@@ -28,6 +28,8 @@ export const TITLES: TitleDef[] = [
     { id: 'bossCore:1', name: '💠 코어의 계승자', desc: '보스 코어 첫 획득', group: '던전', achievement: 'bossCore:1' },
     { id: 'bossCore:4', name: '🔷 네 보스의 기억', desc: '보스 코어 4종 보유', group: '던전', achievement: 'bossCore:4' },
     { id: 'bossCore:7', name: '🌀 일곱 보스를 품은 자', desc: '보스 코어 7종 보유', group: '던전', achievement: 'bossCore:7' },
+    { id: 'abyssCore:3', name: '🥋 도장을 삼킨 자', desc: '무릉도장 코어 3종 획득', group: '던전', achievement: 'abyssCore:3' },
+    { id: 'bossCore:10', name: '🔟 열 보스의 계승자', desc: '보스 코어 10종 모두 보유', group: '던전', achievement: 'bossCore:10' },
     { id: 'coreAwaken:1', name: '✨ 깨어난 코어', desc: '보스 코어 하나를 각성 5단계까지', group: '던전', achievement: 'coreAwaken:1' },
     { id: 'coreAwaken:7', name: '👁 모든 보스를 깨운 자', desc: '보스 코어 7종 모두 각성 5단계', group: '던전', achievement: 'coreAwaken:7' },
     { id: 'abyss:25', name: '🥋 무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },

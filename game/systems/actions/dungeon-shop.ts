@@ -10,7 +10,7 @@ import { drop, dropLevel, gainLevels } from '../encounter';
 import { allItems, hunterBlock, onyxOffer, countBought, boughtToday, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
-import { BOSS_CORES, CORE_FORGE, coreEntry } from '../../data/boss-core';
+import { BOSS_CORES, REGION_CORE_IDS, CORE_FORGE, coreEntry } from '../../data/boss-core';
 import { RARITIES } from '../../data/balance';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
@@ -37,11 +37,11 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         if (id === 'coreBox') {
-            // v3.202 랜덤 보스 코어 상자: 7종 중 하나를 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
+            // v3.202 랜덤 보스 코어 상자: 지역 던전 7종 중 하나를(v3.207 무릉 코어는 층으로만) 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
             if (boughtToday(s, 'coreBox', now) >= DUNGEON_SHOP_DAILY.coreBoxPerDay) throw Error(`보스 코어 상자는 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번까지입니다(한국 시간 자정에 초기화).`);
             pay(s, DUNGEON_SHOP.coreBox);
             countBought(s, 'coreBox', now);
-            const ids = Object.keys(BOSS_CORES), pick = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))];
+            const ids = REGION_CORE_IDS, pick = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))];
             addLog(s, `던전 주화 상점 · 보스 코어 상자 개봉 · ${BOSS_CORES[pick].name} · 주화 -${DUNGEON_SHOP.coreBox.toLocaleString()}`, 'reward');
             grantBossCore(s, pick, rng);
             return;

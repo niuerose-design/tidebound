@@ -6,7 +6,7 @@ import { jobMasteryTarget, extremeBroken } from './progression';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
 import { recordExpIncome } from './income';
-import { rollBossLoot } from './boss-loot';
+import { rollBossLoot, syncAbyssCores } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
@@ -490,6 +490,7 @@ export function reward(s: State, rng: () => number) {
                 const deeper = depth > s.abyssBest;
                 s.abyssBest = Math.max(s.abyssBest, depth);
                 recordAbyssDepth(s, depth, s.lastTick);
+                if (deeper) syncAbyssCores(s);
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');

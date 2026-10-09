@@ -4,7 +4,7 @@
  */
 import type { State } from '../types';
 import { ODDS } from '../data/odds';
-import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, coreForgeEssence, ownedCores, coreEntry, rollCoreAttrs, rollCoreAttr, rollCoreFactor, type CoreAttr } from '../data/boss-core';
+import { BOSS_CORES, BOSS_CORE_RULES, ABYSS_CORE_IDS, abyssCoreRank, CORE_ATTRS, coreForgeEssence, ownedCores, coreEntry, rollCoreAttrs, rollCoreAttr, rollCoreFactor, type CoreAttr } from '../data/boss-core';
 import { ATTRIBUTES } from '../data/progression';
 import { addLog } from './state';
 
@@ -57,4 +57,25 @@ export function rollBossLoot(s: State, dungeonId: string, rng: () => number): nu
     if (rng() >= ODDS.bossLoot.chance && miss + 1 < ODDS.bossLoot.pity) { s.bossLootMiss = miss + 1; return undefined; }
     s.bossLootMiss = 0;
     return grantBossCore(s, dungeonId, rng);
+}
+/**
+ * v3.207 무릉도장 코어: 최고 층(abyssBest)이 그 코어의 층에 닿으면 얻고(기본 능력치 무작위), 다음 층마다 각성합니다.
+ * 층 정복 때와 세이브를 읽을 때(이미 높이 오른 유저) 부릅니다. 능력치 굴림은 코어 · 층으로 정해지는 난수라 결정적입니다.
+ */
+export function syncAbyssCores(s: State, log = true) {
+    for (const id of ABYSS_CORE_IDS) {
+        const want = abyssCoreRank(id, s.abyssBest || 0);
+        if (want < 0) continue;
+        const cores = (s.bossCores ??= {}), had = coreEntry(cores[id]), core = BOSS_CORES[id];
+        if (!had) {
+            let seed = [...id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7) >>> 0;
+            const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+            cores[id] = { rank: want, attrs: rollCoreAttrs(rng) };
+            if (!s.coreSlot) s.coreSlot = id;
+            if (log) addLog(s, `✦ 무릉도장 ${core.floors![0]}층 돌파 · 보스 코어 획득! ${core.name} · ${core.desc} 기본 능력치: ${(cores[id] as { attrs: CoreAttr[] }).attrs.map(attrName).join(' · ')}${want ? ` · 각성 ${want}` : ''}`, 'reward');
+        } else if (had.rank < want) {
+            cores[id] = { ...had, rank: Math.min(BOSS_CORE_RULES.awakenMax, want) };
+            if (log) addLog(s, `✦ 무릉도장 ${core.floors![want]}층 돌파 · ${core.name} 각성 ${want}/${BOSS_CORE_RULES.awakenMax}`, 'reward');
+        }
+    }
 }

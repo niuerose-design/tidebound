@@ -444,3 +444,15 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
  assert.ok(s.achievementClaims['bossCore:4']&&s.achievementClaims['coreAwaken:1'],'rewardless achievements complete at once');assert.ok(!P.unclaimedAchievements(s).some(id=>id.startsWith('bossCore')||id.startsWith('coreAwaken')),'nothing to claim');
  const old=newState(0);old.achievements={'reenlist:1':1,'regions:2':1};old.achievementClaims={};P.syncAchievements(old,()=>{});assert.ok(!old.achievementClaims['regions:2'],'AP honor steps still claimed by hand');assert.ok(old.achievementClaims['reenlist:1'],'old unclaimed honor achievements are tidied');
 });
+
+test('v3.207 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),BL=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop'),M=await L.load('systems/migrations');
+ assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong']);assert.equal(C.REGION_CORE_IDS.length,7);
+ assert.equal(C.BOSS_CORES.abyssMugong.bonus.bossDamage,.08);assert.equal(C.BOSS_CORES.abyssMugong.bonus.penetration,.15);
+ const s=newState(0);s.abyssBest=24;BL.syncAbyssCores(s);assert.equal(s.bossCores,undefined);
+ s.abyssBest=25;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,0);assert.equal(s.bossCores.abyssTrainee.attrs.length,2);
+ s.abyssBest=34;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,3);assert.equal(s.bossCores.abyssMaster,undefined);
+ s.abyssBest=99;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,5);assert.equal(s.bossCores.abyssMaster.rank,5);assert.equal(s.bossCores.abyssMugong.rank,5);
+ const u=newState(0);u.dungeonCoins=D.DUNGEON_SHOP.coreBox*30;for(let d=0;d<30;d++)act(u,{type:'dungeonShop',id:'coreBox'},d*86400000,()=>.999);assert.ok(Object.keys(u.bossCores).every(id=>C.REGION_CORE_IDS.includes(id)),'box never gives abyss cores');
+ const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
+});
