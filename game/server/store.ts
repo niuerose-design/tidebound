@@ -1,7 +1,7 @@
 import type { State, Action, Snapshot } from '../types';
 import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
-import { snapshot } from '../systems/stats';
+import { duelSnapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
 import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
@@ -15,6 +15,7 @@ import { accountFromRequest, AuthError, readSlot } from './auth';
 import { MONSTERS } from '../data/world';
 import { JOBS } from '../data/classes';
 import { jobMastered } from '../systems/progression';
+import { supportOf, mergeSupport, SUPPORT_EFFECTS } from '../systems/support';
 import { mergeSlots, slotUnlocked, slotUnlockText, ACCOUNT_RULES, SLOT_COUNT, type SlotSummary } from '../data/account';
 import { weekKey, weekSeason, monthKey, monthSeason, previousMonthKey } from '../data/time';
 export { db };
@@ -35,10 +36,11 @@ const ACCOUNT_REFRESH_MS = 10 * 60_000;
 /** 슬롯 요약: 계정 보너스에 쓰는 기록만 담습니다. */
 function slotSummary(s: State, slot: number, now: number): SlotSummary {
     const bosses = MONSTERS.filter(f => f.boss).reduce((a, f) => a + (s.book?.[f.id] || 0), 0);
-    return { slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, lifetimeRebirths: lifetimeRebirths(s), ascension: ascensionOf(s), mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: MONSTERS.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
+    const support = supportOf(s);
+    return { ...(Object.keys(support).length ? { support } : {}), slot, name: s.name, job: s.job, level: s.level, rebirths: s.rebirths || 0, lifetimeRebirths: lifetimeRebirths(s), ascension: ascensionOf(s), mastered: JOBS.filter(j => jobMastered(s, j)).map(j => j.id), species: MONSTERS.filter(f => (s.book?.[f.id] || 0) > 0).map(f => f.id), bossKills: bosses, abyssBest: s.abyssBest || 0, updatedAt: now };
 }
-/** 보너스 단계가 바뀌는 값만 비교해, 레벨업·처치마다 올리지 않습니다. */
-const summaryKey = (x: SlotSummary) => `${x.lifetimeRebirths ?? x.rebirths}|${x.ascension || 0}|${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}`;
+/** 보너스 단계가 바뀌는 값만 비교해, 레벨업·처치마다 올리지 않습니다. v3.219 참모 지원 값(편성 · 숙련 단계로만 바뀜)도 넣어, 바뀐 저장에서만 한 번 올립니다. */
+const summaryKey = (x: SlotSummary) => `${x.lifetimeRebirths ?? x.rebirths}|${x.ascension || 0}|${x.rebirths}|${x.mastered.join(',')}|${x.species.length}|${Math.floor(x.bossKills / ACCOUNT_RULES.bossPer)}|${Math.floor(x.abyssBest / ACCOUNT_RULES.abyssPer)}|${SUPPORT_EFFECTS.map(e => x.support?.[e] || 0).join(',')}`;
 const parseSlots = (rows: SlotRow[]) => rows.flatMap(r => { try { return [JSON.parse(r.summary) as SlotSummary]; } catch { return []; } });
 /**
  * 행동 처리 뒤 저장 전에 한 번: 내 슬롯 요약이 보너스 단계상 바뀌었거나 10분이 지났으면 올리고, 모든 슬롯을 합쳐 s.account 에 캐시합니다.
@@ -53,6 +55,9 @@ export async function syncAccount(account: string, slot: number, s: State, now: 
     const merged = mergeSlots(slot, [...others, own], now);
     // v3.31 승천한 모험가의 계정 보너스는 자기 기록으로만 다시 채웁니다(슬롯 목록·해금은 계정 전체 그대로).
     s.account = ascended(s) ? { ...mergeSlots(slot, [own], now), slots: merged.slots, lifetimeRebirths: merged.lifetimeRebirths, ownKey: key } : { ...merged, ownKey: key };
+    // v3.219 참모 지원: 자기를 뺀 다른 분신의 지원을 효과별 최고값으로(승천 캐릭터도 받음). 받는 쪽은 이 10분 주기 동기화에서만 읽습니다(지원만을 위한 읽기 없음).
+    const support = mergeSupport(others.map(x => x.support));
+    if (Object.keys(support).length) s.support = support; else delete s.support;
 }
 /** 슬롯 전환: 열린 슬롯인지 저장된 요약으로 확인합니다. */
 export async function switchSlot(account: string, slot: number, now: number) {
@@ -96,7 +101,8 @@ export async function register(id: string) {
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
     // v3.18 해커는 결투 정보를 새로 등록하지 않습니다(이전 직업으로 등록해 둔 기록은 그대로). v3.26 숨김 정보는 해커의 신원 조작이 서버 설정에 둡니다.
     if (isHacker(state)) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
-    const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
+    // v3.219 결투에는 분신 지원(참모 계보)을 넣지 않습니다.
+    const snap = { ...duelSnapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
     await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;
 }

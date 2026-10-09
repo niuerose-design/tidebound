@@ -180,6 +180,9 @@ export type Item = {
     power: number;
     level: number;
 };
+/** v3.219 참모 지원 효과 종류. */
+export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen' | 'ap' | 'boss' | 'rank' | 'penetration' | 'critDamage';
+export type SupportMap = Partial<Record<SupportEffect, number>>;
 export type Skill = {
     /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
     fx?: string;
@@ -292,6 +295,10 @@ export type Skill = {
     burnConsume?: number;
     /** v3.146 정령(은월 패시브): 장착하면 기본 공격을 포함한 모든 공격 행동에 정령의 추가타가 hits회 붙습니다(위력 power, 기술 배율에 곱함). 여러 개를 장착하면 횟수 · 위력 각각 가장 큰 값. */
     companion?: { hits: number; power: number };
+    /** v3.219 참모 계보 지원 스킬: 장착하면 같은 계정의 다른 분신에게 effect 배율(숙련 단계에 따라 min → max). systems/support.ts */
+    support?: { effect: SupportEffect; min: number; max: number };
+    /** v3.219 지휘 체계: 장착한 지원 스킬 1개마다 자기 두 공격 +commandPer. */
+    commandPer?: number;
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
@@ -503,6 +510,8 @@ export type State = {
     guildStats?: { key: string; catches: number; clears: number; bosses: number; abyss: number; sentCatches: number; sentClears: number; sentBosses: number; sentAbyss: number; sentAt: number };
     /** v25.6 계정 합계 캐시(캐릭터 슬롯 보너스). 서버가 저장 전에 채웁니다. 없으면 보너스 0. */
     account?: import('./data/account').AccountSummary;
+    /** v3.219 다른 분신의 참모 지원(효과별 최고값). 서버가 계정 동기화(최대 10분 주기)에서 채우는 캐시입니다. 승천 캐릭터도 받습니다. */
+    support?: SupportMap;
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */
     statRate?: number;
     tide: number;

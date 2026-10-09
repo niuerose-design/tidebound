@@ -6,6 +6,7 @@ import { jobMasteryTarget, extremeStage, extremeFinalMultiplier } from './progre
 import { EXTREME_STAGES } from '../data/long-term';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
+import { supportMultiplier } from './support';
 import { recordExpIncome, recordMasteryIncome } from './income';
 import { rollBossLoot, syncAbyssCores } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
@@ -345,7 +346,9 @@ export function reward(s: State, rng: () => number) {
     // v3.46 무리는 마리 수 대신 싸운 턴 × 규모별 턴당 값(swarmRankKills, 마리 수 상한). 소수점은 이월합니다.
     // v3.75 전공 옵션: 처치 수 1마리당 +1(전과 기록 배율 전).
     const valor = 1 + Math.floor(equippedAffixTotal(s, 'rankFlat'));
-    if (size > 1) { const raw = swarmRankKills(size, swarmTurns) * valor * (1 + rankPerkLevel(s, 'tally')) + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
+    // v3.219 작전참모 인사 기록(다른 분신): 계급 경험치 배율. 소수점은 무리와 같이 이월합니다.
+    const rankMul = supportMultiplier(s, 'rank');
+    if (size > 1 || rankMul > 1) { const raw = (size > 1 ? swarmRankKills(size, swarmTurns) : 1) * valor * (1 + rankPerkLevel(s, 'tally')) * rankMul + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
     else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));
     s.rank = rk;
     if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }

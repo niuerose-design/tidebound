@@ -2,6 +2,7 @@ import { EXTREME_BREAK_PRACTICE, EXTREME_STAGES, EXTREME_FINAL_DAMAGE } from '..
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
+import { supportAP } from './support';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
@@ -94,6 +95,7 @@ export function apSources(s: State): { id: string; label: string; value: number 
         { id: 'research', label: '세계석 연구 ‘영혼 확장 I · II’', value: researchAP(s) },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
         { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
+        { id: 'support', label: '분신 지원(작전참모)', value: supportAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
 }
@@ -372,6 +374,11 @@ export function jobRequirements(s: State, j: Job) {
         if (j.requiresRank) {
             const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
             list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });
+        }
+        // v3.219 둘 중 하나의 숙련(참모 계보 4차).
+        if (j.requiresAnyJobMastery) {
+            const opts = Object.entries(j.requiresAnyJobMastery), best = opts.reduce((m, [id, n]) => Math.max(m, Math.min(1, (s.jobMastery?.[id] || 0) / n)), 0);
+            list.push({ label: `${opts.map(([id]) => jobById(id)?.name || id).join(' 또는 ')} 숙련 ${opts[0][1].toLocaleString()}`, met: opts.some(([id, n]) => (s.jobMastery?.[id] || 0) >= n), value: best, target: 1 });
         }
         if (j.requiresMastered)
             list.push({ label: `숙달한 직업 ${j.requiresMastered}개`, met: masteredJobCount(s) >= j.requiresMastered, value: masteredJobCount(s), target: j.requiresMastered });
