@@ -418,16 +418,18 @@ test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken
  assert.throws(()=>act(u,{type:'dungeonShop',id:'coreBox'},0,()=>.1),/하루 1번/);act(u,{type:'dungeonShop',id:'coreBox'},86400000,()=>.1);assert.equal(Object.values(u.bossCores)[0].rank,1,'same core again awakens');
 });
 
-test('v3.203 boss core attribute reroll (essence or coins) and refine (essence, factor only)',async()=>{
+test('v3.203 boss core attribute reroll (essence or coins) and refine (essence, factor only); v3.204 cost 50 x1.2, pearl reset',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),B=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop');
  const s=newState(0);s.bossCores={grotto:{rank:1,attrs:[{k:'str',f:.3},{k:'vit',f:.5}]}};s.essence=1e6;
- const c0=B.coreForgeCost(s,'grotto','refine');assert.equal(B.coreForgeCost(s,'grotto','reroll'),c0*2);
+ const c0=B.coreForgeCost(s,'grotto');assert.equal(c0,50);s.rebirths=80;assert.equal(B.coreForgeCost(s,'grotto'),50,'no rebirth scaling');
  act(s,{type:'coreForge',id:'grotto',value:'refine|0'},0,()=>.99);assert.deepEqual(s.bossCores.grotto.attrs[0],{k:'str',f:1});assert.equal(s.essence,1e6-c0);assert.equal(s.bossCores.grotto.forges,1);
- assert.ok(B.coreForgeCost(s,'grotto','refine')>c0,'cost grows per forge');
- act(s,{type:'coreForge',id:'grotto',value:'reroll|1'},0,()=>.0);assert.notEqual(s.bossCores.grotto.attrs[1].k,'str','reroll never duplicates the other line');assert.equal(s.bossCores.grotto.rank,1);
+ assert.equal(B.coreForgeCost(s,'grotto'),60,'x1.2 per forge');
+ act(s,{type:'coreForge',id:'grotto',value:'reroll|1'},0,()=>.0);assert.equal(s.essence,1e6-50-60);assert.notEqual(s.bossCores.grotto.attrs[1].k,'str','reroll never duplicates the other line');assert.equal(s.bossCores.grotto.rank,1);
  assert.throws(()=>act(s,{type:'coreForge',id:'temple',value:'reroll|0'},0),/가진 보스 코어/);
  s.essence=0;assert.throws(()=>act(s,{type:'coreForge',id:'grotto',value:'refine|0'},0),/정수가 부족/);
  const f=s.bossCores.grotto.forges;s.dungeonCoins=D.DUNGEON_SHOP.coreReroll;act(s,{type:'dungeonShop',id:'coreReroll',value:'grotto|0'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.bossCores.grotto.forges,f,'coin reroll does not raise essence cost');
+ const attrs=JSON.stringify(s.bossCores.grotto.attrs);s.pearls=100;act(s,{type:'coreForgeReset',id:'grotto'},0);assert.equal(s.pearls,0);assert.equal(s.bossCores.grotto.forges,undefined);assert.equal(JSON.stringify(s.bossCores.grotto.attrs),attrs);assert.equal(B.coreForgeCost(s,'grotto'),50);
+ assert.throws(()=>act(s,{type:'coreForgeReset',id:'grotto'},0),/손본 적이 없어/);
  const o=newState(0);o.bossCores={cemetery:2};o.essence=1e6;assert.throws(()=>act(o,{type:'coreForge',id:'cemetery',value:'refine|0'},0),/빈 줄/);
  act(o,{type:'coreForge',id:'cemetery',value:'reroll|0'},0,()=>.5);assert.equal(o.bossCores.cemetery.attrs.length,1);assert.equal(o.bossCores.cemetery.rank,2,'old saves fill empty lines by reroll');
 });

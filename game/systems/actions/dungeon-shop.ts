@@ -10,7 +10,7 @@ import { drop, dropLevel, gainLevels } from '../encounter';
 import { allItems, hunterBlock, onyxOffer, countBought, boughtToday, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
-import { BOSS_CORES } from '../../data/boss-core';
+import { BOSS_CORES, CORE_FORGE, coreEntry } from '../../data/boss-core';
 import { RARITIES } from '../../data/balance';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
@@ -112,11 +112,21 @@ export const dungeonShopActions: ActionHandlers = {
         if (mode !== 'reroll' && mode !== 'refine') throw Error('재설정 또는 재련을 고르세요.');
         const kind = mode as CoreForge, blocked = coreForgeBlock(s, id, index, kind);
         if (blocked) throw Error(blocked);
-        const cost = coreForgeCost(s, id, kind);
+        const cost = coreForgeCost(s, id);
         if ((s.essence || 0) < cost) throw Error(`정수가 부족합니다 (필요 ${cost.toLocaleString()}).`);
         s.essence = (s.essence || 0) - cost;
         const r = forgeCore(s, id, index, kind, rng, true);
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 능력치 ${kind === 'reroll' ? '재설정' : '재련'} · ${r.before} → ${r.after} · 정수 -${cost.toLocaleString()}`, 'reward');
+    },
+    /** v3.204 보스 코어 비용 초기화: 세계석 CORE_FORGE.resetPearls로 정수 손보기 횟수를 0으로(능력치는 그대로). */
+    coreForgeReset(s, { id }) {
+        const e = coreEntry(s.bossCores?.[id]);
+        if (!BOSS_CORES[id] || !e) throw Error('가진 보스 코어만 초기화할 수 있습니다.');
+        if (!e.forges) throw Error('정수로 손본 적이 없어 초기화할 비용이 없습니다.');
+        if (s.pearls < CORE_FORGE.resetPearls) throw Error(`세계석이 부족합니다 (필요 ${CORE_FORGE.resetPearls}).`);
+        s.pearls -= CORE_FORGE.resetPearls;
+        s.bossCores![id] = { rank: e.rank, attrs: e.attrs };
+        addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 비용 초기화 · ${e.forges}회 → 0 · 세계석 -${CORE_FORGE.resetPearls}`, 'reward');
     },
     /** v3.199 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
     equipCore(s, { id }) {

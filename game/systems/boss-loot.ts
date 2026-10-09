@@ -4,19 +4,14 @@
  */
 import type { State } from '../types';
 import { ODDS } from '../data/odds';
-import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, rollCoreAttrs, rollCoreAttr, rollCoreFactor, type CoreAttr } from '../data/boss-core';
-import { refineEssenceAt } from '../data/gear';
+import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, coreForgeEssence, ownedCores, coreEntry, rollCoreAttrs, rollCoreAttr, rollCoreFactor, type CoreAttr } from '../data/boss-core';
 import { ATTRIBUTES } from '../data/progression';
-import { refineRebirthFactor } from './equipment';
 import { addLog } from './state';
 
 const attrName = (a: CoreAttr) => `${ATTRIBUTES.find(x => x.id === a.k)!.name} 레벨 ×${a.f}`;
 export type CoreForge = 'reroll' | 'refine';
-/** v3.203 코어 능력치 손보기의 정수 비용(태초 재련 식 × 이 코어를 손본 횟수, 재설정은 CORE_FORGE.rerollMult배). */
-export function coreForgeCost(s: Pick<State, 'bossCores' | 'rebirths'>, id: string, kind: CoreForge) {
-    const forges = coreEntry(s.bossCores?.[id])?.forges || 0, base = refineEssenceAt(CORE_FORGE.rarity, forges, refineRebirthFactor(s.rebirths || 0));
-    return kind === 'reroll' ? base * CORE_FORGE.rerollMult : base;
-}
+/** v3.204 코어 능력치 손보기의 정수 비용(재설정 · 재련 같음, 이 코어를 정수로 손본 횟수만큼 ×1.2). */
+export const coreForgeCost = (s: Pick<State, 'bossCores'>, id: string) => coreForgeEssence(coreEntry(s.bossCores?.[id])?.forges || 0);
 /** 손볼 수 있는 줄인지. 못 하면 이유. 예전 코어(능력치 없음)는 빈 줄을 재설정으로 채웁니다. */
 export function coreForgeBlock(s: Pick<State, 'bossCores'>, id: string, line: number, kind: CoreForge) {
     const e = coreEntry(s.bossCores?.[id]);

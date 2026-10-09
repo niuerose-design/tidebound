@@ -6,7 +6,7 @@ import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from
 import { clearCoinBase, dailyBonusLeft, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { DUNGEON_SHOP, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
-import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, CORE_ATTRS, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
+import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { coreForgeCost } from '@/game/systems/boss-loot';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { dayKey } from '@/game/data/goals';
@@ -135,15 +135,16 @@ function CoreForge({ s, send, busy }: PanelProps) {
     const id = owned.includes(pick) ? pick : s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : owned[0];
     if (!id) return null;
     const e = coreEntry(s.bossCores?.[id])!, index = Math.min(line, CORE_ATTRS.count - 1), cur = e.attrs[index], essence = s.essence || 0;
-    const reroll = coreForgeCost(s, id, 'reroll'), refine = coreForgeCost(s, id, 'refine');
+    const cost = coreForgeCost(s, id);
     const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
     return <span><b>손보기</b>
         <select aria-label="손볼 보스 코어" value={id} disabled={busy} onChange={e => setPick(e.target.value)}>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].name}</option>)}</select>
         <select aria-label="손볼 능력치 줄" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{Array.from({ length: CORE_ATTRS.count }, (_, i) => { const a = e.attrs[i]; return <option key={i} value={i}>{i + 1}. {a ? `${ATTRIBUTES.find(t => t.id === a.k)?.name} 레벨 ×${a.f}` : '빈 줄'}</option>; })}</select>
-        <button className="secondary small" disabled={busy || essence < reroll} onClick={() => forge('reroll')}>재설정 · 정수 {format(reroll)}</button>
-        <button className="secondary small" disabled={busy || !cur || essence < refine} onClick={() => forge('refine')}>재련 · 정수 {format(refine)}</button>
+        <button className="secondary small" disabled={busy || essence < cost} onClick={() => forge('reroll')}>재설정 · 정수 {format(cost)}</button>
+        <button className="secondary small" disabled={busy || !cur || essence < cost} onClick={() => forge('refine')}>재련 · 정수 {format(cost)}</button>
         <button className="secondary small" disabled={busy || (s.dungeonCoins || 0) < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {format(DUNGEON_SHOP.coreReroll)}</button>
-        <small>재설정은 능력치 종류와 배율(레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max})을 새로 굴리고(다른 줄과 겹치지 않음), 재련은 종류는 그대로 배율만 다시 굴립니다. 낮아질 수도 있습니다. 정수 비용은 이 코어를 정수로 손볼 때마다 ×1.1씩 오르고, 주화 재설정은 비용을 올리지 않습니다. 보유 정수 {format(essence)}{e.forges ? ` · 이 코어 ${e.forges}회 손봄` : ''}</small>
+        {e.forges ? <button className="secondary small" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
+        <small>재설정은 능력치 종류와 배율(레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max})을 새로 굴리고(다른 줄과 겹치지 않음), 재련은 종류는 그대로 배율만 다시 굴립니다. 낮아질 수도 있습니다. 정수 비용은 기본 {CORE_FORGE.base}이고 이 코어를 정수로 손볼 때마다 ×{CORE_FORGE.growth}씩 오르며, 세계석 {CORE_FORGE.resetPearls}로 처음 비용으로 되돌릴 수 있습니다(능력치는 그대로). 주화 재설정은 비용을 올리지 않습니다. 보유 정수 {format(essence)}{e.forges ? ` · 이 코어 ${e.forges}회 손봄` : ''}</small>
     </span>;
 }
 

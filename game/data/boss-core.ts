@@ -50,9 +50,11 @@ export function rollCoreAttrs(rng: () => number): CoreAttr[] {
  * v3.203 코어 능력치 손보기(장비 재설정 · 재련과 같은 말):
  * - 재설정: 고른 줄의 종류와 배율을 새로 굴립니다(다른 줄과 겹치지 않음). 정수, 또는 던전 주화 상점(주화 DUNGEON_SHOP.coreReroll).
  * - 재련: 종류는 그대로 배율만 다시 굴립니다. 정수만.
- * 정수 비용은 태초 장비 재련과 같은 식(기본 × 환생 배율 × 1.1^이 코어를 손본 횟수)이고, 재설정은 rerollMult배. 주화 재설정은 횟수를 세지 않습니다.
+ * v3.204 정수 비용은 재설정 · 재련 모두 base × growth^(이 코어를 정수로 손본 횟수). 환생 배율은 없습니다(환생해도 코어 능력치는 그대로라).
+ * 세계석 resetPearls로 그 횟수를 0으로 되돌립니다(비용 초기화, 능력치는 그대로). 주화 재설정은 횟수를 세지 않습니다.
  */
-export const CORE_FORGE = { rarity: 6, rerollMult: 2 };
+export const CORE_FORGE = { base: 50, growth: 1.2, resetPearls: 100 };
+export const coreForgeEssence = (forges = 0) => Math.ceil(CORE_FORGE.base * Math.pow(CORE_FORGE.growth, Math.max(0, Math.floor(forges))));
 /** 보스 코어가 주는 기본 능력치(칸 100% · 공명, 각성 포함). */
 export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'>) {
     const out: Partial<Record<Attribute, number>> = {};
