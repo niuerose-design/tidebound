@@ -223,7 +223,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.153 렐릭의 힘(패스파인더): 경험치 보너스 중 환생 · 연구 몫을 뺀 나머지(스킬 · 장비 · 직업 · 도감). 고른 유틸 세팅이 그대로 피해 기준값이 됩니다.
     set('relicPower', 'skills', Math.max(0, a.expBonus - rebirthExperience(s.rebirths) - (s.permanent.exp || 0) * .2));
     for (const [key, cap] of Object.entries(RULE_CAPS)) if (key !== 'arcaneRatioBonus') limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
-    // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +1%.
+    // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +5%(v3.209, 전에는 +1%).
     // v3.75 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
     a.superCrit = Math.min(1, (a.superCrit || 0) + Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
     // v27.79 계정 보스 보너스는 치명타 확률 배율(곱연산).
