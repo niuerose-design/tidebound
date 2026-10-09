@@ -18,7 +18,7 @@ import { rebirthLevel, encounterTier, tideLimit } from '@/game/systems/meta';
 import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Leaf, Gem, Megaphone } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Meter, SkillIcon, format, Num } from './shared';
+import { Heading, Meter, SkillIcon, format, Num } from './shared';
 import { STAGES, MONSTERS, swarmHpMultiplier, swarmAttackMultiplier, monsterById, stageById, dungeonById } from '@/game/data/world';
 import { variantById } from '@/game/data/variants';
 import { BALANCE } from '@/game/data/balance';
@@ -98,7 +98,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
 const BattleHeading = memo(function BattleHeading({ base, saved, settings, setSettings, name, setName, busy, send, setView, onSwitchSlot }: {
     base: State; saved: boolean; settings: boolean; setSettings: (open: boolean) => void; name: string; setName: (value: string) => void; busy: boolean; send: Send; setView: SetView; onSwitchSlot?: (slot: number) => Promise<void>;
 }) {
-    return <div className="battle-toolbar"><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></div>;
+    return <Heading eyebrow="THE ENDLESS ADVENTURE"><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
 });
 
 /** v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */
