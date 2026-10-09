@@ -640,6 +640,12 @@ export type State = {
     goldLog?: { h: number; g: number }[];
     /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
     expLog?: { h: number; g: number }[];
+    /** v3.207 기록을 시작한 뒤 처치로 번 경험치 합계(expLog와 달리 환생해도 남음). */
+    expEarned?: number;
+    /** v3.207 처치 숙련 수입 기록(goldLog와 같은 칸, 현재 직업 숙련). 환생해도 남습니다. */
+    masteryLog?: { h: number; g: number }[];
+    /** v3.207 기록을 시작한 뒤 처치로 번 숙련 합계. */
+    masteryEarned?: number;
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
