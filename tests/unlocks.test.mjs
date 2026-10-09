@@ -220,3 +220,29 @@ test('v3.221 어둠의 추종자: 어둠의 의식은 지역 보스 코어 수 �
     const c = progressCounts(s); assert.deepEqual([c.cores, c.coreRanks], [2, 7]);
     assert.equal(job('darkFollower').subRole, 'borderCore'); assert.equal(job('darkFollower').attack, job('darkFollower').magic, 'no physical tilt');
 });
+
+test('v3.221 칠흑의 화신: 칠흑 일식은 물리 · 마법 중 높은 쪽 · 끼고 있는 칠흑 장신구 형태, 출현 ×1.5 · 120턴, 패시브는 마나 · 공격/방어 배율(체력 제외)', () => {
+    const base = { hp: 1e7, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const me = (stats, onyx) => ({ name: 'A', job: 'onyxAvatar', ...(onyx ? { onyx } : {}), stats: { ...base, ...stats }, hp: 1e7, mana: 1000, skills: ['onyxEclipse'], cooldowns: {}, stun: 0, effects: {}, ranks: { onyxEclipse: 1 }, mastery: {}, practice: {} });
+    const foe = () => ({ name: 'B', foe: true, prey: true, stats: { ...base }, hp: 1e7, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const cast = (a, b = foe()) => { const ev = []; strike(a, b, () => 0.5, ev, false, false, { id: 'onyxEclipse', index: 0, count: 1, kind: 'awaken' }); return { ev: ev.find(e => e.skillId === 'onyxEclipse'), b, a }; };
+    const phys = cast(me({ attack: 1000, magic: 100 })), mag = cast(me({ attack: 100, magic: 1000 }));
+    assert.equal(phys.ev.damageType, 'physical'); assert.equal(mag.ev.damageType, 'magic');
+    assert.equal(phys.ev.total, mag.ev.total, 'a magic build loses nothing against a physical build');
+    assert.ok(cast(me({}, 'onyxWill')).b.stun > 0, '윌: stun');
+    assert.ok(cast(me({}, 'onyxLucid')).b.effects.weaken > 0, '루시드: weaken');
+    assert.equal(cast(me({}, 'onyxBlackMage')).a.effects.buffs.genesis.damageMultiplier, 1.3, '검은 마법사: damage buff');
+    assert.equal(cast(me({}, 'onyxDunkel')).a.effects.buffs.commanderBeat.stats.chainBonus, 0.3, '듄켈: chain buff');
+    assert.equal(cast(me({}, 'onyxDusk')).a.effects.buffs.duskFear.stats.thorns, 0.3, '더스크: thorns buff');
+    { const a = me({}, 'onyxHilla'); a.hp = 1e5; const r = cast(a); assert.ok(r.ev.drained > 0 && a.hp > 1e5, '진 힐라: drain'); }
+    assert.ok(cast(me({}, 'onyxSeren')).ev.total > cast(me({})).ev.total * 1.4, '세렌: +50% to bosses');
+    assert.equal(job('onyxAvatar').onyxFind, 0.5); assert.equal(job('onyxAvatar').onyxTurns, 120);
+    // 패시브: 칠흑 각성을 올려도 체력은 그대로, 공격은 오릅니다.
+    const p = ready(70); Object.assign(p.attributes, { str: 70, int: 70 }); p.job = 'onyxAvatar'; p.unlockedJobs.push('onyxAvatar'); p.skills = ['onyxHeart']; p.learned.onyxHeart = 1;
+    p.inventory.push({ id: 'o1', name: 'x', slot: 'charm', rarity: 5, level: 70, power: 1, onyx: 'onyxDusk', onyxRank: 0, affixes: [] }, { id: 'o2', name: 'y', slot: 'charm', rarity: 5, level: 70, power: 1, onyx: 'onyxSeren', onyxRank: 0, affixes: [] });
+    const c = progressCounts(p); assert.deepEqual([c.onyxOwned, c.onyxRanks], [2, 0]);
+    const before = stats(p); p.inventory.forEach(i => { i.onyxRank = 5; }); const after = stats(p);
+    assert.equal(progressCounts(p).onyxRanks, 10);
+    assert.equal(after.hp, before.hp, 'combatScale leaves hp alone'); assert.ok(after.attack > before.attack && after.magic > before.magic);
+    assert.ok(SKILLS.find(s => s.id === 'onyxHeart').bonus.mana > 0 && !SKILLS.find(s => s.id === 'onyxHeart').bonus.hp && !SKILLS.find(s => s.id === 'fallenLords').bonus.hp, 'mana instead of max hp');
+});

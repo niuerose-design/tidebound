@@ -62,6 +62,9 @@ export type Job = {
     nuriFind?: number;
     /** v3.221 이 직업이 현재 직업일 때 끼지 않은 지역 보스 코어의 공명 비율(기본 BOSS_CORE_RULES.resonance 10%). 어둠의 추종자 30%. */
     coreResonance?: number;
+    /** v3.221 이 직업이 현재 직업일 때 칠흑 보스 출현 확률 가산(0.5 = ×1.5)과 머무는 턴(기본 ONYX.turns). 칠흑의 화신. */
+    onyxFind?: number;
+    onyxTurns?: number;
     /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
     /** v3.219 이 직업들 가운데 하나의 숙련이 n 이상(참모 계보 4차: 보급관 또는 군의관). */

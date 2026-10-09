@@ -52,6 +52,8 @@ export type Stats = {
     bossDamage?: number;
     /** v3.12 체력·물리/마법 공격·물리/마법 방어 배율 가산(0.05 = +5%). */
     allStats?: number;
+    /** v3.221 물리/마법 공격 · 물리/마법 방어 배율 가산(체력 · 마나 제외, 0.05 = +5%). 아제로스 패시브. */
+    combatScale?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
@@ -93,7 +95,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;
@@ -210,6 +212,10 @@ export type Skill = {
      * v3.221 코어 비례 자기 버프(어둠의 추종자 어둠의 의식): 쓸 때 보유한 지역 보스 코어 수(n)로 selfBuff를 만듭니다.
      * 피해 배율 1 + damage × n, 능력치 stats × n. steps는 n이 at 이상이면 지속 턴 · 상태이상 면역 턴 · 추가 행동을 덧붙입니다.
      */
+    /** v3.221 물리 · 마법 공격 중 높은 쪽으로 피해(그 종류로 방어 적용). 칠흑 일식. */
+    bestOf?: boolean;
+    /** v3.221 끼고 있는 칠흑 장신구(보스 id)에 따라 덧붙는 효과(칠흑 일식). */
+    onyxForms?: Record<string, Partial<Skill>>;
     coreBuff?: { id: string; name: string; turns: number; damage: number; stats: Partial<Stats>; steps: { at: number; turns?: number; wardTurns?: number; extraTurn?: boolean }[] };
     /** v3.158 접신(아크 패시브): 충전이 need에 닿으면 충전을 비우고 자기 버프 ‘접신’(피해 × damageMultiplier · 속도 × speedMultiplier, turns턴)에 들어갑니다. 장착한 것 중 가장 센 하나만. */
     spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.163 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
@@ -883,6 +889,8 @@ export type Snapshot = {
     skills: string[];
     /** v3.86 추가 판정 단계(결투·제단·월드보스에도 그대로). */
     /** v3.221 보유한 지역 보스 코어 수(어둠의 추종자 어둠의 의식). */
+    /** v3.221 끼고 있는 칠흑 장신구의 보스 id(칠흑의 화신 칠흑 일식). */
+    onyx?: string;
     cores?: number;
     extraRolls?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계: 1단계 체력). 없으면 현재 체력 그대로. */
