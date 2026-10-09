@@ -491,6 +491,13 @@
 .battle-character-column .equipment-title{margin:8px 0 2px}
 .battle-character-column .mini-equipment button{margin:6px 0}
 .battle-character-column .mini-slot{width:32px;height:32px}
+/* v3.219 901~1080px: 옛 반응형 규칙(responsive.css의 넓은 캐릭터 패널용 2열 · 4칸 능력치 · 가로 장비)이 좁은 왼쪽 열에 걸려 글자가 세로로 깨지던 것을 되돌립니다. */
+.battle-character-column .player-column{margin-top:0;gap:0}
+.battle-character-column .player-panel .player-avatar{display:flex}
+.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:center}
+.battle-character-column .player-panel .stat-grid{grid-template-columns:1fr 1fr}
+.battle-character-column .mini-equipment{display:block}
+.battle-character-column .mini-equipment button{width:100%}
 
 }
 /* v25.15 빠른 이동: 왼쪽 ‘착용 장비’ 아래 */
