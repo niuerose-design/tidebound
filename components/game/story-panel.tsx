@@ -5,10 +5,10 @@
  */
 import { useEffect, useState } from 'react';
 import { BookOpen, Lock } from 'lucide-react';
-import { STORY, STORY_CHAPTERS } from '@/game/data/story';
+import { STORY, STORY_CHAPTERS, STORY_PARTS } from '@/game/data/story';
 import { kstIso } from '@/game/data/time';
 import type { State } from '@/game/types';
-import { Heading } from './shared';
+import { Fold, Heading } from './shared';
 
 const SEEN_KEY = 'tidebound.storySeen:';
 const readSeen = (name: string): string[] => { try { const v = JSON.parse(localStorage.getItem(SEEN_KEY + name) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
@@ -30,16 +30,23 @@ export function StoryPanel({ s }: { s: State }) {
             <span>열린 이야기 <b>{unlocked.length}</b> / {STORY.length}{fresh > 0 && <em className="story-new"> 새 이야기 {fresh}편</em>}</span>
             <div className="story-bar" aria-hidden><i style={{ width: `${(unlocked.length / STORY.length) * 100}%` }}/></div>
         </section>
-        {STORY_CHAPTERS.map((chapter, ci) => {
-            const scenes = STORY.filter(x => x.chapter === ci), got = scenes.filter(x => open[x.id]).length;
-            return <section key={chapter} className="story-chapter">
-                <h2 className="story-chapter-title">{chapter}<small>{got} / {scenes.length}</small></h2>
-                <div className="story-list">{scenes.map(x => open[x.id]
-                    ? <article key={x.id} className="panel story-scene">
-                        <header><h3>{x.title}{seen && !seen.has(x.id) && <span className="story-badge">NEW</span>}</h3><time>{kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')}</time></header>
-                        {x.lines.map((line, i) => <p key={i}>{line}</p>)}
-                    </article>
-                    : <article key={x.id} className="panel story-scene story-locked"><Lock size={15}/><span>잠긴 이야기 · {x.hint}</span></article>)}</div>
+        {STORY_PARTS.map(part => {
+            const inPart = STORY.filter(x => part.chapters.includes(x.chapter)), partGot = inPart.filter(x => open[x.id]).length;
+            return <section key={part.title} className="story-part">
+                <h2 className="story-part-title"><span>{part.title}</span>{part.subtitle}<small>{partGot} / {inPart.length}</small></h2>
+                {part.chapters.map(ci => {
+                    const chapter = STORY_CHAPTERS[ci], scenes = STORY.filter(x => x.chapter === ci), got = scenes.filter(x => open[x.id]).length;
+                    const fresh = seen ? scenes.filter(x => open[x.id] && !seen.has(x.id)).length : 0;
+                    // 접은 상태는 장마다 이 기기에 기억합니다(Fold). 처음에는 열린 장면이 있는 장만 펼칩니다.
+                    return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={got > 0} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
+                        <div className="story-list">{scenes.map(x => open[x.id]
+                            ? <article key={x.id} className="panel story-scene">
+                                <header><h3>{x.title}{seen && !seen.has(x.id) && <span className="story-badge">NEW</span>}</h3><time>{kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')}</time></header>
+                                {x.lines.map((line, i) => <p key={i}>{line}</p>)}
+                            </article>
+                            : <article key={x.id} className="panel story-scene story-locked"><Lock size={15}/><span>잠긴 이야기 · {x.hint}</span></article>)}</div>
+                    </Fold>;
+                })}
             </section>;
         })}
     </>;

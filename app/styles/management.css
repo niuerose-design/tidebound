@@ -579,9 +579,16 @@
 .story-new { font-style:normal; color:var(--gold); margin-left:6px; }
 .story-bar { flex:1 1 160px; height:6px; border-radius:999px; background:var(--border); overflow:hidden; }
 .story-bar i { display:block; height:100%; background:var(--gold); border-radius:inherit; }
-.story-chapter { margin:20px 0 8px; }
-.story-chapter-title { display:flex; align-items:baseline; gap:10px; font-size:16px; margin:0 0 10px; color:var(--gold); letter-spacing:.02em; }
-.story-chapter-title small { font-size:12px; color:var(--muted); font-weight:400; }
+.story-part { margin:26px 0 6px; }
+.story-part-title { display:flex; align-items:baseline; gap:10px; margin:0 0 4px; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:20px; letter-spacing:.02em; }
+.story-part-title span { color:var(--gold); }
+.story-part-title small { margin-left:auto; font-size:12px; color:var(--muted); font-weight:400; }
+.story-chapter { margin:14px 0 4px; }
+.story-chapter>summary { padding:8px 4px; border-radius:var(--radius-md); }
+.story-chapter>summary:hover { background:rgba(212,181,121,.06); }
+.story-chapter>summary h2 { font-size:16px; color:var(--gold); margin:0; }
+.story-chapter>summary .section-title { display:flex; align-items:baseline; gap:10px; }
+.story-chapter>summary .section-title>span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
 .story-list { display:grid; gap:10px; }
 .story-scene { padding:18px 22px; display:grid; gap:8px; }
 .story-scene header { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }

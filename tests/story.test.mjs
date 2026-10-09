@@ -2,13 +2,14 @@
 import { assert, test, act, newState } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
-const { STORY, STORY_CHAPTERS } = await load('data/story');
+const { STORY, STORY_CHAPTERS, STORY_PARTS } = await load('data/story');
 const { syncStory } = await load('systems/story');
 
 test('v3.215 story table: unique ids, valid chapters, 2~6 lines, every chapter has scenes', () => {
     assert.equal(new Set(STORY.map(x => x.id)).size, STORY.length);
     for (const x of STORY) { assert.ok(x.chapter >= 0 && x.chapter < STORY_CHAPTERS.length, x.id); assert.ok(x.lines.length >= 2 && x.lines.length <= 6, x.id); assert.ok(x.hint && x.title, x.id); }
     for (let i = 0; i < STORY_CHAPTERS.length; i++) assert.ok(STORY.some(x => x.chapter === i), `chapter ${i}`);
+    assert.deepEqual(STORY_PARTS.flatMap(p => p.chapters).sort((a, b) => a - b), STORY_CHAPTERS.map((_, i) => i), 'parts cover every chapter once');
     const fresh = newState(0); delete fresh.story;
     assert.deepEqual(STORY.filter(x => x.when(fresh)).map(x => x.id), [], 'a brand-new adventurer has no scenes yet');
 });
@@ -37,4 +38,12 @@ test('v3.215 story: an old save opens everything it already passed in one summar
     s.rebirths = 100; delete s.dungeon; act(s, { type: 'ascend' }, 7000);
     for (const id of Object.keys(kept)) assert.equal(s.story[id], kept[id], `ascension keeps ${id}`);
     assert.equal(s.story.ascend, 7000, 'first ascension scene opens right after ascending');
+});
+
+test('v3.215 story part 2: opens from post-ascension milestones (ascension count, cores, duels, guild, market, rank)', () => {
+    const s = newState(0); s.kills = 1; s.ascension = 2; s.wins = 1; s.guildMember = { id: 'g1' }; s.market = { holdings: {} }; s.abyssBest = 120;
+    s.bossCores = { grotto: 5 };
+    act(s, { type: 'sync' }, 9000);
+    for (const id of ['ascend', 'ascend2', 'core', 'coreFull', 'abyss100', 'duel', 'guild', 'market']) assert.ok(s.story[id], id);
+    for (const id of ['ascend3', 'ascend5', 'abyss200', 'onyxAll', 'general']) assert.equal(s.story[id], undefined, id);
 });

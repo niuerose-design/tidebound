@@ -6,6 +6,10 @@
 import type { State } from '../types';
 import { STAGES } from './world';
 import { jobById } from './classes';
+import { isHackerJob } from './hacker';
+import { ONYX_BOSSES } from './onyx';
+import { BOSS_CORES, coreEntry } from './boss-core';
+import { RANKS, rankIndex, rankState } from './rank';
 
 export type StoryScene = {
     id: string;
@@ -18,7 +22,12 @@ export type StoryScene = {
     hint: string;
     when: (s: State) => boolean;
 };
-export const STORY_CHAPTERS = ['제1장 · 판게아의 문', '제2장 · 생을 거듭하는 자', '제3장 · 시간의 끝에서'];
+export const STORY_CHAPTERS = ['제1장 · 판게아의 문', '제2장 · 생을 거듭하는 자', '제3장 · 시간의 끝에서', '제4장 · 두 번째 바다', '제5장 · 숫자의 그림자', '제6장 · 판게아 너머'];
+/** v3.215 부(部): 장 묶음. 1부는 첫 승천까지, 2부는 승천 뒤의 이야기입니다. */
+export const STORY_PARTS: { title: string; subtitle: string; chapters: number[] }[] = [
+    { title: '1부', subtitle: '돌아오는 자', chapters: [0, 1, 2] },
+    { title: '2부', subtitle: '떠나는 자', chapters: [3, 4, 5] },
+];
 
 /** 그 지역 사냥터에 가 본 적이 있는지(지금 있는 곳 · 모험 기록 · 가장 멀리 간 사냥터). */
 const visitedStage = (s: State, id: string) => { const i = STAGES.findIndex(st => st.id === id); return i >= 0 && (s.stage === id || !!s.voyage?.[`stage:${id}`] || (s.bestStage || 0) >= i); };
@@ -26,6 +35,9 @@ const visited = (s: State, region: string) => STAGES.some(st => st.region === re
 /** 이 차수 이상의 직업을 연 적이 있는지(지금 직업 포함). */
 const reachedTier = (s: State, tier: number) => [s.job, ...(s.unlockedJobs || [])].some(id => (jobById(id)?.tier ?? 0) >= tier);
 const slain = (s: State, monster: string) => (s.book?.[monster] || 0) > 0;
+const rankAtLeast = (s: State, id: string) => rankIndex(rankState(s).exp) >= RANKS.findIndex(r => r.id === id) || (rankState(s).reenlist || 0) > 0;
+const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
+const cores = (s: State) => Object.entries(s.bossCores || {}).filter(([id]) => BOSS_CORES[id]).map(([, v]) => coreEntry(v)?.rank || 0);
 /** 승천 뒤에도 앞선 생의 기록으로 열린 것으로 봅니다(환생 횟수는 승천하면 0부터). */
 const lives = (s: State) => (s.rebirths || 0) + (s.ascension || 0) * 100;
 
@@ -165,6 +177,80 @@ export const STORY: StoryScene[] = [
         '눈을 떴을 때, 다시 선착장이었다. 하지만 이번에는 바다가 끝없이 넓어 보였다.',
         '노인이 그물을 내려놓았다. “이제 넌 돌아오는 자가 아니야. 떠나는 자지.”',
         '수평선 너머, 아직 이어지지 않은 세계들이 문을 두드리고 있었다. 이야기는 계속된다.',
+    ] },
+    // ── 2부 · 제4장 · 두 번째 바다 ───────────────────────
+    { id: 'ascend2', chapter: 3, title: '다시 떠나는 자', hint: '승천 2회를 달성한다', when: s => (s.ascension || 0) >= 2, lines: [
+        '두 번째 승천. 이번에는 선착장에서 눈을 뜨자마자 웃음이 났다.',
+        '노인이 그물을 건넸다. “떠나는 자도 가끔은 돌아와서 그물을 손봐야지.”',
+        '항구의 아이들이 내 이름을 불렀다. 지난 생의 내가 남긴 이야기가 이 섬의 전설이 되어 있었다.',
+    ] },
+    { id: 'core', chapter: 3, title: '보스의 심장', hint: '보스 코어를 처음 얻는다', when: s => cores(s).length > 0, lines: [
+        '쓰러진 보스의 가슴에서 맥박이 뛰는 돌이 굴러 나왔다. 아직 따뜻했다.',
+        '코어를 쥐자 그 보스의 기술이 손끝에 스며들었다. 싸웠던 상대가 이제는 내 일부가 되었다.',
+        '“판게아는 아무것도 버리지 않아.” 대장장이가 말했다. “적의 힘조차도.”',
+    ] },
+    { id: 'coreFull', chapter: 3, title: '깨어난 심장', hint: '보스 코어 하나를 5단계까지 각성한다', when: s => cores(s).some(r => r >= 5), lines: [
+        '다섯 번째 각성. 코어 속에서 낮은 목소리가 들렸다. 쓰러뜨린 보스의 목소리였다.',
+        '“우리도 한때는 모험가였다. 끝에 닿지 못하고 돌아오기를 멈춘 자들.”',
+        '그 말이 무서웠다. 그리고 조금은 슬펐다.',
+    ] },
+    { id: 'star22', chapter: 3, title: '스물두 개의 별', hint: '장비를 22성까지 강화한다', when: s => bestStar(s) >= 22, lines: [
+        '스물두 번째 별이 박히는 순간 대장간의 불이 파랗게 변했다.',
+        '대장장이는 망치를 내려놓았다. “내 평생 이런 건 처음 봐. 이건 무기가 아니라 하늘 조각이야.”',
+    ] },
+    { id: 'abyss100', chapter: 3, title: '무릉의 백 층', hint: '무릉도장 100층을 돌파한다', when: s => (s.abyssBest || 0) >= 100, lines: [
+        '백 층. 무공이 처음으로 팔짱을 풀었다.',
+        '“오십 층의 너는 강해지려 했지. 지금의 너는 무엇을 위해 오르느냐.”',
+        '대답 대신 다음 계단에 발을 올렸다. 무공은 그것으로 충분하다는 듯 고개를 끄덕였다.',
+    ] },
+
+    // ── 2부 · 제5장 · 숫자의 그림자 ──────────────────────
+    { id: 'duel', chapter: 4, title: '거울 속 모험가', hint: '결투에서 처음 이긴다', when: s => (s.wins || 0) > 0, lines: [
+        '결투장의 상대는 나와 같은 바다를 건너온 모험가였다. 기술도, 버릇도 어딘가 닮아 있었다.',
+        '이긴 뒤 그가 손을 내밀었다. “다음 생에도 여기서 보자.” 우리는 그게 농담이 아니라는 걸 알았다.',
+    ] },
+    { id: 'guild', chapter: 4, title: '같은 깃발 아래', hint: '길드에 가입한다', when: s => !!s.guildMember, lines: [
+        '길드 깃발 아래 낯선 이름들이 모였다. 모두 몇 번씩 선착장에서 눈을 뜬 사람들이었다.',
+        '“혼자 돌아오는 건 외롭잖아.” 길드장이 웃었다. 그날 밤, 항구에는 처음으로 여러 개의 모닥불이 피었다.',
+    ] },
+    { id: 'market', chapter: 4, title: '주화가 흐르는 곳', hint: '증권거래소에서 처음 매수한다', when: s => !!s.market, lines: [
+        '커닝시티 뒷골목의 거래소. 던전 주화가 숫자가 되어 전광판 위를 흘렀다.',
+        '“칼로 버는 것보다 빠르지.” 중개인이 말했다. “물론 칼보다 빨리 잃기도 하고.”',
+        '전광판의 숫자들이 오르내리는 모양이, 어쩐지 세계석의 빛과 닮아 있었다.',
+    ] },
+    { id: 'officer', chapter: 4, title: '소위의 견장', hint: '소위로 진급한다', when: s => rankAtLeast(s, 'lt2'), lines: [
+        '수없이 쓰러뜨린 몬스터의 수가 계급이 되었다. 어깨에 처음으로 견장이 달렸다.',
+        '“판게아 방위군은 기억이 없는 군대야.” 교관이 말했다. “모두가 돌아오니까, 기록만이 남지.”',
+    ] },
+    { id: 'hacker', chapter: 4, title: '숫자를 다루는 자', hint: '해커의 길에 들어선다', when: s => [s.job, ...(s.unlockedJobs || [])].some(id => isHackerJob(id)), lines: [
+        '커닝시티의 후드 쓴 남자가 옳았다. 칼 대신 숫자를 다루는 길이 정말 있었다.',
+        '화면 속에서 판게아는 거대한 계산식처럼 보였다. 몬스터도, 보스도, 심지어 나도.',
+        '“세계를 고칠 수는 없어도, 세계가 어떻게 돌아가는지는 볼 수 있지.” 그가 말했다. 그 눈빛이 조금 무서웠다.',
+    ] },
+    { id: 'general', chapter: 4, title: '별을 단 사람', hint: '준장으로 진급한다', when: s => rankAtLeast(s, 'bg'), lines: [
+        '견장에 별이 달렸다. 연병장의 신병들이 일제히 경례했다. 그중 몇은 지난 생의 나와 같은 눈을 하고 있었다.',
+        '별을 단 사람의 일은 싸우는 것이 아니라 기억하는 것이었다. 돌아오지 못한 자들의 이름까지.',
+    ] },
+
+    // ── 2부 · 제6장 · 판게아 너머 ────────────────────────
+    { id: 'onyxAll', chapter: 5, title: '일곱 개의 칠흑', hint: '칠흑 보스 7종을 모두 처치한다', when: s => ONYX_BOSSES.every(b => (s.onyxBook?.[b.id] || 0) > 0), lines: [
+        '일곱 번째 칠흑 장신구가 손에 들어왔다. 나란히 놓자 장신구들이 서로를 끌어당겼다.',
+        '하나로 맞물린 칠흑은 열쇠 모양이었다. 검은 마법사가 세계를 묶을 때 쓴 바로 그 열쇠.',
+        '열쇠는 문을 잠그는 데도, 여는 데도 쓰인다.',
+    ] },
+    { id: 'abyss200', chapter: 5, title: '끝없는 계단', hint: '무릉도장 200층을 돌파한다', when: s => (s.abyssBest || 0) >= 200, lines: [
+        '이백 층. 무공은 더 이상 그곳에 없었다. 빈 방석 위에 쪽지 하나가 놓여 있었다.',
+        '“이 위로는 나도 가 보지 못했다. 네가 길을 만들어라.”',
+    ] },
+    { id: 'ascend3', chapter: 5, title: '세 번째 승천', hint: '승천 3회를 달성한다', when: s => (s.ascension || 0) >= 3, lines: [
+        '세 번째 승천 때, 지난 생의 그림자들은 더 이상 내 안으로 녹아들지 않았다. 대신 내 곁에 나란히 섰다.',
+        '분신. 같은 바다를 건너온 또 다른 나. 우리는 서로에게 말을 걸지 않아도 무엇을 해야 할지 알았다.',
+    ] },
+    { id: 'ascend5', chapter: 5, title: '문 너머의 바람', hint: '승천 5회를 달성한다', when: s => (s.ascension || 0) >= 5, lines: [
+        '다섯 번째 승천. 칠흑의 열쇠가 저절로 빛났다. 수평선 너머에서 문이 열리는 소리가 들렸다.',
+        '바람에 실려 온 것은 낯선 종소리와 기도 소리. 빛의 망치를 든 기사, 초록빛 불꽃을 다루는 술사들.',
+        '노인이 마지막으로 그물을 걷었다. “아제로스라고 하더군. 판게아에 붙을 다음 세계.”',
+        '배는 이미 선착장에 묶여 있었다. 이야기는, 다음 세계에서 계속된다.',
     ] },
 ];
 export const storyById = (id: string) => STORY.find(x => x.id === id);
