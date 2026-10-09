@@ -770,3 +770,41 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
 });
+test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
+    const s = newState(0); s.level = 100; s.gold = 1e15;
+    const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 1, power: 8, relic: 'soulCoat', locked: true, affixes: [] };
+    const wall = G.rollOption(G.affixDef('bulwark'), 530, 6, () => 1, 100), guard = G.rollOption(G.affixDef('guardian'), 530, 6, () => 1, 100);
+    s.inventory = [relic, { id: 'p', name: 'p', slot: 'coat', rarity: 6, level: 100, power: 530, affixes: [wall, guard] }];
+    act(s, { type: 'imprintRelic', id: 'r', value: 'p:0:0' }, 0);
+    const atOne = Eq.imprintAffix(wall, 6, 3), lv = 3 / 102;
+    assert.equal(relic.affixes[0].value, Math.round(wall.value * lv * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3]), 'scaled to Lv.1');
+    assert.equal(relic.affixes[0].value2, wall.value2, 'fixed speed penalty untouched');
+    // 유물을 Lv.100으로 올려도 같은 레벨에서 바로 옮긴 값을 넘지 않습니다.
+    Eq.applyLevelUp(relic, 100, s); assert.ok(Math.abs(relic.affixes[0].value - atOne.value) <= atOne.value * .05, `${relic.affixes[0].value} ≈ ${atOne.value}`);
+    // 같은 레벨 이하 장비의 줄은 레벨 환산을 받지 않습니다(v3.82 감쇠만).
+    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 100, 100), Eq.imprintAffix(guard, 6, 3), 'same level unchanged');
+    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 50, 100), Eq.imprintAffix(guard, 6, 3), 'lower level not raised');
+    // 예전에 부푼 줄(Lv.1에서 이식 → Lv.100으로 34배): 지금 유물 레벨의 최대치로 줄고, 정상 줄은 그대로, 두 번 불러도 같음.
+    const blown = { ...atOne, value: atOne.value * 34 }, fine = { ...Eq.imprintAffix(guard, 6, 3) };
+    const old = { ...relic, id: 'r2', level: 100, affixes: [blown, fine] };
+    const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
+    const cap = Math.round(G.optionAtQuality(G.affixDef('bulwark'), Math.round(102 * Bal.RARITIES[6].factor * 1.2), 6, 100, G.HEIR_ROLL_TOP).value * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3]);
+    assert.equal(old.affixes[0].value, cap, 'inflated line capped'); assert.ok(cap < blown.value / 10);
+    assert.deepEqual(old.affixes[1], fine, 'normal line untouched');
+    const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'idempotent');
+});
+test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot', async () => {
+    const Enc = await L.load('systems/encounter'), Od = await L.load('data/odds'), { SERVER_ODDS } = await L.load('secret/odds');
+    assert.ok(SERVER_ODDS.drop.heir.ancient > 0 && SERVER_ODDS.drop.heir.ancient <= .01 && SERVER_ODDS.drop.heir.primal > 0 && SERVER_ODDS.drop.heir.primal <= .02);
+    const s = newState(0); s.level = 100; s.rebirths = 10; s.permanent.inventory = 8; s.inventory = []; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 1;
+    Enc.drop(s, 100, () => 0, true, undefined);
+    const got = s.inventory.at(-1); assert.equal(got.rarity, 6); assert.equal(got.heir, 'primal'); assert.ok(got.locked);
+    assert.equal(got.power, Ec.heirPower('primal', 10, got.level), 'heir power');
+    // 같은 부위에 이미 계승 태초가 있으면 일반 태초로 나옵니다.
+    Enc.drop(s, 100, () => 0, true, undefined, 6); const second = s.inventory.at(-1); assert.equal(second.slot, got.slot); assert.ok(!second.heir);
+    // 난수가 확률보다 크면 일반 고대.
+    Enc.drop(s, 100, () => .5, true, undefined, 5); assert.ok(!s.inventory.at(-1).heir);
+    Enc.drop(s, 100, () => 0, true, undefined, 5); assert.equal(s.inventory.at(-1).heir, 'ancient');
+    assert.ok(Od.ODDS.drop.heir.primal === SERVER_ODDS.drop.heir.primal);
+});

@@ -64,9 +64,10 @@ export const effectiveBlessingLevel = (g: { until: number; level?: number; high_
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
     { id: 'gold', name: '풍요의 축복', cost: 12_000, hours: 12, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
     { id: 'exp', name: '성장의 축복', cost: 15_000, hours: 12, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
-    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 12, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }, { mimic: 6 }, { mimic: 7 }, { mimic: 8 }] },
+    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 12, levels: [{ mimic: 2 }, { mimic: 2.5 }, { mimic: 3 }, { mimic: 3.5 }, { mimic: 4 }, { mimic: 5 }] },
+    // v3.217 까미·누리 축복 배율 하향(×3~×8 → ×2~×5): 3단계 상시 유지로 숙련·경험치 소모가 너무 빨랐습니다.
     // v27.70 누리의 축복: 경험의 누리 출현 배율. 레벨 경험치와 직결돼 까미와 같은 값입니다.
-    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 12, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }, { nuri: 6 }, { nuri: 7 }, { nuri: 8 }] },
+    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 12, levels: [{ nuri: 2 }, { nuri: 2.5 }, { nuri: 3 }, { nuri: 3.5 }, { nuri: 4 }, { nuri: 5 }] },
 ];
 type Blessing = typeof BLESSINGS[number];
 /** 단계별 효과(1부터). */

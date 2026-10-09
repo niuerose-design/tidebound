@@ -4,11 +4,11 @@
  * 읽음 표시(NEW)는 전투 기록처럼 이 브라우저에만 남깁니다(서버 저장 없음).
  */
 import { useEffect, useState } from 'react';
-import { BookOpen, Lock } from 'lucide-react';
+import { BookOpen, ChevronDown, Lock } from 'lucide-react';
 import { STORY, STORY_CHAPTERS, STORY_PARTS } from '@/game/data/story';
 import { kstIso } from '@/game/data/time';
 import type { State } from '@/game/types';
-import { Fold, Heading } from './shared';
+import { Fold, Heading, LazyDetails } from './shared';
 import { ChapterBanner, SceneArt } from './story-art';
 
 const SEEN_KEY = 'tidebound.storySeen:';
@@ -38,15 +38,14 @@ export function StoryPanel({ s }: { s: State }) {
                 {part.chapters.map(ci => {
                     const chapter = STORY_CHAPTERS[ci], scenes = STORY.filter(x => x.chapter === ci), got = scenes.filter(x => open[x.id]).length;
                     const fresh = seen ? scenes.filter(x => open[x.id] && !seen.has(x.id)).length : 0;
-                    // 접은 상태는 장마다 이 기기에 기억합니다(Fold). 처음에는 열린 장면이 있는 장만 펼칩니다.
-                    return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={got > 0} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
+                    // 접은 상태는 장마다 이 기기에 기억합니다(Fold). v3.217 처음에는 모든 장이 접혀 있습니다(장 제목의 NEW 수로 새 이야기를 알 수 있음).
+                    return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={false} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
                         <ChapterBanner chapter={ci} title={chapter} dim={got === 0}/>
                         <div className="story-list">{scenes.map(x => open[x.id]
-                            ? <article key={x.id} className="panel story-scene">
-                                <header><h3>{x.title}{seen && !seen.has(x.id) && <span className="story-badge">NEW</span>}</h3><time>{kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')}</time></header>
-                                <SceneArt id={x.id} title={x.title}/>
-                                {x.lines.map((line, i) => <p key={i}>{line}</p>)}
-                            </article>
+                            // v3.218 장면도 하나씩 접었다 폅니다(처음엔 접힘, 펼칠 때 삽화 · 글을 그림).
+                            ? <LazyDetails key={x.id} className="panel story-scene" summary={<summary className="story-scene-head"><h3>{x.title}{seen && !seen.has(x.id) && <span className="story-badge">NEW</span>}</h3><time>{kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')}</time><ChevronDown size={16} className="story-scene-chevron" aria-hidden/></summary>}>
+                                {() => <div className="story-scene-body"><SceneArt id={x.id} title={x.title}/>{x.lines.map((line, i) => <p key={i}>{line}</p>)}</div>}
+                            </LazyDetails>
                             : <article key={x.id} className="panel story-scene story-locked"><Lock size={15}/><span>잠긴 이야기 · {x.hint}</span></article>)}</div>
                     </Fold>;
                 })}
