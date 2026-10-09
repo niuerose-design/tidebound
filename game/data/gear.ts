@@ -116,7 +116,8 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
     { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강합니다.
-    // v3.195 던전 보스 전리품 전용 옵션(규칙): 보스 피해 +5% + 그 보스 테마 효과. onlyOrigin이 'loot:<던전>'이라 어떤 드롭에서도 굴리지 않고 boss-loot.ts가 직접 붙입니다.
+    // v3.195 던전 보스 전리품 전용 옵션(규칙, 가안): 보스 피해 +5% + 그 보스 테마 효과. onlyOrigin이 'loot:<던전>'이라 어떤 드롭에서도 굴리지 않고 systems/boss-loot.ts가 직접 붙입니다.
+    // v3.196 칠흑 고유 옵션처럼 재설정 · 이식 · 재련이 막히고, 각성 단계만큼 커집니다(data/boss-loot.ts). 보스 공격 스킬 · 컨셉에 맞춰 다시 정할 예정.
     { id: 'lootGrotto', name: '버섯 왕관의 포자', stat: 'bossDamage', kind: 'rule', base: .05, stat2: 'statusResist', base2: .05, onlyOrigin: 'loot:grotto', description: '머쉬맘 전리품. 보스·사냥감 피해 +5%, 상태이상 저항 +5%p.' },
     { id: 'lootKelp', name: '왕의 점액', stat: 'bossDamage', kind: 'rule', base: .05, stat2: 'poisonBonus', base2: .1, onlyOrigin: 'loot:kelpCatacomb', description: '킹 슬라임 전리품. 보스·사냥감 피해 +5%, 중독 피해 +10%.' },
     { id: 'lootCemetery', name: '썩지 않는 갓', stat: 'bossDamage', kind: 'rule', base: .05, stat2: 'lifesteal', base2: .015, onlyOrigin: 'loot:cemetery', description: '좀비 머쉬맘 전리품. 보스·사냥감 피해 +5%, 흡혈 +1.5%p(장비 흡혈 합계 최대 10%p).' },

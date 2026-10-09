@@ -5,6 +5,7 @@ import { RARITIES } from '../data/balance';
 import { fishGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
 import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
+import { isLootUnique, lootAwaken } from '../data/boss-loot';
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 /** 장신구: 위력 1당 치명타 +0.2%p. */
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). 예전 위력 × 0.2%는 Lv.60 전설 +10 하나로 100%를 넘었습니다. */
@@ -51,7 +52,8 @@ export function itemStats(item: Item): Partial<Stats> {
         // v3.5 상태이상 저항만 별 보정(별당 +3%)을 받고 장비 합계 50%에서 막힙니다.
         // v3.75 고정 옵션(한 줌)은 등급 감쇠 없이 그대로입니다.
         // v3.113 칠흑 고유 옵션은 각성 단계만큼 커집니다(onyxAwaken, 제어 연장 턴 제외).
-        const awaken = isOnyxUnique(item, affix.id) ? onyxAwaken(item) : 1;
+        // v3.196 보스 전리품 전용 옵션도 각성 단계만큼 커집니다(제어 연장 턴 제외, onyxScaledStat).
+        const awaken = isOnyxUnique(item, affix.id) ? onyxAwaken(item) : isLootUnique(item, affix.id) ? lootAwaken(item) : 1;
         const value = affixDef(affix.id)?.fixed ? affix.value : affix.stat === 'statusResist' ? Math.min(GEAR_CAPS.statusResist!, affix.value * awaken * (1 + (item.enhance || 0) * STATUS_RESIST_STAR)) : scaled(affix.stat, onyxScaledStat(affix.stat, affix.value, awaken));
         result[affix.stat] = (result[affix.stat] || 0) + value;
         // v3.73 이중 옵션(위력 · 수호)의 둘째 고정 수치도 등급 감쇠를 받습니다. 양날 옵션의 손해(음수)는 그대로입니다.
@@ -87,7 +89,7 @@ export const enhanceCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<P
 /** v3.3 유물 옵션 이식 비용: 소비하는 장비의 옵션 재설정 골드 × RELIC_GROWTH.imprintCost. */
 export const imprintCost = (source: Item, s?: Pick<State, 'permanent'>) => reforgeCost(source, s) * RELIC_GROWTH.imprintCost;
 /** v3.66 환생해도 남는 장비: 유물 · 칠흑 장신구 · 계승 장비(원시 고대 · 계승 태초). 판매·분해·도감 등록·청산 대상이 아닙니다. */
-export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) => !!(item.relic || item.onyx || item.heir);
+export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir' | 'bossLoot'>) => !!(item.relic || item.onyx || item.heir || item.bossLoot);
 /** v3.66 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
 export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
 /** 유물·계승 장비의 위력. 예전부터 가진 유물(relicLegacy)은 예전 공식과 새 공식 중 높은 쪽입니다. */
@@ -202,9 +204,9 @@ export const rerollCost = (item: Item, s?: Pick<State, 'permanent'> & Partial<Pi
 export const refineRebirthFactor = (rebirths = 0) => Math.pow(10, Math.max(0, rebirths) / AWAKENING.rebirthScale);
 export const refineCost = (item: Item, s?: Partial<Pick<State, 'rebirths'>>) => ({ gold: 0, essence: refineEssenceAt(item.rarity, item.refines, refineRebirthFactor(s?.rebirths || 0)) });
 /** v3.118 비용 초기화(원시 고대 · 계승 태초 · 칠흑): 세계석으로 재련 · 재설정 횟수를 0으로, 대신 별과 추가 옵션이 초기화됩니다. */
-export const canResetGear = (item: Pick<Item, 'heir' | 'onyx'>) => !!(item.heir || item.onyx);
+export const canResetGear = (item: Pick<Item, 'heir' | 'onyx' | 'bossLoot'>) => !!(item.heir || item.onyx || item.bossLoot);
 /** v3.125 재련 굴림 폭 배율: 원시 고대 · 계승 태초 · 칠흑은 HEIR_ROLL_TOP(수치 150%까지), 그 밖은 1(100%). 화면의 ‘수치 N%’도 같은 값을 씁니다. */
-export const refineTopOf = (item: Pick<Item, 'heir' | 'onyx'>) => canResetGear(item) ? HEIR_ROLL_TOP : 1;
+export const refineTopOf = (item: Pick<Item, 'heir' | 'onyx' | 'bossLoot'>) => canResetGear(item) ? HEIR_ROLL_TOP : 1;
 export const itemDescription = (item: Item) => item.description || (item.slot === 'rod' ? (item.style === 'magic' ? '마법 특화' : item.style === 'physical' ? '물리 특화' : '물리·마법 겸용') + ' 낚싯대.' : item.slot === 'coat' ? '최대 체력·최대 마나·물리 방어·마법 방어를 높이는 방어구.' : item.slot === 'cape' ? '회피와 체력·마나를 높이는 망토. 상태이상 저항 옵션은 망토에만 붙습니다.' : '치명타 확률과 체력·물리 방어·마법 방어를 높이는 장신구.');
 export function rollAffix(rarity: number, rng: () => number) { const x = AFFIXES[Math.floor(rng() * AFFIXES.length)]; return { stat: x.stat, name: x.name, value: x.value * Math.max(1, rarity) }; }
 export function bulkItems(s: State, rarity: number) { return s.inventory.filter(i => i.rarity === rarity && !i.locked && !keepsAcrossLives(i)); }

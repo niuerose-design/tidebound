@@ -4,6 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus, onyxResonance } from '../data/onyx';
+import { ownedLoot, bossLootSetBonus } from '../data/boss-loot';
 import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
@@ -148,6 +149,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.12 칠흑 세트(보유 수 기준, 영구).
     // v3.38 칠흑 세트는 장비 출처로 표시합니다(전에는 ‘도감’으로 잘못 묶였음).
     { const b = onyxSetBonus(ownedOnyx(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
+    // v3.196 보스 전리품 세트(보유 수 기준, 영구).
+    { const b = bossLootSetBonus(ownedLoot(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.dungeonGoldBonus) add('dungeonGoldBonus', 'equipment', b.dungeonGoldBonus); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     const passiveJobs = new Set<string>();
