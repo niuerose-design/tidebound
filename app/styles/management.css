@@ -498,16 +498,47 @@
 .dshop-card .draw-desc { min-height:0; }
 .dshop-card .draw-controls { min-height:0; }
 .dshop-card .gamble-count-row { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
-.dshop-cores { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
-.dshop-cores .gear-slot.locked { opacity:.55; }
 .core-slot { margin-bottom:14px; }
 .core-slot-body { display:grid; gap:4px; min-width:0; }
 .core-slot-body strong { font-size:15px; color:var(--rarity); }
 .core-slot-body small { font-size:12px; color:#8fa6a4; line-height:1.6; }
 .core-slot .gear-slot-upgrade select { min-height:30px; max-width:220px; }
-.core-set { display:flex; flex-wrap:wrap; gap:6px; }
-.core-set span { padding:3px 9px; border:1px solid var(--border); border-radius:999px; font-size:11px; color:#7f9596; }
-.core-set span.on { color:#a4e9ba; border-color:#3f6b5e; }
 .dungeon-coin-link { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
 .dungeon-coin-link b { color:var(--gold); }
 @media(max-width:767px){ .dungeon-coin-link { padding:12px 14px; } .dungeon-coin-link button { flex:1 1 100%; } .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; } }
+/* v3.206 보스 코어 탭: 타일(고르기) · 상세 칸 · 상자 줄 */
+.core-tab { display:grid; gap:14px; margin-top:14px; }
+.core-tiles { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
+.core-tile { position:relative; display:grid; justify-items:center; gap:6px; padding:14px 6px 12px; border:1px solid var(--border); border-radius:10px; background:#11242a; color:#c5d8d2; cursor:pointer; min-width:0; }
+.core-tile svg { color:#8fb7a9; }
+.core-tile small { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.core-tile em { font-style:normal; font-size:11px; color:#6f8688; }
+.core-tile.locked { opacity:.5; }
+.core-tile.locked svg { color:#5a6f71; }
+.core-tile.worn svg { color:#d6b879; }
+.core-tile.on { border-color:#d6b879; background:#1a2f2f; box-shadow:0 0 0 1px #d6b87955 inset; }
+.core-tile-badge { position:absolute; top:5px; right:6px; font-size:10px; color:#d6b879; font-weight:600; }
+.core-pips { display:inline-flex; gap:3px; }
+.core-pips i { width:7px; height:7px; border-radius:50%; background:#2a4045; display:block; }
+.core-pips i.on { background:#d6b879; }
+.core-detail { padding:22px; display:grid; gap:14px; border-top:2px solid #5a6f71; }
+.core-detail.worn { border-top-color:#d6b879; }
+.core-detail header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.core-detail h2 { font-size:20px; margin-top:4px; }
+.core-detail.locked h2 { color:#8fa6a4; }
+.core-detail header button { min-width:96px; }
+.core-effect { margin:0; font-size:14px; line-height:1.7; color:#c5d8d2; }
+.core-awaken { display:flex; align-items:center; gap:10px; font-size:13px; color:#9bb3b0; }
+.core-awaken small { color:#8fa6a4; }
+.core-lines { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.core-line { display:grid; grid-template-columns:1fr auto; gap:2px 10px; text-align:left; padding:12px 14px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:#c5d8d2; cursor:pointer; }
+.core-line span { font-size:13px; color:#9bb3b0; }
+.core-line b { grid-row:span 2; align-self:center; font-size:20px; color:var(--gold); font-variant-numeric:tabular-nums; }
+.core-line small { font-size:12px; color:#7f9596; }
+.core-line.on { border-color:#8fb7a9; background:#14302f; }
+.core-forge { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+.core-forge button { padding:10px 8px; font-size:13px; }
+.core-box { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; }
+.core-box p { margin:4px 0 0; font-size:13px; color:#a5b7b4; line-height:1.6; }
+.core-box button { flex-shrink:0; }
+@media(max-width:767px){ .core-tiles { grid-template-columns:repeat(4,minmax(0,1fr)); } .core-detail { padding:18px; } .core-lines { grid-template-columns:minmax(0,1fr); } .core-box { flex-direction:column; align-items:stretch; } }

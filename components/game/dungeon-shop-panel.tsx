@@ -2,16 +2,15 @@
 /** v3.204 던전 주화 상점: 상점 메뉴의 한 탭(상점 · 던전 주화 상점 · 장비 보관함). 상점과 같은 틀(재화 줄 · 탭 · 상품 카드)입니다. */
 import { useState, type ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Coins, Gem, Sparkles, Swords } from 'lucide-react';
+import { Coins, Gem, Hexagon, Sparkles, Swords } from 'lucide-react';
 import { dungeonGoldMultiplier } from '@/game/systems/stats';
 import { dailyBonusLeft, boughtToday, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { coreForgeCost } from '@/game/systems/boss-loot';
 import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
-import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry } from '@/game/data/boss-core';
+import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { Heading, format, useNow } from './shared';
-import { CoreSlot, coreAttrText } from './core-slot';
 import type { PanelProps } from './panel-props';
 
 type Buy = (id: string, value?: string) => void;
@@ -42,20 +41,7 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="core">보스 코어</TabsTrigger><TabsTrigger value="onyx">칠흑 장신구</TabsTrigger><TabsTrigger value="growth">성장권</TabsTrigger><TabsTrigger value="gear">장비</TabsTrigger></TabsList></Tabs>
         <div className="shop-body">
-        {tab === 'core' && <section aria-label="보스 코어">
-            <CoreSlot s={s} send={send} busy={busy}/>
-            <div className="dshop-grid">
-                <CoreBoxGood s={s} busy={busy} buy={buy} now={now}/>
-                <CoreForgeGood s={s} send={send} busy={busy}/>
-            </div>
-            <div className="gear-slots dshop-cores">{Object.entries(BOSS_CORES).map(([id, c]) => {
-                const e = coreEntry(s.bossCores?.[id]), worn = s.coreSlot === id;
-                return <article key={id} className={`panel gear-slot${e ? '' : ' locked'}`} style={{ '--rarity': worn ? '#d6b879' : e ? '#8fb7a9' : '#5a6f71' } as React.CSSProperties}>
-                    <div className="gear-slot-head"><span>{c.boss}</span>{e && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '해제' : '장착'}</button>}</div>
-                    <div className="core-slot-body"><strong>{c.name}</strong><small>{e ? `${worn ? '장착 중 · ' : ''}각성 ${e.rank}/${BOSS_CORE_RULES.awakenMax}` : '미획득'}</small><small>{c.desc}</small>{e && <small>{coreAttrText(s, id)}</small>}</div>
-                </article>;
-            })}</div>
-        </section>}
+        {tab === 'core' && <CoreTab s={s} send={send} busy={busy} buy={buy} now={now}/>}
         {tab === 'onyx' && <div className="dshop-grid"><OnyxGood s={s} busy={busy} buy={buy} now={now}/></div>}
         {tab === 'growth' && <div className="dshop-grid">{(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <Good key={g} eyebrow="성장권" title={`${o.hours}시간 성장권`}
             desc={`최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × ${o.hours}시간을 바로 받습니다. 환생 ${GROWTH_MAX_REBIRTHS}회 미만, 하루 ${GROWTH_GOODS[g].perDay}번.`}
@@ -85,32 +71,45 @@ function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy:
     </Good>;
 }
 
-function CoreBoxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy; now: number }) {
-    const left = Math.max(0, DUNGEON_SHOP_DAILY.coreBoxPerDay - boughtToday(s, 'coreBox', now));
-    return <Good eyebrow="보스 코어" title="랜덤 보스 코어 상자" desc={`7종 중 하나. 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +${BOSS_CORE_RULES.duplicatePearls}).`} cost={`${format(DUNGEON_SHOP.coreBox)} 주화 · 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 ${left}회 남음`}>
-        <button className="secondary" disabled={busy || !left || (s.dungeonCoins || 0) < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)}</button>
-    </Good>;
-}
-
-/** 보스 코어 능력치 손보기: 정수로 재설정(종류 · 배율) · 재련(배율만), 주화 재설정, 세계석 비용 초기화. */
-function CoreForgeGood({ s, send, busy }: Pick<PanelProps, 's' | 'send' | 'busy'>) {
-    const owned = ownedCores(s), [pick, setPick] = useState(''), [line, setLine] = useState(0);
-    const id = owned.includes(pick) ? pick : s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : owned[0];
-    const desc = `재설정은 능력치 종류와 배율(레벨 ×${CORE_ATTRS.min}~${CORE_ATTRS.max})을 새로 굴리고, 재련은 종류는 그대로 배율만 다시 굴립니다. 낮아질 수도 있습니다.`;
-    if (!id) return <Good eyebrow="보스 코어" title="능력치 재설정 · 재련" desc={desc} cost="보스 코어를 얻으면 열립니다."><button className="secondary" disabled>재설정</button></Good>;
-    const e = coreEntry(s.bossCores?.[id])!, index = Math.min(line, CORE_ATTRS.count - 1), cur = e.attrs[index], essence = s.essence || 0, cost = coreForgeCost(s, id);
+/**
+ * v3.206 보스 코어 탭: 위에 7종 타일(고르기), 아래에 고른 코어 한 칸(효과 · 기본 능력치 줄 · 장착 · 재설정 · 재련), 맨 아래 상자 한 줄.
+ * 전에는 코어 칸 · 상자 · 손보기 카드 · 코어 카드 7장이 따로 있어 같은 정보가 여러 번 보였습니다.
+ */
+function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'busy'> & { buy: Buy; now: number }) {
+    const ids = Object.keys(BOSS_CORES), owned = ownedCores(s), [pick, setPick] = useState(''), [line, setLine] = useState(0);
+    const id = ids.includes(pick) ? pick : s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : owned[0] || ids[0];
+    const c = BOSS_CORES[id], e = coreEntry(s.bossCores?.[id]), worn = s.coreSlot === id, index = Math.min(line, CORE_ATTRS.count - 1);
+    const essence = s.essence || 0, coins = s.dungeonCoins || 0, cost = coreForgeCost(s, id), boxLeft = Math.max(0, DUNGEON_SHOP_DAILY.coreBoxPerDay - boughtToday(s, 'coreBox', now));
+    const m = e ? coreAwaken(e.rank) * (worn ? 1 : BOSS_CORE_RULES.resonance) : 0;
     const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
-    return <Good eyebrow="보스 코어" title="능력치 재설정 · 재련" desc={desc}
-        controls={<>
-            <label>코어<select value={id} disabled={busy} onChange={ev => setPick(ev.target.value)}>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].name}</option>)}</select></label>
-            <label>능력치 줄<select value={index} disabled={busy} onChange={ev => setLine(Number(ev.target.value))}>{Array.from({ length: CORE_ATTRS.count }, (_, i) => { const a = e.attrs[i]; return <option key={i} value={i}>{i + 1}. {a ? `${attrName(a.k)} 레벨 ×${a.f}` : '빈 줄'}</option>; })}</select></label>
-        </>}
-        cost={`정수 ${format(cost)} (기본 ${CORE_FORGE.base} · 손볼 때마다 ×${CORE_FORGE.growth}${e.forges ? ` · 지금 ${e.forges}회` : ''}) · 주화 재설정은 비용을 올리지 않음`}>
-        <button className="secondary" disabled={busy || essence < cost} onClick={() => forge('reroll')}>재설정 · 정수 {format(cost)}</button>
-        <button className="secondary" disabled={busy || !cur || essence < cost} onClick={() => forge('refine')}>재련 · 정수 {format(cost)}</button>
-        <button className="secondary" disabled={busy || (s.dungeonCoins || 0) < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {format(DUNGEON_SHOP.coreReroll)}</button>
-        {e.forges ? <button className="secondary" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
-    </Good>;
+    const pips = (rank: number) => <span className="core-pips" aria-label={`각성 ${rank}/${BOSS_CORE_RULES.awakenMax}`}>{Array.from({ length: BOSS_CORE_RULES.awakenMax }, (_, i) => <i key={i} className={i < rank ? 'on' : ''}/>)}</span>;
+    return <section aria-label="보스 코어" className="core-tab">
+        <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
+            <Hexagon size={22}/><small>{BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
+        </button>; })}</div>
+        <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}`}>
+            <header><div><span className="eyebrow">{c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.name}</h2></div>
+                {e && <button type="button" className={worn ? 'secondary' : 'primary'} disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '해제' : '장착'}</button>}</header>
+            <p className="core-effect">{c.desc}</p>
+            {e ? <>
+                <div className="core-awaken"><span>각성</span>{pips(e.rank)}<small>{e.rank}/{BOSS_CORE_RULES.awakenMax} · 효과 · 능력치 +{Math.round(e.rank * BOSS_CORE_RULES.awakenStep * 100)}%</small></div>
+                <div className="core-lines" role="radiogroup" aria-label="손볼 능력치 줄">{Array.from({ length: CORE_ATTRS.count }, (_, i) => { const a = e.attrs[i]; return <button key={i} type="button" role="radio" aria-checked={i === index} className={`core-line${i === index ? ' on' : ''}`} onClick={() => setLine(i)}>
+                    <span>{a ? attrName(a.k) : '빈 줄'}</span><b>{a ? `+${format(Math.floor(Math.max(1, s.level) * a.f * m))}` : '—'}</b><small>{a ? `레벨 ×${a.f}` : '재설정으로 채움'}</small>
+                </button>; })}</div>
+                <div className="core-forge">
+                    <button className="secondary" disabled={busy || essence < cost} onClick={() => forge('reroll')}>재설정 · 정수 {format(cost)}</button>
+                    <button className="secondary" disabled={busy || !e.attrs[index] || essence < cost} onClick={() => forge('refine')}>재련 · 정수 {format(cost)}</button>
+                    <button className="secondary" disabled={busy || coins < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {format(DUNGEON_SHOP.coreReroll)}</button>
+                    {e.forges ? <button className="secondary" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
+                </div>
+                <small className="muted">고른 줄을 재설정(종류 · 배율 레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max}) 또는 재련(배율만)합니다. 낮아질 수도 있습니다. 정수는 기본 {CORE_FORGE.base}, 손볼 때마다 ×{CORE_FORGE.growth}{e.forges ? `(지금 ${e.forges}회)` : ''} · 주화 재설정은 비용을 올리지 않습니다.</small>
+            </> : <p className="muted">지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다. 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
+        </article>
+        <div className="panel core-box">
+            <div><span className="eyebrow">랜덤 보스 코어 상자</span><p>7종 중 하나. 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
+            <button className="secondary" disabled={busy || !boxLeft || coins < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)} 주화</button>
+        </div>
+    </section>;
 }
 
 function HunterGood({ s, busy, buy }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy }) {

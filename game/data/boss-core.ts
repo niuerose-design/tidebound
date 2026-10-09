@@ -3,7 +3,7 @@
  * - 보스마다 코어 1종. 위력 · 별 · 장비 옵션 없이 그 보스의 기술을 이어받는 전용 효과 + v3.202 무작위 기본 능력치 2종(레벨 비례)이 있습니다.
  * - 같은 코어를 다시 얻으면 각성 +1(최대 awakenMax, 효과 단계당 +awakenStep), 다 찼으면 세계석 duplicatePearls.
  * - 보스 코어 칸에는 하나만 끼고, 끼지 않은 코어는 효과의 resonance(10%)를 줍니다(턴 연장 효과는 제외).
- * - 서로 다른 코어 보유 수로 세트 효과. 환생 · 승천해도 남습니다(금고 없음). 드롭 확률 · 천장은 서버 전용(ODDS.bossLoot).
+ * - 환생 · 승천해도 남습니다(금고 없음). v3.206 보유 수 세트 효과는 없앴습니다. 드롭 확률 · 천장은 서버 전용(ODDS.bossLoot).
  */
 import type { Attribute, CombatStats, State } from '../types';
 
@@ -66,14 +66,7 @@ export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'
 }
 export const coreAwaken = (rank: number) => 1 + Math.min(BOSS_CORE_RULES.awakenMax, Math.max(0, rank)) * BOSS_CORE_RULES.awakenStep;
 export const ownedCores = (s: Pick<State, 'bossCores'>) => Object.keys(s.bossCores || {}).filter(id => BOSS_CORES[id]);
-/** 세트 효과(보유 수 기준). */
-export const BOSS_CORE_SET: { count: number; label: string; bonus: Partial<Record<CoreStat, number>> }[] = [
-    { count: 2, label: '보스·사냥감 피해 +3%', bonus: { bossDamage: .03 } },
-    { count: 4, label: '던전 주화 보너스 +10%', bonus: { dungeonGoldBonus: .1 } },
-    { count: 6, label: '지속 피해 +5%', bonus: { dotBonus: .05 } },
-    { count: 7, label: '보스·사냥감 피해 +5%', bonus: { bossDamage: .05 } },
-];
-/** 보스 코어 칸 · 공명 · 세트를 합친 능력치(합연산). */
+/** 보스 코어 칸 · 공명을 합친 능력치(합연산). */
 export function coreStats(s: Pick<State, 'bossCores' | 'coreSlot'>) {
     const out: Partial<Record<CoreStat, number>> = {}, put = (k: CoreStat, v: number) => { out[k] = (out[k] || 0) + v; };
     for (const id of ownedCores(s)) {
@@ -83,7 +76,5 @@ export function coreStats(s: Pick<State, 'bossCores' | 'coreSlot'>) {
             put(k, v * coreAwaken(rank) * (worn ? 1 : BOSS_CORE_RULES.resonance));
         }
     }
-    const n = ownedCores(s).length;
-    for (const b of BOSS_CORE_SET) if (n >= b.count) for (const [k, v] of Object.entries(b.bonus) as [CoreStat, number][]) put(k, v);
     return out;
 }

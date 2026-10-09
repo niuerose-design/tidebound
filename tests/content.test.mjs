@@ -371,7 +371,7 @@ test('v3.201 growth tickets: best full hour of the last 24 (gold and kill exp) x
  const {restartLife}=await L.load('systems/actions/lifecycle');s.expLog=[{h:1,g:5}];restartLife(s,1000);assert.equal(s.expLog,undefined,'exp log does not survive a new life');
 });
 
-test('v3.202-199 boss cores: daily-bonus regional clears only; duplicates awaken; one core slot (100%), others resonate 10%; set bonus; kept across lives',async()=>{
+test('v3.202-199 boss cores: daily-bonus regional clears only; duplicates awaken; one core slot (100%), others resonate 10%; kept across lives',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),O=await L.load('data/odds'),BL=await L.load('systems/boss-loot'),C=await L.load('data/boss-core');
  for(const d of W.PLAIN_DUNGEONS.filter(d=>d.id!=='abyss')){const c=C.BOSS_CORES[d.id];assert.ok(c,d.id);assert.equal(c.bonus.bossDamage,.05);}
  assert.ok(O.ODDS.bossLoot.chance>0&&O.ODDS.bossLoot.pity>1);
@@ -382,7 +382,7 @@ test('v3.202-199 boss cores: daily-bonus regional clears only; duplicates awaken
  BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto.rank,1);assert.ok(Math.abs((stats(s).hp-hp0)/g1-1.1)<.01,'awaken +10% of the effect');
  for(let k=0;k<4;k++)BL.grantBossCore(s,'grotto');const p=s.pearls;BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto.rank,5);assert.equal(s.pearls,p+C.BOSS_CORE_RULES.duplicatePearls);
  BL.grantBossCore(s,'caldera');assert.equal(s.coreSlot,'grotto','slot kept');let cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,undefined,'turn effects do not resonate');
- assert.ok(Math.abs(cs.bossDamage-(.05*1.5+.05*.1+.03))<1e-9,'worn 100% x awaken + resonance 10% + 2-piece set');
+ assert.ok(Math.abs(cs.bossDamage-(.05*1.5+.05*.1))<1e-9,'worn 100% x awaken + resonance 10% (no set bonus since v3.206)');assert.equal(C.BOSS_CORE_SET,undefined);
  act(s,{type:'equipCore',id:'caldera'},0);cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,1);assert.equal(stats(s).dotTurnsBonus,1);
  assert.throws(()=>act(s,{type:'equipCore',id:'temple'},0),/가진 보스 코어/);act(s,{type:'equipCore',id:''},0);assert.equal(s.coreSlot,undefined);
  const t=newState(0);t.level=60;t.bossLootMiss=O.ODDS.bossLoot.pity-1;clear(t,'temple',()=>.5);assert.ok('temple' in t.bossCores,'pity');
