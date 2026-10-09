@@ -56,11 +56,7 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
                 </article>;
             })}</div>
         </section>}
-        {tab === 'onyx' && <div className="dshop-grid">{ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <Good key={b.id} eyebrow={`칠흑 · ${b.name}`} title={b.accessory.name}
-            desc={`${o.kind === 'awaken' ? `가진 칠흑 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '칠흑 장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
-            cost={o.reason || `${format(o.price)} 주화`}>
-            <button className="secondary" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button>
-        </Good>; })}</div>}
+        {tab === 'onyx' && <div className="dshop-grid"><OnyxGood s={s} busy={busy} buy={buy} now={now}/></div>}
         {tab === 'growth' && <div className="dshop-grid">{(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <Good key={g} eyebrow="성장권" title={`${o.hours}시간 성장권`}
             desc={`최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × ${o.hours}시간을 바로 받습니다. 환생 ${GROWTH_MAX_REBIRTHS}회 미만, 하루 ${GROWTH_GOODS[g].perDay}번.`}
             cost={o.reason || `받는 양 골드 +${format(o.gold)} · 경험치 +${format(o.exp)} · 오늘 ${o.left}회 남음`}>
@@ -75,6 +71,18 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
         </div>}
         </div>
     </>;
+}
+
+/** 칠흑 장신구: 보스를 골라 카드 한 장에서 제작 · 각성(7종을 카드로 늘어놓으면 모바일에서 너무 깁니다). */
+function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy; now: number }) {
+    const [pick, setPick] = useState(''), b = ONYX_BOSSES.find(x => x.id === pick) || ONYX_BOSSES.find(x => !onyxOffer(s, x.id, now).reason) || ONYX_BOSSES[0];
+    const o = onyxOffer(s, b.id, now);
+    return <Good eyebrow="칠흑 장신구" title={b.accessory.name}
+        desc={`${b.accessory.desc} ${o.kind === 'awaken' ? `가진 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
+        controls={<label>칠흑 보스<select value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{ONYX_BOSSES.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{x.name} · {x.accessory.name}{r.kind === 'awaken' ? ` (각성 ${r.rank}/${ONYX.awakenMax})` : s.onyxBook?.[x.id] ? '' : ' (잠김)'}</option>; })}</select></label>}
+        cost={o.reason || `${format(o.price)} 주화`}>
+        <button className="secondary" disabled={busy || !!o.reason || (s.dungeonCoins || 0) < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button>
+    </Good>;
 }
 
 function CoreBoxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy; now: number }) {
