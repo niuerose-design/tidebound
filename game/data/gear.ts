@@ -92,11 +92,12 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다. 치명타 100%를 아직 못 채운 캐릭터에게 이득이고, 명중 손해는 고정 폭입니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
+    // v3.197 가중치를 따로 둡니다(기본 1이라 일반 옵션만큼 나와 태초 5개 중 1개꼴로 초월이 붙었음): 초월 .2(태초 약 4~5%), 나머지 .4.
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
-    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, description: '고대 이상. 체력 · 마나 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
-    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다(다른 보스 피해와 곱연산, 지속 피해에는 붙지 않음).' },
-    { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
-    { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
+    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, weight: .2, description: '고대 이상. 체력 · 마나 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
+    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, weight: .4, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다(다른 보스 피해와 곱연산, 지속 피해에는 붙지 않음).' },
+    { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, weight: .4, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
+    { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, weight: .4, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
     // v3.75 태초 · 칠흑 전용 희귀 옵션(옵션 6줄짜리 장비에서만, 출현은 ODDS.affix.rare). 수련 · 전공은 고정 +1.
     { id: 'drill', name: '수련', stat: 'masteryFlat', kind: 'percent', base: 1, fixed: true, rare: true, minRarity: 6, description: '태초 · 칠흑. 처치당 스킬 숙련 +1(고정).' },
