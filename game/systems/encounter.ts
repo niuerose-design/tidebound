@@ -31,7 +31,7 @@ import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems } from './equipment';
+import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems, inheritGear } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
 import { ONYX, onyxBossFor, onyxById, onyxChance, ownedOnyx, onyxSetBonus } from '../data/onyx';
 import { offlineTally } from './offline-tally';
@@ -106,6 +106,15 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
     syncOrnateName(item);
+    // v3.215 계승 드롭: 고대 · 태초가 아주 낮은 확률로 원시 고대 · 계승 태초인 채로 나옵니다. 그 부위에 같은 종류가 이미 있으면 판정하지 않습니다.
+    // 계승 장비는 자동 정리 · 가방 가득 참 판매를 받지 않고 늘 가방에 들어갑니다.
+    const heir = rarity === 5 ? 'ancient' as const : rarity === 6 ? 'primal' as const : null;
+    if (heir && ODDS.drop.heir[heir] > 0 && !ownedItems(s).some(x => x?.heir === heir && x.slot === slot) && rng() < ODDS.drop.heir[heir]) {
+        s.inventory.push(item);
+        inheritGear(s, item, heir);
+        addLog(s, `${heir === 'ancient' ? '원시 고대' : '계승 태초'} 장비 발견! · ${item.name} · 위력 ${item.power} · 옵션 최고 수치 · 환생해도 남습니다`, 'reward');
+        return;
+    }
     // 자동 분해기: 유물·장비 도감에 없는 종류는 남깁니다.
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
