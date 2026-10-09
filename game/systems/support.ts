@@ -3,7 +3,7 @@
  * - 지원 값은 장착한 지원 스킬의 숙련 단계에 따라 min → max. 지원자의 현재 직업이 참모 계보일 때만 셉니다(계승해 써도 지원 없음).
  * - 서버가 슬롯 요약(SlotSummary.support)에 실어 올리고(지원 값이 바뀐 저장에서만 1회), 받는 쪽은 계정 동기화(server/store.ts syncAccount,
  *   최대 10분 주기)에서 자기를 뺀 다른 분신들의 값을 효과별 최고값으로 합쳐 s.support에 캐시합니다. 받는 쪽을 위한 별도 읽기 · 갱신 계기는 없습니다.
- * - 계정 보너스(s.account)와 따로 두어 승천 캐릭터도 받습니다. 경험치 · 골드 · 숙련만이라 결투 능력치에는 들어가지 않습니다.
+ * - 계정 보너스(s.account)와 따로 두어 승천 캐릭터도 받습니다. 결투 등록 스냅샷은 지원을 빼고 만듭니다(server/store.ts, 제단 PvE는 받음).
  */
 import type { State, SupportEffect, SupportMap } from '../types';
 import { jobById } from '../data/classes';
@@ -11,10 +11,10 @@ import { skillById } from '../data/skills';
 import { canUse, skillMastery, masteryMilestonesFor } from './progression';
 
 export const STAFF_LINEAGE_ID = 'staff';
-export const SUPPORT_EFFECTS: SupportEffect[] = ['exp', 'gold', 'mastery'];
-export const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득' };
-/** 효과 하나의 상한(지원 스킬 최대값). */
-export const SUPPORT_CAP = .08;
+export const SUPPORT_EFFECTS: SupportEffect[] = ['exp', 'gold', 'mastery', 'hp', 'mana', 'hpRegen'];
+export const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득', hp: '최대 체력', mana: '최대 마나', hpRegen: '턴당 체력 회복' };
+/** 효과별 상한(그 효과 지원 스킬의 최대값). v3.216 군의관: 체력 · 마나 5%, 회복 15%. */
+export const SUPPORT_CAP: Record<SupportEffect, number> = { exp: .08, gold: .08, mastery: .08, hp: .05, mana: .05, hpRegen: .15 };
 
 export const isStaff = (s: Pick<State, 'job'>) => jobById(s.job)?.lineage === STAFF_LINEAGE_ID;
 const equipped = (s: State) => [...new Set(s.skills || [])].filter(id => canUse(s, id));
@@ -35,11 +35,11 @@ export function supportOf(s: State): SupportMap {
 /** 여러 분신의 지원을 효과별 최고값으로 합칩니다(합산하지 않음 · 효과마다 SUPPORT_CAP까지). */
 export function mergeSupport(list: (SupportMap | undefined)[]): SupportMap {
     const out: SupportMap = {};
-    for (const m of list) for (const e of SUPPORT_EFFECTS) { const v = Math.min(SUPPORT_CAP, Math.max(0, Number(m?.[e]) || 0)); if (v > (out[e] || 0)) out[e] = v; }
+    for (const m of list) for (const e of SUPPORT_EFFECTS) { const v = Math.min(SUPPORT_CAP[e], Math.max(0, Number(m?.[e]) || 0)); if (v > (out[e] || 0)) out[e] = v; }
     return out;
 }
 /** 받은 지원 배율(1.05 = ×1.05). */
-export const supportMultiplier = (s: Pick<State, 'support'>, e: SupportEffect) => 1 + Math.min(SUPPORT_CAP, Math.max(0, Number(s.support?.[e]) || 0));
+export const supportMultiplier = (s: Pick<State, 'support'>, e: SupportEffect) => 1 + Math.min(SUPPORT_CAP[e], Math.max(0, Number(s.support?.[e]) || 0));
 /** 지휘 체계: 장착한 지원 스킬 1개마다 자기 두 공격 +commandPer(참모 계보일 때만). */
 export function commandBonus(s: State) {
     if (!isStaff(s)) return 0;

@@ -1,7 +1,7 @@
 import type { State, Action, Snapshot } from '../types';
 import { newState, advance, act } from '../systems/engine';
 import { migrateState } from '../systems/migrations';
-import { snapshot } from '../systems/stats';
+import { duelSnapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
 import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
@@ -101,7 +101,8 @@ export async function register(id: string) {
     const { state } = await mutate(id, { type: 'sync' }, s => syncDuelSeason(id, s, now));
     // v3.18 해커는 결투 정보를 새로 등록하지 않습니다(이전 직업으로 등록해 둔 기록은 그대로). v3.26 숨김 정보는 해커의 신원 조작이 서버 설정에 둡니다.
     if (isHacker(state)) throw new ApiError('해커는 결투 정보를 등록할 수 없습니다. 다른 직업으로 등록해 두면 그 기록이 남습니다.');
-    const snap = { ...snapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
+    // v3.216 결투에는 분신 지원(참모 계보)을 넣지 않습니다.
+    const snap = { ...duelSnapshot(state), season: monthSeason(key), seasonRank: state.duelSeason?.lastKey === previousMonthKey(key) ? state.duelSeason?.lastRank : undefined };
     await db().upsertRanking({ id: duelRowId(key, id), snapshot: JSON.stringify(snap), rating: snap.rating, power: snap.power, updated_at: now });
     return state;
 }
