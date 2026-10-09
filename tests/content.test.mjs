@@ -376,14 +376,14 @@ test('v3.195-199 boss cores: daily-bonus regional clears only; duplicates awaken
  for(const d of W.PLAIN_DUNGEONS.filter(d=>d.id!=='abyss')){const c=C.BOSS_CORES[d.id];assert.ok(c,d.id);assert.equal(c.bonus.bossDamage,.05);}
  assert.ok(O.ODDS.bossLoot.chance>0&&O.ODDS.bossLoot.pity>1);
  const clear=(s,id,rng)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(s.enemy&&g++<50)tick(s,rng);};
- const s=newState(0);s.level=60;s.rebirths=10;const inv=s.inventory.length;const hp0=stats(s).hp;clear(s,'grotto',()=>0);
+ const s=newState(0);s.level=60;s.rebirths=10;const inv=s.inventory.length;const hp0=stats(s).hp,mp0=stats(s).mana;clear(s,'grotto',()=>0);
  assert.deepEqual(s.bossCores,{grotto:0});assert.equal(s.coreSlot,'grotto','first core goes into the empty slot');assert.equal(s.inventory.length,inv,'cores are not items');
- assert.ok(Math.abs(stats(s).hp/hp0-1.1)<.01,'Mushmom core: max HP +10%');
- BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto,1);assert.ok(Math.abs(stats(s).hp/hp0-1.11)<.01,'awaken +10% of the effect');
+ const g1=stats(s).hp-hp0;assert.ok(g1>=2000,'Mushmom core: max HP +2,000 flat (then the usual HP multipliers)');assert.ok(stats(s).mana-mp0>=300);
+ BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto,1);assert.ok(Math.abs((stats(s).hp-hp0)/g1-1.1)<.01,'awaken +10% of the effect');
  for(let k=0;k<4;k++)BL.grantBossCore(s,'grotto');const p=s.pearls;BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto,5);assert.equal(s.pearls,p+C.BOSS_CORE_RULES.duplicatePearls);
- BL.grantBossCore(s,'caldera');assert.equal(s.coreSlot,'grotto','slot kept');let cs=C.coreStats(s);assert.equal(cs.burnTurnsBonus,undefined,'turn effects do not resonate');
+ BL.grantBossCore(s,'caldera');assert.equal(s.coreSlot,'grotto','slot kept');let cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,undefined,'turn effects do not resonate');
  assert.ok(Math.abs(cs.bossDamage-(.05*1.5+.05*.1+.03))<1e-9,'worn 100% x awaken + resonance 10% + 2-piece set');
- act(s,{type:'equipCore',id:'caldera'},0);cs=C.coreStats(s);assert.equal(cs.burnTurnsBonus,1);assert.equal(stats(s).burnTurnsBonus,1);
+ act(s,{type:'equipCore',id:'caldera'},0);cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,1);assert.equal(stats(s).dotTurnsBonus,1);
  assert.throws(()=>act(s,{type:'equipCore',id:'temple'},0),/가진 보스 코어/);act(s,{type:'equipCore',id:''},0);assert.equal(s.coreSlot,undefined);
  const t=newState(0);t.level=60;t.bossLootMiss=O.ODDS.bossLoot.pity-1;clear(t,'temple',()=>.5);assert.ok('temple' in t.bossCores,'pity');
  const u=newState(0);u.level=60;u.dungeonBonus={day:'1970-01-01',used:30};clear(u,'grotto',()=>0);assert.equal(u.bossCores,undefined,'no core after the daily bonus');
@@ -397,5 +397,12 @@ test('v3.198 Zakum and Papulatus have their own kits (no longer the Mu Gong anci
  assert.ok(z.includes('zakumArms')&&z.includes('zakumFlame'));assert.ok(p.includes('papTimeStop')&&p.includes('papRift')&&p.includes('papAlarm'));assert.ok(m.includes('tentacleBarrage'));
  assert.notDeepEqual(z,p);assert.notDeepEqual(z,m);assert.ok(E.profile('starfallSeraph').splitBasic);
  for(const id of [...z,...p])assert.ok(F.FOE_FX[id],`${id} has a background effect`);
- assert.equal(BL.BOSS_CORES.cemetery.bonus.stunBonus,1);assert.equal(BL.BOSS_CORES.caldera.bonus.burnTurnsBonus,1);
+ assert.equal(BL.BOSS_CORES.cemetery.bonus.stunBonus,1);assert.equal(BL.BOSS_CORES.caldera.bonus.dotTurnsBonus,1);assert.equal(BL.BOSS_CORES.temple.bonus.penetration,.1);
+});
+
+test('v3.200 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 is gold only',async()=>{
+ const E=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/economy'));
+ const r=E.RESEARCH.find(x=>x.id==='dungeon');assert.equal(r.name,'던전 탐험 I');assert.equal(r.tab,'gold');
+ const s=newState(0);const base=stats(s).dungeonGoldBonus||0;s.permanent.dungeon=3;assert.ok(Math.abs((stats(s).dungeonGoldBonus||0)-base-.3)<1e-9);
+ assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });

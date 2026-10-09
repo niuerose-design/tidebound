@@ -100,7 +100,9 @@ export const RESEARCH: ResearchDef[] = [
     /** v3.17 불굴의 의지: 쓰러진 뒤 회복 대기 -3턴/단계(기본 25턴, 최저 10턴). 환생 10회부터. */
     { id: 'revive', name: '불굴의 의지', desc: '쓰러진 뒤 회복 대기 -3턴(6초) (기본 25턴 = 50초, 최저 10턴)', max: 5, base: 4, step: 3, tab: 'utility', group: 'basic', rebirth: 10, per: 3, unit: 'flat', label: '회복 대기 단축', suffix: '턴' },
     { id: 'mastery', name: '끝없는 수련', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
-    { id: 'gold', name: '황금 비', desc: '사냥터 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '사냥터 골드' },
+    { id: 'gold', name: '황금 비', desc: '골드 획득 +10%(v3.188부터 던전은 골드 대신 코인을 줌)', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '골드 획득' },
+    /** v3.200 던전 탐험 I: 던전 코인 보너스 +10%/단계(하루 보너스 · 보너스 뒤 · 무릉도장 모두). */
+    { id: 'dungeon', name: '던전 탐험 I', desc: '던전 코인 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '던전 코인' },
     { id: 'drop', name: '보물의 냄새', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },
     { id: 'enhance', name: '대장장이 고용', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];

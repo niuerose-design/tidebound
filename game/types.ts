@@ -52,10 +52,6 @@ export type Stats = {
     bossDamage?: number;
     /** v3.12 체력·물리/마법 공격·물리/마법 방어 배율 가산(0.05 = +5%). */
     allStats?: number;
-    /** v3.199 최대 체력 · 마나 배율(보스 코어). */
-    vitalPct?: number;
-    /** v3.199 화상 지속 턴 추가(보스 코어). */
-    burnTurnsBonus?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
