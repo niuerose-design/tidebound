@@ -126,13 +126,13 @@ export function skillAP(s: State, id: string, discount = 0, supportCut = 0) {
     const sk = skillById(id);
     if (!sk) return 2;
     const raw = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
-    // v3.224 군수사령관 경량 편제: 지원 스킬의 장착 AP -supportCut(최소 1).
+    // v3.225 군수사령관 경량 편제: 지원 스킬의 장착 AP -supportCut(최소 1).
     const cost = supportCut > 0 && sk.support && raw > 1 ? Math.max(1, raw - supportCut) : raw;
     if (!(discount > 0 && cost > 1 && sk.job)) return cost;
     const owner = jobById(sk.job), job = jobById(s.job);
     return owner && job && lineageOf(owner) !== lineageOf(job) ? Math.max(1, cost - discount) : cost;
 }
-/** v3.224 경량 편제: 참모 계보가 장착한 supportCostCut 가운데 가장 큰 값(없으면 0). */
+/** v3.225 경량 편제: 참모 계보가 장착한 supportCostCut 가운데 가장 큰 값(없으면 0). */
 function supportCostCut(s: State, ids: string[]) {
     if (jobById(s.job)?.lineage !== 'staff') return 0;
     return Math.max(0, ...ids.map(id => skillById(id)?.supportCostCut || 0));

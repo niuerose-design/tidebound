@@ -81,7 +81,7 @@ test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their ori
     }
     for (const l of LINEAGES.filter(l => !ui.monostatLineage(l.id))) assert.ok(!ui.lineageInTab(s, 'monostat', l), `${l.id} stays out of 외길`);
     // 보이는 직업은 저마다 탭 하나(tabOf)에 들어가고, 그 탭의 계보 목록에 자기 계보가 있습니다.
-    // v3.223 아제로스 세계의 공개 직업(참모 계보)은 계열 탭이 아니라 세계 목차로 들어갑니다.
+    // v3.224 아제로스 세계의 공개 직업(참모 계보)은 계열 탭이 아니라 세계 목차로 들어갑니다.
     const shown = ui.shownJobs(s).filter(j => ui.jobWorld(j) === 'maple');
     for (const j of shown) {
         const tab = ui.tabOf(j), lineage = LINEAGES.find(l => l.id === lineageOf(j));
@@ -138,7 +138,7 @@ test('Job UI v3.168: the beginner lineage sits in the ??? tab while the job keep
 
 test('v3.220 worlds: Azeroth lineages stay out of the Maple World tree tabs and show only in their own world once revealed', () => {
     const s = newState(0);
-    // v3.223 공개 참모 계보(staff)는 처음부터 아제로스에 보이고, 히든 계보는 드러나기 전까지 없습니다.
+    // v3.224 공개 참모 계보(staff)는 처음부터 아제로스에 보이고, 히든 계보는 드러나기 전까지 없습니다.
     assert.deepEqual(ui.worldLineages(s, 'azeroth').map(l => l.id), ['staff'], 'only the public staff lineage before any reveal');
     assert.equal(ui.worldJobCount(s, 'azeroth'), 6); // 참모 계보 3~5차 6개
     s.book.masteryMimic = 100;

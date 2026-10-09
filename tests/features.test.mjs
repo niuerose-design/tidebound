@@ -75,7 +75,7 @@ test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  s.job='quartermaster';s.unlockedJobs.push('quartermaster');for(const id of ['supplyConvoy','militaryProcurement','fieldManual','commandStructure'])s.learned[id]=1;
  s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
  assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
- s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.223 아제로스 규칙: 숙련 단계 ×10
+ s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.224 아제로스 규칙: 숙련 단계 ×10
  assert.ok(Math.abs(Su.commandBonus(s)-.08)<1e-9,'two support skills x 4%');
  const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
  s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
@@ -119,7 +119,7 @@ test('v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery
  const run=sup=>{const h=newState(0);if(sup)h.support={rank:.06};act(h,{type:'start'},0);advance(h,1_800_000,()=>.5);return h.rank?.exp||0;};
  const base=run(false),boosted=run(true);assert.ok(boosted>base&&boosted<=Math.ceil(base*1.06)+1,`${base} → ${boosted}`);
 });
-test('v3.224 5th tier: 총사령관 amplifies its other support (not AP) and gives power; 군수사령관 gives AP up to 3 and cuts its own support AP',async()=>{
+test('v3.225 5th tier: 총사령관 amplifies its other support (not AP) and gives power; 군수사령관 gives AP up to 3 and cuts its own support AP',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
  for(const id of ['commanderInChief','logisticsCommander']){const j=C.jobById(id);assert.ok(j&&j.tier===5&&j.requiresRank==='col'&&j.rebirth===10&&j.lineage==='staff');
   const s=newState(0);s.level=70;s.rebirths=10;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='col')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('작전참모 또는 화력참모'));

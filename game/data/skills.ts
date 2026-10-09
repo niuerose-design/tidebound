@@ -349,7 +349,7 @@ export function alignJobMastery(jobs: Job[]) {
     }
 }
 alignJobMastery(JOBS);
-// v3.223 공개 아제로스 계보(참모 계보)도 아제로스 규칙: 숙련 기준을 맞춘 뒤 직업 숙달 목표 · 그 직업 스킬의 숙련 단계를 AZEROTH_MASTERY_SCALE배로.
+// v3.224 공개 아제로스 계보(참모 계보)도 아제로스 규칙: 숙련 기준을 맞춘 뒤 직업 숙달 목표 · 그 직업 스킬의 숙련 단계를 AZEROTH_MASTERY_SCALE배로.
 // 비밀 아제로스 계보는 서버가 game/secret/register.ts에서 같은 일을 합니다.
 for (const job of JOBS) {
     if (worldOf(LINEAGES.find(l => l.id === lineageOf(job))) !== 'azeroth') continue;
