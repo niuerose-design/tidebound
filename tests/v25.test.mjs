@@ -492,7 +492,7 @@ test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain monster) a
     assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
 });
 
-test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
+test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, no overlevel cut (v3.201), stage enemies capped', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.monsterGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
@@ -505,7 +505,8 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(W.monsterExpAt(abyss.level) * B.DUNGEON_TUNING.bossExpMonsters));
     assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.rewardTierCap, true), 'abyss depth stops raising exp');
     assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.killReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
-    assert.equal(B.dungeonOverlevel(18, 8), 1); assert.equal(B.dungeonOverlevel(30, 8), .7); assert.equal(B.dungeonOverlevel(100, 8), B.DUNGEON_TUNING.overlevelFloor);
+    // v3.201 레벨 초과 감액(v27.30) 삭제: 권장 레벨보다 높아도 클리어 골드·반복 장비 확률이 그대로입니다.
+    assert.equal(B.dungeonOverlevel, undefined); assert.equal(B.DUNGEON_TUNING.overlevelFloor, undefined);
     const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.MONSTERS.find(f => f.id === 'stormBarracuda');
     assert.equal(W.stageStatMonster(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatMonster(storm, reef.level).hp < storm.hp);
     const monster = W.MONSTERS.find(f => f.id === abyss.monsters[0]);

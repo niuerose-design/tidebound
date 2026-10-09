@@ -297,17 +297,18 @@ export const placeKey = (kind: 'stage' | 'dungeon', id: string) => `${kind}:${id
 /** 지금 해킹으로 막힌 곳이면 그 기록, 아니면 undefined. */
 export const hackDownOf = (kind: 'stage' | 'dungeon', id: string, now: number) => (HACK_PATCHED[placeKey(kind, id)] || 0) > now ? undefined : HACK_DOWN.find(d => d.kind === kind && d.id === id && d.until > now);
 // v3.186 입장 환생(docs/boss-plan.md §6): 입장 몸(초보)으로 보스 14 · 22 · 20턴 · 사망 0이 되는 값.
+/** v3.201 지역 던전은 잡몹 1판 + 보스(2연전). monsters의 마지막 칸은 보스 자리표시(bossMonster로 바뀜). 무릉도장은 층 공식 그대로 5연전. */
 export const DUNGEONS = [
     /** v27.86 랜덤게임: 웨이브마다 무작위 몬스터(monsters는 자리표시). 일반 던전 목록·업적·목표에서는 random으로 빠집니다. */
     { id: 'randomGame', name: '랜덤게임', level: 1, rebirth: 5, monsters: ['minnow'], bossMonster: undefined as string | undefined, boss: '랜덤게임', gold: 0, pearls: 0, description: '해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다. 웨이브를 깰수록 판돈이 쌓이고, 쓰러지면 모두 잃습니다.', random: true },
     { id: 'abyss', name: '무릉도장', level: 40, rebirth: 3, monsters: ['moonfish', 'dragon', 'ancient', 'dragon', 'ancient'], bossMonster: 'abyssSovereign', boss: '도장의 주인 · 무공', gold: 12000, pearls: 1, description: '오를 때마다 다음 층이 열립니다. 높을수록 층마다 더 많은 세계석을 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.' },
-    { id: 'grotto', name: '헤네시스 · 버섯 동산', level: 8, rebirth: 0, monsters: ['ray', 'puffer', 'mackerel', 'ray', 'eel'], bossMonster: 'grottoWarden', boss: '버섯 동산의 주인 · 머쉬맘', gold: 350, pearls: 1, description: '다섯 번의 전투 끝에 거대한 버섯이 눈을 뜬다.' },
-    { id: 'kelpCatacomb', name: '커닝시티 · 지하 수로', level: 14, rebirth: 0, monsters: ['seahorse', 'needlefish', 'tidejelly', 'seahorse', 'needlefish'], bossMonster: 'kelpHydra', boss: '수로의 왕 · 킹 슬라임', gold: 950, pearls: 1, description: '갈라지고 또 갈라지는 슬라임들이 도시 아래 수로를 메웠다.' },
-    { id: 'cemetery', name: '슬리피우드 · 개미굴', level: 18, rebirth: 0, monsters: ['ghost', 'angler', 'ghost', 'shark', 'shark'], bossMonster: 'anchorWraith', boss: '개미굴의 망령 · 좀비 머쉬맘', gold: 1600, pearls: 2, description: '깊은 개미굴 아래, 썩지 않는 버섯이 마지막 보물을 지킨다.' },
-    { id: 'caldera', name: '페리온 · 불의 제단', level: 26, rebirth: 2, monsters: ['emberEel', 'ashRay', 'magmaPuffer', 'cinderKoi', 'emberEel'], bossMonster: 'magmaKraken', boss: '불꽃의 마족 · 주니어 발록', gold: 4200, pearls: 3, description: '뜨거운 불길이 장비와 골드를 녹여 새로운 형태로 만든다.' },
-    { id: 'temple', name: '엘리니아 · 잊힌 마법 사원', level: 30, rebirth: 2, monsters: ['viper', 'squid', 'leviathan', 'moonfish', 'dragon'], bossMonster: 'templeOracle', boss: '하늘의 마녀 · 엘리쟈', gold: 6000, pearls: 5, description: '환생의 기억을 지닌 자에게만 열리는 문.' },
-    { id: 'ventCathedral', name: '엘나스 · 자쿰의 제단', level: 60, rebirth: 8, monsters: ['ventCrab', 'sulfurEel', 'glassSquid', 'blindShark', 'ventLeviathan'], bossMonster: 'ventColossus', boss: '폐광의 거대 석상 · 자쿰', gold: 30000, pearls: 12, description: '엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
-    { id: 'starSanctum', name: '루디브리엄 · 시계탑', level: 48, rebirth: 6, monsters: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta', 'starKoi'], bossMonster: 'starfallSeraph', boss: '시계탑의 주인 · 파풀라투스', gold: 18000, pearls: 8, description: '장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 차원의 침략자와 맞서는 후반 탐험지.' },
+    { id: 'grotto', name: '헤네시스 · 버섯 동산', level: 8, rebirth: 0, monsters: ['ray', 'eel'], bossMonster: 'grottoWarden', boss: '버섯 동산의 주인 · 머쉬맘', gold: 350, pearls: 1, description: '숲의 몬스터를 물리치면 거대한 버섯이 눈을 뜬다.' },
+    { id: 'kelpCatacomb', name: '커닝시티 · 지하 수로', level: 14, rebirth: 0, monsters: ['seahorse', 'needlefish'], bossMonster: 'kelpHydra', boss: '수로의 왕 · 킹 슬라임', gold: 950, pearls: 1, description: '갈라지고 또 갈라지는 슬라임들이 도시 아래 수로를 메웠다.' },
+    { id: 'cemetery', name: '슬리피우드 · 개미굴', level: 18, rebirth: 0, monsters: ['ghost', 'shark'], bossMonster: 'anchorWraith', boss: '개미굴의 망령 · 좀비 머쉬맘', gold: 1600, pearls: 2, description: '깊은 개미굴 아래, 썩지 않는 버섯이 마지막 보물을 지킨다.' },
+    { id: 'caldera', name: '페리온 · 불의 제단', level: 26, rebirth: 2, monsters: ['emberEel', 'emberEel'], bossMonster: 'magmaKraken', boss: '불꽃의 마족 · 주니어 발록', gold: 4200, pearls: 3, description: '뜨거운 불길이 장비와 골드를 녹여 새로운 형태로 만든다.' },
+    { id: 'temple', name: '엘리니아 · 잊힌 마법 사원', level: 30, rebirth: 2, monsters: ['viper', 'dragon'], bossMonster: 'templeOracle', boss: '하늘의 마녀 · 엘리쟈', gold: 6000, pearls: 5, description: '환생의 기억을 지닌 자에게만 열리는 문.' },
+    { id: 'ventCathedral', name: '엘나스 · 자쿰의 제단', level: 60, rebirth: 8, monsters: ['ventCrab', 'ventLeviathan'], bossMonster: 'ventColossus', boss: '폐광의 거대 석상 · 자쿰', gold: 30000, pearls: 12, description: '엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
+    { id: 'starSanctum', name: '루디브리엄 · 시계탑', level: 48, rebirth: 6, monsters: ['starKoi', 'starKoi'], bossMonster: 'starfallSeraph', boss: '시계탑의 주인 · 파풀라투스', gold: 18000, pearls: 8, description: '장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 차원의 침략자와 맞서는 후반 탐험지.' },
 ];
 /** v27.86 랜덤게임을 뺀 일반 던전(목록·업적·목표·점검용). */
 export const PLAIN_DUNGEONS = DUNGEONS.filter(d => !('random' in d && d.random));

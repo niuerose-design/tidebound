@@ -20,7 +20,7 @@ import { isHacker } from './hacker';
 import { dismantleEssence, keepsAcrossLives } from './equipment';
 import { rankState } from '../data/rank';
 import { gainLevels, spawn, specialChances, pickSpecial, type ForcedRare } from './encounter';
-import { recordIncome } from './income';
+import { recordIncome, recordExpIncome } from './income';
 import { oneTimeRewards, offlineTally, resetOfflineTally } from './offline-tally';
 import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
 import { stageById } from '../data/world';
@@ -116,6 +116,7 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
     s.sp += grow(g.sp);
     s.gold += gold;
     recordIncome(s, gold);
+    recordExpIncome(s, exp);
     s.kills += kills;
     s.deaths += grow(g.deaths);
     { const rk = rankState(s); rk.exp += grow(g.rankExp); s.rank = rk; }

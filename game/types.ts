@@ -508,6 +508,18 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
+    /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
+    dungeonCoins?: number;
+    dungeonCoinFrac?: number;
+    /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
+    dungeonBonus?: { day: string; used: number };
+    /** v3.202 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
+    bossLootMiss?: number;
+    /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
+    bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
+    coreSlot?: string;
+    /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
+    dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
@@ -626,6 +638,8 @@ export type State = {
     researchLegacy?: Record<string, number>;
     /** v3.58 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
     goldLog?: { h: number; g: number }[];
+    /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
+    expLog?: { h: number; g: number }[];
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */

@@ -83,7 +83,7 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.72 룬은 마력 평타가 켜짐/꺼짐 판정이라 마법 직업에는 효과가 없고 물리 직업은 평타가 마력 평타로 바뀌어 손해였습니다. 새로 붙지 않습니다.
     { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, retired: true, description: '마법 직업의 마력 평타 확률이 오릅니다. (v3.72 새로 붙지 않음)' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },
-    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치·던전 골드가 늘어납니다.' },
+    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해. v3.71 이득과 손해를 함께 ×1.5(맞는 빌드엔 확실한 이득, 안 맞으면 확실한 손해).
     { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.675, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
@@ -226,9 +226,15 @@ function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => numb
 export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number, level = 1, top = 1): ItemAffix {
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
     if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
-    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     // v3.125 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다. v3.131 100% 위는 heirRollQuality의 꼬리 분포.
-    const roll = (ROLL_MIN + heirRollQuality(rng(), top) * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
+    return optionAtQuality(def, power, rarity, level, heirRollQuality(rng(), top));
+}
+/** v3.201 정해진 수치 위치(0 = 최저, 1 = 보통 최고, 1.5 = 계승 최고)로 옵션을 만듭니다. 규칙 · 고정 옵션은 기본값 그대로. */
+export function optionAtQuality(def: AffixDef, power: number, rarity: number, level: number, quality: number): ItemAffix {
+    if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
+    if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
+    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
+    const roll = (ROLL_MIN + quality * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };

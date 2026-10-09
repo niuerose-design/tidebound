@@ -79,6 +79,8 @@ export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) *
  * 하나하나는 작지만 모을수록 보스전에서 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다(틱은 보정 전 위력 기준).
  */
 export const stackBossDamage = (a: number, b: number) => b >= 0 ? (1 + a) * (1 + b) - 1 : a + b;
+/** v3.201 던전 보스는 웨이브 수와 무관하게 마지막 단계 압박(BOSS_PRESSURE_WAVE)을 받습니다(지역 던전이 2연전으로 줄어도 보스 세기는 그대로). */
+export const BOSS_PRESSURE_WAVE = 4;
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
@@ -89,10 +91,10 @@ export function dungeonPressure(wave: number) {
  *   클리어 골드 = clearGoldMonsters마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
  * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
- * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
+ * - v3.201 권장 레벨 초과 감액(클리어 골드·반복 장비 확률)은 없앴습니다. 헬부터는 몬스터 레벨이 내 레벨까지 올라 노말에서만 걸리던 이중 감액이었습니다.
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
-export const DUNGEON_TUNING = { bossExpMonsters: 6, bossGoldMonsters: 4, clearGoldMonsters: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const DUNGEON_TUNING = { bossExpMonsters: 6, bossGoldMonsters: 4, clearGoldMonsters: 6, expLevelOver: 2, rewardTierCap: 6, tierSpeed: .02 };
 /**
  * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
  * 1층 일반 몬스터 체력 hp에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
@@ -107,10 +109,6 @@ export const ABYSS_TUNING = { hp: 30000, hpGrowth: 1.15, attack: 2, attackGrowth
 export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0, note: '' }, { id: 'hell', name: '헬', tier: 70, note: '환생 50 안팎의 몸에 맞춘 난이도입니다.' }, { id: 'nightmare', name: '나이트메어', tier: 260, note: '다른 직업 패시브까지 계승해 채운 몸을 위한 난이도입니다. 자기 계열만으로는 깨기 어렵습니다.' }] as const;
 export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
 export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
-export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
-    const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
-    return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);
-};
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
     /** v3.88 행운 비례 보정(팬텀 계열): 치명 피해 재적용을 없앤 대신 위력의 치명 피해 비례분(scalingRatio)에 곱합니다.
