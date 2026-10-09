@@ -37,6 +37,8 @@ export const DUNGEON_SHOP = {
     quality120: 3600,
     /** v3.202 랜덤 보스 코어 상자: 7종 중 하나(없으면 획득, 있으면 각성). 하루 1번(DUNGEON_SHOP_DAILY.coreBoxPerDay). */
     coreBox: 3600,
+    /** v3.203 보스 코어 능력치 한 줄 재설정(종류 · 배율 새로 굴림). 한도 없음, 정수 재설정 비용을 올리지 않습니다. */
+    coreReroll: 600,
 } as const;
 /** v3.189 수치 상품: 목표 수치(하한)와 위로 굴리는 상한. 120%는 [1.2, 1.5]에서 고르게 굴립니다. */
 export const QUALITY_GOODS = { quality100: { min: 1, max: 1 }, quality120: { min: 1.2, max: 1.5 } } as const;

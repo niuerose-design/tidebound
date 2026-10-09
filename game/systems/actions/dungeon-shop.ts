@@ -5,7 +5,7 @@ import { inventoryCap } from '../../data/economy';
 import { STAGES } from '../../data/world';
 import { onyxById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
-import { grantBossCore } from '../boss-loot';
+import { grantBossCore, coreForgeBlock, coreForgeCost, forgeCore, type CoreForge } from '../boss-loot';
 import { drop, dropLevel, gainLevels } from '../encounter';
 import { allItems, hunterBlock, onyxOffer, countBought, boughtToday, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
@@ -44,6 +44,16 @@ export const dungeonShopActions: ActionHandlers = {
             const ids = Object.keys(BOSS_CORES), pick = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))];
             addLog(s, `던전 주화 상점 · 보스 코어 상자 개봉 · ${BOSS_CORES[pick].name} · 주화 -${DUNGEON_SHOP.coreBox.toLocaleString()}`, 'reward');
             grantBossCore(s, pick, rng);
+            return;
+        }
+        if (id === 'coreReroll') {
+            // v3.203 보스 코어 능력치 한 줄 재설정(주화). value '코어 id|줄'. 정수 재설정 비용은 올리지 않습니다.
+            const [coreId, line] = String(a.value || '').split('|'), index = Number(line);
+            const blocked = coreForgeBlock(s, coreId, index, 'reroll');
+            if (blocked) throw Error(blocked);
+            pay(s, DUNGEON_SHOP.coreReroll);
+            const r = forgeCore(s, coreId, index, 'reroll', rng, false);
+            addLog(s, `던전 주화 상점 · ${BOSS_CORES[coreId].name} 능력치 재설정 · ${r.before} → ${r.after} · 주화 -${DUNGEON_SHOP.coreReroll.toLocaleString()}`, 'reward');
             return;
         }
         if (id === 'gearBox') {
@@ -95,6 +105,18 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         throw Error('없는 상품입니다.');
+    },
+    /** v3.203 보스 코어 칸에서 정수로 능력치 손보기: id = 코어 id, value = 'reroll|줄' 또는 'refine|줄'. */
+    coreForge(s, { a, id, rng }) {
+        const [mode, line] = String(a.value || '').split('|'), index = Number(line);
+        if (mode !== 'reroll' && mode !== 'refine') throw Error('재설정 또는 재련을 고르세요.');
+        const kind = mode as CoreForge, blocked = coreForgeBlock(s, id, index, kind);
+        if (blocked) throw Error(blocked);
+        const cost = coreForgeCost(s, id, kind);
+        if ((s.essence || 0) < cost) throw Error(`정수가 부족합니다 (필요 ${cost.toLocaleString()}).`);
+        s.essence = (s.essence || 0) - cost;
+        const r = forgeCore(s, id, index, kind, rng, true);
+        addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 능력치 ${kind === 'reroll' ? '재설정' : '재련'} · ${r.before} → ${r.after} · 정수 -${cost.toLocaleString()}`, 'reward');
     },
     /** v3.199 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
     equipCore(s, { id }) {

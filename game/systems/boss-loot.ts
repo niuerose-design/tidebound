@@ -4,9 +4,35 @@
  */
 import type { State } from '../types';
 import { ODDS } from '../data/odds';
-import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry, rollCoreAttrs } from '../data/boss-core';
+import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, rollCoreAttrs, rollCoreAttr, rollCoreFactor, type CoreAttr } from '../data/boss-core';
+import { refineEssenceAt } from '../data/gear';
 import { ATTRIBUTES } from '../data/progression';
+import { refineRebirthFactor } from './equipment';
 import { addLog } from './state';
+
+const attrName = (a: CoreAttr) => `${ATTRIBUTES.find(x => x.id === a.k)!.name} 레벨 ×${a.f}`;
+export type CoreForge = 'reroll' | 'refine';
+/** v3.203 코어 능력치 손보기의 정수 비용(태초 재련 식 × 이 코어를 손본 횟수, 재설정은 CORE_FORGE.rerollMult배). */
+export function coreForgeCost(s: Pick<State, 'bossCores' | 'rebirths'>, id: string, kind: CoreForge) {
+    const forges = coreEntry(s.bossCores?.[id])?.forges || 0, base = refineEssenceAt(CORE_FORGE.rarity, forges, refineRebirthFactor(s.rebirths || 0));
+    return kind === 'reroll' ? base * CORE_FORGE.rerollMult : base;
+}
+/** 손볼 수 있는 줄인지. 못 하면 이유. 예전 코어(능력치 없음)는 빈 줄을 재설정으로 채웁니다. */
+export function coreForgeBlock(s: Pick<State, 'bossCores'>, id: string, line: number, kind: CoreForge) {
+    const e = coreEntry(s.bossCores?.[id]);
+    if (!BOSS_CORES[id] || !e) return '가진 보스 코어만 손볼 수 있습니다.';
+    if (!Number.isInteger(line) || line < 0 || line >= CORE_ATTRS.count) return '손볼 능력치 줄을 고르세요.';
+    if (kind === 'refine' && !e.attrs[line]) return '빈 줄은 재설정으로 채우세요.';
+    return undefined;
+}
+/** 고른 줄을 재설정(종류 · 배율) 또는 재련(배율만)합니다. counted면 정수 비용 횟수를 올립니다. 바뀐 전후를 돌려줍니다. */
+export function forgeCore(s: State, id: string, line: number, kind: CoreForge, rng: () => number, counted: boolean) {
+    const e = coreEntry(s.bossCores![id])!, attrs = [...e.attrs], before = attrs[line];
+    const next = kind === 'refine' ? { k: before.k, f: rollCoreFactor(rng) } : rollCoreAttr(rng, attrs.filter((_, i) => i !== line).map(a => a.k));
+    attrs[line] = next;
+    s.bossCores![id] = { rank: e.rank, attrs: attrs.filter(Boolean), ...(counted || e.forges ? { forges: (e.forges || 0) + (counted ? 1 : 0) } : {}) };
+    return { before: before ? attrName(before) : '빈 줄', after: attrName(next) };
+}
 
 /** 보스 코어 하나를 줍니다(새로 얻거나 각성). 받은 뒤 각성 단계, 코어가 없는 던전이면 undefined. */
 export function grantBossCore(s: State, dungeonId: string, rng: () => number = Math.random): number | undefined {
@@ -17,7 +43,7 @@ export function grantBossCore(s: State, dungeonId: string, rng: () => number = M
         const attrs = rollCoreAttrs(rng);
         cores[dungeonId] = { rank: 0, attrs };
         if (!s.coreSlot) s.coreSlot = dungeonId;
-        const names = attrs.map(a => `${ATTRIBUTES.find(x => x.id === a.k)!.name} 레벨 ×${a.f}`).join(' · ');
+        const names = attrs.map(attrName).join(' · ');
         addLog(s, `✦ 보스 코어 획득! ${core.name} · ${core.desc} 기본 능력치: ${names} (보유 ${ownedCores(s).length}/${Object.keys(BOSS_CORES).length}종${s.coreSlot === dungeonId ? ' · 보스 코어 칸에 장착' : ''})`, 'reward');
         return 0;
     }

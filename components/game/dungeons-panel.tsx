@@ -6,7 +6,8 @@ import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from
 import { clearCoinBase, dailyBonusLeft, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { DUNGEON_SHOP, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
-import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
+import { BOSS_CORES, BOSS_CORE_SET, BOSS_CORE_RULES, CORE_ATTRS, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
+import { coreForgeCost } from '@/game/systems/boss-loot';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { dayKey } from '@/game/data/goals';
 import { useState } from 'react';
@@ -113,6 +114,7 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
         <div className="dungeon-reward-lines">
             <span><b>코어</b>보스 코어 {ownedCores(s).length}/{Object.keys(BOSS_CORES).length}종 · 칸에 낀 코어는 효과 100%, 나머지는 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외) · 세트 {BOSS_CORE_SET.map(b => `${ownedCores(s).length >= b.count ? '✓' : '·'}${b.count}개 ${b.label}`).join(' / ')}</span>
             {Object.entries(BOSS_CORES).map(([id, c]) => { const e = coreEntry(s.bossCores?.[id]), own = !!e, worn = s.coreSlot === id; const attrs = e?.attrs.map(x => `${ATTRIBUTES.find(t => t.id === x.k)?.name} +${Math.floor(Math.max(1, s.level) * x.f * coreAwaken(e.rank) * (worn ? 1 : BOSS_CORE_RULES.resonance))}(레벨 ×${x.f})`).join(' · '); return <span key={id}><b>{worn ? '장착' : own ? '보유' : '미획득'}</b>{c.name}{own ? ` · 각성 ${e.rank}/${BOSS_CORE_RULES.awakenMax}` : ''} · {c.desc}{attrs ? ` · ${attrs}` : ''} {own && <button className="secondary small" disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '빼기' : '장착'}</button>}</span>; })}
+            <CoreForge s={s} send={send} busy={busy}/>
             {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
             <span><b>성장</b>최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치 × 시간(환생 {GROWTH_MAX_REBIRTHS}회 미만){(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <button key={g} className="secondary small" title={o.reason || `골드 +${format(o.gold)} · 경험치 +${format(o.exp)}`} disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(g)}>{o.hours}시간 · {format(o.price)} (오늘 {o.left}회)</button>; })} <small>{hour.reason || `1시간 = 골드 +${format(hour.gold)} · 경험치 +${format(hour.exp)}`}</small></span>
             <span><b>코어</b>랜덤 보스 코어 상자(7종 중 하나 · 있으면 각성) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.coreBox || (s.dungeonShopDay?.day === dayKey(now) && (s.dungeonShopDay.coreBox || 0) >= 1)} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)} (하루 1번)</button></span>
@@ -125,6 +127,24 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
             <QualityGoods s={s} send={send} busy={busy}/>
         </div>
     </section>;
+}
+
+/** v3.203 보스 코어 능력치 손보기: 정수로 재설정(종류 · 배율) · 재련(배율만), 또는 주화로 재설정. */
+function CoreForge({ s, send, busy }: PanelProps) {
+    const owned = ownedCores(s), [pick, setPick] = useState(''), [line, setLine] = useState(0);
+    const id = owned.includes(pick) ? pick : s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : owned[0];
+    if (!id) return null;
+    const e = coreEntry(s.bossCores?.[id])!, index = Math.min(line, CORE_ATTRS.count - 1), cur = e.attrs[index], essence = s.essence || 0;
+    const reroll = coreForgeCost(s, id, 'reroll'), refine = coreForgeCost(s, id, 'refine');
+    const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
+    return <span><b>손보기</b>
+        <select aria-label="손볼 보스 코어" value={id} disabled={busy} onChange={e => setPick(e.target.value)}>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].name}</option>)}</select>
+        <select aria-label="손볼 능력치 줄" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{Array.from({ length: CORE_ATTRS.count }, (_, i) => { const a = e.attrs[i]; return <option key={i} value={i}>{i + 1}. {a ? `${ATTRIBUTES.find(t => t.id === a.k)?.name} 레벨 ×${a.f}` : '빈 줄'}</option>; })}</select>
+        <button className="secondary small" disabled={busy || essence < reroll} onClick={() => forge('reroll')}>재설정 · 정수 {format(reroll)}</button>
+        <button className="secondary small" disabled={busy || !cur || essence < refine} onClick={() => forge('refine')}>재련 · 정수 {format(refine)}</button>
+        <button className="secondary small" disabled={busy || (s.dungeonCoins || 0) < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {format(DUNGEON_SHOP.coreReroll)}</button>
+        <small>재설정은 능력치 종류와 배율(레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max})을 새로 굴리고(다른 줄과 겹치지 않음), 재련은 종류는 그대로 배율만 다시 굴립니다. 낮아질 수도 있습니다. 정수 비용은 이 코어를 정수로 손볼 때마다 ×1.1씩 오르고, 주화 재설정은 비용을 올리지 않습니다. 보유 정수 {format(essence)}{e.forges ? ` · 이 코어 ${e.forges}회 손봄` : ''}</small>
+    </span>;
 }
 
 /** v3.189 옵션 수치 상품: 고른 장비 · 옵션 줄의 수치를 100%로, 또는 120~150%로. 장비는 착용 · 가방 모두. */

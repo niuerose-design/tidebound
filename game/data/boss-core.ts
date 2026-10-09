@@ -30,18 +30,29 @@ export const BOSS_CORES: Record<string, BossCore> = {
  */
 export const CORE_ATTRS = { count: 2, min: .2, max: 1 };
 export type CoreAttr = { k: Attribute; f: number };
-export type CoreEntry = { rank: number; attrs: CoreAttr[] };
+export type CoreEntry = { rank: number; attrs: CoreAttr[]; forges?: number };
 const ATTR_KEYS: Attribute[] = ['str', 'dex', 'int', 'vit', 'wis', 'luk'];
 /** 저장 값(예전 숫자 형식 포함)을 코어 항목으로. */
-export const coreEntry = (v: number | { rank: number; attrs?: CoreAttr[] } | undefined): CoreEntry | undefined => v === undefined ? undefined : typeof v === 'number' ? { rank: v, attrs: [] } : { rank: v.rank || 0, attrs: v.attrs || [] };
+export const coreEntry = (v: number | { rank: number; attrs?: CoreAttr[]; forges?: number } | undefined): CoreEntry | undefined => v === undefined ? undefined : typeof v === 'number' ? { rank: v, attrs: [] } : { rank: v.rank || 0, attrs: v.attrs || [], ...(v.forges ? { forges: v.forges } : {}) };
+/** 배율 f 한 번 굴림(0.1 단위). */
+export const rollCoreFactor = (rng: () => number) => Math.round((CORE_ATTRS.min + rng() * (CORE_ATTRS.max - CORE_ATTRS.min)) * 10) / 10;
+/** 능력치 한 줄: exclude(다른 줄의 종류)를 뺀 6종 중 하나 + 배율. */
+export function rollCoreAttr(rng: () => number, exclude: Attribute[] = []): CoreAttr {
+    const pool = ATTR_KEYS.filter(k => !exclude.includes(k));
+    return { k: pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))], f: rollCoreFactor(rng) };
+}
 export function rollCoreAttrs(rng: () => number): CoreAttr[] {
-    const pool = [...ATTR_KEYS], out: CoreAttr[] = [];
-    for (let i = 0; i < CORE_ATTRS.count && pool.length; i++) {
-        const k = pool.splice(Math.floor(rng() * pool.length), 1)[0];
-        out.push({ k, f: Math.round((CORE_ATTRS.min + rng() * (CORE_ATTRS.max - CORE_ATTRS.min)) * 10) / 10 });
-    }
+    const out: CoreAttr[] = [];
+    for (let i = 0; i < CORE_ATTRS.count; i++) out.push(rollCoreAttr(rng, out.map(a => a.k)));
     return out;
 }
+/**
+ * v3.203 코어 능력치 손보기(장비 재설정 · 재련과 같은 말):
+ * - 재설정: 고른 줄의 종류와 배율을 새로 굴립니다(다른 줄과 겹치지 않음). 정수, 또는 던전 주화 상점(주화 DUNGEON_SHOP.coreReroll).
+ * - 재련: 종류는 그대로 배율만 다시 굴립니다. 정수만.
+ * 정수 비용은 태초 장비 재련과 같은 식(기본 × 환생 배율 × 1.1^이 코어를 손본 횟수)이고, 재설정은 rerollMult배. 주화 재설정은 횟수를 세지 않습니다.
+ */
+export const CORE_FORGE = { rarity: 6, rerollMult: 2 };
 /** 보스 코어가 주는 기본 능력치(칸 100% · 공명, 각성 포함). */
 export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'>) {
     const out: Partial<Record<Attribute, number>> = {};
