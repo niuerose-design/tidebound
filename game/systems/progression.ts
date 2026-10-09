@@ -91,12 +91,14 @@ export function apSources(s: State): { id: string; label: string; value: number 
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
         { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
-        { id: 'research', label: '세계석 연구 ‘영혼 확장’', value: s.permanent.ap || 0 },
+        { id: 'research', label: '세계석 연구 ‘영혼 확장 I · II’', value: researchAP(s) },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
         { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
 }
+/** v3.214 세계석 연구 영혼 확장 I · II로 늘어난 장착 AP. */
+export const researchAP = (s: Pick<State, 'permanent'>) => (s.permanent?.ap || 0) + (s.permanent?.ap2 || 0);
 /** 장착 AP 한도(최소 1). */
 export function apCapacity(s: State) { return Math.max(1, apSources(s).reduce((a, x) => a + x.value, 0)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */

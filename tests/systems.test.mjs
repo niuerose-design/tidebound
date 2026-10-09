@@ -118,3 +118,20 @@ test('v27 tidal monster deal split basic attacks (half physical, half magic defe
     const physicalDamage = 1e6 - a.hp, splitDamage = 1e6 - b.hp;
     assert.ok(splitDamage > physicalDamage * 2, `split basic ignores half of the physical-only defense: ${splitDamage} vs ${physicalDamage}`);
 });
+
+test('v3.214 research Soul Expansion II: rebirth 20 gate, +1 AP per rank on top of I, 12 ranks priced 100 + 40/rank, reset refunds', () => {
+    const s = newState(0); s.rebirths = 19; s.pearls = 100000; s.permanent.ap = 12;
+    const before = apCapacity(s);
+    assert.throws(() => act(s, { type: 'permanent', id: 'ap2' }, 0), /환생/);
+    s.rebirths = 20; const cap20 = apCapacity(s);
+    act(s, { type: 'permanent', id: 'ap2' }, 0);
+    assert.equal(s.pearls, 100000 - 100); assert.equal(apCapacity(s), cap20 + 1); assert.ok(cap20 >= before);
+    act(s, { type: 'permanent', id: 'ap2' }, 0);
+    assert.equal(s.pearls, 100000 - 100 - 140);
+    while ((s.permanent.ap2 || 0) < 12) act(s, { type: 'permanent', id: 'ap2' }, 0);
+    assert.equal(100000 - s.pearls, 3840, '12 ranks = 3,840 pearls');
+    assert.equal(apCapacity(s), cap20 + 12);
+    assert.throws(() => act(s, { type: 'permanent', id: 'ap2' }, 0));
+    const pearls = s.pearls; act(s, { type: 'resetResearch', id: 'utility' }, 0);
+    assert.equal(s.permanent.ap2, undefined); assert.ok(s.pearls >= pearls + 3840, 'reset refunds II too');
+});
