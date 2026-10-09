@@ -5,7 +5,7 @@ import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyss
 import { jobMasteryTarget, extremeBroken } from './progression';
 import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
-import { recordExpIncome } from './income';
+import { recordExpIncome, recordMasteryIncome } from './income';
 import { rollBossLoot, syncAbyssCores } from './boss-loot';
 import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
 import { DAILY_BONUS } from '../data/dungeon-shop';
@@ -44,7 +44,7 @@ export function victoryHeal(s: State, a = stats(s)) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
-    // v3.209 LV1 모험가: 레벨이 오르지 않고 경험치도 쌓지 않습니다.
+    // v3.210 LV1 모험가: 레벨이 오르지 않고 경험치도 쌓지 않습니다.
     if (lv1Active(s)) { s.exp = 0; return; }
     while (s.exp >= xpNeeded(s.level, s.rebirths, xpWall(s)) && s.level < 100) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
@@ -360,6 +360,7 @@ export function reward(s: State, rng: () => number) {
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
+    recordMasteryIncome(s, practiceTotal);
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {

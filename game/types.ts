@@ -518,7 +518,7 @@ export type State = {
     /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     coreSlot?: string;
-    /** v3.209 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
+    /** v3.210 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
     lv1AbyssBest?: number;
     /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
@@ -642,6 +642,12 @@ export type State = {
     goldLog?: { h: number; g: number }[];
     /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
     expLog?: { h: number; g: number }[];
+    /** v3.207 기록을 시작한 뒤 처치로 번 경험치 합계(expLog와 달리 환생해도 남음). */
+    expEarned?: number;
+    /** v3.207 처치 숙련 수입 기록(goldLog와 같은 칸, 현재 직업 숙련). 환생해도 남습니다. */
+    masteryLog?: { h: number; g: number }[];
+    /** v3.207 기록을 시작한 뒤 처치로 번 숙련 합계. */
+    masteryEarned?: number;
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
@@ -755,7 +761,7 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };
-    /** v3.209 LV1 모험가(테스트용): 거는 순간의 레벨 · 경험치 · 배분 능력치를 보관하고 Lv.1로 고정합니다. 포기하면 되돌립니다. */
+    /** v3.210 LV1 모험가(테스트용): 거는 순간의 레벨 · 경험치 · 배분 능력치를 보관하고 Lv.1로 고정합니다. 포기하면 되돌립니다. */
     lv1?: { level: number; exp: number; attributes: Record<Attribute, number>; statPoints: number } };
 /** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {

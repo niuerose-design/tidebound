@@ -109,7 +109,7 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         </ul>
     </section>;
 }
-/** v3.209 LV1 모험가(테스트용): 생 도중 바로 걸고 언제든 포기. 다른 서약과 함께 걸 수 없고, 서약 중에는 환생할 수 없습니다. */
+/** v3.210 LV1 모험가(테스트용): 생 도중 바로 걸고 언제든 포기. 다른 서약과 함께 걸 수 없고, 서약 중에는 환생할 수 없습니다. */
 function Lv1VowCard({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
     const on = !!s.vows?.lv1, blocked = !on && hasVows(s.vows);
     return <article className={`vow-card vow-lv1${on ? ' on' : ''}`}>

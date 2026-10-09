@@ -158,7 +158,7 @@ if (ABYSS_CURVE) {
     }
     process.exit(0);
 }
-// --abyss-max: 몸(환생)마다 직업별로 무릉도장을 어느 층까지 깨는지(시드 모두 클리어하는 최고 층, 체력 · 마나는 층마다 새로) 찾습니다. 무릉 코어 층 정하기용(v3.207).
+// --abyss-max: 몸(환생)마다 직업별로 무릉도장을 어느 층까지 깨는지(시드 모두 클리어하는 최고 층, 체력 · 마나는 층마다 새로) 찾습니다. 무릉 코어 층 정하기용(v3.208).
 if (process.argv.includes('--abyss-max')) {
     const d = DUNGEONS.find(x => x.id === 'abyss');
     const ok = (s, st, depth) => Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)).every(x => x.cleared >= 1);

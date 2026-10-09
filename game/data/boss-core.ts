@@ -9,7 +9,7 @@ import type { Attribute, CombatStats, State } from '../types';
 
 export const BOSS_CORE_RULES = { awakenMax: 5, awakenStep: .1, duplicatePearls: 5, resonance: .1 };
 type CoreStat = keyof CombatStats;
-export type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.207 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[] };
+export type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.208 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[] };
 /** 정수 턴 효과: 각성 배율 · 공명을 받지 않습니다. */
 export const CORE_TURN_STATS = new Set<CoreStat>(['stunBonus', 'controlBonus', 'dotTurnsBonus']);
 /** 던전 id → 보스 코어. 모두 보스 · 사냥감 피해 +5%에 그 보스의 기술을 이어받는 효과가 붙습니다. */
@@ -21,7 +21,7 @@ export const BOSS_CORES: Record<string, BossCore> = {
     temple: { name: '엘리쟈의 바람 코어', boss: '엘리쟈', desc: '보스 · 사냥감 피해 +5%, 방어 관통 +10%p(관통 상한 안).', bonus: { bossDamage: .05, penetration: .1 } },
     ventCathedral: { name: '자쿰의 팔 코어', boss: '자쿰', desc: '보스 · 사냥감 피해 +5%, 추가타 위력 +10%p.', bonus: { bossDamage: .05, followUpBonus: .1 } },
     starSanctum: { name: '파풀라투스의 시계 코어', boss: '파풀라투스', desc: '보스 · 사냥감 피해 +5%, 연속 행동 확률 +3%p.', bonus: { bossDamage: .05, chainBonus: .03 } },
-    // v3.207 무릉도장 코어(기획안 2차안 H): 층 첫 돌파로 확정 획득 · 각성(최고 기록 기준). 상자 · 보너스 정복에서는 나오지 않습니다.
+    // v3.208 무릉도장 코어(기획안 2차안 H): 층 첫 돌파로 확정 획득 · 각성(최고 기록 기준). 상자 · 보너스 정복에서는 나오지 않습니다.
     // 층은 기준 몸 측정(check-bosses --abyss-max, 중앙값 R10 32 · R30 41 · R50 48 · R100 53층)으로 정했습니다.
     abyssTrainee: { name: '수련생의 띠 코어', boss: '무릉 수련생', desc: '보스 · 사냥감 피해 +5%, 명중 +10%.', bonus: { bossDamage: .05, accuracy: .1 }, floors: [25, 28, 31, 34, 37, 40] },
     abyssMaster: { name: '사범의 권법 코어', boss: '무릉 사범', desc: '보스 · 사냥감 피해 +5%, 치명 피해 +15%p.', bonus: { bossDamage: .05, critDamage: .15 }, floors: [40, 42, 44, 46, 48, 50] },
@@ -70,7 +70,7 @@ export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'
     return out;
 }
 export const coreAwaken = (rank: number) => 1 + Math.min(BOSS_CORE_RULES.awakenMax, Math.max(0, rank)) * BOSS_CORE_RULES.awakenStep;
-/** v3.207 지역 던전 코어(보너스 정복 · 랜덤 상자에서 나옴)와 무릉도장 코어(층으로만). */
+/** v3.208 지역 던전 코어(보너스 정복 · 랜덤 상자에서 나옴)와 무릉도장 코어(층으로만). */
 export const REGION_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !BOSS_CORES[id].floors);
 export const ABYSS_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !!BOSS_CORES[id].floors);
 /** 최고 층 기준으로 이 무릉 코어가 가져야 할 각성 단계(-1이면 아직 못 얻음). */

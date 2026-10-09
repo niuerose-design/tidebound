@@ -72,7 +72,7 @@ function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy:
 }
 
 /**
- * v3.206 보스 코어 탭: 위에 코어 타일(고르기, v3.207 무릉 코어 3종 포함), 아래에 고른 코어 한 칸(효과 · 기본 능력치 줄 · 장착 · 재설정 · 재련), 맨 아래 상자 한 줄.
+ * v3.206 보스 코어 탭: 위에 코어 타일(고르기, v3.208 무릉 코어 3종 포함), 아래에 고른 코어 한 칸(효과 · 기본 능력치 줄 · 장착 · 재설정 · 재련), 맨 아래 상자 한 줄.
  * 전에는 코어 칸 · 상자 · 손보기 카드 · 코어 카드 7장이 따로 있어 같은 정보가 여러 번 보였습니다.
  */
 function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'busy'> & { buy: Buy; now: number }) {

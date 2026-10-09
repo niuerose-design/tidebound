@@ -37,7 +37,7 @@ export const dungeonShopActions: ActionHandlers = {
             return;
         }
         if (id === 'coreBox') {
-            // v3.202 랜덤 보스 코어 상자: 지역 던전 7종 중 하나를(v3.207 무릉 코어는 층으로만) 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
+            // v3.202 랜덤 보스 코어 상자: 지역 던전 7종 중 하나를(v3.208 무릉 코어는 층으로만) 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
             if (boughtToday(s, 'coreBox', now) >= DUNGEON_SHOP_DAILY.coreBoxPerDay) throw Error(`보스 코어 상자는 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번까지입니다(한국 시간 자정에 초기화).`);
             pay(s, DUNGEON_SHOP.coreBox);
             countBought(s, 'coreBox', now);

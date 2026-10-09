@@ -465,7 +465,7 @@
 .title-pager-nav button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0; }
 .title-pager .title-list { min-height: calc(8 * 46px); align-content: start; }
 @media (max-width: 640px) { .title-pager .title-list { min-height: 0; } .title-pager-nav { justify-content: space-between; } }
-/* v3.209 LV1 모험가(테스트용) 서약 카드 */
+/* v3.210 LV1 모험가(테스트용) 서약 카드 */
 .vow-lv1 { margin-bottom: 12px; border-style: dashed; }
 .vow-lv1.on { border-color: rgba(243, 220, 160, .55); background: rgba(243, 220, 160, .05); }
 .vow-test { margin-left: 6px; padding: 1px 7px; border: 1px solid #6b6236; border-radius: 999px; font-size: 11px; color: var(--gold); vertical-align: middle; }

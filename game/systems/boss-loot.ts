@@ -59,7 +59,7 @@ export function rollBossLoot(s: State, dungeonId: string, rng: () => number): nu
     return grantBossCore(s, dungeonId, rng);
 }
 /**
- * v3.207 무릉도장 코어: 최고 층(abyssBest)이 그 코어의 층에 닿으면 얻고(기본 능력치 무작위), 다음 층마다 각성합니다.
+ * v3.208 무릉도장 코어: 최고 층(abyssBest)이 그 코어의 층에 닿으면 얻고(기본 능력치 무작위), 다음 층마다 각성합니다.
  * 층 정복 때와 세이브를 읽을 때(이미 높이 오른 유저) 부릅니다. 능력치 굴림은 코어 · 층으로 정해지는 난수라 결정적입니다.
  */
 export function syncAbyssCores(s: State, log = true) {

@@ -308,7 +308,7 @@ export const DUNGEONS = [
     { id: 'ventCathedral', name: '엘나스 · 자쿰의 제단', level: 60, rebirth: 8, monsters: ['ventCrab', 'ventLeviathan'], bossMonster: 'ventColossus', boss: '폐광의 거대 석상 · 자쿰', gold: 30000, pearls: 12, description: '엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
     { id: 'starSanctum', name: '루디브리엄 · 시계탑', level: 48, rebirth: 6, monsters: ['starKoi', 'starKoi'], bossMonster: 'starfallSeraph', boss: '시계탑의 주인 · 파풀라투스', gold: 18000, pearls: 8, description: '장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 차원의 침략자와 맞서는 후반 탐험지.' },
 ];
-/** v3.208 랜덤게임을 지운 뒤로는 DUNGEONS와 같습니다(예전 이름을 쓰는 곳이 많아 남겨 둠). */
+/** v3.209 랜덤게임을 지운 뒤로는 DUNGEONS와 같습니다(예전 이름을 쓰는 곳이 많아 남겨 둠). */
 export const PLAIN_DUNGEONS = DUNGEONS;
 let dungeonIndex: Map<string, (typeof DUNGEONS)[number]> | undefined;
 /** 던전 id로 찾기. */

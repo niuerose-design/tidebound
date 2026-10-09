@@ -166,7 +166,7 @@ test('v27.86 legacy sleeping-anchor saves: the seal is released (stored exp paid
     assert.equal(s.vows.seal, undefined); assert.equal(s.vows.anchor, undefined); assert.ok(s.level > 1 || s.exp >= 500); assert.ok(s.logs.some(l => l.text.includes('+500 EXP')));
 });
 
-test('v3.208 random game removed: research refunded (paid ranks only), records and a run in progress cleared', () => {
+test('v3.209 random game removed: research refunded (paid ranks only), records and a run in progress cleared', () => {
     assert.equal(research('vowAnchor'), undefined);
     const s = newState(0); s.permanent.vowAnchor = 3; s.researchGranted = { vowAnchor: 1 }; s.randomGameRuns = 2; s.randomGameDay = 'x'; s.randomGameStats = { best: 9, runs: 4, cashed: 2 };
     s.dungeon = { id: 'randomGame', wave: 3 }; s.running = true; const p = s.pearls;

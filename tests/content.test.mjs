@@ -225,7 +225,7 @@ test('v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 
  assert.ok(mk(100,5).crit>mk(100,0).crit,'enhancing keeps raising charm crit');
  // v27.36 장신구 치명타는 등급 고정값: 위력(레벨)과 무관하고 전설 +10은 15%.
  assert.equal(mk(100,0).crit,mk(900,0).crit);assert.ok(Math.abs(mk(100,10).crit-.15)<1e-9);assert.ok(mk(100,0,6).crit>mk(100,0,3).crit);
- const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.1&&Math.abs(a.superCrit-(400*.003+stats(newState(0)).crit-1)*SKILL_FORMULA.superCritPerHundred)<.05,'overflow goes to super crit at 5% per 100%p (v3.209): '+a.superCrit);
+ const s=newState(0);s.attributes.luk=400;const a=stats(s);assert.equal(a.crit,SKILL_FORMULA.critCap);assert.ok(a.superCrit>0&&a.superCrit<.1&&Math.abs(a.superCrit-(400*.003+stats(newState(0)).crit-1)*SKILL_FORMULA.superCritPerHundred)<.05,'overflow goes to super crit at 5% per 100%p (v3.210): '+a.superCrit);
  const base={hp:1e6,attack:100,magic:0,defense:0,resist:0,crit:1,superCrit:.5,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:2};
  const f=(extra={})=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{}});
  const plain=f({crit:0,superCrit:0}),t1=f({});strike(plain,t1,()=>.4);const normal=1e6-t1.hp;
@@ -445,7 +445,7 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
  const old=newState(0);old.achievements={'reenlist:1':1,'regions:2':1};old.achievementClaims={};P.syncAchievements(old,()=>{});assert.ok(!old.achievementClaims['regions:2'],'AP honor steps still claimed by hand');assert.ok(old.achievementClaims['reenlist:1'],'old unclaimed honor achievements are tidied');
 });
 
-test('v3.207 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
+test('v3.208 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),BL=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop'),M=await L.load('systems/migrations');
  assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong']);assert.equal(C.REGION_CORE_IDS.length,7);
  assert.equal(C.BOSS_CORES.abyssMugong.bonus.bossDamage,.08);assert.equal(C.BOSS_CORES.abyssMugong.bonus.penetration,.15);
@@ -457,7 +457,7 @@ test('v3.207 abyss cores: gained/awakened by first clearing floors (best record)
  const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
 });
 
-test('v3.209 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
+test('v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
  const s=newState(0);s.level=60;s.exp=1234;s.rebirths=0;s.attributes={...s.attributes,str:80};s.statPoints=7;s.running=false;
  act(s,{type:'lv1Vow',id:'start'},0);assert.equal(s.level,1);assert.equal(s.exp,0);assert.equal(s.attributes.str,newState(0).attributes.str);assert.ok(s.vows.lv1);
