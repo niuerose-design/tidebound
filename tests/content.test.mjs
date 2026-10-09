@@ -441,5 +441,6 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
  for(const id of ['bossCore:1','bossCore:4','coreAwaken:1'])assert.ok(s.achievements[id]!==undefined,id);
  for(const id of ['bossCore:7','coreAwaken:7'])assert.equal(s.achievements[id],undefined,id);
  const owned=T.unlockedTitles(s).map(t=>t.id);assert.ok(owned.includes('bossCore:4')&&owned.includes('coreAwaken:1')&&!owned.includes('bossCore:7'));
- const before={...s};P.claimAchievements(s,'bossCore:4');assert.equal(s.pearls,before.pearls,'honor gives nothing');assert.equal(s.sp,before.sp);
+ assert.ok(s.achievementClaims['bossCore:4']&&s.achievementClaims['coreAwaken:1'],'rewardless achievements complete at once');assert.ok(!P.unclaimedAchievements(s).some(id=>id.startsWith('bossCore')||id.startsWith('coreAwaken')),'nothing to claim');
+ const old=newState(0);old.achievements={'reenlist:1':1,'regions:2':1};old.achievementClaims={};P.syncAchievements(old,()=>{});assert.ok(!old.achievementClaims['regions:2'],'AP honor steps still claimed by hand');assert.ok(old.achievementClaims['reenlist:1'],'old unclaimed honor achievements are tidied');
 });
