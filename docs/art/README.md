@@ -50,3 +50,15 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 ## 실루엣(폴백) 규칙
 
 어종마다 `game/data/art.ts`의 `MONSTER_SHAPES`에 모양 하나를 적어 둡니다(물고기·비단잉어·가오리·곰치·오징어·게·해파리·상어·복어·해마·아귀·망령·거수). 새 어종을 추가하면 이 표에도 넣어야 하며, 테스트가 빠진 어종을 잡습니다.
+
+## 아제로스 계보 그림 (v3.223)
+
+`public/art/jobs/{kkamiHunter,nuriTracker,darkFollower,onyxAvatar}.webp`는 임시 문장(엠블럼) 그림입니다. 원형 배지 안에 계보의 상징을 SVG로 그려 512×512로 뽑았습니다.
+그린 그림으로 바꿀 때는 같은 이름의 `.png`를 넣으면 png가 우선합니다(웹p는 지워도 됨). 프롬프트는 위 ‘직업 계보’ 공통 스타일 뒤에 붙입니다.
+
+| 계보 id | 이름 | 지금 그림 | 프롬프트(뒤에 붙임) |
+|---|---|---|---|
+| `kkamiHunter` | 까미 사냥꾼 | 금빛 올가미가 감은 고양이 귀 보물상자(까미) · 금화 | `, a hunter holding a glowing golden lasso, a cat-eared mimic treasure chest peeking nearby, scattered gold coins` |
+| `nuriTracker` | 누리 추적자 | 후광 · 하얀 날개 · 하얀 발자국 | `, a tracker following a trail of small white glowing paw prints, angel halo and white feathers drifting` |
+| `darkFollower` | 어둠의 추종자 | 두건 쓴 그림자와 둘레를 도는 보스 코어 7개 | `, a hooded shadowy figure with glowing violet eyes, seven colored crystal cores orbiting around them` |
+| `onyxAvatar` | 칠흑의 화신 | 금테 두른 칠흑 결정 불꽃과 일곱 조각 | `, an avatar wreathed in black onyx flame, seven onyx shards with golden rims floating in an arc, faint violet glow` |
