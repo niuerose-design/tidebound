@@ -304,9 +304,10 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  const s=newState(0);s.level=40;s.dungeonCoins=0;
  assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/코인이 부족/);
  s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=1,true,'rare or better');
- s.dungeonCoins=20000;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
- s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,8000);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
- act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,2000);assert.equal(onyx.onyxRank,1,'second purchase awakens');
+ const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.192 price ladder');
+ s.dungeonCoins=P.onyxCraft+P.onyxAwaken+P.hunterImprint;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
+ s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.onyxAwaken+P.hunterImprint);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
+ act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
  const line=onyx.affixes.findIndex(a=>!a.rule);act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(onyx.affixes[line].id,'hunter');
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0),/이미 포식자/);
  const rule=onyx.affixes.findIndex(a=>a.rule);assert.ok(rule>=0);
@@ -320,9 +321,9 @@ test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% eve
  const low=G.optionAtQuality(def,200,4,60,.1);s.inventory.push({id:'q1',name:'t',slot:'charm',rarity:4,level:60,power:200,affixes:[low]});
  const q=()=>G.affixQuality(s.inventory.at(-1).affixes[0],200,4,60,G.HEIR_ROLL_TOP);
  assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/코인이 부족/);
- s.dungeonCoins=1000;act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.ok(Math.abs(q()-1)<.01,`100% (${q()})`);
+ s.dungeonCoins=300;act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.ok(Math.abs(q()-1)<.01,`100% (${q()})`);
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/옵션 칸/,'already at 100%');
- act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,1000);assert.ok(q()>=1.34&&q()<=1.36,`midpoint 135% (${q()})`);
+ act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,1400);assert.ok(q()>=1.34&&q()<=1.36,`midpoint 135% (${q()})`);
  s.dungeonCoins=4000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0),/옵션 칸/,'already above 120%');
 });
 
