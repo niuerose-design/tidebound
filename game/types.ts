@@ -498,7 +498,7 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
-    /** v3.188 던전 코인: 던전 정복마다 받아 코인샵에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 코인 보너스의 소수점 이월. */
+    /** v3.188 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
     /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
@@ -508,7 +508,7 @@ export type State = {
     /** v3.199 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
     bossCores?: Record<string, number>;
     coreSlot?: string;
-    /** v3.193 코인샵 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
+    /** v3.193 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;

@@ -31,7 +31,7 @@ export function incomeRate(s: Pick<State, 'goldLog' | 'playMs'>) {
 }
 
 /**
- * v3.194 처치 경험치 수입 기록(코인샵 성장권 기준): 일반 처치 경험치를 플레이 시간 1시간 칸에 쌓습니다(누리 보너스 제외, 부재중 정산 포함).
+ * v3.194 처치 경험치 수입 기록(주화 상점 성장권 기준): 일반 처치 경험치를 플레이 시간 1시간 칸에 쌓습니다(누리 보너스 제외, 부재중 정산 포함).
  * 레벨이 낮아지는 환생에서는 지난 생의 기록이 맞지 않아 지웁니다(lifecycle의 환생 유지 목록에 넣지 않음).
  */
 export function recordExpIncome(s: State, exp: number) {

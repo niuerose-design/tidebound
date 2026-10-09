@@ -112,7 +112,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
-    // v3.200 세계석 연구 ‘던전 탐험 I’: 던전 코인 +10%/단계.
+    // v3.200 세계석 연구 ‘던전 탐험 I’: 던전 주화 +10%/단계.
     add('dungeonGoldBonus', 'research', researchRank(s, 'dungeon') * .1);
     rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
     // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 냄새’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감). 전에는 dropRate에서만 더해 상세 능력치에 보이지 않았습니다.

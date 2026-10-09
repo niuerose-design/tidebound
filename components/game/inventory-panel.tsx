@@ -41,7 +41,7 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×1.08.
     const refine = refineCost(item, s), canRefine = (s.essence || 0) >= refine.essence;
     // v3.125 원시 고대 · 계승 태초 · 칠흑은 재련 상한이 150%라 수치 표시도 그 위까지 보입니다(refineTopOf).
-    // v3.189 표시는 계승 최고(150%)까지: 코인샵 수치 상품으로 일반 장비도 100%를 넘을 수 있습니다. 재련 상한(top)은 그대로.
+    // v3.189 표시는 계승 최고(150%)까지: 주화 상점 수치 상품으로 일반 장비도 100%를 넘을 수 있습니다. 재련 상한(top)은 그대로.
     const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, HEIR_ROLL_TOP); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>

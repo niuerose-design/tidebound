@@ -91,7 +91,7 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
     // v3.59 태초 드롭 천장: 태초 없이 PRIMAL_DROP_PITY개째 드롭은 태초.
-    // v3.193 fixedRarity(코인샵 장비 상자)는 등급을 이미 정했으므로 태초 천장을 세지 않습니다.
+    // v3.193 fixedRarity(주화 상점 장비 상자)는 등급을 이미 정했으므로 태초 천장을 세지 않습니다.
     const pity = (s.primalDropPity || 0) + 1, rarity = fixedRarity ?? (pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s)));
     if (fixedRarity === undefined) s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
     const origin = s.dungeon?.id || s.stage;
@@ -316,7 +316,7 @@ export function reward(s: State, rng: () => number) {
     // v3.48 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
     const swarmTurns = s.turn - (e.born ?? s.turn) + 1, masteryHeads = size > 1 ? swarmMasteryKills(size, swarmTurns) : 1;
     // v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값(무리는 마리분만큼): 배율은 나머지에만 곱하고, 승천 배율 뒤에 더합니다.
-    // v3.188 던전(무릉도장 포함)은 처치마다 골드 · 경험치 · 숙련 · 장비를 주지 않습니다. 보상은 정복할 때 던전 코인으로 한 번에(data/dungeon-shop).
+    // v3.188 던전(무릉도장 포함)은 처치마다 골드 · 경험치 · 숙련 · 장비를 주지 않습니다. 보상은 정복할 때 던전 주화로 한 번에(data/dungeon-shop).
     const dungeonRun = !!s.dungeon;
     const masteryReward = dungeonRun ? { amount: 0, drill: 0, base: 0, bonus: 0, source: '' } : victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
     const researched = researchMastery(s, Math.floor((masteryReward.amount - masteryReward.drill) * masteryHeads * focusMastery * eventMastery)), practice = researched.total + drillMastery;
@@ -468,11 +468,11 @@ export function reward(s: State, rng: () => number) {
         const d = DUNGEONS.find(x => x.id === s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.fish.length) {
-            // v3.188 정복 보상은 던전 코인 한 번(처치 턴과 무관한 고정량, 던전 코인 보너스 적용). 클리어 골드는 없앴습니다.
+            // v3.188 정복 보상은 던전 주화 한 번(처치 턴과 무관한 고정량, 던전 주화 보너스 적용). 클리어 골드는 없앴습니다.
             const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level);
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
-            // v3.191 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 코인(던전 공용, 이월 없음). 무릉도장은 층 코인만.
+            // v3.191 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 주화(던전 공용, 이월 없음). 무릉도장은 층 주화만.
             const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus));
             // v3.195 보스 전리품은 하루 보너스 정복에서만 굴립니다(무릉도장은 보너스가 없어 제외).
             if (bonus) rollBossLoot(s, d.id, rng);
@@ -497,10 +497,10 @@ export function reward(s: State, rng: () => number) {
                 s.pearls += d.pearls;
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
-            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.188 반복 정복 확률 드롭은 없앴습니다(코인샵 장비 상자로).
+            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.188 반복 정복 확률 드롭은 없앴습니다(주화 상점 장비 상자로).
             if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name} 정복! 던전 코인 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            addLog(s, `${d.name} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;

@@ -1,4 +1,4 @@
-/** v3.188 던전 코인 지급과 코인샵 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
+/** v3.188 던전 주화 지급과 주화 상점 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
 import type { Item, State } from '../types';
 import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, DUNGEON_SHOP_DAILY, GEAR_BOX, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
 import { ODDS } from '../data/odds';
@@ -10,7 +10,7 @@ import { dungeonGoldMultiplier } from './stats';
 import { bestHourly } from './income';
 
 const modeOf = (mode: DungeonMode | undefined): DungeonMode => mode && dungeonModeTier(mode) ? mode : 'normal';
-/** 이 정복 한 번의 기본 코인(코인 보너스 전). 무릉도장은 층, 지역 던전은 난이도와 하루 보너스 여부(bonus)로 정합니다. */
+/** 이 정복 한 번의 기본 주화(주화 보너스 전). 무릉도장은 층, 지역 던전은 난이도와 하루 보너스 여부(bonus)로 정합니다. */
 export const clearCoinBase = (dungeonId: string, mode: DungeonMode | undefined, depth = 1, bonus = false) => dungeonId === 'abyss' ? abyssCoins(depth) : (bonus ? DAILY_BONUS.coins : DUNGEON_COINS)[modeOf(mode)];
 /** v3.191 오늘 남은 하루 보너스 정복 수(지역 던전 공용, 이월 없음). */
 export const dailyBonusLeft = (s: Pick<State, 'dungeonBonus'>, now: number) => s.dungeonBonus?.day === dayKey(now) ? Math.max(0, DAILY_BONUS.clears - s.dungeonBonus.used) : DAILY_BONUS.clears;
@@ -21,7 +21,7 @@ export function spendDailyBonus(s: State, dungeonId: string, now: number) {
     s.dungeonBonus = { day, used: (s.dungeonBonus?.day === day ? s.dungeonBonus.used : 0) + 1 };
     return true;
 }
-/** 코인 보너스(던전 코인 보너스 능력치)를 곱해 줍니다. 소수점은 dungeonCoinFrac에 이월합니다. 받은 코인을 돌려줍니다. */
+/** 주화 보너스(던전 주화 보너스 능력치)를 곱해 줍니다. 소수점은 dungeonCoinFrac에 이월합니다. 받은 주화를 돌려줍니다. */
 export function grantDungeonCoins(s: State, base: number) {
     const raw = base * dungeonGoldMultiplier(s) + (s.dungeonCoinFrac || 0), gain = Math.floor(raw);
     s.dungeonCoinFrac = raw - gain;

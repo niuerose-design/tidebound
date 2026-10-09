@@ -27,7 +27,7 @@ export const ownedCores = (s: Pick<State, 'bossCores'>) => Object.keys(s.bossCor
 /** 세트 효과(보유 수 기준). */
 export const BOSS_CORE_SET: { count: number; label: string; bonus: Partial<Record<CoreStat, number>> }[] = [
     { count: 2, label: '보스·사냥감 피해 +3%', bonus: { bossDamage: .03 } },
-    { count: 4, label: '던전 코인 보너스 +10%', bonus: { dungeonGoldBonus: .1 } },
+    { count: 4, label: '던전 주화 보너스 +10%', bonus: { dungeonGoldBonus: .1 } },
     { count: 6, label: '지속 피해 +5%', bonus: { dotBonus: .05 } },
     { count: 7, label: '보스·사냥감 피해 +5%', bonus: { bossDamage: .05 } },
 ];

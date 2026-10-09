@@ -1,4 +1,4 @@
-/** v3.188 던전 코인샵: 칠흑 장신구 제작 · 각성, 희귀 이상 장비 상자, 포식자 각인. 가격은 data/dungeon-shop.ts. */
+/** v3.188 던전 주화 상점: 칠흑 장신구 제작 · 각성, 희귀 이상 장비 상자, 포식자 각인. 가격은 data/dungeon-shop.ts. */
 import { DUNGEON_SHOP, HUNTER_AFFIX } from '../../data/dungeon-shop';
 import { affixDef, rollOption, syncOrnateName } from '../../data/gear';
 import { inventoryCap } from '../../data/economy';
@@ -15,7 +15,7 @@ import type { State } from '../../types';
 import type { ActionHandlers } from './types';
 
 function pay(s: State, price: number) {
-    if ((s.dungeonCoins || 0) < price) throw Error(`던전 코인이 부족합니다 (필요 ${price.toLocaleString()}).`);
+    if ((s.dungeonCoins || 0) < price) throw Error(`던전 주화가 부족합니다 (필요 ${price.toLocaleString()}).`);
     s.dungeonCoins = (s.dungeonCoins || 0) - price;
 }
 function room(s: State) {
@@ -32,7 +32,7 @@ export const dungeonShopActions: ActionHandlers = {
             pay(s, offer.price);
             countBought(s, 'onyx', now);
             const habitat = STAGES.find(st => st.habitat && st.region === onyxById(bossId)!.region)?.level || 1;
-            grantOnyx(s, bossId, habitat, rng, `던전 코인샵 · 코인 -${offer.price.toLocaleString()}`);
+            grantOnyx(s, bossId, habitat, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`);
             return;
         }
         if (id === 'gearBox') {
@@ -41,7 +41,7 @@ export const dungeonShopActions: ActionHandlers = {
             // v3.193 전설 이상 확정, 내 레벨 기준. 고대 · 태초는 일반 드롭 하나와 비슷한 확률(GEAR_BOX).
             const before = s.inventory.length, rarity = rollGearBoxRarity(rng);
             drop(s, dropLevel(s, s.level, 0), rng, true, undefined, rarity);
-            addLog(s, `던전 코인샵 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 코인 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
+            addLog(s, `던전 주화 상점 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 주화 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
             return;
         }
         if (id === 'hunter') {
@@ -57,7 +57,7 @@ export const dungeonShopActions: ActionHandlers = {
             const next = rollOption(affixDef(HUNTER_AFFIX)!, item.power, item.rarity, rng, item.level);
             item.affixes = item.affixes!.map((x, i) => i === index ? next : x);
             syncOrnateName(item);
-            addLog(s, `던전 코인샵 · ${item.name} ${target.name} → ${next.name} 각인 · 코인 -${DUNGEON_SHOP.hunterImprint.toLocaleString()}`, 'reward');
+            addLog(s, `던전 주화 상점 · ${item.name} ${target.name} → ${next.name} 각인 · 주화 -${DUNGEON_SHOP.hunterImprint.toLocaleString()}`, 'reward');
             return;
         }
         if (id === 'quality100' || id === 'quality120') {
@@ -69,7 +69,7 @@ export const dungeonShopActions: ActionHandlers = {
             const price = QUALITY_PRICE[good], before = Math.round((lineQuality(item, index) || 0) * 100);
             pay(s, price);
             const { after } = applyQuality(item, index, good, rng), now = Math.round((lineQuality(item, index) || 0) * 100);
-            addLog(s, `던전 코인샵 · ${item.name} ${after.name} 수치 ${before}% → ${now}% · 코인 -${price.toLocaleString()}`, 'reward');
+            addLog(s, `던전 주화 상점 · ${item.name} ${after.name} 수치 ${before}% → ${now}% · 주화 -${price.toLocaleString()}`, 'reward');
             return;
         }
         if (id === 'growth1' || id === 'growth4') {
@@ -80,7 +80,7 @@ export const dungeonShopActions: ActionHandlers = {
             countBought(s, id, now);
             s.gold += offer.gold; s.exp += offer.exp;
             gainLevels(s);
-            addLog(s, `던전 코인샵 · 성장권 ${offer.hours}시간 · 골드 +${offer.gold.toLocaleString()} · 경험치 +${offer.exp.toLocaleString()} · 코인 -${offer.price.toLocaleString()}`, 'reward');
+            addLog(s, `던전 주화 상점 · 성장권 ${offer.hours}시간 · 골드 +${offer.gold.toLocaleString()} · 경험치 +${offer.exp.toLocaleString()} · 주화 -${offer.price.toLocaleString()}`, 'reward');
             return;
         }
         throw Error('없는 상품입니다.');

@@ -80,7 +80,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 업적 SP ${research}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>정복</b>던전 코인 {d.id === 'abyss' ? format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult)) : `${format(Math.floor(clearCoinBase(d.id, mode, 1, true) * coinMult))} (오늘 보너스 ${bonusLeft}/${DAILY_BONUS.clears}회 남음) · 보너스 뒤 ${format(Math.floor(clearCoinBase(d.id, mode) * coinMult))}`}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
+                <span><b>정복</b>던전 주화 {d.id === 'abyss' ? format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult)) : `${format(Math.floor(clearCoinBase(d.id, mode, 1, true) * coinMult))} (오늘 보너스 ${bonusLeft}/${DAILY_BONUS.clears}회 남음) · 보너스 뒤 ${format(Math.floor(clearCoinBase(d.id, mode) * coinMult))}`}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
             </div>
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
@@ -97,7 +97,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     </>;
 }
 
-/** v3.188 던전 코인샵: 정복으로 모은 던전 코인을 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
+/** v3.188 던전 주화 상점: 정복으로 모은 던전 주화를 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
 function DungeonCoinShop({ s, send, busy }: PanelProps) {
     const now = useNow(60_000), hour = growthOffer(s, 'growth1', now), coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
     const eligible = allItems(s).filter(x => !hunterBlock(x));
@@ -106,8 +106,8 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
     const index = lines.some(l => l.i === line) ? line : lines[0]?.i ?? -1;
     const buy = (id: string, value?: string) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
     return <section className="panel dungeon-coin-shop">
-        <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
-        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나옵니다(환생 · 승천해도 남고, 다시 얻으면 각성). 코인은 환생해도 남습니다.</p>
+        <div className="section-title"><h3>던전 주화 상점</h3><span>보유 {format(coins)} 주화 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 주화 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
+        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 주화를 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 주화를 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나옵니다(환생 · 승천해도 남고, 다시 얻으면 각성). 주화는 환생해도 남습니다.</p>
         <div className="dungeon-reward-lines">
             <span><b>코어</b>보스 코어 {ownedCores(s).length}/{Object.keys(BOSS_CORES).length}종 · 칸에 낀 코어는 효과 100%, 나머지는 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외) · 세트 {BOSS_CORE_SET.map(b => `${ownedCores(s).length >= b.count ? '✓' : '·'}${b.count}개 ${b.label}`).join(' / ')}</span>
             {Object.entries(BOSS_CORES).map(([id, c]) => { const rank = s.bossCores?.[id], own = rank !== undefined, worn = s.coreSlot === id; return <span key={id}><b>{worn ? '장착' : own ? '보유' : '미획득'}</b>{c.name}{own ? ` · 각성 ${rank}/${BOSS_CORE_RULES.awakenMax}` : ''} · {c.desc} {own && <button className="secondary small" disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '빼기' : '장착'}</button>}</span>; })}

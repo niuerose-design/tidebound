@@ -6,7 +6,7 @@ import type { Skill } from '../types';
  *
  * - 팬텀 (1차): 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
  * - 로그(섀도어): 골드·드롭을 내려놓고 도감 기록(발견한 몬스터 + 등록한 물건)에 비례합니다(scaling 'codex', perCount codex).
- * - 해적(캡틴): 골드·던전 코인에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
+ * - 해적(캡틴): 골드·던전 주화에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
  * - 패스파인더 (1차): 경험치는 그대로, 누적 처치(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
  * - 와일드헌터 (1차): 던전 클리어 + 보스 처치(scaling 'hunt', perCount hunt)과 지정 몬스터 처치(perCount species), 사냥감 추가 피해(preyBonus).
  * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 음유시인 계보만 장착합니다.
@@ -72,12 +72,12 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     kingsHoard: { desc: '변종 조우 확률 +60%, 황금 개체 확률 +1%p, 처치 골드 +20%, 물리 공격 +60.', bonus: { variantFind: .6, goldenFind: .01, goldBonus: .2, attack: 60 } },
     legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p, 처치 골드 +30%, 물리 공격 +120, 최대 체력 +300.', bonus: { variantFind: 1, goldenFind: .02, goldBonus: .3, attack: 120, hp: 300 } },
     // 해적(캡틴): 수집가의 드롭을 넘겨받음
-    salvageContract: { desc: '골드 획득 +15%, 던전 코인 +8%, 장비 드롭 확률 +45%.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
+    salvageContract: { desc: '골드 획득 +15%, 던전 주화 +8%, 장비 드롭 확률 +45%.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
     goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
     portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
-    tradeWind: { desc: '골드·던전 코인 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
-    tradeEmpire: { desc: '골드·던전 코인·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
-    goldenEmpire: { desc: '골드·던전 코인·장비 드롭·환생 세계석과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
+    tradeWind: { desc: '골드·던전 주화 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
+    tradeEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
+    goldenEmpire: { desc: '골드·던전 주화·장비 드롭·환생 세계석과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
     // 패스파인더: 경험치(렐릭의 힘의 재료) + 평평한 능력치. 기록 비례 성장은 와일드헌터 · 섀도어 · 에반과 겹쳐 v3.153에 뺌.
     voyageReview: { desc: '획득 경험치 +12%. 경험치 보너스(환생 · 연구 몫 제외)가 렐릭의 힘이 되어 패스파인더 기술의 피해를 올립니다.', bonus: { expBonus: .08 } },
     chronicleStudy: { desc: '획득 경험치 +18%, 두 공격 +16, 최대 체력 +60. 숙련할수록 경험치와 능력치가 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } },
@@ -126,9 +126,9 @@ export const SUPPORT_JOB_DESC: Record<string, string> = {
     salvageMerchant: '동전을 던져 싸우고 처치 골드와 장비 드롭을 늘리는 경제 1차 직업입니다.',
     memoryMerchant: '보유 골드에 비례하는 래피드 파이어와 골드·드롭 패시브를 가진 경제형 2차 직업입니다.',
     harborBroker: '경제 계보의 2차 직업입니다. 흥정 갈고리로 상대를 약화시키고, 패시브로 골드와 명중을 올립니다.',
-    tradePrince: '경제 계보의 환생 후 3차 직업입니다. 배틀쉽 봄버 주문을 쓰고, 패시브로 골드와 던전 코인를 올립니다.',
-    seaTradeKing: '캡틴 계보의 환생 후 4차 경제 직업입니다. 배틀쉽 봄버를 쓰고, 패시브로 골드와 던전 코인를 올립니다.',
-    goldEmperor: '캡틴 계보의 5차 직업입니다. 불릿 파티를 쓰고, 패시브로 골드·던전 코인·환생 세계석을 올려 경제의 정점에 섭니다.',
+    tradePrince: '경제 계보의 환생 후 3차 직업입니다. 배틀쉽 봄버 주문을 쓰고, 패시브로 골드와 던전 주화를 올립니다.',
+    seaTradeKing: '캡틴 계보의 환생 후 4차 경제 직업입니다. 배틀쉽 봄버를 쓰고, 패시브로 골드와 던전 주화를 올립니다.',
+    goldEmperor: '캡틴 계보의 5차 직업입니다. 불릿 파티를 쓰고, 패시브로 골드·던전 주화·환생 세계석을 올려 경제의 정점에 섭니다.',
     voyageScribe: '경험치를 더 얻고, 그 경험치 보너스가 렐릭의 힘이 되어 기술 피해로 돌아오는 패스파인더 1차 직업입니다.',
     chronicleNavigator: '경험치 획득이 높고, 렐릭 차지로 능력치가 함께 오르는 패스파인더 2차 직업입니다.',
     logbookRunner: '기록 계보의 2차 직업입니다. 길 안내 질주로 자신을 가속하고, 패시브로 속도와 경험치를 올립니다.',

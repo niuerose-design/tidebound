@@ -302,7 +302,7 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,20,'v3.191 first normal clear of the day = 20 bonus coins');assert.equal(n.s.clears.grotto,2);
  assert.equal(clear('hell').s.dungeonCoins,40);assert.equal(clear('nightmare').s.dungeonCoins,60);const mu=clear(undefined,12).s;assert.equal(mu.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1, no daily bonus');assert.equal(mu.dungeonBonus,undefined,'Mu Lung does not spend the daily bonus');
  const s=newState(0);s.level=40;s.dungeonCoins=0;
- assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/코인이 부족/);
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/주화가 부족/);
  s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=3,true,'v3.193 legendary or better');
  const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.192 price ladder');
  s.dungeonCoins=P.onyxCraft+P.onyxAwaken+P.hunterImprint;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
@@ -321,7 +321,7 @@ test('v3.189 coin shop quality goods: one option line to 100%, or 120–150% eve
  const def=G.AFFIX_POOL.find(a=>a.kind==='percent'&&!a.minRarity&&!a.junk&&!a.onlyOrigin&&!a.onlySlot&&!a.retired&&!a.rollBoth);
  const low=G.optionAtQuality(def,200,4,60,.1);s.inventory.push({id:'q1',name:'t',slot:'charm',rarity:4,level:60,power:200,affixes:[low]});
  const q=()=>G.affixQuality(s.inventory.at(-1).affixes[0],200,4,60,G.HEIR_ROLL_TOP);
- assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/코인이 부족/);
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/주화가 부족/);
  s.dungeonCoins=300;act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.ok(Math.abs(q()-1)<.01,`100% (${q()})`);
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'quality100',value:'q1|0'},0),/옵션 칸/,'already at 100%');
  act(s,{type:'dungeonShop',id:'quality120',value:'q1|0'},0,()=>.5);assert.equal(s.dungeonCoins,1400);assert.ok(q()>=1.34&&q()<=1.36,`midpoint 135% (${q()})`);
