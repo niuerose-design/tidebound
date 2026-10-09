@@ -366,11 +366,6 @@
     width:100%
   }
 
-  .app-footer {
-    padding:0 16px 25px;
-    flex-wrap:wrap;
-    font-size:9px
-  }
 
   .stage-grid {
     gap:12px
@@ -569,7 +564,6 @@
   .mobile-tab-bar button svg { transition:transform .15s }
   .mobile-tab-bar button.active svg { transform:translateY(-1px) }
   .app-body { padding-bottom:calc(70px + env(safe-area-inset-bottom)) }
-  .app-footer { margin-bottom:8px }
 }
 
 /* v25.18 모바일 안정화: 가로 넘침 차단, 전투 중 높이 변화 최소화, 스킬 화면 탭 줄 정리 */

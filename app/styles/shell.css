@@ -1,8 +1,23 @@
 /* 앱 뼈대: 사이드바·상단바·작업 영역, 전투 장면, 버튼 종류. */
+/*
+ * v3.218 화면 배율: 넓은 화면일수록 글자 · 칸 · 사이드바가 함께 커집니다(최하단 문구 줄은 없앰).
+ * 화면 전체를 브라우저 확대처럼 키우므로 칸 비율은 그대로이고, 대화창 · 툴팁(본문 밖에 그림)은 원래 크기입니다. 모바일(767px 이하)은 1.
+ */
+:root { --ui-scale:1 }
+@media (min-width:1360px) { :root { --ui-scale:1.05 } }
+@media (min-width:1600px) { :root { --ui-scale:1.1 } }
+@media (min-width:1850px) { :root { --ui-scale:1.16 } }
+@media (min-width:2200px) { :root { --ui-scale:1.25 } }
+@media (min-width:2600px) { :root { --ui-scale:1.4 } }
 .app-body {
   flex:1;
-  min-width:0
+  min-width:0;
+  zoom:var(--ui-scale)
 }
+/* 사이드바는 --sidebar-zoom을 따릅니다. 세로가 짧은 화면(노트북 등)에서는 메뉴가 잘리지 않게 원래 크기로 둡니다. */
+:root { --sidebar-zoom:var(--ui-scale) }
+@media (max-height:980px) { :root { --sidebar-zoom:1 } }
+.game-sidebar [data-sidebar=sidebar] { zoom:var(--sidebar-zoom) }
 
 .game-sidebar {
   border-right:1px solid var(--border)
