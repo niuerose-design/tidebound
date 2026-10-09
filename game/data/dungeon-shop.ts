@@ -35,6 +35,8 @@ export const DUNGEON_SHOP = {
     quality100: 300,
     /** v3.189 고른 옵션 한 줄의 수치를 120~150%(계승 최고까지)로. 일반 장비도 보통 최고를 넘습니다. */
     quality120: 3600,
+    /** v3.202 랜덤 보스 코어 상자: 7종 중 하나(없으면 획득, 있으면 각성). 하루 1번(DUNGEON_SHOP_DAILY.coreBoxPerDay). */
+    coreBox: 3600,
 } as const;
 /** v3.189 수치 상품: 목표 수치(하한)와 위로 굴리는 상한. 120%는 [1.2, 1.5]에서 고르게 굴립니다. */
 export const QUALITY_GOODS = { quality100: { min: 1, max: 1 }, quality120: { min: 1.2, max: 1.5 } } as const;
@@ -48,7 +50,7 @@ export const HUNTER_AFFIX = 'hunter';
  */
 export const GEAR_BOX = { minRarity: 3, highFrom: 5, highScale: .25 };
 /** v3.193 칠흑 상품(제작 · 각성 합쳐서)은 하루(한국 시간) onyxPerDay번까지. */
-export const DUNGEON_SHOP_DAILY = { onyxPerDay: 1 };
+export const DUNGEON_SHOP_DAILY = { onyxPerDay: 1, coreBoxPerDay: 1 };
 /**
  * v3.194 성장권: 내 최근 사냥 수입(최근 24시간 중 가장 많이 번 1시간의 골드 · 경험치) × hours를 바로 받습니다. 숙련 · 장비 · 처치 수는 없습니다.
  * 환생 maxRebirths회 미만만 살 수 있고, 하루(한국 시간) perDay번까지. 둘 다 사면 하루 1,100주화로 헬 하루 보너스(1,200)를 거의 다 씁니다.

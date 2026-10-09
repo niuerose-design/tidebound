@@ -1,12 +1,13 @@
 /** v3.188 던전 주화 상점: 칠흑 장신구 제작 · 각성, 희귀 이상 장비 상자, 포식자 각인. 가격은 data/dungeon-shop.ts. */
-import { DUNGEON_SHOP, HUNTER_AFFIX } from '../../data/dungeon-shop';
+import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, HUNTER_AFFIX } from '../../data/dungeon-shop';
 import { affixDef, rollOption, syncOrnateName } from '../../data/gear';
 import { inventoryCap } from '../../data/economy';
 import { STAGES } from '../../data/world';
 import { onyxById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
+import { grantBossCore } from '../boss-loot';
 import { drop, dropLevel, gainLevels } from '../encounter';
-import { allItems, hunterBlock, onyxOffer, countBought, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
+import { allItems, hunterBlock, onyxOffer, countBought, boughtToday, growthOffer, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
 import { BOSS_CORES } from '../../data/boss-core';
@@ -33,6 +34,16 @@ export const dungeonShopActions: ActionHandlers = {
             countBought(s, 'onyx', now);
             const habitat = STAGES.find(st => st.habitat && st.region === onyxById(bossId)!.region)?.level || 1;
             grantOnyx(s, bossId, habitat, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`);
+            return;
+        }
+        if (id === 'coreBox') {
+            // v3.202 랜덤 보스 코어 상자: 7종 중 하나를 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
+            if (boughtToday(s, 'coreBox', now) >= DUNGEON_SHOP_DAILY.coreBoxPerDay) throw Error(`보스 코어 상자는 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번까지입니다(한국 시간 자정에 초기화).`);
+            pay(s, DUNGEON_SHOP.coreBox);
+            countBought(s, 'coreBox', now);
+            const ids = Object.keys(BOSS_CORES), pick = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))];
+            addLog(s, `던전 주화 상점 · 보스 코어 상자 개봉 · ${BOSS_CORES[pick].name} · 주화 -${DUNGEON_SHOP.coreBox.toLocaleString()}`, 'reward');
+            grantBossCore(s, pick, rng);
             return;
         }
         if (id === 'gearBox') {
@@ -88,7 +99,7 @@ export const dungeonShopActions: ActionHandlers = {
     /** v3.199 보스 코어 칸: id = 가진 코어의 던전 id(빈 값이면 빼기). */
     equipCore(s, { id }) {
         if (!id) { s.coreSlot = undefined; addLog(s, '보스 코어를 칸에서 뺐습니다.'); return; }
-        if (!BOSS_CORES[id] || !(id in (s.bossCores || {}))) throw Error('가진 보스 코어만 낄 수 있습니다.');
+        if (!BOSS_CORES[id] || s.bossCores?.[id] === undefined) throw Error('가진 보스 코어만 낄 수 있습니다.');
         s.coreSlot = id;
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 장착`);
     },

@@ -506,10 +506,10 @@ export type State = {
     /** v3.195 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
     bossLootMiss?: number;
     /** v3.199 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
-    bossCores?: Record<string, number>;
+    bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[] }>;
     coreSlot?: string;
     /** v3.193 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.194 성장권). */
-    dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number };
+    dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;

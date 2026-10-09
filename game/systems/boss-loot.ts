@@ -4,25 +4,30 @@
  */
 import type { State } from '../types';
 import { ODDS } from '../data/odds';
-import { BOSS_CORES, BOSS_CORE_RULES, ownedCores } from '../data/boss-core';
+import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry, rollCoreAttrs } from '../data/boss-core';
+import { ATTRIBUTES } from '../data/progression';
 import { addLog } from './state';
 
 /** 보스 코어 하나를 줍니다(새로 얻거나 각성). 받은 뒤 각성 단계, 코어가 없는 던전이면 undefined. */
-export function grantBossCore(s: State, dungeonId: string): number | undefined {
+export function grantBossCore(s: State, dungeonId: string, rng: () => number = Math.random): number | undefined {
     const core = BOSS_CORES[dungeonId];
     if (!core) return undefined;
-    const cores = (s.bossCores ??= {}), had = dungeonId in cores;
+    const cores = (s.bossCores ??= {}), had = coreEntry(cores[dungeonId]);
     if (!had) {
-        cores[dungeonId] = 0;
+        const attrs = rollCoreAttrs(rng);
+        cores[dungeonId] = { rank: 0, attrs };
         if (!s.coreSlot) s.coreSlot = dungeonId;
-        addLog(s, `✦ 보스 코어 획득! ${core.name} · ${core.desc} (보유 ${ownedCores(s).length}/${Object.keys(BOSS_CORES).length}종${s.coreSlot === dungeonId ? ' · 보스 코어 칸에 장착' : ''})`, 'reward');
+        const names = attrs.map(a => `${ATTRIBUTES.find(x => x.id === a.k)!.name} 레벨 ×${a.f}`).join(' · ');
+        addLog(s, `✦ 보스 코어 획득! ${core.name} · ${core.desc} 기본 능력치: ${names} (보유 ${ownedCores(s).length}/${Object.keys(BOSS_CORES).length}종${s.coreSlot === dungeonId ? ' · 보스 코어 칸에 장착' : ''})`, 'reward');
         return 0;
     }
-    if (cores[dungeonId] < BOSS_CORE_RULES.awakenMax) {
-        cores[dungeonId] += 1;
-        addLog(s, `✦ 보스 코어 · ${core.name} 각성 ${cores[dungeonId]}/${BOSS_CORE_RULES.awakenMax}! 효과 +${Math.round(cores[dungeonId] * BOSS_CORE_RULES.awakenStep * 100)}%(턴 연장 제외)`, 'reward');
-    } else { s.pearls += BOSS_CORE_RULES.duplicatePearls; addLog(s, `✦ 보스 코어 · ${core.name}은(는) 각성까지 마쳐 세계석 +${BOSS_CORE_RULES.duplicatePearls}`, 'reward'); }
-    return cores[dungeonId];
+    if (had.rank < BOSS_CORE_RULES.awakenMax) {
+        cores[dungeonId] = { ...had, rank: had.rank + 1 };
+        addLog(s, `✦ 보스 코어 · ${core.name} 각성 ${had.rank + 1}/${BOSS_CORE_RULES.awakenMax}! 효과 · 기본 능력치 +${Math.round((had.rank + 1) * BOSS_CORE_RULES.awakenStep * 100)}%(턴 연장 제외)`, 'reward');
+        return had.rank + 1;
+    }
+    s.pearls += BOSS_CORE_RULES.duplicatePearls; addLog(s, `✦ 보스 코어 · ${core.name}은(는) 각성까지 마쳐 세계석 +${BOSS_CORE_RULES.duplicatePearls}`, 'reward');
+    return had.rank;
 }
 /** 보너스 정복 한 번에 보스 코어를 굴립니다. 받았으면 각성 단계. */
 export function rollBossLoot(s: State, dungeonId: string, rng: () => number): number | undefined {
@@ -30,5 +35,5 @@ export function rollBossLoot(s: State, dungeonId: string, rng: () => number): nu
     const miss = s.bossLootMiss || 0;
     if (rng() >= ODDS.bossLoot.chance && miss + 1 < ODDS.bossLoot.pity) { s.bossLootMiss = miss + 1; return undefined; }
     s.bossLootMiss = 0;
-    return grantBossCore(s, dungeonId);
+    return grantBossCore(s, dungeonId, rng);
 }

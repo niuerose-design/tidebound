@@ -4,7 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus, onyxResonance } from '../data/onyx';
-import { coreStats } from '../data/boss-core';
+import { coreStats, coreAttributes } from '../data/boss-core';
 import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
@@ -62,7 +62,9 @@ function hasPositiveBonus(sk: Skill) {
 }
 /** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
 export function trainedAttributes(s: State, usable = usableSkills(s)) {
+    // v3.202 보스 코어 기본 능력치는 능력치 효과에만 더합니다(직업 조건 · 기록은 직접 배분 그대로).
     const v = attributes(s);
+    { const c = coreAttributes(s); for (const k in c) v[k as keyof typeof v] += c[k as keyof typeof c] || 0; }
     for (const { sk, mastery } of usable) {
         if (!sk.attrBonus) continue;
         const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, mastery);

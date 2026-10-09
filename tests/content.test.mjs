@@ -377,18 +377,18 @@ test('v3.195-199 boss cores: daily-bonus regional clears only; duplicates awaken
  assert.ok(O.ODDS.bossLoot.chance>0&&O.ODDS.bossLoot.pity>1);
  const clear=(s,id,rng)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(s.enemy&&g++<50)tick(s,rng);};
  const s=newState(0);s.level=60;s.rebirths=10;const inv=s.inventory.length;const hp0=stats(s).hp,mp0=stats(s).mana;clear(s,'grotto',()=>0);
- assert.deepEqual(s.bossCores,{grotto:0});assert.equal(s.coreSlot,'grotto','first core goes into the empty slot');assert.equal(s.inventory.length,inv,'cores are not items');
+ assert.equal(s.bossCores.grotto.rank,0);assert.equal(s.bossCores.grotto.attrs.length,2);assert.equal(s.coreSlot,'grotto','first core goes into the empty slot');assert.equal(s.inventory.length,inv,'cores are not items');
  const g1=stats(s).hp-hp0;assert.ok(g1>=2000,'Mushmom core: max HP +2,000 flat (then the usual HP multipliers)');assert.ok(stats(s).mana-mp0>=300);
- BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto,1);assert.ok(Math.abs((stats(s).hp-hp0)/g1-1.1)<.01,'awaken +10% of the effect');
- for(let k=0;k<4;k++)BL.grantBossCore(s,'grotto');const p=s.pearls;BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto,5);assert.equal(s.pearls,p+C.BOSS_CORE_RULES.duplicatePearls);
+ BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto.rank,1);assert.ok(Math.abs((stats(s).hp-hp0)/g1-1.1)<.01,'awaken +10% of the effect');
+ for(let k=0;k<4;k++)BL.grantBossCore(s,'grotto');const p=s.pearls;BL.grantBossCore(s,'grotto');assert.equal(s.bossCores.grotto.rank,5);assert.equal(s.pearls,p+C.BOSS_CORE_RULES.duplicatePearls);
  BL.grantBossCore(s,'caldera');assert.equal(s.coreSlot,'grotto','slot kept');let cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,undefined,'turn effects do not resonate');
  assert.ok(Math.abs(cs.bossDamage-(.05*1.5+.05*.1+.03))<1e-9,'worn 100% x awaken + resonance 10% + 2-piece set');
  act(s,{type:'equipCore',id:'caldera'},0);cs=C.coreStats(s);assert.equal(cs.dotTurnsBonus,1);assert.equal(stats(s).dotTurnsBonus,1);
  assert.throws(()=>act(s,{type:'equipCore',id:'temple'},0),/가진 보스 코어/);act(s,{type:'equipCore',id:''},0);assert.equal(s.coreSlot,undefined);
  const t=newState(0);t.level=60;t.bossLootMiss=O.ODDS.bossLoot.pity-1;clear(t,'temple',()=>.5);assert.ok('temple' in t.bossCores,'pity');
  const u=newState(0);u.level=60;u.dungeonBonus={day:'1970-01-01',used:30};clear(u,'grotto',()=>0);assert.equal(u.bossCores,undefined,'no core after the daily bonus');
- const {restartLife,ascend}=await L.load('systems/actions/lifecycle');restartLife(s,1000);assert.equal(s.bossCores.grotto,5,'kept across lives');
- s.rebirths=999;ascend(s,2000);assert.equal(s.bossCores.grotto,5,'kept across ascension');assert.equal(s.coreSlot,undefined);
+ const {restartLife,ascend}=await L.load('systems/actions/lifecycle');restartLife(s,1000);assert.equal(s.bossCores.grotto.rank,5,'kept across lives');
+ s.rebirths=999;ascend(s,2000);assert.equal(s.bossCores.grotto.rank,5,'kept across ascension');assert.equal(s.coreSlot,undefined);
 });
 
 test('v3.198 Zakum and Papulatus have their own kits (no longer the Mu Gong ancient-boss set); loot rules are inherit-style',async()=>{
@@ -405,4 +405,15 @@ test('v3.200 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  const r=E.RESEARCH.find(x=>x.id==='dungeon');assert.equal(r.name,'던전 탐험 I');assert.equal(r.tab,'gold');
  const s=newState(0);const base=stats(s).dungeonGoldBonus||0;s.permanent.dungeon=3;assert.ok(Math.abs((stats(s).dungeonGoldBonus||0)-base-.3)<1e-9);
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
+});
+
+test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken, 10% resonance); daily random core box',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),D=await L.load('data/dungeon-shop'),BL=await L.load('systems/boss-loot');
+ const a=C.rollCoreAttrs(()=>.5);assert.equal(a.length,2);assert.notEqual(a[0].k,a[1].k);for(const x of a)assert.ok(x.f>=.2&&x.f<=1);
+ const s=newState(0);s.level=40;s.bossCores={grotto:{rank:0,attrs:[{k:'str',f:3},{k:'vit',f:2}]},temple:{rank:2,attrs:[{k:'str',f:5}]}};s.coreSlot='grotto';
+ assert.deepEqual(C.coreAttributes(s),{str:120+Math.floor(40*5*1.2*.1),vit:80});
+ const atk0=(()=>{const t={...s,bossCores:{}};return stats(t).attack;})();assert.ok(stats(s).attack>atk0,'core strength raises attack');
+ assert.deepEqual(C.coreEntry(3),{rank:3,attrs:[]},'old numeric saves still read');
+ const u=newState(0);u.dungeonCoins=D.DUNGEON_SHOP.coreBox*2;act(u,{type:'dungeonShop',id:'coreBox'},0,()=>.1);assert.equal(Object.keys(u.bossCores).length,1);assert.equal(u.dungeonCoins,D.DUNGEON_SHOP.coreBox);
+ assert.throws(()=>act(u,{type:'dungeonShop',id:'coreBox'},0,()=>.1),/하루 1번/);act(u,{type:'dungeonShop',id:'coreBox'},86400000,()=>.1);assert.equal(Object.values(u.bossCores)[0].rank,1,'same core again awakens');
 });
