@@ -15,6 +15,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
+import { regionCores, regionCoreRanks } from '../data/boss-core';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -164,7 +165,7 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
  */
 /** v3.220 까미 · 누리 id(data/mimic.ts · data/exp-nuri.ts). 세이브에 저장되는 값이라 바뀌지 않습니다. */
 const MIMIC_ID = 'masteryMimic', NURI_ID = 'expNuri';
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs' | 'onyxBook'>>) {
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs' | 'onyxBook' | 'bossCores'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
     const book = s.book || {};
@@ -175,7 +176,7 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     const regionClears = Object.entries(s.clears || {}).reduce((x, [id, n]) => id === 'abyss' ? x : x + (n || 0), 0);
     const onyx = Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s) };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;

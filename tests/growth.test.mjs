@@ -153,7 +153,8 @@ test('v24 late-bloomer passives start expensive and pay off at three stages (v3.
 
 const STATUS_TUNING_CAPS = (await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/balance')).STATUS_TUNING.earlyStatusMultiplierCap;
 test('v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped', () => {
- for (const sk of SKILLS.filter(x => x.statusOnly && !x.timeRewind)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
+ // v3.221 코어 비례 자기 버프(어둠의 의식)는 적에게 거는 상태이상이 아니라 자기 버프라 타임 리와인드처럼 뺍니다.
+ for (const sk of SKILLS.filter(x => x.statusOnly && !x.timeRewind && !x.coreBuff)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
  const caps = STATUS_TUNING_CAPS;
  for (const sk of SKILLS.filter(x => x.type === 'active' && !x.statusOnly && caps[x.effect] !== undefined)) {
   const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;

@@ -4,7 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus, onyxResonance } from '../data/onyx';
-import { coreStats, coreAttributes } from '../data/boss-core';
+import { coreStats, coreAttributes, regionCores, BOSS_CORE_RULES } from '../data/boss-core';
 import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
@@ -60,7 +60,7 @@ function hasPositiveBonus(sk: Skill) {
 export function trainedAttributes(s: State, usable = usableSkills(s)) {
     // v3.202 보스 코어 기본 능력치는 능력치 효과에만 더합니다(직업 조건 · 기록은 직접 배분 그대로).
     const v = attributes(s);
-    { const c = coreAttributes(s); for (const k in c) v[k as keyof typeof v] += c[k as keyof typeof c] || 0; }
+    { const c = coreAttributes(s, coreResonanceOf(s)); for (const k in c) v[k as keyof typeof v] += c[k as keyof typeof c] || 0; }
     for (const { sk, mastery } of usable) {
         if (!sk.attrBonus) continue;
         const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, mastery);
@@ -156,7 +156,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     // v3.202 보스 코어(칸 · 공명). 장비 규칙 상한(RULE_CAPS) 밖이라 장비의 기절 · 침묵 +1과 따로 더해집니다.
-    { const res = coreStats(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
+    { const res = coreStats(s, coreResonanceOf(s)); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     const passiveJobs = new Set<string>();
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
@@ -293,7 +293,9 @@ export function powerParts(v: Stats) {
     return { offense, durability, critFactor, hit, pierce, armor, dodge };
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
-export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
+/** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
+const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
+export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), ...(regionCores(s).length ? { cores: regionCores(s).length } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** v3.219 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.219 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
 export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefined, skills: [...(s.skills || [])] }; if (s.support?.ap) trimLoadout(bare); return snapshot(bare); };
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */

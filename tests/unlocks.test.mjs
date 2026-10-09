@@ -194,3 +194,29 @@ test('v3.221 누리 추적자: 하얀 발자국은 누리(대왕 포함)에게�
     const pen0 = stats(p).penetration; p.book.expNuri = 300; const pen300 = stats(p).penetration;
     assert.ok(pen300 - pen0 > 0.25 && pen300 - pen0 <= 0.3 + 1e-9, `penetration ${pen0} → ${pen300}`);
 });
+
+test('v3.221 어둠의 추종자: 어둠의 의식은 지역 보스 코어 수 비례 자기 버프(3 · 5 · 7 단계), 공명 30%, 패시브는 코어 수 · 각성(무릉도장 코어 제외)', async () => {
+    const C = await loadGame().load('game/systems/combat.js'), BC = await loadGame().load('game/data/boss-core.js');
+    const sk = SKILLS.find(x => x.id === 'shadowRite');
+    const at = n => C.withCoreBuff(sk, n);
+    assert.equal(at(0).selfBuff.damageMultiplier, 1); assert.equal(at(0).selfBuff.turns, 4);
+    assert.equal(at(3).selfBuff.turns, 6); assert.ok(!at(3).wardTurns && !at(3).extraTurn);
+    assert.equal(at(5).wardTurns, 2); assert.ok(!at(5).extraTurn);
+    const top = at(7); assert.ok(Math.abs(top.selfBuff.damageMultiplier - 1.49) < 1e-9 && Math.abs(top.selfBuff.stats.dotBonus - 0.49) < 1e-9 && Math.abs(top.selfBuff.stats.healBonus - 0.49) < 1e-9 && top.extraTurn && top.wardTurns === 2);
+    // 전투: 피해 없이 버프 · 면역 · 추가 행동.
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const me = { name: 'A', job: 'darkFollower', cores: 7, stats: { ...base }, hp: 1e6, mana: 1000, skills: ['shadowRite'], cooldowns: {}, stun: 0, effects: {}, ranks: { shadowRite: 1 }, mastery: {}, practice: {} };
+    const foe = { name: 'B', foe: true, stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} }, ev = [];
+    strike(me, foe, () => 0, ev);
+    const cast = ev.find(e => e.skillId === 'shadowRite');
+    assert.ok(cast && cast.total === 0 && foe.hp === 1e6 && cast.extraTurn, 'no damage, extra action at 7 cores');
+    assert.equal(me.effects.buffs.lordShadow.damageMultiplier, 1.49); assert.equal(me.effects.immune.stun, 2);
+    // 공명: 어둠의 추종자는 끼지 않은 지역 코어 30%, 무릉도장 코어는 10% 그대로.
+    const cores = { bossCores: { grotto: { rank: 0, attrs: [] }, abyssMugong: { rank: 0, attrs: [] } }, coreSlot: undefined };
+    assert.equal(BC.coreStats(cores, 0.3).hp, 2000 * 0.3); assert.ok(Math.abs(BC.coreStats(cores, 0.3).penetration - 0.15 * 0.1) < 1e-9, 'abyss core keeps 10%');
+    assert.equal(job('darkFollower').coreResonance, 0.3);
+    // 패시브 기록: 지역 코어만 셉니다.
+    const s = ready(70); s.bossCores = { grotto: { rank: 2, attrs: [] }, temple: { rank: 5, attrs: [] }, abyssMugong: { rank: 5, attrs: [] } };
+    const c = progressCounts(s); assert.deepEqual([c.cores, c.coreRanks], [2, 7]);
+    assert.equal(job('darkFollower').subRole, 'borderCore'); assert.equal(job('darkFollower').attack, job('darkFollower').magic, 'no physical tilt');
+});
