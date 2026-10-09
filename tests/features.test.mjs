@@ -1,5 +1,5 @@
 // 도감·능력치 추적·항해 기록·회복·장기 목표·능력치 포인트
-import { newState, act, tick, victoryHeal, encounterSource, stats, migrateState, assert, rng, test } from './harness.mjs';
+import { newState, act, advance, tick, victoryHeal, encounterSource, stats, migrateState, assert, rng, test } from './harness.mjs';
 test('Codex: crossing several thresholds claims all pending ranks once; claim-all spans species',()=>{
  const s=newState(0),g=s.gold;s.book.minnow=10000;s.book.carp=500;act(s,{type:'claimAllBooks'},0);
  assert.equal(s.bookClaims.minnow,4);assert.equal(s.bookClaims.carp,undefined,'v27.81 ranks without SP have nothing to claim');assert.equal(s.sp,1);assert.equal(s.gold,g,'v27.81 no gold from the codex');
@@ -98,6 +98,26 @@ test('v3.216 군의관: hp · mana · regen support (other slots only); duel sna
  const t=newState(0);t.level=30;t.hpRegen=0;const a0=St.stats(t);t.support={hp:.05,mana:.05,hpRegen:.15};const a1=St.stats(t);
  assert.ok(a1.hp>a0.hp&&a1.mana>a0.mana,'hp and mana rise');assert.ok(Math.abs(a1.hp/a0.hp-1.05)<.01);
  assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);assert.ok(St.snapshot(t).stats.hp>St.duelSnapshot(t).stats.hp,'PvE snapshot keeps support, duel drops it');
+});
+test('v3.217 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery; AP · boss · rank exp · penetration · crit damage support; duel trims support AP',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
+ for(const id of ['operationsOfficer','fireSupportOfficer']){const j=C.jobById(id);assert.ok(j&&j.tier===4&&j.requiresRank==='lt2');
+  const s=newState(0);s.level=55;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='lt2')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('보급관 또는 군의관'));
+  assert.ok(any()&&!any().met);s.jobMastery.fieldMedic=300;assert.ok(any().met,'either branch counts');}
+ const o=newState(0);o.level=55;o.job='operationsOfficer';o.unlockedJobs.push('operationsOfficer');for(const id of ['tacticalMap','operationPlan','personnelRecord'])o.learned[id]=1;o.skills=['tacticalMap','operationPlan','personnelRecord'];
+ assert.deepEqual(Su.supportOf(o),{ap:1,boss:.02,rank:.03});o.skillPractice.tacticalMap=1e6;assert.equal(Su.supportOf(o).ap,2);
+ const f=newState(0);f.level=55;f.job='fireSupportOfficer';f.unlockedJobs.push('fireSupportOfficer');for(const id of ['armorPiercingDoctrine','concentratedFire'])f.learned[id]=1;f.skills=['armorPiercingDoctrine','concentratedFire'];
+ assert.deepEqual(Su.supportOf(f),{penetration:.02,critDamage:.05});
+ // 받는 쪽: AP · 보스 · 관통 · 치명 피해, 결투 스냅샷에서는 빠집니다.
+ const t=newState(0);t.level=30;const cap0=P.apCapacity(t),a0=St.stats(t);t.support={ap:2,boss:.05,penetration:.05,critDamage:.15};const a1=St.stats(t);
+ assert.equal(P.apCapacity(t),cap0+2);assert.ok(a1.bossDamage>a0.bossDamage&&a1.penetration>a0.penetration);assert.ok(Math.abs(a1.critDamage-a0.critDamage-.15)<1e-9);
+ assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);
+ // 지원 AP로만 들어가는 장착은 결투 스냅샷에서 빠집니다.
+ const d=newState(0);d.level=30;d.support={ap:2};const pool=Object.keys(d.learned).filter(id=>P.canUse(d,id));d.skills=[];for(const id of pool){if(P.validLoadout(d,[...d.skills,id]))d.skills.push(id);}
+ const bare=St.snapshot({...d,support:undefined,skills:d.skills}).skills;assert.ok(P.apUsed({...d,support:undefined},St.duelSnapshot(d).skills)<=P.apCapacity({...d,support:undefined}));assert.ok(St.duelSnapshot(d).skills.length<=bare.length);
+ // 계급 경험치 지원: 같은 난수로 사냥하면 계급 경험치가 더 쌓입니다.
+ const run=sup=>{const h=newState(0);if(sup)h.support={rank:.06};act(h,{type:'start'},0);advance(h,1_800_000,()=>.5);return h.rank?.exp||0;};
+ const base=run(false),boosted=run(true);assert.ok(boosted>base&&boosted<=Math.ceil(base*1.06)+1,`${base} → ${boosted}`);
 });
 test('v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),B=await L.load('data/boss-core');

@@ -3,16 +3,16 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 261); assert.equal(new Set(JOBS.map(j => j.id)).size, 261); // v3.215 보급관 · v3.216 군의관 (참모 계보)
+    assert.equal(JOBS.length, 263); assert.equal(new Set(JOBS.map(j => j.id)).size, 263); // 참모 계보: v3.215 보급관 · v3.216 군의관 · v3.217 작전참모 · 화력참모
     // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다. v3.153 몬스터 도감 독자 · v3.155 빙결 결박사 · v3.156 보물 사냥꾼 · v3.199 청빈 수도승을 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 234);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 236);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
     assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 50, magic: 46, defense: 35, status: 32, hybrid: 37, support: 45, mystery: 16 }); // v3.215 보급관 · v3.216 군의관(support)
+    assert.deepEqual(count, { physical: 50, magic: 46, defense: 35, status: 32, hybrid: 37, support: 47, mystery: 16 }); // 참모 계보 4개(support)
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {

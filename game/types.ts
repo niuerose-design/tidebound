@@ -181,7 +181,7 @@ export type Item = {
     level: number;
 };
 /** v3.215 참모 지원 효과 종류. */
-export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen';
+export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen' | 'ap' | 'boss' | 'rank' | 'penetration' | 'critDamage';
 export type SupportMap = Partial<Record<SupportEffect, number>>;
 export type Skill = {
     /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */

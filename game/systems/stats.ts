@@ -18,8 +18,8 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
-import { supportMultiplier, commandBonus } from './support';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable } from './progression';
+import { supportMultiplier, supportAmount, commandBonus } from './support';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -212,6 +212,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     // v3.216 군의관 지원(다른 분신): 최대 체력 · 최대 마나 · 턴당 체력 회복 배율. 결투 등록 스냅샷은 s.support를 빼고 만듭니다.
     if (s.support) for (const [k, e] of [['hp', 'hp'], ['mana', 'mana'], ['hpRegen', 'hpRegen']] as const) if (s.support[e]) mul(k, [['support', supportMultiplier(s, e)]]);
+    // v3.217 작전참모 · 화력참모 지원: 보스 피해 · 방어 관통(기존 겹침 규칙과 상한 그대로) · 치명 피해.
+    if (s.support) for (const [k, e] of [['bossDamage', 'boss'], ['penetration', 'penetration'], ['critDamage', 'critDamage']] as const) if (s.support[e]) add(k, 'support', supportAmount(s, e));
     for (const t of themes)
         if (t.scale) for (const key in t.scale) mul(key as keyof CombatStats, [['book', t.scale[key as keyof typeof t.scale] as number]]);
     // 올라운드 밸런스: 공격력과 같은 연구·환생·직업 배율을 받고, 서로 다른 직업의 능력치 패시브를 빌려 올수록 강해집니다.
@@ -292,8 +294,8 @@ export function powerParts(v: Stats) {
 }
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
-/** v3.216 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. */
-export const duelSnapshot = (s: State) => snapshot({ ...s, support: undefined });
+/** v3.216 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.217 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
+export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefined, skills: [...(s.skills || [])] }; if (s.support?.ap) trimLoadout(bare); return snapshot(bare); };
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */

@@ -11,10 +11,14 @@ import { skillById } from '../data/skills';
 import { canUse, skillMastery, masteryMilestonesFor } from './progression';
 
 export const STAFF_LINEAGE_ID = 'staff';
-export const SUPPORT_EFFECTS: SupportEffect[] = ['exp', 'gold', 'mastery', 'hp', 'mana', 'hpRegen'];
-export const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득', hp: '최대 체력', mana: '최대 마나', hpRegen: '턴당 체력 회복' };
-/** 효과별 상한(그 효과 지원 스킬의 최대값). v3.216 군의관: 체력 · 마나 5%, 회복 15%. */
-export const SUPPORT_CAP: Record<SupportEffect, number> = { exp: .08, gold: .08, mastery: .08, hp: .05, mana: .05, hpRegen: .15 };
+export const SUPPORT_EFFECTS: SupportEffect[] = ['exp', 'gold', 'mastery', 'hp', 'mana', 'hpRegen', 'ap', 'boss', 'rank', 'penetration', 'critDamage'];
+export const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득', hp: '최대 체력', mana: '최대 마나', hpRegen: '턴당 체력 회복', ap: '장착 AP', boss: '보스 · 사냥감 피해', rank: '계급 경험치', penetration: '방어 관통', critDamage: '치명 피해' };
+/** 효과별 상한(그 효과 지원 스킬의 최대값). v3.216 군의관: 체력 · 마나 5%, 회복 15%. v3.217 작전참모: AP 2 · 보스 5% · 계급 6%, 화력참모: 관통 5%p · 치명 피해 15%p. */
+export const SUPPORT_CAP: Record<SupportEffect, number> = { exp: .08, gold: .08, mastery: .08, hp: .05, mana: .05, hpRegen: .15, ap: 2, boss: .05, rank: .06, penetration: .05, critDamage: .15 };
+/** 화면 표기: AP는 정수, 관통 · 치명 피해는 %p, 나머지는 %. */
+export const supportText = (e: SupportEffect, v: number) => e === 'ap' ? `${SUPPORT_LABELS[e]} +${Math.floor(v)}` : `${SUPPORT_LABELS[e]} +${Math.round(v * 1000) / 10}${e === 'penetration' || e === 'critDamage' ? '%p' : '%'}`;
+/** 받은 지원 값(상한 적용). */
+export const supportAmount = (s: Pick<State, 'support'>, e: SupportEffect) => Math.min(SUPPORT_CAP[e], Math.max(0, Number(s.support?.[e]) || 0));
 
 export const isStaff = (s: Pick<State, 'job'>) => jobById(s.job)?.lineage === STAFF_LINEAGE_ID;
 const equipped = (s: State) => [...new Set(s.skills || [])].filter(id => canUse(s, id));
@@ -39,7 +43,9 @@ export function mergeSupport(list: (SupportMap | undefined)[]): SupportMap {
     return out;
 }
 /** 받은 지원 배율(1.05 = ×1.05). */
-export const supportMultiplier = (s: Pick<State, 'support'>, e: SupportEffect) => 1 + Math.min(SUPPORT_CAP[e], Math.max(0, Number(s.support?.[e]) || 0));
+export const supportMultiplier = (s: Pick<State, 'support'>, e: SupportEffect) => 1 + supportAmount(s, e);
+/** v3.217 작전참모 전술 지도: 장착 AP(정수). */
+export const supportAP = (s: Pick<State, 'support'>) => Math.floor(supportAmount(s, 'ap'));
 /** 지휘 체계: 장착한 지원 스킬 1개마다 자기 두 공격 +commandPer(참모 계보일 때만). */
 export function commandBonus(s: State) {
     if (!isStaff(s)) return 0;
