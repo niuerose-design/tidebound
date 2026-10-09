@@ -7,7 +7,7 @@ const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirt
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher']);
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher', 'kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
@@ -114,4 +114,20 @@ test('v3.64 deaths-count growth (v3.163: the fallen angler is gone, the dark kni
     const sk = SKILLS.find(x => x.id === 'stormRider');
     const s = newState(0); s.deaths = 0; const none = passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0;
     s.deaths = 50; assert.equal(progressCounts(s).deaths, 50); assert.ok((passiveGrowthBonus(s, sk, progressCounts(s)).attack || 0) > none);
+});
+
+test('v3.220 Azeroth hidden lineages: kkami 100 · nuri 100 · every region dungeon 100 (Mu Lung excluded) · onyx bosses 100 in total; their passives count those records', () => {
+    const s = ready(70);
+    const closed = id => assert.equal(unlocks.unlockMet(s, id), false, `${id} closed`), open = id => assert.equal(unlocks.unlockMet(s, id), true, `${id} open`);
+    s.book.masteryMimic = 99; closed('kkamiHunter'); s.book.masteryMimic = 100; open('kkamiHunter');
+    s.book.expNuri = 99; closed('nuriTracker'); s.book.expNuri = 100; open('nuriTracker');
+    const regions = ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum'];
+    for (const id of regions) s.clears[id] = 100;
+    s.clears.starSanctum = 99; closed('darkFollower'); s.clears.starSanctum = 100; open('darkFollower');
+    assert.equal(s.clears.abyss, undefined, 'Mu Lung is not needed');
+    s.onyxBook = { a: 60, b: 39 }; closed('onyxAvatar'); s.onyxBook.b = 40; open('onyxAvatar');
+    const c = progressCounts(s);
+    assert.deepEqual([c.kkami, c.nuri, c.dungeonBoss, c.onyx], [100, 100, 700, 100]);
+    s.clears.abyss = 50; assert.equal(progressCounts(s).dungeonBoss, 700, 'Mu Lung floors are not region clears');
+    for (const id of unlocks.UNLOCK_JOBS.slice(-4)) { assert.equal(lineageOf(job(id)), id, `${id} is its own lineage`); assert.ok(SKILLS.some(sk => sk.job === id && sk.perCount?.length), `${id} has a record passive`); }
 });

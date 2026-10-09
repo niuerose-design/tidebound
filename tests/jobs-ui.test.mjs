@@ -134,3 +134,15 @@ test('Job UI v3.168: the beginner lineage sits in the ??? tab while the job keep
     assert.equal(ui.tabOf(job('fisher')), 'mystery');
     assert.ok(ui.tabJobCount(s, 'mystery') >= 1 && !ui.shownJobs(s).some(j => ui.lineageTreeOf(j) === 'hybrid' && j.id === 'fisher'));
 });
+
+test('v3.220 worlds: Azeroth lineages stay out of the Maple World tree tabs and show only in their own world once revealed', () => {
+    const s = newState(0);
+    assert.equal(ui.worldLineages(s, 'azeroth').length, 0, 'nothing revealed yet');
+    assert.equal(ui.worldJobCount(s, 'azeroth'), 0);
+    s.book.masteryMimic = 100;
+    assert.deepEqual(ui.worldLineages(s, 'azeroth').map(l => l.id), ['kkamiHunter'], 'a met hidden condition reveals it in Azeroth');
+    assert.equal(ui.jobWorld(job('kkamiHunter')), 'azeroth'); assert.equal(ui.jobWorld(job('undead')), 'maple');
+    assert.ok(!ui.lineageInTab(s, 'mystery', { id: 'kkamiHunter', tree: 'mystery' }), 'not in the ??? tab');
+    const before = ui.tabJobCount(s, 'mystery'); s.book.masteryMimic = 0; assert.equal(ui.tabJobCount(s, 'mystery'), before, 'the ??? tab count ignores Azeroth');
+    assert.ok(ui.worldLineages(s, 'maple').length > 20 && ui.worldLineages(s, 'maple').every(l => !['kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar'].includes(l.id)));
+});

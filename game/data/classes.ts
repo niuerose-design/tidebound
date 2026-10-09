@@ -343,7 +343,18 @@ export function upsertJobs(list: Job[]) {
 }
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
-export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
+/**
+ * v3.220 세계: 계보 위의 한 단계 묶음. 전직 화면은 세계(책의 장)를 먼저 고르고, 그 세계의 계보만 보여 줍니다.
+ * world가 없는 계보는 메이플 월드입니다. 아제로스는 처치 기록으로 드러나는 히든 계보의 세계입니다.
+ */
+export type WorldId = 'maple' | 'azeroth';
+export const WORLDS: { id: WorldId; name: string; subtitle: string; description: string; accent: string }[] = [
+    { id: 'maple', name: '메이플 월드', subtitle: '모험이 시작된 세계', description: '지금까지의 모든 계열과 계보가 있는 세계입니다.', accent: '#e0a24f' },
+    { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥한 모험가에게만 길이 열리는 히든 계보의 세계입니다.', accent: '#7f8fd8' },
+];
+export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
+/** 계보가 속한 세계(없으면 메이플 월드). */
+export const worldOf = (l: Pick<Lineage, 'world'> | undefined): WorldId => l?.world ?? 'maple';
 // v3.69 계열마다 수련 직업 하나(data/training.ts). 사냥용이 아니라 계승 재료입니다.
 const independent = (tree: JobTreeId): Lineage => ({ id: `${tree}-independent`, name: '수련', tree, summary: '그 계열의 기초 패시브를 모은 수련 직업입니다. 직접 사냥하면 약하고, 기술은 다른 직업이 계승해서 씁니다.' });
 export const LINEAGES: Lineage[] = [
