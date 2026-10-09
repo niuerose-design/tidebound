@@ -4,7 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { ownedOnyx, onyxSetBonus, onyxResonance } from '../data/onyx';
-import { ownedLoot, bossLootSetBonus } from '../data/boss-loot';
+import { ownedLoot, bossLootSetBonus, lootResonance } from '../data/boss-loot';
 import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
@@ -153,6 +153,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     { const b = bossLootSetBonus(ownedLoot(s).size); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.dungeonGoldBonus) add('dungeonGoldBonus', 'equipment', b.dungeonGoldBonus); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
+    // v3.197 보스 전리품 공명: 착용하지 않은 전리품의 전용 옵션 × 10%(각성 포함).
+    { const res = lootResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key] as number); }
     const passiveJobs = new Set<string>();
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.

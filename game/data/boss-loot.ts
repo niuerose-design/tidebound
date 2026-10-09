@@ -7,7 +7,8 @@
 import type { Item, State } from '../types';
 import { AFFIX_POOL } from './gear';
 
-export const BOSS_LOOT_RULES = { awakenMax: 5, awakenStep: .1, duplicatePearls: 5 };
+/** resonance: v3.197 착용하지 않은 전리품의 전용 옵션을 이 비율만큼 받습니다(각성 포함, 제어 연장 턴 제외 — 칠흑 공명과 같음). */
+export const BOSS_LOOT_RULES = { awakenMax: 5, awakenStep: .1, duplicatePearls: 5, resonance: .1 };
 /** 던전 id → 전리품 부위(가안). */
 export const BOSS_LOOT_SLOTS: Record<string, 'rod' | 'coat' | 'charm' | 'cape'> = {
     grotto: 'cape', kelpCatacomb: 'coat', cemetery: 'charm', caldera: 'rod', temple: 'cape', ventCathedral: 'rod', starSanctum: 'charm',
@@ -28,3 +29,16 @@ export const BOSS_LOOT_SET: { count: number; label: string; bossDamage?: number;
     { count: 7, label: '보스·사냥감 피해 +5%', bossDamage: .05 },
 ];
 export const bossLootSetBonus = (owned: number) => BOSS_LOOT_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), dungeonGoldBonus: a.dungeonGoldBonus + (b.dungeonGoldBonus || 0), statusResist: a.statusResist + (b.statusResist || 0) }), { bossDamage: 0, dungeonGoldBonus: 0, statusResist: 0 });
+/** v3.197 공명: 착용하지 않은 전리품마다 전용 옵션(각성 포함) × resonance. 제어 연장(controlBonus)은 정수라 빠집니다. */
+export function lootResonance(s: Pick<State, 'inventory' | 'equipment'>) {
+    const worn = new Set(Object.values(s.equipment).map(i => i?.id).filter(Boolean)), out: Record<string, number> = {};
+    for (const item of s.inventory) {
+        if (!item.bossLoot || worn.has(item.id)) continue;
+        const a = bossLootAffix(item.bossLoot);
+        if (!a) continue;
+        const m = lootAwaken(item) * BOSS_LOOT_RULES.resonance;
+        if (a.stat !== 'controlBonus') out[a.stat] = (out[a.stat] || 0) + a.base * m;
+        if (a.stat2 && a.base2 && a.stat2 !== 'controlBonus') out[a.stat2] = (out[a.stat2] || 0) + a.base2 * m;
+    }
+    return out;
+}

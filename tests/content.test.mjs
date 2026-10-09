@@ -383,6 +383,7 @@ test('v3.195-196 boss loot: daily-bonus regional clears only, fixed-slot primal 
  const before=E.itemStats(it).bossDamage;BL.grantBossLoot(s,'caldera',()=>.5);assert.equal(s.inventory.length,n+1,'duplicate does not add an item');assert.equal(it.lootRank,1);assert.ok(Math.abs(E.itemStats(it).bossDamage-before*1.1)<1e-9,'awaken +10% on the unique line');
  for(let k=0;k<4;k++)BL.grantBossLoot(s,'caldera',()=>.5);const p=s.pearls;BL.grantBossLoot(s,'caldera',()=>.5);assert.equal(it.lootRank,5);assert.equal(s.pearls,p+D.BOSS_LOOT_RULES.duplicatePearls,'full awaken pays pearls');
  s.gold=1e12;assert.throws(()=>act(s,{type:'reforge',id:it.id,value:String(line)},0),/전용 옵션은 바꿀 수 없습니다/);
+ const r=(await L.load('data/boss-loot')).lootResonance(s);assert.ok(Math.abs(r.burnBonus-.1*1.5*.1)<1e-9,'v3.197 resonance: unworn loot gives 10% of its awakened unique line');
  const b0=stats(s).bossDamage||0;BL.grantBossLoot(s,'grotto',()=>.5);assert.ok((stats(s).bossDamage||0)>b0,'2-piece set adds boss damage');
  const t=newState(0);t.level=60;t.bossLootMiss=O.ODDS.bossLoot.pity-1;const m=t.inventory.length;clear(t,'grotto',()=>.5);assert.equal(t.inventory.length,m+1,'pity');assert.ok(t.inventory.at(-1).affixes.some(x=>x.id==='lootGrotto'));
  const u=newState(0);u.level=60;u.dungeonBonus={day:'1970-01-01',used:30};clear(u,'grotto',()=>0);assert.ok(!u.inventory.some(x=>x.bossLoot),'no loot after the daily bonus');assert.equal(u.bossLootMiss,undefined);
