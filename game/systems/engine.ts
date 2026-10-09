@@ -20,6 +20,7 @@ import { lifecycleActions } from './actions/lifecycle';
 import { hackerActions } from './actions/hacker';
 import { dungeonShopActions } from './actions/dungeon-shop';
 import { marketActions } from './market';
+import { syncStory } from './story';
 
 export { newState } from './state';
 export { tick, advance } from './turn';
@@ -33,6 +34,8 @@ export function act(s: State, a: Action, now: number, rng = Math.random) {
     dispatch(s, a, now, rng);
     syncVoyage(s, text => addLog(s, text, 'reward'));
     syncAchievements(s, text => addLog(s, text, 'reward'));
+    // v3.215 모험 일지: 조건을 넘긴 장면을 엽니다.
+    syncStory(s, now, text => addLog(s, text, 'reward'));
     autoClaimRewards(s);
 }
 /** v3.154 세계석 연구 ‘자동 수령’: 행동(동기화 포함) 뒤에 받지 않은 업적 보상과 도감 연구 보상을 받습니다. 턴 안이 아니라 행동 뒤라 부재중 정산의 비례 환산에 섞이지 않습니다. */

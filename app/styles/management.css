@@ -572,3 +572,29 @@
 .mkt-journal li span { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
 .mkt-journal p { margin:0; font-size:12px; }
 @media(max-width:767px){ .mkt-rumor { padding:12px 14px; } .mkt-rumor small { margin-left:0; flex-basis:100%; } .mkt-journal { padding:16px 14px; } }
+/* v3.215 스토리 탭(모험 일지): 진행 줄 · 장 제목 · 장면 카드 · 잠긴 장면 */
+.story-progress { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:14px 18px; margin:14px 0; font-size:14px; color:#a8bdb6; }
+.story-progress svg { color:var(--gold); flex:none; }
+.story-progress b { color:var(--foreground); font-size:16px; }
+.story-new { font-style:normal; color:var(--gold); margin-left:6px; }
+.story-bar { flex:1 1 160px; height:6px; border-radius:999px; background:var(--border); overflow:hidden; }
+.story-bar i { display:block; height:100%; background:var(--gold); border-radius:inherit; }
+.story-part { margin:26px 0 6px; }
+.story-part-title { display:flex; align-items:baseline; gap:10px; margin:0 0 4px; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:20px; letter-spacing:.02em; }
+.story-part-title span { color:var(--gold); }
+.story-part-title small { margin-left:auto; font-size:12px; color:var(--muted); font-weight:400; }
+.story-chapter { margin:14px 0 4px; }
+.story-chapter>summary { padding:8px 4px; border-radius:var(--radius-md); }
+.story-chapter>summary:hover { background:rgba(212,181,121,.06); }
+.story-chapter>summary h2 { font-size:16px; color:var(--gold); margin:0; }
+.story-chapter>summary .section-title { display:flex; align-items:baseline; gap:10px; }
+.story-chapter>summary .section-title>span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.story-list { display:grid; gap:10px; }
+.story-scene { padding:18px 22px; display:grid; gap:8px; }
+.story-scene header { display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.story-scene h3 { margin:0; font-size:16px; display:flex; align-items:center; gap:8px; }
+.story-scene time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.story-scene p { margin:0; font-size:14px; line-height:1.8; color:#cfdcd8; word-break:keep-all; }
+.story-badge { font-size:10px; letter-spacing:.08em; padding:2px 6px; border-radius:var(--radius-sm); background:var(--gold); color:#1a1408; }
+.story-locked { display:flex; align-items:center; gap:8px; padding:12px 18px; font-size:13px; color:var(--muted); border-style:dashed; }
+@media(max-width:767px){ .story-scene { padding:16px 14px; } .story-progress { padding:12px 14px; } }
