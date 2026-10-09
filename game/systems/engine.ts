@@ -19,12 +19,13 @@ import { itemActions } from './actions/items';
 import { lifecycleActions } from './actions/lifecycle';
 import { hackerActions } from './actions/hacker';
 import { dungeonShopActions } from './actions/dungeon-shop';
+import { marketActions } from './market';
 
 export { newState } from './state';
 export { tick, advance } from './turn';
 export { victoryHeal, rollRarity } from './encounter';
 
-const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions, ...dungeonShopActions };
+const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions, ...dungeonShopActions, ...marketActions };
 
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncStatRate(s);
