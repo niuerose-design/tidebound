@@ -3,7 +3,8 @@ import { DUNGEON_COINS, DAILY_BONUS } from '@/game/data/dungeon-shop';
 import { SPROUT, sproutExp } from '@/game/data/sprout';
 import { BOOK_ECOLOGY } from '@/game/data/book-traits';
 import { ASCENSION } from '@/game/data/ascension';
-import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets } from 'lucide-react';
+import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets, TrendingUp } from 'lucide-react';
+import { MARKET, MARKET_TICK_MS, STOCKS } from '@/game/data/market';
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES, XP_SCALING } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
@@ -176,6 +177,10 @@ export function Guide({ s }: { s?: State }) {
                     effect={`던전에서는 처치마다 골드 · 경험치 · 숙련 · 장비가 나오지 않고, 정복하면 던전 주화를 받습니다. 지역 던전은 하루(한국 시간 자정) 처음 ${DAILY_BONUS.clears}번의 정복이 보너스(노말 ${DAILY_BONUS.coins.normal} · 헬 ${DAILY_BONUS.coins.hell} · 나이트메어 ${DAILY_BONUS.coins.nightmare}, 던전 공용 · 이월 없음)이고 그 뒤는 ${DUNGEON_COINS.normal} · ${DUNGEON_COINS.hell} · ${DUNGEON_COINS.nightmare}입니다. 무릉도장은 1 + 10층마다 1(보너스 없음). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나오고, 오래 못 받으면 확정입니다. 보스 코어 칸에 하나를 끼면 효과 100%, 나머지 코어는 10%(턴 연장 제외)이고, 다시 얻으면 각성합니다. 환생 · 승천해도 남습니다. 주화는 던전 화면의 주화 상점에서 칠흑 장신구 · 장비 상자 · 포식자 각인으로 바꿉니다. 정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
+                <Rule icon={<TrendingUp size={19}/>} title="주화 증권거래소"
+                    effect={`왼쪽 메뉴의 증권거래소에서 던전 주화로 가상 종목 ${STOCKS.length}개를 사고팝니다. 시세는 모든 모험가가 같고 ${MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다. 시황 소문은 다음 시세의 방향을 자주 맞히지만 틀릴 때도 있습니다.`}
+                    condition={`매수 · 매도마다 수수료 ${MARKET.fee * 100}%(최소 1주화), 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다.`}
+                    limit="잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 주식도 사라집니다. 차트 · 거래 내역은 이 기기에만 남습니다."/>
                 <Rule icon={<Heart size={19}/>} title="생존 · 방치 진행"
                     effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `(지금 ${percent(victoryHealRate({ ...s, dungeon: null }))})` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                     condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}

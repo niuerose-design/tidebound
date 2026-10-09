@@ -542,3 +542,33 @@
 .core-box p { margin:4px 0 0; font-size:13px; color:#a5b7b4; line-height:1.6; }
 .core-box button { flex-shrink:0; }
 @media(max-width:767px){ .core-tiles { grid-template-columns:repeat(5,minmax(0,1fr)); } .core-tile { padding:10px 2px 8px; } .core-tile small { font-size:11px; } .core-tile-badge { top:2px; right:3px; font-size:9px; } .core-detail { padding:18px; } .core-lines { grid-template-columns:minmax(0,1fr); } .core-box { flex-direction:column; align-items:stretch; } }
+/* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
+.mkt-up { color:#e8746b; }
+.mkt-down { color:#6fa8e6; }
+.mkt-open { padding:22px; display:grid; gap:12px; margin:14px 0; }
+.mkt-open button { justify-self:start; }
+.mkt-rules { margin:0; padding-left:18px; display:grid; gap:6px; color:#a8bdb6; font-size:13px; line-height:1.6; }
+.mkt-stop { display:flex; align-items:flex-start; gap:10px; padding:12px 18px; margin:14px 0; font-size:13px; line-height:1.6; color:#f3d2cd; border-color:#7a3b36; background:rgba(122,59,54,.18); }
+.mkt-stop svg { flex:none; color:#e8746b; margin-top:2px; }
+.mkt-stop b { color:#ffb4ab; margin-right:4px; }
+.mkt-rumor { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
+.mkt-rumor b { color:var(--gold); margin-right:4px; }
+.mkt-rumor small { margin-left:auto; color:var(--muted); }
+.mkt-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.mkt-price { display:grid; justify-items:end; gap:2px; }
+.mkt-price strong { font-size:20px; font-variant-numeric:tabular-nums; }
+.mkt-price small { font-size:12px; font-variant-numeric:tabular-nums; }
+.mkt-spark { width:100%; height:56px; display:block; color:var(--muted); }
+.mkt-spark-empty { display:grid; place-items:center; font-size:12px; border:1px dashed var(--border); border-radius:var(--radius-md); }
+.mkt-hold { font-size:13px; margin:0; font-variant-numeric:tabular-nums; }
+.mkt-qty { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.mkt-qty label { display:flex; align-items:center; gap:8px; font-size:13px; color:#a8bdb6; }
+.mkt-qty input { width:96px; min-height:32px; padding:4px 10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--background); color:var(--foreground); font-variant-numeric:tabular-nums; }
+.mkt-qty button { min-height:32px; }
+.mkt-journal { padding:18px 22px; margin:14px 0; display:grid; gap:10px; }
+.mkt-journal header { display:flex; justify-content:space-between; align-items:center; }
+.mkt-journal h3 { margin:0; font-size:15px; }
+.mkt-journal ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:13px; max-height:260px; overflow:auto; }
+.mkt-journal li span { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
+.mkt-journal p { margin:0; font-size:12px; }
+@media(max-width:767px){ .mkt-rumor { padding:12px 14px; } .mkt-rumor small { margin-left:0; flex-basis:100%; } .mkt-journal { padding:16px 14px; } }

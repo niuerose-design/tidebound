@@ -513,6 +513,11 @@ export type State = {
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
+    /**
+     * v3.213 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
+     * holdings는 종목 → 수량 · 원금(수수료 포함 매수 금액), realized는 누적 실현 손익. 환생해도 남고 승천하면 사라집니다.
+     */
+    market?: { holdings: Record<string, { qty: number; cost: number }>; realized?: number };
     /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
     /** v3.202 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
