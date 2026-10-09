@@ -299,8 +299,8 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  const W=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
  const {restartLife}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/actions/lifecycle');
  const clear=(mode,depth)=>{const s=newState(0);s.level=40;s.rebirths=10;s.running=true;const id=depth?'abyss':'grotto';const len=W.DUNGEONS.find(d=>d.id===id).fish.length;s.dungeon={id,wave:len-1,...(depth?{depth}:{}),...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:50,gold:50,boss:true,stun:0};const gold=s.gold,exp=s.exp,inv=s.inventory.length;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return {s,gold:s.gold-gold,exp:s.exp-exp,inv:s.inventory.length-inv};};
- const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,1,'normal clear = 1 coin');assert.equal(n.s.clears.grotto,2);
- assert.equal(clear('hell').s.dungeonCoins,3);assert.equal(clear('nightmare').s.dungeonCoins,6);assert.equal(clear(undefined,12).s.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1');
+ const n=clear();assert.equal(n.gold,0,'no kill or clear gold');assert.equal(n.exp,0,'no kill exp');assert.equal(n.inv,0,'no repeat drop');assert.equal(n.s.dungeonCoins,20,'v3.191 first normal clear of the day = 20 bonus coins');assert.equal(n.s.clears.grotto,2);
+ assert.equal(clear('hell').s.dungeonCoins,40);assert.equal(clear('nightmare').s.dungeonCoins,60);const mu=clear(undefined,12).s;assert.equal(mu.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1, no daily bonus');assert.equal(mu.dungeonBonus,undefined,'Mu Lung does not spend the daily bonus');
  const s=newState(0);s.level=40;s.dungeonCoins=0;
  assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/코인이 부족/);
  s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=1,true,'rare or better');
@@ -331,4 +331,17 @@ test('v3.190 regional dungeons are one trash wave + boss; the boss keeps the las
  for(const d of W.PLAIN_DUNGEONS)assert.equal(d.fish.length,d.id==='abyss'?5:2,d.id);
  const s=newState(0);s.level=30;s.running=true;act(s,{type:'dungeon',id:'grotto'},0);s.recovery=0;s.dungeon.wave=1;s.enemy=null;tick(s,()=>.9999);
  const boss=W.FISH.find(f=>f.id==='grottoWarden');assert.equal(s.enemy.maxHp,E.scaledEnemyStats(boss,{boss:true,wave:B.BOSS_PRESSURE_WAVE}).hp);
+});
+
+test('v3.191 daily bonus clears: the first 30 regional clears of a KST day pay the bonus, shared across dungeons, no carry-over',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),W=await L.load('data/world'),D=await L.load('data/dungeon-shop');
+ const s=newState(0);s.level=40;s.rebirths=10;
+ const clear=(id,mode)=>{s.running=true;s.dungeon={id,wave:W.DUNGEONS.find(d=>d.id===id).fish.length-1,...(mode?{mode}:{})};s.clears[id]=1;s.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};const before=s.dungeonCoins||0;let g=0;while(s.enemy&&g++<50)tick(s,()=>.5);return (s.dungeonCoins||0)-before;};
+ assert.equal(D.DAILY_BONUS.clears,30);
+ for(let i=0;i<29;i++)clear(i%2?'grotto':'temple','hell');
+ assert.equal(s.dungeonBonus.used,29,'shared across dungeons');
+ assert.equal(clear('grotto','hell'),40,'30th clear still pays the bonus');
+ assert.equal(clear('grotto','hell'),2,'31st clear pays the base (1/20)');
+ assert.equal(clear('grotto','nightmare'),3);assert.equal(clear('grotto'),1);
+ s.lastTick+=86400000;assert.equal(clear('grotto','hell'),40,'a new KST day refills 30, unused clears do not carry over');assert.equal(s.dungeonBonus.used,1);
 });

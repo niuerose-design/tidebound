@@ -7,8 +7,13 @@
  */
 import type { DungeonMode } from './balance';
 
-/** 지역 던전 정복 1회의 코인(난이도별). */
-export const DUNGEON_COINS: Record<DungeonMode, number> = { normal: 1, hell: 3, nightmare: 6 };
+/** 지역 던전 정복 1회의 코인(난이도별). v3.191 하루 보너스를 다 쓴 뒤의 값(보너스의 1/20). */
+export const DUNGEON_COINS: Record<DungeonMode, number> = { normal: 1, hell: 2, nightmare: 3 };
+/**
+ * v3.191 하루 보너스 정복: 지역 던전 정복은 하루(한국 시간 자정 기준) 처음 clears회까지 coins만큼 받습니다. 던전 공용 · 이월 없음 · 무릉도장 제외.
+ * 하루 10~25분이면 다 쓰는 양이라 던전은 '매일 들르는 곳'이 되고, 종일 돌려도 수입이 크게 앞서지 않습니다(기획안 2차안 A).
+ */
+export const DAILY_BONUS: { clears: number; coins: Record<DungeonMode, number> } = { clears: 30, coins: { normal: 20, hell: 40, nightmare: 60 } };
 /** 무릉도장 층 정복의 코인: 1 + ⌊층 ÷ abyssEvery⌋. */
 export const ABYSS_COINS = { base: 1, abyssEvery: 10 };
 export const abyssCoins = (depth: number) => ABYSS_COINS.base + Math.floor(Math.max(1, depth) / ABYSS_COINS.abyssEvery);

@@ -5,7 +5,8 @@ import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyss
 import { jobMasteryTarget, extremeBroken } from './progression';
 import { catchReward, encounterTier, dungeonCatchReward, dungeonLevelAt, xpWall } from './meta';
 import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
-import { grantDungeonCoins, clearCoinBase } from './dungeon-coins';
+import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
+import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
@@ -467,7 +468,8 @@ export function reward(s: State, rng: () => number) {
             const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level);
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
-            const coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth));
+            // v3.191 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 코인(던전 공용, 이월 없음). 무릉도장은 층 코인만.
+            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus));
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 const deeper = depth > s.abyssBest;
@@ -492,7 +494,7 @@ export function reward(s: State, rng: () => number) {
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.188 반복 정복 확률 드롭은 없앴습니다(코인샵 장비 상자로).
             if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name} 정복! 던전 코인 +${coins.toLocaleString()} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            addLog(s, `${d.name} 정복! 던전 코인 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;

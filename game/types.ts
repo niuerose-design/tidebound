@@ -501,6 +501,8 @@ export type State = {
     /** v3.188 던전 코인: 던전 정복마다 받아 코인샵에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 코인 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
+    /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
+    dungeonBonus?: { day: string; used: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;

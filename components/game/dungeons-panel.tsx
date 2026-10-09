@@ -3,8 +3,8 @@ import { AutoRunStatus } from './auto-run';
 import { FIRST_CLEAR_SP } from '@/game/data/achievements';
 import { dungeonGoldMultiplier, stats } from '@/game/systems/stats';
 import { dungeonTier, levelGateOk, dungeonLevelAt, tierHealth, tierAttack } from '@/game/systems/meta';
-import { clearCoinBase, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
-import { DUNGEON_SHOP } from '@/game/data/dungeon-shop';
+import { clearCoinBase, dailyBonusLeft, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
+import { DUNGEON_SHOP, DAILY_BONUS } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
 import { useState } from 'react';
 import { Lock, Swords, Gem, Skull } from 'lucide-react';
@@ -37,7 +37,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
     // v27.70 던전 난이도(노말·헬·나이트메어)는 던전마다 고릅니다. 입장 값은 '<난이도>@<반복>'.
     const [modeChoice, setModeChoice] = useState<Record<string, DungeonMode>>({});
-    const coinMult = dungeonGoldMultiplier(s);
+    const coinMult = dungeonGoldMultiplier(s), now = useNow(60_000), bonusLeft = dailyBonusLeft(s, now);
     const repeat = s.dungeon?.repeat;
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
 
@@ -79,7 +79,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
             <p>{d.description}</p>
             <div className="dungeon-reward-lines">
                 <span><b>최초</b>{d.id === 'abyss' ? `${s.abyssBest + 1}층 세계석 ${abyssPearls(s.abyssBest + 1)} · 10층마다 보너스 세계석(층 수만큼)${nextAbyssMilestone(s.abyssBest) ? ` · ${nextAbyssMilestone(s.abyssBest)}층 SP 1` : ''}` : `세계석 ${d.pearls}${research ? ` · 업적 SP ${research}` : ''}`}{d.id !== 'abyss' && s.clears[d.id] && (!research || claimed) ? ' · 받음' : ''}</span>
-                <span><b>정복</b>던전 코인 {format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult))}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
+                <span><b>정복</b>던전 코인 {d.id === 'abyss' ? format(Math.floor(clearCoinBase(d.id, mode, s.abyssBest + 1) * coinMult)) : `${format(Math.floor(clearCoinBase(d.id, mode, 1, true) * coinMult))} (오늘 보너스 ${bonusLeft}/${DAILY_BONUS.clears}회 남음) · 보너스 뒤 ${format(Math.floor(clearCoinBase(d.id, mode) * coinMult))}`}{d.id !== 'abyss' && mode !== 'normal' ? ` · ${modeDef.name}: 몬스터 Lv.${dLevel} · 체력 ×${tierHealth(tier).toFixed(2)} · 공격 ×${tierAttack(tier).toFixed(2)}` : ''}{d.id === 'abyss' ? ' · 5층마다 확정 드롭에 무릉도장 전용 옵션' : ''} · 처치 골드 · 경험치 · 숙련 · 장비 없음</span>
             </div>
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
@@ -98,15 +98,15 @@ export function Dungeons({ s, send, busy }: PanelProps) {
 
 /** v3.188 던전 코인샵: 정복으로 모은 던전 코인을 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
 function DungeonCoinShop({ s, send, busy }: PanelProps) {
-    const coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1;
+    const coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, useNow(60_000));
     const eligible = allItems(s).filter(x => !hunterBlock(x));
     const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
     const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
     const index = lines.some(l => l.i === line) ? line : lines[0]?.i ?? -1;
     const buy = (id: string, value?: string) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
     return <section className="panel dungeon-coin-shop">
-        <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
-        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 처치 턴과 무관한 고정량이라 보스를 빨리 잡을수록 시간당 코인이 많습니다. 코인은 환생해도 남습니다.</p>
+        <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
+        <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 코인은 환생해도 남습니다.</p>
         <div className="dungeon-reward-lines">
             {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
             <span><b>장비</b>희귀 이상 확정 장비 상자(내 레벨) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
