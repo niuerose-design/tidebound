@@ -61,10 +61,10 @@ export function rollCoreAttrs(rng: () => number): CoreAttr[] {
 export const CORE_FORGE = { base: 50, growth: 1.2, resetPearls: 100 };
 export const coreForgeEssence = (forges = 0) => Math.ceil(CORE_FORGE.base * Math.pow(CORE_FORGE.growth, Math.max(0, Math.floor(forges))));
 /** 보스 코어가 주는 기본 능력치(칸 100% · 공명, 각성 포함). */
-export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'>) {
+export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'>, regionResonance: number = BOSS_CORE_RULES.resonance) {
     const out: Partial<Record<Attribute, number>> = {};
     for (const id of ownedCores(s)) {
-        const e = coreEntry(s.bossCores![id])!, m = coreAwaken(e.rank) * (s.coreSlot === id ? 1 : BOSS_CORE_RULES.resonance);
+        const e = coreEntry(s.bossCores![id])!, m = coreAwaken(e.rank) * (s.coreSlot === id ? 1 : resonanceOf(id, regionResonance));
         for (const a of e.attrs) out[a.k] = (out[a.k] || 0) + Math.floor(Math.max(1, s.level || 1) * a.f * m);
     }
     return out;
@@ -76,14 +76,19 @@ export const ABYSS_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !!BOSS_CORES[
 /** 최고 층 기준으로 이 무릉 코어가 가져야 할 각성 단계(-1이면 아직 못 얻음). */
 export const abyssCoreRank = (id: string, best: number) => (BOSS_CORES[id].floors || []).filter(f => best >= f).length - 1;
 export const ownedCores = (s: Pick<State, 'bossCores'>) => Object.keys(s.bossCores || {}).filter(id => BOSS_CORES[id]);
+/** v3.221 보유한 지역 보스 코어(무릉도장 코어 제외): 수와 각성 단계 합. 어둠의 추종자가 씁니다. */
+export const regionCores = (s: Partial<Pick<State, 'bossCores'>>) => ownedCores({ bossCores: s.bossCores }).filter(id => !BOSS_CORES[id].floors);
+export const regionCoreRanks = (s: Partial<Pick<State, 'bossCores'>>) => regionCores(s).reduce((n, id) => n + Math.min(BOSS_CORE_RULES.awakenMax, Math.max(0, coreEntry(s.bossCores![id])!.rank)), 0);
+/** v3.221 끼지 않은 코어의 공명 비율: 지역 코어는 직업 특성(어둠의 추종자 30%)을 따르고, 무릉도장 코어는 기본 10%. */
+const resonanceOf = (id: string, regionResonance: number) => BOSS_CORES[id].floors ? BOSS_CORE_RULES.resonance : regionResonance;
 /** 보스 코어 칸 · 공명을 합친 능력치(합연산). */
-export function coreStats(s: Pick<State, 'bossCores' | 'coreSlot'>) {
+export function coreStats(s: Pick<State, 'bossCores' | 'coreSlot'>, regionResonance: number = BOSS_CORE_RULES.resonance) {
     const out: Partial<Record<CoreStat, number>> = {}, put = (k: CoreStat, v: number) => { out[k] = (out[k] || 0) + v; };
     for (const id of ownedCores(s)) {
         const rank = coreEntry(s.bossCores![id])!.rank, worn = s.coreSlot === id;
         for (const [k, v] of Object.entries(BOSS_CORES[id].bonus) as [CoreStat, number][]) {
             if (CORE_TURN_STATS.has(k)) { if (worn) put(k, v); continue; }
-            put(k, v * coreAwaken(rank) * (worn ? 1 : BOSS_CORE_RULES.resonance));
+            put(k, v * coreAwaken(rank) * (worn ? 1 : resonanceOf(id, regionResonance)));
         }
     }
     return out;

@@ -13,6 +13,10 @@ export type Fighter = {
     name: string;
     /** v3.221 적의 몬스터 id(까미에게만 발동하는 기술이 봅니다). */
     foeId?: string;
+    /** v3.221 보유한 지역 보스 코어 수(코어 비례 자기 버프 coreBuff). */
+    cores?: number;
+    /** v3.221 끼고 있는 칠흑 장신구의 보스 id(칠흑 일식 onyxForms). */
+    onyx?: string;
     /** 현재 직업. 4차 이상 전용 기술의 계보 밖 효율을 정합니다(적은 없음). */
     job?: string;
     stats: Stats;
@@ -262,9 +266,22 @@ function skillOf(a: Fighter, id: string) {
     if (!base) return undefined;
     // v3.104 effectiveSkill은 캐시된 객체를 돌려주므로 복사본에 배율을 곱합니다.
     const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0);
-    return outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
+    return shapeSkill(a, outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) }));
+}
+/** v3.221 쓰는 사람의 기록으로 기술 모양을 정합니다: 코어 비례 자기 버프(어둠의 의식) · 끼고 있는 칠흑 장신구 형태(칠흑 일식). */
+function shapeSkill(a: Fighter, sk: Skill): Skill {
+    const cored = withCoreBuff(sk, a.cores || 0), form = a.onyx ? cored.onyxForms?.[a.onyx] : undefined;
+    return form ? { ...cored, ...form } : cored;
 }
 /** v3.132 계보 밖에서 쓰는 5차 기술: outsiderChance가 있으면 발동률을 그만큼 낮춥니다(포이즌 노바). */
+/** v3.221 코어 비례 자기 버프(어둠의 의식): 보유한 지역 보스 코어 수 n으로 selfBuff를 만들고, 단계(steps)를 덧붙입니다. */
+export function withCoreBuff(sk: Skill, n: number): Skill {
+    const cb = sk.coreBuff;
+    if (!cb) return sk;
+    const steps = cb.steps.filter(x => n >= x.at), turns = Math.max(cb.turns, ...steps.map(x => x.turns || 0)), ward = Math.max(sk.wardTurns || 0, ...steps.map(x => x.wardTurns || 0));
+    const stats = Object.fromEntries(Object.entries(cb.stats).map(([k, v]) => [k, (v as number) * n])) as Partial<Stats>;
+    return { ...sk, selfBuff: { id: cb.id, name: cb.name, turns, damageMultiplier: 1 + cb.damage * n, ...(n ? { stats } : {}) }, ...(ward ? { wardTurns: ward } : {}), ...(steps.some(x => x.extraTurn) ? { extraTurn: true } : {}) };
+}
 function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
     return base.outsiderChance !== undefined && signatureScale(base, a.job) < 1 ? { ...sk, chance: sk.chance * base.outsiderChance } : sk;
 }
@@ -277,7 +294,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         const base = anySkillById(id);
         if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
             continue;
-        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) });
+        const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = shapeSkill(a, outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) }));
         // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
         if (candidate.condition === 'wounded' && a.hp > sa.hp * SKILL_FORMULA.woundedThreshold)
             continue;
@@ -456,6 +473,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen && forced.power) chosen.multiplier *= forced.power;
     }
     else if (!silenced) chosen = pickActive(a, b, sa, sb, rng, blocked, bonusAction);
+    // v3.221 물리 · 마법 중 높은 쪽(칠흑 일식): 그 종류의 피해로 나갑니다.
+    if (chosen?.bestOf) chosen = { ...chosen, damageType: sa.magic > sa.attack ? 'magic' : 'physical' };
     // v25.5 동시 시전: 첫 성공이 multicast 기술이면 편성의 다른 multicast 액티브도 각자 발동률로 굴려 함께 나갑니다. 묶음 전체의 가중 마나를 감당할 수 있을 때까지 뒤에서부터 뺍니다.
     const MC = SKILL_FORMULA.multicast;
     let castCount = forced?.count || 1;

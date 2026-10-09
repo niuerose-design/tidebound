@@ -12,6 +12,7 @@
  * 표본 동안 사냥이 멈추거나 사냥터 · 직업 · 환생이 바뀌었으면(자동 환생 · 자동 따라가기 등), 또는 레벨이 2 이상 올랐으면 환산하지 않고 전처럼 남은 턴을 다 돌립니다.
  * 던전 · 랜덤게임 · 해커는 처음부터 환산하지 않습니다.
  */
+import { jobById } from '../data/classes';
 import type { Enemy, State } from '../types';
 import { BALANCE, xpNeeded } from '../data/balance';
 import { PRIMAL_DROP_PITY, inventoryCap } from '../data/economy';
@@ -149,7 +150,7 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         s.onyxSeen ??= {};
         for (let i = 0; i < rolls.onyx; i++) {
             const seen = s.onyxSeen[region] || 0;
-            if (rng() < onyxChance(encounterTier(s), seen)) { s.onyxSeen[region] = 0; found.push('onyx'); }
+            if (rng() < onyxChance(encounterTier(s), seen, jobById(s.job)?.onyxFind || 0)) { s.onyxSeen[region] = 0; found.push('onyx'); }
             else s.onyxSeen[region] = seen + 1;
         }
     }

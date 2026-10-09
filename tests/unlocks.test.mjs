@@ -194,3 +194,55 @@ test('v3.221 누리 추적자: 하얀 발자국은 누리(대왕 포함)에게�
     const pen0 = stats(p).penetration; p.book.expNuri = 300; const pen300 = stats(p).penetration;
     assert.ok(pen300 - pen0 > 0.25 && pen300 - pen0 <= 0.3 + 1e-9, `penetration ${pen0} → ${pen300}`);
 });
+
+test('v3.221 어둠의 추종자: 어둠의 의식은 지역 보스 코어 수 비례 자기 버프(3 · 5 · 7 단계), 공명 30%, 패시브는 코어 수 · 각성(무릉도장 코어 제외)', async () => {
+    const C = await loadGame().load('game/systems/combat.js'), BC = await loadGame().load('game/data/boss-core.js');
+    const sk = SKILLS.find(x => x.id === 'shadowRite');
+    const at = n => C.withCoreBuff(sk, n);
+    assert.equal(at(0).selfBuff.damageMultiplier, 1); assert.equal(at(0).selfBuff.turns, 4);
+    assert.equal(at(3).selfBuff.turns, 6); assert.ok(!at(3).wardTurns && !at(3).extraTurn);
+    assert.equal(at(5).wardTurns, 2); assert.ok(!at(5).extraTurn);
+    const top = at(7); assert.ok(Math.abs(top.selfBuff.damageMultiplier - 1.49) < 1e-9 && Math.abs(top.selfBuff.stats.dotBonus - 0.49) < 1e-9 && Math.abs(top.selfBuff.stats.healBonus - 0.49) < 1e-9 && top.extraTurn && top.wardTurns === 2);
+    // 전투: 피해 없이 버프 · 면역 · 추가 행동.
+    const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const me = { name: 'A', job: 'darkFollower', cores: 7, stats: { ...base }, hp: 1e6, mana: 1000, skills: ['shadowRite'], cooldowns: {}, stun: 0, effects: {}, ranks: { shadowRite: 1 }, mastery: {}, practice: {} };
+    const foe = { name: 'B', foe: true, stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} }, ev = [];
+    strike(me, foe, () => 0, ev);
+    const cast = ev.find(e => e.skillId === 'shadowRite');
+    assert.ok(cast && cast.total === 0 && foe.hp === 1e6 && cast.extraTurn, 'no damage, extra action at 7 cores');
+    assert.equal(me.effects.buffs.lordShadow.damageMultiplier, 1.49); assert.equal(me.effects.immune.stun, 2);
+    // 공명: 어둠의 추종자는 끼지 않은 지역 코어 30%, 무릉도장 코어는 10% 그대로.
+    const cores = { bossCores: { grotto: { rank: 0, attrs: [] }, abyssMugong: { rank: 0, attrs: [] } }, coreSlot: undefined };
+    assert.equal(BC.coreStats(cores, 0.3).hp, 2000 * 0.3); assert.ok(Math.abs(BC.coreStats(cores, 0.3).penetration - 0.15 * 0.1) < 1e-9, 'abyss core keeps 10%');
+    assert.equal(job('darkFollower').coreResonance, 0.3);
+    // 패시브 기록: 지역 코어만 셉니다.
+    const s = ready(70); s.bossCores = { grotto: { rank: 2, attrs: [] }, temple: { rank: 5, attrs: [] }, abyssMugong: { rank: 5, attrs: [] } };
+    const c = progressCounts(s); assert.deepEqual([c.cores, c.coreRanks], [2, 7]);
+    assert.equal(job('darkFollower').subRole, 'borderCore'); assert.equal(job('darkFollower').attack, job('darkFollower').magic, 'no physical tilt');
+});
+
+test('v3.221 칠흑의 화신: 칠흑 일식은 물리 · 마법 중 높은 쪽 · 끼고 있는 칠흑 장신구 형태, 출현 ×1.5 · 120턴, 패시브는 마나 · 공격/방어 배율(체력 제외)', () => {
+    const base = { hp: 1e7, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const me = (stats, onyx) => ({ name: 'A', job: 'onyxAvatar', ...(onyx ? { onyx } : {}), stats: { ...base, ...stats }, hp: 1e7, mana: 1000, skills: ['onyxEclipse'], cooldowns: {}, stun: 0, effects: {}, ranks: { onyxEclipse: 1 }, mastery: {}, practice: {} });
+    const foe = () => ({ name: 'B', foe: true, prey: true, stats: { ...base }, hp: 1e7, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const cast = (a, b = foe()) => { const ev = []; strike(a, b, () => 0.5, ev, false, false, { id: 'onyxEclipse', index: 0, count: 1, kind: 'awaken' }); return { ev: ev.find(e => e.skillId === 'onyxEclipse'), b, a }; };
+    const phys = cast(me({ attack: 1000, magic: 100 })), mag = cast(me({ attack: 100, magic: 1000 }));
+    assert.equal(phys.ev.damageType, 'physical'); assert.equal(mag.ev.damageType, 'magic');
+    assert.equal(phys.ev.total, mag.ev.total, 'a magic build loses nothing against a physical build');
+    assert.ok(cast(me({}, 'onyxWill')).b.stun > 0, '윌: stun');
+    assert.ok(cast(me({}, 'onyxLucid')).b.effects.weaken > 0, '루시드: weaken');
+    assert.equal(cast(me({}, 'onyxBlackMage')).a.effects.buffs.genesis.damageMultiplier, 1.3, '검은 마법사: damage buff');
+    assert.equal(cast(me({}, 'onyxDunkel')).a.effects.buffs.commanderBeat.stats.chainBonus, 0.3, '듄켈: chain buff');
+    assert.equal(cast(me({}, 'onyxDusk')).a.effects.buffs.duskFear.stats.thorns, 0.3, '더스크: thorns buff');
+    { const a = me({}, 'onyxHilla'); a.hp = 1e5; const r = cast(a); assert.ok(r.ev.drained > 0 && a.hp > 1e5, '진 힐라: drain'); }
+    assert.ok(cast(me({}, 'onyxSeren')).ev.total > cast(me({})).ev.total * 1.4, '세렌: +50% to bosses');
+    assert.equal(job('onyxAvatar').onyxFind, 0.5); assert.equal(job('onyxAvatar').onyxTurns, 120);
+    // 패시브: 칠흑 각성을 올려도 체력은 그대로, 공격은 오릅니다.
+    const p = ready(70); Object.assign(p.attributes, { str: 70, int: 70 }); p.job = 'onyxAvatar'; p.unlockedJobs.push('onyxAvatar'); p.skills = ['onyxHeart']; p.learned.onyxHeart = 1;
+    p.inventory.push({ id: 'o1', name: 'x', slot: 'charm', rarity: 5, level: 70, power: 1, onyx: 'onyxDusk', onyxRank: 0, affixes: [] }, { id: 'o2', name: 'y', slot: 'charm', rarity: 5, level: 70, power: 1, onyx: 'onyxSeren', onyxRank: 0, affixes: [] });
+    const c = progressCounts(p); assert.deepEqual([c.onyxOwned, c.onyxRanks], [2, 0]);
+    const before = stats(p); p.inventory.forEach(i => { i.onyxRank = 5; }); const after = stats(p);
+    assert.equal(progressCounts(p).onyxRanks, 10);
+    assert.equal(after.hp, before.hp, 'combatScale leaves hp alone'); assert.ok(after.attack > before.attack && after.magic > before.magic);
+    assert.ok(SKILLS.find(s => s.id === 'onyxHeart').bonus.mana > 0 && !SKILLS.find(s => s.id === 'onyxHeart').bonus.hp && !SKILLS.find(s => s.id === 'fallenLords').bonus.hp, 'mana instead of max hp');
+});
