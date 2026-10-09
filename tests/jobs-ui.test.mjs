@@ -81,7 +81,8 @@ test('Job UI v3.166: monostat lineages sit in the 외길 tab and leave their ori
     }
     for (const l of LINEAGES.filter(l => !ui.monostatLineage(l.id))) assert.ok(!ui.lineageInTab(s, 'monostat', l), `${l.id} stays out of 외길`);
     // 보이는 직업은 저마다 탭 하나(tabOf)에 들어가고, 그 탭의 계보 목록에 자기 계보가 있습니다.
-    const shown = ui.shownJobs(s);
+    // v3.221 아제로스 세계의 공개 직업(참모 계보)은 계열 탭이 아니라 세계 목차로 들어갑니다.
+    const shown = ui.shownJobs(s).filter(j => ui.jobWorld(j) === 'maple');
     for (const j of shown) {
         const tab = ui.tabOf(j), lineage = LINEAGES.find(l => l.id === lineageOf(j));
         assert.ok(ui.monostatLineage(lineageOf(j)) ? tab === 'monostat' : tab === ui.lineageTreeOf(j), j.id);
@@ -137,11 +138,13 @@ test('Job UI v3.168: the beginner lineage sits in the ??? tab while the job keep
 
 test('v3.220 worlds: Azeroth lineages stay out of the Maple World tree tabs and show only in their own world once revealed', () => {
     const s = newState(0);
-    assert.equal(ui.worldLineages(s, 'azeroth').length, 0, 'nothing revealed yet');
-    assert.equal(ui.worldJobCount(s, 'azeroth'), 0);
+    // v3.221 공개 참모 계보(staff)는 처음부터 아제로스에 보이고, 히든 계보는 드러나기 전까지 없습니다.
+    assert.deepEqual(ui.worldLineages(s, 'azeroth').map(l => l.id), ['staff'], 'only the public staff lineage before any reveal');
+    assert.equal(ui.worldJobCount(s, 'azeroth'), 4);
     s.book.masteryMimic = 100;
-    assert.deepEqual(ui.worldLineages(s, 'azeroth').map(l => l.id), ['kkamiHunter'], 'a met hidden condition reveals it in Azeroth');
-    assert.equal(ui.jobWorld(job('kkamiHunter')), 'azeroth'); assert.equal(ui.jobWorld(job('undead')), 'maple');
+    assert.deepEqual(ui.worldLineages(s, 'azeroth').map(l => l.id).sort(), ['kkamiHunter', 'staff'], 'a met hidden condition reveals it in Azeroth');
+    assert.equal(ui.jobWorld(job('kkamiHunter')), 'azeroth'); assert.equal(ui.jobWorld(job('quartermaster')), 'azeroth'); assert.equal(ui.jobWorld(job('undead')), 'maple');
+    assert.ok(!ui.lineageInTab(s, 'support', { id: 'staff', tree: 'support' }), 'staff is not in the Maple World support tab');
     assert.ok(!ui.lineageInTab(s, 'mystery', { id: 'kkamiHunter', tree: 'mystery' }), 'not in the ??? tab');
     const before = ui.tabJobCount(s, 'mystery'); s.book.masteryMimic = 0; assert.equal(ui.tabJobCount(s, 'mystery'), before, 'the ??? tab count ignores Azeroth');
     assert.ok(ui.worldLineages(s, 'maple').length > 20 && ui.worldLineages(s, 'maple').every(l => !['kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar'].includes(l.id)));
