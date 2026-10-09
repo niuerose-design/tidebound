@@ -7,7 +7,7 @@ import type { State } from '../types';
 import { STAGES } from './world';
 import { jobById } from './classes';
 import { isHackerJob } from './hacker';
-import { ONYX_BOSSES } from './onyx';
+import { ONYX_BOSSES, ownedOnyx } from './onyx';
 import { BOSS_CORES, coreEntry } from './boss-core';
 import { RANKS, rankIndex, rankState } from './rank';
 
@@ -23,7 +23,7 @@ export type StoryScene = {
     when: (s: State) => boolean;
 };
 export const STORY_CHAPTERS = ['제1장 · 판게아의 문', '제2장 · 생을 거듭하는 자', '제3장 · 시간의 끝에서', '제4장 · 두 번째 바다', '제5장 · 숫자의 그림자', '제6장 · 판게아 너머'];
-/** v3.215 부(部): 장 묶음. 1부는 첫 승천까지, 2부는 승천 뒤의 이야기입니다. */
+/** v3.215 부(部): 장 묶음. v3.216 1부는 검은 마법사까지, 2부는 그 뒤의 이야기이고 승천(1회)은 2부 마지막 장면에만 씁니다. */
 export const STORY_PARTS: { title: string; subtitle: string; chapters: number[] }[] = [
     { title: '1부', subtitle: '돌아오는 자', chapters: [0, 1, 2] },
     { title: '2부', subtitle: '떠나는 자', chapters: [3, 4, 5] },
@@ -172,18 +172,7 @@ export const STORY: StoryScene[] = [
         '그가 무너지며 말했다. “나를 쓰러뜨려도 세계는 갈라지지 않는다. 이제 판게아는 너희의 것이다.”',
         '성이 무너지고, 처음으로 시간이 한 방향으로 흐르기 시작했다.',
     ] },
-    { id: 'ascend', chapter: 2, title: '승천', hint: '처음으로 승천한다', when: s => (s.ascension || 0) > 0, lines: [
-        '모든 세계석이 한꺼번에 빛났다. 지난 생들의 그림자가 하나씩 다가와 내 안으로 녹아들었다.',
-        '눈을 떴을 때, 다시 선착장이었다. 하지만 이번에는 바다가 끝없이 넓어 보였다.',
-        '노인이 그물을 내려놓았다. “이제 넌 돌아오는 자가 아니야. 떠나는 자지.”',
-        '수평선 너머, 아직 이어지지 않은 세계들이 문을 두드리고 있었다. 이야기는 계속된다.',
-    ] },
     // ── 2부 · 제4장 · 두 번째 바다 ───────────────────────
-    { id: 'ascend2', chapter: 3, title: '다시 떠나는 자', hint: '승천 2회를 달성한다', when: s => (s.ascension || 0) >= 2, lines: [
-        '두 번째 승천. 이번에는 선착장에서 눈을 뜨자마자 웃음이 났다.',
-        '노인이 그물을 건넸다. “떠나는 자도 가끔은 돌아와서 그물을 손봐야지.”',
-        '항구의 아이들이 내 이름을 불렀다. 지난 생의 내가 남긴 이야기가 이 섬의 전설이 되어 있었다.',
-    ] },
     { id: 'core', chapter: 3, title: '보스의 심장', hint: '보스 코어를 처음 얻는다', when: s => cores(s).length > 0, lines: [
         '쓰러진 보스의 가슴에서 맥박이 뛰는 돌이 굴러 나왔다. 아직 따뜻했다.',
         '코어를 쥐자 그 보스의 기술이 손끝에 스며들었다. 싸웠던 상대가 이제는 내 일부가 되었다.',
@@ -233,23 +222,22 @@ export const STORY: StoryScene[] = [
     ] },
 
     // ── 2부 · 제6장 · 판게아 너머 ────────────────────────
-    { id: 'onyxAll', chapter: 5, title: '일곱 개의 칠흑', hint: '칠흑 보스 7종을 모두 처치한다', when: s => ONYX_BOSSES.every(b => (s.onyxBook?.[b.id] || 0) > 0), lines: [
+    { id: 'onyxAll', chapter: 5, title: '일곱 개의 칠흑', hint: '칠흑 장신구 7종을 모두 모은다', when: s => { const own = ownedOnyx(s); return ONYX_BOSSES.every(b => own.has(b.id)); }, lines: [
         '일곱 번째 칠흑 장신구가 손에 들어왔다. 나란히 놓자 장신구들이 서로를 끌어당겼다.',
         '하나로 맞물린 칠흑은 열쇠 모양이었다. 검은 마법사가 세계를 묶을 때 쓴 바로 그 열쇠.',
         '열쇠는 문을 잠그는 데도, 여는 데도 쓰인다.',
     ] },
-    { id: 'abyss200', chapter: 5, title: '끝없는 계단', hint: '무릉도장 200층을 돌파한다', when: s => (s.abyssBest || 0) >= 200, lines: [
-        '이백 층. 무공은 더 이상 그곳에 없었다. 빈 방석 위에 쪽지 하나가 놓여 있었다.',
-        '“이 위로는 나도 가 보지 못했다. 네가 길을 만들어라.”',
+    { id: 'clone', chapter: 5, title: '또 다른 나', hint: '분신(두 번째 모험가)을 만든다', when: s => (s.account?.slots?.length || 0) >= 2 || (s.account?.slot || 1) > 1, lines: [
+        '선착장에 나와 똑같은 얼굴이 서 있었다. 같은 바다를 건너온 또 다른 나, 분신이었다.',
+        '우리는 서로에게 말을 걸지 않았다. 말하지 않아도 무엇을 해야 할지 알았으니까.',
+        '한 사람이 걸을 수 없는 길이라면, 둘이 나눠 걸으면 된다.',
     ] },
-    { id: 'ascend3', chapter: 5, title: '세 번째 승천', hint: '승천 3회를 달성한다', when: s => (s.ascension || 0) >= 3, lines: [
-        '세 번째 승천 때, 지난 생의 그림자들은 더 이상 내 안으로 녹아들지 않았다. 대신 내 곁에 나란히 섰다.',
-        '분신. 같은 바다를 건너온 또 다른 나. 우리는 서로에게 말을 걸지 않아도 무엇을 해야 할지 알았다.',
-    ] },
-    { id: 'ascend5', chapter: 5, title: '문 너머의 바람', hint: '승천 5회를 달성한다', when: s => (s.ascension || 0) >= 5, lines: [
-        '다섯 번째 승천. 칠흑의 열쇠가 저절로 빛났다. 수평선 너머에서 문이 열리는 소리가 들렸다.',
-        '바람에 실려 온 것은 낯선 종소리와 기도 소리. 빛의 망치를 든 기사, 초록빛 불꽃을 다루는 술사들.',
-        '노인이 마지막으로 그물을 걷었다. “아제로스라고 하더군. 판게아에 붙을 다음 세계.”',
+    // v3.216 승천은 준장 진급 이상으로 어려워 마지막 장면 하나만 승천 1회로 엽니다(id는 그대로라 이미 연 이야기는 남음).
+    { id: 'ascend', chapter: 5, title: '승천', hint: '처음으로 승천한다', when: s => (s.ascension || 0) > 0, lines: [
+        '모든 세계석이 한꺼번에 빛났다. 칠흑의 열쇠가 저절로 돌아가고, 지난 생들의 그림자가 하나씩 내 안으로 녹아들었다.',
+        '눈을 떴을 때, 다시 선착장이었다. 하지만 이번에는 바다가 끝없이 넓어 보였다.',
+        '노인이 그물을 내려놓았다. “이제 넌 돌아오는 자가 아니야. 떠나는 자지.”',
+        '수평선 너머에서 문이 열리는 소리가 들렸다. 빛의 망치를 든 기사, 초록빛 불꽃을 다루는 술사들. “아제로스라고 하더군. 판게아에 붙을 다음 세계.”',
         '배는 이미 선착장에 묶여 있었다. 이야기는, 다음 세계에서 계속된다.',
     ] },
 ];
