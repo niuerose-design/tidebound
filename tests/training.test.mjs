@@ -189,7 +189,7 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
         if (r < .5 || r > 1.5) bad.push(`${sk.id} ×${r.toFixed(2)}`);
     }
     assert.deepEqual(bad, []);
-    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [600, 3000, 12000, 36000], 'moved 2nd-tier hidden jobs use the 2nd-tier curve');
+    assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'emptyPalm')), [840, 4200, 16800, 50400], 'moved 2nd-tier hidden jobs use the 2nd-tier curve (v3.197 빈손 장타는 방어 비례라 장기 곡선 ×1.4)');
     assert.deepEqual(P.masteryMilestonesFor(SKILLS.find(sk => sk.id === 'boneLegacy')), [1e6, 4e6, 1e7], 'v3.137 bone legacy (AP 6 → 4 → 2 → −3) in millions, ending at ten million');
     assert.equal(P.jobMasteryTarget(job('undead')), 1e7, 'v3.137 망인 job mastery is ten million');
     const s = newState(0); delete s.masteryAligned; s.skillPractice.emptyPalm = 300; s.skillPractice.wave = 100;
@@ -347,7 +347,7 @@ test('v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage 
     assert.equal(sk('primordialBlood').bonus.attack, 300); assert.deepEqual(sk('primordialBlood').companion, { hits: 2, power: .35 });
     assert.deepEqual([sk('tentacleBarrage').multiplier, sk('tentacleBarrage').extraAttacks], [1.4, 1]);
     assert.deepEqual([sk('maulingTide').multiplier, sk('maulingTide').extraAttacks], [1.9, 1]);
-    assert.equal(sk('worldTentacle').extraAttacks, 1); assert.ok(sk('worldTentacle').multiplier > 2.8, 'awakening boost on top of base ×2.8');
+    assert.equal(sk('worldTentacle').extraAttacks, 1); assert.ok(sk('worldTentacle').multiplier > 2.5, 'awakening boost on top of base ×2.5 (v3.197 2.8 → 2.5)');
     assert.deepEqual([sk('abyssalGrip').companion, sk('abyssHide').companion], [{ hits: 1, power: .35 }, { hits: 1, power: .4 }]);
 });
 

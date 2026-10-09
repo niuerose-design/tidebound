@@ -5,7 +5,7 @@ import { accountAP } from '../data/account';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -91,8 +91,26 @@ export function skillMasteryRanks(s: State) { const out: Record<string, number> 
 export function extraRollLevel(s: Pick<State, 'extraRolls' | 'permanent'>) { return Math.max(0, Math.min(s.extraRolls || 0, researchRank(s, 'extraRoll'), SKILL_FORMULA.extraRoll.ap.length)); }
 /** v3.86 추가 판정이 쓰는 장착 AP(단계별 합). */
 export function extraRollAP(s: Pick<State, 'extraRolls' | 'permanent'>, level = extraRollLevel(s)) { return SKILL_FORMULA.extraRoll.ap.slice(0, level).reduce((a, n) => a + n, 0); }
+/** v3.197 떠돌이의 요령(방랑): 장착한 것 중 가장 큰 borrowedDiscount. 요령의 계보(방랑) 직업일 때만 듭니다(다른 계보가 계승해도 효과 없음). */
+function borrowedDiscount(s: State, ids: string[]) {
+    const job = jobById(s.job), home = job ? lineageOf(job) : '';
+    let n = 0;
+    for (const id of ids) { const sk = skillById(id), owner = sk?.borrowedDiscount && sk.job ? jobById(sk.job) : undefined; if (owner && lineageOf(owner) === home) n = Math.max(n, sk!.borrowedDiscount!); }
+    return n;
+}
+/** 스킬 하나의 장착 AP. v3.197 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
+export function skillAP(s: State, id: string, discount = 0) {
+    const sk = skillById(id);
+    if (!sk) return 2;
+    const cost = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    if (!(discount > 0 && cost > 1 && sk.job)) return cost;
+    const owner = jobById(sk.job), job = jobById(s.job);
+    return owner && job && lineageOf(owner) !== lineageOf(job) ? Math.max(1, cost - discount) : cost;
+}
+/** 편성 ids에 넣었을 때 이 스킬의 장착 AP(화면 표시용, apUsed와 같은 값). */
+export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids)); }
 /** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
-export function apUsed(s: State, ids = s.skills) { return extraRollAP(s) + ids.reduce((sum, id) => { const sk = skillById(id); return sum + (sk ? effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost! : 2); }, 0); }
+export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount), 0); }
 /** v3.130 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
 const lineageCache = new WeakMap<Job, string[]>();
 export function lineage(job: string): string[] {
@@ -118,7 +136,7 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
 }
 /**
  * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
- * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
+ * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수 · v3.197 poverty 보유 골드 자릿수가 10에서 모자란 만큼.
  */
 export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
@@ -128,7 +146,7 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     for (const f of MONSTERS) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, poverty: Math.max(0, 10 - Math.floor(Math.log10(1 + Math.max(0, s.gold || 0)))), turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;

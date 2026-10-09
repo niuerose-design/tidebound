@@ -100,12 +100,12 @@ test('v3.137 망인: job mastery ten million; 죽지않은 영혼 AP 6 → 4 →
     assert.equal(effectiveSkill(sk, 1, 3).penaltyRelief, 1, 'the last stage relieves every penalty');
 });
 
-test('v3.139 망인 skills: 무덤파기 only weakens for 5 turns; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
+test('v3.197 망인 skills: 무덤파기 hits and drains; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect', async () => {
     const { strike } = await import('./harness.mjs'), D = await loadGame().load('game/systems/skill-description.js');
-    const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(grave.statusOnly && grave.effect === 'weaken' && grave.statusTurns === 5);
+    const grave = SKILLS.find(x => x.id === 'graveHook'); assert.equal(grave.name, '무덤파기'); assert.ok(!grave.statusOnly && grave.effect === 'drain' && grave.damageType === 'physical');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
-    const a = { name: 'A', stats: { ...base }, hp: 1e6, mana: 1000, skills: ['graveHook'], cooldowns: {}, stun: 0, effects: {}, ranks: { graveHook: 1 }, mastery: {}, practice: {} }, b = { name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
-    strike(a, b, () => 0); assert.equal(b.hp, 1e6, 'no damage'); assert.equal(b.effects.weaken, 5);
+    const a = { name: 'A', stats: { ...base }, hp: 5e5, mana: 1000, skills: ['graveHook'], cooldowns: {}, stun: 0, effects: {}, ranks: { graveHook: 1 }, mastery: {}, practice: {} }, b = { name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} };
+    strike(a, b, () => 0); assert.ok(b.hp < 1e6, 'it hits'); assert.ok(a.hp > 5e5, 'and drains back');
     const soul = SKILLS.find(x => x.id === 'boneLegacy'); assert.equal(soul.name, '죽지않은 영혼');
     assert.deepEqual(D.skillEffectLines(soul, 3), ['쓸모없음']); assert.equal(D.skillBrief(soul), '쓸모없음'); assert.ok(D.skillGrowthStages(soul).every(r => r.effects.join() === '쓸모없음'));
     assert.equal(soul.levelEffects.at(-1).penaltyRelief, 1, 'the real effect is unchanged');

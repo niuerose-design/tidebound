@@ -7,13 +7,26 @@ const base = { hp: 1000, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0
 const fighter = (skills, extra = {}) => ({ name: 'A', job: extra.job, stats: { ...base }, hp: extra.hp ?? 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: extra.effects || {}, ranks: {}, mastery: extra.mastery || {}, practice: {} });
 const target = (extra = {}) => ({ name: 'B', stats: { ...base, hp: 1e6 }, hp: extra.hp ?? 1e6, skills: extra.skills || [], cooldowns: {}, stun: 0, effects: {}, mana: 0 });
 
-test('v25 clockmaker: time machine restores both sides once per battle; mastery opens the chronarch with no door', () => {
-    const a = fighter(['timeMachine'], { hp: 10 }), b = target({ hp: 5 });
-    const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(b.hp, 1e6); assert.ok(a.effects.timeUsed);
-    a.hp = 10; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
+test('v3.197 clockmaker: time rewind restores only me (hp · mana · cooldowns) once per battle when wounded; mastery opens the chronarch with no door', () => {
+    const healthy = fighter(['timeMachine']); strike(healthy, target(), () => 0); assert.ok(!healthy.effects.timeUsed, 'not used at full hp');
+    const a = fighter(['timeMachine', 'windUp'], { hp: 10 }), b = target({ hp: 5 }); a.mana = 3; a.cooldowns = { windUp: 3 };
+    const text = strike(a, b, () => 0); assert.match(text, /타임 리와인드/); assert.equal(a.hp, 1000); assert.equal(a.mana, 200); assert.equal(a.cooldowns.windUp, 0, 'my cooldowns are rewound');
+    assert.equal(b.hp, 5, 'the foe is not rewound'); assert.ok(a.effects.timeUsed);
+    a.hp = 10; a.cooldowns = { windUp: 9 }; strike(a, b, () => 0); assert.equal(a.hp, 10, 'only once per battle');
     const s = newState(0); s.level = 10; s.attributes.dex = 30; s.attributes.int = 30;
     assert.equal(canChangeJob(s, 'chronarch'), false); s.jobMastery.clockmaker = 3000; assert.equal(canChangeJob(s, 'chronarch'), true, 'mastery alone opens the chronarch');
     assert.equal(JOBS.find(j => j.id === 'chronarch').tier, 4);
+});
+
+test('v3.197 zero tag: switching alpha ↔ beta adds the largest equipped tagBonus; the same side twice adds nothing', () => {
+    const sk = id => SKILLS.find(x => x.id === id);
+    assert.deepEqual([sk('windUp').tag, sk('precede').tag, sk('slackHand').tag, sk('frozenTime').tag], ['alpha', 'alpha', 'beta', 'beta']);
+    assert.deepEqual([sk('timeLag').tagBonus, sk('chronoSovereign').tagBonus], [.2, .5]);
+    const hit = (skills, last) => { const a = fighter(skills, { effects: last ? { tag: last } : {} }), t = target(); strike(a, t, () => 0); return { dmg: 1e6 - t.hp, tag: a.effects.tag }; };
+    const plain = hit(['slackHand']), same = hit(['slackHand', 'timeLag'], 'beta'), swap = hit(['slackHand', 'timeLag'], 'alpha'), both = hit(['slackHand', 'timeLag', 'chronoSovereign'], 'alpha');
+    assert.equal(plain.tag, 'beta', 'remembers the side it used'); assert.equal(same.dmg, plain.dmg, 'same side: no bonus');
+    assert.ok(Math.abs(swap.dmg / plain.dmg - 1.2) < .02, `swap +20% (${plain.dmg} → ${swap.dmg})`);
+    assert.ok(both.dmg > swap.dmg * 1.2, 'the largest tagBonus wins');
 });
 
 test('v25 chronarch: frozen time always stuns; precede grants an immediate extra action', () => {
@@ -1625,4 +1638,27 @@ test('v3.113 onyx awakening and resonance: a repeat drop raises the owned access
     // 제어 연장(턴)은 각성 · 공명을 받지 않습니다.
     const will = O.onyxAccessory(O.ONYX_BOSSES.find(b => b.id === 'onyxWill'), 'will', 60); will.onyxRank = 5;
     assert.equal(Eq.itemStats(will).controlBonus, 1); assert.equal(O.onyxResonance({ inventory: [will], equipment: {} }).controlBonus, undefined);
+});
+
+test('v3.197 wanderer knack: in the wander lineage, skills from other lineages cost 1 AP less (min 1); outside it there is no discount', async () => {
+    const P = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const { lineageOf } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/classes');
+    const s = newState(0); s.level = 60; s.job = 'polymath';
+    const home = lineageOf(JOBS.find(j => j.id === 'polymath'));
+    const borrowed = SKILLS.find(sk => sk.type === 'active' && sk.job && sk.cost >= 3 && lineageOf(JOBS.find(j => j.id === sk.job)) !== home && !sk.borrowedDiscount);
+    for (const id of ['wayfarerKnack', 'borrowedForm', borrowed.id]) s.learned[id] = 1;
+    const cost = effectiveSkill(borrowed, 1, 0).cost, knack = effectiveSkill(SKILLS.find(x => x.id === 'wayfarerKnack'), 1, 0).cost, own = effectiveSkill(SKILLS.find(x => x.id === 'borrowedForm'), 1, 0).cost;
+    assert.equal(P.apUsed(s, [borrowed.id, 'borrowedForm']), cost + own, 'no knack, no discount');
+    assert.equal(P.apUsed(s, ['wayfarerKnack', borrowed.id, 'borrowedForm']), knack + cost - 1 + own, 'knack: only the other-lineage skill gets cheaper');
+    assert.equal(P.loadoutSkillAP(s, borrowed.id, ['wayfarerKnack', borrowed.id]), cost - 1);
+    const hero = { ...s, job: borrowed.job }; assert.equal(P.apUsed(hero, ['wayfarerKnack', borrowed.id]), knack + cost, 'inherited outside the wander lineage: no discount');
+});
+
+test('v3.197 vow of poverty: fewer gold digits, sturdier monk (poverty = 10 − gold digits, floored at 0)', async () => {
+    const P = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');
+    const s = newState(0);
+    for (const [gold, want] of [[0, 10], [99, 8], [1e9, 1], [1e10, 0], [1e15, 0]]) { s.gold = gold; assert.equal(P.progressCounts(s).poverty, want, `${gold}`); }
+    const vow = SKILLS.find(x => x.id === 'vowOfPoverty'); assert.equal(vow.perCount[0].source, 'poverty');
+    s.gold = 0; const poor = P.passiveGrowthBonus(s, vow).hp; s.gold = 1e12; const rich = P.passiveGrowthBonus(s, vow).hp || 0;
+    assert.ok(poor > 0 && rich === 0, `poor ${poor} > rich ${rich}`);
 });
