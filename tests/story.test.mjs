@@ -55,3 +55,12 @@ test('v3.216 story part 2: no ascension gate except the finale, onyx = all 7 acc
     assert.deepEqual(ascensionGated.map(x => x.id).filter(id => !['awake', 'shell', 'henesys', 'perion', 'ellinia', 'kerning', 'rebirth1', 'rebirth5', 'rebirth10', 'rebirth50'].includes(id)), ['ascend'], 'only the finale needs an ascension');
     assert.equal(STORY.at(-1).id, 'ascend', 'the ascension scene is last');
 });
+
+test('v3.216 story art: every chapter has an SVG banner fallback, image paths only for files in the manifest', async () => {
+    const { storyArtSrc } = await load('data/art');
+    const { STORY_ART } = await load('data/art-manifest');
+    for (const key of [...STORY.map(x => x.id), ...STORY_CHAPTERS.map((_, i) => `chapter-${i}`)]) assert.equal(storyArtSrc(key), STORY_ART[key] ? `/art/story/${key}.${STORY_ART[key]}` : null, key);
+    const src = (await import('node:fs')).readFileSync('components/game/story-art.tsx', 'utf8');
+    const banners = src.slice(src.indexOf('const BANNERS'), src.indexOf('];', src.indexOf('const BANNERS')));
+    assert.equal((banners.match(/\/\/ 제\d장/g) || []).length, STORY_CHAPTERS.length, 'one SVG banner per chapter');
+});

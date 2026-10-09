@@ -9,6 +9,7 @@ import { STORY, STORY_CHAPTERS, STORY_PARTS } from '@/game/data/story';
 import { kstIso } from '@/game/data/time';
 import type { State } from '@/game/types';
 import { Fold, Heading } from './shared';
+import { ChapterBanner, SceneArt } from './story-art';
 
 const SEEN_KEY = 'tidebound.storySeen:';
 const readSeen = (name: string): string[] => { try { const v = JSON.parse(localStorage.getItem(SEEN_KEY + name) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
@@ -39,9 +40,11 @@ export function StoryPanel({ s }: { s: State }) {
                     const fresh = seen ? scenes.filter(x => open[x.id] && !seen.has(x.id)).length : 0;
                     // 접은 상태는 장마다 이 기기에 기억합니다(Fold). 처음에는 열린 장면이 있는 장만 펼칩니다.
                     return <Fold key={chapter} id={`story:${ci}`} className="story-chapter" defaultOpen={got > 0} title={chapter} note={<>{got} / {scenes.length}{fresh > 0 && <span className="story-badge">NEW {fresh}</span>}</>}>
+                        <ChapterBanner chapter={ci} title={chapter} dim={got === 0}/>
                         <div className="story-list">{scenes.map(x => open[x.id]
                             ? <article key={x.id} className="panel story-scene">
                                 <header><h3>{x.title}{seen && !seen.has(x.id) && <span className="story-badge">NEW</span>}</h3><time>{kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')}</time></header>
+                                <SceneArt id={x.id} title={x.title}/>
                                 {x.lines.map((line, i) => <p key={i}>{line}</p>)}
                             </article>
                             : <article key={x.id} className="panel story-scene story-locked"><Lock size={15}/><span>잠긴 이야기 · {x.hint}</span></article>)}</div>
