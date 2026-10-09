@@ -20,14 +20,14 @@ export function Meter({ value, max, label, color = 'teal' }: {
 }
 export function Heading({ eyebrow, title, description, children }: {
     eyebrow: string;
-    title: string;
+    title?: string;
     description?: string;
     children?: ReactNode;
 }) {
     return <div className="page-heading">
     <div>
     <div className="eyebrow">{eyebrow}</div>
-    <h1>{title}</h1>{description && <p>{description}</p>}</div>{children}</div>;
+    {title && <h1>{title}</h1>}{description && <p>{description}</p>}</div>{children}</div>;
 }
 export function SkillIcon({ id, size = 24 }: {
     id: string;
