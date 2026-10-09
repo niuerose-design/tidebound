@@ -1,6 +1,7 @@
 /** v3.188 던전 코인 지급과 코인샵 판정(화면 · 행동 공용). 규칙과 가격은 data/dungeon-shop.ts. */
 import type { Item, State } from '../types';
-import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
+import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, DUNGEON_SHOP_DAILY, GEAR_BOX, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
+import { ODDS } from '../data/odds';
 import { dayKey } from '../data/goals';
 import { dungeonModeTier, type DungeonMode } from '../data/balance';
 import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
@@ -27,13 +28,24 @@ export function grantDungeonCoins(s: State, base: number) {
     return gain;
 }
 export const allItems = (s: Pick<State, 'inventory' | 'equipment'>) => [...s.inventory, ...Object.values(s.equipment)].filter((x): x is Item => !!x);
-/** 칠흑 장신구 상품: 가진 종이면 각성, 없으면 제작. 못 사는 이유가 있으면 reason. */
-export function onyxOffer(s: State, bossId: string) {
+/** v3.193 오늘 산 칠흑 상품 수(제작 · 각성 합산). */
+export const onyxBoughtToday = (s: Pick<State, 'dungeonShopDay'>, now: number) => s.dungeonShopDay?.day === dayKey(now) ? s.dungeonShopDay.onyx : 0;
+/** v3.193 전설 이상 장비 상자의 등급 가중치(전설 · 신화 · 고대 · 태초 순서가 아닌 등급 번호 그대로, 전설 미만은 0). */
+export const gearBoxWeights = () => ODDS.drop.rarity.map((w, i) => i < GEAR_BOX.minRarity ? 0 : i >= GEAR_BOX.highFrom ? w * GEAR_BOX.highScale : w);
+export function rollGearBoxRarity(rng: () => number) {
+    const w = gearBoxWeights();
+    let roll = rng() * w.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < w.length; i++) { roll -= w[i]; if (roll < 0) return i; }
+    return w.length - 1;
+}
+/** 칠흑 장신구 상품: 가진 종이면 각성, 없으면 제작. 못 사는 이유가 있으면 reason. v3.193 제작 · 각성 합쳐 하루 1회. */
+export function onyxOffer(s: State, bossId: string, now?: number) {
     const own = allItems(s).find(x => x.onyx === bossId), rank = own?.onyxRank || 0;
     const kind = own ? 'awaken' as const : 'craft' as const, price = own ? DUNGEON_SHOP.onyxAwaken : DUNGEON_SHOP.onyxCraft;
     const reason = !onyxById(bossId) ? '없는 칠흑 보스입니다.'
         : !(s.onyxBook?.[bossId]) ? '그 칠흑 보스를 한 번 이상 처치해야 열립니다.'
-        : own && rank >= ONYX.awakenMax ? '각성을 모두 마쳤습니다.' : undefined;
+        : own && rank >= ONYX.awakenMax ? '각성을 모두 마쳤습니다.'
+        : now !== undefined && onyxBoughtToday(s, now) >= DUNGEON_SHOP_DAILY.onyxPerDay ? `칠흑 상품은 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번까지입니다(한국 시간 자정에 초기화).` : undefined;
     return { kind, price, rank, reason };
 }
 /** 포식자 각인을 받을 수 있는 장비인지. 못 받으면 이유. */

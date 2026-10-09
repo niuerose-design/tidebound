@@ -98,7 +98,7 @@ export function Dungeons({ s, send, busy }: PanelProps) {
 
 /** v3.188 던전 코인샵: 정복으로 모은 던전 코인을 칠흑 장신구 제작 · 각성, 장비 상자, 포식자 각인으로 바꿉니다. */
 function DungeonCoinShop({ s, send, busy }: PanelProps) {
-    const coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, useNow(60_000));
+    const now = useNow(60_000), coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
     const eligible = allItems(s).filter(x => !hunterBlock(x));
     const [pick, setPick] = useState(''), [line, setLine] = useState(-1);
     const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
@@ -108,8 +108,8 @@ function DungeonCoinShop({ s, send, busy }: PanelProps) {
         <div className="section-title"><h3>던전 코인샵</h3><span>보유 {format(coins)} 코인 · 오늘 보너스 정복 {left}/{DAILY_BONUS.clears}회 남음{bonus > 0 ? ` · 코인 보너스 +${Math.round(bonus * 100)}%` : ''}</span></div>
         <p className="footnote">던전에서는 처치 보상이 없고, 정복할 때마다 던전 코인을 받습니다. 지역 던전은 하루(한국 시간 자정 기준) 처음 {DAILY_BONUS.clears}번의 정복이 보너스라 코인을 더 받습니다(노말 {DAILY_BONUS.coins.normal} · 헬 {DAILY_BONUS.coins.hell} · 나이트메어 {DAILY_BONUS.coins.nightmare}, 던전 공용, 다음 날로 넘어가지 않음, 무릉도장 제외). 코인은 환생해도 남습니다.</p>
         <div className="dungeon-reward-lines">
-            {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
-            <span><b>장비</b>희귀 이상 확정 장비 상자(내 레벨) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
+            {ONYX_BOSSES.map(b => { const o = onyxOffer(s, b.id, now); return <span key={b.id}><b>칠흑</b>{b.name} · {b.accessory.name} {o.kind === 'awaken' ? `각성 ${o.rank}/${ONYX.awakenMax}` : '제작'}{o.reason ? ` · ${o.reason}` : ''} <button className="secondary small" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button></span>; })}
+            <span><b>장비</b>전설 이상 확정 장비 상자(내 레벨 · 고대 · 태초는 일반 드롭 하나와 비슷한 확률) <button className="secondary small" disabled={busy || coins < DUNGEON_SHOP.gearBox} onClick={() => buy('gearBox')}>구매 · {format(DUNGEON_SHOP.gearBox)}</button></span>
             <span><b>각인</b>{item ? <>
                 <select aria-label="포식자 각인 장비" value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{eligible.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
                 <select aria-label="바꿀 옵션" value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{lines.map(({ x, i }) => <option key={i} value={i}>{i + 1}. {x.name}</option>)}</select>

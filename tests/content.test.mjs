@@ -303,11 +303,12 @@ test('v3.188 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  assert.equal(clear('hell').s.dungeonCoins,40);assert.equal(clear('nightmare').s.dungeonCoins,60);const mu=clear(undefined,12).s;assert.equal(mu.dungeonCoins,2,'Mu Lung floor 12 = 1 + 1, no daily bonus');assert.equal(mu.dungeonBonus,undefined,'Mu Lung does not spend the daily bonus');
  const s=newState(0);s.level=40;s.dungeonCoins=0;
  assert.throws(()=>act(s,{type:'dungeonShop',id:'gearBox'},0),/코인이 부족/);
- s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=1,true,'rare or better');
+ s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=3,true,'v3.193 legendary or better');
  const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.192 price ladder');
  s.dungeonCoins=P.onyxCraft+P.onyxAwaken+P.hunterImprint;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
  s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.onyxAwaken+P.hunterImprint);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
- act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
+ assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5),/하루 1번/,'v3.193 onyx goods once per KST day');
+ act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},86400000,()=>.5);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
  const line=onyx.affixes.findIndex(a=>!a.rule);act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(onyx.affixes[line].id,'hunter');
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0),/이미 포식자/);
  const rule=onyx.affixes.findIndex(a=>a.rule);assert.ok(rule>=0);
@@ -345,4 +346,12 @@ test('v3.191 daily bonus clears: the first 30 regional clears of a KST day pay t
  assert.equal(clear('grotto','hell'),2,'31st clear pays the base (1/20)');
  assert.equal(clear('grotto','nightmare'),3);assert.equal(clear('grotto'),1);
  s.lastTick+=86400000;assert.equal(clear('grotto','hell'),40,'a new KST day refills 30, unused clears do not carry over');assert.equal(s.dungeonBonus.used,1);
+});
+
+test('v3.193 legendary+ gear box: legendary or better at my level; ancient/primal weights x0.25 (about one normal drop); primal pity untouched',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('systems/dungeon-coins'),O=await L.load('data/odds'),D=await L.load('data/dungeon-shop');
+ const w=C.gearBoxWeights(),r=O.ODDS.drop.rarity;assert.deepEqual(w.slice(0,3),[0,0,0]);assert.equal(w[3],r[3]);assert.equal(w[4],r[4]);assert.equal(w[5],r[5]*D.GEAR_BOX.highScale);assert.equal(w[6],r[6]*D.GEAR_BOX.highScale);
+ const t=w.reduce((a,b)=>a+b,0),plain=r.slice(1).reduce((a,b)=>a+b,0);assert.ok(Math.abs(w[5]/t-r[5]/plain)<.01,'ancient share close to a normal drop');
+ assert.equal(C.rollGearBoxRarity(()=>0),3);assert.equal(C.rollGearBoxRarity(()=>.9999999),6);
+ const s=newState(0);s.level=70;s.dungeonCoins=D.DUNGEON_SHOP.gearBox;s.primalDropPity=7;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);const it=s.inventory.at(-1);assert.ok(it.rarity>=3);assert.ok(it.level>=70,'my level');assert.equal(s.primalDropPity,7,'pity untouched');
 });

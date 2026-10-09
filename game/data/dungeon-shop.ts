@@ -27,7 +27,7 @@ export const DUNGEON_SHOP = {
     onyxCraft: 24000,
     /** 가진 칠흑 장신구 각성 +1(최대 ONYX.awakenMax). */
     onyxAwaken: 12000,
-    /** 희귀 이상 확정 장비 상자(내 레벨 기준). */
+    /** v3.193 전설 이상 확정 장비 상자(내 레벨 기준). 고대 · 태초는 GEAR_BOX.highScale만큼 더 희박합니다. */
     gearBox: 100,
     /** ‘포식자’(보스 피해) 옵션 각인: 고대 이상 장비의 옵션 한 줄을 포식자로 바꿉니다(장비당 한 줄). */
     hunterImprint: 2400,
@@ -41,3 +41,11 @@ export const QUALITY_GOODS = { quality100: { min: 1, max: 1 }, quality120: { min
 export type QualityGood = keyof typeof QUALITY_GOODS;
 /** 각인권이 붙이는 옵션. */
 export const HUNTER_AFFIX = 'hunter';
+/**
+ * v3.193 전설 이상 장비 상자: 드롭 등급표(난이도 0)에서 전설 이상만 남기고 고대 · 태초 가중치에 highScale을 곱합니다.
+ * ×0.25면 전설 약 65% · 신화 약 32% · 고대 약 2.8% · 태초 약 0.06%로, 고대 · 태초가 나올 확률은 일반 드롭 하나(2.4% · 0.05%)와 비슷합니다.
+ * 태초 드롭 천장(primalDropPity)은 세지 않습니다.
+ */
+export const GEAR_BOX = { minRarity: 3, highFrom: 5, highScale: .25 };
+/** v3.193 칠흑 상품(제작 · 각성 합쳐서)은 하루(한국 시간) onyxPerDay번까지. */
+export const DUNGEON_SHOP_DAILY = { onyxPerDay: 1 };

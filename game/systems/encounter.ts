@@ -83,14 +83,15 @@ export function rollRarity(rng: () => number, minRarity = 0, tier = 0) {
 /** v27.53 드롭 장비 레벨: 기준 레벨 + 해역 난이도(층) × 5, 단 캐릭터 레벨 + dropLevelOver까지(기준 레벨보다 낮아지지는 않음). */
 export const dropLevel = (s: Pick<State, 'level'>, base: number, tier: number) => Math.max(base, Math.min(base + tier * 5, s.level + BALANCE.dropLevelOver));
 /** v3.104 rate: 미리 계산한 드롭 확률(무리 드롭 판정 반복용, 없으면 지금 계산). */
-export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number) {
+export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number, fixedRarity?: number) {
     if (!guaranteed && rng() > (rate ?? dropRate(s)))
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
     // v3.59 태초 드롭 천장: 태초 없이 PRIMAL_DROP_PITY개째 드롭은 태초.
-    const pity = (s.primalDropPity || 0) + 1, rarity = pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s));
-    s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
+    // v3.193 fixedRarity(코인샵 장비 상자)는 등급을 이미 정했으므로 태초 천장을 세지 않습니다.
+    const pity = (s.primalDropPity || 0) + 1, rarity = fixedRarity ?? (pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s)));
+    if (fixedRarity === undefined) s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm', 'cape'] as const)[Math.floor(rng() * 4)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };

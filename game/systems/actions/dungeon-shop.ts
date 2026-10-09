@@ -6,9 +6,11 @@ import { STAGES } from '../../data/world';
 import { onyxById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
 import { drop, dropLevel } from '../encounter';
-import { allItems, hunterBlock, onyxOffer, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
+import { allItems, hunterBlock, onyxOffer, onyxBoughtToday, rollGearBoxRarity, qualityLines, applyQuality, lineQuality, QUALITY_PRICE } from '../dungeon-coins';
 import type { QualityGood } from '../../data/dungeon-shop';
 import { addLog } from '../state';
+import { dayKey } from '../../data/goals';
+import { RARITIES } from '../../data/balance';
 import type { State } from '../../types';
 import type { ActionHandlers } from './types';
 
@@ -22,12 +24,13 @@ function room(s: State) {
 
 export const dungeonShopActions: ActionHandlers = {
     /** id: 'onyx:<보스 id>' · 'gearBox' · 'hunter'(value '장비 id|옵션 칸'). */
-    dungeonShop(s, { a, id, rng }) {
+    dungeonShop(s, { a, id, rng, now }) {
         if (id.startsWith('onyx:')) {
-            const bossId = id.slice(5), offer = onyxOffer(s, bossId);
+            const bossId = id.slice(5), offer = onyxOffer(s, bossId, now);
             if (offer.reason) throw Error(offer.reason);
             if (offer.kind === 'craft') room(s);
             pay(s, offer.price);
+            s.dungeonShopDay = { day: dayKey(now), onyx: onyxBoughtToday(s, now) + 1 };
             const habitat = STAGES.find(st => st.habitat && st.region === onyxById(bossId)!.region)?.level || 1;
             grantOnyx(s, bossId, habitat, rng, `던전 코인샵 · 코인 -${offer.price.toLocaleString()}`);
             return;
@@ -35,9 +38,10 @@ export const dungeonShopActions: ActionHandlers = {
         if (id === 'gearBox') {
             room(s);
             pay(s, DUNGEON_SHOP.gearBox);
-            const before = s.inventory.length;
-            drop(s, dropLevel(s, s.level, 0), rng, true);
-            addLog(s, `던전 코인샵 · 장비 상자 개봉 · 코인 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
+            // v3.193 전설 이상 확정, 내 레벨 기준. 고대 · 태초는 일반 드롭 하나와 비슷한 확률(GEAR_BOX).
+            const before = s.inventory.length, rarity = rollGearBoxRarity(rng);
+            drop(s, dropLevel(s, s.level, 0), rng, true, undefined, rarity);
+            addLog(s, `던전 코인샵 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 코인 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
             return;
         }
         if (id === 'hunter') {

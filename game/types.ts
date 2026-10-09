@@ -503,6 +503,8 @@ export type State = {
     dungeonCoinFrac?: number;
     /** v3.191 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
     dungeonBonus?: { day: string; used: number };
+    /** v3.193 코인샵 칠흑 상품을 산 날(한국 시간)과 그날 산 횟수. */
+    dungeonShopDay?: { day: string; onyx: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
