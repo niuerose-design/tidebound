@@ -383,7 +383,8 @@ export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
-    if (j.pearlCost) return unlocked ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
+    // v3.235 세계석 0(요원 · 트레이더 1차)은 조건 없이 바로 들어옵니다.
+    if (j.pearlCost !== undefined) return unlocked || !j.pearlCost ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)
