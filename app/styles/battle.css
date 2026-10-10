@@ -1732,8 +1732,8 @@
 .fx-no-glow .xen-whiteout,.fx-no-glow .xen-fx .scene-fx-dark,.fx-no-glow .xen-beam.glow{display:none}
 @media(prefers-reduced-motion:reduce){.xen-fx i{display:none}.xen-title{animation-name:tideReduced}.battle-scene:has(.xen-fx) .ocean-art{animation:none}}
 
-/* v3.246 메카닉 메탈아머 전탄발사 전용 연출(MechFx, 메카물 문법): 레터박스 · 타이틀 카드 → 경고 패널 · 눈 컷인 · 집중선 → 유도 레이저 난무(중첩 × 3줄)
-   → 연쇄 폭발 · 흑백 반전 임팩트 프레임 · 십자 폭발 기둥 → 굵은 타이틀. 각 레이저 · 폭발의 시작 시각은 --t(ms)입니다. */
+/* v3.246 메카닉 메탈아머 전탄발사 전용 연출(MechFx, 메카물 문법): 레터박스 · 타이틀 카드 → 경고 패널 · 눈 컷인 · 집중선 → 만화 컷 패널 셋 → 화면 전체 탄막(중첩 × 6줄)
+   → 연쇄 폭발 · 흑백 반전 임팩트 프레임 · 십자 폭발 기둥 → 굵은 타이틀. 각 해치 · 섬광 · 탄 · 폭발의 시작 시각은 --t(ms)입니다. */
 .scene-fx-layer:has(>.mech-fx){z-index:2}
 .mech-fx{--ma:#ffb347;--mr:#ff3b2f;--my:#ffe45c;--ms:#cfd8e3;--tx:calc(100cqw - 76px);--ty:calc(50cqh + 4px);--sx:10cqw;--sy:80cqh;overflow:hidden}
 .mech-fx.mech-boss{--tx:calc(100cqw - 88px)}
@@ -1754,12 +1754,27 @@
 .mech-cutin b{top:42%;width:17%;height:16%;border-radius:2px 10px 2px 10px;background:linear-gradient(90deg,#fff,var(--my) 30%,var(--mr));box-shadow:0 0 18px var(--my),0 0 40px var(--mr);animation:mechEye .62s steps(1) calc(var(--fx-delay) + .62s) both}
 .mech-cutin b:first-child{left:30%;transform:skewX(18deg)}.mech-cutin b:last-child{right:30%;transform:skewX(-18deg) scaleX(-1)}
 .mech-speed{inset:-30%;background:repeating-conic-gradient(from 0deg at 72% 50%,#fff0 0 3deg,#ffffff22 3deg 3.6deg,#fff0 3.6deg 7deg);mask-image:radial-gradient(circle at 72% 50%,transparent 14%,#000 42%);-webkit-mask-image:radial-gradient(circle at 72% 50%,transparent 14%,#000 42%);animation:mechSpeed 1.2s linear calc(var(--fx-delay) + .62s) both}
-/* ③ 유도 레이저 난무: 발사대 ~ 표적 가로 · 장면 세로 전체 상자에 SVG 곡선. 빛 덩어리(14%)가 곡선을 따라 달리고 지나간 자리에 궤적이 잠깐 남습니다. */
-.mech-lasers{position:absolute;left:var(--sx);top:0;width:calc(var(--tx) - var(--sx));height:100%;overflow:visible;pointer-events:none}
-.mech-lasers path{fill:none;vector-effect:non-scaling-stroke;stroke-linecap:round}
-.mech-lasers .core{stroke:#fff;stroke-width:2.5px;stroke-dasharray:34 140;animation:mechBolt .55s cubic-bezier(.4,0,.8,1) calc(var(--fx-delay) + var(--t)) both}
-.mech-lasers .glow{stroke:#ff4fa0;stroke-width:10px;stroke-dasharray:36 140;opacity:.8;filter:drop-shadow(0 0 6px #ff4fa0);animation:mechBolt .55s cubic-bezier(.4,0,.8,1) calc(var(--fx-delay) + var(--t)) both}
-.mech-lasers .trail{stroke:#ff9ad0;stroke-width:1.5px;stroke-dasharray:100 100;opacity:0;animation:mechTrail .9s ease-out calc(var(--fx-delay) + var(--t)) both}
+/* ③ 만화 컷 패널: 비스듬한 세 칸이 차례로 밀려 들어왔다가 1.62초에 함께 갈라져 사라집니다. */
+.mech-panel{position:absolute;inset:0;z-index:3;overflow:hidden;border:0;animation:mechPanel .5s cubic-bezier(.2,.9,.2,1) calc(var(--fx-delay) + 1.15s) both}
+.mech-panel::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0000,#0000)}
+.mech-panel span{position:absolute;font:900 12px/1 ui-monospace,monospace;letter-spacing:.24em;color:#fff;background:#000;padding:4px 8px;white-space:nowrap}
+.mech-panel.a{clip-path:polygon(0 0,46% 0,34% 100%,0 100%);background:linear-gradient(135deg,#1d2026,#0b0c0f);--from:-60% 0}
+.mech-panel.a span{left:5%;bottom:16%;color:var(--my)}
+.mech-panel.b{clip-path:polygon(47% 0,70% 0,58% 100%,35% 100%);background:radial-gradient(circle at 50% 60%,#ff8a3a55,#120806 70%);--from:0 90%;animation-delay:calc(var(--fx-delay) + 1.22s)}
+.mech-panel.b span{left:46%;top:16%;color:var(--mr)}
+.mech-panel.c{clip-path:polygon(71% 0,100% 0,100% 100%,59% 100%);background:radial-gradient(circle at 82% 52%,#3a0c0a,#0b0303 70%);--from:60% 0;animation-delay:calc(var(--fx-delay) + 1.29s)}
+.mech-panel.c span{right:4%;top:16%;color:var(--mr)}
+.mech-panel{box-shadow:inset 0 0 0 3px #fff}
+.mech-hatches{position:absolute;left:4%;top:22%;display:grid;grid-template-columns:repeat(6,26px);gap:6px}
+.mech-hatches b{position:relative;width:26px;height:26px;border:2px solid #6b7480;border-radius:3px;background:radial-gradient(circle,#fff 0 18%,var(--my) 32%,var(--ma) 55%,#3a1606 80%)}
+.mech-hatches b::before{content:"";position:absolute;inset:-2px;border-radius:3px;background:repeating-linear-gradient(45deg,#4a525c 0 4px,#353b43 4px 8px);transform-origin:50% 0;animation:mechHatch .18s ease-in calc(var(--fx-delay) + var(--t)) both}
+.mech-flare{left:36%;top:var(--y);width:34%;height:10px;border-radius:5px;background:linear-gradient(90deg,#fff,var(--my) 25%,#ff7a2a 55%,transparent);box-shadow:0 0 14px #ff7a2a;transform-origin:0 50%;animation:mechFlare .32s ease-out calc(var(--fx-delay) + var(--t)) 2 both}
+.mech-reticle{left:calc(var(--tx));top:var(--ty);width:96px;height:96px;margin:-48px;border:2px solid var(--mr);border-radius:50%;box-shadow:0 0 16px var(--mr),inset 0 0 16px #ff3b2f55;animation:mechRet .5s steps(5) calc(var(--fx-delay) + 1.3s) both}
+.mech-reticle::before,.mech-reticle::after{content:"";position:absolute;background:var(--mr)}
+.mech-reticle::before{left:50%;top:-14px;bottom:-14px;width:2px;margin-left:-1px}.mech-reticle::after{top:50%;left:-14px;right:-14px;height:2px;margin-top:-1px}
+.mech-tag{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:14px;height:14px;margin:-7px;border:2px solid var(--my);rotate:45deg;box-shadow:0 0 8px var(--my);animation:mechTag .3s steps(3) calc(var(--fx-delay) + var(--t)) both}
+/* ④ 화면 전체 탄막 */
+.mech-tracer{left:0;top:var(--y);width:var(--w);height:5px;margin-top:-2.5px;border-radius:2px;background:linear-gradient(90deg,transparent,#ff7a2a 40%,var(--my) 80%,#fff);box-shadow:0 0 10px #ff7a2a;animation:mechTracer .26s linear calc(var(--fx-delay) + var(--t)) both}
 /* ④ 연쇄 폭발 · 임팩트 프레임 · 십자 폭발 */
 .mech-boom{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:60px;height:60px;margin:-30px;border-radius:50%;background:radial-gradient(circle,#fff 0 14%,var(--my) 28%,var(--ma) 46%,var(--mr) 62%,transparent 72%);mix-blend-mode:screen;animation:mechBoom .45s ease-out calc(var(--fx-delay) + var(--t)) both}
 .mech-impact{inset:0;z-index:2;background:#fff;mix-blend-mode:difference;animation:mechImpact .18s linear calc(var(--fx-delay) + 2.02s) both}
@@ -1781,8 +1796,12 @@
 @keyframes mechCut{0%{clip-path:inset(50% 0 50% 0)}18%,82%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(50% 0 50% 0)}}
 @keyframes mechEye{0%,30%{opacity:.25}31%,100%{opacity:1}}
 @keyframes mechSpeed{0%{opacity:0;rotate:0deg}15%,75%{opacity:1}100%{opacity:0;rotate:8deg}}
-@keyframes mechBolt{0%{stroke-dashoffset:36;opacity:0}6%{opacity:1}90%{opacity:1}100%{stroke-dashoffset:-100;opacity:0}}
-@keyframes mechTrail{0%{stroke-dashoffset:100;opacity:0}8%{opacity:.55}50%{stroke-dashoffset:0;opacity:.45}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes mechPanel{0%{translate:var(--from);opacity:0}18%{translate:0 0;opacity:1}80%{translate:0 0;opacity:1;scale:1}100%{translate:0 0;opacity:0;scale:1.08}}
+@keyframes mechHatch{0%{scale:1 1}100%{scale:1 .08}}
+@keyframes mechFlare{0%{scale:0 1;opacity:0}20%{scale:1 1.3;opacity:1}100%{scale:1.2 .4;opacity:0}}
+@keyframes mechRet{0%{scale:1.8;opacity:0}40%{scale:1;opacity:1}100%{scale:1;opacity:1}}
+@keyframes mechTag{0%{scale:2.4;opacity:0}100%{scale:1;opacity:1}}
+@keyframes mechTracer{0%{translate:-20cqw 0;opacity:0}10%{opacity:1}100%{translate:110cqw 0;opacity:.9}}
 @keyframes mechBoom{0%{scale:.2;opacity:0}15%{scale:1.1;opacity:1}100%{scale:1.7;opacity:0}}
 @keyframes mechImpact{0%,100%{opacity:0}2%,70%{opacity:1}}
 @keyframes mechCross{0%{scale:.1 0;opacity:0}12%{scale:1 1;opacity:1}60%{scale:.8 1;opacity:1}100%{scale:.2 1.05;opacity:0}}
