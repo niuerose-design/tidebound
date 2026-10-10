@@ -173,7 +173,7 @@ const SceneLogLine = memo(function SceneLogLine({ log, playerName }: { log: Log;
     if (ev.stunned || ev.defeated) return <p className={mine ? '' : 'foe'}>{ev.actor} · {ev.stunned ? '기절로 행동 불가' : '쓰러짐'}</p>;
     return <p className={`${mine ? 'me' : 'foe'} ${crit ? 'crit' : ''}`}>
         {mine ? null : <span className="who">{ev.actor} · </span>}<b>{ev.skillName}</b>{' '}
-        {missed ? <span className="miss">빗나감</span> : ev.hits.length > 0 ? <span className="n">{ev.total.toLocaleString()}{crit ? ' 치명' : ''}</span> : null}
+        {missed ? <span className="miss">빗나감</span> : ev.hits.length > 0 ? <span className="n">{ev.total.toLocaleString()}{crit ? <small className="crit-word"> 치명</small> : null}</span> : null}
         {ev.healed > 0 && <span className="heal"> 회복 {ev.healed.toLocaleString()}</span>}
         {ev.drained > 0 && <span className="heal"> 흡혈 {ev.drained.toLocaleString()}</span>}
     </p>;
