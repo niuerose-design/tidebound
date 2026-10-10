@@ -103,3 +103,16 @@ test('v3.240 업적: 동시 시전 4개 묶음 기록(chantFull · chantBest)이
     assert.ok(fresh.length >= 25 && fresh.every(a => a.honor && !a.reward.pearls && !a.reward.sp && !a.reward.ap));
     assert.equal(A.achievementById('chant:1').progress(s) >= 1, true);
 });
+
+test('v3.243 출혈 적 추가 피해가 붙은 출혈 기술(실드 체이싱)은 출혈 중인 적에게도 나가고 보너스를 받습니다', () => {
+    const foe = effects => ({ name: 'b', foe: true, stats: { hp: 1e9, attack: 1, defense: 0, resist: 0, crit: 0 }, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects });
+    const me = () => ({ name: 'a', job: 'bloodSeaLord', stats: { hp: 1000, attack: 1000, magic: 1, defense: 10, mana: 9999, crit: 0, accuracy: 9 }, hp: 1000, mana: 9999, skills: ['crimsonTide'], cooldowns: {}, stun: 0, effects: {} });
+    const hit = eff => { const ev = []; C.strike(me(), foe(eff), () => .01, ev); return ev[0]; };
+    const clean = hit({}), bleed = hit({ dot: { turns: 3, damage: 10 } }), poison = hit({ poison: { turns: 3, damage: 10, stacks: 1 } });
+    assert.equal(bleed.skillName, clean.skillName, 'not skipped on a bleeding target');
+    assert.ok(bleed.linked && poison.linked && !clean.linked);
+    assert.ok(Math.abs(poison.total / clean.total - 1.5) < .01, `${poison.total} / ${clean.total}`);
+    assert.ok(bleed.total > poison.total, 'bleeding also takes the bleed vulnerability');
+    const gash = { ...me(), job: 'bloodAngler', skills: ['gashHook'] }, ev = []; C.strike(gash, foe({ dot: { turns: 3, damage: 10 } }), () => .01, ev);
+    assert.notEqual(ev[0].skillName, '엑시드 블레이드', 'pure bleed appliers still skip an already-bleeding target');
+});

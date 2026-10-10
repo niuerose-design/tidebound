@@ -114,7 +114,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.effect === 'heal') parts.push(`체력 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)} 회복`);
     if (sk.effect === 'drain') parts.push(`피해의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)} 흡혈`);
     if (sk.damageBonusCondition === 'statuses') parts.push(`상태이상 1종마다 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
-    else if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
+    else if (sk.damageBonusCondition) parts.push(`${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 적 +${skillPercent(sk.conditionalDamageBonus || 0)}`);
     if (sk.scaling && PROGRESS_WORD[sk.scaling]) parts.push(`${PROGRESS_WORD[sk.scaling]} 비례`);
     if (sk.scaling === 'arcane') parts.push('마력 평타 계수 기준');
     if (sk.dice) parts.push(`주사위 최대 ${sk.dice.max}개`);
@@ -185,7 +185,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.scaling === 'resist') out.push('결계 친화도: 직업의 마법 방어 배율이 높을수록 1에 가깝고(결계 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.damageBonusCondition === 'statuses') out.push(`헥스 수집: 상대에게 걸린 상태이상 종류(기절 · 침묵 · 약화 · 감속 · 부식 · 출혈/저주 · 중독 · 화상) 1개마다 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다(4종이면 +${skillPercent((sk.conditionalDamageBonus || 0) * 4)}).`);
-        else if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력이 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.` : `${{ bleeding: '출혈·중독', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.`);
+        else if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력이 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.` : `${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.`);
         if (sk.effect === 'heal') out.push(`${sk.condition === 'wounded' ? `체력이 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때 ` : ''}먼저 최대 체력의 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)}를 회복하고 공격합니다. 체력이 ${skillPercent(SKILL_FORMULA.healThreshold)} 이상일 때 쓰면 회복 직업이 아닌 한 피해가 ×${number(SKILL_FORMULA.idleHealDamage)}로 줄어듭니다.`);
         if (sk.effect === 'stun') out.push(`맞히면 ${sk.statusTurns ?? 1}턴 기절시킵니다.`);
         if (sk.effect === 'bleed') out.push(`맞히면 ${sk.dotName || '출혈'}을 ${sk.statusTurns ?? STATUS_TUNING.bleedTurns}턴 겁니다. 출혈 중인 상대는 받는 직접 피해가 ${skillPercent(SKILL_FORMULA.bleedVulnerability)} 커집니다(중첩 없음). 턴마다 (${base.join(' + ')}) × ${number(sk.dotRatio ?? SKILL_FORMULA.bleedRatio)} × (1 + 지속 피해 증가) + 상대 최대 체력 ${skillPercent(SKILL_FORMULA.bleedHpRatio)}의 피해를 방어를 무시하고 줍니다.`);
