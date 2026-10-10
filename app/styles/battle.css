@@ -2022,7 +2022,50 @@
 /* v3.249 전투 기록은 캐릭터 오른쪽(가운데 쪽)에서 올라옵니다. 넓은 장면은 캐릭터 판 오른쪽 아래, 좁은 장면(PC 가운데 열 · 모바일)은 캐릭터 판 바로 위 · 캐릭터 그림 오른쪽. */
 .scene-log{left:calc(12px + clamp(56px,24cqh,84px) + 8px + 176px + 14px);bottom:12px;width:min(40%,380px)}
 .dungeon-scene .scene-log{width:min(40%,380px)}
-@container (max-width:700px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(56px,24cqh,84px) + 8px);bottom:122px;width:auto;right:calc(100% - var(--foe-x) + 62px)}}
-@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(48px,20cqh,64px) + 8px);bottom:106px;width:auto;right:calc(100% - var(--foe-x) + 54px)}}
+@container (max-width:700px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(56px,24cqh,84px) + 8px);bottom:134px;width:auto;right:calc(100% - var(--foe-x) + 76px)}}
+@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(48px,20cqh,64px) + 8px);bottom:116px;width:auto;right:calc(100% - var(--foe-x) + 72px)}}
 .battle-scene .tide-fx-combo-player{left:12px;bottom:calc(10px + clamp(56px,24cqh,84px) * 1.375 + 6px)}
 @container (max-width:560px){.battle-scene .tide-fx-combo-player{left:12px;bottom:calc(10px + clamp(48px,20cqh,64px) * 1.375 + 6px)}}
+/* v3.250 카드 정리: 아래 카드는 사냥터 이름 · 조작만 남긴 얇은 줄, 몬스터 정보는 장면의 몬스터 이름을 눌러 봅니다. 그만큼 장면을 키웁니다. */
+.battle-hud .battle-console .battle-scene{height:420px}
+@media(min-width:1600px){.battle-hud .battle-console .battle-scene{height:480px}}
+.dungeon-scene{height:400px}
+@media(max-width:767px){.battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:440px}.dungeon-scene{height:420px}}
+.battle-dock{padding:8px 12px}
+.battle-dock-info{display:flex;align-items:baseline;gap:8px;min-width:0}
+.battle-dock-info .eyebrow{flex:none}
+.battle-dock-info strong{font-size:13.5px;color:#e6efe9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+/* 몬스터 이름 · 상태: 이름 길이 · 상태이상 개수에 따라 다른 요소가 밀리지 않게 한 줄로 자르고, 상태는 따로 한 줄. */
+.scene-foe-name{max-width:170px;flex-wrap:nowrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-inline:auto;padding:0;border:0;background:none;font:inherit;font-size:11.5px;font-weight:700;color:#f3ede2;pointer-events:auto;cursor:default}
+button.scene-foe-name{cursor:pointer;display:flex}
+button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
+.scene-foe-more{color:#9fd3c5!important;font-weight:600!important;margin-left:2px}
+.scene-foe-status{display:flex;justify-content:center;min-height:0;pointer-events:auto}
+.scene-foe-status:empty{display:none}
+.scene-foe-pop{display:grid;gap:4px;max-width:280px}
+.scene-foe-pop strong{font-size:13px}
+.scene-foe-pop span,.scene-foe-pop small{font-size:12px;color:#c9dbd2;line-height:1.45}
+.scene-foe-pop small{color:#9db3ab}
+/* 스킬 이름 쌓기: 줄마다 자리(--y)가 정해져 새 이름이 오면 이전 이름이 부드럽게 미끄러져 올라갑니다. */
+.skill-receipt{display:block;height:116px;width:min(78%,360px)}
+.skill-slip{position:absolute;left:50%;bottom:0;max-width:100%;opacity:var(--o,1);scale:1;transform:translate(-50%,calc(var(--y,0) * -27px)) scale(var(--s,1));transform-origin:50% 100%;transition:transform .4s cubic-bezier(.2,.8,.3,1),opacity .4s ease}
+.skill-slip:not(:last-child),.skill-slip:nth-last-child(3),.skill-slip:nth-last-child(4){opacity:var(--o,1);scale:1}
+.battle-scene:has(.scene-job-slot>*) .skill-receipt{width:min(52%,300px)}
+.battle-scene:has(.scene-job-slot>*) .skill-slip{left:auto;right:0;transform:translateY(calc(var(--y,0) * -27px)) scale(var(--s,1));transform-origin:100% 100%}
+@keyframes slipIn{from{opacity:0;translate:0 14px}to{opacity:1;translate:0 0}}
+/* 장면 피해 숫자(연출 시안 방식) */
+.scene-dmg-layer{--hw:clamp(56px,24cqh,84px);--me-x:calc(12px + var(--hw) * .6);--me-y:calc(100% - 10px - var(--hw) * .8);position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+@container (max-width:560px){.scene-dmg-layer{--hw:clamp(48px,20cqh,64px)}}
+.scene-dmg{position:absolute;translate:-50% 0;white-space:nowrap;text-align:center;font:800 22px/1 ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;opacity:0;animation:sceneDmg 1s ease-out var(--fx-delay) both}
+.scene-dmg.foe{left:calc(var(--foe-x) + var(--dx,0px));top:calc(var(--foe-y) - 62px + var(--dy,0px))}
+.scene-dmg.me{left:calc(var(--me-x) + var(--dx,0px));top:calc(var(--me-y) - 76px + var(--dy,0px))}
+.scene-dmg small{display:block;font-size:10.5px;letter-spacing:.14em;margin-bottom:2px}
+.scene-dmg.crit{font-size:30px;color:#ffcf4d;text-shadow:0 2px 0 #6b3b00,0 0 12px #ff9d00aa}
+.scene-dmg.super{font-size:34px;color:#ff9a6a;text-shadow:0 2px 0 #5a1600,0 0 16px #ff5a2aaa}
+.scene-dmg.miss{font-size:16px;color:#bcd6e6}
+.scene-dmg.taken{font-size:20px;color:#ff8a7a}
+.scene-dmg.heal{font-size:16px;color:#7dffb0}
+.scene-dmg.dot{font-size:15px;color:#d9a6ff}
+@keyframes sceneDmg{0%{transform:translateY(8px) scale(.5);opacity:0}15%{transform:translateY(-6px) scale(1.15);opacity:1}30%{transform:translateY(-10px) scale(1)}80%{opacity:1}100%{transform:translateY(-46px);opacity:0}}
+@media(max-width:767px){.scene-dmg{font-size:19px}.scene-dmg.crit{font-size:25px}.scene-dmg.super{font-size:28px}}
+@media(prefers-reduced-motion:reduce){.scene-dmg{animation:sceneDmgReduced 1s linear var(--fx-delay) both}@keyframes sceneDmgReduced{0%,80%{opacity:1}100%{opacity:0}}.skill-slip{transition:none}}
