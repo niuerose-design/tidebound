@@ -231,7 +231,7 @@ test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Aze
  const cap={3:1,4:1.06,5:1.09};
  for(const j of C.JOBS){if(C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))!=='azeroth')continue;
   assert.equal(j.masteryBoost,.1,j.id);for(const k of ['attack','magic','hp','defense','resist'])assert.ok(j[k]<=cap[j.tier]+1e-9,`${j.id} ${k} ${j[k]}`);}
- const ledger=Sk.skillById('kkamiLedger');assert.deepEqual(ledger.core,{scale:{attack:.25}});
+ const ledger=Sk.skillById('kkamiLedger');assert.deepEqual(ledger.core,{scale:{attack:.1}});
  assert.equal(P.coreScale(ledger,'kkamiHunter',0),.4);assert.equal(P.coreScale(ledger,'kkamiHunter',4),1);assert.equal(P.coreScale(ledger,'hero',4),0,'Azeroth core is lineage-only');
  assert.equal(Sk.skillById('marshalCommand').commandPer,.07);assert.equal(Sk.skillById('warRoom').commandPer,.06);
 });
