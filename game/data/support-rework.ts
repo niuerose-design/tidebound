@@ -77,7 +77,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
     tradeWind: { desc: '골드·던전 주화 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
-    goldenEmpire: { desc: '골드·던전 주화·장비 드롭·환생 세계석과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, rebirthBonus: 1, magic: 110 } },
+    goldenEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, magic: 110 } },
     // 패스파인더: 경험치(렐릭의 힘의 재료) + 평평한 능력치. 기록 비례 성장은 와일드헌터 · 섀도어 · 에반과 겹쳐 v3.153에 뺌.
     voyageReview: { desc: '획득 경험치 +12%. 경험치 보너스(환생 · 연구 몫 제외)가 렐릭의 힘이 되어 패스파인더 기술의 피해를 올립니다.', bonus: { expBonus: .08 } },
     chronicleStudy: { desc: '획득 경험치 +18%, 두 공격 +16, 최대 체력 +60. 숙련할수록 경험치와 능력치가 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } },
