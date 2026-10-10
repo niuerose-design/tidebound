@@ -31,7 +31,7 @@ import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot, BossIntro, LevelUpFx } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
 import type { CombatFx } from '@/game/systems/combat-feedback';
 import { TideSelector } from './tide-selector';
@@ -175,7 +175,8 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
     const shown = enemy && !s.recovery ? enemy : null;
     const idle = recoveryText ?? (shown ? null : s.running ? '다음 몬스터를 기다리는 중' : '자동 사냥이 멈춰 있습니다');
     return <>
-    <section className={`battle-scene ${s.running ? 'running' : ''}`}><SceneBackdrop/><div className="scene-shade"/>
+    {/* v3.259 내 HP가 30% 아래면 장면 가장자리가 붉게 맥박칩니다(danger). */}
+    <section className={`battle-scene ${s.running ? 'running' : ''} ${!s.recovery && s.hp < playerStats.hp * .3 ? 'danger' : ''}`}><SceneBackdrop/><div className="scene-shade"/>
         <SceneFoe enemy={enemy} hidden={!!s.recovery} effect={combatFx} kkami={!!enemy && isSpecialId(enemy.id)}/>
         <KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/>
         <SceneCombatHud enemy={shown} effect={combatFx} combo={fxCombo} info={shown && <>
@@ -190,7 +191,7 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
         {idle && <span className={`scene-idle ${recoveryText ? 'recovery' : ''}`} aria-live="polite">{idle}</span>}
         {/* v3.258 회복 대기 · 출정 준비 중(몬스터 없음)에는 지난 타격의 숫자 · 스킬 이름 · 투사체를 지웁니다. */}
         {!s.recovery && <><CastFx effect={combatFx} boss={!!enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!enemy?.boss}/></>}
-        <SceneLoot logs={s.logs}/>
+        <SceneLoot logs={s.logs}/><BossIntro enemy={shown}/><LevelUpFx level={s.level}/>
         <SceneLog logs={s.logs} playerName={s.name}/>
         <SceneMe s={s} stats={playerStats} effect={combatFx}/>
     </section>
