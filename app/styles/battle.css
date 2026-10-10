@@ -1732,51 +1732,57 @@
 .fx-no-glow .xen-whiteout,.fx-no-glow .xen-fx .scene-fx-dark,.fx-no-glow .xen-beam.glow{display:none}
 @media(prefers-reduced-motion:reduce){.xen-fx i{display:none}.xen-title{animation-name:tideReduced}.battle-scene:has(.xen-fx) .ocean-art{animation:none}}
 
-/* v3.246 메카닉 메탈아머 전탄발사 전용 연출(MechFx): HUD 무장 → 다중 잠금 → 미사일 일제 발사(포물선) → 연쇄 폭발 → 대폭발 · 타이틀. */
+/* v3.246 메카닉 메탈아머 전탄발사 전용 연출(MechFx, 포격): HUD 무장(중첩 × 3발) → 하늘로 일제 발사 → 표적 구역에 포탄이 쏟아지며 연쇄 폭발 → 대폭발 · 타이틀.
+   각 요소의 시작 시각은 --t(ms, 컴포넌트가 계산)입니다. */
 .scene-fx-layer:has(>.mech-fx){z-index:2}
-.mech-fx{--ma:#ffb347;--mr:#ff5a36;--ms:#cfd8e3;--tx:calc(100cqw - 76px);--ty:calc(50cqh + 4px);--sx:10cqw;--sy:78cqh}
+.mech-fx{--ma:#ffb347;--mr:#ff5a36;--ms:#cfd8e3;--tx:calc(100cqw - 76px);--ty:calc(50cqh + 4px);--sx:10cqw;--sy:80cqh}
 .mech-fx.mech-boss{--tx:calc(100cqw - 88px)}
-.mech-fx .scene-fx-dark{inset:0;background:radial-gradient(ellipse at 70% 50%,#1c1006,#060403 70%);animation:mechDark 2.5s ease-in-out var(--fx-delay) both}
-.mech-tape{left:0;right:0;top:0;height:12px;background:repeating-linear-gradient(-45deg,var(--ma) 0 12px,#1a1006 12px 24px);opacity:.85;animation:mechTape 1.3s steps(3) var(--fx-delay) both}
+.mech-fx .scene-fx-dark{inset:0;background:radial-gradient(ellipse at 75% 55%,#2a1206,#070403 72%);animation:mechDark 2.6s ease-in-out var(--fx-delay) both}
+.mech-tape{left:0;right:0;top:0;height:12px;background:repeating-linear-gradient(-45deg,var(--ma) 0 12px,#1a1006 12px 24px);animation:mechTape 1.2s steps(3) var(--fx-delay) both}
 .mech-tape.low{top:auto;bottom:0}
+.mech-zone{left:var(--tx);top:var(--ty);width:150px;height:96px;margin:-48px 0 0 -75px;border:2px dashed var(--mr);border-radius:50%;box-shadow:0 0 14px #ff5a3655,inset 0 0 20px #ff5a3633;animation:mechZone 2.1s ease-out calc(var(--fx-delay) + .25s) both}
 /* ① HUD */
-.mech-hud{position:absolute;left:3%;top:9%;padding:7px 10px 8px;border:1px solid #ffb34766;border-left:3px solid var(--ma);border-radius:4px;background:linear-gradient(135deg,#1a1108ee,#0d0a07ee);box-shadow:0 0 16px #ffb34733;font:700 10px/1 ui-monospace,monospace;letter-spacing:.12em;color:var(--ma);animation:mechHud 1.5s ease-out var(--fx-delay) both}
+.mech-hud{position:absolute;left:3%;top:9%;max-width:46%;padding:7px 10px 8px;border:1px solid #ffb34766;border-left:3px solid var(--ma);border-radius:4px;background:linear-gradient(135deg,#1a1108ee,#0d0a07ee);box-shadow:0 0 16px #ffb34733;font:700 10px/1 ui-monospace,monospace;letter-spacing:.12em;color:var(--ma);animation:mechHud 1.5s ease-out var(--fx-delay) both}
 .mech-hud small{display:block;margin-bottom:6px;font-size:9.5px}
-.mech-pods{display:grid;grid-template-columns:repeat(6,14px);gap:3px}
-.mech-pods b{position:relative;width:14px;height:10px;border:1px solid #ffb34766;border-radius:2px;background:#ffb34714}
-.mech-pods b::before{content:"";position:absolute;inset:1px;border-radius:1px;background:linear-gradient(#fff3d6,var(--ma));box-shadow:0 0 6px var(--ma);animation:mechPod .12s linear calc(var(--fx-delay) + 60ms + var(--i) * 50ms) both}
-.mech-armed{display:block;margin-top:6px;font-size:14px;color:#fff;text-shadow:0 0 10px var(--mr);animation:mechArmed .5s steps(2) calc(var(--fx-delay) + .62s) 2 both}
-/* ② 다중 잠금 */
-.mech-lock{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:26px;height:26px;margin:-13px;border:2px solid var(--mr);box-shadow:0 0 10px var(--mr);clip-path:polygon(0 0,35% 0,35% 12%,12% 12%,12% 35%,0 35%,0 65%,12% 65%,12% 88%,35% 88%,35% 100%,0 100%,0 0,100% 0,100% 35%,88% 35%,88% 12%,65% 12%,65% 0,100% 0,100% 100%,65% 100%,65% 88%,88% 88%,88% 65%,100% 65%);animation:mechLock 1.2s ease-out calc(var(--fx-delay) + .25s + var(--i) * 90ms) both}
-.mech-lockcount{left:var(--tx);top:calc(var(--ty) + 62px);translate:-50% 0;font:800 10px/1 ui-monospace,monospace;letter-spacing:.18em;color:var(--mr);text-shadow:0 0 6px var(--mr);white-space:nowrap;animation:mechLockText 1.1s steps(6) calc(var(--fx-delay) + .45s) both}
-/* ③ 미사일(바깥 = 가로 등속, 안쪽 = 위로 솟았다 떨어지는 세로) */
-.mech-smoke{left:var(--sx);top:var(--sy);width:46px;height:46px;margin:-23px;border-radius:50%;background:radial-gradient(circle,#d8d2c8aa,#6b625866 50%,transparent 70%);animation:mechSmoke 1s ease-out calc(var(--fx-delay) + .75s + var(--i) * 130ms) both}
-.mech-missile{left:var(--sx);top:var(--sy);width:0;height:0;animation:mechX .6s linear calc(var(--fx-delay) + .75s + var(--i) * 55ms) both}
-.mech-missile b{left:-4px;top:-4px;width:8px;height:8px;border-radius:50%;background:#fff6e0;box-shadow:0 0 8px var(--ma),0 0 16px var(--mr);animation:mechY .6s calc(var(--fx-delay) + .75s + var(--i) * 55ms) both}
-.mech-missile b::after{content:"";position:absolute;right:6px;top:2px;width:34px;height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,#ffb34788,#fff0c8);filter:blur(1px)}
-/* ④ 연쇄 폭발 · ⑤ 대폭발 */
-.mech-boom{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:58px;height:58px;margin:-29px;border-radius:50%;background:radial-gradient(circle,#fff 0 14%,#ffe08a 28%,var(--ma) 46%,var(--mr) 62%,transparent 72%);mix-blend-mode:screen;animation:mechBoom .45s ease-out calc(var(--fx-delay) + 1.3s + var(--i) * 70ms) both}
-.mech-blast{left:var(--tx);top:var(--ty);width:190px;height:150px;margin:-75px 0 0 -95px;border-radius:50%;background:radial-gradient(circle at 50% 55%,#fff 0 12%,#ffe08a 26%,var(--ma) 44%,#a33a12 64%,transparent 72%);mix-blend-mode:screen;animation:mechBlast 1s ease-out calc(var(--fx-delay) + 1.85s) both}
-.mech-ring{left:var(--tx);top:var(--ty);width:110px;height:110px;margin:-55px;border:4px solid var(--ma);border-radius:50%;box-shadow:0 0 18px var(--ma);animation:owRing .75s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.85s) both}
-.mech-ring.late{border-color:var(--mr);box-shadow:0 0 18px var(--mr);animation-delay:calc(var(--fx-delay) + 1.98s)}
-.mech-debris{left:var(--tx);top:var(--ty);width:7px;height:4px;margin:-2px -3.5px;background:var(--ms);box-shadow:0 0 6px var(--ma);animation:mechDebris .8s ease-out calc(var(--fx-delay) + 1.85s) both}
-.mech-title{position:absolute;left:50%;top:14%;translate:-50% 0;text-align:center;font:900 34px/1 var(--font-display,system-ui);letter-spacing:.14em;color:#fff4dc;text-shadow:0 0 12px var(--ma),0 0 26px var(--mr),0 2px 8px #000;white-space:nowrap;animation:mechTitle 1.2s ease-out calc(var(--fx-delay) + 1.35s) both}
+.mech-pods{display:grid;grid-template-columns:repeat(12,10px);gap:3px}
+.mech-pods b{position:relative;width:10px;height:10px;border:1px solid #ffb34766;border-radius:2px;background:#ffb34714}
+.mech-pods b::before{content:"";position:absolute;inset:1px;border-radius:1px;background:linear-gradient(#fff3d6,var(--ma));box-shadow:0 0 6px var(--ma);animation:mechPod 1.1s linear calc(var(--fx-delay) + var(--t)) both}
+.mech-armed{display:block;margin-top:6px;font-size:12px;color:#fff;text-shadow:0 0 10px var(--mr);white-space:nowrap;animation:mechArmed .25s steps(2) calc(var(--fx-delay) + .5s) 4 both}
+.mech-lockcount{left:var(--tx);top:calc(var(--ty) + 58px);translate:-50% 0;font:800 10px/1 ui-monospace,monospace;letter-spacing:.18em;color:var(--mr);text-shadow:0 0 6px var(--mr);white-space:nowrap;animation:mechLockText 1s steps(6) calc(var(--fx-delay) + .35s) both}
+/* ② 하늘로 일제 발사 */
+.mech-smoke{left:var(--sx);top:var(--sy);width:54px;height:54px;margin:-27px;border-radius:50%;background:radial-gradient(circle,#e2dbcfaa,#6b625866 50%,transparent 70%);animation:mechSmoke 1.1s ease-out calc(var(--fx-delay) + var(--t)) both}
+.mech-launch{left:calc(var(--sx) + var(--jx));top:var(--sy);width:4px;height:34px;margin:-34px 0 0 -2px;border-radius:2px;background:linear-gradient(#fff,#ffe0a0 30%,#ff8a3a 60%,transparent);box-shadow:0 0 10px var(--ma);animation:mechLaunch .38s cubic-bezier(.5,0,1,.6) calc(var(--fx-delay) + var(--t)) both}
+/* ③ 포탄 낙하 · 연쇄 폭발 */
+.mech-shell{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:5px;height:44px;margin:-44px 0 0 -2.5px;transform-origin:50% 100%;rotate:22deg;border-radius:3px;background:linear-gradient(transparent,#ff8a3a 40%,#ffe9c0 85%,#fff);box-shadow:0 0 12px var(--ma);animation:mechShell .26s cubic-bezier(.6,0,1,1) calc(var(--fx-delay) + var(--t)) both}
+.mech-boom{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:64px;height:64px;margin:-32px;border-radius:50%;background:radial-gradient(circle,#fff 0 14%,#ffe08a 28%,var(--ma) 46%,var(--mr) 62%,transparent 72%);mix-blend-mode:screen;animation:mechBoom .5s ease-out calc(var(--fx-delay) + var(--t)) both}
+.mech-boom::after{content:"";position:absolute;left:50%;top:50%;width:86px;height:86px;margin:-43px;border-radius:50%;background:radial-gradient(circle,#4a3a2e00 40%,#4a3a2e88 60%,transparent 72%);animation:mechSmoke 1s ease-out .2s both}
+/* ④ 대폭발 */
+.mech-whiteout{inset:0;background:radial-gradient(circle at 80% 52%,#fff,#ffe0a0 22%,#ff7a2a 42%,transparent 62%);mix-blend-mode:screen;animation:mechWhite .55s ease-out calc(var(--fx-delay) + 2s) both}
+.mech-blast{left:var(--tx);top:var(--ty);width:170px;height:140px;margin:-70px 0 0 -85px;border-radius:50%;background:radial-gradient(circle at 50% 55%,#fff 0 12%,#ffe08a 26%,var(--ma) 44%,#a33a12 64%,transparent 72%);mix-blend-mode:screen;animation:mechBlast .65s ease-out calc(var(--fx-delay) + 2s) both}
+.mech-ring{left:var(--tx);top:var(--ty);width:100px;height:100px;margin:-50px;border:4px solid var(--ma);border-radius:50%;box-shadow:0 0 18px var(--ma);animation:owRing .6s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 2s) both}
+.mech-ring.late{border-color:var(--mr);box-shadow:0 0 18px var(--mr);animation-delay:calc(var(--fx-delay) + 2.1s)}
+.mech-debris{left:var(--tx);top:var(--ty);width:8px;height:4px;margin:-2px -4px;background:var(--ms);box-shadow:0 0 6px var(--ma);animation:mechDebris .6s ease-out calc(var(--fx-delay) + var(--t)) both}
+.mech-title{position:absolute;left:50%;top:13%;translate:-50% 0;text-align:center;font:900 36px/1 var(--font-display,system-ui);letter-spacing:.14em;color:#fff4dc;text-shadow:0 0 12px var(--ma),0 0 26px var(--mr),0 2px 8px #000;white-space:nowrap;animation:mechTitle 1.5s ease-out calc(var(--fx-delay) + 1.1s) both}
+.mech-title em{font-style:normal;margin-left:10px;font-size:.7em;color:var(--mr);text-shadow:0 0 12px var(--mr),0 2px 6px #000}
 .mech-title small{display:block;margin-top:7px;font:700 12px/1 system-ui;letter-spacing:.3em;color:var(--ma);text-shadow:0 0 8px var(--mr),0 1px 4px #000}
-.battle-scene:has(.mech-fx) .ocean-art{animation:punShake 1.1s steps(6) 1.3s both}
-@keyframes mechDark{0%{opacity:0}10%{opacity:.85}84%{opacity:.75}100%{opacity:0}}
-@keyframes mechTape{0%{opacity:0}20%,80%{opacity:.85}100%{opacity:0}}
-@keyframes mechHud{0%{opacity:0;translate:-14px 0}10%,78%{opacity:1;translate:0 0}100%{opacity:0}}
-@keyframes mechPod{0%{opacity:0}100%{opacity:1}}
-@keyframes mechArmed{0%{opacity:1;color:#fff}100%{opacity:1;color:var(--ma)}}
-@keyframes mechLock{0%{scale:2.6;opacity:0;rotate:45deg}25%{scale:1;opacity:1;rotate:0deg}70%{opacity:1}100%{opacity:0;scale:.6}}
+/* 포격 내내 장면이 계속 흔들리고, 대폭발에 크게 한 번 */
+.battle-scene:has(.mech-fx) .ocean-art{animation:mechRumble .09s linear 1.25s 9,sceneQuake .9s ease-out 2s both}
+@keyframes mechDark{0%{opacity:0}8%{opacity:.88}86%{opacity:.78}100%{opacity:0}}
+@keyframes mechTape{0%{opacity:0}20%,80%{opacity:.9}100%{opacity:0}}
+@keyframes mechZone{0%{opacity:0;scale:1.8}15%{opacity:1;scale:1}40%{opacity:.4}50%{opacity:1}88%{opacity:.8}100%{opacity:0;scale:1.2}}
+@keyframes mechHud{0%{opacity:0;translate:-14px 0}8%,80%{opacity:1;translate:0 0}100%{opacity:0}}
+@keyframes mechPod{0%{opacity:0}6%,45%{opacity:1}55%,100%{opacity:.18}}
+@keyframes mechArmed{0%{color:#fff}100%{color:var(--ma)}}
 @keyframes mechLockText{0%{opacity:0}20%,80%{opacity:1}100%{opacity:0}}
-@keyframes mechSmoke{0%{scale:.3;opacity:0;translate:0 0}8%{opacity:.9}100%{scale:2.4;opacity:0;translate:14px -26px}}
-@keyframes mechX{0%{translate:0 0;opacity:0}4%,94%{opacity:1}100%{translate:calc(var(--tx) - var(--sx) + var(--jx)) 0;opacity:0}}
-@keyframes mechY{0%{translate:0 0;animation-timing-function:cubic-bezier(.2,.7,.4,1)}45%{translate:0 calc(-36cqh - var(--up));animation-timing-function:cubic-bezier(.6,0,.8,.4)}100%{translate:0 calc(var(--ty) - var(--sy) + var(--jy))}}
-@keyframes mechBoom{0%{scale:.2;opacity:0}20%{scale:1;opacity:1}100%{scale:1.6;opacity:0}}
-@keyframes mechBlast{0%{scale:.2;opacity:0}12%{scale:1;opacity:1}55%{opacity:.9}100%{scale:1.5;opacity:0}}
-@keyframes mechDebris{0%{translate:0 0;opacity:1;rotate:0deg}100%{translate:calc(cos(var(--ang)) * 140px) calc(sin(var(--ang)) * 100px + 30px);opacity:0;rotate:300deg}}
-@keyframes mechTitle{0%{opacity:0;scale:1.7}14%{opacity:1;scale:1}82%{opacity:1}100%{opacity:0;translate:-50% -8px}}
-@media(max-width:767px){.mech-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:8cqw;--sy:82cqh}.mech-fx.mech-boss{--tx:calc(100cqw - 66px)}.mech-title{font-size:24px;top:12%}.mech-hud{left:2%;top:7%;padding:5px 7px 6px}.mech-pods{grid-template-columns:repeat(6,11px)}.mech-pods b{width:11px}.mech-blast{width:140px;height:110px;margin:-55px 0 0 -70px}}
-.fx-no-glow .mech-fx .scene-fx-dark,.fx-no-glow .mech-blast{display:none}
+@keyframes mechSmoke{0%{scale:.3;opacity:0;translate:0 0}8%{opacity:.9}100%{scale:2.6;opacity:0;translate:16px -30px}}
+@keyframes mechLaunch{0%{translate:0 0;opacity:0}10%,90%{opacity:1}100%{translate:calc(var(--jx) * 2) calc(var(--sy) * -1 - 60px);opacity:0}}
+@keyframes mechShell{0%{translate:calc(12cqw + 40px) calc(var(--ty) * -1 - 50px);opacity:1}90%{translate:0 0;opacity:1}100%{translate:0 0;opacity:0}}
+@keyframes mechBoom{0%{scale:.2;opacity:0}15%{scale:1.1;opacity:1}100%{scale:1.7;opacity:0}}
+@keyframes mechWhite{0%{opacity:0}15%{opacity:.85}100%{opacity:0}}
+@keyframes mechBlast{0%{scale:.2;opacity:0}15%{scale:1;opacity:1}55%{opacity:.9}100%{scale:1.45;opacity:0}}
+@keyframes mechDebris{0%{translate:0 0;opacity:1;rotate:0deg}100%{translate:calc(cos(var(--ang)) * 120px) calc(sin(var(--ang)) * 85px + 26px);opacity:0;rotate:300deg}}
+@keyframes mechTitle{0%{opacity:0;scale:1.8}10%{opacity:1;scale:1}86%{opacity:1}100%{opacity:0;translate:-50% -8px}}
+@keyframes mechRumble{0%{translate:-3px 1px}25%{translate:3px -2px}50%{translate:-2px 2px}75%{translate:2px -1px}100%{translate:0 0}}
+@media(max-width:767px){.mech-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:8cqw;--sy:84cqh}.mech-fx.mech-boss{--tx:calc(100cqw - 66px)}.mech-title{font-size:24px;top:12%}.mech-hud{left:2%;top:7%;padding:5px 7px 6px;max-width:60%}.mech-pods{grid-template-columns:repeat(12,7px);gap:2px}.mech-pods b{width:7px;height:7px}.mech-zone{width:110px;height:72px;margin:-36px 0 0 -55px}.mech-blast{width:130px;height:105px;margin:-52px 0 0 -65px}}
+.fx-no-glow .mech-fx .scene-fx-dark,.fx-no-glow .mech-whiteout,.fx-no-glow .mech-blast{display:none}
 @media(prefers-reduced-motion:reduce){.mech-fx i{display:none}.mech-title{animation-name:tideReduced}.battle-scene:has(.mech-fx) .ocean-art{animation:none}}

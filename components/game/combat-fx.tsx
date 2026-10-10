@@ -199,25 +199,29 @@ function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     </div>;
 }
 /**
- * v3.246 메카닉 메탈아머 전탄발사 전용 연출: ① 메탈아머 HUD(미사일 포드 12칸 무장) · 경고 띠 → ② 다중 표적 잠금 →
- * ③ 미사일 12발이 포물선으로 일제 발사(발사 연기) → ④ 몬스터 주변 연쇄 폭발 → ⑤ 마지막 대폭발 · 파편 · 전용 타이틀. 약 2.5초.
+ * v3.246 메카닉 메탈아머 전탄발사 전용 연출(포격): ① 메탈아머 HUD — 방출한 충전 중첩 × 3칸의 미사일 포드가 무장되고 표적 구역을 잠금
+ * → ② 발사대에서 미사일이 하늘로 연달아 솟구침 → ③ 하늘에서 같은 수의 포탄이 표적 구역에 비처럼 내리꽂히며 연쇄 폭발 · 계속 흔들림
+ * → ④ 마지막 대폭발 · 충격파 · 파편 · 전용 타이틀(×중첩). 중첩이 많을수록 미사일 · 폭발이 늘어납니다(5중첩 15발 ~ 8중첩 24발). 약 2.6초.
  */
-const MECH_JITTER = [[-18, -10], [14, 8], [-6, 16], [20, -14], [-22, 6], [8, -18], [0, 0], [16, 14], [-12, -20], [24, 2], [-16, 12], [6, -6]];
+const MECH_PER_STACK = 3;
+const mechSpot = (n: number) => { const a = n * 2.39996, r = 10 + (n * 29 % 38); return [Math.round(Math.cos(a) * r * 1.3), Math.round(Math.sin(a) * r * .8)]; };
 function MechFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
-    const i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(fx.delay, { '--i': n, ...extra });
-    return <div className={`scene-fx mech-fx ${boss ? 'mech-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay)}>
-        <i className="scene-fx-dark"/><i className="mech-tape"/><i className="mech-tape low"/>
+    const stacks = Math.max(1, Math.min(8, fx.charged || 5)), count = stacks * MECH_PER_STACK;
+    const at = (n: number, ms: number, extra: Record<string, string | number> = {}) => fxStyle(fx.delay, { '--i': n, '--t': `${Math.round(ms)}ms`, ...extra });
+    return <div className={`scene-fx mech-fx ${boss ? 'mech-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay, { '--stacks': stacks })}>
+        <i className="scene-fx-dark"/><i className="mech-tape"/><i className="mech-tape low"/><i className="mech-zone"/>
         <div className="mech-hud"><small>METAL ARMOR · FULL BURST</small>
-            <div className="mech-pods">{Array.from({ length: 12 }, (_, n) => <b key={n} style={i(n)}/>)}</div>
-            <strong className="mech-armed">ARMED</strong></div>
-        {Array.from({ length: 5 }, (_, n) => <i key={`l${n}`} className="mech-lock" style={i(n, { '--jx': `${MECH_JITTER[n][0] * 1.6}px`, '--jy': `${MECH_JITTER[n][1] * 1.6}px` })}/>)}
-        <b className="mech-lockcount">TARGET ×5 LOCK</b>
-        {Array.from({ length: 4 }, (_, n) => <i key={`s${n}`} className="mech-smoke" style={i(n)}/>)}
-        {MECH_JITTER.map(([x, y], n) => <i key={`m${n}`} className="mech-missile" style={i(n, { '--jx': `${x}px`, '--jy': `${y}px`, '--up': `${(n % 4) * 7}cqh` })}><b/></i>)}
-        {MECH_JITTER.slice(0, 8).map(([x, y], n) => <i key={`b${n}`} className="mech-boom" style={i(n, { '--jx': `${x * 1.4}px`, '--jy': `${y * 1.4}px` })}/>)}
-        <i className="mech-blast"/><i className="mech-ring"/><i className="mech-ring late"/>
-        {Array.from({ length: 12 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={i(n, { '--ang': `${n * 30 + 12}deg` })}/>)}
-        <strong className="mech-title">FULL BURST<small>메탈아머 전탄발사</small></strong>
+            <div className="mech-pods">{Array.from({ length: count }, (_, n) => <b key={n} style={at(n, 60 + n * (480 / count))}/>)}</div>
+            <strong className="mech-armed">CHARGE ×{stacks} · {count} MISSILES</strong></div>
+        <b className="mech-lockcount">TARGET ZONE LOCKED</b>
+        {Array.from({ length: Math.ceil(count / 4) }, (_, n) => <i key={`s${n}`} className="mech-smoke" style={at(n, 550 + n * (450 / Math.ceil(count / 4)))}/>)}
+        {Array.from({ length: count }, (_, n) => <i key={`u${n}`} className="mech-launch" style={at(n, 550 + n * (450 / count), { '--jx': `${(n % 5 - 2) * 6}px` })}/>)}
+        {Array.from({ length: count }, (_, n) => { const [x, y] = mechSpot(n), t = 1050 + n * (850 / count); return <Fragment key={`h${n}`}>
+            <i className="mech-shell" style={at(n, t, { '--jx': `${x}px`, '--jy': `${y}px` })}/>
+            <i className="mech-boom" style={at(n, t + 240, { '--jx': `${x}px`, '--jy': `${y}px` })}/></Fragment>; })}
+        <i className="mech-whiteout"/><i className="mech-blast"/><i className="mech-ring"/><i className="mech-ring late"/>
+        {Array.from({ length: 14 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={at(n, 2050, { '--ang': `${n * 360 / 14 + 8}deg` })}/>)}
+        <strong className="mech-title">FULL BURST<em>×{stacks}</em><small>메탈아머 전탄발사 · {count}발 포격</small></strong>
     </div>;
 }
 /**

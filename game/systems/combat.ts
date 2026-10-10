@@ -646,6 +646,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         a.effects.charge = 0;
         base *= 1 + spent * (chosen.chargeBonus || 0);
         notes.push(`충전 ${spent}중첩 방출`);
+        if (spent) ev.charged = spent;
     }
     // v3.145 피의 분노(데몬슬레이어 패시브): 잃은 체력 비율 × bloodRage 합만큼 기준값이 커집니다(체력 소모 뒤 기준).
     const rage = a.skills.reduce((n, id) => n + (skillById(id)?.bloodRage || 0), 0);
