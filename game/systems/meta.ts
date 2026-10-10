@@ -17,8 +17,17 @@ export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'> & Partial<Pick<
 export const TAILWIND_EXP = .5;
 /** 순풍 경험치 보너스: +50% + 초심자 보너스 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
-/** v3.23 순풍은 조건 없이 환생 뒤 목표 레벨까지 켜지고, 다른 경험치 보너스와 더합니다. */
-export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'>) => (s.rebirths || 0) > 0 && s.level < rebirthLevel(s);
+/**
+ * v3.227 순풍이 끝나는 레벨: 직전 생의 최고 레벨(환생할 때의 레벨, 환생 기록의 마지막 항목).
+ * 기록이 없거나 직전 생 것이 아니면(옛 세이브) 직전 생의 환생 요구 레벨(그 생이 적어도 닿은 레벨)로 봅니다.
+ * 전에는 이번 생의 환생 요구 레벨까지라, 요구 레벨이 상한(Lv.100)에 닿은 뒤로는 매 생 Lv.100까지 켜져 있었습니다.
+ */
+export const tailwindLevel = (s: Pick<State, 'rebirths'> & Partial<Pick<State, 'rebirthLog'>>) => {
+    const last = s.rebirthLog?.at(-1);
+    return last && last.n === s.rebirths && last.level > 0 ? last.level : rebirthLevel({ rebirths: Math.max(0, (s.rebirths || 0) - 1) });
+};
+/** v3.23 순풍은 조건 없이 환생 뒤 켜지고, 다른 경험치 보너스와 더합니다. v3.227 직전 생 최고 레벨(tailwindLevel)까지. */
+export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'> & Partial<Pick<State, 'rebirthLog'>>) => (s.rebirths || 0) > 0 && s.level < tailwindLevel(s);
 /** v3.23 목표 레벨 너머 벽(OVER_TARGET). 배율은 고정입니다. */
 export const xpWall = (s: Pick<State, 'rebirths'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
 export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));

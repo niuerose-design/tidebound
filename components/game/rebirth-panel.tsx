@@ -13,7 +13,7 @@ import { inventoryCap } from '@/game/data/economy';
 import { RebirthHistory } from './rebirth-history';
 import { SLOTS } from '@/game/data/balance';
 import { researchRefund } from '@/game/systems/commerce';
-import { rebirthRewardParts, tailwindActive, tailwindExp, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
+import { rebirthRewardParts, tailwindActive, tailwindExp, tailwindLevel, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { stats, permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity, researchAP } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
@@ -155,7 +155,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) };
     const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
-    const lifeText = `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
+    const lifeText = `순풍 · 다음 생 Lv.${Math.max(s.level, required)}(이번 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
@@ -172,7 +172,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             {showAutomation(s) && <><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.rebirths >= ASCENSION.rebirthCap ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
-                    {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
+                    {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${tailwindLevel(s)}(직전 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
                     <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required || s.rebirths >= ASCENSION.rebirthCap} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>

@@ -1,5 +1,5 @@
 /** 환생, 하드코어 소프트 리셋, 서약 선택과 전체 초기화 */
-import { tailwindExp, rebirthLevel, rebirthReward } from '../meta';
+import { tailwindExp, tailwindLevel, rebirthLevel, rebirthReward } from '../meta';
 import { ASCENSION, ASCENSION_RESEARCH, ASCENSION_LOG_KEEP, ASCENSION_PERKS, ascensionOf, ascensionPerk, ascensionRequirement } from '../../data/ascension';
 import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX, runResearchPlan } from '../research-plan';
 import { FOLLOW_STAGE, FOLLOW_TIDE, rotationChoices, type FollowRule } from '../automation';
@@ -85,7 +85,7 @@ export function rebirthNow(s: State, now: number) {
     // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
     if (s.vows?.restraint) trimLoadout(s);
     addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
-    addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
+    addLog(s, `순풍 · 직전 생 최고 레벨 Lv.${tailwindLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 환생 요구 레벨 Lv.${rebirthLevel(s)} 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
     if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
     if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
         s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);

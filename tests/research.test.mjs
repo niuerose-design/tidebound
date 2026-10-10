@@ -112,7 +112,7 @@ test('Research v3.23: tailwind sail raises the additive bonus, the over-target w
     const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); close(metaMod.xpWall(s).growth, 1.6);
     s.permanent.tailwindSail = 3; close(metaMod.tailwindExp(s), .8);
     s.rebirths = 6; s.level = 67; act(s, { type: 'rebirth' }, 0); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
-    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.rebirthLevel(s) }), (1 + e + .8) / (1 + e));
+    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.tailwindLevel(s) }), (1 + e + .8) / (1 + e)); // v3.227 직전 생 최고 레벨(67)까지
 });
 
 test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
