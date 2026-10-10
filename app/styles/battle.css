@@ -1792,7 +1792,11 @@
 .scene-foe-name small{font-size:10px;font-weight:700;color:#ffd76a}
 .scene-foe-name small.boss{color:#ff8f7a;letter-spacing:.08em}
 .scene-foe-name .name-statuses{pointer-events:auto}
-.scene-foe-hud{width:120px;left:min(var(--foe-x),calc(100% - 92px))}
+.scene-foe-hud{width:120px;left:min(var(--foe-x),calc(100% - 92px));top:calc(var(--foe-feet) + 10px)}
+/* HP 숫자는 몬스터 그림을 가리지 않게 바 아래에. */
+.scene-foe-hud .meter{display:flex;flex-direction:column-reverse}
+.scene-foe-hud .meter-label{margin:3px 0 0}
+.scene-foe-hud .scene-foe-name{margin-top:1px}
 /* 나: 직업 그림 + 이름 · HP · 마나 판 */
 .scene-me{position:absolute;left:12px;bottom:10px;z-index:4;display:flex;align-items:flex-end;gap:8px;pointer-events:none;max-width:calc(100% - 24px)}
 .scene-hero{flex:none;width:clamp(56px,24cqh,84px);transform-origin:50% 100%}
@@ -1875,8 +1879,10 @@
 @container (max-width:560px){.scene-hero{width:clamp(48px,20cqh,64px)}.scene-me-plate{width:140px;padding:5px 7px 6px}.scene-me-sub{display:none}.scene-log{bottom:calc(10px + clamp(48px,20cqh,64px) * 1.375 + 8px);width:min(56%,250px)}}
 @media(prefers-reduced-motion:reduce){.scene-log p,.scene-foe.spawn,.scene-foe-wrap.dying,.battle-scene.running .scene-hero-art{animation:none}.scene-foe-wrap.dying{display:none}}
 @media(min-width:1600px){.battle-hud .battle-console .battle-scene{height:420px}}
-/* v3.247 스킬 이름 쌓기: 장면 가운데 위에 모아 띄우고, 새 줄이 아래에 찍히면 이전 줄은 위로 밀려 흐려집니다. 따로 뜨던 캡션 · 큰 제목 · 몬스터 스킬 알림은 장면에서 숨깁니다. */
-.battle-scene .tide-fx-caption,.battle-scene .monster-skill-cue,.battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .ow-title,.battle-scene .xen-title,.battle-scene .pun-title,.battle-scene .foe-title{display:none}
+/* v3.247 스킬 이름 쌓기: 몬스터 옆 캡션 · 몬스터 스킬 알림으로 따로 뜨던 이름을 장면 가운데 위에 모아, 새 줄이 아래에 뜨면 이전 줄은 위로 밀려 흐려집니다. 큰 제목이 있는 스킬은 큰 제목만. */
+.battle-scene .tide-fx-caption,.battle-scene .monster-skill-cue{display:none}
+/* 큰 제목(각성기 · 天 · 5단계 · 도트 퍼니셔)은 그대로 띄우되, 아래쪽 캐릭터 판 · 기록에 가리지 않게 장면 가운데로 올립니다. */
+.battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title{top:calc(50% - 14px)}
 .skill-receipt{position:absolute;left:50%;bottom:62%;translate:-50% 0;z-index:7;display:flex;flex-direction:column;align-items:center;gap:3px;width:max-content;max-width:min(78%,360px);pointer-events:none}
 .battle-scene:has(.scene-job-slot>*) .skill-receipt{left:auto;right:14px;translate:none;align-items:flex-end;max-width:min(52%,300px)}
 .skill-slip{display:flex;align-items:baseline;gap:6px;max-width:100%;color:#fff2c4;font-size:15px;font-weight:800;letter-spacing:.3px;line-height:1.3;white-space:nowrap;text-shadow:0 0 12px #efd28acc,0 2px 5px #071a20,0 0 3px #071a20;transform-origin:50% 100%;animation:slipIn .3s cubic-bezier(.2,.8,.3,1) backwards,slipLife 2.6s linear both;transition:opacity .25s,scale .25s}

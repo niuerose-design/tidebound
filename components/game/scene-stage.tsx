@@ -11,7 +11,7 @@ import { mineBonusOf } from '@/game/systems/azeroth';
 import { MonsterArt } from './art';
 import { Meter, format } from './shared';
 import { StatusBadges } from './combat-status';
-import { CombatBarEffect } from './combat-fx';
+import { CombatBarEffect, hasSceneTitle } from './combat-fx';
 
 /**
  * v3.247 전투 장면 개편: 왼쪽 아래 내 캐릭터(직업 그림 + 이름 · HP · 마나 판), 오른쪽 몬스터(맞으면 번쩍이며 밀리고 처치되면 찌그러져 사라짐),
@@ -169,7 +169,7 @@ function later(bag: Set<number>, fn: () => void, ms: number) {
     bag.add(t);
 }
 /**
- * v3.247 스킬 이름 쌓기: 장면에 뜨던 스킬 이름(몬스터 옆 캡션 · 큰 제목 · 몬스터 스킬 알림)을 한 곳에 모아, 새 스킬이 맨 아래에 찍히고
+ * v3.247 스킬 이름 쌓기: 몬스터 옆 캡션 · 몬스터 스킬 알림으로 뜨던 스킬 이름을 한 곳에 모아, 새 스킬이 맨 아래에 찍히고
  * 이전 줄은 위로 밀려 올라가며 흐려집니다. 여러 스킬이 한꺼번에 나가도 겹치지 않습니다. 각 줄은 그 타격 박자(fx.delay)에 찍힙니다.
  */
 export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
@@ -180,7 +180,7 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
         for (const fx of effect) {
             if (seen.current.has(fx.id)) continue;
             seen.current.add(fx.id);
-            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가') continue;
+            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가' || hasSceneTitle(fx, boss)) continue;
             const tags = [fx.extreme && '極限突破', fx.critical && fx.actor === 'player' && '치명', fx.mined && `세계석 +${fx.mined}`, fx.devour && '포식', fx.status].filter((t): t is string => !!t);
             const slip: Slip = { id: fx.id, title: fx.title, tags, side: fx.actor === 'player' ? 'me' : 'foe', big: !!fx.finale || (fx.tier || 0) >= 4, boss: fx.actor === 'enemy' && boss };
             later(bag, () => {
