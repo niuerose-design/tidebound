@@ -2108,8 +2108,8 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @media(max-width:767px){
   .battle-scene{--foe-y:36%;--foe-feet:calc(36% + 48px)}
   .battle-scene:has(.scene-foe.boss){--foe-feet:calc(36% + 58px)}
-  .scene-foe{top:calc(36% - 42px)}
-  .scene-foe.boss{top:calc(36% - 52px)}
+  .battle-scene .scene-foe{top:calc(36% - 42px)}
+  .battle-scene .scene-foe.boss{top:calc(36% - 52px)}
   .ow-fx,.xen-fx{--ty:36cqh}
   .scene-log p:nth-last-child(n+4){display:none}
   .skill-receipt{top:8px;bottom:auto}
@@ -2136,3 +2136,6 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @container (max-width:560px){.scene-me-plate{height:auto}}
 @container (max-width:700px){.scene-log,.dungeon-scene .scene-log{bottom:134px;height:auto}}
 @container (max-width:560px){.scene-log,.dungeon-scene .scene-log{bottom:116px;height:auto}}
+/* v3.256 몬스터 HP 숫자: 짧은 단위(만 · 억)로 바 아래에. */
+.scene-foe-hud .player-hp-anchor{display:flex;flex-direction:column-reverse}
+.scene-foe-hp{display:block;margin-top:3px;text-align:center;font:600 10.5px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#f3e7d5;text-shadow:0 1px 3px #041219;white-space:nowrap;pointer-events:auto}
