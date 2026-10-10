@@ -1,5 +1,4 @@
 'use client';
-import { displayTitle } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
 import { OtherworldHud } from './otherworld-hud';
 import { tutorialActive } from '@/game/systems/guidance';
@@ -8,7 +7,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { MonsterArt, SceneBackdrop } from './art';
+import { SceneBackdrop } from './art';
 import { cachedStats, useReplayView, type FrameStore } from './use-game';
 import { LiveRatesCard } from './live-rates-card';
 import { EXP_NURI } from '@/game/data/exp-nuri';
@@ -16,10 +15,10 @@ import { isSpecialId } from '@/game/data/king';
 import { WHISTLE, WHISTLE_TARGETS, whistleOk, whistleTarget } from '@/game/data/whistle';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { rebirthLevel, encounterTier, tideLimit } from '@/game/systems/meta';
-import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Leaf, Gem, Megaphone } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, ScrollText, Coins, Fish, Pause, Play, RefreshCw, Sparkles, Target, Leaf, Gem, Megaphone } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heading, Meter, SkillIcon, format, Num } from './shared';
+import { Heading, SkillIcon, format, Num } from './shared';
 import { STAGES, MONSTERS, swarmHpMultiplier, swarmAttackMultiplier, monsterById, stageById, dungeonById } from '@/game/data/world';
 import { variantById } from '@/game/data/variants';
 import { BALANCE } from '@/game/data/balance';
@@ -32,7 +31,7 @@ import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { StatusBadges } from './combat-status';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
@@ -141,7 +140,10 @@ const BattleSkills = memo(function BattleSkills({ base: s, setView }: { base: St
     return <section className="panel battle-skills"><div className="section-title"><h2>전투 스킬 <span className="micro">AP {apUsed(s)} / {apCapacity(s)} · 액티브 {activeIds.length}개</span></h2><button className="text-button" onClick={() => setView('skills')}>스킬 편성 <ChevronRight size={14}/></button></div><div className="battle-skill-row">{(activeIds.length ? activeIds : ['']).map(id => { const sk = skillById(id), effective = sk ? effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id)) : null; return <button key={id || 'empty'} className={`battle-skill ${sk ? '' : 'vacant'}`} onClick={() => setView('skills')}><div className="skill-symbol">{sk ? <SkillIcon id={sk.id}/> : <span>+</span>}</div><div><strong>{sk?.name || '빈 스킬 슬롯'}</strong><small>{sk ? (() => { const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0; return `${sk.awaken ? '각성 · ' : ''}${Math.round(effective!.chance * 100)}% 발동 · ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`; })() : '스킬을 장착하세요'}</small></div></button>; })}</div></section>;
 });
 
-/** 상대 카드와 사냥터 장면. 스킬 연출 상태는 여기에만 있어 타격 연출이 바뀔 때 이 안만 다시 그립니다. */
+/**
+ * 사냥터 장면과 아래 몬스터 카드. 스킬 연출 상태는 여기에만 있어 타격 연출이 바뀔 때 이 안만 다시 그립니다.
+ * v3.247 장면에는 나(왼쪽 아래) · 몬스터(오른쪽) · 연출 · 전투 기록 · 전용 HUD만 두고, 사냥터 이름 · 단계 · 출현 문구와 조작 버튼은 아래 카드로 옮겼습니다.
+ */
 function BattleArena({ s, playerStats, busy, send, setView }: { s: State; playerStats: CombatStats; busy: boolean; send: Send; setView: SetView }) {
     const st = stageById(s.stage)!, d = dungeonById(s.dungeon?.id);
     const enemy = s.enemy;
@@ -150,10 +152,34 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
     // 회복 대기(필드 패배 후)·출정 준비(던전 입장 후) 남은 시간. 던전 화면의 준비 카운트다운과 같은 방식입니다.
     const recoverySeconds = Math.ceil(s.recovery * BALANCE.turnMs / 1000);
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
+    const shown = enemy && !s.recovery ? enemy : null;
+    const idle = recoveryText ?? (shown ? null : s.running ? '다음 몬스터를 기다리는 중' : '자동 사냥이 멈춰 있습니다');
     return <>
-    <div className="battle-opponent-strip"><div className="opponent-card player-opponent"><span className="eyebrow">MY CHARACTER</span><div className="combatant-name"><strong>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</strong><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label={`HP ${Math.ceil(s.hp)} / ${playerStats.hp}`}/></div><small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)} · 실제 확률은 상대의 회피·명중과 속도 차이로 1~99.5% 범위에서 정해집니다.`}>속도 {playerStats.speed}{enemyStats ? ` · 명중률 ${percent(hitChance(playerStats, enemyStats), 0)} · 회피율 ${percent(1 - hitChance(enemyStats, playerStats), 0)}` : ' · 상대를 만나면 명중률·회피율 표시'}</small></div><div className="opponent-vs"><Swords size={17}/><strong>VS</strong></div><div className="opponent-card enemy-opponent"><span className="eyebrow">{enemy?.boss ? 'BOSS ENCOUNTER' : enemy?.variant ? 'RARE VARIANT' : 'CURRENT TARGET'}{enemy?.swarm ? ` · 무리 ×${enemy.swarm}` : ''}</span><div className="combatant-name">{enemy ? <strong>{enemy.variant && enemy.variant !== 'swarm' ? <small className={`variant-badge variant-${enemy.variant}`} title={variantById(enemy.variant)?.desc}>{variantById(enemy.variant)?.mark} {variantById(enemy.variant)?.name}</small> : enemy.swarm ? <small className="variant-badge variant-swarm" title={variantById('swarm')?.desc}>≋ 무리 ×{enemy.swarm}</small> : null}{enemy.name}</strong> : recoveryText ? <strong className="recovery-countdown" aria-live="polite">{recoveryText}</strong> : <strong>다음 몬스터를 기다리는 중</strong>}{enemy && <StatusBadges effects={enemy.effects} stun={enemy.stun} recent={combatFx} target="enemy"/>}</div><div className="player-hp-anchor"><Meter value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp)} / ${enemy.maxHp}` : 'READY'} color="enemy"/></div><small>{enemy ? `${bookRevealed(s, enemy.id) ? profile(enemy.id).name : '미확인 개체'} · 속도 ${enemyStats?.speed || 0}${!s.dungeon && s.tide ? ` · 사냥터 난이도 ${s.tide} 적용` : ''}${enemy.swarm ? ` · 무리 체력 ×${swarmHpMultiplier(enemy.swarm)}${swarmAttackMultiplier(enemy.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(enemy.swarm)}` : ''}` : ''}` : st.description}</small><small className="enemy-hint" aria-hidden={!enemy}>{enemy ? bookRevealed(s, enemy.id) ? profile(enemy.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[enemy.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})` : ' '}</small></div></div>
-    <OtherworldHud s={s} send={send}/>
-    <section className={`battle-scene ${s.running ? 'running' : ''}`}><SceneBackdrop/><div className="scene-shade"/>{enemy && !s.recovery && <MonsterArt id={enemy.id} boss={!!enemy.boss} size={128} className={`scene-foe ${isSpecialId(enemy.id) ? 'kkami' : ''}`}/>}<KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud s={s} enemy={enemy && !s.recovery ? enemy : null} playerHp={playerStats.hp} effect={combatFx} combo={fxCombo}/><div className="scene-top"><span className="scene-label"><Compass size={14}/><span className="scene-label-text">{d ? 'DUNGEON EXPEDITION' : st.subtitle}</span></span><div className="scene-actions"><button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={17}/> : <Play size={17}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button><button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button></div></div><div className="scene-copy"><span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`}</span><h2>{d ? d.id === 'abyss' ? <>{d.name} <b className="abyss-floor">{s.dungeon!.depth || s.abyssBest + 1}층</b></> : d.name : st.name}</h2><p>{s.recovery ? d ? '출정을 준비하고 있습니다.' : '모험가가 체력을 회복하고 있습니다.' : enemy ? `${enemy.boss ? 'BOSS · ' : ''}${enemy.name}(이)가 나타났습니다.` : s.running ? '풀숲 너머에서 다음 몬스터를 기다립니다.' : st.description}</p></div><WhistleButton s={s} send={send} busy={busy}/></section>
+    <section className={`battle-scene ${s.running ? 'running' : ''}`}><SceneBackdrop/><div className="scene-shade"/>
+        <SceneFoe enemy={enemy} hidden={!!s.recovery} effect={combatFx} kkami={!!enemy && isSpecialId(enemy.id)}/>
+        <KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/>
+        <SceneCombatHud enemy={shown} effect={combatFx} combo={fxCombo}/>
+        <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
+        {idle && <span className={`scene-idle ${recoveryText ? 'recovery' : ''}`} aria-live="polite">{idle}</span>}
+        <SkillReceipt effect={combatFx} boss={!!enemy?.boss}/>
+        <SceneLog logs={s.logs} playerName={s.name}/>
+        <SceneMe s={s} stats={playerStats} effect={combatFx}/>
+    </section>
+    <div className="battle-dock">
+        <div className="battle-dock-info">
+            <span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${d.name} · ${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+ · ${st.name}`}</span>
+            <div className="combatant-name">{enemy ? <strong>{enemy.boss ? <small className="variant-badge variant-boss">BOSS</small> : enemy.variant && enemy.variant !== 'swarm' ? <small className={`variant-badge variant-${enemy.variant}`} title={variantById(enemy.variant)?.desc}>{variantById(enemy.variant)?.mark} {variantById(enemy.variant)?.name}</small> : enemy.swarm ? <small className="variant-badge variant-swarm" title={variantById('swarm')?.desc}>≋ 무리 ×{enemy.swarm}</small> : null}{enemy.name}</strong> : <strong className={recoveryText ? 'recovery-countdown' : ''}>{recoveryText ?? (s.running ? '다음 몬스터를 기다리는 중' : st.name)}</strong>}</div>
+            <small>{enemy ? `${bookRevealed(s, enemy.id) ? profile(enemy.id).name : '미확인 개체'} · 속도 ${enemyStats?.speed || 0}${!s.dungeon && s.tide ? ` · 사냥터 난이도 ${s.tide} 적용` : ''}${enemy.swarm ? ` · 무리 체력 ×${swarmHpMultiplier(enemy.swarm)}${swarmAttackMultiplier(enemy.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(enemy.swarm)}` : ''}` : ''}` : st.description}</small>
+            {enemy && <small className="enemy-hint">{bookRevealed(s, enemy.id) ? profile(enemy.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[enemy.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})`}</small>}
+            <small className="battle-dock-me" title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)} · 실제 확률은 상대의 회피·명중과 속도 차이로 1~99.5% 범위에서 정해집니다.`}>내 속도 {playerStats.speed}{enemyStats ? ` · 명중률 ${percent(hitChance(playerStats, enemyStats), 0)} · 회피율 ${percent(1 - hitChance(enemyStats, playerStats), 0)}` : ''}</small>
+        </div>
+        <div className="battle-dock-actions">
+            <button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={16}/> : <Play size={16}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button>
+            <button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button>
+            <WhistleButton s={s} send={send} busy={busy}/>
+        </div>
+        <OtherworldHud s={s} send={send} part="actions"/>
+    </div>
     </>;
 }
 

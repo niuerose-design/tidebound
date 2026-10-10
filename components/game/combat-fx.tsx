@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Meter } from './shared';
 import { MonsterArt } from './art';
+import { StatusBadges } from './combat-status';
+import { variantById } from '@/game/data/variants';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log, State } from '@/game/types';
@@ -14,7 +16,7 @@ import { FOE_FX } from '@/game/data/foe-fx';
 const FX_HOLD_MS = 1500;
 /** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
 const SCENE_HOLD_MS = 2700;
-/** v3.246 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
+/** v3.248 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
 const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
 const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
@@ -126,7 +128,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     worldStill: { kind: 'chain', glyphs: ['⛓', '◌', '⛓', '✦', '⛓', '◌', '⛓', '✦'] },
     // 11: 제논 메가 스매셔. v3.245부터 전용 연출(XenonFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     aberrantSurge: { kind: 'laser', glyphs: ['◇', '✦', '◇', '✧', '◇', '✦', '◇', '✧'] },
-    // 12: 메카닉 메탈아머 전탄발사. v3.246부터 전용 연출(MechFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
+    // 12: 메카닉 메탈아머 전탄발사. v3.248부터 전용 연출(MechFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     genesisRune: { kind: 'barrage', glyphs: ['▲', '✦', '★', '▲', '✦', '★', '▲', '✦'] },
     // 13: 섀도어 소닉 블로우. 음파 호가 왼쪽에서 밀려오고 동전이 튑니다.
     hoardCrush: { kind: 'sonic', glyphs: ['◉', '◠', '◉', '◠', '◉', '◠', '◉', '◠'] },
@@ -201,7 +203,7 @@ function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     </div>;
 }
 /**
- * v3.246 메카닉 메탈아머 전탄발사 전용 연출(메카물 문법): ① 시네마틱 레터박스 · 흰 명조 타이틀 카드(검은 화면)
+ * v3.248 메카닉 메탈아머 전탄발사 전용 연출(메카물 문법): ① 시네마틱 레터박스 · 흰 명조 타이틀 카드(검은 화면)
  * → ② 경고 패널 · 기체 눈 컷인 · 집중선 → ③ 만화 컷 패널 셋(해치 개방 · 발사 섬광 · 표적 다중 잠금)
  * → ④ 화면 전체를 메우는 탄막(방출한 충전 중첩 × 6줄) · 연쇄 섬광 → 흑백 반전 임팩트 프레임 → 십자 폭발 기둥 → ⑤ 굵은 타이틀. 약 3초.
  */
@@ -247,7 +249,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
@@ -275,7 +277,7 @@ const OW_FX: Record<string, string> = {
     buyOrder: 'buy', shortSell: 'short', leverage: 'leverage', stopLoss: 'stop', shortSqueeze: 'squeeze', circuitBreaker: 'circuit', blackSwan: 'swan',
 };
 /** 이계 스킬(과 재장전)은 상대 카드 대신 사냥터 배경의 몬스터 위에서만 연출합니다. */
-const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId]);
+const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId] || !!fx.essence || !!fx.mineSwing);
 const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
 const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
 function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: boolean }) {
@@ -308,6 +310,33 @@ function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: bool
         {kind === 'reload' && Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-round" style={i(n)}/>)}
         {(fx.skillId === 'leverage' || fx.skillId === 'blackSwan' || fx.skillId === 'shortSqueeze') && <b className="ow-mult">손익 {swing >= 0 ? '+' : ''}{Math.round(swing * 100)}% → ×{scale.toFixed(2)}</b>}
         <strong className="ow-title">{kind === 'reload' ? 'RELOAD' : kind === 'deadeye' ? 'DEAD EYE' : kind === 'nuke' ? 'TACTICAL NUKE' : kind === 'swan' ? 'BLACK SWAN' : kind === 'circuit' ? 'CIRCUIT BREAKER' : kind === 'leverage' ? scale >= 1 ? 'LEVERAGE' : 'MARGIN CALL' : kind === 'snipe' && fx.critical ? 'HEADSHOT' : fx.title}</strong>
+    </div>;
+}
+const ATTR_NAMES: Record<string, string> = { str: '힘', dex: '민첩', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
+/**
+ * v3.246 아제로스 정수 포식자 · 세계석 광부 전용 연출(이계 연출과 같은 몬스터 좌표 --tx · --ty).
+ * 정수 소모 기술: 정수가 손으로 빨려 들어와 응축 → 몬스터 위에 허공의 아가리가 열려 이빨로 물어뜯고 녹빛 정수가 튐. 포식 처치면 혼이 시전자에게 흘러와 룬 고리와 함께 능력치 +1.
+ * 채굴 기술: 곡괭이가 호를 그리며 내리찍고 균열 · 먼지 · 돌조각. 채굴하면 세계석 원석이 튀어 올랐다가 위쪽(HUD)으로 날아감.
+ */
+function AzerothFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra });
+    if (fx.essence) return <div className={`scene-fx ow-fx az-fx az-devour ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
+        <i className="scene-fx-dark"/>
+        {Array.from({ length: 9 }, (_, n) => <i key={`s${n}`} className="az-stream" style={i(n, { '--x0': `${((n * 53) % 160) - 60}px`, '--y0': `${-150 - (n * 37) % 60}px` })}/>)}
+        <i className="az-charge"/>
+        <i className="az-maw"><i className="az-void"/><i className="az-jaw top"/><i className="az-jaw bot"/></i>
+        {Array.from({ length: 12 }, (_, n) => <i key={`o${n}`} className="az-ooze" style={i(n, { '--ang': `${n * 30 + 7}deg`, '--r': `${50 + (n * 23) % 70}px` })}/>)}
+        <b className="az-cost">정수 −{fx.essence.toLocaleString()}</b>
+        {fx.devour && <>{Array.from({ length: 8 }, (_, n) => <i key={`w${n}`} className="az-wisp" style={i(n)}/>)}<i className="az-rune"/><b className="az-gain">{ATTR_NAMES[fx.devour] || fx.devour} +1<small>포식한 힘을 몸에 새김</small></b></>}
+        <strong className="ow-title az-title">{fx.title}</strong>
+    </div>;
+    return <div className={`scene-fx ow-fx az-fx az-mine ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
+        <i className="az-trail"/>
+        <i className="az-pick"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="56" y="18" width="9" height="92" rx="4" fill="#9a6a38" transform="rotate(-38 60 64)"/><path d="M14 40 Q48 2 104 22 Q62 22 30 50 Z" fill="#c9d3da" stroke="#2b3237" strokeWidth="1.5" transform="rotate(-38 60 64)"/><path d="M14 40 L8 52 L22 46 Z" fill="#eef4f7" transform="rotate(-38 60 64)"/></svg></i>
+        <i className="az-crack"/><i className="az-dust"/>
+        {Array.from({ length: 10 }, (_, n) => <i key={`r${n}`} className="az-rock" style={i(n, { '--ang': `${-160 + n * 15}deg`, '--r': `${40 + (n * 29) % 70}px` })}/>)}
+        {(fx.mined || 0) > 0 && <><i className="az-gem"/>{Array.from({ length: 6 }, (_, n) => <i key={`g${n}`} className="az-glint" style={i(n, { '--ang': `${n * 60}deg` })}/>)}<b className="az-mined">세계석 +{fx.mined}</b></>}
+        <strong className="ow-title az-title">{(fx.mined || 0) > 0 && fx.critical ? '대박 원석!' : fx.title}</strong>
     </div>;
 }
 /**
@@ -394,13 +423,15 @@ export function PlayerHitEffect({ effect }: { effect: CombatFx[] }) {
 }
 
 /**
- * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자),
- * 왼쪽 아래 내 체력바(받은 피해 · 회복 숫자). 상대 · 내 카드의 체력바는 숫자 없이 그대로 남습니다. v3.235 던전 화면도 같은 장면을 씁니다.
+ * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자).
+ * v3.235 던전 화면도 같은 장면을 씁니다. v3.247 체력바 아래 몬스터 이름(변종 · 무리 · 보스 표시), 내 체력바는 왼쪽 아래 캐릭터 판(SceneMe)으로 옮겼습니다.
  */
-export function SceneCombatHud({ s, enemy, playerHp, effect, combo }: { s: State; enemy: State['enemy']; playerHp: number; effect: CombatFx[]; combo: CombatCombo | null }) {
+export function SceneCombatHud({ enemy, effect, combo }: { enemy: State['enemy']; effect: CombatFx[]; combo: CombatCombo | null }) {
+    const variant = enemy?.variant && enemy.variant !== 'swarm' ? variantById(enemy.variant) : null;
     return <>
         <CombatFxOverlay effect={effect} combo={combo}/>
-        {enemy && <div className={`scene-foe-hud ${enemy.boss ? 'boss' : ''}`}><div className="player-hp-anchor"><Meter value={enemy.hp} max={enemy.maxHp} label="HP" color="enemy"/><BarCleave effect={effect} value={enemy.hp} max={enemy.maxHp} label="HP"/><CombatBarEffect effect={effect} target="enemy"/></div></div>}
-        <div className="scene-me-hud"><div className="player-hp-anchor"><Meter value={s.hp} max={playerHp} label={s.name}/><CombatBarEffect effect={effect} target="player"/></div></div>
+        {enemy && <div className={`scene-foe-hud ${enemy.boss ? 'boss' : ''}`}><div className="player-hp-anchor"><Meter value={enemy.hp} max={enemy.maxHp} label="HP" color="enemy"/><BarCleave effect={effect} value={enemy.hp} max={enemy.maxHp} label="HP"/><CombatBarEffect effect={effect} target="enemy"/></div>
+            <span className="scene-foe-name">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark} {variant.name}</small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}{enemy.name}<StatusBadges effects={enemy.effects} stun={enemy.stun} recent={effect} target="enemy"/></span>
+        </div>}
     </>;
 }

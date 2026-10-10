@@ -45,7 +45,7 @@ type Counters = {
     jobMastery: Record<string, number>; skillPractice: Record<string, number>; book: Record<string, number>;
 };
 type Gains = Omit<Counters, 'level'>;
-type Mark = Counters & { rebirths: number; job: string; stage: string; pity: number; items: Set<string>; fuel: number; fuelBought: number };
+type Mark = Counters & { rebirths: number; job: string; stage: string; pity: number; items: Set<string>; fuel: number; fuelBought: number; essenceSpent: number; devoured: number };
 
 const counters = (s: State): Counters => ({
     level: s.level, exp: s.exp, gold: s.gold, essence: s.essence || 0, pearls: s.pearls, sp: s.sp, kills: s.kills, deaths: s.deaths, rankExp: rankState(s).exp,
@@ -91,7 +91,7 @@ export const canSampleOffline = (s: State) => s.running && !s.dungeon && !isHack
 export function markOffline(s: State): Mark {
     resetOfflineTally();
     rareGains = emptyGains();
-    return { ...counters(s), rebirths: s.rebirths, job: s.job, stage: s.stage, pity: s.primalDropPity || 0, items: new Set(s.inventory.map(i => i.id)), fuel: s.fuel || 0, fuelBought: s.fuelBought || 0 };
+    return { ...counters(s), rebirths: s.rebirths, job: s.job, stage: s.stage, pity: s.primalDropPity || 0, items: new Set(s.inventory.map(i => i.id)), essenceSpent: s.essenceSpent || 0, devoured: devouredTotal(s), fuel: s.fuel || 0, fuelBought: s.fuelBought || 0 };
 }
 
 /**
@@ -100,6 +100,9 @@ export function markOffline(s: State): Mark {
  */
 export const sampleStable = (s: State, m: Mark) => canSampleOffline(s) && s.stage === m.stage && s.job === m.job && s.rebirths === m.rebirths && s.level - m.level <= OFFLINE_SAMPLE_MAX_LEVELS;
 /** v3.231 이계 연료: 측정 구간에 태운 연료(충전분 포함). */
+/** v3.246 정수 포식으로 오른 기본 능력치 합. */
+const devouredTotal = (s: State) => Object.values(s.devoured || {}).reduce((a, b) => a + (b || 0), 0);
+const DEVOUR_KEYS = ['str', 'dex', 'int', 'vit', 'wis', 'luk'] as const;
 const fuelDrained = (s: State, m: Mark) => (m.fuel - (s.fuel || 0)) + ((s.fuelBought || 0) - m.fuelBought) * FUEL.perPearl;
 /**
  * v3.231 남은 정산 동안 태울 연료를 지금 연료 + 자동 충전으로 감당할 수 있는지. 못 하면 환산하지 않고 남은 턴을 다 돌립니다
@@ -129,6 +132,18 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
         s.pearls -= buy;
         s.fuelBought = (s.fuelBought || 0) + buy;
     }
+    // v3.246 정수 포식자: 측정 구간에 쓴 정수는 정수 수입에서 빼지 않고(총수입으로 비례), 남은 정산만큼 비례해 씁니다. 정수가 모자라면 쓴 비율만큼만 포식(능력치)도 비례합니다.
+    const essenceSpent = (s.essenceSpent || 0) - m.essenceSpent;
+    g.essence += essenceSpent;
+    let devourShare = 1;
+    if (essenceSpent > 0) {
+        const want = Math.round(essenceSpent * k), have = (s.essence || 0) + grow(g.essence), spend = Math.min(want, have);
+        devourShare = want ? spend / want : 1;
+        s.essence = (s.essence || 0) - spend;
+        s.essenceSpent = (s.essenceSpent || 0) + spend;
+    }
+    const devourGain = Math.floor(grow(devouredTotal(s) - m.devoured) * devourShare);
+    for (let i = 0; i < devourGain; i++) { const key = DEVOUR_KEYS[Math.floor(rng() * DEVOUR_KEYS.length)]; s.devoured ??= {}; s.devoured[key] = (s.devoured[key] || 0) + 1; }
     // 측정 구간에 가방에 들어온 새 장비: 늘린 수만큼 가방 남은 칸까지는 분해 정수, 넘치는 몫은 골드(가방이 찼을 때의 자동 판매와 같은 값).
     const fresh = s.inventory.filter(i => !m.items.has(i.id) && !keepsAcrossLives(i)), items = grow(fresh.length), room = Math.max(0, inventoryCap() - s.inventory.length);
     const avg = (f: (i: State['inventory'][number]) => number) => fresh.length ? fresh.reduce((n, i) => n + f(i), 0) / fresh.length : 0;

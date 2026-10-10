@@ -12,8 +12,9 @@ const PNL_POINTS = 40;
 /**
  * v3.231 이계 사냥 HUD(사냥터 장면 위 한 줄): 요원은 탄창(남은 발 · 무한 탄창), 트레이더는 평가 손익 · 공격 배율 · 손익 흐름,
  * 공통으로 연료 게이지(절전이면 붉게) · 세계석 충전 · 자동 충전. 탄창은 전투 상태(effects.mag · overdrive)를 그대로 읽습니다.
+ * v3.247 part='scene'은 장면 왼쪽 위 HUD(충전 버튼 없음), part='actions'는 아래 조작 카드에 들어가는 충전 버튼 줄입니다.
  */
-export function OtherworldHud({ s, send }: { s: State; send: Send }) {
+export function OtherworldHud({ s, send, part = 'all' }: { s: State; send: Send; part?: 'all' | 'scene' | 'actions' }) {
     const j = jobById(s.job);
     const pnl = s.marketPnl || 0, [trail, setTrail] = useState<{ last: number; points: number[] }>({ last: NaN, points: [] });
     // 동기화마다 바뀐 손익만 이어 붙입니다(렌더 중 파생 상태, 같은 값이면 그대로).
@@ -33,7 +34,12 @@ export function OtherworldHud({ s, send }: { s: State; send: Send }) {
             평가 손익 {up ? '+' : ''}{(pnl * 100).toFixed(1)}%{r !== pnl ? ` (반영 ${r >= 0 ? '+' : ''}${(r * 100).toFixed(0)}%)` : ''} · 공격 ×{factor.toFixed(2)}
         </span>;
     }
-    return <div className={`ow-hud ${empty ? 'saving' : ''}`} role="status">
+    const actions = <span className="ow-hud-actions">
+            {[10, 100, 1000].map(n => <button key={n} type="button" className="secondary small" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })} title={`세계석 ${format(n)}개 → 연료 ${format(n * FUEL.perPearl)}`}>+{format(n)}</button>)}
+            <button type="button" className={`secondary small ${auto ? 'on' : ''}`} onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })} title={auto ? `세계석 ${format(s.fuelAuto!)}개는 남깁니다` : '연료가 떨어지면 세계석으로 자동 충전'}>자동 {auto ? 'ON' : 'OFF'}</button>
+        </span>;
+    if (part === 'actions') return <div className="ow-fuel-actions"><span>연료 충전</span>{actions}</div>;
+    return <div className={`ow-hud ${part === 'scene' ? 'scene-job-hud' : ''} ${empty ? 'saving' : ''}`} role="status">
         <span className="ow-hud-job">이계 · {j.name}</span>
         {cap > 0 && <span className={`ow-hud-mag ${od ? 'od' : ''} ${left === 0 && !od ? 'empty' : ''}`} aria-label={od ? '무한 탄창' : `탄창 ${left} / ${cap}`}>
             {Array.from({ length: cap }, (_, i) => <i key={i} className={!od && i >= left ? 'spent' : ''}/>)}
@@ -41,9 +47,6 @@ export function OtherworldHud({ s, send }: { s: State; send: Send }) {
         </span>}
         {pnlView}
         <span className="ow-hud-fuel"><span>{empty ? '절전 모드' : '연료'}</span><span className="bar"><i style={{ width: `${Math.min(100, fuel / FUEL.cap * 100)}%` }}/></span><span className="num">{format(fuel)} / {format(FUEL.cap)}</span></span>
-        <span className="ow-hud-actions">
-            {[10, 100, 1000].map(n => <button key={n} type="button" className="secondary small" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })} title={`세계석 ${format(n)}개 → 연료 ${format(n * FUEL.perPearl)}`}>+{format(n)}</button>)}
-            <button type="button" className={`secondary small ${auto ? 'on' : ''}`} onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })} title={auto ? `세계석 ${format(s.fuelAuto!)}개는 남깁니다` : '연료가 떨어지면 세계석으로 자동 충전'}>자동 {auto ? 'ON' : 'OFF'}</button>
-        </span>
+        {part === 'all' && actions}
     </div>;
 }

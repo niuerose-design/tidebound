@@ -9,6 +9,8 @@ import { normalizeStats, hitChance } from './stats';
 import { KKAMI_IDS } from '../data/mimic';
 import { NURI_IDS } from '../data/exp-nuri';
 import { effectiveSkill, signatureScale } from './progression';
+/** v3.246 정수 포식으로 오를 수 있는 기본 능력치. */
+const DEVOUR_ATTRS = ['str', 'dex', 'int', 'vit', 'wis', 'luk'] as const;
 export type Fighter = {
     name: string;
     /** v3.221 적의 몬스터 id(까미에게만 발동하는 기술이 봅니다). */
@@ -23,6 +25,9 @@ export type Fighter = {
     hp: number;
     /** v3.231 이계 연료. 이계 전투 직업의 플레이어만 숫자(사냥 중 상태와 이어짐), 없으면(결투 · 시뮬레이션 몸) 연료가 가득 찬 것으로 봅니다. */
     fuel?: number;
+    /** v3.246 쓸 수 있는 정수(정수 포식자). 없으면(결투 · 시뮬레이션) 제한 없음. 채굴 확률 보너스(세계석 광부 패시브). */
+    essence?: number;
+    mineBonus?: number;
     /** v3.231 요원 탄창 크기(장착 패시브 포함) · 재장전 생략 확률. 있으면 액티브를 확률 · 대기 없이 순서대로 씁니다. */
     magazine?: number;
     reloadSkip?: number;
@@ -319,6 +324,9 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if ((a.mana ?? 0) < (candidate.manaCost || 0))
             continue;
+        // v3.246 허기: 정수가 모자라면 정수 포식을 굴리지 않습니다.
+        if (candidate.essenceCost && a.essence !== undefined && a.essence < candidate.essenceCost)
+            continue;
         // v3.143 전탄발사: 충전 중첩이 모자라면 굴리지 않습니다.
         if (candidate.chargeNeed && (a.effects?.charge || 0) < candidate.chargeNeed)
             continue;
@@ -547,6 +555,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen) {
         // v3.231 연료 · 탄창: 쓴 만큼 태우고 한 발을 씁니다. 레버리지: 피해 × (1 + 손익 × pnlScale).
         if (chosen.fuelCost && a.fuel !== undefined) a.fuel = Math.max(0, a.fuel - chosen.fuelCost);
+        // v3.246 정수 포식: 정수를 씁니다(결투 · 시뮬레이션처럼 정수가 없는 전투는 소모 없음).
+        if (chosen.essenceCost) { if (a.essence !== undefined) a.essence = Math.max(0, a.essence - chosen.essenceCost); ev.essenceSpent = chosen.essenceCost; notes.push(`정수 −${chosen.essenceCost}`); }
+        if (chosen.mineChance) ev.mineSwing = true;
         if (a.magazine && !forced && a.effects.mag && !a.effects.overdrive) a.effects.mag.left--;
         if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (chosen.pnlAbs ? Math.abs(a.pnl || 0) : a.pnl || 0) * chosen.pnlScale) };
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
@@ -1016,5 +1027,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     ev.healed = healed;
     // v27.75 합계도 계산된 피해 기준(표시용). 실제 감소량 합이 필요하면 hits의 value를 더합니다.
     ev.total = ev.hits.reduce((n, h) => n + shownHit(h), 0);
+    // v3.246 포식 처치(기본 능력치 +1, 무엇이 오를지는 여기서 굴림) · 채굴(맞히면 확률, 치명타면 2배).
+    if (chosen?.devourStat && b.hp <= 0 && !a.foe) { ev.devour = DEVOUR_ATTRS[Math.floor(rng() * DEVOUR_ATTRS.length)]; notes.push('포식'); }
+    if (chosen?.mineChance && landed && !a.foe && rng() < (chosen.mineChance + (a.mineBonus || 0)) * (crit ? 2 : 1)) { ev.mined = 1; notes.push('세계석 채굴'); }
     return emit(`${a.name} · ${label}${superCrit ? ' [극 치명타]' : crit ? ' [치명타]' : ''} → ${describeHits(ev)}${healed ? ` · 회복 ${healed}` : ''}${ev.drained ? ` · 흡혈 ${ev.drained}` : ''}${notes.length ? ' · ' + notes.join(' · ') : ''}`);
 }
