@@ -1,5 +1,5 @@
 'use client';
-import { useSkillFx, setSkillFx, useFxGlow, setFxGlow } from './skill-fx-setting';
+import { useSkillFx, setSkillFx, useFxGlow, setFxGlow, useSceneLootSetting, setSceneLoot } from './skill-fx-setting';
 import { useNotices, setNotice, NOTICE_KINDS } from './notice-settings';
 import { useStarSetting, setStarSetting } from './star-catch-setting';
 import { Settings } from 'lucide-react';
@@ -48,6 +48,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             {s && researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="vend" title="자동 판매기" verb="골드로 판매" on={!!s.autoVend} action="autoVend"/>}
             <SkillFxToggle/>
             <FxGlowToggle/>
+            <SceneLootToggle/>
             <NoticeToggles/>
             <StarToggle id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
             <StarToggle id="sound" title="강화 효과음" desc="스타캐치와 강화 성공·하락·파괴 효과음입니다. 이 기기에만 저장됩니다."/>
@@ -109,6 +110,14 @@ function FxGlowToggle() {
     return <div className="setting-toggle">
         <div><strong>섬광 효과</strong><p>스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광과, 4차 이상 스킬의 큰 원형 폭발광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.{fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 이 기기에만 저장되며, 처음에는 꺼짐입니다.</p></div>
         <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setFxGlow(!on)}>{on ? '켜짐' : '꺼짐'}</button>
+    </div>;
+}
+/** v3.263 몬스터 쪽 보상 알림 켜기/끄기(이 기기에만 저장). 처음에는 켜짐입니다. */
+function SceneLootToggle() {
+    const on = useSceneLootSetting();
+    return <div className="setting-toggle">
+        <div><strong>몬스터 쪽 보상 알림</strong><p>몬스터를 쓰러뜨리면 그 자리에 경험치 · 골드 · 숙련 · 획득한 것이 떠오릅니다. 켜 두면 캐릭터 옆 전투 기록에는 전투 줄만 나오고, 끄면 보상 줄이 전투 기록으로 돌아옵니다. 움직임 줄이기를 켠 기기에서는 알림이 뜨지 않아 전투 기록에 나옵니다. 이 기기에만 저장되며, 처음에는 켜짐입니다.</p></div>
+        <button className={on ? 'primary' : 'secondary'} aria-pressed={on} onClick={() => setSceneLoot(!on)}>{on ? '켜짐' : '꺼짐'}</button>
     </div>;
 }
 

@@ -2196,3 +2196,18 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .metric-chip small{color:#7f9c98;font-size:10.5px}
 .metric-chip.gold svg{color:#ffd36b}.metric-chip.pearl svg{color:#8fe7ff}.metric-chip.essence svg{color:#7dffb0}
 @media(max-width:767px){.heading-metrics{order:3;flex:1 1 100%;margin-left:0;gap:4px}.metric-chip{height:26px;padding:0 8px;font-size:11px}}
+
+/* v3.263 단축바 스킬 정보 창: 마우스를 올리거나 키보드 초점이 가면 칸 위로 뜹니다. 칸(.hotbar-slot)은 overflow:hidden이라 바깥 .hotbar-cell에 붙입니다. */
+.hotbar-cell{position:relative;display:inline-flex}
+.hotbar-tip{position:absolute;left:50%;bottom:calc(100% + 8px);z-index:30;display:grid;gap:4px;width:max-content;max-width:min(260px,80vw);padding:9px 11px;border-radius:9px;border:1px solid #3d6460;background:#0b1719f2;box-shadow:0 8px 22px #000a;color:#dfeee8;font-size:11.5px;line-height:1.4;text-align:left;pointer-events:none;opacity:0;visibility:hidden;translate:-50% 4px;transition:opacity .12s,translate .12s,visibility .12s}
+.hotbar-tip::after{content:"";position:absolute;left:50%;top:100%;translate:-50% 0;border:6px solid transparent;border-top-color:#3d6460}
+.hotbar-cell:hover .hotbar-tip,.hotbar-cell:has(.hotbar-slot:focus-visible) .hotbar-tip{opacity:1;visibility:visible;translate:-50% 0}
+.hotbar-tip strong{font-size:13px;color:#fff}.hotbar-tip strong em{font-style:normal;color:#e0b84a}
+.hotbar-tip small{color:#8fa9a1;font-size:11px}
+.hotbar-tip-stats{display:flex;flex-wrap:wrap;gap:4px 10px;color:#9db3ab}.hotbar-tip-stats b{color:#ffe7a6;font-variant-numeric:tabular-nums}
+.hotbar-tip-brief{color:#c9dbd2}
+.hotbar-tip-state{font-size:11px;color:#6fc7a6}.hotbar-tip-state.cooling{color:#ffd76a}
+.skill-hotbar>.hotbar-cell:first-child .hotbar-tip{left:0;translate:0 4px}.skill-hotbar>.hotbar-cell:first-child:hover .hotbar-tip,.skill-hotbar>.hotbar-cell:first-child:has(.hotbar-slot:focus-visible) .hotbar-tip{translate:0 0}
+.skill-hotbar>.hotbar-cell:first-child .hotbar-tip::after{left:30px}
+@media(max-width:767px){.hotbar-cell{flex:1 1 62px;max-width:96px}.hotbar-cell .hotbar-slot{width:100%;max-width:none}.hotbar-tip{display:none}}
+@media(prefers-reduced-motion:reduce){.hotbar-tip{transition:none}}

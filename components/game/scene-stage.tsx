@@ -12,6 +12,7 @@ import { MonsterArt } from './art';
 import { Meter, format, short } from './shared';
 import { StatusBadges } from './combat-status';
 import { hasSceneTitle } from './combat-fx';
+import { useSceneLoot } from './skill-fx-setting';
 
 /**
  * v3.247 전투 장면 개편: 왼쪽 아래 내 캐릭터(직업 그림 + 이름 · HP · 마나 판), 오른쪽 몬스터(맞으면 번쩍이며 밀리고 처치되면 찌그러져 사라짐),
@@ -160,7 +161,8 @@ export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; ef
 
 /** 장면 전투 기록: 최근 4줄이 아래에서 올라오고 위로 갈수록 흐려집니다. 전체 기록은 오른쪽 기록판에 그대로. */
 export const SceneLog = memo(function SceneLog({ logs, playerName }: { logs: Log[]; playerName: string }) {
-    const rows = logs.filter(l => l.type === 'battle' || l.type === 'reward').slice(-4);
+    // v3.263 보상 알림이 몬스터 쪽에 뜨면(설정 켜짐) 여기에는 전투 줄만 둡니다.
+    const loot = useSceneLoot(), rows = logs.filter(l => l.type === 'battle' || (!loot && l.type === 'reward')).slice(-4);
     return <div className="scene-log" aria-hidden="true">{rows.map(l => <SceneLogLine key={l.id} log={l} playerName={playerName}/>)}</div>;
 }, (a, b) => a.logs.at(-1)?.id === b.logs.at(-1)?.id && a.playerName === b.playerName);
 
@@ -317,22 +319,22 @@ function lootOf(log: Log): Omit<Loot, 'key' | 'delay'>[] {
 }
 export function SceneLoot({ logs }: { logs: Log[] }) {
     const last = useRef<number | null>(null), timers = useRef(new Set<number>());
-    const [pops, setPops] = useState<Loot[]>([]);
+    const [pops, setPops] = useState<Loot[]>([]), on = useSceneLoot();
     const latest = logs.at(-1)?.id ?? 0;
     useEffect(() => {
         if (last.current === null || latest < last.current) { last.current = latest; return; }
         if (latest === last.current) return;
         const since = last.current;
         last.current = latest;
-        if (reduced()) return;
+        if (!on) return;
         const fresh = logs.filter(l => l.id > since && l.type === 'reward').flatMap(l => lootOf(l).map((x, i) => ({ ...x, key: `${l.id}-${i}` }))).slice(0, LOOT_MAX).map((x, i) => ({ ...x, delay: i * 140 }));
         if (!fresh.length) return;
         const keys = new Set(fresh.map(x => x.key));
         setPops(prev => [...prev.filter(p => !keys.has(p.key)), ...fresh].slice(-8));
         later(timers.current, () => setPops(prev => prev.filter(p => !keys.has(p.key))), LOOT_MS + fresh.length * 140);
-    }, [latest, logs]);
+    }, [latest, logs, on]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
-    if (!pops.length) return null;
+    if (!pops.length || !on) return null;
     return <div className="scene-loot-layer" aria-hidden="true">{pops.map((p, i) => <b key={p.key} className={`scene-loot ${p.kind}`} style={{ '--d': `${p.delay}ms`, '--row': i % 5 } as React.CSSProperties}>{p.text}</b>)}</div>;
 }
 

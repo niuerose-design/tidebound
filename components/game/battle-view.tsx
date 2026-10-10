@@ -24,6 +24,8 @@ import { variantById } from '@/game/data/variants';
 import { BALANCE } from '@/game/data/balance';
 import { statDisplay, percent } from '@/game/data/progression';
 import { skillById } from '@/game/data/skills';
+import { jobById } from '@/game/data/classes';
+import { skillBrief } from '@/game/systems/skill-description';
 import { apCapacity, apUsed, effectiveSkill, skillMastery } from '@/game/systems/progression';
 import { hitChance, normalizeStats } from '@/game/systems/stats';
 import { profile } from '@/game/data/encounters';
@@ -154,11 +156,26 @@ function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; set
         {activeIds.map(id => {
             const sk = skillById(id)!, effective = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id));
             const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0, hit = fired(id);
-            return <button key={id} type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} title={`${sk.name}${sk.awaken ? ' · 각성' : ''} · ${Math.round(effective.chance * 100)}% 발동 · ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`} aria-label={`${sk.name} ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`} onClick={() => setView('skills')}>
-                <SkillIcon id={id} size={20}/><small className="hotbar-name">{sk.name}</small>
-                {wait > 0 && <b className="hotbar-cd">{wait}</b>}
-                {hit !== undefined && <i key={hit} className="hotbar-fire"/>}
-            </button>;
+            const tipId = `hotbar-tip-${id}`, state = wait > 0 ? `대기 ${wait}턴` : '사용 준비';
+            // v3.263 마우스를 올리거나 키보드로 고르면 위로 스킬 정보 창(발동률 · 재사용 대기 · 마나 · 효과 요약 · 지금 상태)이 뜹니다. 전에는 브라우저 기본 title 한 줄.
+            return <span key={id} className="hotbar-cell">
+                <button type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} aria-label={`${sk.name} ${state}`} aria-describedby={tipId} onClick={() => setView('skills')}>
+                    <SkillIcon id={id} size={20}/><small className="hotbar-name">{sk.name}</small>
+                    {wait > 0 && <b className="hotbar-cd">{wait}</b>}
+                    {hit !== undefined && <i key={hit} className="hotbar-fire"/>}
+                </button>
+                <span className="hotbar-tip" role="tooltip" id={tipId}>
+                    <strong>{sk.name}{sk.awaken ? <em> · 각성</em> : null}</strong>
+                    <small>{jobById(sk.job)?.name || '공용'} · Lv.{s.learned[id] || 1}</small>
+                    <span className="hotbar-tip-stats">
+                        <span>발동 <b>{Math.round(effective.chance * 100)}%</b></span>
+                        <span>대기 <b>{sk.awaken ? `시작 ${sk.awaken.start}턴` : `${effective.cooldown}턴`}</b></span>
+                        {(effective.manaCost || 0) > 0 && <span>마나 <b>{format(effective.manaCost!)}</b></span>}
+                    </span>
+                    <span className="hotbar-tip-brief">{skillBrief(effective)}</span>
+                    <span className={`hotbar-tip-state ${wait > 0 ? 'cooling' : 'ready'}`}>{state} · 눌러서 스킬 편성</span>
+                </span>
+            </span>;
         })}
         {!activeIds.length && <button type="button" className="hotbar-slot vacant" onClick={() => setView('skills')} title="스킬을 장착하세요">+</button>}
         <button type="button" className="hotbar-edit" onClick={() => setView('skills')} title="스킬 편성">AP {apUsed(s)}/{apCapacity(s)}<ChevronRight size={13}/></button>

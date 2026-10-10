@@ -246,15 +246,31 @@ const THEME_ART: Record<BackdropTheme, ReactNode> = {
     </>,
     swamp: <>
         <path d={FAR_RIDGE} fill={TONE} opacity=".14"/>
+        <rect y="380" width="1536" height="420" fill="#4f7a52" opacity=".12"/>
         <path d="M0 720 C200 690 420 710 620 720 S1000 690 1200 710 L1536 700 V1024 H0Z" fill="#14231c"/>
+        <path d="M360 742 C470 724 700 724 860 740 S1080 760 1000 772 C820 790 520 786 380 770 S290 754 360 742Z" fill="#2c4a3a" opacity=".85"/>
+        <g stroke="#9fd8b4" strokeOpacity=".22" strokeWidth="3"><path d="M430 752 h110 M620 760 h140 M820 750 h90 M520 772 h80"/></g>
         <g stroke="#0e1a14" strokeWidth="10" strokeLinecap="round" fill="none"><path d="M220 720 V520 M220 580 l-50-40 M220 560 l40-50"/><path d="M1260 710 V480 M1260 560 l-60-30 M1260 530 l50-60"/><path d="M760 720 V610 M760 640 l-30-20"/></g>
+        <g stroke="#3f6b4c" strokeOpacity=".6" strokeWidth="3" fill="none"><path d="M170 540 v46 M186 552 v30 M260 512 v40 M1200 530 v52 M1216 540 v34 M1310 470 v44"/></g>
+        <g fill="#0e1a14"><path d="M1000 716 h44 v-56 c0-26-44-26-44 0z M1080 720 h34 v-40 c0-20-34-20-34 0z"/><path d="M1012 672 h20 M1022 662 v26" stroke="#2c4a3a" strokeWidth="5"/></g>
+        <g stroke="#1d3326" strokeWidth="5" strokeLinecap="round"><path d="M330 760 q-6-60 4-104 M350 764 q4-50-6-90 M900 762 q-4-56 8-96 M924 766 q6-40-2-74 M1420 740 q-6-60 6-100"/></g>
+        <g fill="#2a1a12"><rect x="328" y="652" width="10" height="26" rx="5"/><rect x="896" y="660" width="10" height="26" rx="5"/><rect x="1420" y="636" width="10" height="26" rx="5"/></g>
+        <g fill="#0f1f17"><path d="M560 712 c0-22 18-34 36-34s36 12 36 34z M590 712 h12 v18 h-12z M660 718 c0-14 12-22 24-22s24 8 24 22z M680 718 h8 v12 h-8z"/></g>
+        <g fill="#b6ffcf"><circle cx="470" cy="610" r="5" opacity=".7"/><circle cx="1130" cy="590" r="4" opacity=".6"/><circle cx="860" cy="560" r="3" opacity=".5"/><circle cx="300" cy="630" r="3" opacity=".5"/></g>
         <g fill="#cfe8d8" opacity=".08"><ellipse cx="400" cy="700" rx="320" ry="30"/><ellipse cx="1100" cy="690" rx="360" ry="34"/></g>
     </>,
     mountain: <>
         <path d="M0 640 L200 360 L360 520 L560 260 L760 520 L940 340 L1120 560 L1300 300 L1536 560 V1024 H0Z" fill={TONE} opacity=".24"/>
-        <g fill="#eef6ff" opacity=".55"><path d="M200 360 l-40 56 40-16 40 16z M560 260 l-56 76 56-22 56 22z M1300 300 l-50 70 50-20 50 20z"/></g>
+        <g fill="#eef6ff" opacity=".55"><path d="M200 360 l-40 56 40-16 40 16z M560 260 l-56 76 56-22 56 22z M940 340 l-44 60 44-18 44 18z M1300 300 l-50 70 50-20 50 20z"/></g>
+        <path d="M0 680 L160 540 L300 640 L470 500 L640 650 L820 560 L1000 660 L1180 520 L1360 640 L1536 560 V1024 H0Z" fill="#1a3448"/>
+        <g fill="#dceaf6" opacity=".5"><path d="M470 500 l-36 34 36-10 36 10z M1180 520 l-38 36 38-12 38 12z M160 540 l-30 28 30-8 30 8z"/></g>
         <path d={HILLS} fill="#12283a"/>
-        <g fill="#0d2030"><path d="M1040 660 h120 l-20-30 h-80z M1060 630 h80 l-16-24 h-48z M1090 606 h20 v-20 h-20z"/></g>
+        <path d="M0 700 C160 620 300 640 440 690 S760 610 920 660 S1240 700 1380 640 L1536 620 V636 L1380 656 C1240 716 920 676 760 626 S440 706 300 656 0 716 0 716Z" fill="#e8f2fb" opacity=".35"/>
+        <g fill="#0d2030"><path d="M1040 680 h140 l-22-30 h-96z M1060 650 h100 l-20-28 h-60z M1078 622 h64 l-16-26 h-32z M1100 596 h20 v-28 h-20z"/><path d="M1072 680 h76 v40 h-76z"/></g>
+        <g fill="#e8f2fb" opacity=".55"><path d="M1040 680 h140 l-6-8 h-128z M1060 650 h100 l-5-7 h-90z M1078 622 h64 l-4-6 h-56z"/></g>
+        <g fill="#0f2434"><path d="M200 720 l34-110 34 110z M250 712 l26-80 26 80z M1380 690 l36-120 36 120z M1430 686 l26-84 26 84z"/></g>
+        <g fill="#e8f2fb" opacity=".6"><path d="M234 610 l-12 40 12-8 12 8z M1416 570 l-13 44 13-9 13 9z M276 632 l-9 28 9-6 9 6z"/></g>
+        <g fill="#fff" opacity=".55"><circle cx="120" cy="420" r="3"/><circle cx="340" cy="300" r="2.5"/><circle cx="700" cy="380" r="3"/><circle cx="880" cy="220" r="2"/><circle cx="1010" cy="460" r="2.5"/><circle cx="1220" cy="380" r="3"/><circle cx="1460" cy="320" r="2.5"/><circle cx="560" cy="560" r="2"/><circle cx="1320" cy="560" r="2"/><circle cx="420" cy="620" r="2.5"/></g>
     </>,
 };
 export const SceneBackdrop = memo(function SceneBackdrop({ theme = 'village' }: { theme?: BackdropTheme }) {
