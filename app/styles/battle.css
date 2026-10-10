@@ -2418,3 +2418,10 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @keyframes azuHand{from{rotate:0turn}to{rotate:var(--turns,-1turn)}}
 @keyframes azuMote{0%{opacity:0;translate:0 0}20%{opacity:1}100%{opacity:0;translate:calc(cos(var(--ang)) * 30px) calc(sin(var(--ang)) * 20px - 60px)}}
 @media(max-width:767px){.azu-clock{width:110px;height:110px;margin:-55px}.azu-clock .h{height:28px;margin-top:-28px}.azu-clock .m{height:42px;margin-top:-42px}}
+
+/* v3.270 보스 스킬 연출 좌표를 같은 지면 배치에 맞춥니다: 시작점(--ox · --oy) = 땅 위 몬스터의 왼쪽 가장자리 · 몸 가운데, 목표점(--tx) = 내 캐릭터. 둘이 같은 땅에 서 있어 흐름이 수평으로 내 캐릭터에 닿습니다. */
+.battle-scene .scene-fx-foe{--hw:clamp(56px,24cqh,84px);--ox:calc(var(--foe-x) - var(--foe-size) * .45);--oy:var(--foe-y);--tx:calc(12px + var(--hw) * .55)}
+@container (max-width:560px){.battle-scene .scene-fx-foe{--hw:clamp(48px,20cqh,64px)}}
+
+/* v3.270 내가 받은 피해 숫자: 머리 바로 위에서(연타는 오른쪽 위로 쌓임). */
+.battle-scene .scene-dmg.me{top:calc(var(--me-y) - 58px + var(--dy,0px));left:calc(var(--me-x) + 14px + var(--dx,0px))}
