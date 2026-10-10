@@ -5,7 +5,7 @@ import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems, inheritGear } from './equipment';
-import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
+import { STARFORCE, starSuccess, starCatchSuccess, relicResetFor, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
 import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { monsterGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
@@ -95,7 +95,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
     sf.tries++; sf.gold += cost;
     // v3.8 스타캐치 성공은 성공률 +catchBonus(파괴 확률은 그대로, 실패 몫에서 뺌).
-    const chance = chanceTime(item), roll = rng(), p = Math.min(1, starSuccess(star) + (caught ? STARFORCE.catchBonus : 0)), d = starDestroy(star, safeguard);
+    const chance = chanceTime(item), roll = rng(), p = Math.min(1, caught ? starCatchSuccess(star) : starSuccess(star)), d = starDestroy(star, safeguard);
     // v3.20 업적용 흐름 기록. 연속 성공은 10성 이상 시도만 세고(그 아래는 거의 다 성공이라 건너뜀), 실패·파괴가 나면 끊깁니다.
     const succeeded = chance || roll < p, failed = () => { sf.streak = 0; sf.failStreak = (sf.failStreak || 0) + 1; sf.bestFailStreak = Math.max(sf.bestFailStreak || 0, sf.failStreak); };
     if (chance) sf.chance = (sf.chance || 0) + 1;
@@ -114,7 +114,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     if (roll < p + d) {
         sf.destroy++;
         item.starFails = 0;
-        if (item.relic || item.heir || item.onyx) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
+        if (item.relic || item.heir || item.onyx) { item.enhance = relicResetFor(star); return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${item.enhance}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
         // v3.125 파괴된 태초도 계승 게이지를 채웁니다(분해와 같음).

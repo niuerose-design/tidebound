@@ -62,7 +62,8 @@ export function itemStats(item: Item): Partial<Stats> {
 }
 /** v27.93 스타포스 상한: 전설 이상 22성, 영웅 이하 15성. */
 /** v3.5 유물은 레벨이 별 상한을 정합니다: 12 + 레벨 ÷ 10(Lv.1 12성 · Lv.100 22성). 레벨 1인 유물에 22성을 싸게 박아 두는 것을 막습니다. */
-export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
+/** v3.241 25성 확장: 최고 레벨(Lv.100) 유물은 23~25성까지(레벨 상한식은 22성에서 끝나므로 Lv.100이면 상한 그대로). */
+export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), (item.level || 1) >= 100 ? starMax(item.rarity) : RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
 /** v25.7 판매가: 그 레벨 몬스터 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 맞춘 식입니다. */
 const SALE_MONSTERS = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 /** v27.27 상점 구매품 되팔기 비율. */
