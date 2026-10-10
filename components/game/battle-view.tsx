@@ -1,8 +1,7 @@
 'use client';
 import { displayTitle } from '@/game/data/titles';
-import { FUEL } from '@/game/data/otherworld';
-import { jobById } from '@/game/data/classes';
 import { TutorialCard } from './guidance-panels';
+import { OtherworldHud } from './otherworld-hud';
 import { tutorialActive } from '@/game/systems/guidance';
 import { AltarNotice } from './altar-notice';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
@@ -118,21 +117,10 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
     {s.hackFeed?.root && show('hacker') && <div className="event-banner hack-banner root-banner" role="status"><Sparkles size={15}/><b>ROOT ACCESS</b><span>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</span></div>}
-    {jobById(s.job)?.fuelJob && <FuelBanner s={s} send={send}/>}
     {show('altar') && <AltarNotice s={s} setView={setView}/>}
     {!s.lastOffline && show('tip') && <div className="voyage-brief"><Leaf size={16}/><span>{tipAt(tip)}</span></div>}
     </NoticeStack>;
 });
-
-/** v3.231 이계 연료: 남은 연료 · 절전 표시 · 세계석 충전 버튼 · 자동 충전(세계석 1,000개는 남김) 켜기/끄기. */
-function FuelBanner({ s, send }: { s: State; send: Send }) {
-    const fuel = s.fuel || 0, empty = fuel <= 0, auto = s.fuelAuto !== undefined;
-    return <div className={`event-banner fuel-banner ${empty ? 'hack-banner' : ''}`} role="status"><Gem size={15}/><b>이계 연료</b>
-        <span>{empty ? '절전 모드 · 이계 액티브가 나가지 않고 두 공격이 크게 줄었습니다.' : `${format(fuel)} / ${format(FUEL.cap)} (세계석 1 = 연료 ${FUEL.perPearl})`}</span>
-        {[10, 100, 1000].map(n => <button key={n} type="button" className="secondary small" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })}>세계석 {format(n)}</button>)}
-        <button type="button" className="secondary small" onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })}>{auto ? `자동 충전 끄기(${format(s.fuelAuto!)} 남김)` : '자동 충전 켜기'}</button>
-    </div>;
-}
 
 /** 누적 처치 · 도감 · 보유 재화 한 줄. */
 const SessionMetrics = memo(function SessionMetrics({ base: s }: { base: State }) {
@@ -162,6 +150,7 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
     return <>
     <div className="battle-opponent-strip battle-fx-host"><CombatFxOverlay effect={combatFx} combo={fxCombo}/><div className="opponent-card player-opponent"><span className="eyebrow">MY CHARACTER</span><div className="combatant-name"><strong>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</strong><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label={`HP ${Math.ceil(s.hp)} / ${playerStats.hp}`}/><PlayerHitEffect effect={combatFx}/></div><small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)} · 실제 확률은 상대의 회피·명중과 속도 차이로 1~99.5% 범위에서 정해집니다.`}>속도 {playerStats.speed}{enemyStats ? ` · 명중률 ${percent(hitChance(playerStats, enemyStats), 0)} · 회피율 ${percent(1 - hitChance(enemyStats, playerStats), 0)}` : ' · 상대를 만나면 명중률·회피율 표시'}</small></div><div className="opponent-vs"><Swords size={17}/><strong>VS</strong></div><div className="opponent-card enemy-opponent"><span className="eyebrow">{enemy?.boss ? 'BOSS ENCOUNTER' : enemy?.variant ? 'RARE VARIANT' : 'CURRENT TARGET'}{enemy?.swarm ? ` · 무리 ×${enemy.swarm}` : ''}</span><div className="combatant-name">{enemy ? <strong>{enemy.variant && enemy.variant !== 'swarm' ? <small className={`variant-badge variant-${enemy.variant}`} title={variantById(enemy.variant)?.desc}>{variantById(enemy.variant)?.mark} {variantById(enemy.variant)?.name}</small> : enemy.swarm ? <small className="variant-badge variant-swarm" title={variantById('swarm')?.desc}>≋ 무리 ×{enemy.swarm}</small> : null}{enemy.name}</strong> : recoveryText ? <strong className="recovery-countdown" aria-live="polite">{recoveryText}</strong> : <strong>다음 몬스터를 기다리는 중</strong>}{enemy && <StatusBadges effects={enemy.effects} stun={enemy.stun} recent={combatFx} target="enemy"/>}</div><div className="player-hp-anchor"><Meter value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp)} / ${enemy.maxHp}` : 'READY'} color="enemy"/><BarCleave effect={combatFx} value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp).toLocaleString()} / ${enemy.maxHp.toLocaleString()}` : undefined}/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemy ? `${bookRevealed(s, enemy.id) ? profile(enemy.id).name : '미확인 개체'} · 속도 ${enemyStats?.speed || 0}${!s.dungeon && s.tide ? ` · 사냥터 난이도 ${s.tide} 적용` : ''}${enemy.swarm ? ` · 무리 체력 ×${swarmHpMultiplier(enemy.swarm)}${swarmAttackMultiplier(enemy.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(enemy.swarm)}` : ''}` : ''}` : st.description}</small><small className="enemy-hint" aria-hidden={!enemy}>{enemy ? bookRevealed(s, enemy.id) ? profile(enemy.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[enemy.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})` : ' '}</small></div></div>
+    <OtherworldHud s={s} send={send}/>
     <section className={`battle-scene ${s.running ? 'running' : ''}`}><SceneBackdrop/><div className="scene-shade"/>{enemy && !s.recovery && <MonsterArt id={enemy.id} boss={!!enemy.boss} size={128} className={`scene-foe ${isSpecialId(enemy.id) ? 'kkami' : ''}`}/>}<KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/><div className="scene-top"><span className="scene-label"><Compass size={14}/><span className="scene-label-text">{d ? 'DUNGEON EXPEDITION' : st.subtitle}</span></span><div className="scene-actions"><button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={17}/> : <Play size={17}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button><button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button></div></div><div className="scene-copy"><span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`}</span><h2>{d ? d.id === 'abyss' ? <>{d.name} <b className="abyss-floor">{s.dungeon!.depth || s.abyssBest + 1}층</b></> : d.name : st.name}</h2><p>{s.recovery ? d ? '출정을 준비하고 있습니다.' : '모험가가 체력을 회복하고 있습니다.' : enemy ? `${enemy.boss ? 'BOSS · ' : ''}${enemy.name}(이)가 나타났습니다.` : s.running ? '풀숲 너머에서 다음 몬스터를 기다립니다.' : st.description}</p></div><WhistleButton s={s} send={send} busy={busy}/></section>
     </>;
 }

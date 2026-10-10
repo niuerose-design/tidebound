@@ -33,6 +33,11 @@ export const OTHERWORLD_TARGET = { agent: 3, trader: 1.3, saving: .5 } as const;
 export const TRADER = { cap: .25, floor: -.25, up: 9, down: 3.7, minFactor: .08, positionFull: 5000, feeScale: .5 } as const;
 /** 손익률(자른 값) → 두 공격 배율. */
 export const traderFactor = (r: number) => r >= 0 ? 1 + r * TRADER.up : Math.max(TRADER.minFactor, 1 + r * TRADER.down);
+/** 장착한 패시브(유동성 공급 · 헤지)로 자른 손익률과 두 공격 배율. 능력치 계산과 사냥 화면 표시가 함께 씁니다. */
+export function traderMultiplier(pnl: number, sks: { pnlCap?: number; pnlFloor?: number }[]) {
+    const cap = Math.max(TRADER.cap, ...sks.map(sk => sk.pnlCap ?? 0)), floor = Math.max(-cap, ...sks.map(sk => sk.pnlFloor ?? -Infinity)), r = Math.min(cap, Math.max(floor, pnl || 0));
+    return { r, factor: r ? traderFactor(r) : 1 };
+}
 
 const M1 = [1200, 6000, 24000, 80000], M4 = [25000, 120000, 400000, 1000000], M5 = [100000, 450000, 1500000, 3750000];
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1 };
