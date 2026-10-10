@@ -11,7 +11,7 @@ import { mineBonusOf } from '@/game/systems/azeroth';
 import { MonsterArt } from './art';
 import { Meter, format } from './shared';
 import { StatusBadges } from './combat-status';
-import { CombatBarEffect } from './combat-fx';
+import { CombatBarEffect, hasSceneTitle } from './combat-fx';
 
 /**
  * v3.247 전투 장면 개편: 왼쪽 아래 내 캐릭터(직업 그림 + 이름 · HP · 마나 판), 오른쪽 몬스터(맞으면 번쩍이며 밀리고 처치되면 찌그러져 사라짐),
@@ -169,7 +169,7 @@ function later(bag: Set<number>, fn: () => void, ms: number) {
     bag.add(t);
 }
 /**
- * v3.247 스킬 이름 쌓기: 장면에 뜨던 스킬 이름(몬스터 옆 캡션 · 큰 제목 · 몬스터 스킬 알림)을 한 곳에 모아, 새 스킬이 맨 아래에 찍히고
+ * v3.247 스킬 이름 쌓기: 몬스터 옆 캡션 · 몬스터 스킬 알림으로 뜨던 스킬 이름을 한 곳에 모아, 새 스킬이 맨 아래에 찍히고
  * 이전 줄은 위로 밀려 올라가며 흐려집니다. 여러 스킬이 한꺼번에 나가도 겹치지 않습니다. 각 줄은 그 타격 박자(fx.delay)에 찍힙니다.
  */
 export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
@@ -180,7 +180,7 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
         for (const fx of effect) {
             if (seen.current.has(fx.id)) continue;
             seen.current.add(fx.id);
-            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가') continue;
+            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가' || hasSceneTitle(fx, boss)) continue;
             const tags = [fx.extreme && '極限突破', fx.critical && fx.actor === 'player' && '치명', fx.mined && `세계석 +${fx.mined}`, fx.devour && '포식', fx.status].filter((t): t is string => !!t);
             const slip: Slip = { id: fx.id, title: fx.title, tags, side: fx.actor === 'player' ? 'me' : 'foe', big: !!fx.finale || (fx.tier || 0) >= 4, boss: fx.actor === 'enemy' && boss };
             later(bag, () => {
@@ -195,4 +195,34 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
     return <div className="skill-receipt" aria-hidden="true">{slips.map(s => <div key={s.id} className={`skill-slip ${s.side} ${s.big ? 'big' : ''}`}>
         {s.side === 'foe' && <small className="who">{s.boss ? 'BOSS' : '몬스터'}</small>}<b>{s.title}</b>{s.tags.map(t => <small key={t}>{t}</small>)}
     </div>)}</div>;
+}
+
+/** v3.249 공용 스킬 연출 색(갈래별). */
+const CAST_COLOR: Record<string, string> = {
+    pierce: '#f1e3b6', slash: '#ffe9cf', quake: '#e0b98a', bite: '#b7f08a', wave: '#8ce4ed', lightning: '#ffe38b', fire: '#ff9a4a', frost: '#a8e4ff', star: '#fff2a8',
+    gold: '#ffd36b', song: '#f7b6e8', ward: '#9fd3ff', heal: '#8ff0b0', curse: '#c08bff', arcane: '#b9a6ff', impact: '#ffd9a8', glyph: '#ffe38b', venom: '#9fe870', ink: '#8c8cff', bone: '#e8e2d0', time: '#9fe0d8',
+};
+const CAST_SHAPE: Record<string, 'blade' | 'orb' | 'bolt' | 'aura'> = {
+    pierce: 'bolt', slash: 'blade', quake: 'blade', bite: 'blade', bone: 'blade', impact: 'blade', lightning: 'bolt',
+    heal: 'aura', ward: 'aura', song: 'aura', gold: 'aura',
+};
+/**
+ * v3.249 2단계 공용 연출: 스킬을 쓰면 왼쪽 아래 내 캐릭터가 빛나고(시전), 갈래별 투사체(검기 · 마력 구체 · 번개 화살)가 몬스터로 날아가 맞는 순간 터집니다.
+ * 기본 공격은 몬스터 위 짧은 베기, 몬스터에게 맞으면 내 캐릭터 위에 붉은 할퀴기. 전용 연출(이계 · 아제로스 · 제논 · 각성기 등)이 있는 스킬은 시전 빛만 더합니다.
+ * 투사체는 타격 박자(fx.delay)보다 조금 먼저 출발해 피해 숫자와 함께 닿습니다.
+ */
+export function CastFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
+    return <div className="cast-layer" aria-hidden="true">{effect.map(fx => {
+        if (fx.kind === 'stun' || fx.status === '행동 불가') return null;
+        const style = { '--fx-delay': `${fx.delay}ms`, '--fx': CAST_COLOR[fx.variant] || '#ffe9cf' } as React.CSSProperties;
+        const landed = fx.hits.some(h => !h.miss);
+        if (fx.actor === 'enemy') return fx.target === 'player' && landed ? <div key={fx.id} className={`cast-fx cast-claw ${fx.critical ? 'critical' : ''}`} style={style}><i/><i/><i/></div> : null;
+        if (fx.basic) return landed ? <div key={fx.id} className={`cast-fx cast-basic ${fx.damageType === 'physical' ? 'phys' : 'mag'} ${fx.critical ? 'critical' : ''}`} style={style}><i/></div> : null;
+        const own = hasSceneTitle(fx, boss), shape = fx.target === 'player' ? 'aura' : CAST_SHAPE[fx.variant] ?? 'orb', big = (fx.tier || 0) >= 4;
+        return <div key={fx.id} className={`cast-fx cast-skill cast-${shape} ${big ? 'big' : ''} ${fx.critical ? 'critical' : ''}`} style={style}>
+            <i className="cast-glow"/>
+            {!own && shape !== 'aura' && <><i className="cast-shot"/>{fx.hits.length > 1 && <i className="cast-shot late"/>}<i className="cast-burst"/>{landed && <i className="cast-ring"/>}</>}
+            {shape === 'aura' && <i className="cast-aura"/>}
+        </div>;
+    })}</div>;
 }

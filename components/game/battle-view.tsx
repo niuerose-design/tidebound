@@ -31,7 +31,7 @@ import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
@@ -161,6 +161,7 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
         <SceneCombatHud enemy={shown} effect={combatFx} combo={fxCombo}/>
         <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
         {idle && <span className={`scene-idle ${recoveryText ? 'recovery' : ''}`} aria-live="polite">{idle}</span>}
+        <CastFx effect={combatFx} boss={!!enemy?.boss}/>
         <SkillReceipt effect={combatFx} boss={!!enemy?.boss}/>
         <SceneLog logs={s.logs} playerName={s.name}/>
         <SceneMe s={s} stats={playerStats} effect={combatFx}/>

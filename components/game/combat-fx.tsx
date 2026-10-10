@@ -278,6 +278,10 @@ const OW_FX: Record<string, string> = {
 };
 /** 이계 스킬(과 재장전)은 상대 카드 대신 사냥터 배경의 몬스터 위에서만 연출합니다. */
 const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId] || !!fx.essence || !!fx.mineSwing);
+/** v3.247 장면 연출이 자기 큰 제목(각성기 · 天 · 5단계 · 이계 · 아제로스 · 제논 · 도트 퍼니셔 · 보스 스킬)을 띄우는지. 이런 스킬은 장면 위쪽 스킬 이름 쌓기에서 뺍니다(이름이 두 번 뜨지 않게). */
+export const hasSceneTitle = (fx: CombatFx, boss: boolean) => fx.actor === 'player'
+    ? owScene(fx) || fx.skillId === 'aberrantSurge' || fx.skillId === 'endOfAll' || !!ultimateOf(fx.skillId) || !!fx.finale || (fx.tier || 0) >= 5
+    : boss && !!fx.skillId && !!FOE_FX[fx.skillId];
 const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
 const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
 function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: boolean }) {
