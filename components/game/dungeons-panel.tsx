@@ -18,7 +18,7 @@ import { statDisplay } from '@/game/data/progression';
 import { Heading, Meter, format, useNow } from './shared';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt } from './scene-stage';
 import { OtherworldHud } from './otherworld-hud';
 import { StatusBadges } from './combat-status';
 import { BattleLogLine } from './combat-log';
@@ -60,7 +60,7 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
             {s.recovery > 0 && <span className="scene-idle recovery">출정 준비</span>}
             <span className="scene-wave">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span>
-            <SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
+            <SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
         </section>
         <div className="dungeon-combat-grid">
         <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 모험가</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>

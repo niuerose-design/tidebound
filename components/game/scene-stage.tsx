@@ -160,3 +160,39 @@ export function AzerothHud({ s }: { s: State }) {
     }
     return null;
 }
+
+type Slip = { id: number; title: string; tags: string[]; side: 'me' | 'foe'; big: boolean; boss: boolean };
+const SLIP_MS = 2600, SLIP_MAX = 4;
+/** 컴포넌트가 사라질 때 한꺼번에 지울 수 있게 타이머를 모아 둡니다. */
+function later(bag: Set<number>, fn: () => void, ms: number) {
+    const t = window.setTimeout(() => { bag.delete(t); fn(); }, ms);
+    bag.add(t);
+}
+/**
+ * v3.247 스킬 이름 쌓기: 장면에 뜨던 스킬 이름(몬스터 옆 캡션 · 큰 제목 · 몬스터 스킬 알림)을 한 곳에 모아, 새 스킬이 맨 아래에 찍히고
+ * 이전 줄은 위로 밀려 올라가며 흐려집니다. 여러 스킬이 한꺼번에 나가도 겹치지 않습니다. 각 줄은 그 타격 박자(fx.delay)에 찍힙니다.
+ */
+export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
+    const [slips, setSlips] = useState<Slip[]>([]);
+    const seen = useRef(new Set<number>()), timers = useRef(new Set<number>());
+    useEffect(() => {
+        const bag = timers.current;
+        for (const fx of effect) {
+            if (seen.current.has(fx.id)) continue;
+            seen.current.add(fx.id);
+            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가') continue;
+            const tags = [fx.extreme && '極限突破', fx.critical && fx.actor === 'player' && '치명', fx.mined && `세계석 +${fx.mined}`, fx.devour && '포식', fx.status].filter((t): t is string => !!t);
+            const slip: Slip = { id: fx.id, title: fx.title, tags, side: fx.actor === 'player' ? 'me' : 'foe', big: !!fx.finale || (fx.tier || 0) >= 4, boss: fx.actor === 'enemy' && boss };
+            later(bag, () => {
+                setSlips(prev => [...prev.filter(x => x.id !== slip.id), slip].slice(-SLIP_MAX));
+                later(bag, () => setSlips(prev => prev.filter(x => x.id !== slip.id)), SLIP_MS);
+            }, fx.delay);
+        }
+        if (seen.current.size > 200) { const keep = [...seen.current].slice(-50); seen.current.clear(); keep.forEach(id => seen.current.add(id)); }
+    }, [effect, boss]);
+    useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
+    if (!slips.length) return null;
+    return <div className="skill-receipt" aria-hidden="true">{slips.map(s => <div key={s.id} className={`skill-slip ${s.side} ${s.big ? 'big' : ''}`}>
+        {s.side === 'foe' && <small className="who">{s.boss ? 'BOSS' : '몬스터'}</small>}<b>{s.title}</b>{s.tags.map(t => <small key={t}>{t}</small>)}
+    </div>)}</div>;
+}
