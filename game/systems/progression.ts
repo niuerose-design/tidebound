@@ -6,7 +6,7 @@ import { supportAP } from './support';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById, lineageOf } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf, worldOf, LINEAGES } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -159,12 +159,17 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
-/** v3.228 핵심 패시브(sk.core): 숙련 0단계 70% → 마지막 단계 100%, 다른 계보 직업에서 쓰면 ×0.5. */
-export const CORE_PASSIVE = { base: .7, borrowed: .5 } as const;
+/**
+ * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
+ * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
+ */
+export const CORE_PASSIVE = { base: .7, borrowed: .5, azerothBase: .4 } as const;
 export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
-    const steps = masteryMilestonesFor(sk as Skill).length, growth = CORE_PASSIVE.base + (1 - CORE_PASSIVE.base) * Math.min(1, Math.max(0, mastery) / steps);
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
-    return growth * (owner && user && lineageOf(owner) !== lineageOf(user) ? CORE_PASSIVE.borrowed : 1);
+    const azeroth = !!owner && worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
+    if (azeroth && !home) return 0;
+    const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
+    return (base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps)) * (home ? 1 : CORE_PASSIVE.borrowed);
 }
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
