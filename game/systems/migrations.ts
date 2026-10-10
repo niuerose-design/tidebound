@@ -28,6 +28,8 @@ function refundGoldenResearch(s: State) {
  * v3.38 연구 정리: 던전의 금고(dungeon, base 5·step 4)와 상점 단골(shop, base 3·step 2)을 지우고,
  * 자동 판매기(autoVend)를 자동 정리(옛 자동 분해기 sortingNet)로 합칩니다(두 연구 모두 base 10·step 10, 새 단계 = 둘 중 큰 값).
  * 직접 산(무료로 받지 않은) 단계의 세계석은 차액을 모두 돌려줍니다. 지운 키가 없으면 아무것도 하지 않습니다.
+ * v3.261 v3.202에서 같은 id(dungeon)로 새 연구 ‘던전 탐험 I’이 생겨, 불러올 때마다 그 단계를 지우고 옛 가격으로 세계석을 돌려주던 복사 버그:
+ * 옛 던전의 금고는 이미 모두 정리됐으므로 dungeon은 더 건드리지 않습니다(상점 단골만).
  */
 export function mergeResearch337(s: State) {
     const perm = s.permanent as Record<string, number | undefined> | undefined;
@@ -35,7 +37,7 @@ export function mergeResearch337(s: State) {
     const granted = { ...(s.researchGranted || {}) };
     const paid = (from: number, to: number, base: number, step: number) => { let n = 0; for (let i = from; i < to; i++) n += base + step * i; return n; };
     let refund = 0;
-    for (const [id, base, step] of [['dungeon', 5, 4], ['shop', 3, 2]] as const) {
+    for (const [id, base, step] of [['shop', 3, 2]] as const) {
         if (!(id in perm)) continue;
         const rank = perm[id] || 0;
         refund += paid(Math.min(rank, granted[id] || 0), rank, base, step);

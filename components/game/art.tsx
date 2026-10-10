@@ -172,7 +172,7 @@ export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: nu
 /**
  * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
  * 그림 파일 없이 SVG라 가볍고, 기존 연출(ocean-art 흔들림)을 그대로 받도록 같은 클래스를 씁니다.
- * v3.261 지역별 배경(theme): 항구 · 마을 · 협곡 · 숲 · 도시 · 바닷속 · 용의 둥지 · 신전 · 아케인 · 늪 · 설산. 하늘 · 빛 · 앞쪽 땅은 공통입니다.
+ * v3.262 지역별 배경(theme): 항구 · 마을 · 협곡 · 숲 · 도시 · 바닷속 · 용의 둥지 · 신전 · 아케인 · 늪 · 설산. 하늘 · 빛 · 앞쪽 땅은 공통입니다.
  */
 export type BackdropTheme = 'harbor' | 'village' | 'canyon' | 'forest' | 'city' | 'underwater' | 'dragon' | 'temple' | 'arcane' | 'swamp' | 'mountain';
 const THEME_RULES: [RegExp, BackdropTheme][] = [

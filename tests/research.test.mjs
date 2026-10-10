@@ -274,9 +274,9 @@ test('v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regula
     const s = newState(0); s.version = 8; s.pearls = 0;
     s.permanent.dungeon = 3; s.permanent.shop = 2; s.permanent.sortingNet = 2; s.permanent.autoVend = 1; s.autoVend = true;
     migrateState(s, 0);
-    // 던전의 금고 5+9+13 = 27, 상점 단골 3+5 = 8, 자동 판매기 1단계 10(자동 정리 2단계는 그대로) → 45
-    assert.equal(s.pearls, 45); assert.equal(s.permanent.sortingNet, 2); assert.equal('autoVend' in s.permanent, false); assert.equal('dungeon' in s.permanent, false); assert.equal('shop' in s.permanent, false);
-    assert.equal(s.autoVend, true, 'sell mode stays'); migrateState(s, 0); assert.equal(s.pearls, 45, 'once');
+    // 상점 단골 3+5 = 8, 자동 판매기 1단계 10(자동 정리 2단계는 그대로) → 18. v3.261 dungeon은 지금의 ‘던전 탐험 I’이라 그대로 둡니다.
+    assert.equal(s.pearls, 18); assert.equal(s.permanent.sortingNet, 2); assert.equal('autoVend' in s.permanent, false); assert.equal(s.permanent.dungeon, 3); assert.equal('shop' in s.permanent, false);
+    assert.equal(s.autoVend, true, 'sell mode stays'); migrateState(s, 0); assert.equal(s.pearls, 18, 'once');
     const v = newState(0); v.version = 8; v.pearls = 0; v.permanent.autoVend = 2; migrateState(v, 0); assert.equal(v.permanent.sortingNet, 2); assert.equal(v.pearls, 0, 'vend-only rank moves over, nothing to refund');
     const g = newState(0); g.version = 8; g.pearls = 0; g.permanent.sortingNet = 2; g.permanent.autoVend = 2; g.researchGranted = { sortingNet: 2, autoVend: 2, limitBreak: 0 }; migrateState(g, 0);
     assert.equal(g.pearls, 0, 'ascension-granted ranks are free'); assert.deepEqual(g.researchGranted, { sortingNet: 2, limitBreak: 0 });
@@ -414,4 +414,12 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
     { const d = make(); d.dungeon = { id: 'grotto', wave: 0 }; assert.equal(Enc.specialChances(d).rolls, false); }
     { const w = make(); w.sp = 10; assert.throws(() => act(w, { type: 'whistle', id: 'kingMimic' }, 0), /정수의 슬라임 중에서/); }
     assert.deepEqual(K.SPECIAL_IDS, ['masteryMimic', 'expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime']);
+});
+
+test('v3.261 dungeon expedition research (id dungeon) is kept on load and never refunded (was a pearl duplication)', () => {
+    const s = newState(0); delete s.tutorial; s.rebirths = 10; s.pearls = 100;
+    for (let i = 0; i < 4; i++) act(s, { type: 'permanent', id: 'dungeon' }, 0);
+    assert.equal(s.pearls, 100 - (3 + 5 + 7 + 9)); assert.equal(s.permanent.dungeon, 4);
+    for (let i = 0; i < 3; i++) migrateState(s, 0);
+    assert.equal(s.permanent.dungeon, 4, 'rank survives every load'); assert.equal(s.pearls, 76, 'no refund on load');
 });
