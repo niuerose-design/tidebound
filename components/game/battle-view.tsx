@@ -111,6 +111,9 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     // v25.17 맨 위 한 줄: 부재중 정산 → 던전 진행 → 번갈아 나오는 안내.
     const [tip, setTip] = useState(0);
     useEffect(() => { const timer = window.setInterval(() => setTip(v => v + 1), 14000); return () => window.clearInterval(timer); }, []);
+    // v3.255 부재중 정산 알림은 12초 보여 준 뒤 스스로 닫습니다(확인 단추와 같은 처리). 내용은 획득 기록 · 통계에 남습니다.
+    const offlineKey = s.lastOffline ? `${s.lastOffline.seconds}:${s.lastOffline.kills}:${s.lastOffline.gold}` : '';
+    useEffect(() => { if (!offlineKey) return; const timer = window.setTimeout(() => send({ type: 'offlineDismiss' }), 12000); return () => window.clearTimeout(timer); }, [offlineKey, send]);
     return <NoticeStack>
     {s.lastOffline && show('offline') && <div className="voyage-brief has-offline"><Leaf size={16}/><span>부재중 사냥 정산 · {Math.floor(s.lastOffline.seconds / 60)}분 동안 {s.lastOffline.kills}마리 처치 · +{format(s.lastOffline.gold)} G</span><button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button></div>}
     {banner && show('event') && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}

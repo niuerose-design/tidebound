@@ -25,7 +25,8 @@ export function BattleRail({ s, base, busy, send, setView }: {
     send: (a: Action) => void;
     setView: (v: string) => void;
 }) {
-    const [tab, setTab] = useState<FeedTab>('battle');
+    // v3.255 전투 기록은 장면 안에서도 올라오므로, 기록판은 획득(드롭 · 경험치 · 골드)부터 엽니다. 전투 탭은 그대로 있습니다.
+    const [tab, setTab] = useState<FeedTab>('reward');
     useEffect(() => { const timer = window.setTimeout(() => { try { const v = localStorage.getItem(FEED_KEY); if (FEED_TABS.some(t => t.id === v)) setTab(v as FeedTab); } catch { /* 저장소 없음 */ } }, 0); return () => window.clearTimeout(timer); }, []);
     const pick = (v: FeedTab) => { setTab(v); setOpened(true); try { localStorage.setItem(FEED_KEY, v); } catch { /* 저장소 없음 */ } };
     // v3.39 모바일도 기록판을 펼친 채로 시작합니다(가운데 일지가 없어짐). 화살표로 접을 수 있습니다.
