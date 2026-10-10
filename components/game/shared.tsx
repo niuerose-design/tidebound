@@ -4,6 +4,7 @@ import { createElement, useEffect, useState, type ReactNode } from 'react';
 import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown, ArrowUpRight, Mountain, Flame, Snowflake, Star, Music, HeartPulse, Skull, Sparkles, Hammer, ScrollText, Droplet, Droplets, Bone, Hourglass, Bug, Crosshair, Bomb, TrendingUp, TrendingDown, Activity, Axe, WandSparkles, ShieldHalf, ShieldCheck, Dices, FlaskConical, FlaskRound, Drill, Wind, Gauge, BookOpen, PiggyBank, Package, Search, Sprout, Syringe, Crown, Biohazard, Orbit, Award, CircleSlash, HandHeart, Dumbbell, Brain, Eye, Clover, Flag, Megaphone, Layers, Fuel, Sunrise, Snail, VolumeX, ArrowBigUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { skillById } from '@/game/data/skills';
+import { jobById, lineageOf, JOB_TREES } from '@/game/data/classes';
 import { fxVariantOf } from '@/game/systems/combat-feedback';
 import type { Skill, State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
@@ -74,6 +75,31 @@ function effectGlyph(sk: Skill): LucideIcon | null {
     if (sk.fuelCost) return Fuel;
     return null;
 }
+/**
+ * v3.265 스킬 아이콘 색 = 계보 색. 같은 계보의 스킬은 같은 색, 같은 계열(물리 · 마법 …)의 계보끼리는 계열 색 주변(색상 ±30°)에서 갈립니다.
+ * 모양은 그대로 효과(갈래)로 고릅니다. 공용 스킬 · 화면에 없는 직업의 스킬은 전처럼 갈래 색입니다.
+ */
+const lineageTone = new Map<string, string>();
+function hueOf(hex: string) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255), max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    if (!d) return 0;
+    const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return (h * 60 + 360) % 360;
+}
+function skillTone(sk: Skill | undefined): string | undefined {
+    const job = sk?.job ? jobById(sk.job) : undefined;
+    if (!job) return undefined;
+    const lineage = lineageOf(job);
+    let tone = lineageTone.get(lineage);
+    if (!tone) {
+        let hash = 0;
+        for (const ch of lineage) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+        const base = hueOf(JOB_TREES.find(t => t.id === job.tree)?.accent ?? '#9db3ab');
+        tone = `hsl(${Math.round(base + (hash % 61) - 30)} ${62 + (hash >> 8) % 18}% ${70 + (hash >> 16) % 10}%)`;
+        lineageTone.set(lineage, tone);
+    }
+    return tone;
+}
 export function SkillIcon({ id, size = 24 }: {
     id: string;
     size?: number;
@@ -86,13 +112,15 @@ export function SkillIcon({ id, size = 24 }: {
     // v3.258 따로 정한 아이콘이 없으면 스킬 갈래(연출과 같은 기준)로 아이콘 · 색을 고릅니다(전에는 모두 번개).
     // v3.258 이계 무기 · 시장 기술은 id로 따로 고릅니다(갈래로는 모두 충격이 되어 구분이 안 됨).
     const own = ID_ICON.find(([re]) => re.test(id))?.[1];
-    if (!Icon && own) { const Own = own; return <Own size={size} className="skill-glyph v-own"/>; }
+    // v3.265 각성기(턴마다 판정)는 어디서든 금빛 테두리 빛으로 따로 알아보게 합니다.
+    const sk = skillById(id), tone = skillTone(sk), awaken = sk?.awaken ? ' awaken' : '', style = tone ? { color: tone } : undefined;
+    if (!Icon && own) return createElement(own, { size, className: `skill-glyph v-own${awaken}`, style });
     if (!Icon) {
-        const sk = skillById(id), v = fxVariantOf(id, sk?.damageType === 'magic'), plain = v === 'impact' || v === 'arcane';
+        const v = fxVariantOf(id, sk?.damageType === 'magic'), plain = v === 'impact' || v === 'arcane';
         const Glyph = (plain && sk && effectGlyph(sk)) || (sk?.type === 'passive' && plain ? Gem : VARIANT_ICON[v] ?? Zap);
-        return createElement(Glyph, { size, className: `skill-glyph v-${sk?.type === 'passive' ? 'passive' : v}` });
+        return createElement(Glyph, { size, className: `skill-glyph v-${sk?.type === 'passive' ? 'passive' : v}${awaken}`, style });
     }
-    return <Icon size={size}/>;
+    return <Icon size={size} className={awaken ? `skill-glyph${awaken}` : undefined} style={style}/>;
 }
 export function SlotIcon({ slot, size = 24 }: {
     slot: string;
