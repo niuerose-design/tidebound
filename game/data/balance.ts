@@ -173,7 +173,7 @@ export const SKILL_FORMULA = {
     arcaneStrikeRatio: .7, arcaneStrikeChance: [0, 1, 1, 1, 1, 1],
     // v25.5 동시 시전(겹영창 계보): multicast 액티브는 첫 성공 뒤 나머지 multicast 액티브도 각자 발동률로 함께 나갑니다(한 행동, 최대 max개).
     // 함께 나간 종류 n마다 각 기술의 재사용 대기 +cooldownStep×(n−1), 마나 ×(1 + manaScale×(n−1)).
-    // v3.238 damagePerCast: 묶음 n개면 각 주문 피해 ×(1 + damagePerCast × (n−1)). 하위 영창도 묶음 수를 늘려 계보 주문으로 채우는 쪽이 이득이 되게.
+    // v3.239 damagePerCast: 묶음 n개면 각 주문 피해 ×(1 + damagePerCast × (n−1)). 하위 영창도 묶음 수를 늘려 계보 주문으로 채우는 쪽이 이득이 되게.
     multicast: { max: 4, cooldownStep: 1, manaScale: .35, damagePerCast: .15 },
     // v3.86 각성기(5차 이상 직업의 액티브): 행동마다가 아니라 턴마다(기본 행동 + 확정 추가 행동, 연속 행동은 제외) 따로 판정해 일반 액티브와 같은 턴에 함께 나갑니다.
     // 대기는 턴 단위이고 대기가 꽉 찬 채로 시작합니다(start, 데미지 없는 각성기는 0으로 둘 수 있음). 판정에 실패할 때마다 다음 판정 확률에 기본 발동률을 더합니다(27% → 54% → 81% → 100%).
