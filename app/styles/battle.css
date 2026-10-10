@@ -2224,3 +2224,24 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
   .skill-hotbar>.hotbar-cell:first-child .hotbar-tip{left:0;translate:0 4px}
   .battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:clamp(340px,calc(100svh - 470px),440px)}
 }
+
+/* v3.265 모바일 첫 화면: 장면 → 조작 줄(단축바 · 사냥 일시정지)을 먼저 두고, 레벨 · 경험치 · 전투력 줄(mobile-player-strip)은 조작 줄 아래로 내립니다. 이름 · Lv · HP · MP는 장면의 캐릭터 판에 있습니다. */
+@media(max-width:767px){
+  .battle-console>.battle-scene{order:1}
+  .battle-console>.battle-dock{order:2}
+  .battle-console>.mobile-player-strip{order:3}
+  .battle-console>.battle-skills{order:4}
+}
+/* v3.265 좁은 장면: 몬스터 HP · 이름(.scene-foe-hud)은 오른쪽 끝에서 min(--foe-x, 100% - 92px)로 당겨지므로, 장면 기록의 오른쪽 끝도 같은 기준으로 맞춰 겹치지 않게 합니다. 좁은 기록에서는 몬스터 줄의 이름을 빼고(붉은 글자로 구분) 기술 · 피해만 남깁니다. */
+@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{right:calc(100% - min(var(--foe-x),100% - 92px) + 66px)}.scene-log p{font-size:11px;padding-inline:6px}.scene-log p .who{display:none}}
+
+/* v3.265 까미 · 누리(정수 슬라임 · 대왕 포함) 등장 · 처치 문구가 장면 맨 아래(캐릭터 판 · 전투 기록 뒤)에 깔려 가려지던 문제: 이 연출만 캐릭터 판 위로 올리고, 문구를 장면 위쪽 1/3로 옮깁니다. */
+.scene-fx-layer.kkami-layer{z-index:6}
+.kkami-layer .scene-fx-kkami-title{top:30%}
+.kkami-layer .scene-fx-kkami-sub{top:calc(30% + 22px)}
+.kkami-layer .scene-fx-kkami:not(.scene-fx-kkami-kill) .scene-fx-kkami-coin{top:48%}
+.kkami-layer .scene-fx-kkami-title,.kkami-layer .scene-fx-kkami-sub{left:10px;right:10px;translate:0 -50%;white-space:normal;word-break:keep-all;text-align:center}
+.kkami-layer .scene-fx-kkami-sub{translate:0 0}
+@container (max-width:560px){.kkami-layer .scene-fx-kkami-title{font-size:21px;letter-spacing:1px}.kkami-layer .scene-fx-kkami-sub{font-size:12.5px;letter-spacing:1px}}
+/* v3.265 각성기 아이콘: 금빛 테두리 빛(계보 색 아이콘 둘레). */
+.skill-glyph.awaken{filter:drop-shadow(0 0 1.5px #ffd76a) drop-shadow(0 0 4px #f0a83acc)}
