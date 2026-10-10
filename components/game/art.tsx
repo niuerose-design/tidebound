@@ -1,5 +1,5 @@
 'use client';
-import { useState, memo } from 'react';
+import { useState, memo, type ReactNode } from 'react';
 import { Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2, Atom } from 'lucide-react';
 import type { Job } from '@/game/data/classes';
 import { lineageOf } from '@/game/data/classes';
@@ -170,32 +170,104 @@ export function JobArt({ job, size = 48, className = '' }: { job: Job; size?: nu
 }
 
 /**
- * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 언덕·숲·버섯 집 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
+ * v27.51 전투 장면 배경(바다 그림 대체). 메이플 필드풍 실루엣을 사냥터 색(--stage-tone)으로 물들입니다.
  * 그림 파일 없이 SVG라 가볍고, 기존 연출(ocean-art 흔들림)을 그대로 받도록 같은 클래스를 씁니다.
+ * v3.262 지역별 배경(theme): 항구 · 마을 · 협곡 · 숲 · 도시 · 바닷속 · 용의 둥지 · 신전 · 아케인 · 늪 · 설산. 하늘 · 빛 · 앞쪽 땅은 공통입니다.
  */
-export const SceneBackdrop = memo(function SceneBackdrop() {
-    return <svg className="ocean-art scene-backdrop" viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+export type BackdropTheme = 'harbor' | 'village' | 'canyon' | 'forest' | 'city' | 'underwater' | 'dragon' | 'temple' | 'arcane' | 'swamp' | 'mountain';
+const THEME_RULES: [RegExp, BackdropTheme][] = [
+    [/아쿠아|바닷|산호|수중/, 'underwater'], [/리스항구|항구|해안/, 'harbor'], [/헤네시스|버섯/, 'village'], [/페리온|화구|유적/, 'canyon'],
+    [/커닝시티|지하 수로|도시/, 'city'], [/엘리니아|숲|요정/, 'forest'], [/리프레|용의|드래곤/, 'dragon'], [/시간의 신전|신전|기억/, 'temple'],
+    [/아케인|소멸|레헬른|츄츄/, 'arcane'], [/슬리피우드|개미굴|늪|묘지/, 'swamp'], [/무릉|엘나스|설원|산맥|폐광/, 'mountain'],
+];
+/** 지역 · 사냥터 · 던전 이름으로 배경 테마를 고릅니다. 맞는 게 없으면 마을(기존 언덕 · 버섯 집). */
+export const backdropTheme = (...names: (string | undefined)[]): BackdropTheme => { const text = names.filter(Boolean).join(' '); return THEME_RULES.find(([re]) => re.test(text))?.[1] ?? 'village'; };
+const TONE = 'var(--stage-tone, #5c9dba)';
+const FAR_RIDGE = 'M0 610 L130 470 L240 560 L380 400 L520 540 L640 450 L780 580 L930 430 L1080 560 L1230 420 L1380 540 L1536 460 V1024 H0Z';
+const HILLS = 'M0 700 C160 620 300 640 440 690 S760 610 920 660 S1240 700 1380 640 L1536 620 V1024 H0Z';
+const BUSH = 'c-10-18 4-30 14-22 4-14 22-14 24 2 14-6 24 8 14 20 10 10-2 24-14 18-2 14-20 16-24 2-12 8-26-6-14-20z';
+const THEME_ART: Record<BackdropTheme, ReactNode> = {
+    village: <>
+        <path d={FAR_RIDGE} fill={TONE} opacity=".22"/><path d={HILLS} fill="#10303a"/>
+        <g fill="#0d2830"><path d="M150 700 l38-120 38 120z M200 690 l30-95 30 95z M1290 660 l40-130 40 130z M1350 655 l30-100 30 100z"/><path d="M560 690 c0-40 30-62 62-62s62 22 62 62z M598 690 h48 v40 h-48z"/><path d="M980 670 c0-30 22-46 46-46s46 16 46 46z M1008 670 h36 v30 h-36z"/></g>
+        <g fill={TONE} opacity=".35"><path d={`M330 640 ${BUSH}`}/><path d={`M1180 600 ${BUSH}`}/><path d={`M760 560 ${BUSH}`}/></g>
+    </>,
+    harbor: <>
+        <path d="M0 560 H1536 V1024 H0Z" fill={TONE} opacity=".28"/><path d="M0 600 H1536 V1024 H0Z" fill="#0f2a38"/>
+        <g stroke="#e8f4ff" strokeOpacity=".18" strokeWidth="3"><path d="M120 640 h140 M420 690 h200 M820 650 h160 M1120 700 h220 M300 760 h120 M960 770 h180"/></g>
+        <g fill="#0b2029"><path d="M120 600 h40 v-170 l-20-30 -20 30z"/><path d="M128 470 h24 v-20 h-24z" fill="#ffe9a8" opacity=".8"/><path d="M1060 610 h300 l-30 50 h-240z"/><path d="M1150 610 V420 M1250 610 V450" stroke="#0b2029" strokeWidth="8"/><path d="M1158 430 l80 60 -80 40z M1258 460 l70 50 -70 30z" fill="#16384a"/></g>
+        <g fill="#0c2430"><path d="M500 700 h420 v20 h-420z"/><path d="M520 720 v90 M600 720 v90 M680 720 v90 M760 720 v90 M840 720 v90 M900 720 v90" stroke="#0c2430" strokeWidth="10"/></g>
+    </>,
+    canyon: <>
+        <path d="M0 640 L60 470 L180 470 L220 560 L330 560 L380 380 L520 380 L560 560 L700 600 L760 450 L900 450 L960 600 L1100 620 L1150 420 L1300 420 L1360 580 L1536 560 V1024 H0Z" fill={TONE} opacity=".3"/>
+        <path d="M0 720 C200 660 380 700 560 690 S900 640 1100 690 S1400 700 1536 660 V1024 H0Z" fill="#2a1f19"/>
+        <g fill="#1d1612"><path d="M240 700 v-90 M240 640 l-30-30 M240 620 l26-26" stroke="#1d1612" strokeWidth="9" strokeLinecap="round"/><path d="M1240 690 h40 v-120 h-40z M1236 590 h48 v14 h-48z M1236 620 h48 v10 h-48z"/></g>
+        <g fill="#ff8a3a" opacity=".25"><circle cx="700" cy="680" r="60"/><circle cx="1000" cy="700" r="40"/></g>
+    </>,
+    forest: <>
+        <path d={FAR_RIDGE} fill={TONE} opacity=".16"/>
+        <g fill="#0f2a26"><path d="M140 1024 V420 h70 V1024z M1260 1024 V380 h90 V1024z M720 1024 V500 h50 V1024z"/></g>
+        <g fill="#163a33"><circle cx="175" cy="400" r="150"/><circle cx="1305" cy="360" r="170"/><circle cx="745" cy="470" r="110"/><circle cx="420" cy="520" r="90"/><circle cx="1020" cy="500" r="100"/></g>
+        <path d={HILLS} fill="#10302b"/>
+        <g fill="#c9ffe9" opacity=".7"><circle cx="330" cy="560" r="5"/><circle cx="560" cy="430" r="4"/><circle cx="910" cy="560" r="5"/><circle cx="1130" cy="440" r="4"/><circle cx="640" cy="620" r="3"/></g>
+        <g fill={TONE} opacity=".35"><circle cx="330" cy="560" r="18"/><circle cx="910" cy="560" r="18"/></g>
+    </>,
+    city: <>
+        <g fill={TONE} opacity=".2"><path d="M0 1024 V520 h90 v-60 h80 v100 h110 v-140 h90 v160 h120 v-90 h100 v120 h140 v-200 h80 v180 h120 v-110 h90 v150 h130 v-80 h110 v100 h86 V1024z"/></g>
+        <g fill="#0d1f2a"><path d="M0 1024 V620 h140 v-80 h120 v120 h160 v-140 h110 v160 h150 v-60 h130 v90 h160 v-170 h100 v150 h170 v-90 h196 V1024z"/></g>
+        <g fill="#ffd76a" opacity=".55"><rect x="30" y="660" width="14" height="10"/><rect x="70" y="690" width="14" height="10"/><rect x="290" y="560" width="14" height="10"/><rect x="330" y="600" width="14" height="10"/><rect x="590" y="560" width="14" height="10"/><rect x="620" y="610" width="14" height="10"/><rect x="900" y="520" width="14" height="10"/><rect x="940" y="560" width="14" height="10"/><rect x="1180" y="600" width="14" height="10"/><rect x="1400" y="660" width="14" height="10"/></g>
+        <g fill="#ff5ad8" opacity=".55"><rect x="440" y="610" width="70" height="14" rx="4"/><rect x="1030" y="560" width="60" height="12" rx="4"/></g>
+    </>,
+    underwater: <>
+        <rect width="1536" height="1024" fill="#06324a" opacity=".55"/>
+        <g fill="#bfefff" opacity=".08"><path d="M300 0 L420 0 L260 900 L180 900Z"/><path d="M800 0 L900 0 L760 900 L690 900Z"/><path d="M1200 0 L1290 0 L1180 900 L1110 900Z"/></g>
+        <path d="M0 760 C200 720 420 740 620 760 S1000 720 1200 740 L1536 730 V1024 H0Z" fill="#0b2a3a"/>
+        <g fill="#14465a"><path d="M200 760 q-10-120 10-200 M240 760 q20-90-10-170 M1300 750 q-20-140 10-230 M1340 750 q20-100 0-180" stroke="#1d5a5a" strokeWidth="14" fill="none" strokeLinecap="round"/></g>
+        <g fill="#ff8a8a" opacity=".55"><path d="M620 760 c-10-40 20-70 30-40 10-40 40-30 30 10 30-10 40 20 10 30z M980 750 c-10-30 16-50 26-30 10-30 34-20 26 10 24-6 30 16 8 22z"/></g>
+        <g fill="none" stroke="#dff7ff" strokeOpacity=".5" strokeWidth="2"><circle cx="420" cy="500" r="8"/><circle cx="440" cy="440" r="5"/><circle cx="1100" cy="560" r="7"/><circle cx="1120" cy="500" r="4"/><circle cx="760" cy="380" r="6"/></g>
+    </>,
+    dragon: <>
+        <g fill={TONE} opacity=".22"><path d="M0 1024 V560 L60 300 L120 560 V1024z M1360 1024 V520 L1430 220 L1500 520 V1024z"/><ellipse cx="560" cy="380" rx="120" ry="26"/><path d="M460 380 q100 90 200 0z"/><ellipse cx="1000" cy="300" rx="90" ry="20"/><path d="M925 300 q75 70 150 0z"/></g>
+        <path d="M720 240 q40-30 80 0 q40-40 70 10 q-40-10-70 20 q-40-20-80-30z" fill="#0b1c22" opacity=".6"/>
+        <path d="M0 720 C180 640 360 680 520 700 S860 620 1040 680 S1360 700 1536 640 V1024 H0Z" fill="#132a2a"/>
+        <g fill="#0d2224"><path d="M260 720 V500 h40 V720z"/><circle cx="280" cy="470" r="80"/><path d="M1140 700 l50-160 50 160z"/></g>
+    </>,
+    temple: <>
+        <g fill="#ffffff" opacity=".1"><ellipse cx="300" cy="420" rx="220" ry="40"/><ellipse cx="1150" cy="360" rx="260" ry="46"/><ellipse cx="760" cy="520" rx="300" ry="40"/></g>
+        <circle cx="768" cy="380" r="170" fill="none" stroke={TONE} strokeOpacity=".35" strokeWidth="6"/><path d="M768 380 V250 M768 380 L860 430" stroke={TONE} strokeOpacity=".35" strokeWidth="8" strokeLinecap="round"/>
+        <g fill="#1a2a3a"><path d="M180 760 V470 h50 V760z M330 760 V470 h50 V760z M1150 760 V470 h50 V760z M1300 760 V470 h50 V760z"/><path d="M150 470 h260 v-24 h-260z M1120 470 h260 v-24 h-260z"/></g>
+        <path d="M0 760 H1536 V1024 H0Z" fill="#14202c"/><path d="M0 760 H1536" stroke={TONE} strokeOpacity=".3" strokeWidth="4"/>
+    </>,
+    arcane: <>
+        <g opacity=".35"><path d="M0 300 C300 200 600 380 900 260 S1300 200 1536 300 V360 C1300 280 900 340 600 420 S200 300 0 380Z" fill="#9b6bff"/><path d="M0 420 C400 340 700 480 1000 380 S1400 360 1536 420 V450 C1300 400 1000 450 700 510 S300 420 0 470Z" fill="#5ef2c8"/></g>
+        <path d="M0 700 C220 650 420 690 640 700 S1020 650 1240 690 L1536 670 V1024 H0Z" fill="#1b1430"/>
+        <path d="M0 780 C300 740 600 800 900 770 S1300 760 1536 790 V830 C1200 800 900 830 600 840 S200 800 0 830Z" fill="#6bd6ff" opacity=".35"/>
+        <g fill="#b48cff" opacity=".7"><path d="M300 700 l20-90 20 90z M330 700 l14-60 14 60z M1180 690 l24-110 24 110z M1220 690 l14-60 14 60z"/></g>
+    </>,
+    swamp: <>
+        <path d={FAR_RIDGE} fill={TONE} opacity=".14"/>
+        <path d="M0 720 C200 690 420 710 620 720 S1000 690 1200 710 L1536 700 V1024 H0Z" fill="#14231c"/>
+        <g stroke="#0e1a14" strokeWidth="10" strokeLinecap="round" fill="none"><path d="M220 720 V520 M220 580 l-50-40 M220 560 l40-50"/><path d="M1260 710 V480 M1260 560 l-60-30 M1260 530 l50-60"/><path d="M760 720 V610 M760 640 l-30-20"/></g>
+        <g fill="#cfe8d8" opacity=".08"><ellipse cx="400" cy="700" rx="320" ry="30"/><ellipse cx="1100" cy="690" rx="360" ry="34"/></g>
+    </>,
+    mountain: <>
+        <path d="M0 640 L200 360 L360 520 L560 260 L760 520 L940 340 L1120 560 L1300 300 L1536 560 V1024 H0Z" fill={TONE} opacity=".24"/>
+        <g fill="#eef6ff" opacity=".55"><path d="M200 360 l-40 56 40-16 40 16z M560 260 l-56 76 56-22 56 22z M1300 300 l-50 70 50-20 50 20z"/></g>
+        <path d={HILLS} fill="#12283a"/>
+        <g fill="#0d2030"><path d="M1040 660 h120 l-20-30 h-80z M1060 630 h80 l-16-24 h-48z M1090 606 h20 v-20 h-20z"/></g>
+    </>,
+};
+export const SceneBackdrop = memo(function SceneBackdrop({ theme = 'village' }: { theme?: BackdropTheme }) {
+    return <svg className={`ocean-art scene-backdrop backdrop-${theme}`} viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0c1d2b"/><stop offset=".62" stopColor="var(--stage-tone, #5c9dba)" stopOpacity=".55"/><stop offset="1" stopColor="#0b2029"/></linearGradient>
             <radialGradient id="glow" cx=".72" cy=".24" r=".35"><stop offset="0" stopColor="#fff6d8" stopOpacity=".55"/><stop offset="1" stopColor="#fff6d8" stopOpacity="0"/></radialGradient>
         </defs>
         <rect width="1536" height="1024" fill="#0c1d2b"/>
         <rect width="1536" height="1024" fill="url(#sky)"/>
-        <rect width="1536" height="1024" fill="url(#glow)"/>
-        <circle cx="1105" cy="245" r="58" fill="#fff4d0" opacity=".85"/>
-        <g fill="#fff" opacity=".5"><circle cx="210" cy="120" r="2"/><circle cx="420" cy="80" r="1.5"/><circle cx="640" cy="160" r="2"/><circle cx="860" cy="70" r="1.5"/><circle cx="1320" cy="130" r="2"/><circle cx="1460" cy="210" r="1.5"/><circle cx="120" cy="260" r="1.5"/></g>
-        <path d="M0 610 L130 470 L240 560 L380 400 L520 540 L640 450 L780 580 L930 430 L1080 560 L1230 420 L1380 540 L1536 460 V1024 H0Z" fill="var(--stage-tone, #5c9dba)" opacity=".22"/>
-        <path d="M0 700 C160 620 300 640 440 690 S760 610 920 660 S1240 700 1380 640 L1536 620 V1024 H0Z" fill="#10303a"/>
-        <g fill="#0d2830">
-            <path d="M150 700 l38-120 38 120z M200 690 l30-95 30 95z M1290 660 l40-130 40 130z M1350 655 l30-100 30 100z"/>
-            <path d="M560 690 c0-40 30-62 62-62s62 22 62 62z M598 690 h48 v40 h-48z"/>
-            <path d="M980 670 c0-30 22-46 46-46s46 16 46 46z M1008 670 h36 v30 h-36z"/>
-        </g>
-        <g fill="var(--stage-tone, #5c9dba)" opacity=".35">
-            <path d="M330 640 c-10-18 4-30 14-22 4-14 22-14 24 2 14-6 24 8 14 20 10 10-2 24-14 18-2 14-20 16-24 2-12 8-26-6-14-20z"/>
-            <path d="M1180 600 c-10-18 4-30 14-22 4-14 22-14 24 2 14-6 24 8 14 20 10 10-2 24-14 18-2 14-20 16-24 2-12 8-26-6-14-20z"/>
-            <path d="M760 560 c-8-14 3-24 11-17 3-11 17-11 19 2 11-5 19 6 11 16 8 8-2 19-11 14-2 11-16 13-19 2-10 6-21-5-11-17z"/>
-        </g>
+        {theme !== 'underwater' && <><rect width="1536" height="1024" fill="url(#glow)"/><circle cx="1105" cy="245" r="58" fill="#fff4d0" opacity=".85"/></>}
+        {theme !== 'underwater' && theme !== 'temple' && <g fill="#fff" opacity=".5"><circle cx="210" cy="120" r="2"/><circle cx="420" cy="80" r="1.5"/><circle cx="640" cy="160" r="2"/><circle cx="860" cy="70" r="1.5"/><circle cx="1320" cy="130" r="2"/><circle cx="1460" cy="210" r="1.5"/><circle cx="120" cy="260" r="1.5"/></g>}
+        {THEME_ART[theme]}
         <path d="M0 800 C220 760 420 790 640 810 S1100 770 1300 790 L1536 780 V1024 H0Z" fill="#0b2029"/>
     </svg>;
 });
