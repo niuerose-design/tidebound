@@ -217,7 +217,7 @@ const WhistleButton = memo(function WhistleButton({ s, send, busy }: { s: State;
     return <Popover>
         <PopoverTrigger asChild>
             <button type="button" className={`scene-whistle ${pending ? 'pending' : ''}`} title={`호루라기: SP ${WHISTLE.sp}로 다음 사냥터 출현을 고른 특별 몬스터로 정합니다(하루 ${WHISTLE.perDay}번). 자세한 규칙은 도움말 → 사냥 규칙.`} aria-label="호루라기 메뉴 열기">
-                <Megaphone size={13}/> {pending ? `호루라기 · ${pending.name} 대기` : `호루라기 · SP ${WHISTLE.sp} 소모`}
+                <Megaphone size={13}/><span className="whistle-label">{pending ? `호루라기 · ${pending.name} 대기` : `호루라기 · SP ${WHISTLE.sp} 소모`}</span>
             </button>
         </PopoverTrigger>
         <PopoverContent className="status-pop game-tooltip whistle-pop" side="top" align="end">

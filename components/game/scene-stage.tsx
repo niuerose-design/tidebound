@@ -47,8 +47,52 @@ const HERO_SVG: Record<HeroKind, React.ReactNode> = {
     hacker: <><path d="M28 36h24l6 66H22z" fill="#16201a" stroke="#5dff8f" strokeWidth="1.3"/><path d="M27 30q13-26 26 0l-2 4H29z" fill="#1d2b22"/><circle cx="40" cy="27" r="8" fill="#cfb08e"/><rect x="50" y="56" width="24" height="15" rx="2" fill="#0a120d" stroke="#5dff8f"/><path d="M54 61h8M54 65h14" stroke="#5dff8f" strokeWidth="1.5"/></>,
 };
 
-export const HeroFigure = memo(function HeroFigure({ kind }: { kind: HeroKind }) {
-    return <svg className={`scene-hero-art hero-${kind}`} viewBox="0 0 80 110" aria-hidden="true">{HERO_SVG[kind]}</svg>;
+/**
+ * v3.252 계열 몸 + 무기 소품: 메이플 직업 이름(아처 · 다크나이트 · 섀도어 · 캡틴 · 비숍 …)으로 무기를 고릅니다. 이름에 단서가 없으면 계열 기본 무기.
+ * 전용 자원 직업(정수 소모 · 채굴 · 이계 · 해커)과 히든(신비) 계열은 위의 전용 그림을 그대로 씁니다.
+ */
+type Weapon = 'sword' | 'spear' | 'bow' | 'dagger' | 'gun' | 'fist' | 'staff' | 'shield' | 'orb' | 'fan';
+const WEAPON_RULES: [RegExp, Weapon][] = [
+    [/키네시스|일리움|라라/, 'orb'],
+    [/^검사|파이터|크루세이더|아델|제로|데몬슬레이어/, 'sword'],
+    [/아처|헌터|사수|레인저|저격수|보우|신궁|패스파인더|메르세데스|윈드브레이커|와일드헌터/, 'bow'],
+    [/다크나이트|스피어|아란|창술/, 'spear'],
+    [/팔라딘|페이지|^나이트$|카이저|미하일|종거북/, 'shield'],
+    [/캡틴|건슬링거|발키리|메카닉|엔젤릭버스터|캐논|블래스터/, 'gun'],
+    [/인파이터|바이퍼|버커니어|스트라이커|썬더 브레이커|은월|아크$|아크 /, 'fist'],
+    [/시프|어쌔신|허밋|나이트로드|섀도어|듀얼|카데나|칼리|팬텀|나이트워커|데몬어벤져/, 'dagger'],
+    [/호영|해커/, 'fan'],
+    [/매지션|위자드|메이지|비숍|클레릭|프리스트|썬콜|불독|플레임|에반|루미너스|배틀메이지/, 'staff'],
+];
+const TREE_WEAPON: Record<string, Weapon> = { physical: 'sword', magic: 'staff', defense: 'shield', status: 'dagger', hybrid: 'sword', support: 'fan', mystery: 'orb' };
+export function heroWeapon(job: Pick<Job, 'name' | 'tree'> | undefined): Weapon {
+    const name = job?.name || '';
+    return WEAPON_RULES.find(([re]) => re.test(name))?.[1] ?? TREE_WEAPON[job?.tree || ''] ?? 'sword';
+}
+const TREE_TONE: Record<string, [string, string]> = { physical: ['#41506a', '#c9d6ea'], magic: ['#2d3f7a', '#9fb6ff'], defense: ['#55606e', '#d5dce6'], status: ['#262b33', '#9a7fd1'], hybrid: ['#3b2f55', '#c7a6ff'], support: ['#6b5232', '#e7c67a'], mystery: ['#1f2a33', '#7fd6b3'] };
+const ROBED = new Set<Weapon>(['staff', 'orb']);
+function heroBody(tree: string, weapon: Weapon) {
+    const [cloth, trim] = TREE_TONE[tree] ?? TREE_TONE.physical;
+    if (ROBED.has(weapon)) return <><path d="M40 30c10 0 14 8 14 14l10 58H16l10-58c0-6 4-14 14-14z" fill={cloth} stroke={trim} strokeWidth="1.4"/><circle cx="40" cy="28" r="10" fill="#e7c9a6"/>{weapon === 'staff' ? <path d="M24 24 40 0l16 24z" fill={cloth} stroke={trim} strokeWidth="1.2"/> : <path d="M29 24q11-14 22 0v-4q-11-10-22 0z" fill="#c9c2e6"/>}</>;
+    return <><path d="M30 36h20l6 64H24z" fill={cloth} stroke={trim} strokeWidth="1.4"/><circle cx="40" cy="24" r="11" fill="#e7c9a6"/>{weapon === 'dagger' ? <><path d="M27 30q13-26 26 0l-2 4H29z" fill={cloth}/><path d="M33 27h14" stroke="#111" strokeWidth="2.5"/></> : <path d="M28 22q12-16 24 0v-4Q40 4 28 18z" fill="#7b5b3a"/>}<path d="M24 58h32v5H24z" fill="#2b3446"/></>;
+}
+const WEAPON_SVG: Record<Weapon, React.ReactNode> = {
+    sword: <><path d="M56 48 74 8" stroke="#e8eef8" strokeWidth="5" strokeLinecap="round"/><path d="M50 52l12-8" stroke="#8a6b3a" strokeWidth="5" strokeLinecap="round"/></>,
+    spear: <><path d="M50 102 70 6" stroke="#8a6b3a" strokeWidth="3.5" strokeLinecap="round"/><path d="M70 6l-4 14 8-1z" fill="#e8eef8" stroke="#e8eef8" strokeWidth="2" strokeLinejoin="round"/></>,
+    bow: <><path d="M60 18q22 34 0 70" stroke="#8a6b3a" strokeWidth="3.5" fill="none" strokeLinecap="round"/><path d="M60 18v70" stroke="#e9e2cf" strokeWidth="1"/><path d="M48 53h30" stroke="#d9c7a0" strokeWidth="2"/><path d="M78 53l-5-3v6z" fill="#e8eef8"/></>,
+    dagger: <><path d="M54 50l15-11" stroke="#d9e2ee" strokeWidth="3" strokeLinecap="round"/><path d="M55 62l18-3" stroke="#d9e2ee" strokeWidth="3" strokeLinecap="round"/><circle cx="54" cy="50" r="2.5" fill="#6b4a8a"/><circle cx="55" cy="62" r="2.5" fill="#6b4a8a"/></>,
+    gun: <><path d="M52 52l24-2v6l-20 2z" fill="#30363d" stroke="#c9d6ea"/><path d="M56 56l-1 9h5l1-8z" fill="#30363d"/></>,
+    fist: <><circle cx="60" cy="56" r="7.5" fill="#c9773a" stroke="#ffd9a8" strokeWidth="1.5"/><path d="M55 53h10M55 57h10" stroke="#7a4420" strokeWidth="1.2"/></>,
+    staff: <><path d="M62 30v70" stroke="#8a6b3a" strokeWidth="4" strokeLinecap="round"/><circle cx="62" cy="26" r="6" fill="#9fe7ff"/><circle cx="62" cy="26" r="11" fill="#9fe7ff" opacity=".25"/></>,
+    shield: <><path d="M50 44h22v26q0 14-11 20-11-6-11-20z" fill="#3f6fa8" stroke="#e8eef8" strokeWidth="2"/><path d="M61 52v28M53 62h16" stroke="#f3d27a" strokeWidth="3"/></>,
+    orb: <><circle cx="64" cy="48" r="6" fill="#c9a6ff" opacity=".9"/><circle cx="64" cy="48" r="12" fill="#c9a6ff" opacity=".2"/><circle cx="72" cy="66" r="3.5" fill="#9fe7ff" opacity=".85"/><circle cx="56" cy="34" r="3" fill="#9fe7ff" opacity=".8"/></>,
+    fan: <><path d="M54 56l20-18a18 18 0 0 1 2 22z" fill="#e7c67a" stroke="#8a6b3a" strokeWidth="1.2"/><path d="M54 56l20-18M54 56l22-12M54 56l22-4" stroke="#8a6b3a" strokeWidth=".8"/></>,
+};
+const SPECIAL = new Set<HeroKind>(['devour', 'miner', 'agent', 'trader', 'hacker', 'mystic']);
+export const HeroFigure = memo(function HeroFigure({ kind, job }: { kind: HeroKind; job?: Pick<Job, 'name' | 'tree'> }) {
+    if (SPECIAL.has(kind) || !job) return <svg className={`scene-hero-art hero-${kind}`} viewBox="0 0 80 110" aria-hidden="true">{HERO_SVG[kind]}</svg>;
+    const weapon = heroWeapon(job);
+    return <svg className={`scene-hero-art hero-${kind} weapon-${weapon}`} viewBox="0 0 80 110" aria-hidden="true">{heroBody(job.tree, weapon)}{WEAPON_SVG[weapon]}</svg>;
 });
 
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -104,7 +148,7 @@ export function SceneFoe({ enemy, hidden, effect, kkami = false }: { enemy: Stat
 export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; effect: CombatFx[] }) {
     const ref = usePulse(effect, mePick), job = jobById(s.job), title = displayTitle(s);
     return <div className="scene-me">
-        <div ref={ref} className="scene-hero"><HeroFigure kind={heroKind(s, job)}/></div>
+        <div ref={ref} className="scene-hero"><HeroFigure kind={heroKind(s, job)} job={job}/></div>
         <div className="scene-me-plate">
             <div className="scene-me-name"><b>{title ? <small>{title}</small> : null}{s.name}</b><StatusBadges effects={s.effects} stun={s.playerStun} recent={effect} target="player"/></div>
             <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}</small>

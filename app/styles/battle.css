@@ -2103,3 +2103,20 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .hotbar-edit:hover{color:#e6efe9}
 @media(max-width:767px){.skill-hotbar{flex:1 1 100%}.hotbar-slot{flex:1 1 62px;max-width:96px}}
 @media(prefers-reduced-motion:reduce){.hotbar-fire{animation:none;display:none}}
+/* v3.253 모바일: 장면이 높아진 만큼 몬스터를 위로(가운데 36%) 올려 아래 기록 · 캐릭터 판과 떨어뜨리고, 연출 좌표(--foe-y · --ty)도 같이 옮깁니다.
+   호루라기는 아이콘 버튼으로 줄여 조작 줄을 한 줄에. */
+@media(max-width:767px){
+  .battle-scene{--foe-y:36%;--foe-feet:calc(36% + 48px)}
+  .battle-scene:has(.scene-foe.boss){--foe-feet:calc(36% + 58px)}
+  .scene-foe{top:calc(36% - 42px)}
+  .scene-foe.boss{top:calc(36% - 52px)}
+  .ow-fx,.xen-fx{--ty:36cqh}
+  .scene-log p:nth-last-child(n+4){display:none}
+  .skill-receipt{top:8px;bottom:auto}
+  .battle-scene .tide-fx-combo-enemy,.battle-scene .tide-fx-combo-player{top:auto;left:auto;bottom:12px;right:12px}
+  .battle-dock-actions{flex-wrap:nowrap}
+  .battle-dock-actions>*{flex:1 1 auto}
+  .battle-dock-actions .scene-whistle{flex:0 0 auto;width:40px;height:36px;padding:0;justify-content:center;border-radius:8px}
+  .battle-dock-actions .scene-whistle .whistle-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+  .battle-dock-actions .scene-whistle.pending{box-shadow:0 0 0 2px #f0c46a}
+}
