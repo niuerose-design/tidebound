@@ -2425,3 +2425,11 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 
 /* v3.270 내가 받은 피해 숫자: 머리 바로 위에서(연타는 오른쪽 위로 쌓임). */
 .battle-scene .scene-dmg.me{top:calc(var(--me-y) - 58px + var(--dy,0px));left:calc(var(--me-x) + 14px + var(--dx,0px))}
+
+/* v3.271 장면 제목 자리 통일: 5차 각성기 · 天 · 5단계 · 퍼니셔 · 이계 · 아제로스 · 제논 · 메카닉 제목을 모두 장면 위쪽 띠(14%)에 같은 크기로 띄웁니다(전에는 가운데 · 22% · 18%로 제각각, 가운데 제목은 몬스터 · 기록과 겹침). */
+.battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .ow-title,.battle-scene .azu-title,.battle-scene .xen-title,.battle-scene .mech-title{top:14%}
+.battle-scene .ult-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .pun-title{font-size:24px;letter-spacing:.14em}
+.battle-scene .ow-reload .ow-title{top:auto;bottom:calc(10px + clamp(56px,24cqh,84px) * 1.375 + 6px)}
+@container (max-width:560px){
+  .battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .ow-title,.battle-scene .azu-title,.battle-scene .xen-title,.battle-scene .mech-title{top:11%;font-size:18px;letter-spacing:.08em}
+}
