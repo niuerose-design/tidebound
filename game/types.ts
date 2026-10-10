@@ -296,6 +296,8 @@ export type Skill = {
     fuelCost?: number;
     /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
     magazineBonus?: number;
+    /** v3.237 패시브: 장착하면 ids 액티브의 피해 배율 ×(1 + value)(여럿이면 더함). 겹영창 4 · 5차 패시브가 1~3차 주문을 키웁니다. */
+    boostSkills?: { ids: string[]; value: number };
     reloadSkip?: number;
     /** v3.231 무한 탄창(패시브): 탄창이 비면 재장전 대신 actions행동 동안 탄을 쓰지 않고, 행동마다 탄창 기술을 shots발 더(위력 power) 쏩니다. 두 번에 한 번(그 사이는 보통 재장전). */
     overdrive?: { actions: number; shots: number; power: number };
