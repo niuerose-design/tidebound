@@ -9,6 +9,7 @@ import { registerSkills, alignJobMastery, normalizeSkillMastery, scaleUtilityGai
 import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
 import { SECRET_SKILLS } from './skills';
 import { awakenSkill } from '../data/skill-balance';
+import { applyCoreRework } from '../data/core-passive';
 import { SKILL_FORMULA } from '../data/balance';
 import { setOdds } from '../data/odds';
 import { SERVER_ODDS } from './odds';
@@ -29,6 +30,8 @@ for (const raw of SECRET_JOBS) {
     job.masteryTarget = (job.masteryTarget || 0) * AZEROTH_MASTERY_SCALE;
     for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
 }
+// v3.228 비밀 메이플 월드 4 · 5차도 핵심 패시브 개편(data/core-passive.ts, 아제로스 계보 제외).
+applyCoreRework(SECRET_JOBS.map(j => jobById(j.id)!).filter(Boolean), SKILLS, SECRET_LINEAGES);
 // v3.86 비밀 5차 이상 직업의 액티브도 각성기로(공개 스킬은 tuneActiveSkills에서).
 // v3.199 제로 (5차)의 액티브는 각성기로 바꾸지 않습니다. 태그(알파 ↔ 베타)는 행동마다 번갈아 쓰는 규칙이라, 턴마다 따로 굴리는 각성기와 맞지 않습니다.
 for (const sk of SECRET_SKILLS) if ((jobById(sk.job || '')?.tier ?? 0) >= SKILL_FORMULA.awaken.tier && sk.job !== 'chronarch') awakenSkill(skillById(sk.id)!);

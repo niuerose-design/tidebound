@@ -76,7 +76,7 @@ test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; s
  s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
  assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
  s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.224 아제로스 규칙: 숙련 단계 ×10
- assert.ok(Math.abs(Su.commandBonus(s)-.08)<1e-9,'two support skills x 4%');
+ assert.ok(Math.abs(Su.commandBonus(s)-.12)<1e-9,'two support skills x 6% (v3.228)');
  const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
  s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
  // 합치기: 효과별 최고값, 상한 8%.
@@ -92,7 +92,7 @@ test('v3.219 군의관: hp · mana · regen support (other slots only); duel sna
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),C=await L.load('data/classes');
  const j=C.jobById('fieldMedic');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg');
  const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
- s.skills=['bloodSupply','stimulantKit','fieldDressing','triage'];assert.deepEqual(Su.supportOf(s),{hp:.02,mana:.02,hpRegen:.05});assert.ok(Math.abs(Su.commandBonus(s)-.12)<1e-9);
+ s.skills=['bloodSupply','stimulantKit','fieldDressing','triage'];assert.deepEqual(Su.supportOf(s),{hp:.02,mana:.02,hpRegen:.05});assert.ok(Math.abs(Su.commandBonus(s)-.18)<1e-9,'three support skills x 6% (v3.228)');
  s.skillPractice.bloodSupply=2250000;assert.equal(Su.supportOf(s).hp,.05);
  assert.deepEqual(Su.mergeSupport([{hp:.2,hpRegen:.5}]),{hp:.0625,hpRegen:.1875},'capped per effect (× 1.25 headroom)');
  const t=newState(0);t.level=30;t.hpRegen=0;const a0=St.stats(t);t.support={hp:.05,mana:.05,hpRegen:.15};const a1=St.stats(t);
@@ -132,7 +132,7 @@ test('v3.225 5th tier: 총사령관 amplifies its other support (not AP) and giv
  assert.equal(Su.supportAmp(c),1.1);c.skillPractice.chainOfCommand=1e9;assert.equal(Su.supportAmp(c),1.25);
  let out=Su.supportOf(c);assert.equal(out.power,.025,'2% x 1.25');assert.equal(out.exp,.0375,'3% x 1.25');assert.equal(out.ap,1,'AP is never amplified');
  c.skillPractice.generalMobilization=1e9;c.skillPractice.supplyConvoy=1e9;out=Su.supportOf(c);assert.equal(out.power,.05);assert.equal(out.exp,.1);
- assert.ok(Math.abs(Su.commandBonus(c)-.2)<1e-9,'four support skills (amp counts) x 5%');
+ assert.ok(Math.abs(Su.commandBonus(c)-.28)<1e-9,'four support skills (amp counts) x 7% (v3.228)');
  const t=newState(0);t.level=30;const a0=St.stats(t);t.support={power:.05};const a1=St.stats(t);assert.ok(Math.abs(a1.attack/a0.attack-1.05)<.01&&a1.hp>a0.hp);
  assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats,'duel drops power');
  // 군수사령관: 전군 편제 AP +2 → +3(상한 3, 작전참모 2보다 큼), 경량 편제로 자기 지원 스킬 AP -1.
@@ -213,4 +213,25 @@ test('v26.8 registerItemAll registers one weakest unlocked item per missing slot
     act(s, { type: 'registerItemAll' }, 0);
     assert.deepEqual(Object.keys(s.itemBook).sort(), ['charm:0', 'rod:0']); assert.deepEqual(s.inventory.map(x => x.id).sort(), ['c1', 'm2', 'r0a'], 'weakest rod consumed, locked/relic kept');
     assert.throws(() => act(s, { type: 'registerItemAll' }, 0), /미등록 장비가 가방에 없습니다/);
+});
+test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow 70% → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),St=await L.load('systems/stats'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
+ const sage=C.jobById('sage'),magus=C.jobById('grandMagus');assert.equal(sage.magic,1.06);assert.equal(magus.magic,1.09);assert.equal(sage.masteryBoost,.1);
+ const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.35,hp:.22});
+ assert.equal(P.coreScale(d,'grandMagus',0),.7);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
+ assert.equal(P.coreScale(w,'grandMagus',4),1,'same lineage keeps it whole');assert.equal(P.coreScale(d,'hero',4),.5,'another lineage gets half');
+ const body=(job,ids,practice)=>{const s=newState(0);s.level=100;s.job=job;s.unlockedJobs.push(job);for(const id of ids){s.learned[id]=1;s.skillPractice[id]=practice;}s.skillInheritances=Object.fromEntries(ids.map(id=>[id,true]));s.skills=ids;return St.stats(s);};
+ const core=d.core;delete d.core;const hero0=body('hero',['magusDomain'],1e9),mage0=body('grandMagus',['magusDomain'],0);d.core=core;const hero1=body('hero',['magusDomain'],1e9),mage1=body('grandMagus',['magusDomain'],0);
+ assert.ok(Math.abs(hero1.magic/hero0.magic-1.175)<.01&&Math.abs(hero1.hp/hero0.hp-1.11)<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-1.245)<.01,'stage 0 = 70% of 35%');
+ const flat0=body('sage',[],0),flat1=body('sage',['sageWisdom'],1e9);assert.ok(flat1.magic>=flat0.magic+250+45&&flat1.hp>=flat0.hp+300,'flat core lands before the multipliers');
+});
+test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Azeroth jobs keep small multipliers and a lineage-only core growing from 40%',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
+ assert.deepEqual(Sk.skillById('sageWisdom').core,{flat:{magic:250,hp:300},scale:{magic:.15,hp:.05}});
+ const cap={3:1,4:1.06,5:1.09};
+ for(const j of C.JOBS){if(C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))!=='azeroth')continue;
+  assert.equal(j.masteryBoost,.1,j.id);for(const k of ['attack','magic','hp','defense','resist'])assert.ok(j[k]<=cap[j.tier]+1e-9,`${j.id} ${k} ${j[k]}`);}
+ const ledger=Sk.skillById('kkamiLedger');assert.deepEqual(ledger.core,{scale:{attack:.25}});
+ assert.equal(P.coreScale(ledger,'kkamiHunter',0),.4);assert.equal(P.coreScale(ledger,'kkamiHunter',4),1);assert.equal(P.coreScale(ledger,'hero',4),0,'Azeroth core is lineage-only');
+ assert.equal(Sk.skillById('marshalCommand').commandPer,.07);assert.equal(Sk.skillById('warRoom').commandPer,.06);
 });

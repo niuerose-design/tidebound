@@ -280,6 +280,11 @@ export type Skill = {
     scalingAttribute?: Attribute;
     /** v3.97 scaling 'attr'에 공격력 × 이 비율을 더합니다(외길 계보: 장비 · 연구가 쌓여도 기술이 따라 커지도록). v3.172 마법 기술이면 마법 공격을 더합니다. */
     scalingAttack?: number;
+    /**
+     * v3.228 핵심 패시브: 직업 보정을 한 자리 %로 줄인 몫을 메웁니다. flat은 고정 수치(4차, 다른 고정 수치처럼 배율 전에 더함), scale은 배율(5차, ×(1 + 값)).
+     * 적힌 값은 숙련 마지막 단계 기준이고 0단계는 70%(coreScale). 다른 계보 직업에서 쓰면 절반입니다.
+     */
+    core?: { flat?: Partial<Record<'attack' | 'magic' | 'hp', number>>; scale?: Partial<Record<'attack' | 'magic' | 'hp', number>> };
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
