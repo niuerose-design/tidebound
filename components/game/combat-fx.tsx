@@ -19,7 +19,7 @@ const FX_HOLD_MS = 1500;
 const SCENE_HOLD_MS = 2700;
 /** v3.248 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
 const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
-const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
+const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && (ultimateOf(fx.skillId) || AZ_ULT[sceneOf(fx) ?? ''])) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
@@ -250,7 +250,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : !!AZ_ULT[sceneOf(fx) ?? ''] ? <AzerothUltFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
@@ -281,7 +281,7 @@ const OW_FX: Record<string, string> = {
 const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId] || !!fx.essence || !!fx.mineSwing);
 /** v3.247 장면 연출이 자기 큰 제목(각성기 · 天 · 5단계 · 이계 · 아제로스 · 제논 · 도트 퍼니셔 · 보스 스킬)을 띄우는지. 이런 스킬은 장면 위쪽 스킬 이름 쌓기에서 뺍니다(이름이 두 번 뜨지 않게). */
 export const hasSceneTitle = (fx: CombatFx, boss: boolean) => fx.actor === 'player'
-    ? owScene(fx) || fx.skillId === 'aberrantSurge' || fx.skillId === 'endOfAll' || !!ultimateOf(fx.skillId) || !!fx.finale || (fx.tier || 0) >= 5
+    ? owScene(fx) || fx.skillId === 'aberrantSurge' || fx.skillId === 'endOfAll' || !!ultimateOf(fx.skillId) || !!AZ_ULT[sceneOf(fx) ?? ''] || !!fx.finale || (fx.tier || 0) >= 5
     : boss && !!fx.skillId && !!FOE_FX[fx.skillId];
 const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
 const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
@@ -304,7 +304,7 @@ function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: bool
         {fx.overdrive && <><b className="ow-od">∞ 무한 탄창</b>{Array.from({ length: 8 }, (_, n) => <i key={`r${n}`} className="ow-round od" style={i(n)}/>)}</>}
         {kind === 'ap' && <><i className="ow-beam ap"/><i className="ow-crack"/>{Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-rust" style={i(n, { '--ang': `${n * 45 + 10}deg` })}/>)}</>}
         {kind === 'flash' && <i className="ow-whiteout"/>}
-        {kind === 'grenade' && <><i className="ow-grenade"/><i className="ow-boom"/><i className="ow-boom late"/></>}
+        {kind === 'grenade' && <><i className="ow-nade"/><i className="ow-boom"/><i className="ow-boom late"/></>}
         {(kind === 'buy' || kind === 'squeeze') && <><i className="ow-candle bull"/><b className="ow-stamp bull">{kind === 'squeeze' ? 'SQUEEZE' : 'BUY'}</b></>}
         {(kind === 'short' || kind === 'squeeze') && <><i className="ow-arrow"/><i className="ow-candle bear"/></>}
         {kind === 'buy' && <i className="ow-aura"/>}
@@ -342,6 +342,30 @@ function AzerothFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
         {Array.from({ length: 10 }, (_, n) => <i key={`r${n}`} className="az-rock" style={i(n, { '--ang': `${-160 + n * 15}deg`, '--r': `${40 + (n * 29) % 70}px` })}/>)}
         {(fx.mined || 0) > 0 && <><i className="az-gem"/>{Array.from({ length: 6 }, (_, n) => <i key={`g${n}`} className="az-glint" style={i(n, { '--ang': `${n * 60}deg` })}/>)}<b className="az-mined">세계석 +{fx.mined}</b></>}
         <strong className="ow-title az-title">{(fx.mined || 0) > 0 && fx.critical ? '대박 원석!' : fx.title}</strong>
+    </div>;
+}
+/**
+ * v3.269 아제로스 5차 각성기 전용 연출(이계 연출과 같은 좌표: 쏘는 자리 --sx · --sy = 내 무기 손, 과녁 --tx · --ty = 몬스터 가운데, 땅 = 장면 아래 10px).
+ * 스킬 데이터의 scene 값으로 고릅니다: assault · artillery · convoy · depot(참모 계보 5차), eclipse · judgment(히든 계보 5차, 카탈로그로만 받음). 제목은 로그의 스킬 이름(fx.title).
+ */
+const AZ_ULT: Record<string, { impact: number }> = { assault: { impact: 760 }, artillery: { impact: 640 }, convoy: { impact: 720 }, depot: { impact: 820 }, eclipse: { impact: 1050 }, judgment: { impact: 900 } };
+/** 스킬의 전용 장면 이름(Skill.scene). 비밀 스킬은 카탈로그로 받은 스킬에만 있습니다. */
+const sceneOf = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && !fx.finale ? skillById(fx.skillId)?.scene : undefined;
+/** v3.269 전용 장면이 ‘맞는 순간’까지 걸리는 시간(ms). 장면 피해 숫자 · 몬스터 피격 흔들림을 이만큼 늦춰 연출과 박자를 맞춥니다. */
+/** 이계 연출 중 투사체가 늦게 닿는 것(고폭 유탄은 포물선 0.55초 뒤 폭발). */
+const OW_IMPACT: Record<string, number> = { grenadeLauncher: 520 };
+export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId ? OW_IMPACT[fx.skillId] ?? 0 : 0);
+function AzerothUltFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const k = sceneOf(fx)!, ult = AZ_ULT[k], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra }), hits = Math.max(1, fx.hits.filter(h => !h.miss).length);
+    return <div className={`scene-fx ow-fx az-ult az-${k} ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d, { '--hits': hits, '--impact': `${ult.impact}ms` })}>
+        <i className="scene-fx-dark"/>
+        {k === 'assault' && <><i className="azu-flag"><b/></i>{Array.from({ length: 3 }, (_, n) => <i key={n} className="azu-charge" style={i(n, { '--lane': `${(n - 1) * 14}px` })}/>)}{Array.from({ length: hits }, (_, n) => <i key={`h${n}`} className="azu-hit" style={i(n)}/>)}</>}
+        {k === 'artillery' && <>{Array.from({ length: 5 }, (_, n) => <i key={n} className="azu-shell" style={i(n, { '--off': `${(n - 2) * 22}px` })}/>)}{Array.from({ length: 5 }, (_, n) => <i key={`b${n}`} className="azu-boom" style={i(n, { '--off': `${(n - 2) * 22}px` })}/>)}<i className="azu-dust"/></>}
+        {k === 'convoy' && <><i className="azu-truck"><b/><b/></i><i className="azu-speed"/>{Array.from({ length: 6 }, (_, n) => <i key={n} className="azu-crate" style={i(n, { '--ang': `${-150 + n * 22}deg` })}/>)}<i className="azu-hit big"/></>}
+        {k === 'depot' && <><i className="azu-stack"/><i className="azu-fuse"/>{Array.from({ length: 3 }, (_, n) => <i key={n} className="azu-boom chain" style={i(n, { '--off': `${(n - 1) * 30}px` })}/>)}{Array.from({ length: 12 }, (_, n) => <i key={`s${n}`} className="azu-shrap" style={i(n, { '--ang': `${n * 30 + 8}deg` })}/>)}</>}
+        {k === 'eclipse' && <><i className="azu-sun"/><i className="azu-corona"/><i className="azu-blackbeam"/><i className="azu-darkring"/><i className="azu-darkring late"/></>}
+        {k === 'judgment' && <><i className="azu-sigil"/><i className="azu-pillar"/>{Array.from({ length: 8 }, (_, n) => <b key={n} className="azu-feather" style={fxStyle(d + (n * 5 % 8) * 90, { '--i': n, '--x': `${(n - 3.5) * 30}px` })}>{n % 2 ? '✝' : '✦'}</b>)}</>}
+        <strong className="ow-title az-title azu-title">{fx.title}</strong>
     </div>;
 }
 /**
@@ -437,7 +461,7 @@ export function SceneCombatHud({ enemy, effect, combo, info }: { enemy: State['e
     return <>
         <CombatFxOverlay effect={effect} combo={combo}/>
         {enemy && <div className={`scene-foe-hud ${enemy.boss ? 'boss' : ''}`}><div className="player-hp-anchor"><span className="scene-foe-hp" title={`HP ${Math.ceil(enemy.hp).toLocaleString()} / ${enemy.maxHp.toLocaleString()}`}>{short(Math.ceil(enemy.hp))} / {short(enemy.maxHp)}</span><Meter value={enemy.hp} max={enemy.maxHp} color="enemy"/><BarCleave effect={effect} value={enemy.hp} max={enemy.maxHp}/></div>
-            {info ? <Popover><PopoverTrigger asChild><button type="button" className="scene-foe-name" title="몬스터 정보 보기">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark} {variant.name}</small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}{enemy.name}<small className="scene-foe-more">ⓘ</small></button></PopoverTrigger><PopoverContent className="status-pop game-tooltip scene-foe-pop" side="bottom" align="end">{info}</PopoverContent></Popover> : <span className="scene-foe-name">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark} {variant.name}</small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}{enemy.name}</span>}
+            {info ? <Popover><PopoverTrigger asChild><button type="button" className="scene-foe-name" title="몬스터 정보 보기">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark}<span className="vname"> {variant.name}</span></small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}<span className="scene-foe-label">{enemy.name}</span><small className="scene-foe-more">ⓘ</small></button></PopoverTrigger><PopoverContent className="status-pop game-tooltip scene-foe-pop" side="bottom" align="end">{info}</PopoverContent></Popover> : <span className="scene-foe-name">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark}<span className="vname"> {variant.name}</span></small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}<span className="scene-foe-label">{enemy.name}</span></span>}
             <span className="scene-foe-status"><StatusBadges effects={enemy.effects} stun={enemy.stun} recent={effect} target="enemy"/></span>
         </div>}
     </>;

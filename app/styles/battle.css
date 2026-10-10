@@ -1529,7 +1529,8 @@
 .ow-crack{left:var(--tx);top:var(--ty);width:90px;height:90px;margin:-45px;border-radius:50%;background:conic-gradient(from 10deg,transparent 0 8deg,#b6e05aaa 8deg 10deg,transparent 10deg 70deg,#b6e05aaa 70deg 72deg,transparent 72deg 150deg,#b6e05aaa 150deg 152deg,transparent 152deg 230deg,#b6e05aaa 230deg 233deg,transparent 233deg);mask:radial-gradient(circle,transparent 18%,#000 20%,#000 60%,transparent 70%);animation:owCrack .9s ease-out calc(var(--fx-delay) + .15s) both}
 .ow-rust{left:var(--tx);top:var(--ty);width:7px;height:7px;border-radius:50%;background:var(--ow-corrode);box-shadow:0 0 8px var(--ow-corrode);animation:owBurst .8s ease-out calc(var(--fx-delay) + .15s) both}
 .ow-whiteout{inset:0;background:#fff;mix-blend-mode:screen;animation:owWhite .5s ease-out var(--fx-delay) both}
-.ow-grenade{left:var(--sx);top:calc(var(--sy) - 4%);width:12px;height:12px;border-radius:50%;background:#59684a;box-shadow:0 0 6px #000;animation:owArc .55s cubic-bezier(.3,0,.7,1) var(--fx-delay) both}
+/* v3.269 컨테이너(.ow-fx.ow-grenade)와 이름이 겹쳐 장면 전체가 12px로 줄던 것을 ow-nade로 바꿈 */
+.ow-nade{left:var(--sx);top:calc(var(--sy) - 4%);width:12px;height:12px;border-radius:50%;background:#59684a;box-shadow:0 0 6px #000;animation:owArc .55s cubic-bezier(.3,0,.7,1) var(--fx-delay) both}
 .ow-boom{left:var(--tx);top:var(--ty);width:140px;height:140px;margin:-70px;border-radius:50%;background:radial-gradient(circle,#fff 0 10%,#ffcf6b 25%,#ff6a2a 45%,transparent 68%);mix-blend-mode:screen;animation:owBoom .7s ease-out calc(var(--fx-delay) + .5s) both}
 .ow-boom.late{animation-delay:calc(var(--fx-delay) + .62s);scale:.6}
 .ow-candle{left:var(--tx);width:26px;margin-left:-13px;border-radius:3px;animation:owCandle .8s cubic-bezier(.2,.8,.3,1) var(--fx-delay) both}
@@ -1550,7 +1551,7 @@
 .ow-shield{left:var(--sx);top:var(--sy);width:110px;height:130px;margin:-65px 0 0 -55px;border-radius:50%/45%;border:2px solid var(--ow-steel);background:radial-gradient(circle,transparent 50%,#7fb4ff33 80%);animation:owShield 1.4s ease-out var(--fx-delay) both}
 .ow-halt{left:0;right:0;top:calc(var(--ty) - 18% + var(--i) * 16%);height:10px;background:repeating-linear-gradient(-45deg,#ffd36b 0 12px,#111 12px 24px);opacity:.85;animation:owHalt 1.4s ease-out calc(var(--fx-delay) + var(--i) * 90ms) both}
 .ow-round{left:calc(10% + var(--i) * 10px);top:84%;width:6px;height:16px;border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,#ffe2a6,var(--ow-tracer) 40%,#8a5a1a);animation:owRound .5s ease-out calc(var(--fx-delay) + var(--i) * 40ms) both}
-.ow-mult{left:calc(var(--tx) - 200px);top:calc(var(--ty) - 40%);font:600 14px/1.2 ui-monospace,monospace;padding:2px 8px;border-radius:4px;background:#0b121ccc;border:1px solid var(--ow-gold);color:var(--ow-gold);white-space:nowrap;animation:sceneTitle 1.6s ease-out var(--fx-delay) both}
+.ow-mult{left:50%;translate:-50% 0;top:calc(22% + 38px);font:600 14px/1.2 ui-monospace,monospace;padding:2px 8px;border-radius:4px;background:#0b121ccc;border:1px solid var(--ow-gold);color:var(--ow-gold);white-space:nowrap;animation:sceneTitle 1.6s ease-out var(--fx-delay) both}
 .ow-title{position:absolute;left:50%;top:22%;translate:-50% 0;font:800 26px/1 var(--font-display,system-ui);letter-spacing:.12em;color:#fff;text-shadow:0 0 14px currentColor,0 2px 6px #000;white-space:nowrap;animation:sceneTitle 1.4s ease-out var(--fx-delay) both}
 .ow-snipe .ow-title,.ow-deadeye .ow-title{color:#cfe3ff}.ow-ap .ow-title{color:var(--ow-corrode)}.ow-buy .ow-title,.ow-squeeze .ow-title{color:var(--ow-bull)}.ow-short .ow-title,.ow-stop .ow-title{color:var(--ow-bear)}
 .ow-leverage .ow-title,.ow-circuit .ow-title{color:var(--ow-gold)}.ow-swan .ow-title{color:#c9b8ff;font-size:32px}.ow-deadeye .ow-title{font-size:32px}.ow-reload .ow-title{top:72%;left:22%;font-size:16px;color:var(--ow-tracer)}
@@ -2297,3 +2298,99 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .scene-look-hero .scene-hero-art{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px #0009)}
 .scene-hero-art.hero-image{object-fit:contain;object-position:50% 100%;aspect-ratio:80/110;image-rendering:auto}
 @media(max-width:767px){.scene-look-preview{flex:1 1 100%;height:120px}}
+
+/* v3.269 이계 · 아제로스 연출 손질: 쏘는 자리(--sx · --sy)를 내 캐릭터의 무기 손(그림 80×110의 76 · 54 지점)에 맞춥니다. 피해 숫자는 머리 위 HP 칸보다 더 위에서 뜹니다. */
+.battle-scene .ow-fx{--hw:clamp(56px,24cqh,84px);--sx:calc(12px + var(--hw) * .95);--sy:calc(100cqh - 10px - var(--hw) * .7)}
+@container (max-width:560px){.battle-scene .ow-fx{--hw:clamp(48px,20cqh,64px)}}
+.battle-scene .scene-dmg.foe{top:calc(var(--foe-top) - 78px + var(--dy,0px))}
+
+/* v3.269 아제로스 5차 각성기 전용 연출(.az-ult). 좌표: --sx · --sy(내 무기 손) → --tx · --ty(몬스터 가운데), 땅 --gy. 2.4초 안에 끝납니다. */
+.az-ult{--i:0;--gy:calc(100cqh - 10px);--az-gold:#ffd36b;--az-red:#ff6a4a;--az-khaki:#c9b77a}
+.az-ult .scene-fx-dark{animation:owDark 2.2s ease-in-out var(--fx-delay) both}
+.azu-title{top:18%;font-size:28px}
+.az-assault .azu-title,.az-artillery .azu-title,.az-convoy .azu-title,.az-depot .azu-title{color:#ffe1a8}
+.az-eclipse .azu-title{color:#d9c2ff;letter-spacing:.3em}
+.az-judgment .azu-title{color:#fff2c4}
+/* 총공격 명령: 내 뒤에 지휘 깃발이 서고, 돌격선 세 줄이 땅을 따라 몬스터로 내달려 타격마다 섬광. */
+.azu-flag{left:calc(var(--sx) - 46px);top:calc(var(--gy) - 150px);width:3px;height:150px;background:linear-gradient(#e8e2cf,#7a6a48);transform-origin:50% 100%;animation:azuFlagRise 2.2s ease-out var(--fx-delay) both}
+.azu-flag b{position:absolute;left:3px;top:0;width:54px;height:34px;background:linear-gradient(90deg,#c0392b,#e74c3c 60%,#c0392b);clip-path:polygon(0 0,100% 12%,86% 50%,100% 88%,0 100%);box-shadow:0 0 12px #ff6a4a;animation:azuWave .4s ease-in-out infinite alternate}
+.azu-charge{left:var(--sx);top:calc(var(--gy) - 26px + var(--lane));width:calc(var(--tx) - var(--sx));height:16px;background:linear-gradient(90deg,transparent,#c9b77a55 40%,#ffe1a8 92%,#fff);clip-path:polygon(0 40%,92% 0,100% 50%,92% 100%,0 60%);transform-origin:0 50%;filter:drop-shadow(0 0 6px #ffcf6a);animation:azuCharge .55s cubic-bezier(.6,0,.3,1) calc(var(--fx-delay) + .32s + var(--i) * .16s) both}
+.azu-hit{left:var(--tx);top:var(--ty);width:90px;height:90px;margin:-45px;border-radius:50%;background:radial-gradient(circle,#fff 0 12%,#ffd36b 30%,#ff6a4a66 55%,transparent 70%);mix-blend-mode:screen;animation:azuPop .45s ease-out calc(var(--fx-delay) + var(--impact,0ms) + var(--i) * 160ms) both}
+.azu-hit.big{width:150px;height:150px;margin:-75px}
+/* 포병 일제 사격: 포탄 다섯 발이 왼쪽 하늘(내 뒤)에서 호를 그리며 몬스터 둘레로 떨어져 차례로 터짐. */
+.azu-shell{left:calc(var(--tx) + var(--off));top:var(--gy);width:10px;height:22px;margin:-22px 0 0 -5px;border-radius:5px 5px 2px 2px;background:linear-gradient(#e8e2cf,#6b5a3a);box-shadow:0 -14px 18px -6px #ffb86b;animation:azuShell .7s cubic-bezier(.5,0,.9,.6) calc(var(--fx-delay) + var(--i) * 140ms) both}
+.azu-boom{left:calc(var(--tx) + var(--off));top:calc(var(--gy) - 18px);width:110px;height:110px;margin:-55px;border-radius:50%;background:radial-gradient(circle,#fff 0 10%,#ffe08a 24%,#ff7a2a 46%,#5a2a1a88 64%,transparent 72%);mix-blend-mode:screen;animation:azuBoom .7s ease-out calc(var(--fx-delay) + .62s + var(--i) * 140ms) both}
+.azu-dust{left:calc(var(--tx) - 160px);top:calc(var(--gy) - 46px);width:320px;height:60px;border-radius:50%;background:radial-gradient(closest-side,#c9b77a66,transparent);filter:blur(4px);animation:azuDust 1.6s ease-out calc(var(--fx-delay) + .7s) both}
+/* 보급선 돌파: 보급 수레가 땅을 따라 내 자리에서 몬스터까지 돌진해 들이받고 상자가 흩어짐. */
+.azu-truck{left:var(--sx);top:calc(var(--gy) - 40px);width:72px;height:36px;border-radius:6px 10px 4px 4px;background:linear-gradient(#7a6a48,#4a3f2a);box-shadow:inset 0 0 0 2px #c9b77a,0 0 14px #ffcf6a66;animation:azuTruck .7s cubic-bezier(.7,0,.4,1) calc(var(--fx-delay) + .1s) both}
+.azu-truck b{position:absolute;bottom:-8px;width:16px;height:16px;border-radius:50%;background:#222;border:3px solid #9a8a66}
+.azu-truck b:first-child{left:8px}.azu-truck b:last-child{right:8px}
+.azu-speed{left:var(--sx);top:calc(var(--gy) - 46px);width:calc(var(--tx) - var(--sx));height:44px;background:repeating-linear-gradient(180deg,transparent 0 6px,#ffe1a866 6px 8px);-webkit-mask:linear-gradient(90deg,transparent,#000 60%,transparent);mask:linear-gradient(90deg,transparent,#000 60%,transparent);animation:azuSpeed .7s linear calc(var(--fx-delay) + .1s) both}
+.azu-crate{left:var(--tx);top:calc(var(--gy) - 30px);width:14px;height:14px;margin:-7px;background:#8a6b3a;box-shadow:inset 0 0 0 2px #c9b77a;animation:azuScatter 1s cubic-bezier(.2,.7,.4,1) calc(var(--fx-delay) + .72s) both}
+/* 탄약고 폭파: 몬스터 곁에 탄약 상자 더미가 생기고, 도화선 불꽃이 땅을 따라 달려가 연쇄 폭발(세 번) · 파편. */
+.azu-stack{left:calc(var(--tx) - 40px);top:calc(var(--gy) - 34px);width:80px;height:34px;background:linear-gradient(90deg,#6b5a3a 0 30%,transparent 30% 35%,#7a6a48 35% 65%,transparent 65% 70%,#6b5a3a 70%);box-shadow:inset 0 0 0 2px #c9b77a;animation:azuStack 1s ease-out var(--fx-delay) both}
+.azu-fuse{left:var(--sx);top:calc(var(--gy) - 4px);width:calc(var(--tx) - var(--sx) - 40px);height:3px;background:linear-gradient(90deg,#3a2a1a,#ffb86b);transform-origin:0 50%;box-shadow:0 0 8px #ffb86b;animation:azuFuse 1.6s linear calc(var(--fx-delay) + .15s) both}
+.azu-boom.chain{top:calc(var(--gy) - 34px);width:140px;height:140px;margin:-70px;animation:azuBoom .8s ease-out calc(var(--fx-delay) + .8s + var(--i) * 180ms) both}
+.azu-shrap{left:var(--tx);top:calc(var(--gy) - 34px);width:6px;height:6px;background:#ffe1a8;box-shadow:0 0 6px #ff7a2a;animation:azuShrap 1s ease-out calc(var(--fx-delay) + .85s) both}
+/* 칠흑 일식: 하늘이 어두워지고 몬스터 위로 검은 해(빛 테두리)가 떠오른 뒤, 검은 빛줄기가 내리꽂혀 어둠의 고리가 퍼짐. */
+.az-eclipse .scene-fx-dark{background:#020104}
+.azu-sun{left:var(--tx);top:calc(var(--ty) - var(--foe-size,120px) - 60px);width:86px;height:86px;margin:-43px;border-radius:50%;background:#000;box-shadow:0 0 0 3px #d9c2ff,0 0 26px 6px #a96bff,0 0 60px 18px #5a2a9a88;animation:azuSun 2.2s cubic-bezier(.3,.7,.3,1) var(--fx-delay) both}
+.azu-corona{left:var(--tx);top:calc(var(--ty) - var(--foe-size,120px) - 60px);width:150px;height:150px;margin:-75px;border-radius:50%;background:repeating-conic-gradient(from 0deg,transparent 0 10deg,#d9c2ff55 12deg 14deg,transparent 16deg 30deg);-webkit-mask:radial-gradient(circle,transparent 30%,#000 34%,transparent 70%);mask:radial-gradient(circle,transparent 30%,#000 34%,transparent 70%);animation:azuCorona 2.2s linear var(--fx-delay) both}
+.azu-blackbeam{left:var(--tx);top:calc(var(--ty) - var(--foe-size,120px) - 60px);width:40px;height:calc(var(--foe-size,120px) + 60px + var(--foe-size,120px) * .5);margin-left:-20px;background:linear-gradient(90deg,transparent,#a96bff 20%,#000 35% 65%,#a96bff 80%,transparent);box-shadow:0 0 30px #7a3fd6;transform-origin:50% 0;animation:azuBeam .9s cubic-bezier(.7,0,.3,1) calc(var(--fx-delay) + .8s) both}
+.azu-darkring{left:var(--tx);top:calc(var(--gy) - 8px);width:60px;height:20px;margin:-10px 0 0 -30px;border-radius:50%;border:3px solid #a96bff;box-shadow:0 0 16px #7a3fd6;animation:azuRing 1s ease-out calc(var(--fx-delay) + 1.1s) both}
+.azu-darkring.late{animation-delay:calc(var(--fx-delay) + 1.3s)}
+/* 순례자의 신벌: 몬스터 발밑에 제단 문양이 그려지고, 하늘에서 금빛 기둥이 내리꽂히며 깃털 · 십자가 내려옴. */
+.az-judgment .scene-fx-dark{background:#0a0804}
+.azu-sigil{left:var(--tx);top:calc(var(--gy) - 6px);width:220px;height:60px;margin:-30px 0 0 -110px;border-radius:50%;border:2px solid var(--az-gold);background:repeating-conic-gradient(from 0deg,transparent 0 20deg,#ffd36b44 20deg 24deg);box-shadow:0 0 18px #ffd36b,inset 0 0 18px #ffd36b66;animation:azuSigil 2.2s ease-out var(--fx-delay) both}
+.azu-pillar{left:var(--tx);top:0;width:90px;height:calc(var(--gy) - 4px);margin-left:-45px;background:linear-gradient(90deg,transparent,#fff2c488 25%,#fff 50%,#fff2c488 75%,transparent);box-shadow:0 0 40px #ffd36b;transform-origin:50% 0;mix-blend-mode:screen;animation:azuPillar 1.4s cubic-bezier(.6,0,.3,1) calc(var(--fx-delay) + .55s) both}
+.azu-feather{left:calc(var(--tx) + var(--x));top:-20px;font-size:16px;color:#fff2c4;text-shadow:0 0 8px #ffd36b;animation:azuFeather 1.8s ease-in calc(var(--fx-delay) + .4s) both}
+@keyframes azuFlagRise{0%{scale:1 0;opacity:0}18%{scale:1 1.06;opacity:1}24%{scale:1 1}85%{opacity:1}100%{opacity:0}}
+@keyframes azuWave{from{transform:skewY(0)}to{transform:skewY(-6deg) scaleX(.94)}}
+@keyframes azuCharge{0%{scale:0 1;opacity:0}40%{opacity:1}80%{scale:1 1;opacity:1}100%{scale:1 .2;opacity:0}}
+@keyframes azuPop{0%{scale:.2;opacity:0}30%{scale:1;opacity:1}100%{scale:1.4;opacity:0}}
+@keyframes azuShell{0%{translate:-60cqw -110cqh;rotate:-50deg;opacity:0}20%{opacity:1}96%{translate:0 0;rotate:0deg;opacity:1}100%{translate:0 0;opacity:0}}
+@keyframes azuBoom{0%{scale:.15;opacity:0}20%{scale:1;opacity:1}100%{scale:1.5;opacity:0}}
+@keyframes azuDust{0%{opacity:0;scale:.5 1}30%{opacity:1}100%{opacity:0;scale:1.3 1.4;translate:0 -14px}}
+@keyframes azuTruck{0%{translate:-40px 0;opacity:0}15%{opacity:1}85%{translate:calc(var(--tx) - var(--sx) - 70px) 0;opacity:1}100%{translate:calc(var(--tx) - var(--sx) - 60px) 0;opacity:0;scale:1.1 .8}}
+@keyframes azuSpeed{0%{opacity:0}30%,80%{opacity:1}100%{opacity:0}}
+@keyframes azuScatter{0%{opacity:0;translate:0 0}10%{opacity:1}100%{opacity:0;translate:calc(cos(var(--ang)) * 90px) calc(sin(var(--ang)) * 90px + 40px);rotate:240deg}}
+@keyframes azuStack{0%{opacity:0;translate:0 -20px}20%{opacity:1;translate:0 0}60%{opacity:1}75%,100%{opacity:0}}
+@keyframes azuFuse{0%{scale:0 1}40%{scale:1 1;opacity:1}60%,100%{scale:1 1;opacity:0}}
+@keyframes azuShrap{0%{opacity:0;translate:0 0}10%{opacity:1}100%{opacity:0;translate:calc(cos(var(--ang)) * 130px) calc(sin(var(--ang)) * 100px)}}
+@keyframes azuSun{0%{opacity:0;translate:0 50px;scale:.6}35%{opacity:1;translate:0 0;scale:1}85%{opacity:1}100%{opacity:0}}
+@keyframes azuCorona{0%{opacity:0;rotate:0deg}35%{opacity:1}85%{opacity:1}100%{opacity:0;rotate:120deg}}
+@keyframes azuBeam{0%{scale:1 0;opacity:0}30%{scale:1 1;opacity:1}75%{opacity:1}100%{opacity:0;scale:.3 1}}
+@keyframes azuRing{0%{scale:.3;opacity:0}20%{opacity:1}100%{scale:4;opacity:0}}
+@keyframes azuSigil{0%{opacity:0;scale:.4}25%{opacity:1;scale:1}85%{opacity:1}100%{opacity:0;scale:1.15}}
+@keyframes azuPillar{0%{scale:.2 0;opacity:0}25%{scale:1 1;opacity:1}70%{opacity:1}100%{scale:.1 1;opacity:0}}
+@keyframes azuFeather{0%{opacity:0;translate:0 0}15%{opacity:1}50%{translate:12px 50cqh}100%{opacity:0;translate:-8px calc(100cqh - 40px);rotate:40deg}}
+@media(max-width:767px){.azu-title{font-size:20px}.azu-sigil{width:150px;margin-left:-75px}.azu-pillar{width:64px;margin-left:-32px}}
+@media(prefers-reduced-motion:reduce){.az-ult i,.az-ult b:not(.ow-title){display:none}}
+
+/* v3.269 모바일 전투 장면: 몬스터가 땅으로 내려와 위쪽이 비므로 장면을 낮추고(조작 줄이 첫 화면에), 왼쪽 위 직업 HUD를 줄이고, 몬스터 이름 · HP 칸은 한 줄(긴 이름은 말줄임, 변종은 표시 기호만)로 좁혀 기록과 떨어뜨립니다. 대기 문구는 위로. */
+@media(max-width:767px){
+  .battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:clamp(290px,calc(100svh - 520px),360px)}
+}
+@container (max-width:560px){
+  .scene-job-slot{scale:.86;transform-origin:0 0;max-width:72%}
+  .battle-scene .scene-foe-hud{width:132px;padding:2px 5px 3px}
+  .battle-scene .scene-foe-name{font-size:10.5px;gap:0 4px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;line-height:1.3}
+  .battle-scene .scene-foe-name>*{flex:none}
+  .battle-scene .scene-foe-name .scene-foe-label{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+  .battle-scene .scene-foe-name .vname{display:none}
+  .battle-scene .scene-idle{left:auto;right:10px;top:auto;bottom:40px;translate:0 0;max-width:118px;white-space:normal;text-align:center;line-height:1.35;font-size:11px;padding:5px 10px;border-radius:12px}
+  .battle-scene .scene-foe-name small{font-size:9.5px}
+  .battle-scene .scene-foe-hp{font-size:10px}
+}
+
+/* v3.269 장면 섬광의 중심을 옛 몬스터 자리(62% · 48%)에서 지금 몬스터 자리(--foe-x · --foe-y, 같은 지면)로 옮깁니다. 색 · 크기는 그대로. */
+.battle-scene .scene-fx-burst .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 42%,transparent),transparent 62%)}
+.battle-scene .scene-fx-burst.critical .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 62%,transparent),transparent 70%)}
+.battle-scene .scene-fx-tier5 .scene-fx-flash,.battle-scene .scene-fx-ult .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 70%,#fff) 0%,color-mix(in srgb,var(--fx) 45%,transparent) 30%,transparent 64%)}
+.battle-scene .ult-flamecircle .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#fff1c4 0%,#ff9a3c88 24%,#ff3b1a33 46%,transparent 64%)}
+.battle-scene .scene-fx-punisher .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 45%,transparent),transparent 58%)}
+.battle-scene .scene-fx-kkami .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#fff3c8 0%,#ffd76a99 24%,transparent 60%)}
+.battle-scene .scene-fx-nuri .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#ffffff 0%,#fff1c499 26%,transparent 62%)}
+.battle-scene .scene-fx-kkami.scene-fx-kkami-kill .scene-fx-flash{background:radial-gradient(circle at var(--foe-x) var(--foe-y),#fff8dc 0%,#ffd76a66 18%,transparent 40%)}
+/* 조커 슬롯: 몬스터 머리 위, 오른쪽 끝에서 잘리지 않게. */
+.battle-scene .ult-jackpot .ult-a{left:min(var(--foe-x),calc(100% - 115px));top:calc(var(--foe-top) - 92px)}
