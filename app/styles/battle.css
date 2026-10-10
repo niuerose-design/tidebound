@@ -2122,3 +2122,17 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 }
 /* v3.254 모바일: 실시간 효율 카드가 장면 위에 끼던 것을 장면 · 조작 줄 · 기록 아래(누적 지표 앞)로. */
 @media(max-width:767px){.battle-console>.live-rates{order:5}}
+/* v3.255 넓은 화면(1181px 이상): 장면 높이를 화면 높이에 맞춰(위쪽 머리글 · 아래 조작 줄 몫을 빼고, 화면 배율 --ui-scale 반영) 장면과 조작 줄이 한 화면에 들어오게. 420~560px. */
+@media(min-width:1181px){.battle-hud .battle-console .battle-scene{height:clamp(420px,calc(100vh / var(--ui-scale,1) - 400px),560px)}}
+/* 부재중 정산 알림: 12초 뒤 스스로 닫히기 전 남은 시간을 아래 얇은 줄로 보여 줍니다. */
+.voyage-brief.has-offline{position:relative;overflow:hidden}
+.voyage-brief.has-offline::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:100%;background:#7fd6b3;transform-origin:0 50%;animation:offlineFade 12s linear both}
+@keyframes offlineFade{from{scale:1 1}to{scale:0 1}}
+@media(prefers-reduced-motion:reduce){.voyage-brief.has-offline::after{animation:none;display:none}}
+/* v3.255 넓은 장면: 전투 기록 칸의 위 · 아래 끝을 캐릭터 판과 맞춥니다(판 높이 96px 고정, 기록 4줄이 같은 높이를 채움). */
+.scene-me-plate{height:96px;display:flex;flex-direction:column;justify-content:flex-end}
+.scene-log{bottom:10px;height:96px}
+.scene-log p{padding-block:3px}
+@container (max-width:560px){.scene-me-plate{height:auto}}
+@container (max-width:700px){.scene-log,.dungeon-scene .scene-log{bottom:134px;height:auto}}
+@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{bottom:116px;height:auto}}
