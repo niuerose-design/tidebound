@@ -124,7 +124,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     worldStill: { kind: 'chain', glyphs: ['⛓', '◌', '⛓', '✦', '⛓', '◌', '⛓', '✦'] },
     // 11: 제논 메가 스매셔. v3.245부터 전용 연출(XenonFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     aberrantSurge: { kind: 'laser', glyphs: ['◇', '✦', '◇', '✧', '◇', '✦', '◇', '✧'] },
-    // 12: 메카닉 메탈아머 전탄발사. 미사일 비가 위에서 쏟아지고 세 곳에서 폭발이 연달아 터집니다.
+    // 12: 메카닉 메탈아머 전탄발사. v3.246부터 전용 연출(MechFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     genesisRune: { kind: 'barrage', glyphs: ['▲', '✦', '★', '▲', '✦', '★', '▲', '✦'] },
     // 13: 섀도어 소닉 블로우. 음파 호가 왼쪽에서 밀려오고 동전이 튑니다.
     hoardCrush: { kind: 'sonic', glyphs: ['◉', '◠', '◉', '◠', '◉', '◠', '◉', '◠'] },
@@ -199,6 +199,28 @@ function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     </div>;
 }
 /**
+ * v3.246 메카닉 메탈아머 전탄발사 전용 연출: ① 메탈아머 HUD(미사일 포드 12칸 무장) · 경고 띠 → ② 다중 표적 잠금 →
+ * ③ 미사일 12발이 포물선으로 일제 발사(발사 연기) → ④ 몬스터 주변 연쇄 폭발 → ⑤ 마지막 대폭발 · 파편 · 전용 타이틀. 약 2.5초.
+ */
+const MECH_JITTER = [[-18, -10], [14, 8], [-6, 16], [20, -14], [-22, 6], [8, -18], [0, 0], [16, 14], [-12, -20], [24, 2], [-16, 12], [6, -6]];
+function MechFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(fx.delay, { '--i': n, ...extra });
+    return <div className={`scene-fx mech-fx ${boss ? 'mech-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay)}>
+        <i className="scene-fx-dark"/><i className="mech-tape"/><i className="mech-tape low"/>
+        <div className="mech-hud"><small>METAL ARMOR · FULL BURST</small>
+            <div className="mech-pods">{Array.from({ length: 12 }, (_, n) => <b key={n} style={i(n)}/>)}</div>
+            <strong className="mech-armed">ARMED</strong></div>
+        {Array.from({ length: 5 }, (_, n) => <i key={`l${n}`} className="mech-lock" style={i(n, { '--jx': `${MECH_JITTER[n][0] * 1.6}px`, '--jy': `${MECH_JITTER[n][1] * 1.6}px` })}/>)}
+        <b className="mech-lockcount">TARGET ×5 LOCK</b>
+        {Array.from({ length: 4 }, (_, n) => <i key={`s${n}`} className="mech-smoke" style={i(n)}/>)}
+        {MECH_JITTER.map(([x, y], n) => <i key={`m${n}`} className="mech-missile" style={i(n, { '--jx': `${x}px`, '--jy': `${y}px`, '--up': `${(n % 4) * 7}cqh` })}><b/></i>)}
+        {MECH_JITTER.slice(0, 8).map(([x, y], n) => <i key={`b${n}`} className="mech-boom" style={i(n, { '--jx': `${x * 1.4}px`, '--jy': `${y * 1.4}px` })}/>)}
+        <i className="mech-blast"/><i className="mech-ring"/><i className="mech-ring late"/>
+        {Array.from({ length: 12 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={i(n, { '--ang': `${n * 30 + 12}deg` })}/>)}
+        <strong className="mech-title">FULL BURST<small>메탈아머 전탄발사</small></strong>
+    </div>;
+}
+/**
  * v3.183 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
  * 카드 쪽은 손대지 않습니다(‘몬스터 스킬’ 알림 · HP 바 숫자 그대로). 추가타가 있는 기술은 타격 수만큼 .foe-hit를 HP 바 숫자와 같은 박자(160ms)로 반복합니다.
  */
@@ -217,7 +239,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
