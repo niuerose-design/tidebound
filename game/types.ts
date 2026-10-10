@@ -193,6 +193,8 @@ export type SupportMap = Partial<Record<SupportEffect, number>>;
 export type Skill = {
     /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
     fx?: string;
+    /** v3.269 전용 장면 연출 이름(combat-fx.tsx AZ_ULT의 키). 비밀 스킬도 카탈로그로 이 값만 받아 화면 코드에 스킬 id · 이름을 두지 않습니다. */
+    scene?: string;
     /** A rare native technique requires this much mastery in its owning job. */
     unlockJobMastery?: number;
     sourceEnemySkill?: string;
