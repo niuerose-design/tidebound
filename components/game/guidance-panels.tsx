@@ -9,20 +9,20 @@ import { unclaimedAchievements } from '@/game/systems/progress';
 import { TUTORIAL_STEPS, tutorialProgress, tutorialStepDone, nextTutorialStep } from '@/game/systems/guidance';
 import { Heading, Meter, useNow } from './shared';
 import { useState } from 'react';
-import { useIsMobile } from './use-mobile';
 import type { State } from '@/game/types';
 import { dayKey, nextDailyReset, nextWeeklyReset, KST } from '@/game/data/time';
 
 
 /** 접을 수 있는 짧은 튜토리얼. 새 세이브에만 보이고, 한 번 만족한 단계는 기록으로 남아 되돌아가지 않습니다. 보상은 없습니다. */
 export function TutorialCard({ s, send, busy, setView }: PanelProps) {
-    // v27.88 모바일(767px 이하)은 접힌 한 줄로 시작하고 이 화면에서만 펼칩니다(서버 저장 없음). 데스크톱은 전처럼 서버에 접힘을 기억합니다.
-    const mobile = useIsMobile(), [expanded, setExpanded] = useState(false);
+    // v27.88 모바일(767px 이하)은 접힌 한 줄로 시작하고 이 화면에서만 펼칩니다(서버 저장 없음).
+    // v3.254 데스크톱도 같은 방식: 전투 장면을 가리지 않게 늘 접힌 한 줄(진행 · 다음 단계)로 시작하고, 누르면 이 화면에서만 펼칩니다.
+    const [expanded, setExpanded] = useState(false);
     if (!s.tutorial || s.tutorial.skipped) return null;
     const done = tutorialProgress(s), next = nextTutorialStep(s);
     if (!next) return null;
-    const hidden = mobile ? !expanded : !!s.tutorial.hidden, index = TUTORIAL_STEPS.indexOf(next) + 1;
-    const toggle = () => { if (mobile) setExpanded(v => !v); else send({ type: 'tutorial', id: hidden ? 'show' : 'hide' }); };
+    const hidden = !expanded, index = TUTORIAL_STEPS.indexOf(next) + 1;
+    const toggle = () => setExpanded(v => !v);
     return <section className={`panel tutorial-card ${hidden ? 'folded' : ''}`} aria-label="모험 안내">
         <div className="tutorial-head">
             <Compass size={16}/><strong>모험 안내 · {done} / {TUTORIAL_STEPS.length}</strong>
