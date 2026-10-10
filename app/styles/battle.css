@@ -2139,3 +2139,13 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 /* v3.256 몬스터 HP 숫자: 짧은 단위(만 · 억)로 바 아래에. */
 .scene-foe-hud .player-hp-anchor{display:flex;flex-direction:column-reverse}
 .scene-foe-hp{display:block;margin-top:3px;text-align:center;font:600 10.5px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#f3e7d5;text-shadow:0 1px 3px #041219;white-space:nowrap;pointer-events:auto}
+/* v3.257 던전 진행: 장면 아래 웨이브는 작은 칩 한 줄(그림 · W번호 · 이름), 머리 줄은 촘촘하게. */
+.dungeon-run-panel .dungeon-run-header{margin-bottom:10px}
+.dungeon-run-panel .dungeon-run-header p:empty{display:none}
+.dungeon-run-panel .dungeon-wave-track{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
+.dungeon-run-panel .dungeon-wave{flex-direction:row;align-items:center;gap:6px;min-height:0;padding:4px 10px 4px 5px;border-radius:999px}
+.dungeon-run-panel .dungeon-wave .monster-art{width:22px;height:22px;margin:0;border-radius:50%}
+.dungeon-run-panel .dungeon-wave strong{font-size:11.5px;white-space:nowrap}
+.dungeon-run-panel .dungeon-scene{margin:0}
+@media(max-width:767px){.dungeon-run-panel .dungeon-run-header{flex-direction:row;align-items:center}.dungeon-run-panel .dungeon-run-header>button{flex:none;width:auto}}
+@media(max-width:767px){.dungeon-run-panel .dungeon-run-header h2{font-size:19px}}
