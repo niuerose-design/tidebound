@@ -235,7 +235,10 @@ function OtherworldFx({ fx, pnl }: { fx: CombatFx; pnl: number }) {
         {shots > 0 && Array.from({ length: shots }, (_, n) => <i key={n} className="ow-tracer" style={i(n, { '--spread': kind === 'shotgun' ? `${(n - 2) * 4}deg` : owSpread(n), '--t': `${n * (kind === 'shotgun' ? 0 : 70)}ms` })}/>)}
         {shots > 0 && Array.from({ length: Math.min(shots, 4) }, (_, n) => <i key={`s${n}`} className="ow-casing" style={i(n)}/>)}
         {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-scope"><b/></i>}
-        {kind === 'deadeye' && <><i className="ow-scope late"><b/></i><i className="ow-mark"/></>}
+        {kind === 'deadeye' && <><i className="ow-scope late"><b/></i>{Array.from({ length: 3 }, (_, n) => <i key={`m${n}`} className="ow-mark" style={i(n)}/>)}
+            {Array.from({ length: 9 }, (_, n) => <i key={`d${n}`} className="ow-tracer" style={i(n, { '--spread': `${(n - 4) * 3.2}deg`, '--t': `${550 + n * 55}ms` })}/>)}
+            {Array.from({ length: 6 }, (_, n) => <i key={`c${n}`} className="ow-casing" style={i(n)}/>)}
+            <i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 14 }, (_, n) => <i key={`p${n}`} className="ow-spark" style={i(n, { '--ang': `${n * 360 / 14}deg` })}/>)}</>}
         {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-beam"/>}
         {kind === 'ap' && <><i className="ow-beam ap"/><i className="ow-crack"/>{Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-rust" style={i(n, { '--ang': `${n * 45 + 10}deg` })}/>)}</>}
         {kind === 'flash' && <i className="ow-whiteout"/>}
