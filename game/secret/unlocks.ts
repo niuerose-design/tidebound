@@ -35,6 +35,9 @@ export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'abyssAscetic', test: s => (s.abyssBest || 0) >= 50 },
     { job: 'variantScholar', test: s => variantKills(s) >= 1000 },
     { job: 'altarPilgrim', test: s => (s.altar?.tries || 0) >= 100 },
+    // v3.246 정수 20,000개 보유 · 세계석 3,000개 보유.
+    { job: 'essenceDevourer', test: s => (s.essence || 0) >= 20000 },
+    { job: 'pearlMiner', test: s => (s.pearls || 0) >= 3000 },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */
 export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);

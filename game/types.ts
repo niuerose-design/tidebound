@@ -93,7 +93,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;
@@ -292,6 +292,15 @@ export type Skill = {
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v3.231 이계 액티브: 쓸 때 태우는 세계석 연료(이계 전투 직업만 씀, data/otherworld.ts FUEL). */
     fuelCost?: number;
+    /** v3.246 정수 소모(정수 포식자): 쓸 때마다 정수를 이만큼 씁니다. 모자라면 나가지 않습니다(허기). */
+    essenceCost?: number;
+    /** v3.246 이 기술로 처치하면 기본 능력치 하나가 무작위로 +1(State.devoured, 환생하면 초기화). */
+    devourStat?: boolean;
+    /** v3.246 채굴(세계석 광부): 맞히면 이 확률로 세계석 1개(치명타면 2배). 패시브 mineBonus가 더해집니다. */
+    mineChance?: number;
+    mineBonus?: number;
+    /** v3.246 채굴이 쌓일수록 오르는 채굴 확률(세계석 광부 패시브): 캔 세계석 per개마다 +bonus, 최대 cap. */
+    mineGrowth?: { per: number; bonus: number; cap: number };
     /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
     magazineBonus?: number;
     /** v3.239 패시브: 장착하면 ids 액티브의 피해 배율 ×(1 + value)(여럿이면 더함). 겹영창 4 · 5차 패시브가 1~3차 주문을 키웁니다. */
@@ -460,6 +469,8 @@ export type Enemy = {
 export type CombatHit = { kind: 'main' | 'follow'; value: number; raw?: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
 export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
+    /** v3.246 아제로스: 쓴 정수 · 포식 처치로 오른 기본 능력치 · 채굴한 세계석 · 채굴 기술로 친 행동. */
+    essenceSpent?: number; devour?: Attribute; mined?: number; mineSwing?: boolean;
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** v3.211 극한돌파 전용 연출이 열린 스킬로 한 행동. */
@@ -590,6 +601,10 @@ export type State = {
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     /** v3.231 이계 연료(세계석 1 = 100). fuelAuto: 자동 충전 때 남길 세계석(없으면 자동 충전 끔). */
     fuel?: number;
+    /** v3.246 정수 포식으로 오른 기본 능력치(환생하면 초기화) · 평생 쓴 정수 · 평생 채굴한 세계석. */
+    devoured?: Partial<Record<Attribute, number>>;
+    essenceSpent?: number;
+    pearlsMined?: number;
     /** v3.240 동시 시전 기록(업적용): 4개 이상 묶음 횟수 · 가장 큰 묶음. */
     chantFull?: number;
     chantBest?: number;

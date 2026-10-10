@@ -217,7 +217,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
@@ -245,7 +245,7 @@ const OW_FX: Record<string, string> = {
     buyOrder: 'buy', shortSell: 'short', leverage: 'leverage', stopLoss: 'stop', shortSqueeze: 'squeeze', circuitBreaker: 'circuit', blackSwan: 'swan',
 };
 /** 이계 스킬(과 재장전)은 상대 카드 대신 사냥터 배경의 몬스터 위에서만 연출합니다. */
-const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId]);
+const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId] || !!fx.essence || !!fx.mineSwing);
 const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
 const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
 function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: boolean }) {
@@ -278,6 +278,33 @@ function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: bool
         {kind === 'reload' && Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-round" style={i(n)}/>)}
         {(fx.skillId === 'leverage' || fx.skillId === 'blackSwan' || fx.skillId === 'shortSqueeze') && <b className="ow-mult">손익 {swing >= 0 ? '+' : ''}{Math.round(swing * 100)}% → ×{scale.toFixed(2)}</b>}
         <strong className="ow-title">{kind === 'reload' ? 'RELOAD' : kind === 'deadeye' ? 'DEAD EYE' : kind === 'nuke' ? 'TACTICAL NUKE' : kind === 'swan' ? 'BLACK SWAN' : kind === 'circuit' ? 'CIRCUIT BREAKER' : kind === 'leverage' ? scale >= 1 ? 'LEVERAGE' : 'MARGIN CALL' : kind === 'snipe' && fx.critical ? 'HEADSHOT' : fx.title}</strong>
+    </div>;
+}
+const ATTR_NAMES: Record<string, string> = { str: '힘', dex: '민첩', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
+/**
+ * v3.246 아제로스 정수 포식자 · 세계석 광부 전용 연출(이계 연출과 같은 몬스터 좌표 --tx · --ty).
+ * 정수 소모 기술: 정수가 손으로 빨려 들어와 응축 → 몬스터 위에 허공의 아가리가 열려 이빨로 물어뜯고 녹빛 정수가 튐. 포식 처치면 혼이 시전자에게 흘러와 룬 고리와 함께 능력치 +1.
+ * 채굴 기술: 곡괭이가 호를 그리며 내리찍고 균열 · 먼지 · 돌조각. 채굴하면 세계석 원석이 튀어 올랐다가 위쪽(HUD)으로 날아감.
+ */
+function AzerothFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra });
+    if (fx.essence) return <div className={`scene-fx ow-fx az-fx az-devour ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
+        <i className="scene-fx-dark"/>
+        {Array.from({ length: 9 }, (_, n) => <i key={`s${n}`} className="az-stream" style={i(n, { '--x0': `${((n * 53) % 160) - 60}px`, '--y0': `${-150 - (n * 37) % 60}px` })}/>)}
+        <i className="az-charge"/>
+        <i className="az-maw"><i className="az-void"/><i className="az-jaw top"/><i className="az-jaw bot"/></i>
+        {Array.from({ length: 12 }, (_, n) => <i key={`o${n}`} className="az-ooze" style={i(n, { '--ang': `${n * 30 + 7}deg`, '--r': `${50 + (n * 23) % 70}px` })}/>)}
+        <b className="az-cost">정수 −{fx.essence.toLocaleString()}</b>
+        {fx.devour && <>{Array.from({ length: 8 }, (_, n) => <i key={`w${n}`} className="az-wisp" style={i(n)}/>)}<i className="az-rune"/><b className="az-gain">{ATTR_NAMES[fx.devour] || fx.devour} +1<small>포식한 힘을 몸에 새김</small></b></>}
+        <strong className="ow-title az-title">{fx.title}</strong>
+    </div>;
+    return <div className={`scene-fx ow-fx az-fx az-mine ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
+        <i className="az-trail"/>
+        <i className="az-pick"><svg viewBox="0 0 120 120" aria-hidden="true"><rect x="56" y="18" width="9" height="92" rx="4" fill="#9a6a38" transform="rotate(-38 60 64)"/><path d="M14 40 Q48 2 104 22 Q62 22 30 50 Z" fill="#c9d3da" stroke="#2b3237" strokeWidth="1.5" transform="rotate(-38 60 64)"/><path d="M14 40 L8 52 L22 46 Z" fill="#eef4f7" transform="rotate(-38 60 64)"/></svg></i>
+        <i className="az-crack"/><i className="az-dust"/>
+        {Array.from({ length: 10 }, (_, n) => <i key={`r${n}`} className="az-rock" style={i(n, { '--ang': `${-160 + n * 15}deg`, '--r': `${40 + (n * 29) % 70}px` })}/>)}
+        {(fx.mined || 0) > 0 && <><i className="az-gem"/>{Array.from({ length: 6 }, (_, n) => <i key={`g${n}`} className="az-glint" style={i(n, { '--ang': `${n * 60}deg` })}/>)}<b className="az-mined">세계석 +{fx.mined}</b></>}
+        <strong className="ow-title az-title">{(fx.mined || 0) > 0 && fx.critical ? '대박 원석!' : fx.title}</strong>
     </div>;
 }
 /**
