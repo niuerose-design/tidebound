@@ -11,7 +11,6 @@ export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starfor
 export const PRIMAL_DROP_PITY = 3200;
 /** v3.58 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
 export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
-export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
 /**
  * 감정 가격의 환생 배율(현재 환생 횟수 기준이라 승천하면 다시 낮아집니다).
  * v3.68 지수 10^(환생 / scale)과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 지수만 쓰면 골드 수입을 크게 앞질러 후반 감정이 막힙니다.

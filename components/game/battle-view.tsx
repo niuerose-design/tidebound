@@ -74,6 +74,8 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     const playerStats = useMemo(() => cachedStats(base), [base]);
     // v3.19 알림·카드 켜기/끄기(설정 → 화면 알림). 꺼도 진행은 그대로입니다.
     const show = useNotices();
+    // v3.228 사냥터 난이도 카드에 넣는 집중 사냥 줄은 동기화 상태로만 다시 만들어, 재생 프레임마다 난이도 카드(memo)가 다시 그려지지 않게 합니다.
+    const targetStrip = useMemo(() => <TargetStrip base={base} busy={busy} send={send} inline/>, [base, busy, send]);
     return <>
     <BattleHeading base={base} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} busy={busy} send={send} setView={setView} onSwitchSlot={onSwitchSlot}/>
     <BattleNotices base={base} send={send} setView={setView}/>
@@ -86,7 +88,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     {tutorialActive(base) && <div className="battle-top-tutorial"><TutorialCard s={base} send={send} busy={busy} setView={setView}/></div>}
     <SessionMetrics base={base}/>
     {show('liveRates') && <LiveRatesCard s={base} compact/>}
-    {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={<TargetStrip base={base} busy={busy} send={send} inline/>}/> : <TargetStrip base={base} busy={busy} send={send}/>}
+    {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={targetStrip}/> : <TargetStrip base={base} busy={busy} send={send}/>}
     <BattleArena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
     <BattleSkills base={base} setView={setView}/>
     </div>

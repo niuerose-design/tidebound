@@ -397,3 +397,5 @@
 /* v25.9 사이드바 잠금 표시: 숨기지 않고 해금 조건만 보여줍니다. */
 .game-sidebar .nav-locked { opacity:.62; }
 .game-sidebar .nav-lock { margin-left:auto; display:inline-flex; align-items:center; gap:3px; font-size:10px; color:#8ea7a4; }
+/* v3.228 나눠 받는 화면을 처음 열 때 잠깐 보이는 자리(레이아웃이 튀지 않게 높이만 잡아 둠). */
+.panel-loading { min-height:60vh; }

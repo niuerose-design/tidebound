@@ -111,10 +111,12 @@
 .auto-run-state { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: #0f2227; white-space: nowrap; }
 .auto-run-state i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .auto-run-state.on { color: #a4e9ba; border-color: #3f6b5e; }
-.auto-run-state.on i { box-shadow: 0 0 0 0 #a4e9ba88; animation: auto-run-pulse 1.8s ease-out infinite; }
+/* v3.228 맥동은 box-shadow 대신 가상 요소의 크기 · 투명도로(합성만, 매 프레임 다시 그리지 않음). 자동 사냥 내내 돌아 모바일 잔렉의 원인이었습니다. */
+.auto-run-state.on i { position: relative; }
+.auto-run-state.on i::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #a4e9ba; opacity: 0; animation: auto-run-pulse 1.8s ease-out infinite; pointer-events: none; }
 .auto-run-state.off { color: #e3c28d; border-color: #6b6236; }
-@keyframes auto-run-pulse { 0% { box-shadow: 0 0 0 0 #a4e9ba88; } 70%, 100% { box-shadow: 0 0 0 6px #a4e9ba00; } }
-@media (prefers-reduced-motion: reduce) { .auto-run-state.on i { animation: none; } }
+@keyframes auto-run-pulse { 0% { transform: scale(1); opacity: .55; } 70%, 100% { transform: scale(2.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .auto-run-state.on i::after { animation: none; } }
 .auto-run-status { margin-bottom: 18px; }
 .panel.auto-run-status { padding: 20px 22px; }
 .auto-run-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -343,6 +345,8 @@
 .scene-foe.boss { width: 120px; height: 120px; top: calc(50% - 56px); color: #f3dca0; }
 .scene-foe .monster-silhouette { width: 100%; height: 100%; }
 @keyframes foeDrift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+/* v3.228 그림자 필터가 붙은 채 계속 떠다니므로 자기 층으로 올려, 그림자를 한 번만 그리고 위치만 옮깁니다. */
+.scene-foe { will-change: transform; }
 @media (max-width: 767px) { .scene-foe { right: 14px; top: calc(50% - 20px); width: 84px; height: 84px; } .scene-foe.boss { width: 104px; height: 104px; top: calc(50% - 30px); } }
 @media (prefers-reduced-motion: reduce) { .scene-foe { animation: none; } }
 .book-icon .monster-art { width: 56px; height: 56px; }

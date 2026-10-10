@@ -241,4 +241,3 @@ export const STORY: StoryScene[] = [
         '배는 이미 선착장에 묶여 있었다. 이야기는, 다음 세계에서 계속된다.',
     ] },
 ];
-export const storyById = (id: string) => STORY.find(x => x.id === id);

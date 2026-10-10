@@ -53,7 +53,7 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             const def = isBoss && activeDungeon.bossMonster ? monsterById(activeDungeon.bossMonster) : monsterById(id);
             return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={def?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{def?.name || id}</strong></div>;
         })}</div>}
-        {/* v3.233 사냥 화면과 같은 장면: 몬스터 발밑 체력바 · 스킬 연출 · 피해 숫자 · 왼쪽 아래 내 체력바. 아래 카드는 체력바 · 정보만. */}
+        {/* v3.234 사냥 화면과 같은 장면: 몬스터 발밑 체력바 · 스킬 연출 · 피해 숫자 · 왼쪽 아래 내 체력바. 아래 카드는 체력바 · 정보만. */}
         <section className="battle-scene dungeon-scene"><SceneBackdrop/><div className="scene-shade"/>{s.enemy && !s.recovery && <MonsterArt id={s.enemy.id} boss={!!s.enemy.boss} size={128} className="scene-foe"/>}<FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud s={s} enemy={s.enemy && !s.recovery ? s.enemy : null} playerHp={playerStats.hp} effect={combatFx} combo={fxCombo}/>
             <div className="scene-copy"><span className="eyebrow">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span><h2>{s.enemy?.name || (s.recovery > 0 ? '출정 준비' : '다음 웨이브')}</h2></div>
         </section>
