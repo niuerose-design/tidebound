@@ -1731,3 +1731,50 @@
 @media(max-width:767px){.xen-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:10cqw;--sy:70cqh;--beam:22px}.xen-fx.xen-boss{--tx:calc(100cqw - 66px)}.xen-title{font-size:24px;top:12%}.xen-cells b{width:22px}.xen-gauge{left:2%;top:5%;padding:5px 7px 6px}.xen-lock{width:90px;height:90px;margin:-45px}}
 .fx-no-glow .xen-whiteout,.fx-no-glow .xen-fx .scene-fx-dark,.fx-no-glow .xen-beam.glow{display:none}
 @media(prefers-reduced-motion:reduce){.xen-fx i{display:none}.xen-title{animation-name:tideReduced}.battle-scene:has(.xen-fx) .ocean-art{animation:none}}
+/* v3.246 아제로스 정수 포식자 · 세계석 광부 연출(이계 연출과 같은 좌표: 몬스터 --tx · --ty, 시전자 --sx · --sy). */
+.az-fx{--az-ess:#a96bff;--az-core:#5ef2c8;--az-pearl:#8fe7ff;--az-ore:#d79a4a}
+.az-devour .scene-fx-dark{inset:0;background:#0a0512;animation:owDark 1.6s ease-in-out var(--fx-delay) both}
+.az-stream{left:calc(var(--sx) + 14px);top:calc(var(--sy) - 24px);width:10px;height:10px;margin:-5px;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,var(--az-ess) 50%,transparent 70%);box-shadow:0 0 14px var(--az-ess);animation:azStream .55s cubic-bezier(.5,0,.3,1) calc(var(--fx-delay) + var(--i) * 40ms) both}
+@keyframes azStream{0%{transform:translate(var(--x0),var(--y0)) scale(.4);opacity:0}20%{opacity:1}100%{transform:translate(0,0) scale(1.2);opacity:0}}
+.az-charge{left:calc(var(--sx) + 14px);top:calc(var(--sy) - 24px);width:70px;height:70px;margin:-35px;border-radius:50%;background:radial-gradient(circle,#fff 0 8%,var(--az-core) 22%,var(--az-ess) 45%,transparent 70%);mix-blend-mode:screen;animation:azCharge .7s ease-in var(--fx-delay) both}
+@keyframes azCharge{0%{scale:.2;opacity:0}70%{scale:1.2;opacity:1}100%{scale:.5;opacity:0}}
+.az-maw{left:var(--tx);top:var(--ty);width:200px;height:200px;margin:-100px;animation:azMaw 1.5s ease-out calc(var(--fx-delay) + .5s) both}
+@keyframes azMaw{0%{opacity:0;scale:.4}15%{opacity:1;scale:1}80%{opacity:1}100%{opacity:0;scale:1.1}}
+.az-maw i{position:absolute;display:block}
+.az-void{inset:36px;border-radius:50%;background:radial-gradient(circle,#0000 0 34%,#000c 52%,#2a0f3d 64%,#a96bff55 72%,transparent 74%);box-shadow:0 0 40px #a96bff88,inset 0 0 30px #000;animation:azVoid .3s ease-in-out calc(var(--fx-delay) + .5s) 3 alternate}
+@keyframes azVoid{to{box-shadow:0 0 70px #a96bffcc,inset 0 0 40px #000}}
+.az-jaw{left:30px;right:30px;height:36px;background:linear-gradient(#fff 0%,#e8dcff 40%,#b493ff 100%);clip-path:polygon(0 0, 100% 0, 100.0% 30%, 95.5% 100%, 90.9% 30%, 86.4% 100%, 81.8% 30%, 77.3% 100%, 72.7% 30%, 68.2% 100%, 63.6% 30%, 59.1% 100%, 54.5% 30%, 50.0% 100%, 45.5% 30%, 40.9% 100%, 36.4% 30%, 31.8% 100%, 27.3% 30%, 22.7% 100%, 18.2% 30%, 13.6% 100%, 9.1% 30%, 4.5% 100%, 0.0% 30%);filter:drop-shadow(0 0 8px var(--az-ess)) drop-shadow(0 0 2px #fff)}
+.az-jaw.top{top:56px;animation:azJawTop .45s cubic-bezier(.8,0,.2,1) calc(var(--fx-delay) + .8s) both}
+.az-jaw.bot{bottom:56px;transform:scaleY(-1);animation:azJawBot .45s cubic-bezier(.8,0,.2,1) calc(var(--fx-delay) + .8s) both}
+@keyframes azJawTop{0%{translate:0 -42px;opacity:0}40%{opacity:1}100%{translate:0 20px}}
+@keyframes azJawBot{0%{translate:0 42px;opacity:0}40%{opacity:1}100%{translate:0 -20px}}
+.az-ooze{left:var(--tx);top:var(--ty);width:14px;height:14px;margin:-7px;border-radius:50% 50% 50% 0;background:radial-gradient(circle at 35% 35%,#d8ffef,var(--az-core) 45%,#2b8f74);box-shadow:0 0 8px var(--az-core);animation:azOoze .9s cubic-bezier(.2,.7,.4,1) calc(var(--fx-delay) + 1.25s) both}
+@keyframes azOoze{from{transform:rotate(var(--ang)) translateX(0) scale(.3);opacity:1}to{transform:rotate(var(--ang)) translateX(var(--r)) scale(1) rotate(200deg);opacity:0}}
+.az-cost{left:var(--sx);top:calc(var(--sy) - 90px);font:600 13px/1 ui-monospace,monospace;color:var(--az-ess);text-shadow:0 0 8px var(--az-ess);white-space:nowrap;animation:barNumber 1s ease-out var(--fx-delay) both}
+.az-wisp{left:var(--tx);top:var(--ty);width:12px;height:12px;margin:-6px;border-radius:50%;background:radial-gradient(circle,#fff,var(--az-core) 50%,transparent 70%);box-shadow:0 0 14px var(--az-core);animation:azWisp 1s cubic-bezier(.4,0,.2,1) calc(var(--fx-delay) + 1.5s + var(--i) * 70ms) both}
+@keyframes azWisp{0%{translate:0 0;scale:.5;opacity:0}20%{opacity:1}100%{translate:calc(var(--sx) - var(--tx)) calc(var(--sy) - var(--ty) - 30px);scale:.6;opacity:0}}
+.az-rune{left:var(--sx);top:calc(var(--sy) - 20px);width:90px;height:90px;margin:-45px;border-radius:50%;border:2px solid var(--az-core);box-shadow:0 0 18px var(--az-core),inset 0 0 12px var(--az-core);animation:azRune 1.2s ease-out calc(var(--fx-delay) + 2.2s) both}
+@keyframes azRune{0%{scale:.3;opacity:0}20%{scale:1;opacity:1}100%{scale:1.6;opacity:0}}
+.az-gain{left:calc(var(--sx) - 30px);top:calc(var(--sy) - 110px);font:800 20px/1.1 var(--font-display,system-ui);color:var(--az-core);text-shadow:0 0 14px var(--az-core),0 2px 4px #000;white-space:nowrap;text-align:center;animation:azGain 1.6s ease-out calc(var(--fx-delay) + 2.2s) both}
+.az-gain small{display:block;font-size:11px;font-weight:600;color:#ece6f3}
+@keyframes azGain{0%{transform:translateY(10px) scale(.6);opacity:0}15%{transform:scale(1.15);opacity:1}30%{transform:scale(1)}85%{opacity:1}100%{transform:translateY(-50px);opacity:0}}
+.az-devour .az-title{color:#d9c2ff}
+.az-trail{left:calc(var(--tx) - 30px);top:calc(var(--ty) - 30px);width:150px;height:150px;margin:-75px;border-radius:50%;border:6px solid transparent;border-top-color:#ffe7b5;border-right-color:#ffe7b588;filter:blur(1px) drop-shadow(0 0 8px var(--az-ore));animation:azTrail .42s ease-out var(--fx-delay) both}
+@keyframes azTrail{0%{rotate:-120deg;opacity:0}50%{opacity:1}100%{rotate:10deg;opacity:0}}
+.az-pick{left:var(--tx);top:var(--ty);width:110px;height:110px;margin:-95px 0 0 -95px;transform-origin:85% 85%;filter:drop-shadow(0 0 6px #ffcf8a88);animation:azSwing .42s cubic-bezier(.6,0,.4,1) var(--fx-delay) both}
+.az-pick svg{width:100%;height:100%;overflow:visible}
+@keyframes azSwing{0%{rotate:-110deg;opacity:0}30%{opacity:1}90%{rotate:20deg;opacity:1}100%{rotate:20deg;opacity:0}}
+.az-crack{left:var(--tx);top:calc(var(--ty) + 10px);width:120px;height:120px;margin:-60px;background:conic-gradient(from 0deg,transparent 0 20deg,#ffd9a0 20deg 22deg,transparent 22deg 95deg,#ffd9a0 95deg 97deg,transparent 97deg 170deg,#ffd9a0 170deg 172deg,transparent 172deg 250deg,#ffd9a0 250deg 252deg,transparent 252deg 320deg,#ffd9a0 320deg 322deg,transparent 322deg);mask:radial-gradient(circle,transparent 12%,#000 14%,#000 58%,transparent 66%);filter:drop-shadow(0 0 6px var(--az-ore));animation:azCrack .9s ease-out calc(var(--fx-delay) + .3s) both}
+@keyframes azCrack{0%{scale:.2;opacity:1}100%{scale:1.2;opacity:0}}
+.az-dust{left:var(--tx);top:calc(var(--ty) + 40px);width:120px;height:40px;margin:-20px -60px;border-radius:50%;background:radial-gradient(ellipse,#b9a68e88,transparent 70%);animation:azDust 1s ease-out calc(var(--fx-delay) + .3s) both}
+@keyframes azDust{from{scale:.3;opacity:.9}to{scale:1.8 1.2;opacity:0;translate:0 -10px}}
+.az-rock{left:var(--tx);top:calc(var(--ty) + 10px);width:11px;height:9px;background:linear-gradient(135deg,#a89cb0,#6d6175 60%,#3d3544);clip-path:polygon(20% 0,100% 15%,85% 100%,0 70%);animation:azRock .8s cubic-bezier(.2,.7,.4,1) calc(var(--fx-delay) + .3s) both}
+@keyframes azRock{from{transform:rotate(var(--ang)) translateX(0);opacity:1}60%{opacity:1}to{transform:rotate(var(--ang)) translateX(var(--r)) rotate(260deg);opacity:0}}
+.az-gem{left:var(--tx);top:var(--ty);width:22px;height:28px;margin:-14px -11px;background:linear-gradient(160deg,#fff 0%,var(--az-pearl) 35%,#2f8fbf 70%,#bff4ff 100%);clip-path:polygon(50% 0,100% 35%,80% 100%,20% 100%,0 35%);filter:drop-shadow(0 0 8px var(--az-pearl));animation:azGem 1.5s cubic-bezier(.3,.7,.3,1) calc(var(--fx-delay) + .35s) both}
+@keyframes azGem{0%{translate:0 0;scale:.2;rotate:0deg}30%{translate:-10px -70px;scale:1.15;rotate:160deg}45%{translate:-10px -46px;scale:1;rotate:240deg}60%{translate:-10px -46px;rotate:240deg;opacity:1}100%{translate:calc(12cqw - var(--tx)) calc(-1 * var(--ty) + 10px);scale:.4;rotate:420deg;opacity:.2}}
+.az-glint{left:calc(var(--tx) - 10px);top:calc(var(--ty) - 60px);width:4px;height:4px;border-radius:50%;background:#fff;box-shadow:0 0 8px var(--az-pearl);animation:azGlint .6s ease-out calc(var(--fx-delay) + .8s) both}
+@keyframes azGlint{from{transform:rotate(var(--ang)) translateX(0);opacity:1}to{transform:rotate(var(--ang)) translateX(30px);opacity:0}}
+.az-mined{left:calc(var(--tx) - 40px);top:calc(var(--ty) - 110px);font:800 18px/1 var(--font-display,system-ui);color:var(--az-pearl);text-shadow:0 0 12px var(--az-pearl),0 2px 4px #000;white-space:nowrap;animation:azGain 1.4s ease-out calc(var(--fx-delay) + .5s) both}
+.az-mine .az-title{color:#ffe1a8;font-size:18px;top:16%}
+.az-mine.critical .az-title{color:var(--az-pearl)}
+@media(prefers-reduced-motion:reduce){.az-fx i,.az-fx svg{display:none}}

@@ -7,7 +7,7 @@ const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirt
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher', 'kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar', 'abyssAscetic', 'variantScholar', 'altarPilgrim']);
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher', 'kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar', 'abyssAscetic', 'variantScholar', 'altarPilgrim', 'essenceDevourer', 'pearlMiner']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
