@@ -2069,3 +2069,21 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @keyframes sceneDmg{0%{transform:translateY(8px) scale(.5);opacity:0}15%{transform:translateY(-6px) scale(1.15);opacity:1}30%{transform:translateY(-10px) scale(1)}80%{opacity:1}100%{transform:translateY(-46px);opacity:0}}
 @media(max-width:767px){.scene-dmg{font-size:19px}.scene-dmg.crit{font-size:25px}.scene-dmg.super{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.scene-dmg{animation:sceneDmgReduced 1s linear var(--fx-delay) both}@keyframes sceneDmgReduced{0%,80%{opacity:1}100%{opacity:0}}.skill-slip{transition:none}}
+/* v3.251 PC(768px 이상)도 장면을 맨 위로: 안내 → 장면 → 조작 줄 → 전투 스킬 → 난이도 · 집중 사냥 → 실시간 효율 → 누적 지표. */
+@media(min-width:768px){
+  .battle-console>.battle-top-tutorial{order:-1}
+  .battle-console>.battle-scene{order:1}
+  .battle-console>.battle-dock{order:2}
+  .battle-console>.battle-skills{order:3}
+  .battle-console>.tide-selector,.battle-console>.battle-target-strip{order:4}
+  .battle-console>.live-rates{order:5}
+  .battle-console>.session-metrics{order:6;margin-top:0}
+}
+/* v3.251 1181~1500px: 오른쪽 기록판 · 사냥터 목록을 가운데 열 아래로 내려 장면 열을 넓힙니다(전투 기록은 장면 안에도 있음). 왼쪽 나의 모험가는 그대로 왼쪽에 길게. */
+@media(min-width:1181px) and (max-width:1500px){
+  .battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}
+  .battle-character-column{grid-column:1;grid-row:1/span 2}
+  .battle-console{grid-column:2;grid-row:1}
+  .battle-utility-rail{grid-column:2;grid-row:2;display:grid;grid-template-columns:1.1fr 1fr;gap:13px;align-items:start}
+  .battle-stage-list,.battle-dungeon-list{max-height:260px}
+}
