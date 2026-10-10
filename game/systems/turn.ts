@@ -18,11 +18,14 @@ import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel }
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
-import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
+import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, fuelCovers, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
 import { recordIncome } from './income';
+import { autoFuel } from './otherworld';
+import { jobById } from '../data/classes';
+import { skillById } from '../data/skills';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -94,7 +97,9 @@ function tickTurn(s: State, rng: () => number) {
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
     const usable = s.skills.filter(id => canUse(s, id)), skillFinal = extremeFinalTable(s, usable), extremeFx = extremeFxTable(s, usable);
-    const player: Fighter = { name: s.name, job: s.job, cores: regionCores(s).length, onyx: wornOnyx(s), stats: a, hp: s.hp, skills: usable, cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(skillFinal ? { skillFinal } : {}), ...(extremeFx ? { extremeFx } : {}), ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
+    // v3.231 이계 전투 직업: 연료 자동 충전 → 연료 · 탄창 · 트레이더 손익을 전투원에 싣습니다.
+    const ow = otherworldFighter(s, usable);
+    const player: Fighter = { name: s.name, job: s.job, cores: regionCores(s).length, onyx: wornOnyx(s), stats: a, hp: s.hp, skills: usable, cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(skillFinal ? { skillFinal } : {}), ...(extremeFx ? { extremeFx } : {}), ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job), ...ow };
     const enemy: Fighter = { foe: true, foeId: e.id, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
@@ -108,6 +113,7 @@ function tickTurn(s: State, rng: () => number) {
     s.gold = Math.max(0, player.gold ?? s.gold);
     s.playerStun = player.stun;
     s.effects = player.effects || {};
+    if (player.fuel !== undefined) s.fuel = player.fuel;
     e.hp = enemy.hp;
     e.stun = enemy.stun;
     e.mana = enemy.mana;
@@ -189,7 +195,7 @@ export function advance(s: State, now: number, rng = Math.random) {
             tick(s, rng);
         }
         // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
-        if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
+        if (mark && sampleStable(s, mark) && fuelCovers(s, mark, count - warmup, budget - count)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
     finally { delete s.catchingUp; delete s.away; }
     if (away) s.event = live;
@@ -200,4 +206,17 @@ export function advance(s: State, now: number, rng = Math.random) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
         s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + Math.max(0, s.gold - before.gold), exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
     }
+}
+
+/** v3.231 이계 전투원 필드: 연료(자동 충전 포함) · 탄창(직업 + 장착 패시브) · 재장전 생략 · 트레이더 손익. 이계 직업이 아니면 빈 객체. */
+function otherworldFighter(s: State, usable: string[]): Partial<Fighter> {
+    const j = jobById(s.job);
+    if (!j?.fuelJob && !j?.magazine && !j?.trader) return {};
+    if (j.fuelJob) autoFuel(s);
+    const passives = usable.map(id => skillById(id)).filter(sk => sk?.type === 'passive');
+    return {
+        ...(j.fuelJob ? { fuel: s.fuel || 0 } : {}),
+        ...(j.magazine ? { magazine: j.magazine + passives.reduce((n, sk) => n + (sk!.magazineBonus || 0), 0), reloadSkip: Math.max(0, ...passives.map(sk => sk!.reloadSkip || 0)) } : {}),
+        ...(j.trader ? { pnl: s.marketPnl || 0 } : {}),
+    };
 }

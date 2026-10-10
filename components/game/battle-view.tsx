@@ -1,5 +1,7 @@
 'use client';
 import { displayTitle } from '@/game/data/titles';
+import { FUEL } from '@/game/data/otherworld';
+import { jobById } from '@/game/data/classes';
 import { TutorialCard } from './guidance-panels';
 import { tutorialActive } from '@/game/systems/guidance';
 import { AltarNotice } from './altar-notice';
@@ -116,10 +118,21 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
     {s.hackFeed?.broadcast && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>[해커 {s.hackFeed.broadcast.by}]</b><span>{s.hackFeed.broadcast.text}</span></div>}
     {s.hackFeed?.root && show('hacker') && <div className="event-banner hack-banner root-banner" role="status"><Sparkles size={15}/><b>ROOT ACCESS</b><span>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</span></div>}
+    {jobById(s.job)?.fuelJob && <FuelBanner s={s} send={send}/>}
     {show('altar') && <AltarNotice s={s} setView={setView}/>}
     {!s.lastOffline && show('tip') && <div className="voyage-brief"><Leaf size={16}/><span>{tipAt(tip)}</span></div>}
     </NoticeStack>;
 });
+
+/** v3.231 이계 연료: 남은 연료 · 절전 표시 · 세계석 충전 버튼 · 자동 충전(세계석 1,000개는 남김) 켜기/끄기. */
+function FuelBanner({ s, send }: { s: State; send: Send }) {
+    const fuel = s.fuel || 0, empty = fuel <= 0, auto = s.fuelAuto !== undefined;
+    return <div className={`event-banner fuel-banner ${empty ? 'hack-banner' : ''}`} role="status"><Gem size={15}/><b>이계 연료</b>
+        <span>{empty ? '절전 모드 · 이계 액티브가 나가지 않고 두 공격이 크게 줄었습니다.' : `${format(fuel)} / ${format(FUEL.cap)} (세계석 1 = 연료 ${FUEL.perPearl})`}</span>
+        {[10, 100, 1000].map(n => <button key={n} type="button" className="secondary small" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })}>세계석 {format(n)}</button>)}
+        <button type="button" className="secondary small" onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })}>{auto ? `자동 충전 끄기(${format(s.fuelAuto!)} 남김)` : '자동 충전 켜기'}</button>
+    </div>;
+}
 
 /** 누적 처치 · 도감 · 보유 재화 한 줄. */
 const SessionMetrics = memo(function SessionMetrics({ base: s }: { base: State }) {

@@ -21,6 +21,13 @@ export type Fighter = {
     job?: string;
     stats: Stats;
     hp: number;
+    /** v3.231 이계 연료. 이계 전투 직업의 플레이어만 숫자(사냥 중 상태와 이어짐), 없으면(결투 · 시뮬레이션 몸) 연료가 가득 찬 것으로 봅니다. */
+    fuel?: number;
+    /** v3.231 요원 탄창 크기(장착 패시브 포함) · 재장전 생략 확률. 있으면 액티브를 확률 · 대기 없이 순서대로 씁니다. */
+    magazine?: number;
+    reloadSkip?: number;
+    /** v3.231 트레이더 평가 손익 배율(레버리지 pnlScale이 봄). */
+    pnl?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
     dotHpCap?: number;
     skills: string[];
@@ -289,10 +296,14 @@ function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
  * 편성 순서대로 액티브 발동 판정을 굴려 처음 성공한 기술을 고릅니다. from부터 봅니다(추가 판정은 앞서 고른 기술 아래부터).
  * 각성기는 따로 굴리므로 여기서 빼고, 쓸 수 없는 상황(대기·조건·마나·이미 걸린 상태이상·면역)은 굴리지 않고 넘어갑니다.
  */
+/** v3.231 이계 액티브는 이계 전투 직업일 때만, 연료가 있을 때만 나갑니다(fuel이 없으면 가득 찬 몸). */
+const fuelOk = (a: Fighter, sk: Skill) => !sk.fuelCost || !!jobById(a.job)?.fuelJob && (a.fuel === undefined || a.fuel >= sk.fuelCost);
 function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rng: () => number, blocked: Set<string>, bonusAction: boolean, from = 0) {
-    for (const id of a.skills.slice(from)) {
+    // v3.231 탄창: 장착 순서대로 다음 칸부터 쓸 수 있는 첫 액티브를 확률 · 대기 없이 고릅니다(따로 고르는 곳은 act).
+    const mag = a.magazine && !from ? a.effects?.mag : undefined, ids = mag ? [...a.skills.slice(mag.next), ...a.skills.slice(0, mag.next)] : a.skills.slice(from);
+    for (const id of ids) {
         const base = anySkillById(id);
-        if (!base || base.type !== 'active' || base.awaken || blocked.has(id))
+        if (!base || base.type !== 'active' || base.awaken || (!mag && blocked.has(id)) || !fuelOk(a, base))
             continue;
         const e = effectiveSkill(base, a.ranks?.[id] || 1, a.mastery?.[id] || 0), candidate = shapeSkill(a, outsider(base, a, { ...e, multiplier: e.multiplier * signatureScale(base, a.job) }));
         // v21: 회복 기술은 체력이 가득 차도 시도합니다(회복이 필요 없으면 아래에서 피해가 줄어듦).
@@ -321,6 +332,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
             continue;
         if (candidate.statusOnly && candidate.effect && ENEMY_STATUS[candidate.effect] && isImmune(b, ENEMY_STATUS[candidate.effect]))
             continue;
+        if (mag) { mag.next = (a.skills.indexOf(id) + 1) % a.skills.length; return candidate; }
         if (rng() < candidate.chance)
             return candidate;
     }
@@ -467,6 +479,15 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         ev.stunned = true;
         return emit(`${a.name}: 기절로 행동 불가.${notes.length ? ' ' + notes.join(' · ') : ''}`);
     }
+    // v3.231 탄창: 다 쐈으면 이번 행동은 재장전(빠른 재장전이면 이 확률로 행동을 쓰지 않고 이어서 쏨).
+    if (a.magazine && !forced) {
+        const mag = (a.effects.mag ??= { left: a.magazine, next: 0 });
+        if (mag.left <= 0) {
+            mag.left = a.magazine;
+            if (!(a.reloadSkip && rng() < a.reloadSkip)) { ev.reload = true; return emit(`${a.name}: 재장전.${notes.length ? ' ' + notes.join(' · ') : ''}`); }
+            notes.push('빠른 재장전');
+        }
+    }
     let chosen: Skill | undefined;
     if (forced) {
         chosen = skillOf(a, forced.id);
@@ -502,6 +523,10 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const idleHeal = chosen?.effect === 'heal' && a.hp >= sa.hp * SKILL_FORMULA.healThreshold && !sa.healFocus && !chosen.healNoPenalty;
     let burned = 0;
     if (chosen) {
+        // v3.231 연료 · 탄창: 쓴 만큼 태우고 한 발을 씁니다. 레버리지: 피해 × (1 + 손익 × pnlScale).
+        if (chosen.fuelCost && a.fuel !== undefined) a.fuel = Math.max(0, a.fuel - chosen.fuelCost);
+        if (a.magazine && !forced && a.effects.mag) a.effects.mag.left--;
+        if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (a.pnl || 0) * chosen.pnlScale) };
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
         // v3.145 체력 소모: 현재 체력 × hpCost를 바칩니다(1은 남김). 피의 분노가 그만큼 더 세게 반응합니다.

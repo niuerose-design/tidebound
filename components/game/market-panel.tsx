@@ -5,7 +5,7 @@
  */
 import { useCallback, useState } from 'react';
 import { Coins, Landmark, Newspaper, OctagonAlert, TrendingUp, Wallet } from 'lucide-react';
-import { MARKET, MARKET_TICK_MS, STOCKS, buyCost, sellGain, marketCost, rumorText, stockById, type StockDef } from '@/game/data/market';
+import { MARKET, MARKET_TICK_MS, STOCKS, buyCost, sellGain, marketCost, rumorText, stockById, feeScaleOf, type StockDef } from '@/game/data/market';
 import { Heading, format, useNow } from './shared';
 import { useMarket, currentPrices, clearMarketTrades, type MarketStore, type MarketTrade } from './market-records';
 import type { PanelProps } from './panel-props';
@@ -64,10 +64,10 @@ function StockCard({ d, column, x, s, busy, send }: Pick<PanelProps, 's' | 'busy
     const [qty, setQty] = useState('1');
     const series = x?.prices.map(row => row[column]) || [], p = series.at(-1), day = series.length > 144 ? series.at(-145)! : series[0];
     const h = s.market?.holdings[d.id], n = Math.max(0, Math.floor(Number(qty) || 0)), coins = s.dungeonCoins || 0;
-    const buy = p ? buyCost(p, n) : null, sell = p ? sellGain(p, n) : null;
+    const buy = p ? buyCost(p, n, feeScaleOf(s)) : null, sell = p ? sellGain(p, n, feeScaleOf(s)) : null;
     // 수수료 올림 · 최소 1주화 때문에 어림값이 한두 주 넘칠 수 있어 실제 비용으로 줄입니다.
     let maxBuy = p ? Math.floor(coins / (p * (1 + MARKET.fee))) : 0;
-    while (p && maxBuy > 0 && buyCost(p, maxBuy).total > coins) maxBuy--;
+    while (p && maxBuy > 0 && buyCost(p, maxBuy, feeScaleOf(s)).total > coins) maxBuy--;
     return <article className="panel market-card dshop-card mkt-card">
         <header className="mkt-head"><div><span className="eyebrow">{d.risk}</span><h2>{d.name}</h2></div>
             <div className="mkt-price"><strong>{p ? format(p) : '-'}</strong>{p && day ? <small className={tone(p - day)}>{pct(p / day - 1)}{series.length > 144 ? ' · 24시간' : ''}</small> : null}</div></header>

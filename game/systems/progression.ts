@@ -166,8 +166,9 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
 export const CORE_PASSIVE = { base: .7, borrowed: .5, azerothBase: .4 } as const;
 export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
-    const azeroth = !!owner && worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
-    if (azeroth && !home) return 0;
+    // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.
+    const world = owner ? worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
+    if (world !== 'maple' && !home) return 0;
     const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
     return (base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps)) * (home ? 1 : CORE_PASSIVE.borrowed);
 }
@@ -381,6 +382,8 @@ export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.
 /** 전직 조건 목록. */
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
+    // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
+    if (j.pearlCost) return unlocked ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)

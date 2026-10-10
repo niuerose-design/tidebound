@@ -28,6 +28,7 @@ import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
 import { stageById } from '../data/world';
 import { KING, isSpecialId } from '../data/king';
 import { variantChances } from '../data/variants';
+import { FUEL } from '../data/otherworld';
 
 /**
  * warmup: 표본 앞에서 실제로 돌리되 비율 측정에서 빼는 턴 수(10분). 정산은 체력 · 마나가 가득 찬 채로 시작해 첫 사망이 평균보다 늦게 오므로,
@@ -44,7 +45,7 @@ type Counters = {
     jobMastery: Record<string, number>; skillPractice: Record<string, number>; book: Record<string, number>;
 };
 type Gains = Omit<Counters, 'level'>;
-type Mark = Counters & { rebirths: number; job: string; stage: string; pity: number; items: Set<string> };
+type Mark = Counters & { rebirths: number; job: string; stage: string; pity: number; items: Set<string>; fuel: number; fuelBought: number };
 
 const counters = (s: State): Counters => ({
     level: s.level, exp: s.exp, gold: s.gold, essence: s.essence || 0, pearls: s.pearls, sp: s.sp, kills: s.kills, deaths: s.deaths, rankExp: rankState(s).exp,
@@ -90,7 +91,7 @@ export const canSampleOffline = (s: State) => s.running && !s.dungeon && !isHack
 export function markOffline(s: State): Mark {
     resetOfflineTally();
     rareGains = emptyGains();
-    return { ...counters(s), rebirths: s.rebirths, job: s.job, stage: s.stage, pity: s.primalDropPity || 0, items: new Set(s.inventory.map(i => i.id)) };
+    return { ...counters(s), rebirths: s.rebirths, job: s.job, stage: s.stage, pity: s.primalDropPity || 0, items: new Set(s.inventory.map(i => i.id)), fuel: s.fuel || 0, fuelBought: s.fuelBought || 0 };
 }
 
 /**
@@ -98,6 +99,17 @@ export function markOffline(s: State): Mark {
  * 측정 구간에 레벨이 2 이상 올랐으면 성장이 빨라 표본 비율이 뒤를 대표하지 못하므로(막 시작한 캐릭터 등) 환산하지 않습니다. 이런 캐릭터는 턴이 가벼워 다 돌려도 부담이 작습니다.
  */
 export const sampleStable = (s: State, m: Mark) => canSampleOffline(s) && s.stage === m.stage && s.job === m.job && s.rebirths === m.rebirths && s.level - m.level <= OFFLINE_SAMPLE_MAX_LEVELS;
+/** v3.231 이계 연료: 측정 구간에 태운 연료(충전분 포함). */
+const fuelDrained = (s: State, m: Mark) => (m.fuel - (s.fuel || 0)) + ((s.fuelBought || 0) - m.fuelBought) * FUEL.perPearl;
+/**
+ * v3.231 남은 정산 동안 태울 연료를 지금 연료 + 자동 충전으로 감당할 수 있는지. 못 하면 환산하지 않고 남은 턴을 다 돌립니다
+ * (연료가 떨어진 뒤의 절전 모드를 실제로 계산해야 하므로). 감당하면 환산 때 그만큼 연료 · 세계석을 뺍니다(extrapolateOffline).
+ */
+export function fuelCovers(s: State, m: Mark, turns: number, remaining: number) {
+    if (!jobById(s.job)?.fuelJob) return true;
+    const need = fuelDrained(s, m) * remaining / Math.max(1, turns), spare = s.fuelAuto === undefined ? 0 : Math.max(0, (s.pearls || 0) - s.fuelAuto) * FUEL.perPearl;
+    return need <= (s.fuel || 0) + spare;
+}
 
 /**
  * 측정 구간(turns턴)에 늘어난 양에서 희귀 처치 · 일회성 보상을 뺀 만큼을 remaining턴만큼 비례해 더합니다. 줄어든 값(소비 · 사망 손실 등)은 더하지 않습니다.
@@ -108,6 +120,15 @@ export function extrapolateOffline(s: State, m: Mark, turns: number, remaining: 
     const g = gainsSince(s, m);
     addGains(g, rareGains, -1);
     g.pearls -= oneTimeRewards.pearls; g.sp -= oneTimeRewards.sp; g.essence -= oneTimeRewards.essence;
+    // v3.231 이계 연료: 측정 구간의 충전(세계석 지출)은 세계석 수입에서 빼지 않고, 남은 정산만큼 비례해 태웁니다(모자라면 자동 충전, fuelCovers가 감당할 때만 여기로 옴).
+    const fuelJob = !!jobById(s.job)?.fuelJob, bought = fuelJob ? (s.fuelBought || 0) - m.fuelBought : 0;
+    g.pearls += bought;
+    if (fuelJob) {
+        const drain = Math.round(fuelDrained(s, m) * k), short = Math.max(0, drain - (s.fuel || 0)), buy = Math.ceil(short / FUEL.perPearl);
+        s.fuel = Math.max(0, (s.fuel || 0) + buy * FUEL.perPearl - drain);
+        s.pearls -= buy;
+        s.fuelBought = (s.fuelBought || 0) + buy;
+    }
     // 측정 구간에 가방에 들어온 새 장비: 늘린 수만큼 가방 남은 칸까지는 분해 정수, 넘치는 몫은 골드(가방이 찼을 때의 자동 판매와 같은 값).
     const fresh = s.inventory.filter(i => !m.items.has(i.id) && !keepsAcrossLives(i)), items = grow(fresh.length), room = Math.max(0, inventoryCap() - s.inventory.length);
     const avg = (f: (i: State['inventory'][number]) => number) => fresh.length ? fresh.reduce((n, i) => n + f(i), 0) / fresh.length : 0;

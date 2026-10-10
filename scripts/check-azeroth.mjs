@@ -1,4 +1,4 @@
-// v3.229 아제로스 완성 점검(기획안 ③ 원칙): 아제로스 직업을 다 키운 상태(직업 숙달 · 스킬 숙련 완료 · 계보 기록 상한)에서
+// v3.229 아제로스 완성 점검(기획안 ③ 원칙) · v3.231 이계(연료 +30% · 절전 −50%): 아제로스 직업을 다 키운 상태(직업 숙달 · 스킬 숙련 완료 · 계보 기록 상한)에서
 // 같은 차수 메이플 직업(같은 상태)의 공격 기대값 중앙값보다 +10%(±5%) 안에 드는지 봅니다. 물리 · 마법은 따로 중앙값을 냅니다.
 // 공격 기대값 = 전투력의 공격 몫(powerParts.offense)에서 보스 피해를 뺀 값. 몸은 check-tier5와 같은 엔드 몸(Lv.100 · 환생 100 · 태초 22성 4부위).
 // 기록(까미 · 누리 300, 지역 코어 각성 5, 칠흑 장신구 7종 각성 5 · 처치, 무릉도장 200층, 변종 3,000, 신 도전 300)은 모든 직업에 똑같이 채워 공용 보너스는 비교에서 상쇄됩니다.
@@ -65,7 +65,8 @@ function body(j) {
     return s;
 }
 
-const TARGET = 1.1, BAND = .05, bad = [];
+// v3.231 이계: 연료가 가득일 때 메이플 +30%, 절전 모드(연료 0) −50%. 트레이더는 평가 손익 0(보유 없음)으로 잽니다.
+const TARGET = { azeroth: 1.1, otherworld: 1.3 }, SAVING = .5, BAND = .05, bad = [];
 for (const tier of [4, 5]) {
     const rows = [];
     for (const j of JOBS.filter(j => j.tier === tier && !j.retired && j.attack >= .5)) {
@@ -77,18 +78,21 @@ for (const tier of [4, 5]) {
         // v3.230 무릉도장 200층 · 변종 3,000 · 신 도전 300(기록 상한).
         Object.assign(s, { abyssBest: 200, altar: { tries: 300 }, variantBook: { [MONSTERS_FIRST]: { giant: 3000 } } });
         s.inventory = ONYX_BOSSES.map((b, i) => ({ id: 'onyx' + i, slot: 'charm', style: 'balanced', rarity: 6, power: 1, level: 1, enhance: 0, name: b.id, affixes: [], onyx: b.id, onyxRank: 5 }));
+        s.fuel = 100_000;
         loadout(s, j, attributesFor(j).magic);
-        const st = stats(s), world = LINEAGES.find(l => l.id === lineageOf(j))?.world || 'maple';
-        rows.push({ name: j.name, world, support: j.tree === 'support', phys: st.attack >= st.magic, offense: powerParts(st).offense / (1 + (st.bossDamage || 0) / 2) });
+        const st = stats(s), world = LINEAGES.find(l => l.id === lineageOf(j))?.world || 'maple', off = x => powerParts(x).offense / (1 + (x.bossDamage || 0) / 2);
+        rows.push({ name: j.name, world, support: j.tree === 'support', phys: st.attack >= st.magic, offense: off(st), saving: world === 'otherworld' ? off(stats({ ...s, fuel: 0 })) : undefined });
     }
     const median = phys => { const a = rows.filter(r => r.world === 'maple' && r.phys === phys).map(r => r.offense).sort((x, y) => x - y); return a[a.length >> 1]; };
     const ref = { true: median(true), false: median(false) };
     console.log(`${tier}차 메이플 중앙값 물리 ${Math.round(ref.true).toLocaleString()} · 마법 ${Math.round(ref.false).toLocaleString()}`);
-    for (const r of rows.filter(r => r.world === 'azeroth' && !r.support)) {
-        const ratio = r.offense / ref[r.phys], ok = Math.abs(ratio - TARGET) <= BAND;
+    for (const r of rows.filter(r => r.world !== 'maple' && !r.support)) {
+        const ratio = r.offense / ref[r.phys], ok = Math.abs(ratio - TARGET[r.world]) <= BAND;
+        const saving = r.saving === undefined ? undefined : r.saving / ref[r.phys], savingOk = saving === undefined || Math.abs(saving - SAVING) <= BAND;
         if (!ok) bad.push(`${r.name} ${ratio.toFixed(3)}`);
-        console.log(`${ok ? '  ' : '✗ '}${r.name} ${r.phys ? '물리' : '마법'} ×${ratio.toFixed(3)}`);
+        if (!savingOk) bad.push(`${r.name} 절전 ${saving.toFixed(3)}`);
+        console.log(`${ok && savingOk ? '  ' : '✗ '}${r.name} ${r.phys ? '물리' : '마법'} ×${ratio.toFixed(3)} (목표 ×${TARGET[r.world]})${saving === undefined ? '' : ` · 절전 ×${saving.toFixed(3)}`}`);
     }
 }
-if (bad.length) { console.error(`아제로스 완성치가 메이플 +10%(±5%)를 벗어남: ${bad.join(', ')}`); process.exit(1); }
-console.log('아제로스 완성치 모두 메이플 +10%(±5%) 안');
+if (bad.length) { console.error(`완성치가 목표(아제로스 메이플 +10% · 이계 +30% · 절전 −50%, ±5%)를 벗어남: ${bad.join(', ')}`); process.exit(1); }
+console.log('아제로스 · 이계 완성치 모두 목표(±5%) 안');

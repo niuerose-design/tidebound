@@ -19,6 +19,8 @@ import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { supportMultiplier, supportAmount, commandBonus } from './support';
+import { TRADER, FUEL } from '../data/otherworld';
+import { powerSaving } from './otherworld';
 import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
@@ -212,6 +214,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const command = commandBonus(s);
     if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
     for (const key in coreMul) mul(key as 'attack', [['skills', 1 + coreMul[key as 'attack']!]]);
+    // v3.231 이계: 트레이더 평가 손익(±25%, 헤지 패시브가 하한을 올림) · 연료가 없으면 절전 모드(두 공격 × FUEL.powerSave).
+    if (j.trader) { const floor = Math.max(TRADER.floor, ...usable.map(u => u.sk.pnlFloor ?? -Infinity)), r = Math.min(TRADER.cap, Math.max(floor, s.marketPnl || 0)); if (r) for (const k of ['attack', 'magic'] as const) mul(k, [['job', 1 + r]]); }
+    if (powerSaving(s)) for (const k of ['attack', 'magic'] as const) mul(k, [['job', FUEL.powerSave]]);
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
     mul('resist', [['job', mult(j.resist)], ['achievement', 1 + feats.resist]]);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));

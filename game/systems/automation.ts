@@ -71,7 +71,8 @@ export function rotationDue(s: State, at: RotationRule['at']) {
 }
 /** 다음 직업: 지금 바꿀 수 있고 아직 숙달하지 않은 직업 중 낮은 차수부터(같으면 직업 목록 순). 해커 계열은 빼고, 없으면 null. */
 export function nextRotationJob(s: State) {
-    return JOBS.filter(j => j.id !== s.job && !isHackerJob(j.id) && !jobMastered(s, j) && canChangeJob(s, j.id)).sort((a, b) => a.tier - b.tier)[0] || null;
+    // v3.231 아직 사지 않은 이계 직업(세계석 비용)은 자동으로 사지 않습니다.
+    return JOBS.filter(j => j.id !== s.job && !isHackerJob(j.id) && !(j.pearlCost && !s.unlockedJobs.includes(j.id)) && !jobMastered(s, j) && canChangeJob(s, j.id)).sort((a, b) => a.tier - b.tier)[0] || null;
 }
 /** 순회 시점이면 다음 직업으로 바꾸고 추천 편성을 장착합니다. 전투 사이에만. 바꿨으면 true. */
 export function runRotation(s: State, rng: () => number) {

@@ -26,7 +26,7 @@ assert.equal((await call('/api/auth')).data.loggedIn, true);
 let { data } = await call('/api/game', { type: 'sync' }, { expect: 200 });
 assert.equal(data.state.version, 8); assert.equal(data.state.name, '테스터까미', 'v26.8 signup name applied to the first fisher');
 assert.equal(data.catalog?.secret, false, 'v3.43 catalog rides with the game response (secrecy off by default)'); assert.ok(Object.keys(data.catalog.unlocks || {}).length, 'v3.62 hidden unlock states come from the server');
-assert.equal(data.catalog.skills?.length, 42, 'v3.47 secret-job skills come through the catalog (all of them while secrecy is off; v3.199~3.200 35 → 28, v3.220 아제로스 +8 → 36, v3.230 +6 → 42)');
+assert.equal(data.catalog.skills?.length, 39, 'v3.47 secret-job skills come through the catalog (all of them while secrecy is off; v3.199~3.200 35 → 28, v3.220 아제로스 +8 → 36, v3.230 +6 → 42, v3.231 해커 3개는 공개 이계 표로 → 39)');
 assert.ok(data.catalog.odds?.drop?.chance > 0, 'v3.52 drop odds come through the catalog while secrecy is off');
 assert.ok(Object.keys(data.catalog.stageAvg || {}).length > 10, 'v3.55 per-stage reward averages ride with the catalog');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));

@@ -61,7 +61,7 @@ test('v3.57 info hacking: leaks are built from the data, skip known ones and ent
 
 test('v3.57 info hacking: hackRun leak charges bits, counts per day, stores the fragment and refuses when nothing is left', async () => {
     const { newState: fresh } = await load('systems/state'), { act } = await import('./harness.mjs'), D = await load('data/hacker'), { leakPool } = await load('secret/leaks');
-    const s = fresh(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 500; act(s, { type: 'job', id: 'hacker' }, 0);
+    const s = fresh(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 3500; act(s, { type: 'job', id: 'hacker' }, 0);
     s.hacker.tier = 1; s.hacker.bits = 1000;
     act(s, { type: 'hackRun', id: 'leak' }, 0, () => 0);
     assert.equal(s.hacker.bits, 1000 - D.HACKER.leak.bits); assert.equal(s.hacker.leaks.length, 1); assert.equal(s.hacker.used.leak, 1);

@@ -131,6 +131,8 @@ export type StatusEffects = {
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
+    /** v3.231 요원 탄창: 남은 발 · 다음 칸(장착 순서 위치). */
+    mag?: { left: number; next: number };
     /** v3.198 태그(제로): 이번 전투에 마지막으로 쓴 태그 기술의 쪽(알파 · 베타). */
     tag?: 'alpha' | 'beta';
     /** v25 이번 전투에 無로 막은 횟수. */
@@ -287,6 +289,14 @@ export type Skill = {
     core?: { flat?: Partial<Record<'attack' | 'magic' | 'hp', number>>; scale?: Partial<Record<'attack' | 'magic' | 'hp', number>> };
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
+    /** v3.231 이계 액티브: 쓸 때 태우는 세계석 연료(이계 전투 직업만 씀, data/otherworld.ts FUEL). */
+    fuelCost?: number;
+    /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
+    magazineBonus?: number;
+    reloadSkip?: number;
+    /** v3.231 트레이더 액티브: 피해 × (1 + 평가 손익률 × pnlScale). 패시브 pnlFloor: 손익 배율의 하한. */
+    pnlScale?: number;
+    pnlFloor?: number;
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
     /** v26.6 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 가장 높은 눈이 1이면 ×low, 6이면 ×high(눈마다 같은 비율로 커짐). 손가락 자르기(diceTrim)로 양 끝을 좁힐 수 있습니다. */
@@ -472,6 +482,8 @@ export type CombatEvent = {
     followUp?: { index: number; power: number };
     /** v25: 타임 리와인드. v3.198부터 나만 처음 상태로(상대는 그대로). */
     restored?: boolean;
+    /** v3.231 요원 재장전으로 쓴 행동. */
+    reload?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
     /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */
@@ -566,6 +578,13 @@ export type State = {
     bossLootMiss?: number;
     /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
+    /** v3.231 이계 연료(세계석 1 = 100). fuelAuto: 자동 충전 때 남길 세계석(없으면 자동 충전 끔). */
+    fuel?: number;
+    fuelAuto?: number;
+    /** v3.231 연료로 바꾼 세계석 누계(부재중 정산 환산이 측정 구간의 충전을 셈). */
+    fuelBought?: number;
+    /** v3.231 트레이더: 동기화 때 서버가 구한 평가 손익 배율(가중 · 자름 전 손익률 × 포지션 비중). */
+    marketPnl?: number;
     coreSlot?: string;
     /** v3.210 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
     lv1AbyssBest?: number;

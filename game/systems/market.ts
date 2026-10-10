@@ -6,7 +6,10 @@
  * - 시세는 저장하지 않습니다. 틱 t의 가격은 t − warm 틱부터 평균에서 시작한 평균 회귀 과정(logP ← λ · logP + σ · ε − σ²/2)을 돌려 구하므로
  *   어느 서버 인스턴스에서 계산해도 같습니다. 화면 코드는 이 파일을 가져가지 않습니다(data/market.ts만).
  */
-import { MARKET, STOCKS, stockById, marketTick, buyCost, sellGain, type MarketFeed } from '../data/market';
+import type { State } from '../types';
+import { MARKET, STOCKS, stockById, marketTick, buyCost, sellGain, feeScaleOf, type MarketFeed } from '../data/market';
+import { TRADER } from '../data/otherworld';
+import { jobById } from '../data/classes';
 import { addLog } from './state';
 import type { ActionHandlers } from './actions/types';
 
@@ -116,7 +119,7 @@ export const marketActions: ActionHandlers = {
         if (blocked) throw Error(blocked);
         const qty = qtyOf(a.value), w = marketWindow(now), price = w.rows[w.rows.length - 1][STOCKS.indexOf(def)], held = m.holdings[def.id];
         if (side === 'buy') {
-            const c = buyCost(price, qty);
+            const c = buyCost(price, qty, feeScaleOf(s));
             if ((s.dungeonCoins || 0) < c.total) throw Error(`던전 주화가 부족합니다 (필요 ${c.total.toLocaleString()}).`);
             s.dungeonCoins = (s.dungeonCoins || 0) - c.total;
             s.market = m;
@@ -125,10 +128,25 @@ export const marketActions: ActionHandlers = {
             return;
         }
         if (!held || held.qty < qty) throw Error(`${def.name}을(를) ${qty.toLocaleString()}주 갖고 있지 않습니다(보유 ${(held?.qty || 0).toLocaleString()}주).`);
-        const g = sellGain(price, qty), part = held.qty === qty ? held.cost : Math.round(held.cost * qty / held.qty), pnl = g.net - part;
+        const g = sellGain(price, qty, feeScaleOf(s)), part = held.qty === qty ? held.cost : Math.round(held.cost * qty / held.qty), pnl = g.net - part;
         s.dungeonCoins = (s.dungeonCoins || 0) + g.net;
         if (held.qty === qty) delete m.holdings[def.id]; else m.holdings[def.id] = { qty: held.qty - qty, cost: held.cost - part };
         m.realized = (m.realized || 0) + pnl;
         addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매도 · ${price.toLocaleString()} · 주화 +${g.net.toLocaleString()} (수수료 ${g.fee}) · 손익 ${pnl >= 0 ? '+' : ''}${pnl.toLocaleString()}`, pnl >= 0 ? 'reward' : 'system');
     },
 };
+
+/**
+ * v3.231 트레이더 평가 손익: 보유 종목을 지금 시세로 매긴 평가액 ÷ 원금 − 1, 평가액이 TRADER.positionFull 주화 아래면 그 비율만큼 줄입니다.
+ * 트레이더 계보가 아니면 0. 자르기(±25%, 헤지)는 능력치 계산에서 합니다. 시세 창은 인스턴스에서 나눠 쓰므로 동기화마다 불러도 가볍습니다.
+ */
+export function traderPnl(s: State, now: number) {
+    if (!jobById(s.job)?.trader) return 0;
+    const held = Object.entries(s.market?.holdings || {}).filter(([, h]) => h.qty > 0);
+    if (!held.length) return 0;
+    const w = marketWindow(now), last = w.rows[w.rows.length - 1];
+    let value = 0, cost = 0;
+    for (const [id, h] of held) { const i = STOCKS.findIndex(d => d.id === id); if (i < 0) continue; value += last[i] * h.qty; cost += h.cost; }
+    if (cost <= 0) return 0;
+    return (value / cost - 1) * Math.min(1, value / TRADER.positionFull);
+}
