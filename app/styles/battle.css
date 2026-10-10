@@ -1898,3 +1898,43 @@
 @keyframes slipLife{0%,82%{filter:none}100%{filter:opacity(0)}}
 @media(max-width:767px){.skill-receipt{bottom:64%}.skill-slip{font-size:13px}.skill-slip.big{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.skill-slip{animation:none}}
+/* v3.248 2단계 공용 연출(CastFx): 내 캐릭터(--me-x · --me-y) → 몬스터(--foe-x · --foe-y). 투사체는 타격 박자보다 먼저 출발해 피해 숫자와 함께 닿습니다. */
+.cast-layer{--hw:clamp(56px,24cqh,84px);--me-x:calc(12px + var(--hw) * .6);--me-y:calc(100% - 10px - var(--hw) * .8);position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
+@container (max-width:560px){.cast-layer{--hw:clamp(48px,20cqh,64px)}}
+.cast-fx{position:absolute;inset:0;color:var(--fx)}
+.cast-fx i{position:absolute;display:block}
+.cast-glow{left:var(--me-x);top:var(--me-y);width:96px;height:96px;margin:-48px;border-radius:50%;background:radial-gradient(circle,#fff 0 7%,var(--fx) 26%,transparent 66%);mix-blend-mode:screen;animation:castGlow .5s ease-out calc(var(--fx-delay) - 320ms) both}
+@keyframes castGlow{0%{scale:.3;opacity:0}35%{opacity:.95}100%{scale:1.35;opacity:0}}
+.cast-shot{left:var(--me-x);top:var(--me-y);width:24px;height:24px;margin:-12px;opacity:0;animation:castFly .3s cubic-bezier(.45,0,.9,.55) calc(var(--fx-delay) - 270ms) both}
+.cast-shot.late{animation-delay:calc(var(--fx-delay) - 170ms)}
+@keyframes castFly{0%{left:var(--me-x);top:var(--me-y);opacity:0}15%{opacity:1}92%{left:var(--foe-x);top:var(--foe-y);opacity:1}100%{left:var(--foe-x);top:var(--foe-y);opacity:0}}
+.cast-orb .cast-shot{border-radius:50%;background:radial-gradient(circle,#fff 0 22%,var(--fx) 48%,transparent 72%);box-shadow:0 0 16px var(--fx),0 0 30px color-mix(in srgb,var(--fx) 50%,transparent)}
+.cast-orb .cast-shot::after,.cast-bolt .cast-shot::after{content:'';position:absolute;right:50%;top:50%;width:76px;height:6px;margin-top:-3px;border-radius:3px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--fx) 80%,transparent));transform-origin:100% 50%;rotate:-18deg}
+.cast-bolt .cast-shot{width:30px;height:4px;margin:-2px -15px;border-radius:2px;background:linear-gradient(90deg,var(--fx),#fff);box-shadow:0 0 10px var(--fx);rotate:-18deg}
+.cast-bolt .cast-shot::after{width:110px;height:3px;margin-top:-1.5px;rotate:0deg}
+.cast-blade .cast-shot{width:46px;height:46px;margin:-23px;border-radius:50%;border-right:5px solid var(--fx);border-top:2px solid transparent;filter:drop-shadow(0 0 6px var(--fx)) drop-shadow(0 0 2px #fff);animation:castFly .3s cubic-bezier(.45,0,.9,.55) calc(var(--fx-delay) - 270ms) both,castSpin .3s linear calc(var(--fx-delay) - 270ms) both}
+.cast-blade .cast-shot.late{animation-delay:calc(var(--fx-delay) - 170ms),calc(var(--fx-delay) - 170ms)}
+@keyframes castSpin{from{rotate:-40deg}to{rotate:320deg}}
+.cast-burst{left:var(--foe-x);top:var(--foe-y);width:120px;height:120px;margin:-60px;border-radius:50%;background:radial-gradient(circle,#fff 0 9%,var(--fx) 26%,transparent 62%);mix-blend-mode:screen;opacity:0;animation:castBurst .38s ease-out var(--fx-delay) both}
+@keyframes castBurst{0%{scale:.25;opacity:1}100%{scale:1.4;opacity:0}}
+.cast-ring{left:var(--foe-x);top:var(--foe-y);width:130px;height:130px;margin:-65px;border-radius:50%;border:2px solid var(--fx);box-shadow:0 0 14px var(--fx),inset 0 0 12px var(--fx);opacity:0;animation:castRing .5s ease-out calc(var(--fx-delay) + 40ms) both}
+@keyframes castRing{0%{scale:.2;opacity:1}100%{scale:1.3;opacity:0}}
+.cast-skill.big .cast-shot{scale:1.5}.cast-skill.big .cast-burst{width:170px;height:170px;margin:-85px}
+.cast-skill.critical .cast-burst{background:radial-gradient(circle,#fff 0 16%,#ffe38b 30%,var(--fx) 42%,transparent 66%)}
+.cast-aura{left:var(--me-x);top:var(--me-y);width:110px;height:110px;margin:-55px;border-radius:50%;border:2px solid var(--fx);box-shadow:0 0 18px var(--fx),inset 0 0 18px color-mix(in srgb,var(--fx) 60%,transparent);opacity:0;animation:castAura .75s ease-out var(--fx-delay) both}
+@keyframes castAura{0%{scale:.3 .15;opacity:1;translate:0 30px}60%{opacity:.8}100%{scale:1.2 1.2;opacity:0;translate:0 -14px}}
+.cast-basic.phys i{left:var(--foe-x);top:var(--foe-y);width:92px;height:3px;margin:-1.5px -46px;border-radius:2px;background:linear-gradient(90deg,transparent,#fff,var(--fx),transparent);box-shadow:0 0 8px var(--fx);rotate:-32deg;opacity:0;animation:castSlash .26s ease-out var(--fx-delay) both}
+.cast-basic.mag i{left:var(--foe-x);top:var(--foe-y);width:60px;height:60px;margin:-30px;border-radius:50%;background:radial-gradient(circle,#fff 0 10%,var(--fx) 30%,transparent 64%);mix-blend-mode:screen;opacity:0;animation:castBurst .3s ease-out var(--fx-delay) both}
+.cast-basic.critical i{scale:1.4}
+@keyframes castSlash{0%{scale:.1 1;opacity:1}60%{scale:1.1 1;opacity:1}100%{scale:1.2 .3;opacity:0}}
+.cast-claw{--fx:#ff6a5a}
+.cast-claw i{left:var(--me-x);top:var(--me-y);width:64px;height:3px;margin:-1.5px -32px;border-radius:2px;background:linear-gradient(90deg,transparent,#ffd2c8,var(--fx),transparent);box-shadow:0 0 8px var(--fx);rotate:58deg;opacity:0;animation:castSlash .24s ease-out var(--fx-delay) both}
+.cast-claw i:nth-child(1){translate:-11px -4px}.cast-claw i:nth-child(3){translate:11px 4px}
+.cast-claw.critical i{scale:1.35;height:4px}
+.fx-no-glow .cast-glow,.fx-no-glow .cast-burst{display:none}
+@media(prefers-reduced-motion:reduce){.cast-layer{display:none}}
+/* v3.248 연속 행동 배지: 내 배지는 캐릭터 판 오른쪽 아래, 상대 배지는 장면 오른쪽 위(던전은 웨이브 표시 아래). */
+.battle-scene .tide-fx-combo-player{left:calc(12px + clamp(56px,24cqh,84px) + 196px);right:auto;top:auto;bottom:12px}
+@container (max-width:560px){.battle-scene .tide-fx-combo-player{left:calc(12px + clamp(48px,20cqh,64px) + 158px)}}
+.battle-scene .tide-fx-combo-enemy{left:auto;right:12px;top:10px;bottom:auto}
+.dungeon-scene .tide-fx-combo-enemy{top:38px}
