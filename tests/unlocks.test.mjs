@@ -7,7 +7,7 @@ const ready = (level = 30) => { const s = newState(0); s.level = level; s.rebirt
 const job = id => JOBS.find(j => j.id === id);
 
 test('v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change', () => {
-    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher', 'kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar']);
+    assert.deepEqual(unlocks.UNLOCK_JOBS, ['undead', 'clockmaker', 'journeyman', 'rebirthFisher', 'kkamiHunter', 'nuriTracker', 'darkFollower', 'onyxAvatar', 'abyssAscetic', 'variantScholar', 'altarPilgrim']);
     const s = ready();
     assert.equal(canChangeJob(s, 'undead'), false);
     assert.ok(jobRequirements(s, job('undead')).some(r => r.label === '숨은 조건' && !r.met));
@@ -247,4 +247,18 @@ test('v3.221 칠흑의 화신: 칠흑 일식은 물리 · 마법 중 높은 쪽 
     assert.equal(progressCounts(p).onyxRanks, 10);
     assert.equal(after.hp, before.hp, 'combatScale leaves hp alone'); assert.ok(after.attack > before.attack && after.magic > before.magic);
     assert.ok(SKILLS.find(s => s.id === 'onyxHeart').bonus.mana > 0 && !SKILLS.find(s => s.id === 'onyxHeart').bonus.hp && !SKILLS.find(s => s.id === 'fallenLords').bonus.hp, 'mana instead of max hp');
+});
+
+test('v3.230 아제로스 3계보: 무릉도장 50층 · 변종 1,000 · 신 도전 100이 조건; 직업마다 무릉 주화 ×1.5 · 변종 · 황금 ×1.5 · 신 도전 간격 절반; 기록 비례 패시브', async () => {
+    const L = loadGame(), V = await L.load('data/variants'), A = await L.load('data/altar');
+    const s = ready();
+    assert.equal(unlocks.unlockMet(s, 'abyssAscetic'), false); s.abyssBest = 50; assert.equal(unlocks.unlockMet(s, 'abyssAscetic'), true);
+    s.variantBook = { minnow: { giant: 900 } }; s.goldenBook = { minnow: 99 }; assert.equal(unlocks.unlockMet(s, 'variantScholar'), false);
+    s.goldenBook.minnow = 100; assert.equal(unlocks.unlockMet(s, 'variantScholar'), true);
+    s.altar = { tries: 99 }; assert.equal(unlocks.unlockMet(s, 'altarPilgrim'), false); s.altar.tries = 100; assert.equal(unlocks.unlockMet(s, 'altarPilgrim'), true);
+    const c = progressCounts(s); assert.equal(c.abyssBest, 50); assert.equal(c.altar, 100);
+    assert.equal(job('abyssAscetic').abyssCoinScale, 1.5); assert.equal(job('variantScholar').variantRate, .5); assert.equal(job('altarPilgrim').altarCooldownScale, .5);
+    const v = newState(0); v.book.minnow = 50; const base = V.variantChances(v).giant; v.job = 'variantScholar'; assert.ok(Math.abs(V.variantChances(v).giant / base - 1.5) < 1e-9 || V.variantChances(v).giant === 1);
+    assert.equal(A.altarCooldownMs({ job: 'altarPilgrim' }), A.ALTAR.challengeCooldownMs / 2); assert.equal(A.altarCooldownMs({ job: 'hero' }), A.ALTAR.challengeCooldownMs);
+    for (const id of ['abyssAscetic', 'variantScholar', 'altarPilgrim']) { const j = job(id); assert.ok(j.hidden && j.masteryBoost === .1 && SKILLS.filter(sk => sk.job === id).length === 2, id); }
 });

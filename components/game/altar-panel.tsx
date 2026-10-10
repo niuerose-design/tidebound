@@ -5,7 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, formatRemaining } from './shared';
-import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
+import { ALTAR, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
@@ -92,7 +92,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
     // v3.19 직접 입력도 한 번에 바칠 수 있는 상한을 넘으면 버튼에서 알려 줍니다(서버는 넘으면 거절).
     const over = offer.gold > ALTAR.maxGold || offer.pearls > ALTAR.maxPearls || offer.essence > ALTAR.maxEssence;
     const submit = async () => { if (await act({ action: 'offer', ...offer, gauge, anonymous })) { setGold(''); setPearls(''); setEssence(''); setNow(stamp); } };
-    const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + ALTAR.challengeCooldownMs - now;
+    const myPower = power(stats(s)), wait = (s.altar?.challengeAt || 0) + altarCooldownMs(s) - now;
     const god = info?.god, throne = info?.throne;
     // v3.22 월드보스 탭(발록·자쿰·혼테일): 보스마다 소환·전투·도전 간격이 따로입니다. 고른 탭에 보스가 없으면 그 보스의 소환 게이지를 보여 줍니다.
     const raid = info?.raids.find(r => r.id === raidTab), raidGauge = info?.gauges.find(g => g.id === raidTab), raidWait = (s.altar?.raidAtBy?.[raidTab] || 0) + RAID.cooldownMs - now;

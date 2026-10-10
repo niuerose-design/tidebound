@@ -95,7 +95,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;

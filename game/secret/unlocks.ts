@@ -12,6 +12,8 @@ import { masteredJobCount, jobMasteryTarget } from '../systems/progression';
 import { jobById } from '../data/classes';
 import { setUnlockSource } from '../data/unlock-info';
 import { DUNGEONS } from '../data/world';
+/** v3.230 변종(모든 종류) · 황금 개체 처치 합계. */
+const variantKills = (s: State) => Object.values(s.variantBook || {}).reduce((x, row) => x + Object.values(row || {}).reduce((y, n) => y + (n || 0), 0), 0) + Object.values(s.goldenBook || {}).reduce((x, n) => x + (n || 0), 0);
 
 
 const masteredTier5 = (s: State) => Object.entries(s.jobMastery || {}).filter(([id, n]) => { const j = jobById(id); return !!j && !j.retired && j.tier >= 5 && n >= jobMasteryTarget(j); }).length;
@@ -29,6 +31,10 @@ export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'nuriTracker', test: s => (s.book?.expNuri || 0) >= 100 },
     { job: 'darkFollower', test: s => DUNGEONS.every(d => d.id === 'abyss' || (s.clears?.[d.id] || 0) >= 100) },
     { job: 'onyxAvatar', test: s => Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0) >= 100 },
+    // v3.230 무릉도장 50층 · 변종 · 황금 개체 1,000마리 · 신 도전 100번.
+    { job: 'abyssAscetic', test: s => (s.abyssBest || 0) >= 50 },
+    { job: 'variantScholar', test: s => variantKills(s) >= 1000 },
+    { job: 'altarPilgrim', test: s => (s.altar?.tries || 0) >= 100 },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */
 export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);

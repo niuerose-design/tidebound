@@ -1,7 +1,7 @@
 // v3.229 아제로스 완성 점검(기획안 ③ 원칙): 아제로스 직업을 다 키운 상태(직업 숙달 · 스킬 숙련 완료 · 계보 기록 상한)에서
 // 같은 차수 메이플 직업(같은 상태)의 공격 기대값 중앙값보다 +10%(±5%) 안에 드는지 봅니다. 물리 · 마법은 따로 중앙값을 냅니다.
 // 공격 기대값 = 전투력의 공격 몫(powerParts.offense)에서 보스 피해를 뺀 값. 몸은 check-tier5와 같은 엔드 몸(Lv.100 · 환생 100 · 태초 22성 4부위).
-// 기록(까미 · 누리 300, 지역 코어 각성 5, 칠흑 장신구 7종 각성 5 · 처치)은 모든 직업에 똑같이 채워 공용 보너스는 비교에서 상쇄됩니다.
+// 기록(까미 · 누리 300, 지역 코어 각성 5, 칠흑 장신구 7종 각성 5 · 처치, 무릉도장 200층, 변종 3,000, 신 도전 300)은 모든 직업에 똑같이 채워 공용 보너스는 비교에서 상쇄됩니다.
 // 지원 계열(참모 계보, tree 'support')은 다른 분신에게 주는 지원이 힘이라 자기 전투력이 약해도 되므로 빼고 봅니다.
 // 사용: node scripts/check-azeroth.mjs
 import { loadGame } from './lib/game-modules.mjs';
@@ -25,6 +25,7 @@ const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 1
 const { researchByBudget } = await researchBudgetTools({ load });
 const RESEARCH_BY_MAIN = Object.fromEntries(['attack', 'magicAttack', 'both'].map(m => [m, researchByBudget(REBIRTHS, m, undefined, RESEARCH_SCALE)]));
 const { REGION_CORE_IDS } = await load('data/boss-core');
+const MONSTERS_FIRST = (await load('data/world')).MONSTERS[0].id;
 const { ONYX_BOSSES } = await load('data/onyx');
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 function attributesFor(j) {
@@ -73,6 +74,8 @@ for (const tier of [4, 5]) {
         s.book = { ...s.book, masteryMimic: 300, expNuri: 300 };
         s.bossCores = Object.fromEntries(REGION_CORE_IDS.map(id => [id, { rank: 5, attrs: [] }]));
         s.onyxBook = Object.fromEntries(ONYX_BOSSES.map(b => [b.id, 50]));
+        // v3.230 무릉도장 200층 · 변종 3,000 · 신 도전 300(기록 상한).
+        Object.assign(s, { abyssBest: 200, altar: { tries: 300 }, variantBook: { [MONSTERS_FIRST]: { giant: 3000 } } });
         s.inventory = ONYX_BOSSES.map((b, i) => ({ id: 'onyx' + i, slot: 'charm', style: 'balanced', rarity: 6, power: 1, level: 1, enhance: 0, name: b.id, affixes: [], onyx: b.id, onyxRank: 5 }));
         loadout(s, j, attributesFor(j).magic);
         const st = stats(s), world = LINEAGES.find(l => l.id === lineageOf(j))?.world || 'maple';

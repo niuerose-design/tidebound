@@ -65,6 +65,12 @@ export type Job = {
     /** v3.221 이 직업이 현재 직업일 때 칠흑 보스 출현 확률 가산(0.5 = ×1.5)과 머무는 턴(기본 ONYX.turns). 칠흑의 화신. */
     onyxFind?: number;
     onyxTurns?: number;
+    /** v3.230 이 직업이 현재 직업일 때 무릉도장 층 주화 배율. 무릉 수행자 1.5. */
+    abyssCoinScale?: number;
+    /** v3.230 이 직업이 현재 직업일 때 변종 · 황금 개체 확률 가산(0.5 = ×1.5). 변종 학자. */
+    variantRate?: number;
+    /** v3.230 이 직업이 현재 직업일 때 신 도전 간격 배율. 제단 순례자 0.5. */
+    altarCooldownScale?: number;
     /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
     /** v3.219 이 직업들 가운데 하나의 숙련이 n 이상(참모 계보 4차: 보급관 또는 군의관). */
