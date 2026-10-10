@@ -70,6 +70,8 @@ export type Job = {
     pearlCost?: number;
     /** v3.231 이계 전투 직업: 이계 액티브(Skill.fuelCost)가 세계석 연료를 태우고, 연료가 0이면 절전 모드(data/otherworld.ts FUEL). */
     fuelJob?: boolean;
+    /** v3.231 절전 모드 두 공격 배율(없으면 FUEL.powerSave). */
+    powerSave?: number;
     /** v3.231 요원 계보: 탄창 크기. 액티브가 확률 · 대기 없이 장착 순서대로 한 발씩 나가고, 다 쏘면 재장전 1행동. */
     magazine?: number;
     /** v3.231 트레이더 계보: 증권거래소 평가 손익률이 두 공격 배율(s.marketPnl). marketFeeScale: 거래 수수료 배율. */
