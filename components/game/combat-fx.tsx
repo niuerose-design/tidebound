@@ -16,7 +16,9 @@ import { FOE_FX } from '@/game/data/foe-fx';
 const FX_HOLD_MS = 1500;
 /** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
 const SCENE_HOLD_MS = 2700;
-const holdFor = (fx: CombatFx) => fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
+/** v3.248 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
+const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
+const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
@@ -126,7 +128,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     worldStill: { kind: 'chain', glyphs: ['⛓', '◌', '⛓', '✦', '⛓', '◌', '⛓', '✦'] },
     // 11: 제논 메가 스매셔. v3.245부터 전용 연출(XenonFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     aberrantSurge: { kind: 'laser', glyphs: ['◇', '✦', '◇', '✧', '◇', '✦', '◇', '✧'] },
-    // 12: 메카닉 메탈아머 전탄발사. 미사일 비가 위에서 쏟아지고 세 곳에서 폭발이 연달아 터집니다.
+    // 12: 메카닉 메탈아머 전탄발사. v3.248부터 전용 연출(MechFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     genesisRune: { kind: 'barrage', glyphs: ['▲', '✦', '★', '▲', '✦', '★', '▲', '✦'] },
     // 13: 섀도어 소닉 블로우. 음파 호가 왼쪽에서 밀려오고 동전이 튑니다.
     hoardCrush: { kind: 'sonic', glyphs: ['◉', '◠', '◉', '◠', '◉', '◠', '◉', '◠'] },
@@ -201,6 +203,34 @@ function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     </div>;
 }
 /**
+ * v3.248 메카닉 메탈아머 전탄발사 전용 연출(메카물 문법): ① 시네마틱 레터박스 · 흰 명조 타이틀 카드(검은 화면)
+ * → ② 경고 패널 · 기체 눈 컷인 · 집중선 → ③ 만화 컷 패널 셋(해치 개방 · 발사 섬광 · 표적 다중 잠금)
+ * → ④ 화면 전체를 메우는 탄막(방출한 충전 중첩 × 6줄) · 연쇄 섬광 → 흑백 반전 임팩트 프레임 → 십자 폭발 기둥 → ⑤ 굵은 타이틀. 약 3초.
+ */
+const MECH_PER_STACK = 3;
+const mechSpot = (n: number) => { const a = n * 2.39996, r = 8 + (n * 29 % 36); return [Math.round(Math.cos(a) * r * 1.3), Math.round(Math.sin(a) * r * .8)]; };
+function MechFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const stacks = Math.max(1, Math.min(8, fx.charged || 5)), count = stacks * MECH_PER_STACK;
+    const at = (n: number, ms: number, extra: Record<string, string | number> = {}) => fxStyle(fx.delay, { '--i': n, '--t': `${Math.round(ms)}ms`, ...extra });
+    return <div className={`scene-fx mech-fx ${boss ? 'mech-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay, { '--stacks': stacks })}>
+        <i className="scene-fx-dark"/><i className="mech-speed"/>
+        <div className="mech-card"><small>METAL ARMOR · 第五次</small><strong>전탄발사</strong><i/><em>FULL BURST · CHARGE ×{stacks}</em></div>
+        <i className="mech-alert left"><b>WARNING · 全弾発射 · WARNING · 全弾発射</b></i><i className="mech-alert right"><b>EMERGENCY · {count} MISSILES · EMERGENCY</b></i>
+        <i className="mech-cutin"><b/><b/></i>
+        {/* ③ 1.15 → 1.62초: 만화 컷처럼 화면을 비스듬한 패널 셋으로 — 해치 개방 · 발사 섬광 · 표적 다중 잠금 */}
+        <div className="mech-panel a"><div className="mech-hatches">{Array.from({ length: 18 }, (_, n) => <b key={n} style={at(n, 1180 + (n % 6) * 35 + Math.floor(n / 6) * 50)}/>)}</div><span>HATCH OPEN</span></div>
+        <div className="mech-panel b">{Array.from({ length: 10 }, (_, n) => <i key={n} className="mech-flare" style={at(n, 1250 + n * 30, { '--y': `${8 + n * 9}%` })}/>)}<span>FIRE</span></div>
+        <div className="mech-panel c"><i className="mech-reticle"/>{Array.from({ length: 9 }, (_, n) => { const [x, y] = mechSpot(n); return <i key={n} className="mech-tag" style={at(n, 1350 + n * 25, { '--jx': `${x * 1.6}px`, '--jy': `${y * 1.6}px` })}/>; })}<span>LOCK ×{count}</span></div>
+        {/* ④ 1.6 → 2.05초: 화면 전체를 메우는 탄막(중첩 × 6줄) · 표적 연쇄 섬광 */}
+        {Array.from({ length: count * 2 }, (_, n) => <i key={`r${n}`} className="mech-tracer" style={at(n, 1600 + (n * 37 % (count * 2)) * (420 / (count * 2)), { '--y': `${6 + (n * 53) % 88}%`, '--w': `${90 + (n * 29) % 140}px` })}/>)}
+        {Array.from({ length: Math.min(count, 16) }, (_, n) => { const [x, y] = mechSpot(n); return <i key={`b${n}`} className="mech-boom" style={at(n, 1650 + n * 24, { '--jx': `${x * 1.3}px`, '--jy': `${y * 1.3}px` })}/>; })}
+        <i className="mech-impact"/><i className="mech-cross"/><i className="mech-cross h"/><i className="mech-ring"/><i className="mech-ring late"/>
+        {Array.from({ length: 14 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={at(n, 2100, { '--ang': `${n * 360 / 14 + 8}deg` })}/>)}
+        <i className="mech-bar"/><i className="mech-bar low"/>
+        <strong className="mech-title">FULL BURST!!<small>메탈아머 전탄발사 · {count}발</small></strong>
+    </div>;
+}
+/**
  * v3.183 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
  * 카드 쪽은 손대지 않습니다(‘몬스터 스킬’ 알림 · HP 바 숫자 그대로). 추가타가 있는 기술은 타격 수만큼 .foe-hit를 HP 바 숫자와 같은 박자(160ms)로 반복합니다.
  */
@@ -219,7 +249,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>

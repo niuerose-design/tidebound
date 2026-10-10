@@ -475,6 +475,8 @@ export type CombatEvent = {
     statuses: { id: string; turns: number; onSelf?: boolean }[];
     /** v3.211 극한돌파 전용 연출이 열린 스킬로 한 행동. */
     extreme?: boolean;
+    /** v3.248 충전 중첩을 모두 방출한 기술(전탄발사 등)이 쓴 중첩 수. 연출이 미사일 수를 맞춥니다. */
+    charged?: number;
     /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
     hpSpent?: number;
     /** v3.148 이 행동에 태운 마나(마나 연소 기술). */

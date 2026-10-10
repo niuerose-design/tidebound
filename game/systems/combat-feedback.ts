@@ -77,6 +77,8 @@ export type CombatFx = {
     reload?: boolean;
     /** v3.231 무한 탄창에 들어간 행동. */
     overdrive?: boolean;
+    /** v3.248 방출한 충전 중첩 수(전탄발사 미사일 수). */
+    charged?: number;
     /** v3.246 아제로스: 정수 포식(쓴 정수 · 처치로 오른 능력치) · 광맥 강타(채굴한 세계석). */
     essence?: number; devour?: string; mineSwing?: boolean; mined?: number;
 };
@@ -104,7 +106,7 @@ export function combatFxFromLog(log: Log, playerName: string): CombatFx | null {
         const status = ev.statuses.find(x => !x.onSelf) || ev.statuses[0];
         const kind: CombatFxKind = missed ? 'miss' : status ? status.id === 'bleed' ? 'bleed' : status.id as CombatFxKind : ev.damageType;
         if (ev.reload) return { id: log.id, actor, target: actor, title: '재장전', kind: 'physical', variant: 'impact', basic: false, reload: true, critical: false, healing: 0, drained: 0, status: '', hits: [], delay: 0, damageType: 'physical' };
-        return { id: log.id, actor, target, skillId: ev.skillId, ...(ev.overdrive ? { overdrive: true } : {}), ...(ev.essenceSpent ? { essence: ev.essenceSpent } : {}), ...(ev.devour ? { devour: ev.devour } : {}), ...(ev.mineSwing ? { mineSwing: true } : {}), ...(ev.mined ? { mined: ev.mined } : {}), ...(ev.linked && actor === 'player' && ev.skillId && skillById(ev.skillId)?.damageBonusCondition === 'lowHp' ? { execute: true } : {}), title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.raw ?? h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}), ...(ev.extreme && actor === 'player' ? { extreme: true } : {}) };
+        return { id: log.id, actor, target, skillId: ev.skillId, ...(ev.overdrive ? { overdrive: true } : {}), ...(ev.charged ? { charged: ev.charged } : {}), ...(ev.essenceSpent ? { essence: ev.essenceSpent } : {}), ...(ev.devour ? { devour: ev.devour } : {}), ...(ev.mineSwing ? { mineSwing: true } : {}), ...(ev.mined ? { mined: ev.mined } : {}), ...(ev.linked && actor === 'player' && ev.skillId && skillById(ev.skillId)?.damageBonusCondition === 'lowHp' ? { execute: true } : {}), title: ev.finale ? '天 · 일곱 인 해방' : ev.skillName, kind, variant: ev.finale ? 'glyph' : variantOf(ev.skillId, ev.damageType !== 'physical', ev.healed > 0 ? 'heal' : undefined), tier: ev.finale ? 5 : fxTierOf(ev.skillId), gamble: ev.gamble, dice: ev.dice, basic: !ev.skillId, critical: !!ev.finale || ev.hits.some(h => h.critical), healing: ev.healed, drained: ev.drained, status: status ? STATUS_NAMES[status.id] || '' : '', hits: ev.hits.map(h => ({ value: h.raw ?? h.value, critical: h.critical, miss: h.miss })), delay: 0, damageType: ev.damageType, dot: ev.dot, ...(ev.chain ? { chain: ev.chain } : {}), ...(ev.endured ? { endured: ev.endured } : {}), ...(ev.finale ? { finale: true } : {}), ...(ev.extreme && actor === 'player' ? { extreme: true } : {}) };
     }
     const text = log.text;
     const actor = text.startsWith(`${playerName} ·`) || text.startsWith(`${playerName}:`) ? 'player' : 'enemy';

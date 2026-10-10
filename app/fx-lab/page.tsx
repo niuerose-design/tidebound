@@ -3,6 +3,7 @@
  * v3.173 연출 실험실(개발 전용): 사냥터를 돌리지 않고 가상의 몹 카드 위에 스킬 연출을 바로 띄웁니다.
  * 주소: /fx-lab?skill=<스킬 id>&every=<밀리초>&glow=on|off&tier=5&foe=<몬스터 id>&execute=1(처형 연계 타격으로)
  * v3.183 보스 스킬: /fx-lab?skill=<몬스터 스킬 id>&actor=foe (보스 몬스터가 쓰는 것으로 띄움 · 추가타는 extraAttacks만큼)
+ * v3.248 &charge=<중첩 수>: 충전 중첩을 방출하는 기술(전탄발사)의 중첩 수.
  * 운영 빌드(production)에서는 404입니다. 연출 제작 · 녹화용이라 게임 규칙 · 저장과는 무관합니다.
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -37,7 +38,7 @@ function FxLabInner() {
         const kind: CombatFxKind = effectName && KIND_BY_EFFECT[effectName] ? KIND_BY_EFFECT[effectName] : (sk.damageType ?? 'physical');
         const hits = Array.from({ length: 1 + Math.min(4, sk.extraAttacks || 0) }, (_, i) => ({ value: Math.round(48_000 * (i ? .55 : 1)), critical: i === 0, miss: false }));
         return [{ id: seq, actor: asFoe ? 'enemy' : 'player', target: asFoe ? 'player' : 'enemy', title: sk.name, kind, variant: fxVariantOf(sk.id, magical, sk.effect), basic: false, critical: true, healing: sk.effect === 'heal' ? 12_000 : 0, drained: 0, status: '',
-            damageType: sk.damageType ?? 'physical', hits, delay: 0, skillId: sk.id, ...(execute ? { execute: true } : {}), tier: Number(params.get('tier')) || jobById(sk.job)?.tier || 5 }];
+            damageType: sk.damageType ?? 'physical', hits, delay: 0, skillId: sk.id, ...(execute ? { execute: true } : {}), tier: Number(params.get('tier')) || jobById(sk.job)?.tier || 5, ...(Number(params.get('charge')) > 0 ? { charged: Number(params.get('charge')) } : {}) }];
     }, [sk, seq, params, execute, asFoe]);
     const job = sk && jobById(sk.job);
     return <main className="fx-lab" style={{ maxWidth: 980, margin: '24px auto', padding: '0 16px', color: '#dfe7e3' }}>
