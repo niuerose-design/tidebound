@@ -25,5 +25,6 @@ await import('./foe-fx.test.mjs');
 await import('./boss.test.mjs');
 await import('./market.test.mjs');
 await import('./story.test.mjs');
+await import('./otherworld.test.mjs');
 await settled();
 console.log(`${results.passed} gameplay tests passed.`);

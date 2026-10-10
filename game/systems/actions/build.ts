@@ -5,6 +5,8 @@ import { unlockedTitles } from '../../data/titles';
 import { RANK_PERKS, rankState, rankPerkLevel, rankPointsFree } from '../../data/rank';
 import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
+import { FUEL } from '../../data/otherworld';
+import { chargeFuel } from '../otherworld';
 import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
 import { SKILL_FORMULA } from '../../data/balance';
@@ -20,6 +22,22 @@ const SKILL_MARK_MAX = 400;
 const skillIdList = (value: string) => [...new Set(value.split(',').map(x => x.trim()).filter(x => skillById(x)))].slice(0, SKILL_MARK_MAX);
 
 export const buildActions: ActionHandlers = {
+    /** v3.231 이계 연료 충전: value = 세계석 개수(상한까지만 씀). */
+    fuelCharge(s, { a }) {
+        if (!jobById(s.job)?.fuelJob) throw Error('이계 전투 직업일 때만 충전합니다.');
+        const n = Number(a.value);
+        if (!Number.isInteger(n) || n < 1) throw Error('충전할 세계석 수를 적으세요.');
+        const used = chargeFuel(s, n);
+        if (!used) throw Error((s.fuel || 0) >= FUEL.cap ? '연료가 가득 찼습니다.' : '세계석이 없습니다.');
+        addLog(s, `세계석 ${used.toLocaleString()}개를 연료로 충전했습니다(연료 ${(s.fuel || 0).toLocaleString()}).`, 'system');
+    },
+    /** v3.231 자동 충전: value = 남길 세계석 수, 빈 값이면 끔. */
+    fuelAuto(s, { a }) {
+        if (a.value === undefined || a.value === '') { delete s.fuelAuto; return; }
+        const keep = Number(a.value);
+        if (!Number.isInteger(keep) || keep < 0) throw Error('남길 세계석 수를 0 이상의 정수로 적으세요.');
+        s.fuelAuto = keep;
+    },
     job(s, { id, now }) {
         if (!canChangeJob(s, id))
             throw Error('레벨·능력치·선행 직업 숙련·숨은 조건을 확인하세요.');
@@ -47,6 +65,9 @@ export const buildActions: ActionHandlers = {
         // v3.26 해커 계열로 새로 전직하면 서버 채팅에 빨간 알림(누가 했는지는 밝히지 않음). /api/game이 저장 전에 읽고 지웁니다.
         if (isHackerJob(id) && s.job !== id) s.jobAnnounce = id;
         if (isHackerJob(id) && !wasHacker) (s.hacker ??= { bits: 0, exp: 0, grade: 1, tier: 0 }).savedSkills = [...s.skills];
+        // v3.231 이계 직업은 처음 들어갈 때 세계석을 냅니다(조건 판정은 canChangeJob이 이미 함).
+        const price = jobById(id)?.pearlCost;
+        if (price && !s.unlockedJobs.includes(id)) { s.pearls -= price; addLog(s, `세계석 ${price.toLocaleString()}개를 내고 ${jobById(id)!.name}의 문을 열었습니다.`, 'system'); }
         s.job = id;
         if (!s.unlockedJobs.includes(id))
             s.unlockedJobs.push(id);

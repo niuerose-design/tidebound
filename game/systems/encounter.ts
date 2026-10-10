@@ -337,7 +337,7 @@ export function reward(s: State, rng: () => number) {
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
     const rareFoe = isSpecialId(e.id) || !!e.onyx || dungeonRun;
-    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
+    const goldenChance = (won.goldenFind || 0) * (1 + (jobById(s.job)?.variantRate || 0)), golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perMonster * size * big) + (golden ? perMonster * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
@@ -489,7 +489,7 @@ export function reward(s: State, rng: () => number) {
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
             // v3.201 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 주화(던전 공용, 이월 없음). 무릉도장은 층 주화만.
-            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus));
+            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus) * (d.id === 'abyss' ? jobById(s.job)?.abyssCoinScale ?? 1 : 1));
             // v3.202 보스 전리품은 하루 보너스 정복에서만 굴립니다(무릉도장은 보너스가 없어 제외).
             if (bonus) rollBossLoot(s, d.id, rng);
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));

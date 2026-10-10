@@ -4,20 +4,23 @@ import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
 const H = await load('game/systems/hacker.js'), D = await load('game/data/hacker.js');
 
-const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 500; act(s, { type: 'job', id: 'hacker' }, 0); return s; };
+// v3.231 해커는 이계 직업: 세계석 3,000을 내고 들어갑니다(그 뒤 남는 세계석 500).
+const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 3500; act(s, { type: 'job', id: 'hacker' }, 0); return s; };
 
-test('v3.18 hacker job: hidden mystery tier-1 job without stat penalties (combat is blocked by rule), adguard as its only skill', () => {
+test('v3.18 hacker job: public otherworld tier-1 job bought with pearls (v3.231), no stat penalties (combat is blocked by rule), adguard as its only skill', () => {
     const j = JOBS.find(x => x.id === 'hacker');
-    assert.ok(j && j.hidden && j.tree === 'mystery' && j.tier === 1 && j.rebirth === 5, 'v3.199 rebirth 3 → 5');
+    assert.ok(j && !j.hidden && j.tree === 'mystery' && j.tier === 1 && !j.rebirth && j.pearlCost === 3000, 'v3.231 이계: 세계석 3,000만');
     // v3.18 몹을 만나지 않으니 능력치 보정은 없고, 전투 참여를 규칙으로 막습니다.
     assert.deepEqual([j.attack, j.magic, j.hp, j.defense, j.resist], [1, 1, 1, 1, 1]); assert.ok(!j.constraint);
     assert.ok(H.hackerCombatBlock({ job: 'hacker' }) && !H.hackerCombatBlock({ job: 'fisher' }));
     assert.deepEqual(SKILLS.filter(sk => sk.job === 'hacker').map(sk => sk.id), ['adGuard']);
-    const s = newState(0); s.level = 40; s.rebirths = 4; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0));
+    // v3.231 레벨 · 환생 조건은 없고 세계석만: 2,999면 막히고 3,000이면 들어가며 그만큼 빠집니다.
+    const s = newState(0); s.pearls = 2999; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0)); s.pearls = 3000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.pearls, 0);
+    act(s, { type: 'job', id: 'fisher' }, 0); act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.pearls, 0, 'paid once');
 });
 
 test('v3.18 hacker constraints: no stat allocation, no dungeons, loadout parked and restored, no combat or exp while idle', () => {
-    const s = newState(0); s.level = 40; s.rebirths = 5; s.statPoints = 10;
+    const s = newState(0); s.level = 40; s.rebirths = 5; s.statPoints = 10; s.pearls = 3000;
     s.skills = s.skills.length ? s.skills : ['hook'];
     const before = [...s.skills];
     act(s, { type: 'job', id: 'hacker' }, 0);
@@ -157,7 +160,7 @@ test('v3.25 programs: buy once with bits, memory cap, crypto miner / port scanne
 test('v3.25 white hacker: needs hacker mastery, same constraints, keeps adguard, restores and patches but never attacks', () => {
     const s = hacker(); s.level = 40;
     assert.throws(() => act(s, { type: 'job', id: 'whiteHacker' }, 0));
-    s.jobMastery.hacker = 1500; act(s, { type: 'skill', id: 'adGuard' }, 0); act(s, { type: 'job', id: 'whiteHacker' }, 0);
+    s.jobMastery.hacker = 1500; s.pearls += 10000; act(s, { type: 'skill', id: 'adGuard' }, 0); act(s, { type: 'job', id: 'whiteHacker' }, 0);
     assert.equal(s.job, 'whiteHacker'); assert.ok(H.isHacker(s) && H.isWhiteHacker(s)); assert.ok(s.skills.includes('adGuard'), 'adguard stays equipped');
     s.level = 40; act(s, { type: 'skill', id: 'firewall' }, 0); assert.ok(s.skills.includes('firewall'), 'white hacker passive');
     assert.throws(() => act(s, { type: 'dungeon', id: 'abyss' }, 0), /던전/); assert.throws(() => act(s, { type: 'attribute', id: 'str' }, 0), /능력치/);
@@ -186,7 +189,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         act(a, { type: 'hackRun', id: 'backdoor', value: 'zakum' }, now); await Hk.applyPendingHack(a, 'acct_a', now);
         assert.equal(((await database.listAltarGauges()).find(g => g.id === 'zakum')?.points || 0) - g0, Math.floor(A.gaugeCost('zakum', 0) * .02));
         // 화이트 해커가 서버 다운을 되돌리고 현상금을 받습니다.
-        const w = veteran(); w.jobMastery.hacker = 1500; act(w, { type: 'job', id: 'whiteHacker' }, now); w.hacker.tier = 3;
+        const w = veteran(); w.jobMastery.hacker = 1500; w.pearls += 10000; act(w, { type: 'job', id: 'whiteHacker' }, now); w.hacker.tier = 3;
         const bits = w.hacker.bits; act(w, { type: 'hackRun', id: 'restore', value: `down:dungeon:${W.DUNGEONS[0].id}` }, now); await Hk.applyPendingHack(w, 'acct_w', now);
         assert.equal(w.hacker.bits, bits - D.HACKER.white.restore.bits + Math.floor(D.HACKER.down.bits * .5)); assert.ok(!W.hackDownOf('dungeon', W.DUNGEONS[0].id, now));
         // 스니핑: 지금 이후 저장된 다른 모험가 수.
@@ -230,7 +233,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const rv = veteran(); await Hk.syncHackFeed(rv, 'rival', T); assert.deepEqual(rv.hackFeed.traced, { day: rv.hackFeed.traced.day, n: 1 }); assert.ok(rv.hackFeed.overloadUntil > T);
         assert.equal(H.entriesCap(rv, T), D.HACKER.infil.entriesPerDay - 1);
         rv.lastTick = T; const b1 = rv.hacker.bits; H.hackerTick(rv); assert.ok(Math.abs(rv.hacker.bits - b1 - D.HACKER.brute.bits * .5) < 1e-9, 'overloaded brute force');
-        const wh = veteran(); wh.jobMastery.hacker = 1500; act(wh, { type: 'job', id: 'whiteHacker' }, T); assert.throws(() => act(wh, { type: 'hackRun', id: 'trace', value: 'hacker:rival' }, T), /화이트/);
+        const wh = veteran(); wh.jobMastery.hacker = 1500; wh.pearls += 10000; act(wh, { type: 'job', id: 'whiteHacker' }, T); assert.throws(() => act(wh, { type: 'hackRun', id: 'trace', value: 'hacker:rival' }, T), /화이트/);
         // v3.28 해킹 VI~X: 가로채기는 쓰러진 보스의 세대만 정산, 세이브 스캠은 보스당 서버 전체 1회, DDoS는 서버에 하나, 루트 권한은 모두에게 보임.
         const top = veteran(10); top.name = '루트'; top.hacker.grade = 20;
         const gen = await database.summonAltarRaid('balrog', 1000, now + 3600_000, now, A.RAID.respawnMs);
@@ -264,10 +267,10 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const dd = veteran(10); act(dd, { type: 'hackRun', id: 'ddos', value: 'exp' }, now); await assert.rejects(Hk.applyPendingHack(dd, 'acct_dd', now), /DDoS/, 'one at a time');
         act(top, { type: 'hackRun', id: 'root' }, now); await Hk.applyPendingHack(top, 'acct_top', now);
         const plain = newState(0); await Hk.syncHackFeed(plain, 'acct_plain', now); assert.equal(plain.hackFeed.root.by, '루트'); assert.equal(plain.hackFeed.ddos.kind, 'gold');
-        const wr = veteran(10); wr.jobMastery.hacker = 1500; act(wr, { type: 'job', id: 'whiteHacker' }, now); wr.hacker.tier = 10;
+        const wr = veteran(10); wr.jobMastery.hacker = 1500; wr.pearls += 10000; act(wr, { type: 'job', id: 'whiteHacker' }, now); wr.hacker.tier = 10;
         act(wr, { type: 'hackRun', id: 'restore', value: 'ddos' }, now); await Hk.applyPendingHack(wr, 'acct_wr', now); assert.equal(Ev.activeEvent(now).gold, 1, 'white hacker restores the DDoS');
         // v3.28 블랙 해커 실패: 효과 없이 전체 채팅에 이름 공지(루트킷이 있어도).
-        const bk = veteran(); bk.name = '그림자'; bk.jobMastery.hacker = 1500; act(bk, { type: 'job', id: 'blackHacker' }, now); bk.hacker.loadout = ['rootkit']; bk.hacker.programs = ['rootkit'];
+        const bk = veteran(); bk.name = '그림자'; bk.jobMastery.hacker = 1500; bk.pearls += 10000; act(bk, { type: 'job', id: 'blackHacker' }, now); bk.hacker.loadout = ['rootkit']; bk.hacker.programs = ['rootkit'];
         act(bk, { type: 'hackRun', id: 'broadcast', value: '들켰다' }, now, () => .01); await Hk.applyPendingHack(bk, 'acct_bk', now);
         assert.ok((await database.listChat('news', 0, 300)).some(c => c.account_id === 'system-hacker' && c.text.includes('블랙 해커 그림자가 방송 탈취 중 추적당했습니다')), 'busted notice names the black hacker');
         assert.notEqual((await Hk.readHacks(now)).broadcast?.text, '들켰다', 'failed hack has no effect');
@@ -278,7 +281,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         await assert.rejects(Cr.createCrew('m_boss', boss, '그림자단', 'white', now + 1).then(f => f(boss)).then(() => Cr.createCrew('m_boss', boss, '또', 'gray', now)), /이미/);
         const crewId = boss.hacker.crew.id, row0 = await database.getCrew(crewId);
         assert.equal(boss.hacker.bits, 10000 - CD.CREW.createBits); assert.equal(boss.hacker.crew.leader, true); assert.equal(row0.code.length, 6);
-        const blackie = veteran(1); blackie.jobMastery.hacker = 1500; act(blackie, { type: 'job', id: 'blackHacker' }, now);
+        const blackie = veteran(1); blackie.jobMastery.hacker = 1500; blackie.pearls += 10000; act(blackie, { type: 'job', id: 'blackHacker' }, now);
         await assert.rejects(Cr.joinCrew('m_black', blackie, row0.code, now), /화이트/, 'white crew: no black hackers');
         await assert.rejects(Cr.joinCrew('m_x', newState(0), row0.code, now), /해커 계열/);
         const members = [];
@@ -375,7 +378,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 18, 'v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가 · v3.220 아제로스 4개'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 18, 'v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가 · v3.220 아제로스 4개 · v3.230 아제로스 3개 · v3.231 해커 3개는 공개 이계로'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'voidSovereign');
@@ -384,7 +387,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         const opened = newState(0); opened.doorsOpened = ['voidcaller']; const voidCat = await Sc.buildCatalog(opened, now + 6);
         assert.ok(voidCat.revealed.includes('voidcaller') && !voidCat.jobs.find(j => j.id === 'voidcaller').veiled, 'a recorded reveal (old rebirth door) shows the job in full');
         // v3.47 비밀 직업의 스킬: 꺼져 있으면 67개 전부, 켜면 드러난 직업 것과 내가 배운·장착한 것만(실루엣 직업의 스킬은 없음).
-        assert.equal(openCat.skills.length, 36); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
+        assert.equal(openCat.skills.length, 39); assert.ok(veiledCat.skills.every(sk => veiledCat.revealed.includes(sk.job)) && !veiledCat.skills.some(sk => sk.job === 'voidSovereign'), 'only skills of revealed jobs');
         assert.ok(voidCat.skills.some(sk => sk.id === 'voidLance') && voidCat.skills.length > veiledCat.skills.length, 'revealing the job sends its skills');
         const holder = newState(0); holder.skills.push('graveHook'); const holderCat = await Sc.buildCatalog(holder, now + 7);
         assert.ok(holderCat.skills.some(sk => sk.id === 'graveHook') && holderCat.jobs.find(j => j.id === 'undead').veiled, 'an equipped secret skill is sent even if its job is still veiled');
@@ -422,7 +425,7 @@ test('v3.26 infiltration puzzles: first lock then port, later nodes mix in seque
 });
 
 test('v3.26 becoming a hacker flags an anonymous red chat line (posted by the server test above)', () => {
-    const s = newState(0); s.level = 40; s.rebirths = 5; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
+    const s = newState(0); s.level = 40; s.rebirths = 5; s.pearls = 3000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
     delete s.jobAnnounce; act(s, { type: 'job', id: 'fisher' }, 0); assert.equal(s.jobAnnounce, undefined, 'leaving is quiet');
 });
 
@@ -451,7 +454,7 @@ test('v3.28 hacks VI–X in the save: intercept/savescum/ddos leave pending writ
 
 test('v3.28 black hacker: needs hacker mastery, double caps and costs, failures trace (no effect, 6h lockout, 3h with wipe trace)', () => {
     const s = veteran(3); assert.throws(() => act(s, { type: 'job', id: 'blackHacker' }, 0));
-    s.jobMastery.hacker = 1500; act(s, { type: 'job', id: 'blackHacker' }, 0); assert.ok(H.isHacker(s) && H.isBlackHacker(s) && H.canAttack(s) && !H.isWhiteHacker(s));
+    s.jobMastery.hacker = 1500; s.pearls += 10000; act(s, { type: 'job', id: 'blackHacker' }, 0); assert.ok(H.isHacker(s) && H.isBlackHacker(s) && H.canAttack(s) && !H.isWhiteHacker(s));
     assert.throws(() => act(s, { type: 'dungeon', id: 'abyss' }, 0), /던전/);
     const b0 = s.hacker.bits; act(s, { type: 'hackRun', id: 'broadcast', value: 'hi' }, 0, () => .99); assert.equal(s.hacker.bits, b0 - D.HACKER.broadcast.bits * 2); delete s.hacker.pending;
     act(s, { type: 'hackRun', id: 'broadcast', value: 'hi' }, 0, () => .99); delete s.hacker.pending;
@@ -472,16 +475,16 @@ test('v3.28 identity spoof decoys: mastery 3, validated name/job/level, shown fi
     const s = hacker(); s.hacker.bits = 1000; act(s, { type: 'skill', id: 'adGuard' }, 0); H.gainHacker(s, 0, 1300); assert.equal(H.adguardLevel(s), 2);
     assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x||0|가짜' }, 0), /3단계/);
     H.gainHacker(s, 0, 4000); assert.equal(H.adguardLevel(s), 3);
-    for (const bad of ['abyss:x||0|???', 'abyss:x||0|' + '가'.repeat(13), 'abyss:x||0||hacker', 'abyss:x||0||nope', 'abyss:x||0|||0', 'abyss:x||0|||1000']) assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: bad }, 0), /미끼/, bad);
+    for (const bad of ['abyss:x||0|???', 'abyss:x||0|' + '가'.repeat(13), 'abyss:x||0||undead', 'abyss:x||0||nope', 'abyss:x||0|||0', 'abyss:x||0|||1000']) assert.throws(() => act(s, { type: 'hackRun', id: 'spoof', value: bad }, 0), /미끼/, bad);
     act(s, { type: 'hackRun', id: 'spoof', value: 'abyss:x|job|0|가짜|fisher|7' }, 0);
     assert.deepEqual(s.hacker.pending, { kind: 'spoof', value: 'abyss:x|job|가짜||7', minutes: 0 }, 'shown job keeps its real value');
 });
 
 test('v3.33 crew modules in the save: launder lowers black hacker failure and names the crew, joint patch adds 30 minutes', () => {
-    const b = veteran(10); b.jobMastery.hacker = 1500; act(b, { type: 'job', id: 'blackHacker' }, 0); b.hacker.crew = { id: 'c_x', name: '그림자', side: 'black', grade: 1, leader: true, syncedAt: 0, modules: ['launder'] };
+    const b = veteran(10); b.jobMastery.hacker = 1500; b.pearls += 10000; act(b, { type: 'job', id: 'blackHacker' }, 0); b.hacker.crew = { id: 'c_x', name: '그림자', side: 'black', grade: 1, leader: true, syncedAt: 0, modules: ['launder'] };
     act(b, { type: 'hackRun', id: 'broadcast', value: 'hi' }, 0, () => .051); assert.equal(b.hacker.pending.kind, 'broadcast', '5.1% roll passes at tier X with launder (floor 5%)'); delete b.hacker.pending;
     b.hacker.tier = 1; act(b, { type: 'hackRun', id: 'crack', value: 'abyss:x' }, 0, () => .30); assert.equal(b.hacker.pending.kind, 'crack', 'tier I: 32% − 3%p = 29%');
     delete b.hacker.pending; act(b, { type: 'hackRun', id: 'crack', value: 'abyss:x' }, 0, () => .01); assert.deepEqual(b.hacker.pending, { kind: 'busted', value: '크래킹|그림자', minutes: 360 });
-    const w = veteran(3); w.jobMastery.hacker = 1500; act(w, { type: 'job', id: 'whiteHacker' }, 0); w.hacker.crew = { id: 'c_w', name: '방패', side: 'white', grade: 1, leader: true, syncedAt: 0, modules: ['jointPatch'] };
+    const w = veteran(3); w.jobMastery.hacker = 1500; w.pearls += 10000; act(w, { type: 'job', id: 'whiteHacker' }, 0); w.hacker.crew = { id: 'c_w', name: '방패', side: 'white', grade: 1, leader: true, syncedAt: 0, modules: ['jointPatch'] };
     act(w, { type: 'hackRun', id: 'patch', value: `stage:${W.STAGES[1].id}` }, 0); assert.equal(w.hacker.pending.minutes, D.HACKER.white.patch.minutes + 30);
 });

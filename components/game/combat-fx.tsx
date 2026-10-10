@@ -79,7 +79,7 @@ const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? 
 /** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다.
  * v3.195 연속 배지는 행동한 쪽이 같으면 타격마다 다시 만들지 않고 그대로 두며, 숫자가 바뀔 때만 숫자가 살짝 튑니다(전에는 묶음마다 깜박였습니다). */
 export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
-    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${combo.actor}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong key={combo.count}>×{combo.count.toLocaleString()}</strong></div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가').map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''} ${fx.extreme ? 'extreme' : ''}`} style={fxStyle(fx.delay)}>
+    return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${combo.actor}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong key={combo.count}>×{combo.count.toLocaleString()}</strong></div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가' && !owScene(fx)).map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''} ${fx.extreme ? 'extreme' : ''}`} style={fxStyle(fx.delay)}>
         {fx.extreme && <><i className="tide-fx-extreme-halo"/><i className="tide-fx-extreme-halo late"/><b className="tide-fx-extreme-mark">極</b></>}<i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/>{fx.gamble === undefined && <><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/></>}
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
         {fx.finale && <i className="tide-fx-heaven">天</i>}
@@ -195,9 +195,9 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  * 사냥터 배경 위의 큰 연출. 내 스킬은 배경까지 번지는 섬광과 파편, 天은 어둠 속 일곱 글자가 모여 터지는 전체 화면 연출입니다.
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
  */
-export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
+export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>
@@ -217,6 +217,50 @@ export function SceneFx({ effect, boss = false }: { effect: CombatFx[]; boss?: b
     </div>; return fx.extreme ? <Fragment key={fx.id}>{scene}<ExtremeFx fx={fx}/></Fragment> : scene; })}</div>;
 }
 /**
+ * v3.231 이계 전용 연출(요원 · 트레이더). 요원은 예광탄 · 조준경 · 철갑 균열 · 섬광 · 유탄, 트레이더는 양봉 · 음봉 · 급등선 · 금화 · 손절선.
+ * 쏘는 자리(왼쪽 아래)에서 몬스터 자리(62% · 48%)로 향합니다. 재장전은 탄창이 다시 들어오는 짧은 연출입니다.
+ */
+const OW_FX: Record<string, string> = {
+    pistolBurst: 'burst', suppressFire: 'burst', fullAuto: 'burst', doubleTap: 'burst', shotgunBlast: 'shotgun', snipe: 'snipe', armorPiercer: 'ap', flashbang: 'flash', grenadeLauncher: 'grenade', deadEye: 'deadeye', tacticalNuke: 'nuke',
+    buyOrder: 'buy', shortSell: 'short', leverage: 'leverage', stopLoss: 'stop', shortSqueeze: 'squeeze', circuitBreaker: 'circuit', blackSwan: 'swan',
+};
+/** 이계 스킬(과 재장전)은 상대 카드 대신 사냥터 배경의 몬스터 위에서만 연출합니다. */
+const owScene = (fx: CombatFx) => fx.actor === 'player' && (!!fx.reload || !!fx.skillId && !!OW_FX[fx.skillId]);
+const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
+const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
+function OtherworldFx({ fx, pnl, boss }: { fx: CombatFx; pnl: number; boss: boolean }) {
+    const kind = fx.reload ? 'reload' : OW_FX[fx.skillId!], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra });
+    const shots = kind === 'burst' ? OW_BURST[fx.skillId!] ?? 3 : kind === 'shotgun' ? 5 : 0, swing = Math.max(-.35, Math.min(.35, pnl));
+    const scale = fx.skillId === 'leverage' ? Math.max(0, 1 + swing * 2) : fx.skillId === 'blackSwan' ? 1 + Math.abs(swing) * 3 : fx.skillId === 'shortSqueeze' ? Math.max(0, 1 - swing * 2) : 1;
+    return <div className={`scene-fx ow-fx ow-${kind} ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
+        {(kind === 'deadeye' || kind === 'swan' || kind === 'circuit' || kind === 'nuke') && <i className="scene-fx-dark"/>}
+        {shots > 0 && Array.from({ length: shots }, (_, n) => <i key={n} className="ow-tracer" style={i(n, { '--spread': kind === 'shotgun' ? `${(n - 2) * 4}deg` : owSpread(n), '--t': `${n * (kind === 'shotgun' ? 0 : 70)}ms` })}/>)}
+        {shots > 0 && Array.from({ length: Math.min(shots, 4) }, (_, n) => <i key={`s${n}`} className="ow-casing" style={i(n)}/>)}
+        {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-scope"><b/></i>}
+        {kind === 'deadeye' && <><i className="ow-scope late"><b/></i>{Array.from({ length: 3 }, (_, n) => <i key={`m${n}`} className="ow-mark" style={i(n)}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`d${n}`} className="ow-tracer" style={i(n, { '--spread': `${(n - 1) * 2.4}deg`, '--t': `${620 + n * 170}ms` })}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`o${n}`} className="ow-pop" style={i(n)}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`c${n}`} className="ow-casing" style={i(n)}/>)}
+            <i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 14 }, (_, n) => <i key={`p${n}`} className="ow-spark" style={i(n, { '--ang': `${n * 360 / 14}deg` })}/>)}</>}
+        {kind === 'snipe' && <i className="ow-beam"/>}
+        {kind === 'nuke' && <>{Array.from({ length: 2 }, (_, n) => <i key={`w${n}`} className="ow-warn" style={i(n)}/>)}<i className="ow-missile"/><i className="ow-whiteout late"/><i className="ow-fireball"/><i className="ow-stem"/><i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 16 }, (_, n) => <i key={`e${n}`} className="ow-ember" style={i(n, { '--ang': `${n * 22.5}deg` })}/>)}</>}
+        {fx.overdrive && <><b className="ow-od">∞ 무한 탄창</b>{Array.from({ length: 8 }, (_, n) => <i key={`r${n}`} className="ow-round od" style={i(n)}/>)}</>}
+        {kind === 'ap' && <><i className="ow-beam ap"/><i className="ow-crack"/>{Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-rust" style={i(n, { '--ang': `${n * 45 + 10}deg` })}/>)}</>}
+        {kind === 'flash' && <i className="ow-whiteout"/>}
+        {kind === 'grenade' && <><i className="ow-grenade"/><i className="ow-boom"/><i className="ow-boom late"/></>}
+        {(kind === 'buy' || kind === 'squeeze') && <><i className="ow-candle bull"/><b className="ow-stamp bull">{kind === 'squeeze' ? 'SQUEEZE' : 'BUY'}</b></>}
+        {(kind === 'short' || kind === 'squeeze') && <><i className="ow-arrow"/><i className="ow-candle bear"/></>}
+        {kind === 'buy' && <i className="ow-aura"/>}
+        {(kind === 'leverage' || kind === 'swan') && <svg className="ow-spike" viewBox="0 0 100 100" preserveAspectRatio="none"><path d={kind === 'swan' ? 'M10 30 L40 36 L60 84 L80 72 L100 50' : 'M10 72 L35 66 L52 78 L78 40 L100 50'}/></svg>}
+        {(kind === 'leverage' || kind === 'swan') && Array.from({ length: 12 }, (_, n) => <i key={n} className="ow-coin" style={i(n, { '--ang': `${n * 30}deg` })}/>)}
+        {kind === 'stop' && <><i className="ow-stopline"/><i className="ow-shield"/></>}
+        {kind === 'circuit' && Array.from({ length: 3 }, (_, n) => <i key={n} className="ow-halt" style={i(n)}/>)}
+        {kind === 'reload' && Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-round" style={i(n)}/>)}
+        {(fx.skillId === 'leverage' || fx.skillId === 'blackSwan' || fx.skillId === 'shortSqueeze') && <b className="ow-mult">손익 {swing >= 0 ? '+' : ''}{Math.round(swing * 100)}% → ×{scale.toFixed(2)}</b>}
+        <strong className="ow-title">{kind === 'reload' ? 'RELOAD' : kind === 'deadeye' ? 'DEAD EYE' : kind === 'nuke' ? 'TACTICAL NUKE' : kind === 'swan' ? 'BLACK SWAN' : kind === 'circuit' ? 'CIRCUIT BREAKER' : kind === 'leverage' ? scale >= 1 ? 'LEVERAGE' : 'MARGIN CALL' : kind === 'snipe' && fx.critical ? 'HEADSHOT' : fx.title}</strong>
+    </div>;
+}
+/**
  * v3.211 극한돌파 전용 연출: 극한돌파한 스킬을 쓸 때 원래 연출 위에 겹칩니다. 진홍 · 금빛 빛기둥 세 줄이 내리꽂히고,
  * 퍼지는 고리와 가운데 ‘極’ 문장이 찍힙니다. 섬광을 끈 기기는 빛기둥이 빠집니다.
  */
@@ -228,7 +272,9 @@ function ExtremeFx({ fx }: { fx: CombatFx }) {
 }
 
 /** v3.178 처형 연출: 빈사(체력 35% 이하) 적에게 추가 피해가 붙은 검 계열 처형기. 배경 몬스터가 반으로 갈라지고 HP 바가 베입니다. */
-const EXECUTE_CLEAVE = new Set(['braveSlash']);
+const EXECUTE_CLEAVE = new Set(['braveSlash', 'deadEye']);
+/** v3.231 처형 연출을 늦게 시작하는 기술(ms): 데드아이는 표식 · 정밀 사격 뒤 관통선에서 갈라집니다. */
+const CLEAVE_LEAD: Record<string, number> = { deadEye: 1200 };
 const cleaveFx = (effect: CombatFx[]) => effect.find(fx => fx.execute && fx.actor === 'player' && !!fx.skillId && EXECUTE_CLEAVE.has(fx.skillId) && fx.hits.some(h => !h.miss));
 /** 처형 연출 길이(ms): 검 0.7초 + 조각이 날아간 뒤 빈 채로 두는 시간까지. 이 동안 원본(몬스터 그림 · HP 바)은 비어 보이고, 끝나면 RESTORE_MS 동안 눈에 보이게 복구됩니다. */
 const CLEAVE_MS = 2400, RESTORE_MS = 450;
@@ -238,7 +284,8 @@ function useCleave(effect: CombatFx[]): CleaveHold | null {
     const found = cleaveFx(effect);
     const [held, setHeld] = useState<CleaveHold | null>(null), [doneId, setDoneId] = useState<number | null>(null);
     // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태). 끝난 타격(doneId)은 효과 목록에 남아 있어도 다시 잡지 않습니다. 시각은 effect 안의 타이머가 셈니다.
-    if (found && held?.fx.id !== found.id && doneId !== found.id) setHeld({ fx: found, phase: 'cut' });
+    // v3.231 데드아이는 마지막 관통선(1.2초 뒤)에 맞춰 갈라집니다.
+    if (found && held?.fx.id !== found.id && doneId !== found.id) setHeld({ fx: { ...found, delay: found.delay + (CLEAVE_LEAD[found.skillId!] || 0) }, phase: 'cut' });
     useEffect(() => {
         if (!held) return;
         const timer = window.setTimeout(() => {

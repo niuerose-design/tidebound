@@ -6,7 +6,7 @@ import { supportAP } from './support';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById, lineageOf } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf, worldOf, LINEAGES } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -159,6 +159,19 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
+/**
+ * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
+ * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
+ */
+export const CORE_PASSIVE = { base: .7, borrowed: .5, azerothBase: .4 } as const;
+export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
+    const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
+    // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.
+    const world = owner ? worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
+    if (world !== 'maple' && !home) return 0;
+    const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
+    return (base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps)) * (home ? 1 : CORE_PASSIVE.borrowed);
+}
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
@@ -172,7 +185,7 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
  */
 /** v3.220 까미 · 누리 id(data/mimic.ts · data/exp-nuri.ts). 세이브에 저장되는 값이라 바뀌지 않습니다. */
 const MIMIC_ID = 'masteryMimic', NURI_ID = 'expNuri';
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs' | 'onyxBook' | 'bossCores' | 'inventory' | 'equipment'>>) {
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs' | 'onyxBook' | 'bossCores' | 'inventory' | 'equipment' | 'abyssBest' | 'altar'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
     const book = s.book || {};
@@ -186,7 +199,7 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     const onyxItems = [...(s.inventory || []), ...Object.values(s.equipment || {})].filter(i => i?.onyx), onyx7 = new Set(onyxItems.map(i => i!.onyx!));
     const onyxRanks = [...onyx7].reduce((n, id) => n + Math.min(5, Math.max(0, ...onyxItems.filter(i => i!.onyx === id).map(i => i!.onyxRank || 0))), 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s), onyxOwned: onyx7.size, onyxRanks };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s), onyxOwned: onyx7.size, onyxRanks, abyssBest: s.abyssBest || 0, altar: s.altar?.tries || 0 };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
@@ -369,6 +382,8 @@ export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.
 /** 전직 조건 목록. */
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
+    // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
+    if (j.pearlCost) return unlocked ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)

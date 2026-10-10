@@ -3,6 +3,7 @@ import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
 import { JOBS, LINEAGES, lineageOf, worldOf, AZEROTH_MASTERY_SCALE, type Job } from './classes';
+import { applyCoreRework } from './core-passive';
 import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
@@ -14,6 +15,7 @@ import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 import { SPECIAL_SKILLS } from './specials';
+import { OTHERWORLD_SKILLS, OTHERWORLD_COMBAT_SKILLS } from './otherworld';
 import { STAT_TRAINING_SKILLS } from './stat-training';
 import { trainingSkillOwner, scaleTrainingBonus, TRAINING_PASSIVE, TRAINING_DESC, TRAINING_SKILLS } from './training';
 export const SKILLS: Skill[] = [
@@ -240,6 +242,11 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 }
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
+// v3.231 이계 스킬(해커 계보).
+registerSkills(OTHERWORLD_SKILLS);
+registerSkills(OTHERWORLD_COMBAT_SKILLS);
+// v3.231 이계 5차 대표기 셋은 각성기(턴마다 따로 판정, 탄창 순서와 별개).
+for (const id of ['deadEye', 'tacticalNuke', 'blackSwan']) { const sk = OTHERWORLD_COMBAT_SKILLS.find(x => x.id === id); if (sk) awakenSkill(sk); }
 // v3.199 공개 특수 직업의 5차 액티브(은월 (5차) 파쇄 연권)도 각성기로(비밀 표는 secret/register.ts에서 같은 일을 함).
 for (const sk of SPECIAL_SKILLS) if (sk.type === 'active' && !sk.awaken && (JOBS.find(j => j.id === sk.job)?.tier ?? 0) >= SKILL_FORMULA.awaken.tier) awakenSkill(sk);
 // v3.69 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts). v3.170 새 수련 패시브는 처음부터 수련 직업 소유입니다.
@@ -357,3 +364,5 @@ for (const job of JOBS) {
     // 제약형(최대 숙련에서 AP 0 이하, 지휘 체계 계열)은 이미 천만 단위라 그대로 둡니다.
     for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones && !isConstraintSkill(sk)) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
 }
+// v3.228 메이플 월드 4 · 5차 핵심 패시브 개편(data/core-passive.ts). 비밀 직업은 서버가 secret/register.ts에서 같은 일을 합니다.
+applyCoreRework(JOBS, SKILLS);
