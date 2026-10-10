@@ -7,7 +7,7 @@ import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { SceneBackdrop } from './art';
+import { SceneBackdrop, backdropTheme } from './art';
 import { cachedStats, useReplayView, type FrameStore } from './use-game';
 import { LiveRatesCard } from './live-rates-card';
 import { EXP_NURI } from '@/game/data/exp-nuri';
@@ -182,7 +182,7 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
     const idle = recoveryText ?? (shown ? null : s.running ? '다음 몬스터를 기다리는 중' : '자동 사냥이 멈춰 있습니다');
     return <>
     {/* v3.259 내 HP가 30% 아래면 장면 가장자리가 붉게 맥박칩니다(danger). */}
-    <section className={`battle-scene ${s.running ? 'running' : ''} ${!s.recovery && s.hp < playerStats.hp * .3 ? 'danger' : ''}`}><SceneBackdrop/><div className="scene-shade"/>
+    <section className={`battle-scene ${s.running ? 'running' : ''} ${!s.recovery && s.hp < playerStats.hp * .3 ? 'danger' : ''}`}><SceneBackdrop theme={backdropTheme(d ? d.name : st.region, st.name)}/><div className="scene-shade"/>
         <SceneFoe enemy={enemy} hidden={!!s.recovery} effect={combatFx} kkami={!!enemy && isSpecialId(enemy.id)}/>
         <KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/>
         <SceneCombatHud enemy={shown} effect={combatFx} combo={fxCombo} info={shown && <>
