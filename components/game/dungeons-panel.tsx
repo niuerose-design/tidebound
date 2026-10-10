@@ -13,7 +13,7 @@ import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, monsterById, dungeonById } from 
 import { Heading, format, useNow } from './shared';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot } from './scene-stage';
 import { OtherworldHud } from './otherworld-hud';
 import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
@@ -44,7 +44,7 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
             {s.recovery > 0 && <span className="scene-idle recovery">출정 준비</span>}
             <span className="scene-wave">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span>
-            <CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
+            {!s.recovery && <><CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/></>}<SceneLoot logs={s.logs}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
         </section>
         {<div className="dungeon-wave-track">{activeDungeon.monsters.map((id, index) => {
             const isDone = s.dungeon!.wave > index;

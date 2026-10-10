@@ -9,7 +9,7 @@ import { isHackerJob } from '@/game/data/hacker';
 import { displayTitle } from '@/game/data/titles';
 import { mineBonusOf } from '@/game/systems/azeroth';
 import { MonsterArt } from './art';
-import { Meter, format } from './shared';
+import { Meter, format, short } from './shared';
 import { StatusBadges } from './combat-status';
 import { hasSceneTitle } from './combat-fx';
 
@@ -297,4 +297,41 @@ function popsOf(fx: CombatFx): Pop[] {
 }
 export function SceneDamage({ effect }: { effect: CombatFx[] }) {
     return <div className="scene-dmg-layer" aria-hidden="true">{effect.flatMap(popsOf).map(p => <b key={p.key} className={`scene-dmg ${p.at} ${p.kind}`} style={{ '--fx-delay': `${p.delay}ms`, '--dx': `${p.dx}px`, '--dy': `${p.dy}px` } as React.CSSProperties}>{p.kind === 'crit' || p.kind === 'super' ? <small>{p.kind === 'super' ? 'SUPER CRITICAL' : 'CRITICAL'}</small> : null}{p.text}</b>)}</div>;
+}
+
+/**
+ * v3.258 처치 보상 팝업: 새 처치 · 획득 기록이 오면 몬스터 자리에서 경험치 · 골드 · 숙련, 세계석 · 정수 · 장비 같은 획득이 차례로 떠오릅니다.
+ * 기록 문구(엔진의 ‘○○ 처치 · +G · +EXP · 숙련 +N’)를 읽어 숫자는 짧게(만 · 억) 보여 줍니다.
+ */
+type Loot = { key: string; text: string; kind: 'exp' | 'gold' | 'mastery' | 'pearl' | 'essence' | 'item' | 'other'; delay: number };
+const LOOT_MS = 1900, LOOT_MAX = 5;
+function lootOf(log: Log): Omit<Loot, 'key' | 'delay'>[] {
+    const kill = /처치(?: · \+([\d,]+) G · \+([\d,]+) EXP)?(?: · 숙련 \+([\d,]+))?/.exec(log.text);
+    if (kill && /처치/.test(log.text.split(' · ')[0])) {
+        const n = (v?: string) => Number((v || '0').replace(/,/g, ''));
+        return [kill[2] && { text: `+${short(n(kill[2]))} EXP`, kind: 'exp' as const }, kill[1] && { text: `+${short(n(kill[1]))} G`, kind: 'gold' as const }, kill[3] && { text: `숙련 +${short(n(kill[3]))}`, kind: 'mastery' as const }].filter(Boolean) as Omit<Loot, 'key' | 'delay'>[];
+    }
+    const kind = /세계석/.test(log.text) ? 'pearl' : /정수/.test(log.text) ? 'essence' : /장비 발견|획득/.test(log.text) ? 'item' : 'other';
+    const text = log.text.replace(/^[✦◆◇★☆♦👑\s]+/, '').split(' · ').slice(0, 2).join(' · ');
+    return [{ text: text.length > 26 ? `${text.slice(0, 25)}…` : text, kind }];
+}
+export function SceneLoot({ logs }: { logs: Log[] }) {
+    const last = useRef<number | null>(null), timers = useRef(new Set<number>());
+    const [pops, setPops] = useState<Loot[]>([]);
+    const latest = logs.at(-1)?.id ?? 0;
+    useEffect(() => {
+        if (last.current === null || latest < last.current) { last.current = latest; return; }
+        if (latest === last.current) return;
+        const since = last.current;
+        last.current = latest;
+        if (reduced()) return;
+        const fresh = logs.filter(l => l.id > since && l.type === 'reward').flatMap(l => lootOf(l).map((x, i) => ({ ...x, key: `${l.id}-${i}` }))).slice(0, LOOT_MAX).map((x, i) => ({ ...x, delay: i * 140 }));
+        if (!fresh.length) return;
+        const keys = new Set(fresh.map(x => x.key));
+        setPops(prev => [...prev.filter(p => !keys.has(p.key)), ...fresh].slice(-8));
+        later(timers.current, () => setPops(prev => prev.filter(p => !keys.has(p.key))), LOOT_MS + fresh.length * 140);
+    }, [latest, logs]);
+    useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
+    if (!pops.length) return null;
+    return <div className="scene-loot-layer" aria-hidden="true">{pops.map((p, i) => <b key={p.key} className={`scene-loot ${p.kind}`} style={{ '--d': `${p.delay}ms`, '--row': i % 5 } as React.CSSProperties}>{p.text}</b>)}</div>;
 }
