@@ -366,8 +366,8 @@ test('v25.11 guild goals scale with members, points formula, weekly stats accumu
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { makeGuildGoals, guildPoints, guildGoalProgress, normalizeGuildCode } = await mods.load('data/guild'); const { recordGoal, recordAbyssDepth, guildStatsFor } = await mods.load('systems/progress');
     assert.equal(makeGuildGoals(1)[0].target, 1200, 'solo guild counts as 3 members'); assert.equal(makeGuildGoals(10)[0].target, 4000); assert.equal(makeGuildGoals(20)[1].target, 240); assert.equal(makeGuildGoals(5)[3].target, 20);
-    assert.equal(guildPoints({ catches: 100, clears: 2, bosses: 4, abyss: 3, donated: 2500 }), 100 + 40 + 20 + 30 + 2);
-    assert.equal(guildGoalProgress(makeGuildGoals(3)[0], { catches: 99999, clears: 0, bosses: 0, abyss: 0, donated: 0 }), 1200, 'progress caps at target');
+    assert.equal(guildPoints({ catches: 100, clears: 2, bosses: 4, abyss: 3 }), 100 + 40 + 20 + 30, 'v3.241 기부 점수 없음');
+    assert.equal(guildGoalProgress(makeGuildGoals(3)[0], { catches: 99999, clears: 0, bosses: 0, abyss: 0 }), 1200, 'progress caps at target');
     assert.equal(normalizeGuildCode(' k7pq-2m '), 'K7PQ2M');
     const s = newState(0); const mon = Date.UTC(2026, 9, 1, 3); s.lastTick = mon;
     recordGoal(s, 'catch', undefined, 5, () => {}); recordGoal(s, 'boss', undefined, 1, () => {}); recordGoal(s, 'dungeon', 'grotto', 1, () => {}); recordAbyssDepth(s, 7, mon);
