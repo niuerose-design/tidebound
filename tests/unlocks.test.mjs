@@ -129,7 +129,7 @@ test('v3.220 Azeroth hidden lineages: kkami 100 · nuri 100 · every region dung
     const c = progressCounts(s);
     assert.deepEqual([c.kkami, c.nuri, c.dungeonBoss, c.onyx], [100, 100, 700, 100]);
     s.clears.abyss = 50; assert.equal(progressCounts(s).dungeonBoss, 700, 'Mu Lung floors are not region clears');
-    for (const id of unlocks.UNLOCK_JOBS.slice(-4)) { assert.equal(lineageOf(job(id)), id, `${id} is its own lineage`); assert.ok(SKILLS.some(sk => sk.job === id && sk.perCount?.length), `${id} has a record passive`); }
+    for (const id of unlocks.UNLOCK_JOBS.slice(-4)) { assert.equal(lineageOf(job(id)), id, `${id} is its own lineage`); assert.ok(SKILLS.some(sk => sk.job === id && (sk.perCount?.length || sk.mineGrowth)), `${id} has a record passive`); }
 });
 
 test('v3.221 까미 사냥꾼: 황금 올가미는 까미(대왕 포함)에게만 · 최대 체력 40% 고정 피해 · 반드시 명중 · 로또 상향 표식; 직업이면 까미 ×1.5; 패시브 치명타 300회 +300%p', () => {

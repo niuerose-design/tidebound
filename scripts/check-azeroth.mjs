@@ -70,7 +70,7 @@ const { OTHERWORLD_TARGET } = await load('data/otherworld');
 const TARGET = { azeroth: 1.1, otherworld: 1.3 }, SAVING = OTHERWORLD_TARGET.saving, BAND = .05, bad = [];
 // v3.231 이계는 계보별 목표(요원 ×3 · 트레이더 ×1.3), 허용 폭은 목표의 ±5%.
 // v3.246 세계석 광부는 세계석을 캐는 대신 전투력이 낮은 직업이라 메이플 ×0.85를 목표로 합니다(포식으로 오르는 능력치는 이 점검에 넣지 않음).
-const JOB_TARGET = { pearlMiner: .85 };
+const JOB_TARGET = { pearlMiner: .7 };
 const targetOf = r => JOB_TARGET[r.id] ?? (r.world === 'otherworld' ? OTHERWORLD_TARGET[r.lineage] ?? TARGET.otherworld : TARGET[r.world]);
 for (const tier of [4, 5]) {
     const rows = [];

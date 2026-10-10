@@ -215,7 +215,7 @@ function azerothFighter(s: State, usable: string[]): Partial<Fighter> {
     const sks = usable.map(id => skillById(id)).filter(Boolean);
     const out: Partial<Fighter> = {};
     if (sks.some(sk => sk!.essenceCost)) out.essence = s.essence || 0;
-    const mine = sks.reduce((n, sk) => n + (sk!.type === 'passive' ? sk!.mineBonus || 0 : 0), 0);
+    const mine = sks.reduce((n, sk) => n + (sk!.type === 'passive' ? (sk!.mineBonus || 0) + (sk!.mineGrowth ? Math.min(sk!.mineGrowth.cap, Math.floor((s.pearlsMined || 0) / sk!.mineGrowth.per) * sk!.mineGrowth.bonus) : 0) : 0), 0);
     if (mine) out.mineBonus = mine;
     return out;
 }

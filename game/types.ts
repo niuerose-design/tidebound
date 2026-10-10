@@ -299,6 +299,8 @@ export type Skill = {
     /** v3.246 채굴(세계석 광부): 맞히면 이 확률로 세계석 1개(치명타면 2배). 패시브 mineBonus가 더해집니다. */
     mineChance?: number;
     mineBonus?: number;
+    /** v3.246 채굴이 쌓일수록 오르는 채굴 확률(세계석 광부 패시브): 캔 세계석 per개마다 +bonus, 최대 cap. */
+    mineGrowth?: { per: number; bonus: number; cap: number };
     /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
     magazineBonus?: number;
     /** v3.239 패시브: 장착하면 ids 액티브의 피해 배율 ×(1 + value)(여럿이면 더함). 겹영창 4 · 5차 패시브가 1~3차 주문을 키웁니다. */
