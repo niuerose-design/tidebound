@@ -301,10 +301,10 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
 test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the monster gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     const { monsterGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
-    assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
+    assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 25, 'v3.241 25성'); assert.equal(enhanceMaxFor({ rarity: 6 }), 25);
     const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 15 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 20 }; s.inventory = [hero, legend];
     const win = () => 0;
-    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0, win); act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 22); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
+    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); for (let i = 0; i < 5; i++) act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 25); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
     assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), monsterGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
     let spent = 0; for (let e = 0; e < legend.enhance; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(monsterGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
     assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
@@ -1144,10 +1144,10 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
 test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction from 15 (relics reset to 12), chance time, safeguard, cost growth after 12', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const SF = await L.load('data/starforce'), { enhanceCost, itemStats } = await L.load('systems/equipment');
-    assert.equal(SF.starSuccess(0), .95); assert.equal(SF.starSuccess(15), .3); assert.equal(SF.starMax(3), 22); assert.equal(SF.starMax(2), 15);
+    assert.equal(SF.starSuccess(0), .95); assert.equal(SF.starSuccess(15), .3); assert.equal(SF.starMax(3), 25); assert.equal(SF.starSuccess(22), .03); assert.equal(SF.starSuccess(24), .01); assert.ok(!SF.starDrops(22) && SF.starDrops(23)); assert.equal(SF.starDestroy(22, true), 0, 'v3.241 22성 파괴 방지'); assert.equal(SF.starDestroy(24), .396); assert.equal(SF.relicResetFor(23), 20); assert.equal(SF.relicResetFor(21), 12); assert.ok(Math.abs(SF.starCatchSuccess(22) - .0315) < 1e-9 && Math.abs(SF.starCatchSuccess(15) - .4) < 1e-9); assert.equal(SF.starMax(2), 15);
     assert.ok(!SF.starDrops(9) && SF.starDrops(10) && !SF.starDrops(15) && SF.starDrops(16) && !SF.starDrops(20) && SF.starDrops(21));
     assert.equal(SF.starDestroy(14), 0); assert.equal(SF.starDestroy(15), .021); assert.equal(SF.starDestroy(15, true), 0); assert.equal(SF.starDestroy(20, true), .07, 'safeguard only at 15·16');
-    assert.ok(Math.abs(SF.starMultiplier(12) - 2.2) < 1e-9 && Math.abs(SF.starMultiplier(15) - 2.5) < 1e-9 && Math.abs(SF.starMultiplier(22) - 3.55) < 1e-9);
+    assert.ok(Math.abs(SF.starMultiplier(12) - 2.2) < 1e-9 && Math.abs(SF.starMultiplier(15) - 2.5) < 1e-9 && Math.abs(SF.starMultiplier(22) - 3.55) < 1e-9 && Math.abs(SF.starMultiplier(25) - 4.15) < 1e-9);
     const base = { id: 'x', name: 'x', slot: 'coat', rarity: 3, power: 100, level: 30 };
     assert.ok(Math.abs(enhanceCost({ ...base, enhance: 13 }) - enhanceCost({ ...base, enhance: 12 }) * SF.STARFORCE.growth) <= 1); assert.ok(enhanceCost({ ...base, enhance: 21 }) > enhanceCost({ ...base, enhance: 12 }) * 7);
     assert.ok(itemStats({ ...base, enhance: 22 }).hp > itemStats({ ...base, enhance: 12 }).hp * 1.5);
@@ -1248,7 +1248,7 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     assert.equal(relic.power, Eco.heirPower('relic', 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
     for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21);
     // v3.13 Lv.91 → Lv.100(내 레벨까지), 별 상한 22. 전에는 Lv.101을 요구해 영원히 막혔습니다.
-    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 22); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
+    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 25, 'v3.241 Lv.100 유물 25성'); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
 });
 
 test('v3.6 star force records: tries/success/fail/destroy/gold persist through rebirth and feed the 강화 achievements and star titles', async () => {
