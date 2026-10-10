@@ -1731,6 +1731,87 @@
 @media(max-width:767px){.xen-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:10cqw;--sy:70cqh;--beam:22px}.xen-fx.xen-boss{--tx:calc(100cqw - 66px)}.xen-title{font-size:24px;top:12%}.xen-cells b{width:22px}.xen-gauge{left:2%;top:5%;padding:5px 7px 6px}.xen-lock{width:90px;height:90px;margin:-45px}}
 .fx-no-glow .xen-whiteout,.fx-no-glow .xen-fx .scene-fx-dark,.fx-no-glow .xen-beam.glow{display:none}
 @media(prefers-reduced-motion:reduce){.xen-fx i{display:none}.xen-title{animation-name:tideReduced}.battle-scene:has(.xen-fx) .ocean-art{animation:none}}
+
+/* v3.248 메카닉 메탈아머 전탄발사 전용 연출(MechFx, 메카물 문법): 레터박스 · 타이틀 카드 → 경고 패널 · 눈 컷인 · 집중선 → 만화 컷 패널 셋 → 화면 전체 탄막(중첩 × 6줄)
+   → 연쇄 폭발 · 흑백 반전 임팩트 프레임 · 십자 폭발 기둥 → 굵은 타이틀. 각 해치 · 섬광 · 탄 · 폭발의 시작 시각은 --t(ms)입니다. */
+.scene-fx-layer:has(>.mech-fx){z-index:2}
+.mech-fx{--ma:#ffb347;--mr:#ff3b2f;--my:#ffe45c;--ms:#cfd8e3;--tx:calc(100cqw - 76px);--ty:calc(50cqh + 4px);--sx:10cqw;--sy:80cqh;overflow:hidden}
+.mech-fx.mech-boss{--tx:calc(100cqw - 88px)}
+.mech-fx .scene-fx-dark{inset:0;background:radial-gradient(ellipse at 75% 55%,#2a1206,#050302 72%);animation:mechDark 3.1s ease-in-out var(--fx-delay) both}
+/* ① 레터박스 · 타이틀 카드 */
+.mech-bar{left:0;right:0;top:0;height:13%;background:#000;z-index:5;animation:mechBar 3.1s ease-in-out var(--fx-delay) both}
+.mech-bar.low{top:auto;bottom:0;animation-name:mechBarLow}
+.mech-card{position:absolute;inset:0;z-index:4;display:flex;flex-direction:column;justify-content:center;padding-left:9%;background:#000;color:#fff;font-family:"Noto Serif KR","Noto Serif CJK KR","Nanum Myeongjo","AppleMyungjo","Batang",serif;animation:mechCard .62s steps(1) var(--fx-delay) both}
+.mech-card small{font:700 12px/1 "Noto Serif KR",serif;letter-spacing:.3em;color:#fff;opacity:.85}
+.mech-card strong{margin-top:10px;font-size:64px;font-weight:900;line-height:1;letter-spacing:-.02em;transform:scaleY(1.28);transform-origin:left top;text-shadow:0 0 1px #fff}
+.mech-card i{position:relative;display:block;width:46%;height:2px;margin:26px 0 10px;background:#fff}
+.mech-card em{font:700 13px/1 "Noto Serif KR",serif;font-style:normal;letter-spacing:.24em;color:#ff7a3a}
+/* ② 경고 패널 · 눈 컷인 · 집중선 */
+.mech-alert{left:-4%;right:-4%;height:30px;z-index:3;overflow:hidden;background:repeating-linear-gradient(-55deg,#ff3b2f 0 18px,#170404 18px 36px);border-block:2px solid #ff3b2f;box-shadow:0 0 20px #ff3b2f88;animation:mechAlert .7s cubic-bezier(.2,.8,.2,1) calc(var(--fx-delay) + .6s) both}
+.mech-alert.left{top:22%;rotate:-4deg}.mech-alert.right{top:68%;rotate:3deg;animation-name:mechAlertR}
+.mech-alert b{left:50%;top:50%;translate:-50% -50%;padding:3px 14px;background:#000;font:900 13px/1 ui-monospace,monospace;letter-spacing:.24em;color:#ff5a3a;white-space:nowrap;text-shadow:0 0 6px #ff3b2f}
+.mech-cutin{left:0;right:0;top:40%;height:20%;z-index:3;background:linear-gradient(180deg,#0b0d10,#2a2f36 45%,#14171b);border-block:3px solid var(--ma);box-shadow:0 0 30px #000;animation:mechCut .62s cubic-bezier(.2,.9,.2,1) calc(var(--fx-delay) + .62s) both}
+.mech-cutin b{top:42%;width:17%;height:16%;border-radius:2px 10px 2px 10px;background:linear-gradient(90deg,#fff,var(--my) 30%,var(--mr));box-shadow:0 0 18px var(--my),0 0 40px var(--mr);animation:mechEye .62s steps(1) calc(var(--fx-delay) + .62s) both}
+.mech-cutin b:first-child{left:30%;transform:skewX(18deg)}.mech-cutin b:last-child{right:30%;transform:skewX(-18deg) scaleX(-1)}
+.mech-speed{inset:-30%;background:repeating-conic-gradient(from 0deg at 72% 50%,#fff0 0 3deg,#ffffff22 3deg 3.6deg,#fff0 3.6deg 7deg);mask-image:radial-gradient(circle at 72% 50%,transparent 14%,#000 42%);-webkit-mask-image:radial-gradient(circle at 72% 50%,transparent 14%,#000 42%);animation:mechSpeed 1.2s linear calc(var(--fx-delay) + .62s) both}
+/* ③ 만화 컷 패널: 비스듬한 세 칸이 차례로 밀려 들어왔다가 1.62초에 함께 갈라져 사라집니다. */
+.mech-panel{position:absolute;inset:0;z-index:3;overflow:hidden;border:0;animation:mechPanel .5s cubic-bezier(.2,.9,.2,1) calc(var(--fx-delay) + 1.15s) both}
+.mech-panel::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(#0000,#0000)}
+.mech-panel span{position:absolute;font:900 12px/1 ui-monospace,monospace;letter-spacing:.24em;color:#fff;background:#000;padding:4px 8px;white-space:nowrap}
+.mech-panel.a{clip-path:polygon(0 0,46% 0,34% 100%,0 100%);background:linear-gradient(135deg,#1d2026,#0b0c0f);--from:-60% 0}
+.mech-panel.a span{left:5%;bottom:16%;color:var(--my)}
+.mech-panel.b{clip-path:polygon(47% 0,70% 0,58% 100%,35% 100%);background:radial-gradient(circle at 50% 60%,#ff8a3a55,#120806 70%);--from:0 90%;animation-delay:calc(var(--fx-delay) + 1.22s)}
+.mech-panel.b span{left:46%;top:16%;color:var(--mr)}
+.mech-panel.c{clip-path:polygon(71% 0,100% 0,100% 100%,59% 100%);background:radial-gradient(circle at 82% 52%,#3a0c0a,#0b0303 70%);--from:60% 0;animation-delay:calc(var(--fx-delay) + 1.29s)}
+.mech-panel.c span{right:4%;top:16%;color:var(--mr)}
+.mech-panel{box-shadow:inset 0 0 0 3px #fff}
+.mech-hatches{position:absolute;left:4%;top:22%;display:grid;grid-template-columns:repeat(6,26px);gap:6px}
+.mech-hatches b{position:relative;width:26px;height:26px;border:2px solid #6b7480;border-radius:3px;background:radial-gradient(circle,#fff 0 18%,var(--my) 32%,var(--ma) 55%,#3a1606 80%)}
+.mech-hatches b::before{content:"";position:absolute;inset:-2px;border-radius:3px;background:repeating-linear-gradient(45deg,#4a525c 0 4px,#353b43 4px 8px);transform-origin:50% 0;animation:mechHatch .18s ease-in calc(var(--fx-delay) + var(--t)) both}
+.mech-flare{left:36%;top:var(--y);width:34%;height:10px;border-radius:5px;background:linear-gradient(90deg,#fff,var(--my) 25%,#ff7a2a 55%,transparent);box-shadow:0 0 14px #ff7a2a;transform-origin:0 50%;animation:mechFlare .32s ease-out calc(var(--fx-delay) + var(--t)) 2 both}
+.mech-reticle{left:calc(var(--tx));top:var(--ty);width:96px;height:96px;margin:-48px;border:2px solid var(--mr);border-radius:50%;box-shadow:0 0 16px var(--mr),inset 0 0 16px #ff3b2f55;animation:mechRet .5s steps(5) calc(var(--fx-delay) + 1.3s) both}
+.mech-reticle::before,.mech-reticle::after{content:"";position:absolute;background:var(--mr)}
+.mech-reticle::before{left:50%;top:-14px;bottom:-14px;width:2px;margin-left:-1px}.mech-reticle::after{top:50%;left:-14px;right:-14px;height:2px;margin-top:-1px}
+.mech-tag{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:14px;height:14px;margin:-7px;border:2px solid var(--my);rotate:45deg;box-shadow:0 0 8px var(--my);animation:mechTag .3s steps(3) calc(var(--fx-delay) + var(--t)) both}
+/* ④ 화면 전체 탄막 */
+.mech-tracer{left:0;top:var(--y);width:var(--w);height:5px;margin-top:-2.5px;border-radius:2px;background:linear-gradient(90deg,transparent,#ff7a2a 40%,var(--my) 80%,#fff);box-shadow:0 0 10px #ff7a2a;animation:mechTracer .26s linear calc(var(--fx-delay) + var(--t)) both}
+/* ④ 연쇄 폭발 · 임팩트 프레임 · 십자 폭발 */
+.mech-boom{left:calc(var(--tx) + var(--jx));top:calc(var(--ty) + var(--jy));width:60px;height:60px;margin:-30px;border-radius:50%;background:radial-gradient(circle,#fff 0 14%,var(--my) 28%,var(--ma) 46%,var(--mr) 62%,transparent 72%);mix-blend-mode:screen;animation:mechBoom .45s ease-out calc(var(--fx-delay) + var(--t)) both}
+.mech-impact{inset:0;z-index:2;background:#fff;mix-blend-mode:difference;animation:mechImpact .18s linear calc(var(--fx-delay) + 2.02s) both}
+.mech-cross{left:var(--tx);top:-20%;width:46px;height:140%;margin-left:-23px;background:linear-gradient(90deg,transparent,#ff7a2a 22%,#ffe9b0 44%,#fff 50%,#ffe9b0 56%,#ff7a2a 78%,transparent);filter:drop-shadow(0 0 18px var(--mr));mix-blend-mode:screen;transform-origin:50% calc(var(--ty) + 20%);animation:mechCross .95s cubic-bezier(.2,.8,.3,1) calc(var(--fx-delay) + 2.1s) both}
+.mech-cross.h{left:calc(var(--tx) - 110px);top:var(--ty);width:220px;height:30px;margin:-15px 0 0;background:linear-gradient(180deg,transparent,#ff7a2a 22%,#ffe9b0 44%,#fff 50%,#ffe9b0 56%,#ff7a2a 78%,transparent);transform-origin:50% 50%;animation-name:mechCrossH}
+.mech-ring{left:var(--tx);top:var(--ty);width:110px;height:110px;margin:-55px;border:4px solid var(--ma);border-radius:50%;box-shadow:0 0 18px var(--ma);animation:owRing .7s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 2.1s) both}
+.mech-ring.late{border-color:var(--mr);box-shadow:0 0 18px var(--mr);animation-delay:calc(var(--fx-delay) + 2.22s)}
+.mech-debris{left:var(--tx);top:var(--ty);width:9px;height:4px;margin:-2px -4.5px;background:var(--ms);box-shadow:0 0 6px var(--ma);animation:mechDebris .7s ease-out calc(var(--fx-delay) + var(--t)) both}
+/* ⑤ 굵은 타이틀 */
+.mech-title{position:absolute;left:50%;top:17%;z-index:4;translate:-50% 0;text-align:center;font:italic 900 46px/1 "Arial Black","Impact",system-ui;letter-spacing:.02em;color:var(--my);-webkit-text-stroke:3px #120400;paint-order:stroke fill;text-shadow:4px 4px 0 var(--mr),8px 8px 0 #120400,0 0 30px #ff7a2a;transform:skewX(-12deg) rotate(-4deg);white-space:nowrap;animation:mechTitle .9s cubic-bezier(.2,1.4,.4,1) calc(var(--fx-delay) + 2.15s) both}
+.mech-title small{display:block;margin-top:8px;font:900 13px/1 system-ui;font-style:normal;letter-spacing:.3em;color:#fff;-webkit-text-stroke:0;text-shadow:0 0 8px var(--mr),0 2px 4px #000}
+.battle-scene:has(.mech-fx) .ocean-art{animation:mechRumble .08s linear 1.6s 6,sceneQuake .9s ease-out 2.05s both}
+@keyframes mechDark{0%{opacity:0}6%{opacity:.9}88%{opacity:.8}100%{opacity:0}}
+@keyframes mechBar{0%{translate:0 -100%}8%,90%{translate:0 0}100%{translate:0 -100%}}
+@keyframes mechBarLow{0%{translate:0 100%}8%,90%{translate:0 0}100%{translate:0 100%}}
+@keyframes mechCard{0%,100%{opacity:0}2%,98%{opacity:1}}
+@keyframes mechAlert{0%{translate:-110% 0}22%{translate:0 0}75%{translate:0 0;opacity:1}100%{translate:110% 0;opacity:0}}
+@keyframes mechAlertR{0%{translate:110% 0}22%{translate:0 0}75%{translate:0 0;opacity:1}100%{translate:-110% 0;opacity:0}}
+@keyframes mechCut{0%{clip-path:inset(50% 0 50% 0)}18%,82%{clip-path:inset(0 0 0 0)}100%{clip-path:inset(50% 0 50% 0)}}
+@keyframes mechEye{0%,30%{opacity:.25}31%,100%{opacity:1}}
+@keyframes mechSpeed{0%{opacity:0;rotate:0deg}15%,75%{opacity:1}100%{opacity:0;rotate:8deg}}
+@keyframes mechPanel{0%{translate:var(--from);opacity:0}18%{translate:0 0;opacity:1}80%{translate:0 0;opacity:1;scale:1}100%{translate:0 0;opacity:0;scale:1.08}}
+@keyframes mechHatch{0%{scale:1 1}100%{scale:1 .08}}
+@keyframes mechFlare{0%{scale:0 1;opacity:0}20%{scale:1 1.3;opacity:1}100%{scale:1.2 .4;opacity:0}}
+@keyframes mechRet{0%{scale:1.8;opacity:0}40%{scale:1;opacity:1}100%{scale:1;opacity:1}}
+@keyframes mechTag{0%{scale:2.4;opacity:0}100%{scale:1;opacity:1}}
+@keyframes mechTracer{0%{translate:-20cqw 0;opacity:0}10%{opacity:1}100%{translate:110cqw 0;opacity:.9}}
+@keyframes mechBoom{0%{scale:.2;opacity:0}15%{scale:1.1;opacity:1}100%{scale:1.7;opacity:0}}
+@keyframes mechImpact{0%,100%{opacity:0}2%,70%{opacity:1}}
+@keyframes mechCross{0%{scale:.1 0;opacity:0}12%{scale:1 1;opacity:1}60%{scale:.8 1;opacity:1}100%{scale:.2 1.05;opacity:0}}
+@keyframes mechCrossH{0%{scale:0 .1;opacity:0}12%{scale:1 1;opacity:1}55%{opacity:1}100%{scale:1.4 .2;opacity:0}}
+@keyframes mechDebris{0%{translate:0 0;opacity:1;rotate:0deg}100%{translate:calc(cos(var(--ang)) * 130px) calc(sin(var(--ang)) * 90px + 26px);opacity:0;rotate:300deg}}
+@keyframes mechTitle{0%{opacity:0;scale:3.2}18%{opacity:1;scale:1}24%{scale:1.08}30%{scale:1}86%{opacity:1}100%{opacity:0}}
+@keyframes mechRumble{0%{translate:-3px 1px}25%{translate:3px -2px}50%{translate:-2px 2px}75%{translate:2px -1px}100%{translate:0 0}}
+@media(max-width:767px){.mech-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:8cqw;--sy:84cqh}.mech-fx.mech-boss{--tx:calc(100cqw - 66px)}.mech-card strong{font-size:44px}.mech-title{font-size:30px;-webkit-text-stroke-width:2px}.mech-alert{height:24px}.mech-alert b{font-size:10px}.mech-cross.h{width:160px;left:calc(var(--tx) - 80px)}}
+.fx-no-glow .mech-fx .scene-fx-dark,.fx-no-glow .mech-impact,.fx-no-glow .mech-cross{display:none}
+@media(prefers-reduced-motion:reduce){.mech-fx i,.mech-card{display:none}.mech-title{animation-name:tideReduced}.battle-scene:has(.mech-fx) .ocean-art{animation:none}}
 /* v3.246 아제로스 정수 포식자 · 세계석 광부 연출(이계 연출과 같은 좌표: 몬스터 --tx · --ty, 시전자 --sx · --sy). */
 .az-fx{--az-ess:#a96bff;--az-core:#5ef2c8;--az-pearl:#8fe7ff;--az-ore:#d79a4a}
 .az-devour .scene-fx-dark{inset:0;background:#0a0512;animation:owDark 1.6s ease-in-out var(--fx-delay) both}
@@ -1898,7 +1979,7 @@
 @keyframes slipLife{0%,82%{filter:none}100%{filter:opacity(0)}}
 @media(max-width:767px){.skill-receipt{bottom:64%}.skill-slip{font-size:13px}.skill-slip.big{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.skill-slip{animation:none}}
-/* v3.248 2단계 공용 연출(CastFx): 내 캐릭터(--me-x · --me-y) → 몬스터(--foe-x · --foe-y). 투사체는 타격 박자보다 먼저 출발해 피해 숫자와 함께 닿습니다. */
+/* v3.249 2단계 공용 연출(CastFx): 내 캐릭터(--me-x · --me-y) → 몬스터(--foe-x · --foe-y). 투사체는 타격 박자보다 먼저 출발해 피해 숫자와 함께 닿습니다. */
 .cast-layer{--hw:clamp(56px,24cqh,84px);--me-x:calc(12px + var(--hw) * .6);--me-y:calc(100% - 10px - var(--hw) * .8);position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
 @container (max-width:560px){.cast-layer{--hw:clamp(48px,20cqh,64px)}}
 .cast-fx{position:absolute;inset:0;color:var(--fx)}
@@ -1933,8 +2014,15 @@
 .cast-claw.critical i{scale:1.35;height:4px}
 .fx-no-glow .cast-glow,.fx-no-glow .cast-burst{display:none}
 @media(prefers-reduced-motion:reduce){.cast-layer{display:none}}
-/* v3.248 연속 행동 배지: 내 배지는 캐릭터 판 오른쪽 아래, 상대 배지는 장면 오른쪽 위(던전은 웨이브 표시 아래). */
+/* v3.249 연속 행동 배지: 내 배지는 캐릭터 판 오른쪽 아래, 상대 배지는 장면 오른쪽 위(던전은 웨이브 표시 아래). */
 .battle-scene .tide-fx-combo-player{left:calc(12px + clamp(56px,24cqh,84px) + 196px);right:auto;top:auto;bottom:12px}
 @container (max-width:560px){.battle-scene .tide-fx-combo-player{left:calc(12px + clamp(48px,20cqh,64px) + 158px)}}
 .battle-scene .tide-fx-combo-enemy{left:auto;right:12px;top:10px;bottom:auto}
 .dungeon-scene .tide-fx-combo-enemy{top:38px}
+/* v3.249 전투 기록은 캐릭터 오른쪽(가운데 쪽)에서 올라옵니다. 넓은 장면은 캐릭터 판 오른쪽 아래, 좁은 장면(PC 가운데 열 · 모바일)은 캐릭터 판 바로 위 · 캐릭터 그림 오른쪽. */
+.scene-log{left:calc(12px + clamp(56px,24cqh,84px) + 8px + 176px + 14px);bottom:12px;width:min(40%,380px)}
+.dungeon-scene .scene-log{width:min(40%,380px)}
+@container (max-width:700px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(56px,24cqh,84px) + 8px);bottom:122px;width:auto;right:calc(100% - var(--foe-x) + 62px)}}
+@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{left:calc(12px + clamp(48px,20cqh,64px) + 8px);bottom:106px;width:auto;right:calc(100% - var(--foe-x) + 54px)}}
+.battle-scene .tide-fx-combo-player{left:12px;bottom:calc(10px + clamp(56px,24cqh,84px) * 1.375 + 6px)}
+@container (max-width:560px){.battle-scene .tide-fx-combo-player{left:12px;bottom:calc(10px + clamp(48px,20cqh,64px) * 1.375 + 6px)}}

@@ -197,7 +197,7 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
     </div>)}</div>;
 }
 
-/** v3.248 공용 스킬 연출 색(갈래별). */
+/** v3.249 공용 스킬 연출 색(갈래별). */
 const CAST_COLOR: Record<string, string> = {
     pierce: '#f1e3b6', slash: '#ffe9cf', quake: '#e0b98a', bite: '#b7f08a', wave: '#8ce4ed', lightning: '#ffe38b', fire: '#ff9a4a', frost: '#a8e4ff', star: '#fff2a8',
     gold: '#ffd36b', song: '#f7b6e8', ward: '#9fd3ff', heal: '#8ff0b0', curse: '#c08bff', arcane: '#b9a6ff', impact: '#ffd9a8', glyph: '#ffe38b', venom: '#9fe870', ink: '#8c8cff', bone: '#e8e2d0', time: '#9fe0d8',
@@ -207,7 +207,7 @@ const CAST_SHAPE: Record<string, 'blade' | 'orb' | 'bolt' | 'aura'> = {
     heal: 'aura', ward: 'aura', song: 'aura', gold: 'aura',
 };
 /**
- * v3.248 2단계 공용 연출: 스킬을 쓰면 왼쪽 아래 내 캐릭터가 빛나고(시전), 갈래별 투사체(검기 · 마력 구체 · 번개 화살)가 몬스터로 날아가 맞는 순간 터집니다.
+ * v3.249 2단계 공용 연출: 스킬을 쓰면 왼쪽 아래 내 캐릭터가 빛나고(시전), 갈래별 투사체(검기 · 마력 구체 · 번개 화살)가 몬스터로 날아가 맞는 순간 터집니다.
  * 기본 공격은 몬스터 위 짧은 베기, 몬스터에게 맞으면 내 캐릭터 위에 붉은 할퀴기. 전용 연출(이계 · 아제로스 · 제논 · 각성기 등)이 있는 스킬은 시전 빛만 더합니다.
  * 투사체는 타격 박자(fx.delay)보다 조금 먼저 출발해 피해 숫자와 함께 닿습니다.
  */
