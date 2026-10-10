@@ -15,7 +15,7 @@ const FX_HOLD_MS = 1500;
 /** 장면 연출(각성기 · 일곱 인 해방 · 보스 스킬 · 도트 퍼니셔)은 2.4~2.6초짜리라 그 길이만큼 붙잡아 둡니다. 이보다 짧으면 애니메이션 도중에 DOM이 지워집니다. */
 const SCENE_HOLD_MS = 2700;
 /** v3.246 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
-const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
+const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3700;
 const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && ultimateOf(fx.skillId)) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
@@ -202,13 +202,16 @@ function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
 }
 /**
  * v3.246 메카닉 메탈아머 전탄발사 전용 연출(메카물 문법): ① 시네마틱 레터박스 · 흰 명조 타이틀 카드(검은 화면)
- * → ② 경고 패널 · 기체 눈 컷인 · 집중선 → ③ 방출한 충전 중첩 × 3줄의 유도 레이저가 곡선을 그리며 난무(빛 궤적)
- * → ④ 연쇄 폭발 → 흑백 반전 임팩트 프레임 → 십자 폭발 기둥 → ⑤ 기울어진 굵은 타이틀이 꽂힘. 약 3초.
+ * → ② 경고 패널 · 기체 눈 컷인 · 집중선 → ③ 방출한 충전 중첩 × 3줄의 레이저가 위아래로 갈라져 화면 밖으로 쏘아짐
+ * → ④ 위아래에서 다시 내리꽂히며 표적 구역 여러 곳에 작은 십자 폭발이 연달아 → 흑백 반전 임팩트 프레임 → 큰 십자 폭발 기둥 → ⑤ 굵은 타이틀. 약 3.5초.
  */
 const MECH_PER_STACK = 3;
-/** 유도 레이저 곡선: 발사대(0, 80)에서 위로 솟았다 휘어 표적(100, 51) 둘레로. 상자는 발사대 ~ 표적 가로 · 장면 세로 전체(.mech-lasers). */
-const mechLaser = (n: number, x: number, y: number) => { const up = 4 + (n * 17) % 34, swing = n % 2 ? 92 : 8 + (n * 11) % 30, ex = 100 + x / 6, ey = 51 + y / 3;
-    return `M0 80 C ${6 + (n % 5) * 5} ${up} ${55 + (n * 13) % 30} ${swing} ${ex.toFixed(1)} ${ey.toFixed(1)}`; };
+/** 레이저 곡선(상자 = 발사대 ~ 표적 가로 · 장면 세로 전체, .mech-lasers). 발사: 발사대(0, 80)에서 위 · 아래로 부채꼴로 갈라져 화면 밖으로. */
+const mechLaunch = (n: number, up: boolean) => { const ex = 8 + (n * 23) % 60, bend = 4 + (n * 7) % 18;
+    return up ? `M0 80 C ${bend} 50 ${ex * .6} 10 ${ex} -12` : `M0 80 C ${bend + 6} 92 ${ex * .7} 104 ${ex + 6} 114`; };
+/** 강하: 위(-12) · 아래(114)에서 표적 구역(100, 51) 둘레의 한 점으로 휘어 내리꽂힘. 가로 1칸 ≈ 7px · 세로 1칸 ≈ 2.7px로 .mech-pop 자리와 맞춥니다. */
+const mechDive = (n: number, up: boolean, x: number, y: number) => { const sx = 45 + (n * 31) % 50, ex = 100 + (x * 2.2 - 40) / 7, ey = 51 + y * 2 / 2.7;
+    return up ? `M${sx} -12 C ${sx + 8} 20 ${ex - 12} ${ey - 30} ${ex.toFixed(1)} ${ey.toFixed(1)}` : `M${sx} 114 C ${sx + 8} 86 ${ex - 12} ${ey + 30} ${ex.toFixed(1)} ${ey.toFixed(1)}`; };
 const mechSpot = (n: number) => { const a = n * 2.39996, r = 8 + (n * 29 % 36); return [Math.round(Math.cos(a) * r * 1.3), Math.round(Math.sin(a) * r * .8)]; };
 function MechFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     const stacks = Math.max(1, Math.min(8, fx.charged || 5)), count = stacks * MECH_PER_STACK;
@@ -218,11 +221,16 @@ function MechFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
         <div className="mech-card"><small>METAL ARMOR · 第五次</small><strong>전탄발사</strong><i/><em>FULL BURST · CHARGE ×{stacks}</em></div>
         <i className="mech-alert left"><b>WARNING · 全弾発射 · WARNING · 全弾発射</b></i><i className="mech-alert right"><b>EMERGENCY · {count} LASERS · EMERGENCY</b></i>
         <i className="mech-cutin"><b/><b/></i>
-        <svg className="mech-lasers" viewBox="0 0 100 100" preserveAspectRatio="none">{Array.from({ length: count }, (_, n) => { const [x, y] = mechSpot(n), t = 1150 + n * (520 / count), d = mechLaser(n, x, y);
-            return <g key={`l${n}`} style={at(n, t)}><path className="trail" d={d} pathLength={100}/><path className="glow" d={d} pathLength={100}/><path className="core" d={d} pathLength={100}/></g>; })}</svg>
-        {Array.from({ length: count }, (_, n) => { const [x, y] = mechSpot(n); return <i key={`b${n}`} className="mech-boom" style={at(n, 1150 + n * (520 / count) + 500, { '--jx': `${x * 1.2}px`, '--jy': `${y * 1.2}px` })}/>; })}
+        {/* ③ 1.15 → 1.6초: 발사대에서 위아래로 갈라져 화면 밖으로, ④ 1.6 → 2.35초: 위아래에서 다시 내리꽂히며 표적 구역 여러 곳에 작은 십자 폭발 */}
+        <i className="mech-muzzle"/>
+        <svg className="mech-lasers" viewBox="0 0 100 100" preserveAspectRatio="none">{Array.from({ length: count }, (_, n) => { const up = n % 2 === 0, [x, y] = mechSpot(n), launch = 1150 + n * (420 / count), dive = 1600 + n * (700 / count);
+            return <Fragment key={`l${n}`}>
+                <g style={at(n, launch)}><path className="trail" d={mechLaunch(n, up)} pathLength={100}/><path className="glow" d={mechLaunch(n, up)} pathLength={100}/><path className="core" d={mechLaunch(n, up)} pathLength={100}/></g>
+                <g className="dive" style={at(n, dive)}><path className="trail" d={mechDive(n, up, x, y)} pathLength={100}/><path className="glow" d={mechDive(n, up, x, y)} pathLength={100}/><path className="core" d={mechDive(n, up, x, y)} pathLength={100}/></g>
+            </Fragment>; })}</svg>
+        {Array.from({ length: count }, (_, n) => { const [x, y] = mechSpot(n); return <i key={`p${n}`} className="mech-pop" style={at(n, 1600 + n * (700 / count) + 300, { '--jx': `${x * 2.2 - 40}px`, '--jy': `${y * 2}px`, '--s': `${.9 + (n % 3) * .25}` })}><b/><b/></i>; })}
         <i className="mech-impact"/><i className="mech-cross"/><i className="mech-cross h"/><i className="mech-ring"/><i className="mech-ring late"/>
-        {Array.from({ length: 14 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={at(n, 2100, { '--ang': `${n * 360 / 14 + 8}deg` })}/>)}
+        {Array.from({ length: 14 }, (_, n) => <i key={`d${n}`} className="mech-debris" style={at(n, 2450, { '--ang': `${n * 360 / 14 + 8}deg` })}/>)}
         <i className="mech-bar"/><i className="mech-bar low"/>
         <strong className="mech-title">FULL BURST!!<small>메탈아머 전탄발사 · {count}줄 레이저</small></strong>
     </div>;
