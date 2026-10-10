@@ -2,6 +2,7 @@
 // 같은 차수 메이플 직업(같은 상태)의 공격 기대값 중앙값보다 +10%(±5%) 안에 드는지 봅니다. 물리 · 마법은 따로 중앙값을 냅니다.
 // 공격 기대값 = 전투력의 공격 몫(powerParts.offense)에서 보스 피해를 뺀 값. 몸은 check-tier5와 같은 엔드 몸(Lv.100 · 환생 100 · 태초 22성 4부위).
 // 기록(까미 · 누리 300, 지역 코어 각성 5, 칠흑 장신구 7종 각성 5 · 처치)은 모든 직업에 똑같이 채워 공용 보너스는 비교에서 상쇄됩니다.
+// 지원 계열(참모 계보, tree 'support')은 다른 분신에게 주는 지원이 힘이라 자기 전투력이 약해도 되므로 빼고 봅니다.
 // 사용: node scripts/check-azeroth.mjs
 import { loadGame } from './lib/game-modules.mjs';
 import { random } from './lib/sim.mjs';
@@ -75,12 +76,12 @@ for (const tier of [4, 5]) {
         s.inventory = ONYX_BOSSES.map((b, i) => ({ id: 'onyx' + i, slot: 'charm', style: 'balanced', rarity: 6, power: 1, level: 1, enhance: 0, name: b.id, affixes: [], onyx: b.id, onyxRank: 5 }));
         loadout(s, j, attributesFor(j).magic);
         const st = stats(s), world = LINEAGES.find(l => l.id === lineageOf(j))?.world || 'maple';
-        rows.push({ name: j.name, world, phys: st.attack >= st.magic, offense: powerParts(st).offense / (1 + (st.bossDamage || 0) / 2) });
+        rows.push({ name: j.name, world, support: j.tree === 'support', phys: st.attack >= st.magic, offense: powerParts(st).offense / (1 + (st.bossDamage || 0) / 2) });
     }
     const median = phys => { const a = rows.filter(r => r.world === 'maple' && r.phys === phys).map(r => r.offense).sort((x, y) => x - y); return a[a.length >> 1]; };
     const ref = { true: median(true), false: median(false) };
     console.log(`${tier}차 메이플 중앙값 물리 ${Math.round(ref.true).toLocaleString()} · 마법 ${Math.round(ref.false).toLocaleString()}`);
-    for (const r of rows.filter(r => r.world === 'azeroth')) {
+    for (const r of rows.filter(r => r.world === 'azeroth' && !r.support)) {
         const ratio = r.offense / ref[r.phys], ok = Math.abs(ratio - TARGET) <= BAND;
         if (!ok) bad.push(`${r.name} ${ratio.toFixed(3)}`);
         console.log(`${ok ? '  ' : '✗ '}${r.name} ${r.phys ? '물리' : '마법'} ×${ratio.toFixed(3)}`);
