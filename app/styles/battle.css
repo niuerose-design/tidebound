@@ -2282,3 +2282,18 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
   .battle-scene .ow-fx,.battle-scene .xen-fx{--tx:calc(100cqw - 62px);--ty:calc(100cqh - 10px - var(--foe-size) * .5)}
   .battle-scene .xen-fx.xen-boss{--tx:calc(100cqw - 72px)}
 }
+
+/* v3.268 설정 › 전투 장면 꾸미기 */
+.scene-look-setting{align-items:stretch;flex-wrap:wrap}
+.scene-look-setting>div:first-child{flex:1 1 260px;min-width:0}
+.scene-look-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 10px;margin-top:8px}
+.scene-look-grid label,.scene-look-image{display:grid;gap:4px;font-size:12px;color:#9db3ab}
+.scene-look-grid select{width:100%;min-width:0;height:32px;padding:0 8px;border-radius:7px;border:1px solid #2c4744;background:#0f2224;color:#dfeee8;font-size:12.5px}
+.scene-look-grid select:disabled{opacity:.5}
+.scene-look-error{margin:6px 0 0;color:#ff9a8a;font-size:12px}
+.scene-look-preview{position:relative;flex:0 0 200px;height:132px;border-radius:10px;overflow:hidden;border:1px solid #2c4744;align-self:center}
+.scene-look-preview .scene-backdrop{position:absolute;inset:0;width:100%;height:100%}
+.scene-look-hero{position:absolute;left:18px;bottom:8px;width:58px}
+.scene-look-hero .scene-hero-art{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px #0009)}
+.scene-hero-art.hero-image{object-fit:contain;object-position:50% 100%;aspect-ratio:80/110;image-rendering:auto}
+@media(max-width:767px){.scene-look-preview{flex:1 1 100%;height:120px}}

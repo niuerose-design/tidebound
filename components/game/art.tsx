@@ -1,4 +1,5 @@
 'use client';
+import { useSceneLook } from './scene-look-setting';
 import { useState, memo, type ReactNode } from 'react';
 import { Compass, Coins, Droplets, Shield, Sparkles, Swords, Wand2, Atom } from 'lucide-react';
 import type { Job } from '@/game/data/classes';
@@ -273,7 +274,9 @@ const THEME_ART: Record<BackdropTheme, ReactNode> = {
         <g fill="#fff" opacity=".55"><circle cx="120" cy="420" r="3"/><circle cx="340" cy="300" r="2.5"/><circle cx="700" cy="380" r="3"/><circle cx="880" cy="220" r="2"/><circle cx="1010" cy="460" r="2.5"/><circle cx="1220" cy="380" r="3"/><circle cx="1460" cy="320" r="2.5"/><circle cx="560" cy="560" r="2"/><circle cx="1320" cy="560" r="2"/><circle cx="420" cy="620" r="2.5"/></g>
     </>,
 };
-export const SceneBackdrop = memo(function SceneBackdrop({ theme = 'village' }: { theme?: BackdropTheme }) {
+export const SceneBackdrop = memo(function SceneBackdrop({ theme: auto = 'village', fixed = false }: { theme?: BackdropTheme; fixed?: boolean }) {
+    // v3.268 설정 › 전투 장면 꾸미기에서 배경을 고르면 사냥터와 상관없이 그 배경(미리보기는 fixed로 그대로).
+    const look = useSceneLook(), theme = !fixed && look.backdrop !== 'auto' ? look.backdrop : auto;
     return <svg className={`ocean-art scene-backdrop backdrop-${theme}`} viewBox="0 0 1536 1024" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs>
             <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#0c1d2b"/><stop offset=".62" stopColor="var(--stage-tone, #5c9dba)" stopOpacity=".55"/><stop offset="1" stopColor="#0b2029"/></linearGradient>
