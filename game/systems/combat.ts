@@ -718,7 +718,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.221 최대 체력 비례 고정 피해(황금 올가미 · 하얀 발자국)는 치명타를 판정하지 않습니다.
     const crit = !chosen?.maxHpDamage && critRoll < sa.crit, superCrit = crit && critRoll < (sa.superCrit || 0);
     // v3.88 행운 비례(scaling 'luck', 팬텀 계열)는 위력에 이미 치명 피해를 넣으므로, 치명타가 터져도 치명 피해를 다시 곱하지 않습니다(제곱 방지).
-    let damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+    // v3.237 동시 시전 보너스: 묶음으로 함께 나간 주문 수 n이면 각 주문 피해 ×(1 + damagePerCast × (n − 1)).
+    const multicastBonus = chosen?.multicast && castCount > 1 ? 1 + MC.damagePerCast * (castCount - 1) : 1;
+    let damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * multicastBonus * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     // v3.221 황금 올가미 · 하얀 발자국: 대상 최대 체력 비례 고정 피해(방어 · 피해 배율 무시, multiplier는 계보 밖 효율만 담음), 명중하면 숙련 로또 상향 표식.
     if (landed && !statusOnly && chosen?.maxHpDamage) damage = Math.max(1, Math.round(sb.hp * chosen.maxHpDamage * (chosen.multiplier || 1)));
     if (landed && chosen?.jackpotUp) b.effects.jackpotUp = Math.max(b.effects.jackpotUp || 0, chosen.jackpotUp);
