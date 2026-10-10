@@ -11,11 +11,11 @@ export type TutorialStep = { id: string; title: string; hint: string; view: stri
  */
 export const TUTORIAL_STEPS: TutorialStep[] = [
     { id: 'catch', title: '첫 처치', hint: '자동 사냥 화면의 ‘자동 사냥 시작’을 누르면 알아서 싸웁니다. 몬스터를 한 마리 잡아 보세요.', view: 'battle', done: s => s.kills > 0 || s.rebirths > 0, earned: s => s.kills > 0, reward: { pearls: 1 } },
-    { id: 'attribute', title: '능력치 배분', hint: '레벨이 오르면 받는 포인트를 ‘능력치 · 빌드’에서 배분합니다. 힘(물리) · 지능(마법) · 기민(속도·회피) · 체질(체력) · 정신(마나) · 행운(치명). 처음엔 한 가지에 몰아도 됩니다.', view: 'character', done: s => Object.values(s.attributes || {}).some(n => n > 0) || s.rebirths > 0, earned: s => Object.values(s.attributes || {}).some(n => n > 0), reward: { pearls: 1 } },
+    { id: 'attribute', title: '능력치 배분', hint: '레벨이 오르면 받는 포인트를 ‘능력치 · 치장’에서 배분합니다. 근력(물리) · 지능(마법) · 기민(속도·회피) · 체질(체력) · 정신(마나) · 행운(치명). Lv.10 첫 전직은 대개 두 능력치를 10~12씩 요구하니, ‘스킬 · 전직’의 처음 추천에서 원하는 직업 조건을 보고 나눠 찍으세요.', view: 'character', done: s => Object.values(s.attributes || {}).some(n => n > 0) || s.rebirths > 0, earned: s => Object.values(s.attributes || {}).some(n => n > 0), reward: { pearls: 1 } },
     { id: 'skill', title: '스킬 장착', hint: '‘스킬 · 전직’에서 기술을 장착하세요. 장착 AP 안에서 자유롭게 바꿀 수 있고, 장착한 스킬은 싸우면서 숙련이 오릅니다.', view: 'skills', done: s => s.skills.length > 0 || s.rebirths > 0, earned: s => s.skills.some(id => id !== 'hook'), reward: { pearls: 1 } },
     { id: 'stage', title: '새 사냥터', hint: 'Lv.5가 되면 ‘사냥터·던전’ 지도에서 리스항구 · 조개 해안으로 옮기세요. 사냥터마다 몬스터와 도감이 다르고, 레벨이 맞는 곳이 경험치가 가장 좋습니다.', view: 'stages', done: s => s.stage !== 'brook' || Object.keys(s.voyage || {}).filter(k => k.startsWith('stage:')).length > 1 || s.rebirths > 0, earned: s => s.stage !== 'brook' || Object.keys(s.voyage || {}).filter(k => k.startsWith('stage:')).length > 1, reward: { pearls: 1 } },
     { id: 'dungeon', title: '던전 첫 정복', hint: 'Lv.8부터 헤네시스 · 버섯 동산에 도전할 수 있습니다. 잡몹 한 판 뒤 보스를 잡으면 희귀 장비와 세계석을 받습니다. 정복마다 던전 주화가 쌓이고, 반복 횟수를 정해 두면 자동으로 다시 돕니다.', view: 'dungeons', done: s => Object.values(s.clears || {}).some(n => n > 0) || s.rebirths > 0, earned: s => Object.values(s.clears || {}).some(n => n > 0), reward: { pearls: 2 } },
-    { id: 'job', title: '전직', hint: 'Lv.10부터 ‘스킬 · 전직’의 전직 탭에서 첫 직업을 고릅니다. 직업은 스킬과 능력치 배율을 정하고, 숙련을 채우면 보너스가 커집니다.', view: 'classes', done: s => s.job !== 'fisher' || (s.unlockedJobs?.length || 0) > 1 || s.rebirths > 0, earned: s => s.job !== 'fisher' || (s.unlockedJobs?.length || 0) > 1, reward: { pearls: 2 } },
+    { id: 'job', title: '전직', hint: 'Lv.10부터 ‘스킬 · 전직’의 전직 탭에서 첫 직업을 고릅니다. 처음이라면 ‘처음 추천’의 메이플 대표 직업 여섯부터 보세요. 직업은 스킬과 능력치 배율을 정하고, 숙련을 채우면 보너스가 커집니다.', view: 'classes', done: s => s.job !== 'fisher' || (s.unlockedJobs?.length || 0) > 1 || s.rebirths > 0, earned: s => s.job !== 'fisher' || (s.unlockedJobs?.length || 0) > 1, reward: { pearls: 2 } },
     { id: 'enhance', title: '장비 강화', hint: '‘장비 보관함’에서 골드로 장비를 한 번 강화하세요. 실패·파괴가 없고 기본 수치가 15%씩 오릅니다. 나중에 팔거나 분해해도 이 단계는 유지됩니다.', view: 'inventory', done: s => [...s.inventory, ...Object.values(s.equipment)].some(i => (i?.enhance || 0) > 0) || s.rebirths > 0, earned: s => [...s.inventory, ...Object.values(s.equipment)].some(i => (i?.enhance || 0) > 0), reward: { pearls: 1 } },
     { id: 'book', title: '도감 연구 보상', hint: '같은 몬스터를 여러 번 잡으면 ‘도감 · 업적’의 도감에 연구 보상(골드, 마지막 단계 SP)이 쌓입니다. 직접 눌러 받아야 합니다.', view: 'book', done: s => Object.values(s.bookClaims || {}).some(n => n > 0) || s.rebirths > 0, earned: s => Object.values(s.bookClaims || {}).some(n => n > 0), reward: { pearls: 1 } },
     { id: 'achievement', title: '업적 보상', hint: '‘도감 · 업적’의 업적 탭에서 달성한 업적의 보상(세계석 · SP · 장착 AP)을 받으세요. 받은 업적 수만큼 능력치 보너스도 붙습니다. 업적은 환생해도 유지됩니다. 오늘의 목표·주간 목표도 같은 화면에서 세계석을 줍니다.', view: 'voyage', done: s => Object.keys(s.achievementClaims || {}).length > 0 || s.rebirths > 0, earned: s => Object.keys(s.achievementClaims || {}).length > 0, reward: { pearls: 1 } },
@@ -24,6 +24,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     { id: 'rebirth', title: '환생', hint: '요구 레벨(처음 Lv.30)에 닿으면 환생으로 세계석과 영구 보너스를 얻고 1레벨부터 더 빠르게 다시 모험합니다. 도감·연구·업적·유물 장비는 남습니다.', view: 'rebirth', done: s => s.rebirths > 0, reward: { pearls: 3, sp: 1 } },
     { id: 'tide', title: '사냥터 난이도', hint: '환생 1회부터 자동 사냥 화면의 ‘난이도’를 올릴 수 있습니다(환생 횟수만큼). 몬스터가 강해지는 대신 보상·숙련이 오르고, 난이도 5부터 숙련의 까미, 10부터 경험의 누리가 나타납니다. 한 단계만 올려 보세요.', view: 'battle', done: s => (s.tide || 0) > 0, reward: { pearls: 2 } },
 ];
+/**
+ * v3.242 입문 메뉴: 첫 생(환생 0회 · 승천 전)에는 처음부터 쓸 수 없는 메뉴를 숨겨 두고 하나씩 엽니다.
+ * Lv.10(첫 전직)에 제단 · 환생 · 통계 · 길드 · 랭킹, 첫 던전 정복에 증권거래소(던전 주화로 거래).
+ */
+export const NOVICE_MENU_LEVEL = 10;
+export const noviceLife = (s: Pick<State, 'rebirths' | 'ascension'>) => !s.rebirths && !s.ascension;
+export const noviceMenuLocked = (s: Pick<State, 'rebirths' | 'ascension' | 'level'>) => noviceLife(s) && s.level < NOVICE_MENU_LEVEL;
+export const noviceMarketLocked = (s: Pick<State, 'rebirths' | 'ascension' | 'clears'>) => noviceLife(s) && !Object.values(s.clears || {}).some(n => n > 0);
 /** 기록된 완료 또는 지금 조건 만족. */
 export const tutorialStepDone = (s: State, step: TutorialStep) => !!s.tutorial?.done?.[step.id] || step.done(s);
 export const tutorialProgress = (s: State) => TUTORIAL_STEPS.filter(x => tutorialStepDone(s, x)).length;

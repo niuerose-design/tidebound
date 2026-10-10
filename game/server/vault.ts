@@ -62,7 +62,7 @@ async function vaultOnyxMove(account: string, s: State, action: unknown, key: st
         if (!item) throw new ApiError(Object.values(s.equipment).some(x => x?.id === key) ? '착용 중인 칠흑은 넣을 수 없습니다. 먼저 벗으세요.' : '가방에 그 칠흑 장신구가 없습니다.');
         if (list.length >= VAULT_ONYX_CAP) throw new ApiError(`금고의 칠흑 칸은 ${VAULT_ONYX_CAP}개까지입니다.`);
         list.push({ id: `v${now.toString(36)}${Math.random().toString(36).slice(2, 7)}`, item: structuredClone(item), slot, ascension: s.ascension || 0, at: now });
-        apply = x => { x.inventory = x.inventory.filter(i => i.id !== key); addLog(x, `계정 금고에 칠흑 장신구 ‘${item.name}’을(를) 넣었습니다. 이 캐릭터가 승천하면 금고에서도 사라집니다.`, 'system'); };
+        apply = x => { x.inventory = x.inventory.filter(i => i.id !== key); addLog(x, `계정 금고에 칠흑 장신구 ‘${item.name}’을(를) 넣었습니다.`, 'system'); };
     }
     else if (action === 'withdraw') {
         const entry = list.find(x => x.id === key);
@@ -76,9 +76,8 @@ async function vaultOnyxMove(account: string, s: State, action: unknown, key: st
     apply(s);
     return { info: infoOf(w), apply };
 }
-/** v3.116 승천: 세계석 · 정수는 전처럼 비우고, 칠흑은 승천하는 분신(slot)이 넣은 것만 지웁니다(다른 분신 몫은 남김). 지운 개수를 돌려줍니다. */
-export async function vaultAfterAscend(account: string, slot: number, now: number) {
-    const w = await wallet(account, now), list = vaultOnyx(w), keep = list.filter(x => x.slot !== slot);
-    await db().setWallet({ account_id: account, pearls: 0, essence: 0, week: weekKey(now), pearl_out: 0, items: JSON.stringify(keep) });
-    return list.length - keep.length;
+/** v3.116 승천: 세계석 · 정수는 전처럼 비웁니다. v3.242 칠흑은 승천해도 남으므로 금고의 칠흑도 그대로 둡니다. */
+export async function vaultAfterAscend(account: string, now: number) {
+    const w = await wallet(account, now);
+    await db().setWallet({ account_id: account, pearls: 0, essence: 0, week: weekKey(now), pearl_out: 0, items: w.items || '[]' });
 }

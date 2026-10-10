@@ -15,6 +15,7 @@ import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, over
 import { restraintSlots } from '../vows';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
+import { spendAutoAttributes } from '../encounter';
 
 /** v27.73 즐겨찾기·숨김 목록 상한(스킬 수보다 넉넉히). */
 const SKILL_MARK_MAX = 400;
@@ -206,6 +207,14 @@ export const buildActions: ActionHandlers = {
             throw Error('능력치 포인트가 부족합니다.');
         s.attributes[id as Attribute] += amount;
         s.statPoints -= amount;
+    },
+    /** v3.242 능력치 자동 배분 켜기 · 끄기(id 'on' · 'off'). 켜면 남은 포인트도 바로 지금 비율대로 나눕니다. */
+    autoAttr(s, { id }) {
+        if (id !== 'on' && id !== 'off') throw Error('자동 배분 설정을 확인하세요.');
+        s.autoAttr = id === 'on';
+        if (!s.autoAttr) return;
+        if (!Object.values(s.attributes).some(n => n > 0)) addLog(s, '능력치 자동 배분을 켰습니다. 먼저 원하는 능력치에 직접 투자하면 그 비율대로 나눕니다.', 'system');
+        else { const n = spendAutoAttributes(s); if (n) addLog(s, `능력치 자동 배분 · ${n}포인트를 지금 비율대로 나눴습니다.`, 'system'); }
     },
     resetAttributes(s) {
         if (s.running)

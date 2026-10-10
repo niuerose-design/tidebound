@@ -5,12 +5,13 @@ import { BookOpen, ChevronLeft, Compass, Flag, Lock, Search } from 'lucide-react
 import { JOBS, LINEAGES, WORLDS, lineageOf, jobById, type WorldId } from '@/game/data/classes';
 import { jobMasteryTarget } from '@/game/systems/progression';
 import { Heading, format } from './shared';
+import { noviceLife } from '@/game/systems/guidance';
 import { LineageCard, RouteMap, JobList } from './jobs/lineage-view';
 import { JobCompare } from './jobs/job-compare';
 import { JobDetail } from './jobs/job-detail';
 import { statusReader, finderJobs, searchJobs, shownLineageJobs, lineageInTab, tabJobCount, tabOf, JOB_TABS, jobTally, jobGoalOf, jobWorld, worldLineages, worldJobCount, type JobTabId, TOP_TAGS, type Finder } from './jobs/job-status';
 
-const FINDER_LABEL: Record<Finder, string> = { ready: '전직 가능', mastered: '숙달', near: '거의 다 됨' };
+const FINDER_LABEL: Record<Finder, string> = { starter: '처음 추천', ready: '전직 가능', mastered: '숙달', near: '거의 다 됨' };
 
 /**
  * 직업 화면: 세 번 눌러 원하는 직업에 닿는 카드형 화면.
@@ -32,12 +33,14 @@ export function Classes({ s, send, busy }: PanelProps) {
     // v3.220 고른 세계. null이면 책(세계 목차)을 보여 줍니다.
     const [world, setWorld] = useState<WorldId | null>(null);
     // 편의 기능: 빠른 찾기(계열 무관 모아 보기), 이름 검색·태그 필터, 비교(최대 3개).
-    const [finder, setFinder] = useState<Finder | null>(null);
+    // v3.242 첫 생의 초보자는 ‘처음 추천’ 모아 보기로 시작합니다(1차 직업이 70개가 넘음).
+    const starter = noviceLife(s), finders = useMemo(() => (Object.keys(FINDER_LABEL) as Finder[]).filter(kind => kind !== 'starter' || starter), [starter]);
+    const [finder, setFinder] = useState<Finder | null>(starter && s.job === 'fisher' ? 'starter' : null);
     const [query, setQuery] = useState(''), [tag, setTag] = useState('');
     const [compareIds, setCompareIds] = useState<string[]>([]);
     const toggleCompare = (id: string) => setCompareIds(ids => ids.includes(id) ? ids.filter(x => x !== id) : ids.length >= 3 ? ids : [...ids, id]);
     // v27.62 빠른 찾기 개수는 상태가 바뀔 때만 다시 셉니다(직업 259개 × 조건 판정이라 검색 입력마다 세면 무거움).
-    const finderCounts = useMemo(() => Object.fromEntries((Object.keys(FINDER_LABEL) as Finder[]).map(kind => [kind, finderJobs(s, kind, statusReader(s)).length])) as Record<Finder, number>, [s]);
+    const finderCounts = useMemo(() => Object.fromEntries(finders.map(kind => [kind, finderJobs(s, kind, statusReader(s)).length])) as Record<Finder, number>, [s, finders]);
     const searching = !!query.trim() || !!tag;
     const found = useMemo(() => finder ? finderJobs(s, finder, statusReader(s)) : searching ? searchJobs(s, query, tag) : null, [s, finder, searching, query, tag]);
     const foundTitle = finder ? `빠른 찾기 · ${FINDER_LABEL[finder]}` : `검색${query.trim() ? ` '${query.trim()}'` : ''}${tag ? ` #${tag}` : ''}`;
@@ -72,7 +75,7 @@ export function Classes({ s, send, busy }: PanelProps) {
         <section className="panel job-current-summary"><Compass size={26}/><div><small>현재 직업</small><h2>{current.name}</h2><p>숙련 {format(s.jobMastery[s.job] || 0)} / {format(jobMasteryTarget(current))} · 전직해 본 직업 {tally.unlocked} / {tally.total} · 숙달 {tally.mastered} / {tally.total}</p>
             <p className={`job-goal-line ${goalStatus && (goalStatus.status === 'ready' || goalStatus.status === 'mastered') ? 'ready' : ''}`}><Flag size={13}/> {goal && goalStatus ? <>목표 <b>{goal.name}</b> · {goalStatus.status === 'ready' || goalStatus.status === 'mastered' ? '지금 전직할 수 있습니다' : `조건 ${goalStatus.missing.length}개 남음${goalStatus.missing[0] ? ` · ${goalStatus.missing[0].label}` : ''}`}</> : '목표 직업 없음 · 직업 상세에서 ‘목표로 설정’'}</p></div>
             <div className="job-summary-buttons"><button className="secondary small" onClick={showCurrent}>현재 직업 보기</button>{goal && <button className="secondary small" onClick={showGoal}>목표 보기</button>}</div></section>
-        <div className="job-finder" role="group" aria-label="빠른 찾기">{(Object.keys(FINDER_LABEL) as Finder[]).map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderCounts[kind]}</b></button>)}</div>
+        <div className="job-finder" role="group" aria-label="빠른 찾기">{finders.map(kind => <button type="button" key={kind} className={`job-finder-chip ${finder === kind ? 'active' : ''}`} aria-pressed={finder === kind} onClick={() => { setFinder(finder === kind ? null : kind); setQuery(''); setTag(''); }}>{FINDER_LABEL[kind]} <b>{finderCounts[kind]}</b></button>)}</div>
         <div className="job-search">
             <label className="job-search-box"><Search size={15}/><input type="search" value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>
             <div className="job-tag-chips" aria-label="태그 필터">{TOP_TAGS.map(t => <button type="button" key={t} className={`job-tag-chip ${tag === t ? 'active' : ''}`} aria-pressed={tag === t} onClick={() => { setTag(tag === t ? '' : t); setFinder(null); }}>#{t}</button>)}</div>

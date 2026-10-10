@@ -1,4 +1,5 @@
 /** 적 등장·드롭·승리 보상. */
+import { NOVICE_MENU_LEVEL, noviceLife, noviceMarketLocked } from './guidance';
 import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
@@ -27,7 +28,7 @@ import type { State, Item, Stats, Enemy } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE } from '../data/balance';
 import { MONSTERS, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatMonster, tideLiftMonster, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, monsterById, stageById, dungeonById } from '../data/world';
 import { jobById } from '../data/classes';
-import { HACKER_ID } from '../data/hacker';
+import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
@@ -57,7 +58,24 @@ export function gainLevels(s: State) {
         s.mana = grown.mana;
         s.hp = grown.hp;
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
+        if (s.level === NOVICE_MENU_LEVEL && noviceLife(s)) addLog(s, '새 메뉴가 열렸습니다 · 제단 · 환생 · 통계 · 길드 · 랭킹', 'system');
     }
+    spendAutoAttributes(s);
+}
+/**
+ * v3.242 능력치 자동 배분(s.autoAttr): 남은 포인트를 지금 직접 투자한 비율대로 모두 나눕니다(나머지는 큰 몫부터 1씩).
+ * 아직 투자한 능력치가 없거나 해커(투자 불가)면 그대로 둡니다. 환생 직후에는 직전 생의 비율(weights)을 씁니다. 나눈 포인트 수를 돌려줍니다.
+ */
+export function spendAutoAttributes(s: State, weights: State['attributes'] = s.attributes) {
+    if (!s.autoAttr || s.statPoints < 1 || isHackerJob(s.job)) return 0;
+    const keys = Object.keys(s.attributes) as (keyof State['attributes'])[], total = keys.reduce((n, k) => n + (weights[k] || 0), 0);
+    if (total < 1) return 0;
+    const points = s.statPoints, shares = keys.map(k => ({ k, exact: points * (weights[k] || 0) / total })), add = Object.fromEntries(shares.map(x => [x.k, Math.floor(x.exact)])) as Record<string, number>;
+    let left = points - Object.values(add).reduce((n, x) => n + x, 0);
+    for (const x of [...shares].sort((p, q) => (q.exact % 1) - (p.exact % 1))) { if (left < 1) break; add[x.k]++; left--; }
+    for (const k of keys) s.attributes[k] += add[k];
+    s.statPoints = 0;
+    return points;
 }
 /** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 v27.86에 없어짐). 레벨은 호출한 쪽에서 올립니다. */
 export function releaseLegacySeal(s: State) {
@@ -351,7 +369,7 @@ export function reward(s: State, rng: () => number) {
     if (size > 1 || rankMul > 1) { const raw = (size > 1 ? swarmRankKills(size, swarmTurns) : 1) * valor * (1 + rankPerkLevel(s, 'tally')) * rankMul + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
     else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));
     s.rank = rk;
-    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
+    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 치장 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
     // v3.221 황금 올가미 표식이 남은 까미는 그 확률로 로또가 한 단계 위로 굴러갑니다.
@@ -513,6 +531,7 @@ export function reward(s: State, rng: () => number) {
             }
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
+            if (noviceMarketLocked(s)) addLog(s, '새 메뉴가 열렸습니다 · 증권거래소(던전 주화로 거래)', 'system');
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.201 반복 정복 확률 드롭은 없앴습니다(주화 상점 장비 상자로).
