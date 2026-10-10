@@ -26,6 +26,8 @@ export type Fighter = {
     /** v3.231 요원 탄창 크기(장착 패시브 포함) · 재장전 생략 확률. 있으면 액티브를 확률 · 대기 없이 순서대로 씁니다. */
     magazine?: number;
     reloadSkip?: number;
+    /** v3.231 무한 탄창(데드샷 패시브). */
+    overdrive?: { actions: number; shots: number; power: number };
     /** v3.231 트레이더 평가 손익 배율(레버리지 pnlScale이 봄). */
     pnl?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
@@ -341,6 +343,7 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
 /** v3.86 행동 뒤에 붙는 줄: 추가 판정(액티브가 발동한 행동)과, 턴을 세는 행동(턴의 첫 행동·확정 추가 행동)이면 각성기. */
 function afterAction(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, turn: boolean, onAction: (text: string, event: CombatEvent) => void) {
     followUps(a, b, rng, first, onAction);
+    overdriveShots(a, b, rng, first, onAction);
     if (turn) awaken(a, b, rng, first, onAction);
 }
 /** v3.86 추가 판정: 액티브가 발동한 행동에서 그 아래 액티브로 단계 수만큼 더 굴려, 성공하면 줄어든 위력으로 바로 씁니다. 동시 시전 묶음으로 나간 행동에는 굴리지 않고, 대신 v3.87부터 묶음 최대 개수가 단계만큼 늘어납니다. */
@@ -358,6 +361,19 @@ function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent
         const text = act(a, b, rng, more, false, false, { id: next.id, index: i + 1, count: 1, kind: 'followUp', power: R.power[i] });
         onAction(`${text} · 추가 판정${rolls > 1 ? ` ${i + 1}` : ''} (위력 ${Math.round(R.power[i] * 100)}%)`, more[0]);
     }
+}
+/** v3.231 무한 탄창 중이면 이 행동 뒤에 탄창 순서대로 shots발을 더 쏩니다(탄은 쓰지 않고 연료는 씀). 행동마다 남은 수가 1 줄어듭니다. */
+function overdriveShots(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | undefined, onAction: (text: string, event: CombatEvent) => void) {
+    const od = a.overdrive, left = a.effects?.overdrive || 0;
+    if (!od || left <= 0 || !first || first.stunned || first.reload) return;
+    for (let i = 0; i < od.shots && a.hp > 0 && b.hp > 0; i++) {
+        const next = pickActive(a, b, normalizeStats(a.stats), normalizeStats(b.stats), rng, new Set(), false);
+        if (!next) break;
+        const more: CombatEvent[] = [];
+        const text = act(a, b, rng, more, false, false, { id: next.id, index: i + 1, count: od.shots + 1, kind: 'followUp', power: od.power });
+        onAction(`${text} · 무한 탄창`, more[0]);
+    }
+    a.effects!.overdrive = left - 1;
 }
 /**
  * v3.86 각성기: 턴마다 대기를 1 줄이고, 대기가 끝난 각성기를 편성 순서대로 굴려 한 턴에 perTurn개(기본 1)까지 씁니다.
@@ -484,8 +500,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const mag = (a.effects.mag ??= { left: a.magazine, next: 0 });
         if (mag.left <= 0) {
             mag.left = a.magazine;
-            if (!(a.reloadSkip && rng() < a.reloadSkip)) { ev.reload = true; return emit(`${a.name}: 재장전.${notes.length ? ' ' + notes.join(' · ') : ''}`); }
-            notes.push('빠른 재장전');
+            // v3.231 무한 탄창: 두 번에 한 번은 재장전 대신 actions행동 동안 탄을 쓰지 않고 연사합니다(afterAction의 overdriveShots).
+            if (a.overdrive && !a.effects.odCool) { a.effects.overdrive = a.overdrive.actions; a.effects.odCool = true; ev.overdrive = true; notes.push(`무한 탄창 ${a.overdrive.actions}행동`); }
+            else {
+                a.effects.odCool = false;
+                if (!(a.reloadSkip && rng() < a.reloadSkip)) { ev.reload = true; return emit(`${a.name}: 재장전.${notes.length ? ' ' + notes.join(' · ') : ''}`); }
+                notes.push('빠른 재장전');
+            }
         }
     }
     let chosen: Skill | undefined;
@@ -525,7 +546,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen) {
         // v3.231 연료 · 탄창: 쓴 만큼 태우고 한 발을 씁니다. 레버리지: 피해 × (1 + 손익 × pnlScale).
         if (chosen.fuelCost && a.fuel !== undefined) a.fuel = Math.max(0, a.fuel - chosen.fuelCost);
-        if (a.magazine && !forced && a.effects.mag) a.effects.mag.left--;
+        if (a.magazine && !forced && a.effects.mag && !a.effects.overdrive) a.effects.mag.left--;
         if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (chosen.pnlAbs ? Math.abs(a.pnl || 0) : a.pnl || 0) * chosen.pnlScale) };
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));

@@ -55,3 +55,15 @@ test('v3.231 5차: 숏 스퀴즈는 손실일수록, 블랙 스완(각성기)은
     const tt = SK.skillById('tacticalTraining'); assert.equal(tt.exclusiveLineage, 'agentRookie'); assert.ok(tt.bonus.crit >= .15 && tt.bonus.penetration >= .15);
     const out = newState(0); out.job = 'hero'; assert.equal(P.exclusiveAccess(out, tt), false); const inn = newState(0); inn.job = 'ghostOperative'; assert.equal(P.exclusiveAccess(inn, tt), true);
 });
+
+test('v3.231 데드샷 무한 탄창: 탄창이 비면 두 번에 한 번은 재장전 대신 탄을 쓰지 않고 행동마다 한 발 더, 그다음 빈 탄창은 재장전', () => {
+    const a = { name: 'a', job: 'deadshot', stats: { hp: 1000, attack: 200, defense: 10, mana: 9999, crit: 0, accuracy: 9 }, hp: 1000, mana: 9999, skills: ['snipe', 'doubleTap'], cooldowns: {}, stun: 0, effects: {}, fuel: 1000, magazine: 2, overdrive: { actions: 2, shots: 1, power: .8 } };
+    const b = { name: 'b', foe: true, stats: { hp: 1e9, attack: 1, defense: 0, crit: 0 }, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {} };
+    const turn = () => { const ev = []; C.strike(a, b, () => .99, ev); return ev.map(e => e.reload ? 'reload' : (e.overdrive ? '∞' : '') + e.skillName); };
+    assert.deepEqual(turn(), ['저격']); assert.deepEqual(turn(), ['더블 탭']);
+    assert.deepEqual(turn(), ['∞저격', '더블 탭'], 'empty → overdrive instead of reload, plus one more shot');
+    assert.deepEqual(turn(), ['저격', '더블 탭']); assert.equal(a.effects.mag.left, 2, 'no rounds spent');
+    assert.deepEqual(turn(), ['저격'], 'overdrive over'); assert.deepEqual(turn(), ['더블 탭']);
+    assert.deepEqual(turn(), ['reload'], 'the next empty magazine reloads');
+    assert.ok(SK.skillById('tacticalNuke').awaken && SK.skillById('deadEye').job === 'deadshot');
+});

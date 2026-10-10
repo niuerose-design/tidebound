@@ -133,6 +133,9 @@ export type StatusEffects = {
     timeUsed?: boolean;
     /** v3.231 요원 탄창: 남은 발 · 다음 칸(장착 순서 위치). */
     mag?: { left: number; next: number };
+    /** v3.231 무한 탄창(데드샷): 남은 행동 수 · 이번에 걸렸으면 다음 빈 탄창은 보통 재장전. */
+    overdrive?: number;
+    odCool?: boolean;
     /** v3.198 태그(제로): 이번 전투에 마지막으로 쓴 태그 기술의 쪽(알파 · 베타). */
     tag?: 'alpha' | 'beta';
     /** v25 이번 전투에 無로 막은 횟수. */
@@ -294,6 +297,8 @@ export type Skill = {
     /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
     magazineBonus?: number;
     reloadSkip?: number;
+    /** v3.231 무한 탄창(패시브): 탄창이 비면 재장전 대신 actions행동 동안 탄을 쓰지 않고, 행동마다 탄창 기술을 shots발 더(위력 power) 쏩니다. 두 번에 한 번(그 사이는 보통 재장전). */
+    overdrive?: { actions: number; shots: number; power: number };
     /** v3.231 트레이더 액티브: 피해 × (1 + 평가 손익률 × pnlScale). 패시브 pnlFloor: 손익 배율의 하한. */
     pnlScale?: number;
     pnlFloor?: number;
@@ -487,6 +492,8 @@ export type CombatEvent = {
     restored?: boolean;
     /** v3.231 요원 재장전으로 쓴 행동. */
     reload?: boolean;
+    /** v3.231 무한 탄창에 들어간 행동. */
+    overdrive?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
     /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */

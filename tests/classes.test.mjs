@@ -3,16 +3,16 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 278); assert.equal(new Set(JOBS.map(j => j.id)).size, 278); // v3.230 아제로스 히든 3개(무릉 수행자 · 변종 학자 · 제단 순례자) · v3.231 이계 요원 · 트레이더 6개(1 · 4 · 5차) // v3.225 참모 계보 5차 2개(총사령관 · 군수사령관) // v3.220 아제로스 히든 계보 4개(까미 사냥꾼 · 누리 추적자 · 어둠의 추종자 · 칠흑의 화신) // 참모 계보: v3.219 보급관 · v3.219 군의관 · v3.219 작전참모 · 화력참모
+    assert.equal(JOBS.length, 279); assert.equal(new Set(JOBS.map(j => j.id)).size, 279); // v3.230 아제로스 히든 3개(무릉 수행자 · 변종 학자 · 제단 순례자) · v3.231 이계 요원 4개(5차 두 갈래) · 트레이더 3개 // v3.225 참모 계보 5차 2개(총사령관 · 군수사령관) // v3.220 아제로스 히든 계보 4개(까미 사냥꾼 · 누리 추적자 · 어둠의 추종자 · 칠흑의 화신) // 참모 계보: v3.219 보급관 · v3.219 군의관 · v3.219 작전참모 · 화력참모
     // v3.135 나이트워커 2~5차 · 골령술사(5개)를 지우고 1차 망인만 남겼습니다. v3.138 미하일 계보 5개 · 성벽 기사를 지웠습니다. v3.153 몬스터 도감 독자 · v3.155 빙결 결박사 · v3.156 보물 사냥꾼 · v3.199 청빈 수도승을 지웠습니다.
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
-    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 251);
+    assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 252);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
     assert.equal(JOBS.filter(j => /^(str|dex|int|vit|wis|luk)Training[123]$/.test(j.id)).length, 18);
     assert.equal(JOBS.filter(j => j.tree === 'other').length, 0);
     for (const j of JOBS) assert.equal(JOB_TREES.filter(t => t.id === j.tree).length, 1, j.id);
     const count = Object.fromEntries(JOB_TREES.map(t => [t.id, JOBS.filter(j => j.tree === t.id).length]));
-    assert.deepEqual(count, { physical: 53, magic: 49, defense: 35, status: 32, hybrid: 37, support: 49, mystery: 23 }); // 참모 계보 6개(support) · v3.230 아제로스 히든 3개(mystery) · v3.231 이계 요원(physical) · 트레이더(magic) 3개씩
+    assert.deepEqual(count, { physical: 54, magic: 49, defense: 35, status: 32, hybrid: 37, support: 49, mystery: 23 }); // 참모 계보 6개(support) · v3.230 아제로스 히든 3개(mystery) · v3.231 이계 요원(physical) · 트레이더(magic) 3개씩
 });
 
 test('Job trees: the old other jobs land where the plan puts them', () => {

@@ -221,17 +221,17 @@ export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[];
  * 쏘는 자리(왼쪽 아래)에서 몬스터 자리(62% · 48%)로 향합니다. 재장전은 탄창이 다시 들어오는 짧은 연출입니다.
  */
 const OW_FX: Record<string, string> = {
-    pistolBurst: 'burst', suppressFire: 'burst', fullAuto: 'burst', shotgunBlast: 'shotgun', snipe: 'snipe', armorPiercer: 'ap', flashbang: 'flash', grenadeLauncher: 'grenade', deadEye: 'deadeye',
+    pistolBurst: 'burst', suppressFire: 'burst', fullAuto: 'burst', doubleTap: 'burst', shotgunBlast: 'shotgun', snipe: 'snipe', armorPiercer: 'ap', flashbang: 'flash', grenadeLauncher: 'grenade', deadEye: 'deadeye', tacticalNuke: 'nuke',
     buyOrder: 'buy', shortSell: 'short', leverage: 'leverage', stopLoss: 'stop', shortSqueeze: 'squeeze', circuitBreaker: 'circuit', blackSwan: 'swan',
 };
-const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8 };
+const OW_BURST: Record<string, number> = { pistolBurst: 2, suppressFire: 5, fullAuto: 8, doubleTap: 2 };
 const owSpread = (i: number) => `${((i * 37) % 9 - 4) * .7}deg`;
 function OtherworldFx({ fx, pnl }: { fx: CombatFx; pnl: number }) {
     const kind = fx.reload ? 'reload' : OW_FX[fx.skillId!], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra });
     const shots = kind === 'burst' ? OW_BURST[fx.skillId!] ?? 3 : kind === 'shotgun' ? 5 : 0, swing = Math.max(-.35, Math.min(.35, pnl));
     const scale = fx.skillId === 'leverage' ? Math.max(0, 1 + swing * 2) : fx.skillId === 'blackSwan' ? 1 + Math.abs(swing) * 3 : fx.skillId === 'shortSqueeze' ? Math.max(0, 1 - swing * 2) : 1;
     return <div className={`scene-fx ow-fx ow-${kind} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d)}>
-        {(kind === 'deadeye' || kind === 'swan' || kind === 'circuit') && <i className="scene-fx-dark"/>}
+        {(kind === 'deadeye' || kind === 'swan' || kind === 'circuit' || kind === 'nuke') && <i className="scene-fx-dark"/>}
         {shots > 0 && Array.from({ length: shots }, (_, n) => <i key={n} className="ow-tracer" style={i(n, { '--spread': kind === 'shotgun' ? `${(n - 2) * 4}deg` : owSpread(n), '--t': `${n * (kind === 'shotgun' ? 0 : 70)}ms` })}/>)}
         {shots > 0 && Array.from({ length: Math.min(shots, 4) }, (_, n) => <i key={`s${n}`} className="ow-casing" style={i(n)}/>)}
         {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-scope"><b/></i>}
@@ -240,7 +240,9 @@ function OtherworldFx({ fx, pnl }: { fx: CombatFx; pnl: number }) {
             {Array.from({ length: 3 }, (_, n) => <i key={`o${n}`} className="ow-pop" style={i(n)}/>)}
             {Array.from({ length: 3 }, (_, n) => <i key={`c${n}`} className="ow-casing" style={i(n)}/>)}
             <i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 14 }, (_, n) => <i key={`p${n}`} className="ow-spark" style={i(n, { '--ang': `${n * 360 / 14}deg` })}/>)}</>}
-        {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-beam"/>}
+        {kind === 'snipe' && <i className="ow-beam"/>}
+        {kind === 'nuke' && <>{Array.from({ length: 2 }, (_, n) => <i key={`w${n}`} className="ow-warn" style={i(n)}/>)}<i className="ow-missile"/><i className="ow-whiteout late"/><i className="ow-fireball"/><i className="ow-stem"/><i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 16 }, (_, n) => <i key={`e${n}`} className="ow-ember" style={i(n, { '--ang': `${n * 22.5}deg` })}/>)}</>}
+        {fx.overdrive && <><b className="ow-od">∞ 무한 탄창</b>{Array.from({ length: 8 }, (_, n) => <i key={`r${n}`} className="ow-round od" style={i(n)}/>)}</>}
         {kind === 'ap' && <><i className="ow-beam ap"/><i className="ow-crack"/>{Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-rust" style={i(n, { '--ang': `${n * 45 + 10}deg` })}/>)}</>}
         {kind === 'flash' && <i className="ow-whiteout"/>}
         {kind === 'grenade' && <><i className="ow-grenade"/><i className="ow-boom"/><i className="ow-boom late"/></>}
@@ -253,7 +255,7 @@ function OtherworldFx({ fx, pnl }: { fx: CombatFx; pnl: number }) {
         {kind === 'circuit' && Array.from({ length: 3 }, (_, n) => <i key={n} className="ow-halt" style={i(n)}/>)}
         {kind === 'reload' && Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-round" style={i(n)}/>)}
         {(fx.skillId === 'leverage' || fx.skillId === 'blackSwan' || fx.skillId === 'shortSqueeze') && <b className="ow-mult">손익 {swing >= 0 ? '+' : ''}{Math.round(swing * 100)}% → ×{scale.toFixed(2)}</b>}
-        <strong className="ow-title">{kind === 'reload' ? 'RELOAD' : kind === 'deadeye' ? 'DEAD EYE' : kind === 'swan' ? 'BLACK SWAN' : kind === 'circuit' ? 'CIRCUIT BREAKER' : kind === 'leverage' ? scale >= 1 ? 'LEVERAGE' : 'MARGIN CALL' : kind === 'snipe' && fx.critical ? 'HEADSHOT' : fx.title}</strong>
+        <strong className="ow-title">{kind === 'reload' ? 'RELOAD' : kind === 'deadeye' ? 'DEAD EYE' : kind === 'nuke' ? 'TACTICAL NUKE' : kind === 'swan' ? 'BLACK SWAN' : kind === 'circuit' ? 'CIRCUIT BREAKER' : kind === 'leverage' ? scale >= 1 ? 'LEVERAGE' : 'MARGIN CALL' : kind === 'snipe' && fx.critical ? 'HEADSHOT' : fx.title}</strong>
     </div>;
 }
 /**

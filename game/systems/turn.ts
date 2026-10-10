@@ -217,6 +217,7 @@ function otherworldFighter(s: State, usable: string[]): Partial<Fighter> {
     return {
         ...(j.fuelJob ? { fuel: s.fuel || 0 } : {}),
         ...(j.magazine ? { magazine: j.magazine + passives.reduce((n, sk) => n + (sk!.magazineBonus || 0), 0), reloadSkip: Math.max(0, ...passives.map(sk => sk!.reloadSkip || 0)) } : {}),
+        ...(j.magazine && passives.some(sk => sk!.overdrive) ? { overdrive: passives.find(sk => sk!.overdrive)!.overdrive } : {}),
         ...(j.trader ? { pnl: s.marketPnl || 0 } : {}),
     };
 }
