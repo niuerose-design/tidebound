@@ -17,7 +17,7 @@ import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
 import { jobById } from '../data/classes';
-import { josa, ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, RAID_STAGE, raidStageStats, nextRaidStage, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { josa, ALTAR, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, RAID_STAGE, raidStageStats, nextRaidStage, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow>;
     /** v3.91 모든 모험가의 누적 기여(내 누적 기여 · 순위를 요청마다 전체 합산하지 않고 이 캐시에서 셉니다). totals는 많은 순. */ totals: Map<string, number>; sortedTotals: number[] };
@@ -323,7 +323,7 @@ export function makeChallenge(id: string) {
             const a = (await core(now, true)).altar, stored = parseGod(a), god = stored && divineFirstGod(stored);
             if (!god || !godAlive(a, now)) throw new ApiError('지금 깨어 있는 신이 없습니다.');
             if (a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 도전할 수 없습니다.');
-            if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`신에게는 ${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
+            if (now - last < altarCooldownMs(s)) throw new ApiError(`신에게는 ${Math.ceil((altarCooldownMs(s) - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
             const me = snapshot(s), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
             const claimed = result.winner === 'player' && await db().claimAltarThrone(a.gen, id, s.name, JSON.stringify(me), now);
             outcome = { result, claimed, gen: a.gen, god: god.name, dealt: Math.max(0, Math.min(1, 1 - result.opponentHp / Math.max(1, god.stats.hp))) };
@@ -350,7 +350,7 @@ export function makeImpeach(id: string) {
             if (!a.throne) throw new ApiError('신의 자리가 비어 있습니다.');
             if (a.throne === id) throw new ApiError('자신을 탄핵할 수는 없습니다.');
             if (godAlive(a, now)) throw new ApiError('깨어 있는 신이 있습니다. 신에게 도전하세요.');
-            if (now - last < ALTAR.challengeCooldownMs) throw new ApiError(`${Math.ceil((ALTAR.challengeCooldownMs - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
+            if (now - last < altarCooldownMs(s)) throw new ApiError(`${Math.ceil((altarCooldownMs(s) - (now - last)) / 60000)}분 뒤에 다시 도전할 수 있습니다.`);
             const me = snapshot(s), god = nextGod(a), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
             const impeached = result.winner === 'player' && await db().vacateAltarThrone(a.throne);
             outcome = { result, impeached, holder: a.throne_name, dealt: Math.max(0, Math.min(1, 1 - result.opponentHp / Math.max(1, god.stats.hp))) };

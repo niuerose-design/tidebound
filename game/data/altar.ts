@@ -7,6 +7,8 @@
  * 서버 부하: 게임 틱은 제단을 전혀 읽지 않습니다. 축복은 기존 서버 이벤트처럼 30초 캐시로만 읽고,
  * 제단 화면도 인스턴스마다 15초 캐시를 씁니다. 쓰기는 바치기·도전·거두기 버튼에서만 일어납니다.
  */
+import { jobById } from './classes';
+
 export const ALTAR = {
     /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
     goldPerPoint: 1000, pearlPoints: 500, essencePoints: 30,
@@ -189,3 +191,6 @@ export type AltarStatus = {
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };
+
+/** v3.230 신 도전 간격: 현재 직업의 altarCooldownScale(제단 순례자 0.5)을 곱합니다. 화면과 서버가 같은 값을 씁니다. */
+export const altarCooldownMs = (s: { job: string }) => ALTAR.challengeCooldownMs * (jobById(s.job)?.altarCooldownScale ?? 1);
