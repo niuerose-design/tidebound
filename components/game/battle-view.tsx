@@ -26,7 +26,7 @@ import { statDisplay, percent } from '@/game/data/progression';
 import { skillById } from '@/game/data/skills';
 import { jobById } from '@/game/data/classes';
 import { skillBrief } from '@/game/systems/skill-description';
-import { apCapacity, apUsed, effectiveSkill, skillMastery } from '@/game/systems/progression';
+import { apCapacity, apUsed, effectiveSkill, maxSkillLevel, skillLevel, skillMastery } from '@/game/systems/progression';
 import { hitChance, normalizeStats } from '@/game/systems/stats';
 import { profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
@@ -181,7 +181,7 @@ function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; set
                 </button>
                 <span className="hotbar-tip" role="tooltip" id={tipId}>
                     <strong>{sk.name}{sk.awaken ? <em> · 각성</em> : null}</strong>
-                    <small>{jobById(sk.job)?.name || '공용'} · Lv.{s.learned[id] || 1}</small>
+                    <small>{jobById(sk.job)?.name || '공용'} · 성장 Lv.{skillLevel(sk, s.learned[id] || 1, skillMastery(s, id))} / {maxSkillLevel(sk)}</small>
                     <span className="hotbar-tip-stats">
                         <span>발동 <b>{Math.round(effective.chance * 100)}%</b></span>
                         <span>대기 <b>{sk.awaken ? `시작 ${sk.awaken.start}턴` : `${effective.cooldown}턴`}</b></span>

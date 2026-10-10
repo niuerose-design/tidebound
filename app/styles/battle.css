@@ -2245,3 +2245,10 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @container (max-width:560px){.kkami-layer .scene-fx-kkami-title{font-size:21px;letter-spacing:1px}.kkami-layer .scene-fx-kkami-sub{font-size:12.5px;letter-spacing:1px}}
 /* v3.265 각성기 아이콘: 금빛 테두리 빛(계보 색 아이콘 둘레). */
 .skill-glyph.awaken{filter:drop-shadow(0 0 1.5px #ffd76a) drop-shadow(0 0 4px #f0a83acc)}
+
+/* v3.266 몬스터 HP · 이름 칸: 그림이 발밑 아래로 내려오는 몬스터(스켈레곤 등)의 다리 위에서도 숫자가 읽히도록 어두운 받침을 깝니다. */
+.scene-foe-hud{padding:3px 6px 4px;border-radius:8px;background:#050d10b8;box-shadow:0 0 0 1px #ffffff12;backdrop-filter:blur(2px)}
+.scene-foe-name{margin-top:2px}
+/* v3.266 장면 기록 치명타: ‘치명’ 글자는 넓은 장면에서만, 좁은 장면(모바일)은 숫자 앞 ★로 줄여 피해 숫자가 잘리지 않게 합니다. */
+.scene-log p .crit-word{font-size:inherit;font-weight:inherit}
+@container (max-width:560px){.scene-log p .crit-word{display:none}.scene-log p.crit .n::before{content:"★";margin-right:1px;font-size:.9em}}
