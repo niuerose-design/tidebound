@@ -75,3 +75,14 @@ test('v3.235 요원 · 트레이더 1차는 세계석 없이 조건 없이 들�
     const cost = id => jobById(id).pearlCost;
     assert.deepEqual(['specialAgent', 'fundManager', 'ghostOperative', 'deadshot', 'marketMaker', 'hacker'].map(cost), [1000, 1000, 10000, 10000, 10000, 3000]);
 });
+
+test('v3.238 겹영창: 4 · 5차 패시브가 1~3차 주문 피해 +50%씩, 동시 시전 묶음 n개면 각 주문 ×(1 + 0.15 × (n−1))', () => {
+    const foe = () => ({ name: 'b', foe: true, stats: { hp: 1e9, attack: 1, defense: 0, resist: 0, crit: 0 }, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const hit = skills => { const ev = []; C.strike({ name: 'a', job: 'thousandChants', stats: { hp: 1000, magic: 1000, attack: 1, defense: 10, mana: 9999, crit: 0, accuracy: 9 }, hp: 1000, mana: 9999, skills, cooldowns: {}, stun: 0, effects: {} }, foe(), () => 0, ev); return ev[0]; };
+    const base = hit(['twinSpark']).total, one = hit(['twinSpark', 'masterCadence']).total, two = hit(['twinSpark', 'masterCadence', 'endlessVerse']).total;
+    assert.ok(Math.abs(one / base - 1.5) < .01 && Math.abs(two / base - 2) < .01, `${base} ${one} ${two}`);
+    assert.equal(hit(['stormChant', 'masterCadence']).total, hit(['stormChant']).total, '4차 주문은 그대로');
+    const pair = hit(['twinSpark', 'emberVerse']);
+    assert.equal(pair.multicast?.count, 2);
+    assert.ok(Math.abs(pair.total / base - 1.15) < .01, `${pair.total} / ${base}`);
+});
