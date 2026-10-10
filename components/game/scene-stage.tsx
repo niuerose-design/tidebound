@@ -335,3 +335,33 @@ export function SceneLoot({ logs }: { logs: Log[] }) {
     if (!pops.length) return null;
     return <div className="scene-loot-layer" aria-hidden="true">{pops.map((p, i) => <b key={p.key} className={`scene-loot ${p.kind}`} style={{ '--d': `${p.delay}ms`, '--row': i % 5 } as React.CSSProperties}>{p.text}</b>)}</div>;
 }
+
+/** 값이 바뀌는 순간에만 잠깐 켜지는 표시(처음 그릴 때는 켜지 않음). key가 같으면 다시 켜지지 않습니다. */
+function useFlash(key: string, ms: number, fire: (was: string, now: string) => boolean = () => true) {
+    const prev = useRef<string | null>(null), [on, setOn] = useState<string | null>(null);
+    useEffect(() => {
+        const was = prev.current;
+        prev.current = key;
+        if (was === null || !key || was === key || reduced() || !fire(was, key)) return;
+        setOn(key);
+        const timer = window.setTimeout(() => setOn(v => v === key ? null : v), ms);
+        return () => window.clearTimeout(timer);
+    }, [key, ms, fire]);
+    return on;
+}
+const levelRose = (was: string, now: string) => Number(now) > Number(was);
+
+/** v3.259 보스 등장: 보스가 나타나면 장면이 어두워지고 붉은 띠에 ‘BOSS’와 이름이 가로질러 지나갑니다(약 2.4초). */
+export function BossIntro({ enemy }: { enemy: State['enemy'] }) {
+    const key = enemy?.boss ? `${enemy.id}:${enemy.maxHp}` : '';
+    const on = useFlash(key, 2400);
+    if (!on || !enemy) return null;
+    return <div className="boss-intro" aria-hidden="true"><i className="boss-intro-dark"/><div className="boss-intro-band"><small>WARNING · BOSS</small><strong>{enemy.name}</strong></div></div>;
+}
+
+/** v3.259 레벨 업: 레벨이 오르는 순간 내 캐릭터 둘레에 빛기둥이 서고 ‘LEVEL UP · Lv.N’이 떠오릅니다(약 2초). */
+export function LevelUpFx({ level }: { level: number }) {
+    const on = useFlash(String(level), 2000, levelRose);
+    if (!on) return null;
+    return <div className="levelup-fx" aria-hidden="true"><i className="levelup-pillar"/><i className="levelup-ring"/><strong>LEVEL UP<small>Lv.{level}</small></strong></div>;
+}

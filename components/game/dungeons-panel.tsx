@@ -13,7 +13,7 @@ import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, monsterById, dungeonById } from 
 import { Heading, format, useNow } from './shared';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot, BossIntro, LevelUpFx } from './scene-stage';
 import { OtherworldHud } from './otherworld-hud';
 import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
@@ -40,11 +40,11 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
         <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>
         </div>
         {/* v3.235 사냥 화면과 같은 장면. v3.247 캐릭터 · 기록 · 전용 HUD까지 사냥 화면과 같습니다. v3.250 아래 내 모험가 · 몬스터 카드와 최근 전투 로그는 장면과 겹쳐 없애고 장면을 키웠습니다. */}
-        <section className="battle-scene dungeon-scene"><SceneBackdrop/><div className="scene-shade"/><SceneFoe enemy={s.enemy} hidden={!!s.recovery} effect={combatFx}/><FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud enemy={s.enemy && !s.recovery ? s.enemy : null} effect={combatFx} combo={fxCombo}/>
+        <section className={`battle-scene dungeon-scene ${!s.recovery && s.hp < playerStats.hp * .3 ? 'danger' : ''}`}><SceneBackdrop/><div className="scene-shade"/><SceneFoe enemy={s.enemy} hidden={!!s.recovery} effect={combatFx}/><FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud enemy={s.enemy && !s.recovery ? s.enemy : null} effect={combatFx} combo={fxCombo}/>
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
             {s.recovery > 0 && <span className="scene-idle recovery">출정 준비</span>}
             <span className="scene-wave">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span>
-            {!s.recovery && <><CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/></>}<SceneLoot logs={s.logs}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
+            {!s.recovery && <><CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/></>}<SceneLoot logs={s.logs}/><BossIntro enemy={s.enemy && !s.recovery ? s.enemy : null}/><LevelUpFx level={s.level}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
         </section>
         {<div className="dungeon-wave-track">{activeDungeon.monsters.map((id, index) => {
             const isDone = s.dungeon!.wave > index;
