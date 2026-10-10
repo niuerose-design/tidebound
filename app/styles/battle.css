@@ -2129,3 +2129,10 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .voyage-brief.has-offline::after{content:'';position:absolute;left:0;bottom:0;height:2px;width:100%;background:#7fd6b3;transform-origin:0 50%;animation:offlineFade 12s linear both}
 @keyframes offlineFade{from{scale:1 1}to{scale:0 1}}
 @media(prefers-reduced-motion:reduce){.voyage-brief.has-offline::after{animation:none;display:none}}
+/* v3.255 넓은 장면: 전투 기록 칸의 위 · 아래 끝을 캐릭터 판과 맞춥니다(판 높이 96px 고정, 기록 4줄이 같은 높이를 채움). */
+.scene-me-plate{height:96px;display:flex;flex-direction:column;justify-content:flex-end}
+.scene-log{bottom:10px;height:96px}
+.scene-log p{padding-block:3px}
+@container (max-width:560px){.scene-me-plate{height:auto}}
+@container (max-width:700px){.scene-log,.dungeon-scene .scene-log{bottom:134px;height:auto}}
+@container (max-width:560px){.scene-log,.dungeon-scene .scene-log{bottom:116px;height:auto}}
