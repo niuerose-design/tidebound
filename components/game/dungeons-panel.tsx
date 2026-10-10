@@ -10,26 +10,16 @@ import { Lock, Swords } from 'lucide-react';
 import { MonsterArt, SceneBackdrop } from './art';
 import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
 import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, monsterById, dungeonById } from '@/game/data/world';
-import { SKILLS } from '@/game/data/skills';
-import { ENEMY_SKILLS, profile } from '@/game/data/encounters';
-import { bookRevealed } from '@/game/systems/book';
-import { BOOK_REVEAL } from '@/game/data/book-traits';
-import { statDisplay } from '@/game/data/progression';
-import { Heading, Meter, format, useNow } from './shared';
+import { Heading, format, useNow } from './shared';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage } from './scene-stage';
 import { OtherworldHud } from './otherworld-hud';
-import { StatusBadges } from './combat-status';
-import { BattleLogLine } from './combat-log';
 import { abyssPearls, nextAbyssMilestone } from '@/game/data/long-term';
 import type { PanelProps } from './panel-props';
 export function Dungeons({ s, send, busy, setView }: PanelProps) {
     const activeDungeon = s.dungeon ? dungeonById(s.dungeon?.id) : undefined;
     const playerStats = stats(s);
-    const enemyDef = s.enemy ? monsterById(s.enemy?.id) : undefined;
-    const revealed = !!enemyDef && bookRevealed(s, enemyDef.id);
-    const enemyProfile = enemyDef && revealed ? profile(enemyDef.id) : undefined;
     const activeWave = s.dungeon?.wave ?? 0;
     const skillFx = useSkillFx(), { effects: combatFx, combo: fxCombo } = useCombatFx(s.logs, s.name, skillFx);
     const [repeatChoice, setRepeatChoice] = useState<Record<string, string>>({});
@@ -55,19 +45,13 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             const def = isBoss && activeDungeon.bossMonster ? monsterById(activeDungeon.bossMonster) : monsterById(id);
             return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={def?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{def?.name || id}</strong></div>;
         })}</div>}
-        {/* v3.235 사냥 화면과 같은 장면. v3.247 왼쪽 아래 캐릭터 · 아래에서 올라오는 기록 · 전용 HUD까지 사냥 화면과 같습니다. 아래 카드는 체력바 · 정보만. */}
+        {/* v3.235 사냥 화면과 같은 장면. v3.247 캐릭터 · 기록 · 전용 HUD까지 사냥 화면과 같습니다. v3.250 아래 내 모험가 · 몬스터 카드와 최근 전투 로그는 장면과 겹쳐 없애고 장면을 키웠습니다. */}
         <section className="battle-scene dungeon-scene"><SceneBackdrop/><div className="scene-shade"/><SceneFoe enemy={s.enemy} hidden={!!s.recovery} effect={combatFx}/><FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud enemy={s.enemy && !s.recovery ? s.enemy : null} effect={combatFx} combo={fxCombo}/>
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
             {s.recovery > 0 && <span className="scene-idle recovery">출정 준비</span>}
             <span className="scene-wave">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span>
-            <CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
+            <CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
         </section>
-        <div className="dungeon-combat-grid">
-        <div className="dungeon-combatant player-combatant"><span className="eyebrow">내 모험가</span><div className="combatant-name"><h3>{s.name}</h3><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label="HP" color="teal"/></div><Meter value={s.mana} max={playerStats.mana} label="MP" color="blue"/><small>속도 {playerStats.speed} · 명중 수치 {statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 {statDisplay('evasion', playerStats.evasion || 0)}</small></div>
-        <div className="dungeon-vs">VS<span>{`${activeWave + 1}/${activeDungeon.monsters.length}`}</span></div>
-        <div className="dungeon-combatant enemy-combatant"><span className="eyebrow">{s.enemy?.boss ? 'BOSS ENCOUNTER' : 'CURRENT TARGET'}</span><div className="combatant-name"><h3>{s.enemy?.name || (s.recovery > 0 ? `출정 준비 · ${Math.ceil(s.recovery * BALANCE.turnMs / 1000)}초 남음` : '다음 몬스터를 기다리는 중')}</h3>{s.enemy && <StatusBadges effects={s.enemy.effects} stun={s.enemy.stun} recent={combatFx} target="enemy"/>}</div>{s.enemy ? <><div className="player-hp-anchor"><Meter value={s.enemy.hp} max={s.enemy.maxHp} label="HP" color="rose"/></div><small>{enemyProfile?.name || '미확인 개체'} · 속도 {s.enemy.combatStats?.speed || '-'}{revealed ? ` · 공격 스킬 ${s.enemy.skills?.map(id => [...ENEMY_SKILLS, ...SKILLS].find(sk => sk.id === id)?.name || id).join(', ') || '기본 공격'}` : ` · 도감 ${BOOK_REVEAL}회 처치 시 성향·스킬 공개`}</small>{enemyProfile?.hint && <p className="dungeon-hint">{enemyProfile.hint}</p>}</> : <p className="dungeon-hint">{s.recovery > 0 ? '준비가 끝나면 체력·마나가 모두 회복되고 탐험이 시작됩니다.' : '자동 사냥이 다음 웨이브를 준비하고 있습니다.'}</p>}</div>
-        </div>
-        <div className="dungeon-combat-log"><div className="section-title"><h3>최근 전투 로그</h3><span>자동 갱신</span></div>{s.logs.filter(log => log.type === 'battle').slice(-6).reverse().map(log => <BattleLogLine key={log.id} log={log} playerName={s.name}/>)}</div>
     </section>}
     {/* v3.204 던전 주화 상점은 상점 메뉴의 탭으로 옮겼습니다. 여기는 보유 주화와 바로 가기만. */}
     <section className="panel dungeon-coin-link"><span>던전 주화 <b>{format(s.dungeonCoins || 0)}</b> · 오늘 보너스 정복 {bonusLeft}/{DAILY_BONUS.clears}회 남음</span>{setView && <button className="secondary small" onClick={() => setView('dungeonShop')}>던전 주화 상점</button>}</section>

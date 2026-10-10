@@ -11,7 +11,7 @@ import { mineBonusOf } from '@/game/systems/azeroth';
 import { MonsterArt } from './art';
 import { Meter, format } from './shared';
 import { StatusBadges } from './combat-status';
-import { CombatBarEffect, hasSceneTitle } from './combat-fx';
+import { hasSceneTitle } from './combat-fx';
 
 /**
  * v3.247 전투 장면 개편: 왼쪽 아래 내 캐릭터(직업 그림 + 이름 · HP · 마나 판), 오른쪽 몬스터(맞으면 번쩍이며 밀리고 처치되면 찌그러져 사라짐),
@@ -108,7 +108,7 @@ export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; ef
         <div className="scene-me-plate">
             <div className="scene-me-name"><b>{title ? <small>{title}</small> : null}{s.name}</b><StatusBadges effects={s.effects} stun={s.playerStun} recent={effect} target="player"/></div>
             <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}</small>
-            <div className="player-hp-anchor"><Meter value={s.hp} max={stats.hp} label="HP"/><CombatBarEffect effect={effect} target="player"/></div>
+            <div className="player-hp-anchor"><Meter value={s.hp} max={stats.hp} label="HP"/></div>
             <div className="scene-me-mana" title={`마나 ${Math.ceil(s.mana)} / ${stats.mana}`}><i style={{ width: `${Math.max(0, Math.min(100, s.mana / Math.max(1, stats.mana) * 100))}%` }}/></div>
         </div>
     </div>;
@@ -162,7 +162,8 @@ export function AzerothHud({ s }: { s: State }) {
 }
 
 type Slip = { id: number; title: string; tags: string[]; side: 'me' | 'foe'; big: boolean; boss: boolean };
-const SLIP_MS = 2600, SLIP_MAX = 4;
+const SLIP_MS = 2600, SLIP_MAX = 4, SLIP_GAP = 260;
+const SLIP_LOOK = [{ o: 1, s: 1 }, { o: .78, s: .92 }, { o: .55, s: .85 }, { o: .32, s: .78 }];
 /** 컴포넌트가 사라질 때 한꺼번에 지울 수 있게 타이머를 모아 둡니다. */
 function later(bag: Set<number>, fn: () => void, ms: number) {
     const t = window.setTimeout(() => { bag.delete(t); fn(); }, ms);
@@ -174,7 +175,7 @@ function later(bag: Set<number>, fn: () => void, ms: number) {
  */
 export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
     const [slips, setSlips] = useState<Slip[]>([]);
-    const seen = useRef(new Set<number>()), timers = useRef(new Set<number>());
+    const seen = useRef(new Set<number>()), timers = useRef(new Set<number>()), nextAt = useRef(0);
     useEffect(() => {
         const bag = timers.current;
         for (const fx of effect) {
@@ -183,18 +184,22 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
             if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가' || hasSceneTitle(fx, boss)) continue;
             const tags = [fx.extreme && '極限突破', fx.critical && fx.actor === 'player' && '치명', fx.mined && `세계석 +${fx.mined}`, fx.devour && '포식', fx.status].filter((t): t is string => !!t);
             const slip: Slip = { id: fx.id, title: fx.title, tags, side: fx.actor === 'player' ? 'me' : 'foe', big: !!fx.finale || (fx.tier || 0) >= 4, boss: fx.actor === 'enemy' && boss };
+            // v3.250 한꺼번에 여러 이름이 와도 SLIP_GAP 간격으로 하나씩 올립니다(따다닥 튀지 않게).
+            const now = performance.now(), at = Math.max(now + fx.delay, nextAt.current);
+            nextAt.current = at + SLIP_GAP;
             later(bag, () => {
                 setSlips(prev => [...prev.filter(x => x.id !== slip.id), slip].slice(-SLIP_MAX));
                 later(bag, () => setSlips(prev => prev.filter(x => x.id !== slip.id)), SLIP_MS);
-            }, fx.delay);
+            }, at - now);
         }
         if (seen.current.size > 200) { const keep = [...seen.current].slice(-50); seen.current.clear(); keep.forEach(id => seen.current.add(id)); }
     }, [effect, boss]);
     useEffect(() => { const pending = timers.current; return () => pending.forEach(clearTimeout); }, []);
     if (!slips.length) return null;
-    return <div className="skill-receipt" aria-hidden="true">{slips.map(s => <div key={s.id} className={`skill-slip ${s.side} ${s.big ? 'big' : ''}`}>
+    // 줄마다 아래에서 몇 번째인지(--y)로 자리를 잡아, 새 이름이 오면 이전 이름이 부드럽게 위로 미끄러집니다.
+    return <div className="skill-receipt" aria-hidden="true">{slips.map((s, i) => { const y = slips.length - 1 - i, look = SLIP_LOOK[y] ?? SLIP_LOOK[3]; return <div key={s.id} className={`skill-slip ${s.side} ${s.big ? 'big' : ''}`} style={{ '--y': y, '--o': look.o, '--s': look.s } as React.CSSProperties}>
         {s.side === 'foe' && <small className="who">{s.boss ? 'BOSS' : '몬스터'}</small>}<b>{s.title}</b>{s.tags.map(t => <small key={t}>{t}</small>)}
-    </div>)}</div>;
+    </div>; })}</div>;
 }
 
 /** v3.249 공용 스킬 연출 색(갈래별). */
@@ -225,4 +230,27 @@ export function CastFx({ effect, boss = false }: { effect: CombatFx[]; boss?: bo
             {shape === 'aura' && <i className="cast-aura"/>}
         </div>;
     })}</div>;
+}
+
+/**
+ * v3.250 장면 피해 숫자(연출 시안 방식): 몬스터 · 내 캐릭터 위에서 크게 튀어 올랐다가 위로 흩어집니다. 추가타는 160ms 박자로 조금씩 엇갈려 쌓이고,
+ * 치명타는 노란 큰 숫자에 CRITICAL, 빗나감은 MISS, 지속 피해는 보라, 회복 · 흡혈은 초록. 예전 HP 바 위 숫자(CombatBarEffect)는 장면에서 쓰지 않습니다.
+ */
+type Pop = { key: string; at: 'foe' | 'me'; text: string; kind: 'hit' | 'crit' | 'super' | 'miss' | 'heal' | 'dot' | 'taken'; delay: number; dx: number; dy: number };
+const jitter = (n: number, spread: number) => ((n * 37) % 11 - 5) / 5 * spread;
+function popsOf(fx: CombatFx): Pop[] {
+    const out: Pop[] = [], target = fx.target === 'player' ? 'me' : 'foe', self = fx.actor === 'player' ? 'me' : 'foe';
+    if (fx.dot) out.push({ key: `${fx.id}-dot`, at: self, text: `${fx.dot.name} −${fx.dot.value.toLocaleString()}`, kind: 'dot', delay: fx.delay, dx: 0, dy: 26 });
+    fx.hits.forEach((h, i) => out.push({
+        key: `${fx.id}-${i}`, at: target, delay: fx.delay + i * 160, dx: jitter(fx.id + i * 3, 26), dy: -i * 22,
+        text: h.miss ? 'MISS' : `${target === 'me' ? '−' : ''}${h.value.toLocaleString()}`,
+        kind: h.miss ? 'miss' : target === 'me' ? 'taken' : h.superCritical ? 'super' : h.critical ? 'crit' : 'hit',
+    }));
+    if (fx.healing > 0) out.push({ key: `${fx.id}-heal`, at: self, text: `+${fx.healing.toLocaleString()}`, kind: 'heal', delay: fx.delay + 150, dx: 18, dy: 0 });
+    if (fx.drained > 0) out.push({ key: `${fx.id}-drain`, at: self, text: `흡혈 +${fx.drained.toLocaleString()}`, kind: 'heal', delay: fx.delay + 300, dx: 18, dy: -20 });
+    if (fx.endured) out.push({ key: `${fx.id}-endure`, at: fx.endured.self ? self : target, text: `無 버팀${fx.endured.heal ? ` +${fx.endured.heal.toLocaleString()}` : ''}`, kind: 'heal', delay: fx.delay + 320, dx: 0, dy: -40 });
+    return out;
+}
+export function SceneDamage({ effect }: { effect: CombatFx[] }) {
+    return <div className="scene-dmg-layer" aria-hidden="true">{effect.flatMap(popsOf).map(p => <b key={p.key} className={`scene-dmg ${p.at} ${p.kind}`} style={{ '--fx-delay': `${p.delay}ms`, '--dx': `${p.dx}px`, '--dy': `${p.dy}px` } as React.CSSProperties}>{p.kind === 'crit' || p.kind === 'super' ? <small>{p.kind === 'super' ? 'SUPER CRITICAL' : 'CRITICAL'}</small> : null}{p.text}</b>)}</div>;
 }
