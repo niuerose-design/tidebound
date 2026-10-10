@@ -149,7 +149,8 @@ export const SKILL_FORMULA = {
     idleHealDamage: .6,
     // v22.2 흡혈 상한: 한 번의 행동(추가타 포함)으로 회복하는 흡혈량은 최대 체력 × 흡혈률 × 이 값까지입니다.
     // 심연은 적의 체력이 높고 공격이 약한 소모전이라, 준 피해 비례 흡혈 3%만으로 도달 층이 3배가 되었습니다.
-    lifestealHpCap: .025,
+    // v3.236 .025 → .1: 흡혈 10%에 최대 체력의 0.25%뿐이라 상한 없을 때의 약 45%만 들어왔습니다(자쿰 노멀). .1이면 약 87%.
+    lifestealHpCap: .1,
     // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한. 고정 보정 직업은 jobFactor로 환산한 배율을 씁니다.
     // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
     guardBase: .95, guardSpan: .5, guardFloor: .2,
