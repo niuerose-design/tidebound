@@ -2087,3 +2087,19 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
   .battle-utility-rail{grid-column:2;grid-row:2;display:grid;grid-template-columns:1.1fr 1fr;gap:13px;align-items:start}
   .battle-stage-list,.battle-dungeon-list{max-height:260px}
 }
+/* v3.252 전투 스킬 단축키 줄(아래 조작 줄 안). 대기 중이면 흐리게 하고 오른쪽 위에 남은 턴, 스킬이 나가는 순간 아이콘 테두리가 반짝입니다. */
+.skill-hotbar{display:flex;align-items:center;gap:5px;flex:0 1 auto;min-width:0;flex-wrap:wrap}
+.hotbar-slot{position:relative;display:grid;place-items:center;align-content:center;gap:2px;width:68px;height:46px;padding:0 4px;border-radius:8px;border:1px solid #3d6460;background:#0f2224;color:#dfeee8;cursor:pointer;overflow:hidden}
+.hotbar-slot.ready{border-color:#6fc7a6;box-shadow:inset 0 0 0 1px #6fc7a633,0 0 8px #6fc7a633}
+.hotbar-slot.awaken{border-color:#e0b84a}
+.hotbar-slot.vacant{width:46px;font-size:18px;color:#7f9c98;border-style:dashed}
+.hotbar-slot svg,.hotbar-slot img{width:20px;height:20px}
+.hotbar-name{display:block;max-width:100%;font-size:10px;line-height:1.15;color:#c9dbd2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hotbar-cd{position:absolute;top:2px;right:3px;min-width:15px;padding:1px 3px;border-radius:5px;background:#000c;font:800 11px/1.2 ui-monospace,monospace;color:#ffd76a;text-align:center}
+.hotbar-slot.cooling svg,.hotbar-slot.cooling img,.hotbar-slot.cooling .hotbar-name{opacity:.45}
+.hotbar-fire{position:absolute;inset:-1px;border-radius:8px;border:2px solid #fff6c8;box-shadow:0 0 12px #f0c46a,inset 0 0 10px #f0c46a;pointer-events:none;animation:hotbarFire .6s ease-out both}
+@keyframes hotbarFire{0%{opacity:1;scale:1.12}100%{opacity:0;scale:1}}
+.hotbar-edit{display:inline-flex;align-items:center;gap:2px;height:46px;padding:0 8px;border-radius:8px;border:1px solid #2c4744;background:#12262a;color:#9db3ab;font:600 11px/1 ui-monospace,monospace;white-space:nowrap;cursor:pointer}
+.hotbar-edit:hover{color:#e6efe9}
+@media(max-width:767px){.skill-hotbar{flex:1 1 100%}.hotbar-slot{flex:1 1 62px;max-width:96px}}
+@media(prefers-reduced-motion:reduce){.hotbar-fire{animation:none;display:none}}

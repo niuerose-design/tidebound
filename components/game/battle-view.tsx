@@ -33,6 +33,7 @@ import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
 import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
+import type { CombatFx } from '@/game/systems/combat-feedback';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
 import { SlotChips } from './slot-chips';
@@ -89,7 +90,6 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     {show('liveRates') && <LiveRatesCard s={base} compact/>}
     {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={targetStrip}/> : <TargetStrip base={base} busy={busy} send={send}/>}
     <BattleArena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
-    <BattleSkills base={base} setView={setView}/>
     </div>
     <BattleRail s={s} base={base} busy={busy} send={send} setView={setView}/>
     </div>
@@ -134,11 +134,27 @@ const TargetStrip = memo(function TargetStrip({ base: s, busy, send, inline = fa
     return <div className={`battle-target-strip ${inline ? 'inline' : ''}`}><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.monsters.map(id => { const f = monsterById(id), need = f?.minTier || 0, locked = need > tier; return <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon || locked} title={locked ? `사냥터 난이도 ${need}부터 나타나는 몬스터입니다. 지금 난이도 ${tier}.` : undefined}>{f?.name}{locked ? ` · 난이도 ${need}+` : ''}</TabsTrigger>; })}</TabsList></Tabs></div>;
 });
 
-/** 장착한 액티브 스킬 줄(AP · 발동률 · 대기). 대기 턴은 동기화마다 갱신됩니다. */
-const BattleSkills = memo(function BattleSkills({ base: s, setView }: { base: State; setView: SetView }) {
+/**
+ * v3.252 전투 스킬 단축키 줄(아래 조작 줄 안): 장착한 액티브 스킬 아이콘에 대기 턴을 덮어 보여 주고, 그 스킬이 나가는 순간 아이콘이 반짝입니다.
+ * 아이콘 아래 짧은 이름, 발동률은 마우스를 올리면(title) 보이고, 누르면 스킬 편성 화면으로 갑니다. 예전 ‘전투 스킬’ 카드를 대신합니다.
+ */
+function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; setView: SetView }) {
     const activeIds = s.skills.filter(id => skillById(id)?.type === 'active');
-    return <section className="panel battle-skills"><div className="section-title"><h2>전투 스킬 <span className="micro">AP {apUsed(s)} / {apCapacity(s)} · 액티브 {activeIds.length}개</span></h2><button className="text-button" onClick={() => setView('skills')}>스킬 편성 <ChevronRight size={14}/></button></div><div className="battle-skill-row">{(activeIds.length ? activeIds : ['']).map(id => { const sk = skillById(id), effective = sk ? effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id)) : null; return <button key={id || 'empty'} className={`battle-skill ${sk ? '' : 'vacant'}`} onClick={() => setView('skills')}><div className="skill-symbol">{sk ? <SkillIcon id={sk.id}/> : <span>+</span>}</div><div><strong>{sk?.name || '빈 스킬 슬롯'}</strong><small>{sk ? (() => { const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0; return `${sk.awaken ? '각성 · ' : ''}${Math.round(effective!.chance * 100)}% 발동 · ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`; })() : '스킬을 장착하세요'}</small></div></button>; })}</div></section>;
-});
+    const fired = (id: string) => effect.findLast(fx => fx.actor === 'player' && fx.skillId === id)?.id;
+    return <div className="skill-hotbar" role="group" aria-label="전투 스킬">
+        {activeIds.map(id => {
+            const sk = skillById(id)!, effective = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id));
+            const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0, hit = fired(id);
+            return <button key={id} type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} title={`${sk.name}${sk.awaken ? ' · 각성' : ''} · ${Math.round(effective.chance * 100)}% 발동 · ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`} aria-label={`${sk.name} ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`} onClick={() => setView('skills')}>
+                <SkillIcon id={id} size={20}/><small className="hotbar-name">{sk.name}</small>
+                {wait > 0 && <b className="hotbar-cd">{wait}</b>}
+                {hit !== undefined && <i key={hit} className="hotbar-fire"/>}
+            </button>;
+        })}
+        {!activeIds.length && <button type="button" className="hotbar-slot vacant" onClick={() => setView('skills')} title="스킬을 장착하세요">+</button>}
+        <button type="button" className="hotbar-edit" onClick={() => setView('skills')} title="스킬 편성">AP {apUsed(s)}/{apCapacity(s)}<ChevronRight size={13}/></button>
+    </div>;
+}
 
 /**
  * 사냥터 장면과 아래 몬스터 카드. 스킬 연출 상태는 여기에만 있어 타격 연출이 바뀔 때 이 안만 다시 그립니다.
@@ -180,6 +196,7 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
             <span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${d.name} · ${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`}</span>
             <strong>{d ? d.name : st.name}</strong>
         </div>
+        <SkillHotbar s={s} effect={combatFx} setView={setView}/>
         <div className="battle-dock-actions">
             <button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={16}/> : <Play size={16}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button>
             <button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button>
