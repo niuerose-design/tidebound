@@ -83,7 +83,7 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
                 {d.id !== 'abyss' && modeDef.note && <small className="dungeon-mode-note">{modeDef.note}</small>}
                 <select aria-label={`${d.name} 반복 설정`} value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
                     <option value="once">1회</option>
-                    {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지</option>) : [5, 10, 25].map(n => <option key={n} value={String(n)}>{n}회</option>)}
+                    {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지</option>) : [5, 10, DAILY_BONUS.clears].map(n => <option key={n} value={String(n)}>{n}회{n === DAILY_BONUS.clears ? ' · 오늘 보너스' : ''}</option>)}
                     <option value="fail">실패까지</option>
                 </select>
                 <button className="primary small" disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'dungeon', id: d.id, value: `${mode}@${repeatChoice[d.id] || 'once'}` })}>{locked ? <Lock size={14}/> : <Swords size={14}/>}도전</button>
