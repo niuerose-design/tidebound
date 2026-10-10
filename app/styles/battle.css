@@ -2120,3 +2120,5 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
   .battle-dock-actions .scene-whistle .whistle-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
   .battle-dock-actions .scene-whistle.pending{box-shadow:0 0 0 2px #f0c46a}
 }
+/* v3.254 모바일: 실시간 효율 카드가 장면 위에 끼던 것을 장면 · 조작 줄 · 기록 아래(누적 지표 앞)로. */
+@media(max-width:767px){.battle-console>.live-rates{order:5}}
