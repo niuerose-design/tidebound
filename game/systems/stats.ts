@@ -212,6 +212,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
     // v3.219 군의관 지원(다른 분신): 최대 체력 · 최대 마나 · 턴당 체력 회복 배율. 결투 등록 스냅샷은 s.support를 빼고 만듭니다.
     if (s.support) for (const [k, e] of [['hp', 'hp'], ['mana', 'mana'], ['hpRegen', 'hpRegen']] as const) if (s.support[e]) mul(k, [['support', supportMultiplier(s, e)]]);
+    // v3.225 총사령관 총동원령: 두 공격 · 최대 체력.
+    if (s.support?.power) for (const k of ['attack', 'magic', 'hp'] as const) mul(k, [['support', supportMultiplier(s, 'power')]]);
     // v3.219 작전참모 · 화력참모 지원: 보스 피해 · 방어 관통(기존 겹침 규칙과 상한 그대로) · 치명 피해.
     if (s.support) for (const [k, e] of [['bossDamage', 'boss'], ['penetration', 'penetration'], ['critDamage', 'critDamage']] as const) if (s.support[e]) add(k, 'support', supportAmount(s, e));
     for (const t of themes)
