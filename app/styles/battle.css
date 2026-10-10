@@ -2394,3 +2394,34 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .battle-scene .scene-fx-kkami.scene-fx-kkami-kill .scene-fx-flash{background:radial-gradient(circle at var(--foe-x) var(--foe-y),#fff8dc 0%,#ffd76a66 18%,transparent 40%)}
 /* 조커 슬롯: 몬스터 머리 위, 오른쪽 끝에서 잘리지 않게. */
 .battle-scene .ult-jackpot .ult-a{left:min(var(--foe-x),calc(100% - 115px));top:calc(var(--foe-top) - 92px)}
+
+/* v3.270 히든 5차 장면 두 가지 더(.az-ult): 쉐도우 레인(검은 칼날 그림자 비 + ‘한 번 더’), 리와인드(거꾸로 도는 시계 · 시간 물결 · 내 캐릭터 회복 빛). */
+.az-shadowrain .scene-fx-dark{background:#05030a}
+.az-shadowrain .azu-title{color:#ff9aa8}
+.azu-blade{left:calc(var(--tx) + var(--x));top:calc(var(--gy) - 84px);width:8px;height:70px;margin-left:-4px;background:linear-gradient(180deg,transparent,#3a0f1f 30%,#ff4d6d 85%,#fff);clip-path:polygon(50% 100%,100% 70%,70% 0,30% 0,0 70%);filter:drop-shadow(0 0 6px #ff4d6d);animation:azuBlade .5s cubic-bezier(.7,0,1,.6) calc(var(--fx-delay) + .25s) both}
+.azu-shadowpool{left:var(--tx);top:calc(var(--gy) - 8px);width:200px;height:26px;margin:-13px 0 0 -100px;border-radius:50%;background:radial-gradient(closest-side,#000d,#3a0f1f88 60%,transparent);animation:azuPool 1.8s ease-out calc(var(--fx-delay) + .3s) both}
+.azu-again{position:absolute;left:var(--sx);top:calc(var(--sy) - 70px);font:800 15px/1 var(--font-display,system-ui);letter-spacing:.18em;color:#ffb3c0;text-shadow:0 0 10px #ff4d6d,0 2px 4px #000;white-space:nowrap;animation:azuAgain 1.3s ease-out calc(var(--fx-delay) + .8s) both}
+.az-rewind .scene-fx-dark{background:#02070c}
+.az-rewind .azu-title{color:#9fe0ff}
+.azu-clock{left:50%;top:54%;width:150px;height:150px;margin:-75px;border-radius:50%;border:3px solid #9fe0ff;background:radial-gradient(circle,#06131c 0 64%,transparent 65%),repeating-conic-gradient(from -1deg,#9fe0ff 0 2deg,transparent 2deg 30deg);box-shadow:0 0 30px #4fb8ff88;animation:azuClock 2.2s ease-out var(--fx-delay) both}
+.azu-clock b{position:absolute;left:50%;top:50%;width:4px;margin-left:-2px;border-radius:2px;background:#e8f8ff;transform-origin:50% 100%;box-shadow:0 0 8px #9fe0ff}
+.azu-clock .h{height:38px;margin-top:-38px;animation:azuHand 2s cubic-bezier(.3,.6,.3,1) var(--fx-delay) both}
+.azu-clock .m{height:58px;margin-top:-58px;width:3px;animation:azuHand 2s cubic-bezier(.2,.7,.3,1) var(--fx-delay) both;--turns:-3turn}
+.azu-ripple{left:var(--tx);top:var(--ty);width:60px;height:60px;margin:-30px;border-radius:50%;border:3px solid #9fe0ff;box-shadow:0 0 14px #4fb8ff;animation:azuRing 1s ease-out calc(var(--fx-delay) + .8s) both}
+.azu-ripple.late{animation-delay:calc(var(--fx-delay) + 1s)}
+.azu-heal{left:var(--sx);top:calc(var(--gy) - 60px);width:110px;height:120px;margin-left:-70px;border-radius:50%;background:radial-gradient(ellipse at 50% 70%,#7dffb0aa,#7dffb022 50%,transparent 70%);mix-blend-mode:screen;animation:azuPop 1s ease-out calc(var(--fx-delay) + 1.15s) both}
+.azu-mote{left:calc(var(--sx) - 16px);top:calc(var(--gy) - 40px);width:6px;height:6px;border-radius:50%;background:#7dffb0;box-shadow:0 0 8px #7dffb0;animation:azuMote 1.1s ease-out calc(var(--fx-delay) + 1.15s + var(--i) * 50ms) both}
+@keyframes azuAgain{0%{opacity:0;translate:0 12px}20%{opacity:1;translate:0 0}80%{opacity:1}100%{opacity:0;translate:0 -10px}}
+@keyframes azuBlade{0%{translate:0 -60cqh;opacity:0}20%{opacity:1}90%{translate:0 0;opacity:1}100%{translate:0 0;opacity:0}}
+@keyframes azuPool{0%{opacity:0;scale:.3 1}30%{opacity:1;scale:1 1}80%{opacity:1}100%{opacity:0}}
+@keyframes azuClock{0%{opacity:0;scale:.5}20%{opacity:1;scale:1}80%{opacity:1}100%{opacity:0;scale:1.1}}
+@keyframes azuHand{from{rotate:0turn}to{rotate:var(--turns,-1turn)}}
+@keyframes azuMote{0%{opacity:0;translate:0 0}20%{opacity:1}100%{opacity:0;translate:calc(cos(var(--ang)) * 30px) calc(sin(var(--ang)) * 20px - 60px)}}
+@media(max-width:767px){.azu-clock{width:110px;height:110px;margin:-55px}.azu-clock .h{height:28px;margin-top:-28px}.azu-clock .m{height:42px;margin-top:-42px}}
+
+/* v3.270 보스 스킬 연출 좌표를 같은 지면 배치에 맞춥니다: 시작점(--ox · --oy) = 땅 위 몬스터의 왼쪽 가장자리 · 몸 가운데, 목표점(--tx) = 내 캐릭터. 둘이 같은 땅에 서 있어 흐름이 수평으로 내 캐릭터에 닿습니다. */
+.battle-scene .scene-fx-foe{--hw:clamp(56px,24cqh,84px);--ox:calc(var(--foe-x) - var(--foe-size) * .45);--oy:var(--foe-y);--tx:calc(12px + var(--hw) * .55)}
+@container (max-width:560px){.battle-scene .scene-fx-foe{--hw:clamp(48px,20cqh,64px)}}
+
+/* v3.270 내가 받은 피해 숫자: 머리 바로 위에서(연타는 오른쪽 위로 쌓임). */
+.battle-scene .scene-dmg.me{top:calc(var(--me-y) - 58px + var(--dy,0px));left:calc(var(--me-x) + 14px + var(--dx,0px))}
