@@ -326,7 +326,8 @@ function pickActive(a: Fighter, b: Fighter, sa: CombatStats, sb: CombatStats, rn
         if (candidate.requiresBuff && !((a.effects?.buffs?.[candidate.requiresBuff]?.turns || 0) > 0))
             continue;
         // 이미 걸린 상태이상은 다시 걸지 않고 다음 기술로 넘어갑니다. 면역 중인 상대에게 상태이상 전용 기술은 쓰지 않습니다.
-        if (alreadyAfflicted(b, candidate))
+        // v3.243 출혈 적 추가 피해(damageBonusCondition 'bleeding')가 붙은 피해 기술은 출혈 중인 적에게도 씁니다(출혈은 새로 걸려 갱신). 전엔 건너뛰어 보너스가 출혈 적에게 한 번도 붙지 않았습니다.
+        if (alreadyAfflicted(b, candidate) && !(candidate.damageBonusCondition === 'bleeding' && !candidate.statusOnly))
             continue;
         if (candidate.timeRewind && a.effects?.timeUsed)
             continue;
