@@ -438,7 +438,7 @@ test('v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura
     assert.equal(progressCounts({ playMs: 2000 * 12345, deaths: 7, book: {}, attributes: {} }).turns, 12345);
     const s = newState(0); s.job = 'seaDragonGod'; s.level = 100; s.deaths = 40; s.playMs = 2000 * 25000; s.learned.dragonGodScale = 1;
     const g = passiveGrowthBonus(s, sk('dragonGodScale'));
-    // v3.240 쓰러진 횟수 3회마다 +3 · 보낸 턴 3,000마다 +9, 상한 1,000번(3,000회 · 300만 턴에 참).
+    // v3.242 쓰러진 횟수 3회마다 +3 · 보낸 턴 3,000마다 +9, 상한 1,000번(3,000회 · 300만 턴에 참).
     assert.ok(Math.abs(g.attack - 39) < 1e-9 && Math.abs(g.hp - 72) < 1e-9, `growth ${JSON.stringify(g)}`);
     s.deaths = 5000; s.playMs = 2000 * 4e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 3000) < 1e-9 && Math.abs(capped.hp - 9000) < 1e-9, 'capped at 1,000 steps');
     assert.deepEqual(sk('dragonGodScale').lastStand, { charges: 1, heal: .25 });

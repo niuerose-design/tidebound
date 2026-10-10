@@ -104,7 +104,7 @@ function tickTurn(s: State, rng: () => number) {
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
     // v25 타임 리와인드: 쓸 때마다 현재 직업 숙련이 오릅니다.
-    const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; };
+    const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; if (event?.multicast?.index === 0 && event.actor === s.name) chantRecord(s, event.multicast.count); };
     actTurn(first, second, rng, log);
     if (first.hp > 0 && second.hp > 0)
         actTurn(second, first, rng, log);
@@ -209,6 +209,11 @@ export function advance(s: State, now: number, rng = Math.random) {
 }
 
 /** v3.231 이계 전투원 필드: 연료(자동 충전 포함) · 탄창(직업 + 장착 패시브) · 재장전 생략 · 트레이더 손익. 이계 직업이 아니면 빈 객체. */
+/** v3.240 동시 시전 기록(업적): 4개 이상 묶음 횟수와 가장 큰 묶음. */
+function chantRecord(s: State, count: number) {
+    if (count >= 4) s.chantFull = (s.chantFull || 0) + 1;
+    if (count > (s.chantBest || 0)) s.chantBest = count;
+}
 function otherworldFighter(s: State, usable: string[]): Partial<Fighter> {
     const j = jobById(s.job);
     if (!j?.fuelJob && !j?.magazine && !j?.trader) return {};

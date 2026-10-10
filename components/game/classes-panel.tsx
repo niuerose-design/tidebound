@@ -33,7 +33,7 @@ export function Classes({ s, send, busy }: PanelProps) {
     // v3.220 고른 세계. null이면 책(세계 목차)을 보여 줍니다.
     const [world, setWorld] = useState<WorldId | null>(null);
     // 편의 기능: 빠른 찾기(계열 무관 모아 보기), 이름 검색·태그 필터, 비교(최대 3개).
-    // v3.240 첫 생의 초보자는 ‘처음 추천’ 모아 보기로 시작합니다(1차 직업이 70개가 넘음).
+    // v3.242 첫 생의 초보자는 ‘처음 추천’ 모아 보기로 시작합니다(1차 직업이 70개가 넘음).
     const starter = noviceLife(s), finders = useMemo(() => (Object.keys(FINDER_LABEL) as Finder[]).filter(kind => kind !== 'starter' || starter), [starter]);
     const [finder, setFinder] = useState<Finder | null>(starter && s.job === 'fisher' ? 'starter' : null);
     const [query, setQuery] = useState(''), [tag, setTag] = useState('');

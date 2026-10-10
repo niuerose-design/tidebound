@@ -592,6 +592,9 @@ export type State = {
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     /** v3.231 이계 연료(세계석 1 = 100). fuelAuto: 자동 충전 때 남길 세계석(없으면 자동 충전 끔). */
     fuel?: number;
+    /** v3.240 동시 시전 기록(업적용): 4개 이상 묶음 횟수 · 가장 큰 묶음. */
+    chantFull?: number;
+    chantBest?: number;
     fuelAuto?: number;
     /** v3.231 연료로 바꾼 세계석 누계(부재중 정산 환산이 측정 구간의 충전을 셈). */
     fuelBought?: number;
@@ -753,7 +756,7 @@ export type State = {
     autoVendGrades?: number[];
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
-    /** v3.240 능력치 자동 배분: 레벨업으로 받은 포인트를 지금 직접 투자한 비율대로 바로 나눕니다(자리를 비운 동안에도). */
+    /** v3.242 능력치 자동 배분: 레벨업으로 받은 포인트를 지금 직접 투자한 비율대로 바로 나눕니다(자리를 비운 동안에도). */
     autoAttr?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
     swarmCap?: number;

@@ -145,7 +145,7 @@ export function jobGoalOf(s: State) {
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
 export type Finder = 'starter' | 'ready' | 'mastered' | 'near';
-/** v3.240 처음 추천: 1차 직업이 70개가 넘어 첫 생에는 메이플 대표 계보(전사 둘 · 마법사 · 궁수 · 도적 · 해적)부터 보여 줍니다. */
+/** v3.242 처음 추천: 1차 직업이 70개가 넘어 첫 생에는 메이플 대표 계보(전사 둘 · 마법사 · 궁수 · 도적 · 해적)부터 보여 줍니다. */
 export const STARTER_JOBS = ['ronin', 'warden', 'tide', 'harpoon', 'relicScavenger', 'martialArtist'];
 export function finderJobs(s: State, kind: Finder, status: StatusReader = j => jobStatus(s, j)) {
     if (kind === 'starter') return STARTER_JOBS.map(id => jobById(id)).filter((j): j is Job => !!j);

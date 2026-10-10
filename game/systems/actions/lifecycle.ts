@@ -99,7 +99,7 @@ export function rebirthNow(s: State, now: number) {
         const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
         if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
     }
-    // v3.240 능력치 자동 배분: 새 생의 포인트를 직전 생 비율로 나눕니다.
+    // v3.242 능력치 자동 배분: 새 생의 포인트를 직전 생 비율로 나눕니다.
     if (s.autoAttr && s.statPoints > 0) { const n = spendAutoAttributes(s, Object.values(s.attributes).some(x => x > 0) ? s.attributes : prevAttr); if (n) addLog(s, `능력치 자동 배분 · ${n}포인트를 직전 생 비율로 나눴습니다`, 'system'); }
 }
 
@@ -160,7 +160,7 @@ export function ascend(s: State, now: number) {
     }
     const refund = achievementRefund(s), pastLog = s.ascensionLog || [];
     const fresh = newState(now);
-    // v3.240 칠흑 장신구(별 · 각성 · 착용 그대로)와 칠흑 격파 기록은 보스 코어처럼 승천해도 남습니다.
+    // v3.242 칠흑 장신구(별 · 각성 · 착용 그대로)와 칠흑 격파 기록은 보스 코어처럼 승천해도 남습니다.
     fresh.inventory = s.inventory.filter(i => i.onyx);
     for (const [slot, item] of Object.entries(s.equipment)) if (item?.onyx) fresh.equipment[slot] = item;
     // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 칠흑 장신구, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.

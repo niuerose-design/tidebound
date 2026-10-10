@@ -283,9 +283,9 @@ Lv.100, 같은 직업 계보(모두 숙달), 전설 장비 4부위, 연구는 �
 | **유지: 직업·숙련** | 직업 숙련·숙달·단련, 해금 직업, 스킬 숙련(성장 레벨), 계승 | `jobMastery`, `unlockedJobs`, `skillPractice`, `skillInheritances`, `legacyInherited` (스킬 전문화는 삭제된 콘텐츠라 v3.31에서 세이브에서도 지움) |
 | 초기화: 스킬 연마·한계 돌파 | 연마 단계(30단계, 최대 +24%)와 한계 돌파 레벨(최대 3). 숙련 수치는 두고 기준점만 옮긴다(8.5) | `limitBreaks`, 새 필드 `refineBase` |
 | 초기화: SP 투자 | SP로 올린 스킬 단계는 1로, 투자 기록은 비움. 배운 스킬 목록은 유지 | `learned`(단계만), `skillSpent` |
-| 초기화: 장비 | 유물, 보관함(v3.240 칠흑 장신구는 유지) | `inventory`, `equipment` |
+| 초기화: 장비 | 유물, 보관함(v3.242 칠흑 장신구는 유지) | `inventory`, `equipment` |
 | 초기화: 도감 | 몬스터 도감과 생태·지역 연구, 변종·황금 도감, 난이도 이정표, 물건 도감, 도감 보상 수령, 보스 연구 수령 | `book`, `bookTier`, `variantBook`, `goldenBook`, `itemBook`, `bookClaims`, `bossResearchClaims` |
-| 유지: 칠흑 (v3.240) | 칠흑 장신구(별·각성·착용), 칠흑 보스 격파 기록·연속 미획득. 보스 코어와 같은 규칙 | `inventory`·`equipment`의 칠흑, `onyxBook`, `onyxSeen`, `onyxMiss` |
+| 유지: 칠흑 (v3.242) | 칠흑 장신구(별·각성·착용), 칠흑 보스 격파 기록·연속 미획득. 보스 코어와 같은 규칙 | `inventory`·`equipment`의 칠흑, `onyxBook`, `onyxSeen`, `onyxMiss` |
 | 초기화: 진행 안내 | 모험 일지, 튜토리얼(v3.38 장기 목표 삭제) | `voyage`, `tutorial` |
 
 ### 8.3 결정에서 따라 나오는 것

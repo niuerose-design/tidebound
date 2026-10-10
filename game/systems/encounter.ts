@@ -63,7 +63,7 @@ export function gainLevels(s: State) {
     spendAutoAttributes(s);
 }
 /**
- * v3.240 능력치 자동 배분(s.autoAttr): 남은 포인트를 지금 직접 투자한 비율대로 모두 나눕니다(나머지는 큰 몫부터 1씩).
+ * v3.242 능력치 자동 배분(s.autoAttr): 남은 포인트를 지금 직접 투자한 비율대로 모두 나눕니다(나머지는 큰 몫부터 1씩).
  * 아직 투자한 능력치가 없거나 해커(투자 불가)면 그대로 둡니다. 환생 직후에는 직전 생의 비율(weights)을 씁니다. 나눈 포인트 수를 돌려줍니다.
  */
 export function spendAutoAttributes(s: State, weights: State['attributes'] = s.attributes) {

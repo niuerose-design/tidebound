@@ -208,7 +208,7 @@ export const buildActions: ActionHandlers = {
         s.attributes[id as Attribute] += amount;
         s.statPoints -= amount;
     },
-    /** v3.240 능력치 자동 배분 켜기 · 끄기(id 'on' · 'off'). 켜면 남은 포인트도 바로 지금 비율대로 나눕니다. */
+    /** v3.242 능력치 자동 배분 켜기 · 끄기(id 'on' · 'off'). 켜면 남은 포인트도 바로 지금 비율대로 나눕니다. */
     autoAttr(s, { id }) {
         if (id !== 'on' && id !== 'off') throw Error('자동 배분 설정을 확인하세요.');
         s.autoAttr = id === 'on';

@@ -76,7 +76,7 @@ async function vaultOnyxMove(account: string, s: State, action: unknown, key: st
     apply(s);
     return { info: infoOf(w), apply };
 }
-/** v3.116 승천: 세계석 · 정수는 전처럼 비웁니다. v3.240 칠흑은 승천해도 남으므로 금고의 칠흑도 그대로 둡니다. */
+/** v3.116 승천: 세계석 · 정수는 전처럼 비웁니다. v3.242 칠흑은 승천해도 남으므로 금고의 칠흑도 그대로 둡니다. */
 export async function vaultAfterAscend(account: string, now: number) {
     const w = await wallet(account, now);
     await db().setWallet({ account_id: account, pearls: 0, essence: 0, week: weekKey(now), pearl_out: 0, items: w.items || '[]' });

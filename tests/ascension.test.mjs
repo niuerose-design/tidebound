@@ -46,8 +46,8 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     assert.equal(s.rank.exp, 12345); assert.ok(s.achievementClaims['rebirths:3'], 'achievements kept'); assert.equal(s.kills, 777, 'records kept');
     assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0); assert.equal(s.gold, 100, 'gold back to a new character'); assert.equal('skillSpecializations' in s, false, 'deleted content is not carried');
     for (const key of ['vows', 'nextVows', 'variantBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
-    assert.deepEqual(s.onyxBook, { onyxDusk: 1 }, 'v3.240 onyx kill record kept');
-    assert.deepEqual(s.inventory.map(i => i.id), ['ox'], 'relics reset, v3.240 onyx accessories kept'); assert.equal(s.equipment.charm?.id, 'oxw', 'worn onyx stays worn');
+    assert.deepEqual(s.onyxBook, { onyxDusk: 1 }, 'v3.242 onyx kill record kept');
+    assert.deepEqual(s.inventory.map(i => i.id), ['ox'], 'relics reset, v3.242 onyx accessories kept'); assert.equal(s.equipment.charm?.id, 'oxw', 'worn onyx stays worn');
     // v3.154 승천 무료 지급 ‘자동 수령’이 승천 직후 새로 달성한 업적(승천 1회 등)의 보상까지 바로 받으므로, 받은 업적 합계(환급 1 + 3 + 자동 수령분)와 세계석이 같습니다.
     const refund = Lc.achievementRefund(s); assert.ok(refund.pearls >= 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded'); assert.ok(s.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
     assert.equal(s.permanent.attack || 0, 0, 'combat research reset'); assert.equal(s.permanent.messageBottle || 0, 0, 'lucky letter must be rebought');
@@ -604,7 +604,7 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
-test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.240)', async () => {
+test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.242)', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-vault-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     const V = await L.load('server/vault'), O = await L.load('data/onyx');
@@ -626,7 +626,7 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
         info = (await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-c', now, 1)).info;
         await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2);
         assert.equal(b.inventory.filter(i => i.onyx === 'onyxDusk').length, 1); assert.equal(got.onyxRank, 3, 'awaken +1');
-        // v3.240 승천: 칠흑은 승천해도 남으므로 금고의 칠흑도 모두 남음(세계석 · 정수는 전처럼 비움).
+        // v3.242 승천: 칠흑은 승천해도 남으므로 금고의 칠흑도 모두 남음(세계석 · 정수는 전처럼 비움).
         const lucid = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxHilla'), 'h', 60);
         a.inventory.push(lucid); b.inventory.push(hilla); a.pearls = 50;
         await V.vaultMove(acc, a, 'deposit', 'onyx', 'l', now, 1); await V.vaultMove(acc, b, 'deposit', 'onyx', 'h', now, 2); await V.vaultMove(acc, a, 'deposit', 'pearls', 10, now, 1);
@@ -811,7 +811,7 @@ test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), nev
     assert.ok(Od.ODDS.drop.heir.primal === SERVER_ODDS.drop.heir.primal);
 });
 
-test('v3.240 onboarding: novice menus open at Lv.10 / first clear, auto attribute split keeps the ratio across rebirth', async () => {
+test('v3.242 onboarding: novice menus open at Lv.10 / first clear, auto attribute split keeps the ratio across rebirth', async () => {
     const G = await L.load('systems/guidance');
     const s = newState(0);
     assert.ok(G.noviceMenuLocked(s) && G.noviceMarketLocked(s), 'first life hides later menus');
