@@ -2211,3 +2211,16 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .skill-hotbar>.hotbar-cell:first-child .hotbar-tip::after{left:30px}
 @media(max-width:767px){.hotbar-cell{flex:1 1 62px;max-width:96px}.hotbar-cell .hotbar-slot{width:100%;max-width:none}.hotbar-tip{display:none}}
 @media(prefers-reduced-motion:reduce){.hotbar-tip{transition:none}}
+
+/* v3.264 모바일: 단축바 칸을 길게 누르면 정보 창이 단축바 너비로 위에 뜹니다. 모바일 장면은 화면 높이에 맞춰 조금 낮춥니다(조작 줄이 첫 화면에 더 가깝게). */
+.hotbar-slot{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none}
+@media(max-width:767px){
+  .skill-hotbar{position:relative}
+  .hotbar-cell{position:static}
+  .hotbar-tip{display:grid;left:0;right:0;width:auto;max-width:none;translate:0 4px}
+  .hotbar-tip::after{display:none}
+  .hotbar-cell:hover .hotbar-tip,.hotbar-cell:has(.hotbar-slot:focus-visible) .hotbar-tip{opacity:0;visibility:hidden}
+  .skill-hotbar>.hotbar-cell.open .hotbar-tip,.skill-hotbar>.hotbar-cell.open:first-child .hotbar-tip{opacity:1;visibility:visible;translate:0 0}
+  .skill-hotbar>.hotbar-cell:first-child .hotbar-tip{left:0;translate:0 4px}
+  .battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:clamp(340px,calc(100svh - 470px),440px)}
+}
