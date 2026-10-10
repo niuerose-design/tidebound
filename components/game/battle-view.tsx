@@ -86,7 +86,6 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     <div className="battle-console">
     <MobilePlayerStrip s={s} a={playerStats} setView={setView}/>
     {tutorialActive(base) && <div className="battle-top-tutorial"><TutorialCard s={base} send={send} busy={busy} setView={setView}/></div>}
-    <SessionMetrics base={base}/>
     {show('liveRates') && <LiveRatesCard s={base} compact/>}
     {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={targetStrip}/> : <TargetStrip base={base} busy={busy} send={send}/>}
     <BattleArena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
@@ -100,7 +99,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
 const BattleHeading = memo(function BattleHeading({ base, saved, settings, setSettings, name, setName, busy, send, setView, onSwitchSlot }: {
     base: State; saved: boolean; settings: boolean; setSettings: (open: boolean) => void; name: string; setName: (value: string) => void; busy: boolean; send: Send; setView: SetView; onSwitchSlot?: (slot: number) => Promise<void>;
 }) {
-    return <Heading eyebrow="THE ENDLESS ADVENTURE"><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
+    return <Heading eyebrow="THE ENDLESS ADVENTURE"><SessionMetrics base={base}/><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
 });
 
 /** v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */
@@ -126,9 +125,16 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     </NoticeStack>;
 });
 
-/** 누적 처치 · 도감 · 보유 재화 한 줄. */
+/** 누적 처치 · 도감 · 보유 재화 한 줄. v3.260 맨 아래 카드 대신 위쪽 도구 줄 옆 작은 칩(정확한 값 · 설명은 마우스를 올리면). */
 const SessionMetrics = memo(function SessionMetrics({ base: s }: { base: State }) {
-    return <div className="session-metrics"><div><Fish/><span>누적 처치<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 몬스터<strong>{Object.keys(s.book).length} <small>/ {MONSTERS.length}종</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl" title={`세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`}><Sparkles/><span>보유 세계석 <small className="metric-hint">?</small><strong><Num n={s.pearls}/> <small>개</small></strong></span></div><div className="session-currency essence" title="정수는 장비 분해 · 무리 전리품 · 높은 사냥터 난이도 등에서 모입니다. 옵션 재설정 · 재련, 저격 뽑기, 원시 각성에 씁니다. 환생해도 사라지지 않습니다."><Gem/><span>보유 정수 <small className="metric-hint">?</small><strong><Num n={s.essence || 0}/> <small>개</small></strong></span></div></div>;
+    const pearlHelp = `세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`;
+    return <div className="heading-metrics" role="group" aria-label="누적 · 보유">
+        <span className="metric-chip" title={`누적 처치 ${format(s.kills)}마리`}><Fish size={13}/><Num n={s.kills}/></span>
+        <span className="metric-chip" title={`발견한 몬스터 ${Object.keys(s.book).length} / ${MONSTERS.length}종`}><BookOpen size={13}/>{Object.keys(s.book).length}<small>/{MONSTERS.length}</small></span>
+        <span className="metric-chip gold" title={`보유 골드 ${format(s.gold)} G`}><Coins size={13}/><Num n={s.gold}/></span>
+        <span className="metric-chip pearl" title={`보유 세계석 ${format(s.pearls)}개 · ${pearlHelp}`}><Sparkles size={13}/><Num n={s.pearls}/></span>
+        <span className="metric-chip essence" title={`보유 정수 ${format(s.essence || 0)}개 · 정수는 장비 분해 · 무리 전리품 · 높은 사냥터 난이도 등에서 모입니다. 옵션 재설정 · 재련, 저격 뽑기, 원시 각성에 씁니다. 환생해도 사라지지 않습니다.`}><Gem size={13}/><Num n={s.essence || 0}/></span>
+    </div>;
 });
 
 /** 집중 사냥 대상 고르기(사냥터의 몬스터 탭). v3.218 사냥터 난이도 카드 안에 한 줄로 들어갑니다(inline). 난이도가 없는 첫 생에는 따로 한 줄. */
