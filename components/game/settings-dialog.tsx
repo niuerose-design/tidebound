@@ -11,6 +11,7 @@ import { SWARM_CAPS, swarmCapOf } from '@/game/data/variants';
 import { useState } from 'react';
 import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
 import { jobById } from '@/game/data/classes';
+import { SceneLookSettings } from './scene-look-panel';
 export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setName, onSwitchSlot }: {
     onSwitchSlot?: (slot: number) => Promise<void>;
     open: boolean;
@@ -49,6 +50,7 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
             <SkillFxToggle/>
             <FxGlowToggle/>
             <SceneLootToggle/>
+            <SceneLookSettings s={s}/>
             <NoticeToggles/>
             <StarToggle id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
             <StarToggle id="sound" title="강화 효과음" desc="스타캐치와 강화 성공·하락·파괴 효과음입니다. 이 기기에만 저장됩니다."/>

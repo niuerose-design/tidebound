@@ -13,13 +13,14 @@ import { Meter, format, short } from './shared';
 import { StatusBadges } from './combat-status';
 import { hasSceneTitle } from './combat-fx';
 import { useSceneLoot } from './skill-fx-setting';
+import { useHeroImage, useSceneLook, type HeroKindId, type WeaponId } from './scene-look-setting';
 
 /**
  * v3.247 전투 장면 개편: 왼쪽 아래 내 캐릭터(직업 그림 + 이름 · HP · 마나 판), 오른쪽 몬스터(맞으면 번쩍이며 밀리고 처치되면 찌그러져 사라짐),
  * 장면 왼쪽에서 한 줄씩 올라오는 전투 기록, 전용 자원이 있는 직업(이계 · 아제로스 히든)만 왼쪽 위 HUD.
  */
 
-type HeroKind = 'warrior' | 'mage' | 'guardian' | 'rogue' | 'spellblade' | 'merchant' | 'mystic' | 'devour' | 'miner' | 'agent' | 'trader' | 'hacker';
+type HeroKind = HeroKindId;
 const TREE_HERO: Record<string, HeroKind> = { physical: 'warrior', magic: 'mage', defense: 'guardian', status: 'rogue', hybrid: 'spellblade', support: 'merchant', mystery: 'mystic' };
 
 /** 장면에 그릴 캐릭터 모양. 전용 자원 기술(정수 소모 · 채굴)을 끼면 그 모습, 이계 직업은 요원 · 트레이더, 나머지는 계열별. */
@@ -52,7 +53,7 @@ const HERO_SVG: Record<HeroKind, React.ReactNode> = {
  * v3.252 계열 몸 + 무기 소품: 메이플 직업 이름(아처 · 다크나이트 · 섀도어 · 캡틴 · 비숍 …)으로 무기를 고릅니다. 이름에 단서가 없으면 계열 기본 무기.
  * 전용 자원 직업(정수 소모 · 채굴 · 이계 · 해커)과 히든(신비) 계열은 위의 전용 그림을 그대로 씁니다.
  */
-type Weapon = 'sword' | 'spear' | 'bow' | 'dagger' | 'gun' | 'fist' | 'staff' | 'shield' | 'orb' | 'fan';
+type Weapon = WeaponId;
 const WEAPON_RULES: [RegExp, Weapon][] = [
     [/키네시스|일리움|라라/, 'orb'],
     [/^검사|파이터|크루세이더|아델|제로|데몬슬레이어/, 'sword'],
@@ -90,9 +91,12 @@ const WEAPON_SVG: Record<Weapon, React.ReactNode> = {
     fan: <><path d="M54 56l20-18a18 18 0 0 1 2 22z" fill="#e7c67a" stroke="#8a6b3a" strokeWidth="1.2"/><path d="M54 56l20-18M54 56l22-12M54 56l22-4" stroke="#8a6b3a" strokeWidth=".8"/></>,
 };
 const SPECIAL = new Set<HeroKind>(['devour', 'miner', 'agent', 'trader', 'hacker', 'mystic']);
-export const HeroFigure = memo(function HeroFigure({ kind, job }: { kind: HeroKind; job?: Pick<Job, 'name' | 'tree'> }) {
+/** v3.268 모양을 직접 고르면(꾸미기) 그 모양의 계열 몸 색을 씁니다. */
+const HERO_TREE: Partial<Record<HeroKind, string>> = Object.fromEntries(Object.entries(TREE_HERO).map(([tree, kind]) => [kind, tree]));
+export const HeroFigure = memo(function HeroFigure({ kind, job, weapon: chosen, tree: bodyTree }: { kind: HeroKind; job?: Pick<Job, 'name' | 'tree'>; weapon?: Weapon; tree?: string }) {
+    if (bodyTree && !SPECIAL.has(kind)) { const weapon = chosen ?? heroWeapon(job); return <svg className={`scene-hero-art hero-${kind} weapon-${weapon}`} viewBox="0 0 80 110" aria-hidden="true">{heroBody(bodyTree, weapon)}{WEAPON_SVG[weapon]}</svg>; }
     if (SPECIAL.has(kind) || !job) return <svg className={`scene-hero-art hero-${kind}`} viewBox="0 0 80 110" aria-hidden="true">{HERO_SVG[kind]}</svg>;
-    const weapon = heroWeapon(job);
+    const weapon = chosen ?? heroWeapon(job);
     return <svg className={`scene-hero-art hero-${kind} weapon-${weapon}`} viewBox="0 0 80 110" aria-hidden="true">{heroBody(job.tree, weapon)}{WEAPON_SVG[weapon]}</svg>;
 });
 
@@ -146,10 +150,18 @@ export function SceneFoe({ enemy, hidden, effect, kkami = false }: { enemy: Stat
 }
 
 /** 왼쪽 아래 내 캐릭터: 직업 그림 + 이름 · 상태이상 · HP(받은 피해 숫자) · 마나. 기술을 쓰면 앞으로 내딛고, 맞으면 뒤로 밀립니다. */
+/** v3.268 꾸미기 설정을 반영한 내 캐릭터: 올린 그림 → 고른 모양 · 무기 → 직업 자동 순서. */
+export function MyHero({ s, job }: { s: Pick<State, 'job' | 'skills'>; job: Job | undefined }) {
+    const look = useSceneLook(), image = useHeroImage();
+    // eslint-disable-next-line @next/next/no-img-element -- 이 기기에 저장한 data URL 그림
+    if (image) return <img className="scene-hero-art hero-image" src={image} alt=""/>;
+    const kind = look.hero === 'auto' ? heroKind(s, job) : look.hero, weapon = look.weapon === 'auto' ? undefined : look.weapon;
+    return <HeroFigure kind={kind} job={job} weapon={weapon} tree={look.hero === 'auto' ? (weapon && job ? job.tree : undefined) : HERO_TREE[look.hero]}/>;
+}
 export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; effect: CombatFx[] }) {
     const ref = usePulse(effect, mePick), job = jobById(s.job), title = displayTitle(s);
     return <div className="scene-me">
-        <div ref={ref} className="scene-hero"><HeroFigure kind={heroKind(s, job)} job={job}/></div>
+        <div ref={ref} className="scene-hero"><MyHero s={s} job={job}/></div>
         <div className="scene-me-plate">
             <div className="scene-me-name"><b>{title ? <small>{title}</small> : null}{s.name}</b><StatusBadges effects={s.effects} stun={s.playerStun} recent={effect} target="player"/></div>
             <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}</small>
