@@ -374,7 +374,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         if (a.cooldowns[id] > 0) { a.cooldowns[id]--; continue; }
         if (fired >= limit || a.hp <= 0 || b.hp <= 0 || first?.stunned || first?.silenced) continue;
         const sk = skillOf(a, id)!;
-        if ((a.mana ?? 0) < (sk.manaCost || 0)) continue;
+        if ((a.mana ?? 0) < (sk.manaCost || 0) || !fuelOk(a, sk)) continue;
         // v3.143 전탄발사: 충전 중첩이 chargeNeed에 닿을 때까지 기다립니다(대기 0에서 멈춰 있고, 실패로 세지 않음).
         if (sk.chargeNeed && (a.effects?.charge || 0) < sk.chargeNeed) continue;
         if (sk.requiresBuff && !((a.effects?.buffs?.[sk.requiresBuff]?.turns || 0) > 0)) continue;
@@ -526,7 +526,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.231 연료 · 탄창: 쓴 만큼 태우고 한 발을 씁니다. 레버리지: 피해 × (1 + 손익 × pnlScale).
         if (chosen.fuelCost && a.fuel !== undefined) a.fuel = Math.max(0, a.fuel - chosen.fuelCost);
         if (a.magazine && !forced && a.effects.mag) a.effects.mag.left--;
-        if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (a.pnl || 0) * chosen.pnlScale) };
+        if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (chosen.pnlAbs ? Math.abs(a.pnl || 0) : a.pnl || 0) * chosen.pnlScale) };
         a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
         a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
         // v3.145 체력 소모: 현재 체력 × hpCost를 바칩니다(1은 남김). 피의 분노가 그만큼 더 세게 반응합니다.

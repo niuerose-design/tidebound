@@ -1,7 +1,7 @@
 // v3.231 제3장 이계: 세계석 해금 · 연료(충전 · 자동 · 절전) · 요원 탄창 · 트레이더 손익.
 import { newState, act, stats, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
-const L = loadGame(), C = await L.load('game/systems/combat.js'), O = await L.load('game/data/otherworld.js'), Ow = await L.load('game/systems/otherworld.js'), M = await L.load('game/data/market.js'), P = await L.load('game/systems/progression.js');
+const L = loadGame(), SK = await L.load('game/data/skills.js'), C = await L.load('game/systems/combat.js'), O = await L.load('game/data/otherworld.js'), Ow = await L.load('game/systems/otherworld.js'), M = await L.load('game/data/market.js'), P = await L.load('game/systems/progression.js');
 
 test('v3.231 이계 직업은 세계석만으로 해금(레벨 · 선행 직업 없음), 한 번만 냅니다', () => {
     const s = newState(0); s.pearls = 19_999;
@@ -43,4 +43,15 @@ test('v3.231 트레이더: 평가 손익 ±25%(헤지 −10% 하한) · 레버�
     const run = pnl => { const ev = []; C.strike({ ...lev, pnl, cooldowns: {}, effects: {} }, { name: 'b', foe: true, stats: { hp: 1e9, attack: 1, defense: 0, resist: 0, crit: 0 }, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {} }, () => 0, ev); return ev[0].total; };
     assert.ok(Math.abs(run(.2) / run(0) - 1.4) < .05 && Math.abs(run(-.2) / run(0) - .6) < .05, `${run(.2)} ${run(0)} ${run(-.2)}`);
     assert.equal(P.coreScale({ job: 'specialAgent' }, 'hero', 4), 0, 'otherworld core is lineage-only');
+});
+
+test('v3.231 5차: 숏 스퀴즈는 손실일수록, 블랙 스완(각성기)은 손익 절댓값만큼 강함; 마켓 메이커 손익 범위 ±35%; 요원 치명 · 관통은 계보 전용', () => {
+    const foe = () => ({ name: 'b', foe: true, stats: { hp: 1e9, attack: 1, defense: 0, resist: 0, crit: 0 }, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const hit = (id, pnl) => { const ev = []; C.strike({ name: 'a', job: 'marketMaker', stats: { hp: 1000, magic: 1000, attack: 1, defense: 10, mana: 9999, crit: 0, accuracy: 9 }, hp: 1000, mana: 9999, skills: [id], cooldowns: {}, stun: 0, effects: {}, fuel: 100, pnl }, foe(), () => 0, ev); return ev[0].total; };
+    assert.ok(Math.abs(hit('shortSqueeze', -.2) / hit('shortSqueeze', 0) - 1.4) < .05 && hit('shortSqueeze', .2) < hit('shortSqueeze', 0));
+    const S = SK.skillById('blackSwan'); assert.ok(S.awaken && S.pnlAbs && S.pnlScale === 3);
+    const s = newState(0); s.pearls = 60_000; act(s, { type: 'job', id: 'marketMaker' }, 0); s.fuel = 1000; s.level = 100; s.attributes.int = 400; s.learned.liquidity = 1; s.skillInheritances = { liquidity: true }; s.skills = ['liquidity'];
+    const base = stats({ ...s, marketPnl: 0 }).magic; s.marketPnl = .5; assert.ok(Math.abs(stats(s).magic / base - 1.35) < .01, 'liquidity widens the cap to ±35%');
+    const tt = SK.skillById('tacticalTraining'); assert.equal(tt.exclusiveLineage, 'agentRookie'); assert.ok(tt.bonus.crit >= .15 && tt.bonus.penetration >= .15);
+    const out = newState(0); out.job = 'hero'; assert.equal(P.exclusiveAccess(out, tt), false); const inn = newState(0); inn.job = 'ghostOperative'; assert.equal(P.exclusiveAccess(inn, tt), true);
 });

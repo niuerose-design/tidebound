@@ -215,7 +215,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
     for (const key in coreMul) mul(key as 'attack', [['skills', 1 + coreMul[key as 'attack']!]]);
     // v3.231 이계: 트레이더 평가 손익(±25%, 헤지 패시브가 하한을 올림) · 연료가 없으면 절전 모드(두 공격 × FUEL.powerSave).
-    if (j.trader) { const floor = Math.max(TRADER.floor, ...usable.map(u => u.sk.pnlFloor ?? -Infinity)), r = Math.min(TRADER.cap, Math.max(floor, s.marketPnl || 0)); if (r) for (const k of ['attack', 'magic'] as const) mul(k, [['job', 1 + r]]); }
+    if (j.trader) { const cap = Math.max(TRADER.cap, ...usable.map(u => u.sk.pnlCap ?? 0)), floor = Math.max(-cap, ...usable.map(u => u.sk.pnlFloor ?? -Infinity)), r = Math.min(cap, Math.max(floor, s.marketPnl || 0)); if (r) for (const k of ['attack', 'magic'] as const) mul(k, [['job', 1 + r]]); }
     if (powerSaving(s)) for (const k of ['attack', 'magic'] as const) mul(k, [['job', FUEL.powerSave]]);
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
     mul('resist', [['job', mult(j.resist)], ['achievement', 1 + feats.resist]]);

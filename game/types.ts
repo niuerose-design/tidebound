@@ -297,6 +297,9 @@ export type Skill = {
     /** v3.231 트레이더 액티브: 피해 × (1 + 평가 손익률 × pnlScale). 패시브 pnlFloor: 손익 배율의 하한. */
     pnlScale?: number;
     pnlFloor?: number;
+    /** v3.231 pnlAbs: 손익의 절댓값으로(블랙 스완). pnlCap: 손익 배율 범위의 위아래(마켓 메이커 ±35%). */
+    pnlAbs?: boolean;
+    pnlCap?: number;
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
     /** v26.6 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 가장 높은 눈이 1이면 ×low, 6이면 ×high(눈마다 같은 비율로 커짐). 손가락 자르기(diceTrim)로 양 끝을 좁힐 수 있습니다. */
