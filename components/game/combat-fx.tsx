@@ -264,9 +264,9 @@ export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[];
         <b className="scene-fx-dice-faces">{(fx.dice || [Math.min(6, Math.max(1, Math.round(fx.gamble * 3.5)))]).map((f, i) => <span key={i} style={fxStyle(fx.delay + i * 90)}>{DICE_FACES[f - 1]}</span>)}</b>
         <span className="scene-fx-dice-mult">×{fx.gamble.toFixed(2)}</span>
         <strong className="scene-fx-dice-line">{fx.gamble >= 1.8 ? '이게 실력이지~' : fx.gamble < .6 ? '좆망겜이네~' : '굴릴 만하네~'}</strong>
-    </div> : <div key={fx.id} className={`scene-fx scene-fx-burst scene-fx-${fx.variant} scene-fx-${fx.kind} ${fx.critical ? 'critical' : ''} ${(fx.tier || 0) >= 4 ? `scene-fx-tier${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay)}>
+    </div> : <div key={fx.id} className={`scene-fx scene-fx-burst scene-fx-${fx.variant} scene-fx-${fx.kind} ${fx.critical ? 'critical' : ''} ${(fx.tier || 0) >= 4 ? `scene-fx-tier${Math.min(5, fx.tier!)}` : ''}`} style={fxStyle(fx.delay + sceneImpactMs(fx))}>
         {(fx.tier || 0) >= 4 && <i className="scene-fx-dark"/>}<i className="scene-fx-flash"/>{(fx.tier || 0) >= 5 && <><i className="scene-fx-slash"/><span className="scene-fx-title">{fx.title}</span></>}
-        {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
+        {glyphs[fx.variant].slice(0, 4).map((g, i) => <b key={i} className="scene-fx-spark" style={fxStyle(fx.delay + sceneImpactMs(fx) + i * 40, { '--fx-x': `${Math.cos(i * Math.PI / 2 + .6) * 180}px`, '--fx-y': `${Math.sin(i * Math.PI / 2 + .6) * 90}px` })}>{g}</b>)}
     </div>; return fx.extreme ? <Fragment key={fx.id}>{scene}<ExtremeFx fx={fx}/></Fragment> : scene; })}</div>;
 }
 /**
@@ -354,7 +354,13 @@ const sceneOf = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && !fx.f
 /** v3.269 전용 장면이 ‘맞는 순간’까지 걸리는 시간(ms). 장면 피해 숫자 · 몬스터 피격 흔들림을 이만큼 늦춰 연출과 박자를 맞춥니다. */
 /** 이계 연출 중 투사체가 늦게 닿는 것(고폭 유탄은 포물선 0.55초 뒤 폭발). */
 const OW_IMPACT: Record<string, number> = { grenadeLauncher: 520 };
-export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId ? OW_IMPACT[fx.skillId] ?? 0 : 0);
+/**
+ * v3.271 일반 스킬(전용 장면이 없는 내 스킬)의 투사체 비행 시간. 재생은 한 박자에 연출 하나라 delay가 늘 0이어서, 전에는 투사체가 출발 전에 이미 끝나 보이지 않았습니다.
+ * 이제 시전 → 0.28초 비행 → 닿는 순간 타격 섬광 · 피해 숫자 · 몬스터 흔들림 · 배경 섬광이 함께 뜹니다.
+ */
+export const CAST_TRAVEL_MS = 280;
+const castTravels = (fx: CombatFx) => fx.actor === 'player' && fx.target === 'enemy' && !fx.basic && fx.hits.length > 0 && fx.status !== '행동 불가' && !hasSceneTitle(fx, false);
+export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId && OW_IMPACT[fx.skillId] ? OW_IMPACT[fx.skillId] : castTravels(fx) ? CAST_TRAVEL_MS : 0);
 function AzerothUltFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     const k = sceneOf(fx)!, ult = AZ_ULT[k], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra }), hits = Math.max(1, fx.hits.filter(h => !h.miss).length);
     return <div className={`scene-fx ow-fx az-ult az-${k} ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d, { '--hits': hits, '--impact': `${ult.impact}ms` })}>

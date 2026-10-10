@@ -1997,9 +1997,9 @@
 .cast-blade .cast-shot{width:46px;height:46px;margin:-23px;border-radius:50%;border-right:5px solid var(--fx);border-top:2px solid transparent;filter:drop-shadow(0 0 6px var(--fx)) drop-shadow(0 0 2px #fff);animation:castFly .3s cubic-bezier(.45,0,.9,.55) calc(var(--fx-delay) - 270ms) both,castSpin .3s linear calc(var(--fx-delay) - 270ms) both}
 .cast-blade .cast-shot.late{animation-delay:calc(var(--fx-delay) - 170ms),calc(var(--fx-delay) - 170ms)}
 @keyframes castSpin{from{rotate:-40deg}to{rotate:320deg}}
-.cast-burst{left:var(--foe-x);top:var(--foe-y);width:120px;height:120px;margin:-60px;border-radius:50%;background:radial-gradient(circle,#fff 0 9%,var(--fx) 26%,transparent 62%);mix-blend-mode:screen;opacity:0;animation:castBurst .38s ease-out var(--fx-delay) both}
+.cast-burst{left:var(--foe-x);top:var(--foe-y);width:120px;height:120px;margin:-60px;border-radius:50%;background:radial-gradient(circle,#fff 0 9%,var(--fx) 26%,transparent 62%);mix-blend-mode:screen;opacity:0;animation:castBurst .38s ease-out var(--fx-delay) forwards}
 @keyframes castBurst{0%{scale:.25;opacity:1}100%{scale:1.4;opacity:0}}
-.cast-ring{left:var(--foe-x);top:var(--foe-y);width:130px;height:130px;margin:-65px;border-radius:50%;border:2px solid var(--fx);box-shadow:0 0 14px var(--fx),inset 0 0 12px var(--fx);opacity:0;animation:castRing .5s ease-out calc(var(--fx-delay) + 40ms) both}
+.cast-ring{left:var(--foe-x);top:var(--foe-y);width:130px;height:130px;margin:-65px;border-radius:50%;border:2px solid var(--fx);box-shadow:0 0 14px var(--fx),inset 0 0 12px var(--fx);opacity:0;animation:castRing .5s ease-out calc(var(--fx-delay) + 40ms) forwards}
 @keyframes castRing{0%{scale:.2;opacity:1}100%{scale:1.3;opacity:0}}
 .cast-skill.big .cast-shot{scale:1.5}.cast-skill.big .cast-burst{width:170px;height:170px;margin:-85px}
 .cast-skill.critical .cast-burst{background:radial-gradient(circle,#fff 0 16%,#ffe38b 30%,var(--fx) 42%,transparent 66%)}
@@ -2425,3 +2425,11 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 
 /* v3.270 내가 받은 피해 숫자: 머리 바로 위에서(연타는 오른쪽 위로 쌓임). */
 .battle-scene .scene-dmg.me{top:calc(var(--me-y) - 58px + var(--dy,0px));left:calc(var(--me-x) + 14px + var(--dx,0px))}
+
+/* v3.271 장면 제목 자리 통일: 5차 각성기 · 天 · 5단계 · 퍼니셔 · 이계 · 아제로스 · 제논 · 메카닉 제목을 모두 장면 위쪽 띠(14%)에 같은 크기로 띄웁니다(전에는 가운데 · 22% · 18%로 제각각, 가운데 제목은 몬스터 · 기록과 겹침). */
+.battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .ow-title,.battle-scene .azu-title,.battle-scene .xen-title,.battle-scene .mech-title{top:14%}
+.battle-scene .ult-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .pun-title{font-size:24px;letter-spacing:.14em}
+.battle-scene .ow-reload .ow-title{top:auto;bottom:calc(10px + clamp(56px,24cqh,84px) * 1.375 + 6px)}
+@container (max-width:560px){
+  .battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .ow-title,.battle-scene .azu-title,.battle-scene .xen-title,.battle-scene .mech-title{top:11%;font-size:18px;letter-spacing:.08em}
+}
