@@ -1,6 +1,7 @@
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
-import { JOBS, jobById } from './classes';
+import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
+import { STORY } from './story';
 import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken } from '../systems/progression';
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
@@ -53,6 +54,13 @@ const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
 const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
 const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다(세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리).`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6 }, { pearls: 10, sp: 1 }, { pearls: 12 }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
+/** v3.240 직업이 속한 세계(계보의 world). */
+const lineageWorld = new Map(LINEAGES.map(l => [l.id, worldOf(l)]));
+const jobWorld = (id: string): WorldId => { const j = jobById(id); return j ? lineageWorld.get(lineageOf(j)) ?? 'maple' : 'maple'; };
+const worldJobs = (w: WorldId) => JOBS.filter(j => !j.retired && jobWorld(j.id) === w);
+const unlockedIn = (w: WorldId) => (s: State) => (s.unlockedJobs || []).filter(id => jobWorld(id) === w && !jobById(id)?.retired).length;
+const masteredWorlds = (s: State) => (['maple', 'azeroth', 'otherworld'] as const).filter(w => JOBS.some(j => jobWorld(j.id) === w && jobMastered(s, j))).length;
+const honor = (list: Achievement[]) => list.map(a => ({ ...a, honor: true, reward: {} }));
 const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => jobById(id)?.tier || 0));
 
 const series = (prefix: string, group: Achievement['group'], title: (n: number) => string, desc: (n: number) => string, steps: number[], progress: (s: State) => number, reward: (i: number) => AchievementReward): Achievement[] =>
@@ -143,6 +151,19 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'deep:100', group: '환생', title: '깊은 모험', desc: 'Lv.100에 도달합니다.', reward: { pearls: 10 }, progress: s => Math.max(s.level, s.peakLevel || 0) >= 100 ? 1 : 0, target: 1 },
     /** v3.28 해킹 X 루트 권한을 한 번 쓰면 칭호 root(보상은 칭호뿐: 해커는 다른 재화를 얻지 않음). */
     { id: 'hacker:root', group: '도전', title: 'root', desc: '해킹 X 루트 권한을 실행합니다.', reward: {}, progress: s => (s.hacker?.roots || 0) > 0 ? 1 : 0, target: 1 },
+    // v3.240 명예 업적(보상 없음 · 업적 보너스 집계 제외): 아제로스 · 이계 · 한계돌파 · 이계 연료 · 증권거래소 · 승천 · 스토리 · 결투 레이팅 · 겹영창.
+    ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개`, n => `아제로스 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('azeroth').length], unlockedIn('azeroth'), () => ({}))),
+    ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개`, n => `이계 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
+    { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
+    ...honor(series('limitBreak', '숙련', n => `한계돌파 ${n}개`, n => `스킬 ${n}개를 한계돌파합니다.`, [1, 5, 20], s => Object.values(s.limitBreaks || {}).filter(n => n > 0).length, () => ({}))),
+    ...honor(series('fuel', '도전', n => `연료에 세계석 ${n.toLocaleString()}`, n => `이계 연료 충전에 세계석을 누적 ${n.toLocaleString()}개 씁니다.`, [1000, 10000, 100000], s => s.fuelBought || 0, () => ({}))),
+    ...honor(series('marketProfit', '도전', n => `실현 수익 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 수익이 누적 ${n.toLocaleString()} G를 넘습니다.`, [1e6, 1e8, 1e10], s => Math.max(0, s.market?.realized || 0), () => ({}))),
+    ...honor(series('marketLoss', '도전', n => `손절의 미학 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 손실이 누적 ${n.toLocaleString()} G에 이릅니다.`, [1e6, 1e8], s => Math.max(0, -(s.market?.realized || 0)), () => ({}))),
+    { id: 'ascension:1', honor: true, group: '환생', title: '첫 승천', desc: '처음으로 승천합니다.', reward: {}, progress: s => Math.min(1, s.ascension || 0), target: 1 },
+    ...honor(series('story', '모험', n => `이야기 ${n}장면`, n => `스토리 장면 ${n}개를 엽니다.`, [10, 20, STORY.length], s => Object.keys(s.story || {}).length, () => ({}))),
+    ...honor(series('rating', '사냥', n => `결투 레이팅 ${n.toLocaleString()}`, n => `랭크 결투 레이팅 ${n.toLocaleString()}에 오릅니다.`, [1500, 2000, 2500], s => s.rating || 0, () => ({}))),
+    ...honor(series('chant', '숙련', n => `사중 영창 ${n.toLocaleString()}회`, n => `동시 시전으로 주문 4개 이상을 한 행동에 ${n.toLocaleString()}번 함께 냅니다.`, [1, 100, 1000], s => s.chantFull || 0, () => ({}))),
+    { id: 'chant:five', honor: true, group: '숙련', title: '오중 영창', desc: '동시 시전으로 주문 5개를 한 행동에 함께 냅니다(추가 판정 필요).', reward: {}, progress: s => s.chantBest || 0, target: 5 },
     { id: 'warden:all', group: '숙련', title: '모든 세계의 수호자', desc: '방어 계열 직업 3개를 숙달합니다.', reward: { pearls: 6 }, progress: s => JOBS.filter(j => j.tree === 'defense' && jobMastered(s, j)).length, target: 3 },
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;

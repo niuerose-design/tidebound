@@ -1,5 +1,5 @@
 // v3.231 제3장 이계: 세계석 해금 · 연료(충전 · 자동 · 절전) · 요원 탄창 · 트레이더 손익.
-import { newState, act, stats, assert, test } from './harness.mjs';
+import { newState, act, advance, stats, assert, test } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const L = loadGame(), SK = await L.load('game/data/skills.js'), C = await L.load('game/systems/combat.js'), O = await L.load('game/data/otherworld.js'), Ow = await L.load('game/systems/otherworld.js'), M = await L.load('game/data/market.js'), P = await L.load('game/systems/progression.js'), { jobById } = await L.load('game/data/classes.js');
 
@@ -85,4 +85,21 @@ test('v3.239 겹영창: 4 · 5차 패시브가 1~3차 주문 피해 +50%씩, 동
     const pair = hit(['twinSpark', 'emberVerse']);
     assert.equal(pair.multicast?.count, 2);
     assert.ok(Math.abs(pair.total / base - 1.15) < .01, `${pair.total} / ${base}`);
+});
+
+test('v3.240 업적: 동시 시전 4개 묶음 기록(chantFull · chantBest)이 쌓이고, 새 업적은 모두 보상 없는 명예 업적', async () => {
+    const A = await L.load('game/data/achievements.js');
+    const { JOBS } = await L.load('game/data/classes.js'), P2 = await L.load('game/systems/progression.js');
+    const s = newState(0); Object.assign(s, { level: 100, rebirths: 20, job: 'thousandChants', unlockedJobs: JOBS.map(j => j.id) });
+    s.jobMastery = { thousandChants: 1e9 };
+    for (const id of ['twinSpark', 'emberVerse', 'frostLance', 'voidRay', 'stormChant']) { s.learned[id] = 1; s.skillPractice[id] = P2.masteryMilestonesFor(SK.skillById(id)).at(-1); }
+    for (const id of ['chantNovice', 'twinCaster', 'tripleCaster', 'chantMaster']) s.jobMastery[id] = 1e9;
+    s.skills = ['stormChant', 'voidRay', 'frostLance', 'twinSpark'];
+    assert.ok(s.skills.every(id => P2.canUse(s, id)), s.skills.map(id => id + ':' + P2.canUse(s, id)).join(' '));
+    act(s, { type: 'stage', id: 'brook' }, 0); act(s, { type: 'start' }, 0);
+    let t = 0; while (t < 120_000 && !(s.chantFull > 0)) { t += 2000; s.mana = stats(s).mana; advance(s, t, () => 0); }
+    assert.ok(s.chantFull > 0 && s.chantBest >= 4, `chantFull ${s.chantFull} best ${s.chantBest}`);
+    const fresh = A.ACHIEVEMENTS.filter(a => /^(azerothJobs|otherworldJobs|threeWorlds|limitBreak|fuel|marketProfit|marketLoss|ascension|story|rating|chant)/.test(a.id));
+    assert.ok(fresh.length >= 25 && fresh.every(a => a.honor && !a.reward.pearls && !a.reward.sp && !a.reward.ap));
+    assert.equal(A.achievementById('chant:1').progress(s) >= 1, true);
 });
