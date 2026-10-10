@@ -592,6 +592,9 @@ export type State = {
     bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
     /** v3.231 이계 연료(세계석 1 = 100). fuelAuto: 자동 충전 때 남길 세계석(없으면 자동 충전 끔). */
     fuel?: number;
+    /** v3.240 동시 시전 기록(업적용): 4개 이상 묶음 횟수 · 가장 큰 묶음. */
+    chantFull?: number;
+    chantBest?: number;
     fuelAuto?: number;
     /** v3.231 연료로 바꾼 세계석 누계(부재중 정산 환산이 측정 구간의 충전을 셈). */
     fuelBought?: number;
