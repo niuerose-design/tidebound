@@ -7,7 +7,6 @@ import { addLog } from './state';
 
 /** 자동 환생 목표 레벨 선택지(0 = 요구 레벨에 닿는 즉시). 요구 레벨보다 낮으면 요구 레벨을 씁니다. */
 export const AUTO_REBIRTH_LEVELS = [0, 50, 60, 70, 80, 90, 100] as const;
-export type ResearchPlanItem = { id: string; to: number };
 /** 연구 구매 예약 칸 수. */
 export const RESEARCH_PLAN_MAX = 40;
 

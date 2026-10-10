@@ -51,7 +51,6 @@ export function cleanVows(s: Pick<State, 'permanent'>, v?: Vows): Vows {
 }
 /** v3.210 LV1 모험가(테스트용 서약): 레벨 1 고정 · 환생 불가 · 레벨 제한 무시 · 다른 서약과 함께 걸 수 없음 · 언제든 포기. 보상은 최고 무릉 층 기록뿐. */
 export const lv1Active = (s: Partial<Pick<State, 'vows'>>) => !!s.vows?.lv1;
-export const LV1_NAME = 'LV1 모험가';
 export const hasVows = (v?: Vows) => !!(v && (v.breath || v.rough || v.restraint || v.focus));
 /** v25.6 이번 생의 조건 카드. 연구 없이 환생 1회부터 고를 수 있고, 한 생에 하나입니다. */
 const FOCUS_KINDS = ['stage', 'tree', 'gold'] as const;

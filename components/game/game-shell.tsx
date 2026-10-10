@@ -1,46 +1,64 @@
 'use client';
-import { MasteryBoard } from './mastery-board';
 import { useFxGlowClass } from './skill-fx-setting';
 import type { State } from '@/game/types';
-import { Skills } from './skills-panel';
-import { Classes } from './classes-panel';
-import { VoyageLog } from './guidance-panels';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { BarChart3, BookOpen, Check, ChevronRight, HelpCircle, Map, RefreshCw, ShoppingBag, Target, Trophy, Users, Zap, Swords, Leaf, Flame, Terminal, ChartCandlestick } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster, toast } from 'sonner';
 import { useGame } from './use-game';
-import { Guild } from './guild-panel';
-import { SlotsPanel } from './slots-panel';
-import { Hacker } from './hacker-panel';
-import { Guide } from './guide-panel';
-import { UpdateLog } from './update-log-panel';
 import { LoginScreen } from './login-screen';
-import { Inventory } from './inventory-panel';
-import { Shop } from './shop-panel';
-import { DungeonShop } from './dungeon-shop-panel';
-import { MarketPanel } from './market-panel';
-import { StoryPanel } from './story-panel';
-import { Rebirth } from './rebirth-panel';
-import { Stages } from './stages-panel';
-import { Dungeons } from './dungeons-panel';
-import { Altar } from './altar-panel';
-import { Rankings } from './rankings-panel';
-import { Character } from './character-panel';
-import { Cosmetics } from './cosmetics-panel';
-import { Collection } from './collection-panel';
-import { Stats } from './stats-panel';
 import { SettingsDialog } from './settings-dialog';
 import { Navigation } from './navigation';
 import { ViewTabs } from './view-tabs';
-import { Crew } from './crew-panel';
 import { BattleView } from './battle-view';
 import { useFeedLiveRates } from './live-rates';
 import { useFeedBattleRecords } from './battle-records';
-import { BattleRecordsPanel } from './battle-records-panel';
 import { MobileTabBar } from './mobile-tab-bar';
 import { slotUnlocked } from '@/game/data/account';
 import { isHackerJob } from '@/game/data/hacker';
+/**
+ * v3.228 화면 코드 나누기: 첫 화면(자동 사냥)에 필요 없는 메뉴 화면은 처음 열 때 따로 받습니다(첫 로딩 · 모바일 파싱 시간 단축).
+ * 첫 동기화 뒤 브라우저가 한가할 때 미리 받아 두어(preloadPanels), 메뉴를 처음 열 때도 거의 기다리지 않습니다.
+ */
+const panelLoaders: (() => Promise<unknown>)[] = [];
+function lazyPanel<P>(load: () => Promise<React.ComponentType<P>>) {
+    panelLoaders.push(load);
+    return dynamic(load, { loading: () => <div className="panel-loading" aria-busy="true"/> });
+}
+let preloaded = false;
+function preloadPanels() {
+    if (preloaded) return;
+    preloaded = true;
+    // Safari에는 requestIdleCallback이 없어 잠깐 뒤로 미룹니다.
+    const idle = (fn: () => void) => typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
+    idle(() => { for (const load of panelLoaders) void load().catch(() => { preloaded = false; }); });
+}
+const MasteryBoard = lazyPanel(() => import('./mastery-board').then(m => m.MasteryBoard));
+const Skills = lazyPanel(() => import('./skills-panel').then(m => m.Skills));
+const Classes = lazyPanel(() => import('./classes-panel').then(m => m.Classes));
+const VoyageLog = lazyPanel(() => import('./guidance-panels').then(m => m.VoyageLog));
+const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
+const SlotsPanel = lazyPanel(() => import('./slots-panel').then(m => m.SlotsPanel));
+const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
+const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
+const UpdateLog = lazyPanel(() => import('./update-log-panel').then(m => m.UpdateLog));
+const Inventory = lazyPanel(() => import('./inventory-panel').then(m => m.Inventory));
+const Shop = lazyPanel(() => import('./shop-panel').then(m => m.Shop));
+const DungeonShop = lazyPanel(() => import('./dungeon-shop-panel').then(m => m.DungeonShop));
+const MarketPanel = lazyPanel(() => import('./market-panel').then(m => m.MarketPanel));
+const StoryPanel = lazyPanel(() => import('./story-panel').then(m => m.StoryPanel));
+const Rebirth = lazyPanel(() => import('./rebirth-panel').then(m => m.Rebirth));
+const Stages = lazyPanel(() => import('./stages-panel').then(m => m.Stages));
+const Dungeons = lazyPanel(() => import('./dungeons-panel').then(m => m.Dungeons));
+const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
+const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
+const Character = lazyPanel(() => import('./character-panel').then(m => m.Character));
+const Cosmetics = lazyPanel(() => import('./cosmetics-panel').then(m => m.Cosmetics));
+const Collection = lazyPanel(() => import('./collection-panel').then(m => m.Collection));
+const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
+const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
+const BattleRecordsPanel = lazyPanel(() => import('./battle-records-panel').then(m => m.BattleRecordsPanel));
 type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: number }>; unlock?: (s: State) => string | null; views?: string[]; /** v3.18 조건을 채우기 전에는 메뉴에서 아예 숨깁니다(해킹). */ hidden?: (s: State) => boolean };
 /** 합친 화면의 탭별 제목(상단 빵부스러기). 없으면 메뉴 이름을 씁니다. */
 const VIEW_TITLES: Record<string, string> = { hacker: '해킹', slots: '분신', stats: '통계', records: '전투 기록', shop: '상점', inventory: '장비 보관함', character: '능력치', cosmetics: '치장', stages: '사냥터', dungeons: '던전 탐험', altar: '제단', skills: '스킬', classes: '전직', mastery: '숙련 진행', book: '몬스터 도감', voyage: '목표 · 업적', help: '도움말', updates: '업데이트 내역' };
@@ -79,6 +97,8 @@ export default function GameShell() {
         if (error && s)
             toast.error(error);
     }, [error, s]);
+    // v3.228 첫 상태를 받은 뒤 나머지 화면 코드를 한가할 때 미리 받습니다.
+    useEffect(() => { if (s) preloadPanels(); }, [s]);
     const props = s ? { s, send, busy } : null, onLogout = game.logout;
     // v3.218 사이드바 폭도 화면 배율(--sidebar-zoom, shell.css)을 따라 커집니다.
     return <SidebarProvider style={{ '--sidebar-width': 'calc(232px * var(--sidebar-zoom, 1))' } as React.CSSProperties}>
