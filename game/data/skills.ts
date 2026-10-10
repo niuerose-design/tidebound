@@ -3,6 +3,7 @@ import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
 import { JOBS, LINEAGES, lineageOf, worldOf, AZEROTH_MASTERY_SCALE, type Job } from './classes';
+import { applyCoreRework } from './core-passive';
 import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
@@ -357,3 +358,5 @@ for (const job of JOBS) {
     // 제약형(최대 숙련에서 AP 0 이하, 지휘 체계 계열)은 이미 천만 단위라 그대로 둡니다.
     for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones && !isConstraintSkill(sk)) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
 }
+// v3.228 메이플 월드 4 · 5차 핵심 패시브 개편(data/core-passive.ts). 비밀 직업은 서버가 secret/register.ts에서 같은 일을 합니다.
+applyCoreRework(JOBS, SKILLS);
