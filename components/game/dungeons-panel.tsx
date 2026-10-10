@@ -30,21 +30,15 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
 
     return <>
-    <Heading eyebrow="DUNGEON" title="세계의 숨겨진 던전" description="연속 전투와 보스에 도전하세요. 현재 전투·웨이브·전투 로그를 이 화면에서 바로 확인할 수 있습니다."/>
+    {/* v3.257 던전에 들어가 있으면 머리말을 줄이고 진행 장면을 맨 위로, 자동 진행 카드는 그 아래로. */}
+    <Heading eyebrow="DUNGEON" title="세계의 숨겨진 던전" description={activeDungeon ? undefined : "연속 전투와 보스에 도전하세요. 현재 전투·웨이브·전투 로그를 이 화면에서 바로 확인할 수 있습니다."}/>
     {!activeDungeon && <p className="footnote">현재 HP {format(s.hp)} / {format(playerStats.hp)} · MP {format(s.mana)} / {format(playerStats.mana)} · 입장 후 {MONSTER_TUNING.dungeonPreparationTurns * BALANCE.turnMs / 1000}초 준비가 끝나면 모두 회복됩니다.</p>}
-    <AutoRunStatus s={s}/>
+    {!activeDungeon && <AutoRunStatus s={s}/>}
     {activeDungeon && <section className="panel dungeon-run-panel">
         <div className="dungeon-run-header">
-        <div><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2><p>{activeDungeon.description}{activeDungeon.id === 'abyss' ? ` · 최고 기록 ${s.abyssBest}층` : ''}</p></div>
+        <div title={activeDungeon.description}><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2>{activeDungeon.name}{activeDungeon.id === 'abyss' && <b className="abyss-floor"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2><p>{activeDungeon.id === 'abyss' ? `최고 기록 ${s.abyssBest}층` : null}</p></div>
         <button className="secondary" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</button>
         </div>
-        {<div className="dungeon-wave-track">{activeDungeon.monsters.map((id, index) => {
-            const isDone = s.dungeon!.wave > index;
-            const isCurrent = s.dungeon!.wave === index;
-            const isBoss = index === activeDungeon.monsters.length - 1;
-            const def = isBoss && activeDungeon.bossMonster ? monsterById(activeDungeon.bossMonster) : monsterById(id);
-            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={def?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{def?.name || id}</strong></div>;
-        })}</div>}
         {/* v3.235 사냥 화면과 같은 장면. v3.247 캐릭터 · 기록 · 전용 HUD까지 사냥 화면과 같습니다. v3.250 아래 내 모험가 · 몬스터 카드와 최근 전투 로그는 장면과 겹쳐 없애고 장면을 키웠습니다. */}
         <section className="battle-scene dungeon-scene"><SceneBackdrop/><div className="scene-shade"/><SceneFoe enemy={s.enemy} hidden={!!s.recovery} effect={combatFx}/><FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud enemy={s.enemy && !s.recovery ? s.enemy : null} effect={combatFx} combo={fxCombo}/>
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
@@ -52,7 +46,15 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             <span className="scene-wave">{s.enemy?.boss ? 'BOSS · ' : ''}{activeWave + 1} / {activeDungeon.monsters.length} 전투</span>
             <CastFx effect={combatFx} boss={!!s.enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!s.enemy?.boss}/><SceneLog logs={s.logs} playerName={s.name}/><SceneMe s={s} stats={playerStats} effect={combatFx}/>
         </section>
+        {<div className="dungeon-wave-track">{activeDungeon.monsters.map((id, index) => {
+            const isDone = s.dungeon!.wave > index;
+            const isCurrent = s.dungeon!.wave === index;
+            const isBoss = index === activeDungeon.monsters.length - 1;
+            const def = isBoss && activeDungeon.bossMonster ? monsterById(activeDungeon.bossMonster) : monsterById(id);
+            return <div className={`dungeon-wave ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''} ${isBoss ? 'boss' : ''}`} key={`${id}-${index}`}><MonsterArt id={def?.id || id} boss={isBoss} size={28}/><span>{isBoss ? 'BOSS' : `W${index + 1}`}</span><strong>{def?.name || id}</strong></div>;
+        })}</div>}
     </section>}
+    {activeDungeon && <AutoRunStatus s={s}/>}
     {/* v3.204 던전 주화 상점은 상점 메뉴의 탭으로 옮겼습니다. 여기는 보유 주화와 바로 가기만. */}
     <section className="panel dungeon-coin-link"><span>던전 주화 <b>{format(s.dungeonCoins || 0)}</b> · 오늘 보너스 정복 {bonusLeft}/{DAILY_BONUS.clears}회 남음</span>{setView && <button className="secondary small" onClick={() => setView('dungeonShop')}>던전 주화 상점</button>}</section>
     <div className="stage-grid dungeon-grid">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
