@@ -122,7 +122,7 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     oceanOfLife: { kind: 'peace', glyphs: ['✚', '❀', '✦', '✚', '❀', '✦', '✚', '❀'] },
     // 10: 카데나 체인아츠: 메일스트롬. 쇠사슬 고리가 휘감아 돌고 사슬이 가로지릅니다.
     worldStill: { kind: 'chain', glyphs: ['⛓', '◌', '⛓', '✦', '⛓', '◌', '⛓', '✦'] },
-    // 11: 제논 메가 스매셔. 육각 조준경이 잠기고 왼쪽에서 거대한 레이저가 관통합니다(반드시 명중).
+    // 11: 제논 메가 스매셔. v3.245부터 전용 연출(XenonFx)로 그립니다. 여기 항목은 장면 유지 시간(SCENE_HOLD_MS) 판정용으로 남깁니다.
     aberrantSurge: { kind: 'laser', glyphs: ['◇', '✦', '◇', '✧', '◇', '✦', '◇', '✧'] },
     // 12: 메카닉 메탈아머 전탄발사. 미사일 비가 위에서 쏟아지고 세 곳에서 폭발이 연달아 터집니다.
     genesisRune: { kind: 'barrage', glyphs: ['▲', '✦', '★', '▲', '✦', '★', '▲', '✦'] },
@@ -179,6 +179,26 @@ function PunisherFx({ fx }: { fx: CombatFx }) {
     </div>;
 }
 /**
+ * v3.245 제논 메가 스매셔 전용 연출(이계 연출과 같은 장면 좌표): ① 하이브리드 코어 충전 게이지(여섯 능력치 칸 · 0 → 100%)와 코어로 모이는 입자
+ * → ② 육각 포신 전개 · 표적 잠금 → ③ 화면을 가르는 대형 빔(섬광 · 흔들림) → ④ 관통 폭발 · 육각 파편 · 전용 타이틀. 약 2.5초.
+ */
+const XEN_CELLS = ['STR', 'DEX', 'INT', 'VIT', 'WIS', 'LUK'];
+function XenonFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
+    const i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(fx.delay, { '--i': n, ...extra });
+    return <div className={`scene-fx xen-fx ${boss ? 'xen-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(fx.delay)}>
+        <i className="scene-fx-dark"/><i className="xen-grid"/>
+        <div className="xen-gauge"><small>HYBRID CORE · CHARGE</small>
+            <div className="xen-cells">{XEN_CELLS.map((c, n) => <b key={c} style={i(n)}><span>{c}</span></b>)}</div>
+            <strong className="xen-pct"/></div>
+        <i className="xen-core"/>{Array.from({ length: 12 }, (_, n) => <i key={`p${n}`} className="xen-mote" style={i(n, { '--ang': `${n * 30}deg` })}/>)}
+        {Array.from({ length: 3 }, (_, n) => <i key={`h${n}`} className="xen-barrel" style={i(n)}/>)}
+        <i className="xen-lock"><b>LOCK ON</b></i>
+        <i className="xen-whiteout"/><i className="xen-beam glow"/><i className="xen-beam"/><i className="xen-beam core"/>
+        <i className="xen-ring"/><i className="xen-ring late"/>{Array.from({ length: 10 }, (_, n) => <i key={`s${n}`} className="xen-shard" style={i(n, { '--ang': `${n * 36 + 8}deg` })}/>)}
+        <strong className="xen-title">MEGA SMASHER<small>메가 스매셔 · 반드시 명중</small></strong>
+    </div>;
+}
+/**
  * v3.183 보스 몬스터 스킬의 배경 연출. 몬스터 자리(오른쪽)에서 왼쪽으로 향하게 그려 내 스킬과 방향이 구분됩니다.
  * 카드 쪽은 손대지 않습니다(‘몬스터 스킬’ 알림 · HP 바 숫자 그대로). 추가타가 있는 기술은 타격 수만큼 .foe-hit를 HP 바 숫자와 같은 박자(160ms)로 반복합니다.
  */
@@ -197,7 +217,7 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
-    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
+    return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
         <strong className="ult-title">{ult.title ?? skillById(fx.skillId)?.name}</strong>

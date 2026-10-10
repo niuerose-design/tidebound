@@ -1676,3 +1676,58 @@
 .dungeon-scene .scene-copy{position:absolute;left:18px;top:16px;z-index:3;pointer-events:none}
 .dungeon-scene .scene-copy h2{margin:4px 0 0;font-size:22px}
 @media(max-width:767px){.dungeon-scene{height:300px}.dungeon-scene .scene-copy h2{font-size:18px}}
+
+/* v3.245 제논 메가 스매셔 전용 연출(XenonFx): 충전 게이지 → 육각 포신 · 표적 잠금 → 대형 빔 → 관통 폭발 · 타이틀. 좌표는 이계 연출(.ow-fx)과 같습니다. */
+@property --xen-pct{syntax:'<integer>';inherits:false;initial-value:0}
+.scene-fx-layer:has(>.xen-fx){z-index:2}
+.xen-fx{--xc:#5ff4ff;--xm:#ff4fd8;--xw:#eaffff;--tx:calc(100cqw - 76px);--ty:calc(50cqh + 4px);--sx:12cqw;--sy:64cqh;--len:hypot(calc(var(--tx) - var(--sx)),calc(var(--ty) - var(--sy)));--aim:atan2(calc(var(--ty) - var(--sy)),calc(var(--tx) - var(--sx)));--beam:30px}
+.xen-fx.xen-boss{--tx:calc(100cqw - 88px)}
+.xen-fx .scene-fx-dark{inset:0;background:radial-gradient(ellipse at 20% 70%,#0a1d2a,#03070c 70%);animation:xenDark 2.5s ease-in-out var(--fx-delay) both}
+.xen-grid{inset:0;background:repeating-linear-gradient(0deg,#5ff4ff10 0 1px,transparent 1px 18px),repeating-linear-gradient(90deg,#5ff4ff0c 0 1px,transparent 1px 18px);mix-blend-mode:screen;animation:xenDark 2.5s ease-in-out var(--fx-delay) both}
+/* ① 충전 게이지 */
+.xen-gauge{position:absolute;left:3%;top:7%;padding:7px 10px 8px;border:1px solid #5ff4ff66;border-radius:6px;background:linear-gradient(135deg,#061722ee,#120a1aee);box-shadow:0 0 18px #5ff4ff33,inset 0 0 12px #5ff4ff1a;font:700 10px/1 ui-monospace,monospace;letter-spacing:.12em;color:var(--xc);animation:xenGauge 1.5s ease-out var(--fx-delay) both}
+.xen-gauge small{display:block;margin-bottom:6px;font-size:9.5px;opacity:.85}
+.xen-cells{display:flex;gap:3px}
+.xen-cells b{position:relative;width:30px;height:16px;border:1px solid #5ff4ff55;clip-path:polygon(18% 0,100% 0,82% 100%,0 100%);background:#5ff4ff12;overflow:hidden}
+.xen-cells b::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--xc),var(--xm));transform-origin:0 50%;animation:xenCell .14s linear calc(var(--fx-delay) + 80ms + var(--i) * 120ms) both}
+.xen-cells b span{position:relative;display:block;text-align:center;font-size:8px;line-height:15px;color:#e8fbff;text-shadow:0 0 4px #000}
+.xen-pct{display:block;margin-top:6px;font-size:15px;color:#fff;text-shadow:0 0 10px var(--xc);--xen-pct:0;counter-reset:xp var(--xen-pct);animation:xenPct .85s linear var(--fx-delay) both,xenFull .3s steps(2) calc(var(--fx-delay) + .85s) 2}
+.xen-pct::before{content:counter(xp) "%"}
+/* 코어와 모이는 입자 */
+.xen-core{left:var(--sx);top:var(--sy);width:44px;height:44px;margin:-22px;border-radius:50%;background:radial-gradient(circle,#fff 0 18%,var(--xc) 40%,#ff4fd855 62%,transparent 72%);box-shadow:0 0 26px var(--xc),0 0 50px #ff4fd866;mix-blend-mode:screen;animation:xenCore 1.9s ease-in var(--fx-delay) both}
+.xen-mote{left:var(--sx);top:var(--sy);width:5px;height:5px;margin:-2.5px;border-radius:50%;background:var(--xw);box-shadow:0 0 8px var(--xc);animation:xenMote .55s ease-in calc(var(--fx-delay) + var(--i) * 55ms) both}
+.xen-mote:nth-child(odd){background:#ffd2f6;box-shadow:0 0 8px var(--xm)}
+/* ② 육각 포신 · 표적 잠금 */
+.xen-barrel{left:var(--sx);top:var(--sy);width:64px;height:64px;margin:-32px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%,50% 0,50% 8%,7% 29%,7% 71%,50% 92%,93% 71%,93% 29%,50% 8%);background:linear-gradient(135deg,var(--xc),var(--xm));filter:drop-shadow(0 0 6px var(--xc));translate:calc(cos(var(--aim)) * (20px + var(--i) * 34px)) calc(sin(var(--aim)) * (20px + var(--i) * 34px));animation:xenBarrel 1.15s cubic-bezier(.2,.8,.2,1) calc(var(--fx-delay) + .8s + var(--i) * 70ms) both}
+.xen-lock{left:var(--tx);top:var(--ty);width:120px;height:120px;margin:-60px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%,50% 0,50% 4%,4% 27%,4% 73%,50% 96%,96% 73%,96% 27%,50% 4%);background:var(--xm);filter:drop-shadow(0 0 8px var(--xm));animation:xenLock 1.5s ease-out calc(var(--fx-delay) + .45s) both}
+.xen-lock b{left:50%;top:-22px;translate:-50% 0;font:800 10px/1 ui-monospace,monospace;letter-spacing:.2em;color:var(--xm);white-space:nowrap}
+/* ③ 대형 빔 */
+.xen-beam{left:var(--sx);top:var(--sy);width:calc(var(--len) + 40cqw);height:var(--beam);margin-top:calc(var(--beam) / -2);transform-origin:0 50%;rotate:var(--aim);border-radius:0 40% 40% 0/0 50% 50% 0;background:linear-gradient(90deg,#5ff4ff00,var(--xc) 6%,#bffaff 40%,var(--xc) 85%,#5ff4ff00);animation:xenBeam 1s cubic-bezier(.3,0,.2,1) calc(var(--fx-delay) + 1.15s) both}
+.xen-beam.glow{--beam:84px;background:linear-gradient(90deg,#ff4fd800,#ff4fd866 8%,#5ff4ff55 50%,#ff4fd800);filter:blur(6px);mix-blend-mode:screen}
+.xen-beam.core{--beam:9px;background:linear-gradient(90deg,#fff0,#fff 6%,#fff 90%,#fff0);box-shadow:0 0 18px #fff;animation-name:xenBeamCore}
+.xen-whiteout{inset:0;background:radial-gradient(circle at 30% 60%,#fff,#bffaff 40%,#5ff4ff 70%);mix-blend-mode:screen;animation:xenWhite .5s ease-out calc(var(--fx-delay) + 1.15s) both}
+/* ④ 관통 폭발 · 타이틀 */
+.xen-ring{left:var(--tx);top:var(--ty);width:110px;height:110px;margin:-55px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%,50% 0,50% 5%,5% 28%,5% 72%,50% 95%,95% 72%,95% 28%,50% 5%);background:var(--xc);filter:drop-shadow(0 0 10px var(--xc));animation:xenRing .8s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.25s) both}
+.xen-ring.late{background:var(--xm);filter:drop-shadow(0 0 10px var(--xm));animation-delay:calc(var(--fx-delay) + 1.45s)}
+.xen-shard{left:var(--tx);top:var(--ty);width:12px;height:12px;margin:-6px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(var(--xc),var(--xm));animation:xenShard .9s ease-out calc(var(--fx-delay) + 1.25s) both}
+.xen-title{position:absolute;left:50%;top:16%;translate:-50% 0;text-align:center;font:900 34px/1 var(--font-display,system-ui);letter-spacing:.16em;color:#effeff;text-shadow:0 0 12px var(--xc),-2px 0 0 #ff4fd8aa,2px 0 0 #5ff4ffaa,0 2px 8px #000;white-space:nowrap;animation:xenTitle 1.3s ease-out calc(var(--fx-delay) + 1.2s) both}
+.xen-title small{display:block;margin-top:7px;font:700 12px/1 system-ui;letter-spacing:.3em;color:var(--xm);text-shadow:0 0 8px var(--xm),0 1px 4px #000}
+.battle-scene:has(.xen-fx) .ocean-art{animation:sceneQuake 1.2s ease-out .7s both}
+@keyframes xenDark{0%{opacity:0}10%{opacity:.85}82%{opacity:.75}100%{opacity:0}}
+@keyframes xenGauge{0%{opacity:0;translate:-14px 0}10%,78%{opacity:1;translate:0 0}100%{opacity:0;translate:0 6px}}
+@keyframes xenCell{0%{scale:0 1}100%{scale:1 1}}
+@keyframes xenPct{0%{--xen-pct:0}100%{--xen-pct:100}}
+@keyframes xenFull{0%{color:#fff;text-shadow:0 0 18px var(--xm)}100%{color:var(--xc)}}
+@keyframes xenCore{0%{scale:.2;opacity:0}12%{opacity:1}45%{scale:.9}58%{scale:1.5;filter:brightness(1.6)}64%{scale:1.1}88%{scale:1;opacity:1}100%{scale:.4;opacity:0}}
+@keyframes xenMote{0%{translate:calc(cos(var(--ang)) * 110px) calc(sin(var(--ang)) * 80px);opacity:0}25%{opacity:1}100%{translate:0 0;opacity:0;scale:.4}}
+@keyframes xenBarrel{0%{scale:.2;opacity:0;rotate:-90deg}25%{scale:1.15;opacity:1;rotate:0deg}35%{scale:1}75%{opacity:1}100%{opacity:0;scale:1.3}}
+@keyframes xenLock{0%{scale:2.2;opacity:0;rotate:60deg}22%{scale:1;opacity:1;rotate:0deg}30%{scale:.85}38%{scale:1}52%{opacity:1}60%{opacity:.3}66%{opacity:1}100%{opacity:0;scale:1.5}}
+@keyframes xenBeam{0%{scale:0 .3;opacity:0}12%{scale:1 1.25;opacity:1}22%{scale:1 1}60%{scale:1 1.08;opacity:1}100%{scale:1 0;opacity:0}}
+@keyframes xenBeamCore{0%{scale:0 1;opacity:0}12%{scale:1 1;opacity:1}55%{opacity:1}70%{opacity:.6}78%{opacity:1}100%{scale:1 0;opacity:0}}
+@keyframes xenWhite{0%{opacity:0}12%{opacity:.85}100%{opacity:0}}
+@keyframes xenRing{0%{scale:.2;opacity:1}100%{scale:3;opacity:0;rotate:30deg}}
+@keyframes xenShard{0%{translate:0 0;opacity:1;rotate:0deg}100%{translate:calc(cos(var(--ang)) * 130px) calc(sin(var(--ang)) * 95px);opacity:0;rotate:240deg}}
+@keyframes xenTitle{0%{opacity:0;scale:1.6;letter-spacing:.5em}14%{opacity:1;scale:1;letter-spacing:.16em}80%{opacity:1}100%{opacity:0;translate:-50% -8px}}
+@media(max-width:767px){.xen-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:10cqw;--sy:70cqh;--beam:22px}.xen-fx.xen-boss{--tx:calc(100cqw - 66px)}.xen-title{font-size:24px;top:12%}.xen-cells b{width:22px}.xen-gauge{left:2%;top:5%;padding:5px 7px 6px}.xen-lock{width:90px;height:90px;margin:-45px}}
+.fx-no-glow .xen-whiteout,.fx-no-glow .xen-fx .scene-fx-dark,.fx-no-glow .xen-beam.glow{display:none}
+@media(prefers-reduced-motion:reduce){.xen-fx i{display:none}.xen-title{animation-name:tideReduced}.battle-scene:has(.xen-fx) .ocean-art{animation:none}}
