@@ -126,7 +126,7 @@ function usePulse(effect: CombatFx[], pick: (fx: CombatFx) => keyof typeof FRAME
 }
 const landed = (fx: CombatFx) => fx.hits.some(h => !h.miss);
 const foePick = (fx: CombatFx) => fx.target === 'enemy' && landed(fx) ? (fx.critical ? 'crit' : 'hit') : null;
-const mePick = (fx: CombatFx) => fx.actor === 'player' && !fx.basic && fx.kind !== 'stun' ? 'cast' : fx.target === 'player' && fx.actor === 'enemy' && landed(fx) ? 'recoil' : null;
+const mePick = (fx: CombatFx) => fx.actor === 'player' && !fx.basic && !(fx.kind === 'stun' && !fx.hits.length) ? 'cast' : fx.target === 'player' && fx.actor === 'enemy' && landed(fx) ? 'recoil' : null;
 
 /** 오른쪽 몬스터: 맞으면 번쩍이며 밀리고, 사라지는(처치 · 교체) 순간에는 찌그러지며 흐려지는 잔상을 잠깐 남깁니다. */
 export function SceneFoe({ enemy, hidden, effect, kkami = false }: { enemy: State['enemy']; hidden: boolean; effect: CombatFx[]; kkami?: boolean }) {
@@ -239,7 +239,7 @@ export function SkillReceipt({ effect, boss = false }: { effect: CombatFx[]; bos
         for (const fx of effect) {
             if (seen.current.has(fx.id)) continue;
             seen.current.add(fx.id);
-            if (fx.basic || !fx.skillId || fx.kind === 'stun' || fx.status === '행동 불가' || hasSceneTitle(fx, boss)) continue;
+            if (fx.basic || !fx.skillId || (fx.kind === 'stun' && !fx.hits.length) || fx.status === '행동 불가' || hasSceneTitle(fx, boss)) continue;
             const tags = [fx.extreme && '極限突破', fx.critical && fx.actor === 'player' && '치명', fx.mined && `세계석 +${fx.mined}`, fx.devour && '포식', fx.status].filter((t): t is string => !!t);
             const slip: Slip = { id: fx.id, title: fx.title, tags, side: fx.actor === 'player' ? 'me' : 'foe', big: !!fx.finale || (fx.tier || 0) >= 4, boss: fx.actor === 'enemy' && boss };
             // v3.250 한꺼번에 여러 이름이 와도 SLIP_GAP 간격으로 하나씩 올립니다(따다닥 튀지 않게).
@@ -276,8 +276,10 @@ const CAST_SHAPE: Record<string, 'blade' | 'orb' | 'bolt' | 'aura'> = {
  */
 export function CastFx({ effect, boss = false }: { effect: CombatFx[]; boss?: boolean }) {
     return <div className="cast-layer" aria-hidden="true">{effect.map(fx => {
-        if (fx.kind === 'stun' || fx.status === '행동 불가') return null;
-        const style = { '--fx-delay': `${fx.delay}ms`, '--fx': CAST_COLOR[fx.variant] || '#ffe9cf' } as React.CSSProperties;
+        // v3.271 기절을 거는 스킬(kind 'stun', 타격 있음)도 투사체를 그립니다. 빼는 것은 기절해 행동하지 못한 턴(타격 없음)뿐.
+        if (fx.status === '행동 불가' || (fx.kind === 'stun' && !fx.hits.length)) return null;
+        // v3.271 투사체 CSS는 --fx-delay(닿는 순간)보다 0.27초 먼저 출발하므로, 일반 스킬은 닿는 순간을 비행 시간만큼 뒤로 미룹니다(시전 빛은 그대로 시전 순간).
+        const style = { '--fx-delay': `${fx.delay + sceneImpactMs(fx)}ms`, '--fx': CAST_COLOR[fx.variant] || '#ffe9cf' } as React.CSSProperties;
         const landed = fx.hits.some(h => !h.miss);
         if (fx.actor === 'enemy') return fx.target === 'player' && landed ? <div key={fx.id} className={`cast-fx cast-claw ${fx.critical ? 'critical' : ''}`} style={style}><i/><i/><i/></div> : null;
         if (fx.basic) return landed ? <div key={fx.id} className={`cast-fx cast-basic ${fx.damageType === 'physical' ? 'phys' : 'mag'} ${fx.critical ? 'critical' : ''}`} style={style}><i/></div> : null;
