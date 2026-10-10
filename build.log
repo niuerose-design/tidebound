@@ -1,0 +1,63 @@
+$ next build
+▲ Next.js 16.3.4 (Turbopack)
+✓ Running next.config.ts took 28ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 3.3s
+  Running TypeScript ...
+  Finished TypeScript in 11.1s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/5) ...
+  Generating static pages using 3 workers (1/5) 
+  Generating static pages using 3 workers (2/5) 
+  Generating static pages using 3 workers (3/5) 
+✓ Generating static pages using 3 workers (5/5) in 366ms
+Turbopack build encountered 1 warning:
+./game/server/db.ts:409:39
+Warning: Dynamic filesystem access causes tracing of the whole project
+  [90m407 |[0m ...[36mst[0m load = [36masync[0m (): [33mPromise[0m<[33mFileDb[0m> => {
+  [90m408 |[0m ... [36mconst[0m fs = [36mawait[0m [36mimport[0m([32m'node:fs/promises'[0m);
+[33m[1m>[0m [90m409 |[0m ... [36mtry[0m { [36mreturn[0m [33mJSON[0m.parse([36mawait[0m fs.readFile(path, [32m'utf8'[0m)); } [36mcatch[0m { [36mreturn[0m { players:...
+  [90m    |[0m                                   [33m[1m^^^^^^^^^^^^^^^^^^^^^^^^^[0m
+  [90m410 |[0m ...
+  [90m411 |[0m ...[36mst[0m save = [36masync[0m (db: [33mFileDb[0m) => {
+  [90m412 |[0m ... [36mconst[0m fs = [36mawait[0m [36mimport[0m([32m'node:fs/promises'[0m), p = [36mawait[0m [36mimport[0m([32m'node:path'[0m);
+
+Static analysis determined that this filesystem access causes the whole project to be traced and included in the output.
+This is usually unintentional and leads to all source files (including the public folder) to be deployed as part of the server code.
+This can slow down deployments or lead to failures when size limits are exceeded.
+To resolve this, you can
+- make sure the path is statically scoped to some subfolder, for example path.join(process.cwd(), 'data', bar), or
+- only use them in development, or
+- opt out by adding an ignore comment to the highlighted call: fs.readFile(/*turbopackIgnore: true*/ ...), or
+- remove them.
+
+Import trace:
+  App Route:
+    ./game/server/db.ts
+    ./app/api/crew/route.ts
+
+
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ƒ /api/admin
+├ ƒ /api/altar
+├ ƒ /api/auth
+├ ƒ /api/chat
+├ ƒ /api/crew
+├ ƒ /api/duel
+├ ƒ /api/game
+├ ƒ /api/guild
+├ ƒ /api/hack
+├ ƒ /api/ranking
+├ ƒ /api/vault
+└ ○ /fx-lab
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

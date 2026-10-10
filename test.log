@@ -1,0 +1,497 @@
+$ node tests/run.mjs
+PASS Fresh state, stage and job restrictions
+PASS Server elapsed time, capped offline progress, no repeated rewards
+PASS Pause does not accumulate rewards
+PASS Job skills are free and SP cannot buy an unvisited job skill
+PASS Advanced jobs require attributes and predecessor mastery, with safe combat transition
+PASS SP levels do not replace real mastery in advanced job requirements
+PASS Stat and SP refunds cannot create points or erase acquired skills
+PASS Codex: crossing several thresholds claims all pending ranks once; claim-all spans species
+PASS Stat trace: per-source deltas sum to the final value and do not change the result
+PASS Stage visits: recorded silently for plain stages only, survive rebirth; tutorial skip grants nothing
+PASS Recovery v27.8: 20% after a win minus 1%p per sea tier (min 5%), 8% in dungeons; first aid is free at Lv.2 and gives hp regen
+PASS removed features: their actions are refused and old saves drop the leftover fields
+PASS v3.38 first-clear SP is an achievement; old boss-research claims move over as claimed (no double SP)
+PASS Stat points: 5 per level, old saves get the difference once, max button spends all
+PASS v26.8 registerItemAll registers one weakest unlocked item per missing slot/rarity and skips locked/relic
+PASS Saves from before v8 restart fresh, keep only the name, and are idempotent
+PASS Equipment swapping preserves item counts and sale is single-use
+PASS Rebirth resets run while preserving permanent progression
+PASS Dungeon completion and first-clear pearl only once
+PASS PvP is isolated from PvE, bounded and deterministic
+PASS Status-only stun deals no damage, skips enemy actions, and cooldown prevents instant repeated proc
+PASS Mana budget, magic defense, accuracy and damage over time
+PASS Silence blocks active skills but keeps basic attacks
+PASS Slow and haste change round priority without adding actions
+PASS Extra attacks are data-driven and capped
+PASS Economy jobs change rewards without forcing combat stats
+PASS Rare monster, dungeon bosses and monster-derived skills are present
+PASS v3.58 fixed purchase is gone; appraisal overspending is rejected
+PASS Appraisal probability boundaries and full bag rejection
+PASS Equipment enhancement changes real stats and caps at 15 stars for normal gear (v27.93 star force, success forced)
+PASS Bulk sale respects exact rarity, locks and relics
+PASS Rebirth unlocks, research and relic persistence
+PASS Gold and experience multipliers match actual combat payouts
+PASS Tide scaling and endless depths advance only on full clear
+PASS Accuracy and evasion use the displayed formula
+PASS v25.11 guild: single-player guild actions are gone, ranking shows the shared guild name, membership survives rebirth
+PASS v24.1 a status already on the target is not re-applied: the skill is skipped for the next one
+PASS v24.1 immunity: after a stun wears off the target cannot be stunned again for a while
+PASS HP regen: constitution adds per-action HP recovery that never exceeds max HP
+PASS Training opponents: dungeon bosses fight with their dungeon stats and enemy skills, never touching rating or state
+PASS Logs carry the turn they were written in and duels return structured rounds alongside text
+PASS v25.2 arcane monster strike with magic damage against resist; magic jobs gain an arcane strike ratio by tier
+PASS v3.214 research Soul Expansion II: rebirth 20 gate, +1 AP per rank on top of I, 12 ranks priced 100 + 40/rank, reset refunds
+PASS v3.38 AP sources: the breakdown sums to the cap and abyss floors no longer give AP
+PASS SP and mastery reach identical growth levels, never stacking or locking
+PASS Tier 1 and 2 jobs own one or two skills; every skill has a real job and rising milestones
+PASS Data reset returns a clean run while preserving the chosen name
+PASS Async duel snapshot exposes accuracy and evasion used by both sides
+PASS SP inheritance is separate, costs one, and refund preserves natural inheritance
+PASS Bone growth boundaries flip AP exactly at 1M/4M/10M wins
+PASS Negative AP works independent of priority and cannot be removed to overflow AP
+PASS SP inheritance, growth and practice survive reincarnation
+PASS Level ups grant no SP
+PASS Combat feedback preserves both actors, healing target and follow-up misses
+PASS PvP snapshots use the same purchased or mastered active levels
+PASS Experience bonus is additive, visible and included only for usable equipped skills
+PASS Experience payout uses the same bonus displayed on the character
+PASS Mastery bonuses match boss and species, use the strongest one and cap at ten
+PASS A bonus victory advances job and equipped skills once but codex by only one
+PASS A mastery level earned by this victory does not retroactively multiply its reward
+PASS Boss techniques unlock at native job mastery and SP cannot skip first acquisition
+PASS Research skill conditions and boss origins reference actual game data
+PASS Bone mastery relieves only the current job's negative multipliers
+PASS v24 per-rebirth passives grow with rebirths up to the cap
+PASS v24 late-bloomer passives start expensive and pay off at three stages (v3.80 scaled to the 5th-tier curve)
+PASS v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped
+PASS v24 loadout priority moves only among skills of the same type
+PASS v3.38 place AP moves to region achievements once: old saves keep their AP; honor steps give titles and skip the achievement bonus
+PASS v27.95 mastery inflation: tier 3+ job/skill requirements scale up, tier 1-2 stay, old inheritance is kept
+PASS v3.5 skill simple view: growth passives show their current count/rebirth stats and list the rules under 기타
+PASS Name statuses include bleed, show consumed stun and target haste at its actor
+PASS v3.60 one appraisal for all slots: slot, rod style and rarity are rolled in that order, charging once
+PASS Job mastery strengthens only the currently selected job and never its penalties
+PASS Growth descriptions expose real bone penalties, negative AP and farming stages
+PASS Active descriptions show maximum-resource scaling, statuses and additional hits
+PASS Abyss pearls scale with depth and milestone SP is granted once and survives rebirth
+PASS v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then the over-target wall compounds
+PASS Dungeon repeat runs until its stop condition, then resumes idle hunting
+PASS Harmony stat: allocated-point formula and per-job passive scaling (all-rounder removed in v3.163)
+PASS Variants: appear from 10 catches; swarm sizes gated by codex and passive; giant/abyssal/starlit change stats and rewards
+PASS Rebirth reward breakdown always sums to the pearls actually granted
+PASS Follow-up hits: each hit counted once, total equals HP lost, stops when the target dies, works for player and enemy
+PASS v27.81 codex: research stages grant no flat trait stats (ecology only); v3.38 place themes moved into region research tier 1; 50 catches reveal info
+PASS v27.81 ecology research: from stage 2 only against that species, 3·3·4·15·25% dealt / 1.5·1.5·2·7.5·12.5% taken, max +50% / -25%
+PASS Pearl research: locked research is refused server-side until its rebirth count
+PASS Pearl research: physical and magic attack/defense are separate research lines
+PASS Pearl research reset: per-tab refund, always free (v27.29), refusal conditions
+PASS v27.11 art: every monster has a silhouette shape and the shape table has no stale ids
+PASS v27.13 batch appraisal: 5 or 10 at once, all-or-nothing on gold and bag room, same rolls as singles
+PASS v27.14 skill fx overrides name real skills and win over the id rules
+PASS v27.14 mastery x2 event doubles victory practice
+PASS v27.16 stuck-state repair: NaN hp, dead enemy left over, unknown stage, and stalemates all recover
+PASS v27.18 charm crit is uncapped and crit above 60% becomes super crit (x1.5 crit damage)
+PASS v27.19 relics come from rebirth count, and pearls spent before the change are refunded once
+PASS v3.58 plain (white) codex entries start registered now that the plain purchase is gone
+PASS v27.74 catch mastery ignores stage tide (the tide mastery multiplier is gone); v3.201 dungeons give none
+PASS v27.22 mastery mimic: rare stage-only spawn with the strongest local body, pays lottery mastery to job and equipped skills
+PASS v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx parser carries the skill id
+PASS v27.25·v27.31 closed dungeons/stages refuse entry, evict saves inside, and are written to State.closed
+PASS v3.227 tailwind lasts until the previous life's top level (rebirth log), not the current rebirth level; old saves fall back to the previous life's required level
+PASS v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind
+PASS v21 tank counter and defense-scaled damage follow the job defense multiplier
+PASS v21 heal skills fire at full HP; non-healers deal reduced damage when the heal is wasted
+PASS v21 poison, burns and execute conditions are data-driven
+PASS v21 job chains: five-step flagships per archetype and a physical kraken route
+PASS v21.1 magic jobs replace basic attacks with a weaker arcane strike from tier 1
+PASS v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and at 70% when inherited elsewhere
+PASS v27.17 poison is its own stacking status; bleed does not stack but makes the target take more damage
+PASS v22 gear: rarity = option count, at most one rule option, themed origins and value rolls
+PASS v22 gear: rule options change existing rules within caps and apply from equipment
+PASS v22 gear (v27.53 base 0.25%, rare or better): scarce drops, dismantle into essence and reroll one option
+PASS v27.94 essence sinks: rerolling the same item costs +10% each time without a cap, refine rerolls only the value (v3.118 reroll gold only, refine essence only ×1.08 each)
+PASS Research v2: 10 new entries (v3.38 shop removed) match the plan table and are refused before unlock and at the cap
+PASS Research v2: stat effects come from the research source and keep the existing caps
+PASS Research v2: recovery and smith discounts use the state-aware functions
+PASS Research v2 → v3.154: the bag is a flat 100 slots (no research), drops auto-sell at the cap, and a utility reset no longer checks the bag
+PASS Research v2 → v3.154: long rest extends the offline cap by six hours per rank (3 ranks → 24 hours)
+PASS Research v2: online ticks and one offline settlement give the same result with every new research
+PASS Research v3: three special entries match the plan table and sit in the utility special group
+PASS Research v3.23: tailwind sail raises the additive bonus, the over-target wall stays at ×1.6
+PASS Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on
+PASS v25.23 golden monsters: multiplies one catch by ten and is recorded; v27.44 everyone rolls a 0.2% base, thief passives add to it
+PASS v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance per rank
+PASS v27.86 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset
+PASS v27.86 legacy sleeping-anchor saves: the seal is released (stored exp paid as is) on the next tick and the vow is gone
+PASS v3.209 random game removed: research refunded (paid ranks only), records and a run in progress cleared
+PASS Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls
+PASS v27.86 strength path (rough): difficulty floor, gear -30/50/70%, recovery -50/75/100%; gold and drops ×(1+0.5n×boost) after the drop cap; snapshot badges
+PASS Inherited skills skip the level requirement; other skills explain why they cannot be equipped
+PASS v27.88 every vow is a next-life reservation: reserving rough/restraint/breath never changes the current life
+PASS v3.24 auto vend sells known low-rarity drops for gold; v3.38 one research (자동 정리) opens both; v3.35 it can run together with the auto dismantler (dismantler wins on the same grade)
+PASS v3.35 auto devices pick several grades: rank 1 up to legendary, rank 2 up to ancient, one device per grade, primordial/onyx/locked never processed
+PASS v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regular, and the vend half of auto sort
+PASS v3.24 removed research tailwindWindow refunds every pearl once
+PASS v3.90 max mana: base grows with level, research ‘마나 강화 I’ ×(1 + 8%/rank), account · rebirth multipliers, coat/cape mana, ~0.2 of max HP
+PASS v3.154 bag research retired (cap 100, pearls refunded), long rest rescaled to 3 x 6h, auto-claim research claims achievements and codex rewards after an action
+PASS v3.160 whistle: SP 5 forces the next hunting-ground spawn to be the mimic or nuri, three per day, not in dungeons
+PASS Job trees: seven trees, no job left in the old other tree, v24 job counts per tree
+PASS Job trees: the old other jobs land where the plan puts them
+PASS Lineages: every job belongs to exactly one lineage inside its own tree; independents are parentless, childless tier 1
+PASS Job counts stay close: trees within 1.6× of each other (??? 14 or more), named lineages 4–10 (매지션 11) and all reach tier 5
+PASS v3.62 hidden unlocks: record conditions (v3.200 four); an unmet one shows as ‘숨은 조건’ and refuses the job change
+PASS v3.62 hidden unlocks count play records (v3.199 100 hours · 5 mastered)
+PASS v3.62 the rebirth door is gone: no draw at rebirth, the old door jobs keep only their own conditions
+PASS v3.62 save migration: the open rebirth door becomes a revealed record; admin-opened doors are dropped
+PASS Mastery rule: a mastered job can be re-entered at level 1, ignoring level, stats, mastery and hidden conditions
+PASS v25.23 a met hidden condition stays met: the settlement records it and unlockMet honors it after the condition breaks
+PASS v3.64 retired hidden jobs: the six jobs and their skills are gone, and old saves lose their records without compensation
+PASS v3.135 Night Walker lineage retired: only 망인 (undead) remains in the 제약 lineage; old saves move to 망인 and lose the deleted jobs' and skills' records
+PASS v3.64 deaths-count growth (v3.163: the fallen angler is gone, the dark knight keeps the device)
+PASS v3.220 Azeroth hidden lineages: kkami 100 · nuri 100 · every region dungeon 100 (Mu Lung excluded) · onyx bosses 100 in total; their passives count those records
+PASS v3.221 까미 사냥꾼: 황금 올가미는 까미(대왕 포함)에게만 · 최대 체력 40% 고정 피해 · 반드시 명중 · 로또 상향 표식; 직업이면 까미 ×1.5; 패시브 치명타 300회 +300%p
+PASS v3.221 Azeroth rules: rank badge required (4th tier 하사 · 칠흑의 화신 상사) and mastery ×10 over the Maple World curve
+PASS v3.221 누리 추적자: 하얀 발자국은 누리(대왕 포함)에게만 · 최대 체력 40% 고정 피해 · 경험치 로또 상향 표식 · 계보 전용(궁극의 모험가 예외); 직업이면 누리 ×1.5; 패시브 관통 300회 +30%p
+PASS v3.221 칠흑의 화신: 칠흑 일식은 물리 · 마법 중 높은 쪽 · 끼고 있는 칠흑 장신구 형태, 출현 ×1.5 · 120턴, 패시브는 마나 · 공격/방어 배율(체력 제외)
+PASS v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self
+PASS Job UI: every hidden or hidden-unlock job has a one-line hint
+PASS Job UI: a silhouette reveals its name when its hidden condition is met or all gate conditions are met
+PASS Job UI: quick finder and search never leak silhouette names
+PASS Job UI: a hidden condition reveals its job while it holds and keeps it once recorded
+PASS v25 hidden jobs without gates are shown; v3.199 the 5th-tier chronarch appears only once every gate is met
+PASS v3.63 hidden jobs stay out of sight until revealed, then show up in the ??? tab (other-tree hidden jobs bring their lineage along)
+PASS Job UI v3.166: the classes header and the mastery board count jobs from one tally
+PASS Job UI v3.166: a job goal is set from the detail sheet, flagged, and dropped on arrival
+PASS v3.220 worlds: Azeroth lineages stay out of the Maple World tree tabs and show only in their own world once revealed
+PASS v3.219 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it
+PASS battle replay: turns follow lastTick, strikes 260ms apart, last frame equals server state
+PASS battle replay: same-enemy turns step HP exactly by logged damage
+PASS battle replay: field defeat counts recovery down one turn at a time
+PASS battle replay: grouping and skipped-hit counter
+PASS battle replay: unreplayable batches fall back to an immediate update
+PASS chain: probability is min(1, 0.5 × log2(speed ratio)) and 0 when not faster
+PASS chain: at most 5 actions per fighter per turn, numbered 2..5 in event and log
+PASS chain: stops as soon as either side falls
+PASS chain: equal or slower speed uses exactly the same random numbers as a single strike
+PASS chain: extra actions are full actions (cooldowns and stun advance)
+PASS chain: online ticks and offline advance give the same result
+PASS chain: duels use the same rule
+PASS v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery; AP · boss · rank exp · penetration · crit damage support; duel trims support AP
+PASS v24.2 progress passives count codex, catches, hunts, species, gold and rebirths
+PASS v24.2 progress scaling multiplies damage by the recorded power
+PASS v24.2 gamble rolls the multiplier; all-in spends HP and mana; gold toss spends gold
+PASS v24.2 prey bonus hits bosses and designated species harder
+PASS v24.2 songs cost 0 AP and only bard-lineage jobs may equip them
+PASS v25.24 swap scaling: brawnWave deals magic damage from physical attack; v3.140 Luminous oath deals physical damage from magic attack
+PASS v25.25 thorns lifesteal: the defender heals by reflected damage × lifesteal
+PASS v26.2 attr scaling: 외길 actives add the allocated attribute × ratio, so a luck-only fisher deals damage
+PASS v26.3 healOnly: 회복 heals without attacking (no hit roll, no damage, no thorns); luck gives no attack
+PASS v26.6 dice: luck lane rolls more dice with more luck; the highest face maps 1→×low … 6→×high, and finger cutting narrows both ends
+PASS v3.225 5th tier: 총사령관 amplifies its other support (not AP) and gives power; 군수사령관 gives AP up to 3 and cuts its own support AP
+PASS v3.198 clockmaker: time rewind restores only me (hp · mana · cooldowns) once per battle when wounded; mastery opens the chronarch with no door
+PASS v3.198 zero tag: switching alpha ↔ beta adds the largest equipped tagBonus; the same side twice adds nothing
+PASS v25 chronarch: frozen time always stuns; precede grants an immediate extra action
+PASS v25 glyphs: alone they hurt, together they cancel; seven glyphs unleash heaven
+PASS v25 glyph chain unlocks one by one and descriptions stay hidden until mastery Lv.1
+PASS v25 heaven fires in the real turn flow and shows up in the structured log
+PASS v25.3 passive-only and independent jobs fight at tier strength
+PASS v25.5 multicast: chant spells fire together in one action with scaled cooldown and mana; non-multicast loadouts are untouched
+PASS v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet
+PASS v3.212 onyx awakening news: every awakening announces (no daily cap); vault merges and old marks stay quiet
+PASS v27.79 account bonuses are low multiplicative factors (AP unchanged); slot 3 opens at 50 account rebirths
+PASS v3.190 rank news: 하사 and 소위 and every rank after 소위 announce, other ranks stay quiet, no once-a-day cap, skipped ranks still count
+PASS v3.18 hacker job: public otherworld tier-1 job bought with pearls (v3.231), no stat penalties (combat is blocked by rule), adguard as its only skill
+PASS v3.18 hacker constraints: no stat allocation, no dungeons, loadout parked and restored, no combat or exp while idle
+PASS v3.18 currency is one-way: SP and pearls burn into bits, nothing converts back
+PASS v3.18 infiltration: the answer is never in the save, lock/port puzzles grade correctly, cash out vs trace
+PASS v3.18 hack I: unlock with grade and bits, broadcast/crack charge bits and leave a pending write; daily caps
+PASS v3.26 identity spoof (old adguard): hacker-only, mastery sets daily uses and options, leaves a pending write; snapshots carry no self privacy
+PASS v27.72 tutorial: 13 steps (v3.38), completed steps are recorded and never regress, veterans are backfilled silently
+PASS v3.25 hack tiers II–V: grade and bits gates, each hack needs its tier
+PASS v3.25 tamper, down, backdoor leave pending writes; sniff runs in the save; daily caps and first stage protected
+PASS v3.25 runtime: tampered event multipliers never drop below ×1, down blocks new entries only, patch lifts it
+PASS v3.25 programs: buy once with bits, memory cap, crypto miner / port scanner / AV evasion effects
+PASS v3.25 white hacker: needs hacker mastery, same constraints, keeps adguard, restores and patches but never attacks
+PASS v3.26 infiltration puzzles: first lock then port, later nodes mix in sequence, base conversion and cipher graded by the server
+PASS v3.26 becoming a hacker flags an anonymous red chat line (posted by the server test above)
+PASS v3.28 hacks VI–X in the save: intercept/savescum/ddos leave pending writes, botnet doubles brute force and adds entries, root resets today and grants the title
+PASS v3.28 black hacker: needs hacker mastery, double caps and costs, failures trace (no effect, 6h lockout, 3h with wipe trace)
+PASS v3.28 identity spoof decoys: mastery 3, validated name/job/level, shown fields keep their real value
+PASS v3.33 crew modules in the save: launder lowers black hacker failure and names the crew, joint patch adds 30 minutes
+PASS v3.228 core passive: 4th-tier flat and 5th-tier scale grow 70% → 100% with mastery, half on another lineage, full in the same lineage
+PASS v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Azeroth jobs keep small multipliers and a lineage-only core growing from 40%
+PASS Rebirth skills still require their job; temple relic and research caps work
+PASS v24 monsters can land critical hits; bosses and swift predators crit more
+PASS v27 tidal monster deal split basic attacks (half physical, half magic defense) and enemy skills cover all damage types
+PASS v3.31 mimic chance stops growing at difficulty 20 and the dragon nest
+PASS v3.31 rebirth stops at 200 and world-stone research purchases lock from 200
+PASS v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, resets the rest, refunds achievement currency
+PASS v3.31 extreme-break and limit-break progress restart from the ascension base; growth levels stay
+PASS v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; an honor achievement without reward
+PASS v3.31 ascended effects: no sprout, ×2 early exp, vow bonus ×1.2 per ascension, mastery ×(1+n)
+PASS v3.31 ascended hunters meet the mimic at difficulty 0 and its jackpot gets the ascension multiplier
+PASS v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), jackpot 7.5%, letter recipient 1%
+PASS v3.31 slot unlocks use lifetime rebirths so an ascension never closes a slot
+PASS v3.40 auto rebirth (ascension 1): locked before, fires at the target level outside dungeons, keeps hunting, settings survive
+PASS v3.40 research plan (ascension 1): buys in order up to targets, waits when short of pearls, skips locked ones, survives ascension
+PASS v3.40 auto rebirth also fires during offline catch-up and keeps the offline summary
+PASS v3.41 auto follow (ascension 2): highest stage that fits the level, tide by rule, only between fights
+PASS v3.41 job rotation (ascension 2 fixed at vocation 1; more choices later): switches to the next unmastered job and equips a loadout
+PASS v27.26 restartLife resets this life only: rebirths, pearls, relics, research and codex stay
+PASS v3.42 swarm drops roll √N times (×500 doubled) and the skipped rolls pay essence
+PASS v3.42 ×500 swarms pay exp · gold ×1.5 on top of the head count
+PASS v3.42 research ranks from the 21st cost ×1.06 compounding; ranks bought before refund at the old price
+PASS v3.46 swarm rank exp = fought turns × per-size rate, capped at the head count, fractions carried
+PASS v3.48 swarm mastery = fought turns × per-size rate (×5 2 · ×100 10 · ×500 20), capped at the head count
+PASS v3.82 removing an imprinted relic line is free and empties that slot
+PASS v3.52 odds: public data files keep no drop-table literals (the values live in game/secret/odds.ts)
+PASS v3.201 dungeons pay no kill rewards and a fixed dungeon coin per clear; the coin shop sells onyx, gear boxes and the hunter imprint
+PASS v3.201 coin shop quality goods: one option line to 100%, or 120–150% even on normal gear
+PASS v3.201 regional dungeons are one trash wave + boss; the boss keeps the last-wave pressure; Mu Lung stays five fights
+PASS v3.69 training: six training jobs absorb the 27 old independents; every old skill keeps its id under a new owner
+PASS v3.69 training: retired jobs refuse the job change even when mastered; training jobs hunt weak and earn about a third
+PASS v3.69 training: a save sitting in an old independent job moves to its training job and keeps its skills and records
+PASS v3.69 training passives: tier-3 strength from level 1, tier-3 mastery milestones, old inheritance kept once
+PASS v3.69 mastered job count: retired independents no longer count, for old saves too
+PASS v3.70 stat training I-III: opened by 1M training mastery, each step needs the previous one mastered, passives raise base attributes and can be inherited
+PASS v3.89 Joker: luck ratio 0.3 (Final Cut keeps 0.8)
+PASS v3.98 Dark Knight: Dragon Fury ×2.8, Beholder Impact ×2.8 with one extra hit, Darkness Aura crit like Phantom's 5th passive
+PASS v3.100 Luminous: Light Reflection ×2.8 → v3.181 ×3.8, Apocalypse ×3 → ×4 with one extra hit
+PASS v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p and crit damage 0.4 (v3.138: Michael lineage retired)
+PASS v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8
+PASS v3.109 Kaiser: Nova Temperance adds crit 8%p and crit damage 0.4 (same as Michael and Paladin)
+PASS v3.143 Mechanic: every active is defense-scaled magic damage that charges; Genesis Rune needs 5 charges and spends them
+PASS v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000
+PASS v3.123 Kali: Chakram Split curses (bleed-type damage over time, Illium's ratio), Queen of Hexes magic +250
+PASS v3.155 Cadena: Mystic Storm attack +450 and crit +10%p, variety bonus instead of stun extension; chain arts grant distinct self buffs
+PASS v3.145 Demon Slayer: actives cost HP instead of mana (floor 1), Blood Rage scales damage by missing HP, Demon Bane still stuns 3 turns
+PASS v3.138 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped
+PASS v3.146 Eunwol: companion passives add spirit follow-up hits to every action (basic attacks too), best hits and power win; Gumiho removed
+PASS v3.201 daily bonus clears: the first 30 regional clears of a KST day pay the bonus, shared across dungeons, no carry-over
+PASS v3.86 every tier-5+ active is an awakening skill with a 10-turn cooldown that starts full
+PASS v3.86 awakening rolls once per turn, waits 10 turns at the start and after each cast
+PASS v3.86 a failed awakening roll adds the base chance to the next roll (27% → 54% → 81% → 100%)
+PASS v3.86 chain actions are not turns; guaranteed extra turns are
+PASS v3.86 only one awakening fires per turn; it can join any active in the same turn
+PASS v3.86 stunned or silenced turns still count down but do not cast
+PASS v3.86 extra roll: after an active fires, roll the actives below it once more at 60% power
+PASS v3.86 extra roll costs 12 AP, needs the world-stone research and is dropped before skills when AP runs short
+PASS v3.87 extra roll raises the multicast bundle cap by its level instead of rolling again after a bundle
+PASS v3.201 legendary+ gear box: legendary or better at my level; ancient/primal weights x0.25 (about one normal drop); primal pity untouched
+PASS v3.103 replay: every log shows up on its own server turn, including across a defeat and recovery
+PASS v3.201 growth tickets: best full hour of the last 24 (gold and kill exp) x hours, rebirths < 50, daily limits; exp log resets on rebirth
+PASS Foe fx: every enemy skill a boss can use has a scene effect
+PASS v3.202-199 boss cores: daily-bonus regional clears only; duplicates awaken; one core slot (100%), others resonate 10%; kept across lives
+PASS v3.202 Zakum and Papulatus have their own kits (no longer the Mu Gong ancient-boss set); loot rules are inherit-style
+PASS v3.213 market: shared deterministic prices, cached window = direct calculation, hidden behind the server key
+PASS v3.213 market: buy/sell settle at the server tick price with fees and realized PnL, no principal cap or daily limit
+PASS v3.213 market feed: only past ticks, full day first, then only new ticks, nothing when up to date
+PASS v3.213 market: holdings survive rebirth, ascension clears them
+PASS v3.213 market control: closed market and circuit breaker block trades (prices keep running), then reopen
+PASS v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 is gold only
+PASS v3.215 story table: unique ids, valid chapters, 2~6 lines, every chapter has scenes
+PASS v3.215 story: first kill opens the first scene with one log line, later milestones open on the next action
+PASS v3.215 story: an old save opens everything it already passed in one summary line, kept through rebirth and ascension
+PASS v3.216 story part 2: no ascension gate except the finale, onyx = all 7 accessories owned, Mu Lung 50 · 100
+PASS v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken, 10% resonance); daily random core box
+PASS v3.203 boss core attribute reroll (essence or coins) and refine (essence, factor only); v3.203 cost 50 x1.2, pearl reset
+PASS v3.205 boss core honor achievements (no reward) unlock dungeon titles
+PASS v3.231 이계 직업은 세계석만으로 해금(레벨 · 선행 직업 없음), 한 번만 냅니다
+PASS v3.231 연료: 세계석 1 = 100, 상한 · 자동 충전(남길 세계석) · 연료가 없으면 절전 모드(두 공격 감소)
+PASS v3.231 요원 탄창: 액티브가 장착 순서대로 확정 발사 · 한 발마다 연료 · 다 쏘면 재장전, 연료가 없거나 이계 직업이 아니면 이계 액티브 없음
+PASS v3.231 트레이더: 평가 손익 ±25%(헤지 −10% 하한) · 레버리지 손익 2배 · 수수료 절반
+PASS v3.231 5차: 숏 스퀴즈는 손실일수록, 블랙 스완(각성기)은 손익 절댓값만큼 강함; 마켓 메이커 손익 범위 ±35%; 요원 치명 · 관통은 계보 전용
+PASS v3.231 데드샷 무한 탄창: 탄창이 비면 두 번에 한 번은 재장전 대신 탄을 쓰지 않고 행동마다 한 발 더, 그다음 빈 탄창은 재장전
+PASS v3.235 요원 · 트레이더 1차는 세계석 없이 조건 없이 들어옵니다(4차 1,000 · 5차 10,000, 해커는 그대로)
+PASS v3.239 겹영창: 4 · 5차 패시브가 1~3차 주문 피해 +50%씩, 동시 시전 묶음 n개면 각 주문 ×(1 + 0.15 × (n−1))
+PASS v3.243 출혈 적 추가 피해가 붙은 출혈 기술(실드 체이싱)은 출혈 중인 적에게도 나가고 보너스를 받습니다
+PASS v3.208 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load
+PASS v3.246 정수 포식: 쓸 때마다 정수 50(환생 수와 무관), 포식 처치는 기본 능력치 +1(상한 없음) · 환생하면 초기화
+PASS v3.246 정수 포식: 정수가 50보다 적으면 나가지 않습니다
+PASS v3.246 광맥 강타: 맞히면 세계석을 캐고(상한 없음) 기록이 패시브에 쌓입니다
+PASS v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept
+PASS Research v2/v27.73: mastery memory adds +3% per rank with an integer carry (1/100) and no random calls
+PASS v27.86 restraint: equip AP -4/-8/-12 (min 1), actives·passives 3/2/1 each, exp ×(1 + 20/40/60% × boost)
+PASS v3.99 enemy label in combat logs: swarm ×N, variant mark + name, [보스] / [칠흑] tags; battle lines and kill line use it
+PASS v3.160 reenlist: only at the top rank, resets rank exp and perks, adds a permanent promotion point per reenlistment and shows a star
+PASS v3.161 essence slime: shares the special roll right after the nuri band, pays bundle × tier essence, not before Lv.30 / difficulty 10
+PASS v3.161 kings: after 30 small ones a share of that special becomes the king, with a bigger body, an escape timer and a guaranteed triple jackpot
+PASS v27.4 constraint framework: every job with a multiplier ≤ 0.3 declares a constraint with at least one device; devices drive turn order, last stand and evasion
+PASS v3.44 registerJobs: adds a batch once with the same finishing steps (hint, mastery target, maple name), existing ids are skipped
+PASS v3.47 secret skills: server-only table registered by the engine, missing from the public table, registerSkills upserts by id
+PASS v3.137 망인: job mastery ten million; 죽지않은 영혼 AP 6 → 4 → 2 → −3 at 1M · 4M · 10M practice with no flat minus; only strong job penalties remain
+PASS v3.198 망인 skills: 무덤파기 hits and drains; 죽지않은 영혼 shows only 쓸모없음 but keeps its real effect
+PASS v3.221 어둠의 추종자: 어둠의 의식은 지역 보스 코어 수 비례 자기 버프(3 · 5 · 7 단계), 공명 30%, 패시브는 코어 수 · 각성(무릉도장 코어 제외)
+PASS v3.230 아제로스 3계보: 무릉도장 50층 · 변종 1,000 · 신 도전 100이 조건; 직업마다 무릉 주화 ×1.5 · 변종 · 황금 ×1.5 · 신 도전 간격 절반; 기록 비례 패시브
+PASS Job UI v3.166: monostat lineages sit in the 외길 tab and leave their original tree tab
+PASS Job UI v3.168: the beginner lineage sits in the ??? tab while the job keeps its hybrid tree
+PASS v3.101 battle records: client-side per-mob fights from synced logs (win/lose/flee, ×N swarm 5 kept, plain mob 1 + previous summary, gaps marked partial)
+PASS v26.1 titles come from achievements; equip, hide and auto all resolve through displayTitle
+PASS v26.1 server events multiply exp/gold/drop while active and are stamped into the state by advance()
+PASS v26.2 ranked duel allowance: 20 per day, 3 per opponent, 1-minute cooldown; practice is free
+PASS v26.5 focus hunting refuses a monster gated behind a higher sea difficulty instead of silently going random
+PASS v26.7 magic attacks take half of the target evasion and never a negative tempo
+PASS v27.2 thorns scale with swarm size, ignore half of attacker defense, and tank passives raise swarm encounter odds
+PASS v27.6 limit break: needs full mastery, practice multiples and SP; pushes growth past max, adds chance, stage 3 cuts AP; survives rebirth copy
+PASS v25.3 combat feedback marks heaven for the scene effect and build view pairs the two regens
+PASS v25.3 passive-route returns: the archivist passive scales with rebirths and the journeyman with mastered jobs
+PASS v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint passives, journeyman lineage gates
+PASS v25.5 reset passives fire on crit, kill and chain (players only); chained actions tick cooldowns normally
+PASS v25.6 achievements pay out once with permanent bonuses; daily/weekly goals roll over on KST days and reward on completion
+PASS v27.81 goals reroll once per goal per KST day without duplicating board entries; claimed goals stay
+PASS v27.81 rank and dungeon-mode achievements: rank exp reaches cumulative needs, hell/nightmare clears are recorded per dungeon
+PASS v25.6 focus cards change exp, gold and mastery for one life; weekly abyss depth is tracked per KST week
+PASS v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the monster gold curve and refunds 30% of enhancement
+PASS v25.7 salvage research sells or dismantles all non-relic gear at rebirth with rank efficiency; gold carries into the next life
+PASS v27.86 tide best is recorded per stage (no milestone pearls), variant monster need the tier, abyss 10-floor bonus and AP milestones, abyss-only affixes
+PASS v25.8 dusk vents stage (rebirth 5) and vent cathedral dungeon (rebirth 8) are wired into profiles, themes, research and logs; rebirth titles
+PASS v25.11 guild goals scale with members, points formula, weekly stats accumulate and reset by week
+PASS v25.12 duel season keys, tiers, season pearls, optional duel goals excluded from the all-bonus, duel achievements
+PASS v25.14 defense expansion: 11 jobs wired, resist scaling uses ward affinity, salt warden lineage listed
+PASS v25.14 recommended loadout mixes passives and actives within AP
+PASS v25.15 update log keeps exactly the 3 newest entries, newest first; stat confirm setting toggles and survives rebirth
+PASS v27.27 shop gear resells for at most half its price; old shop items are estimated
+PASS v27.27·v27.73 server events come from the admin page only: no code events, admin events apply and a name-only event is a notice
+PASS v27.28 limit break raises level-table passives (+10%/stage), applies stage-3 AP cut to them, and scales count-based passives
+PASS v27.31 limit break needs the pearl research "리미터 해제"; old breaks get it free, and a reset keeps free ranks without refunding them
+PASS v27.32 swarm cap setting lowers rolled swarm sizes (off = plain monster) and survives rebirth
+PASS v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, no overlevel cut (v3.201), stage enemies capped
+PASS mimic appears at a lower rate (v3.189 half) during an away catch-up
+PASS v27.36 high-rarity gear is damped and enhancement gives +10% per level
+PASS v27.43 altar: offering points, tithe, blessing events skip offline catch-up, mimic multiplier
+PASS v27.43 altar first god matches the Mu Lung firstGod.depth boss (v3.188 59F) and fights past the 80-turn duel cap
+PASS v27.46 maple gear names: drops/shop use set names by style, old save names and affixes are renamed once
+PASS v27.48 burn: stacks to 3, ticks like poison, adds half of bleed vulnerability, separate from bleed/poison
+PASS v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlement gets half the event multipliers
+PASS v27.51 every final combat stat equals the sum of its shown breakdown rows
+PASS v27.53 drops: 0.25% base, bonus 0.01 = +10%, rare or better, tide drop level capped at player level + 10
+PASS v27.57 balance: bleed, poison and burn add about the same damage in real combat (normal and boss HP)
+PASS v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black Mage hits with divine force
+PASS v27.55 rebirth level keeps rising after Lv.60 (+1 per rebirth, cap 80); level gates lift from 5 rebirths
+PASS v27.58 exp nuri: shares the mimic roll, high-level stage-only, pays 1~3% of the current level requirement (v3.112 or 10~30 stage encounters, whichever is larger)
+PASS v27.58 achievements: dungeon group replaces Mu Lung, new series per group with SP +1, old ids kept
+PASS v27.62 sync log delta: server sends only logs after the client key, client merge rebuilds the exact list
+PASS v27.63 rebirth history: each rebirth records real/play time, level and pearls; old saves start a partial clock
+PASS v27.64 tide lifts low-stage monster levels toward the top stage (capped by player level) so every stage is similar at high tide
+PASS v27.66 exp level-gap cap: monsters more than 10 levels above the player give exp as if they were player level + 10
+PASS v27.67 lift completes at the mimic tide, and lifted monsters are normalized by the stage average reward multiplier
+PASS v27.69 monsters get level-based penetration and the ward: bosses/Lv.50+ cleanse and go immune when afflicted
+PASS v27.73 skill pins and hidden skills live in the save: toggles, mutual exclusion, list import, and they survive rebirth, SP refund and a life restart
+PASS v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, repeat keeps the mode, Mu Lung ignores it
+PASS v27.70 the first god is the Mu Lung 50F boss with divinity (HP 9.3억, attack ×5, 50% penetration), and the throne copy is the holder as is
+PASS v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn chance like the mimic blessing
+PASS v27.71 evasion: non-dex sources are capped at 60%p raw, dex evasion stacks on top before the soft cap
+PASS v27.75 hits record the computed damage: text and FX show it, value/HP bar/recoil keep the actual HP removed
+PASS v27.76 tide loot: rarity weights drift up conservatively with tier, essence drops on stages from tier 5
+PASS v27.78 heal after kill keeps falling with tide; stageField matches spawn; starfall reward multipliers normalized
+PASS v27.80 regional book: research 5·6 need 250k/500k kills (stage 6 also difficulty 50), region research stacks per region, records survive rebirth
+PASS v27.80 regional variants and swarm habitats: signature variant ×2.5, habitats spawn ×100/×500 swarms (v3.106 plus mimic · nuri) without milestone pearls
+PASS v27.79 rank: kills-only progression with perks (tally, drill, medal, supply), free reset, survives rebirth
+PASS v27.80 badge choice (title/rank) and the 지겨운 환생 research restores mastered job, inherited skills and attribute ratio after rebirth
+PASS v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebirths, half death recovery and +5%p kill heal below 5
+PASS v27.91 world bosses: three summon gauges, shared HP snapshot, raid challenge accumulates damage and pays the whole party on the kill
+PASS v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction from 15 (relics reset to 12), chance time, safeguard, cost growth after 12
+PASS v27.96 growing relics: power follows rebirths, imprint consumes a same-slot item and survives rebirth, reforge only rerolls the fixed affix
+PASS v27.95 cape slot: evasion/hp base, steadfast affix only on capes with level² scaling and star bonus (cap 50%), monsters' statuses are resisted
+PASS v3.5 gear level-up: +10 up to player level, power/flat affixes scale, stars reset, relic star cap and power follow level
+PASS v3.6 star force records: tries/success/fail/destroy/gold persist through rebirth and feed the 강화 achievements and star titles
+PASS v3.7 auto enhance: needs the autoStar research, loops until target/limit/destroy, and sums the star force records
+PASS v3.8 star catch: enhance value "catch" adds +10%p success (destroy unchanged), flags combine with safeguard, auto enhance never catches
+PASS v3.8 auto enhance research costs 10 pearls; saves that paid 100 get 90 back once
+PASS v3.9 depth coefficient: later stages/dungeons are +4% per entry-level step in stats and rewards; abyss, random game, mimic and nuri are untouched
+PASS v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-growing above (so Lv.66→100 idling takes hours, not minutes)
+PASS v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards
+PASS v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart
+PASS v3.30 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines
+PASS v3.14 plain 태초 charm renamed to 제네시스 펜던트 by migration; onyx 창세의 뱃지 keeps its name
+PASS v3.15 level projection: counts level-ups through xpNeeded, stops at the cap, and msToCap sums the remaining need
+PASS v3.15 altar: offering to a world-boss gauge no longer throws (503) and logs the gauge name
+PASS v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-piece reward
+PASS v3.17 catch-up is chunked: a long absence settles CATCH_UP_CHUNK turns per request and continues next sync (same total, summary accumulates)
+PASS v3.189 away penalty (event half · special monsters offlineScale) only after an hour away; chunked catch-up keeps the first decision
+PASS v3.104 offline sampling: a long absence runs warm-up + sample turn by turn and adds the rest in proportion, in one request; fast-growing characters and dungeons fall back to chunked catch-up
+PASS v3.104 offline extrapolation math: gains grow by remaining/turns; one-time rewards and rare kills (까미 · 누리 · 별빛 · 칠흑) are left out of the proportion
+PASS v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing
+PASS v3.19 rank rescale: old saves are re-ranked once; demoted saves get their perks back, others keep them
+PASS v3.20 starforce flow achievements: 10★+ success streak, fail streak, drops, chance time, star catch, 15★+ successes
+PASS v3.21 difficulty exp and gold bend to √ above difficulty 30
+PASS v3.85 altar: a blessing re-opens by itself when the gauge already holds the next cost (no extra offering needed)
+PASS v3.105 altar: after an offering the cached all-time totals are patched (same answer as a fresh read, no full re-read)
+PASS v3.106 goal reset times: daily at the next KST midnight, weekly at the next KST Monday 0:00
+PASS v3.107 rank perk drill is a flat add outside every mastery multiplier (focus · event · research · ascension), per swarm head
+PASS v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of the current stage when that beats the level %, and appears from Lv.100 on
+PASS v3.113 onyx awakening and resonance: a repeat drop raises the owned accessory (max 5, unique option +10% each), unworn accessories lend 10% of their unique option
+PASS v3.198 wanderer knack: in the wander lineage, skills from other lineages cost 1 AP less (min 1); outside it there is no discount
+PASS v3.200 ultimate adventurer: other lineages’ 5th-tier signature skills keep full power; old 윤회의 나그네 records are cleared once
+PASS v3.25 server: pending hacks write the shared config, white hackers restore for a bounty, sniffing counts active players, board rows
+PASS v3.211 extreme stages: 1억·2억·4억·7억·10억 → +2% final damage each on that skill; first break unlocks a permanent effect
+PASS v3.48 logs keep battle 70 and reward 50 lines separately; client merge prunes the same way
+PASS v3.54 DoT: first application in a fight ticks at once (once per fight), poison/burn open at 2 stacks, swarm %HP uses one × √N
+PASS v3.54 healers turn overflowing heals into damage on the enemy (healers only)
+PASS v3.58 gold income is logged per play hour (24 buckets) and survives rebirth
+PASS v3.207 exp · mastery income is logged per play hour for the admin page; mastery log survives rebirth
+PASS v3.58 appraisal: price × rebirth factor (v3.68 linear, v3.81 scale 30), pity at 150/1000/3000 kept through rebirth and reset by ascension
+PASS v3.58 imprint appraisal always carries the chosen option and costs v3.73 5× gold + 50 essence; auto appraisal stops at the target
+PASS v3.59 primal drops: weight cut to ~0.054% of drops and a pity at PRIMAL_DROP_PITY drops, kept through rebirth
+PASS v3.66 heir gear: relic power follows (level + 2) × rebirth factor; awakened ancients and inherited primals survive rebirth, grow, cap one per slot
+PASS v3.66 relics owned before the update keep the higher of the old and new power formulas until ascension
+PASS v3.71 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lower grades, not imprintable), two-edged options scaled both ways
+PASS v3.72 draws: accuracy+evasion merged into sense (both rolled), precise/drift/runic retired but still readable, auto draw spends everything with limit "max"
+PASS v3.73 options: crit damage drawn at 0.4 weight, force/guardian roll both damped stats, mana pair merged into flow, bounty is ancient+, blood pact ignores the gear lifesteal cap
+PASS v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, distill essence) and junk options (ornate name, pinch +1 hp)
+PASS v3.77 onyx accessories carry max-rolled options (power still grows only by paid level-ups) and fall back to 12★ instead of breaking
+PASS v3.81 permanent gear (relic / heir / onyx) star force costs × (1 + 0.21 × rebirths); normal gear unchanged; appraisal price is linear from ~38 rebirths
+PASS v3.82 relic imprint keeps the source item's effective flat bonus (source damp ÷ relic damp); old imprints are corrected once, never raised
+PASS v3.141 relic imprint scales percent lines to relic rarity quality (primal 2.2 → legendary 1.6), never raises, penalties untouched; v3.82~139 lines corrected once on load
+PASS v3.114 rebirth 50 · 100 onyx milestones: random accessory once per character (retroactive on load, not again after ascension), repeat kinds awaken; ascension log keeps earlier records
+PASS v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 … 받았습니다’, a hunted one keeps the old line; the gift note is cleared
+PASS v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.242)
+PASS v3.118 gear cost reset: heir / onyx only, 999 pearls, rerolls · refines → 0, stars → 0, extra options rerolled at max value, onyx unique kept
+PASS v3.119 display bugs: 마력 option mana regen scales with power (and old tiny values are fixed on load), 초월 keeps hp/attack integers
+PASS v3.125 primal gauge fills on every exit path, rare foes are never golden, heir refine ceiling is 150%
+PASS v3.122 onyx accessory level: the higher of its habitat level and my level (boss drop and milestone grant)
+PASS v3.129 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched
+PASS v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor
+PASS v3.133 rule options (◆) draw at weight .25: about 36% of primal items carry one (was 80%), rare (★) unchanged
+PASS v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3), Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★
+PASS v3.217 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load
+PASS v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot
+PASS v3.242 onboarding: novice menus open at Lv.10 / first clear, auto attribute split keeps the ratio across rebirth
+PASS v3.52 odds: the server fills the window with the server-only values, and the public tables read through it
+PASS v3.52 odds: the public region signature (variant names) matches the server-only region multipliers
+PASS v3.52 odds: the catalog carries the odds only while secrecy is off
+PASS v3.55 spawn weights: server-only, and the per-stage average table reproduces the server reward norm for the screen
+PASS v3.57 info hacking: leaks are built from the data, skip known ones and entered jobs, and every hidden unlock has an exact condition
+PASS v3.57 info hacking: hackRun leak charges bits, counts per day, stores the fragment and refuses when nothing is left
+PASS v3.61 roles: every job resolves to a known sub role, and only the beginner and hackers have none
+PASS v3.61 roles: lineage assignments follow the plan (§11.6-1), with job-level exceptions on side branches
+PASS v3.80 role-unique effects stay with their role (docs/concept.md 11.3): swarm/thorns tanks, DoT boosts status dealers, gold/exp/drop buffers, heal actives healers, dealers own at most one control active
+PASS v3.170 training jobs: no actives, exactly 4 passives each with one main and one minor stat and no extra mechanics; the deleted skills are retired without compensation
+PASS v3.172 blaster recoil gauge: damage taken fills charge by max-hp share, cylinder burst waits for 3 stacks and spends them all
+PASS v3.172 lara mana mend: at the start of an action mana (8% of max) becomes hp (3~8% of max); magic attr skills add magic attack
+PASS v3.176 oneway devices: aran combo stacks on hit and beyonder spends it, dual blade stacks on evade and blade fury turns stacks into follow-ups, battle mage mana shield eats damage first
+PASS v3.80 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered
+PASS v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up
+PASS v3.83 utility gain ×1.5: gold/exp/drop bonuses of utility job skills only, applied once
+PASS v3.84 penetration: sources stack multiplicatively (no 0.6 wall, 0.85 total cap), research 3% per rank, owned gear lines ×2 once; boss damage stacks multiplicatively
+PASS v3.84 boss damage: direct hits on bosses only (world bosses included), never damage-over-time ticks
+PASS v3.88 luck-scaling skills (Phantom line) put crit damage into power once: a crit does not multiply it again
+PASS v3.97 Night Lord dice skills (3rd · 5th tier) add physical attack × 0.5 to the luck base; v3.176 1st · 2nd tier add × .4 · .45
+PASS v3.181 DoT weight shift: hp ratios halved, power ratios ×1.6, no per-tick cap field
+PASS v3.146 Eunwol: Ghost Gate attack +300 with a two-hit spirit, Fist Barrage ×1.4 and Shattering Fists ×1.9 keep one extra hit, World Fists ×2.5 (v3.199 public)
+PASS v3.124 Adele: Ruin magic +450 and max mana +1000
+PASS v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons and burns 7 turns (half chance outside the lineage), Dot Punisher finishes by stacks with no cooldown
+PASS v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura endures one lethal hit and heals 25%
+PASS v3.148 Adele burns current mana into damage; Flame Wizard Genesis detonates burn stacks
+PASS v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts defense/resist/speed, Gravity Core fires five times; self-buff frame carries haste
+PASS v3.169 stat training passives: detail view shows the attribute gain per mastery stage, the next-stage hint, and a growing stage table
+PASS v3.186 boss pass 1: dungeon entry rebirths 2 · 2 · 6, hell 70 · nightmare 260 with notes, boss hp ×0.8 only on boss-scaled foes
+PASS v3.188 boss pass 2: onyx hp multiplier per boss with √ difficulty scaling, Mu Lung floor 1 at 3만 · ×2, the first god keeps its body at floor 59
+PASS v3.191 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10), +1 after a kill on the same day, same stage after it leaves, back to 1 after a day; DoT hp-ratio stays on stage-1 hp
+PASS v3.194 world boss kills open no blessing; blessing events use the live level (high tiers fall back to 3 once their time is over)
+PASS v3.213 market control: admin switch is stored in server settings and read back by refreshEvents
+PASS v3.216 story art: every chapter has an SVG banner fallback, image paths only for files in the manifest
+PASS v3.217 story art: every scene has its own SVG illustration and chapters start folded
+PASS v3.240 업적: 동시 시전 4개 묶음 기록(chantFull · chantBest)이 쌓이고, 새 업적은 모두 보상 없는 명예 업적
+495 gameplay tests passed.

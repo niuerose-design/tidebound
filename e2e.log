@@ -1,0 +1,19 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: v3.47 secret-job skills come through the catalog (all of them while secrecy is off; v3.199~3.200 35 → 28, v3.220 아제로스 +8 → 36, v3.230 +6 → 42, v3.231 해커 3개는 공개 이계 표로 → 39)
+
+43 !== 39
+
+    at file:///home/runner/work/tidebound/tidebound/scripts/e2e-api.mjs:29:8
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 43,
+  expected: 39,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.21.0
