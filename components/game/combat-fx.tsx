@@ -3,6 +3,8 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import { Meter } from './shared';
 import { MonsterArt } from './art';
+import { StatusBadges } from './combat-status';
+import { variantById } from '@/game/data/variants';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties } from 'react';
 import type { Log, State } from '@/game/types';
@@ -391,13 +393,15 @@ export function PlayerHitEffect({ effect }: { effect: CombatFx[] }) {
 }
 
 /**
- * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자),
- * 왼쪽 아래 내 체력바(받은 피해 · 회복 숫자). 상대 · 내 카드의 체력바는 숫자 없이 그대로 남습니다. v3.235 던전 화면도 같은 장면을 씁니다.
+ * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자).
+ * v3.235 던전 화면도 같은 장면을 씁니다. v3.247 체력바 아래 몬스터 이름(변종 · 무리 · 보스 표시), 내 체력바는 왼쪽 아래 캐릭터 판(SceneMe)으로 옮겼습니다.
  */
-export function SceneCombatHud({ s, enemy, playerHp, effect, combo }: { s: State; enemy: State['enemy']; playerHp: number; effect: CombatFx[]; combo: CombatCombo | null }) {
+export function SceneCombatHud({ enemy, effect, combo }: { enemy: State['enemy']; effect: CombatFx[]; combo: CombatCombo | null }) {
+    const variant = enemy?.variant && enemy.variant !== 'swarm' ? variantById(enemy.variant) : null;
     return <>
         <CombatFxOverlay effect={effect} combo={combo}/>
-        {enemy && <div className={`scene-foe-hud ${enemy.boss ? 'boss' : ''}`}><div className="player-hp-anchor"><Meter value={enemy.hp} max={enemy.maxHp} label="HP" color="enemy"/><BarCleave effect={effect} value={enemy.hp} max={enemy.maxHp} label="HP"/><CombatBarEffect effect={effect} target="enemy"/></div></div>}
-        <div className="scene-me-hud"><div className="player-hp-anchor"><Meter value={s.hp} max={playerHp} label={s.name}/><CombatBarEffect effect={effect} target="player"/></div></div>
+        {enemy && <div className={`scene-foe-hud ${enemy.boss ? 'boss' : ''}`}><div className="player-hp-anchor"><Meter value={enemy.hp} max={enemy.maxHp} label="HP" color="enemy"/><BarCleave effect={effect} value={enemy.hp} max={enemy.maxHp} label="HP"/><CombatBarEffect effect={effect} target="enemy"/></div>
+            <span className="scene-foe-name">{enemy.boss ? <small className="boss">BOSS</small> : variant ? <small className={`variant-${enemy.variant}`}>{variant.mark} {variant.name}</small> : enemy.swarm ? <small className="variant-swarm">≋ ×{enemy.swarm}</small> : null}{enemy.name}<StatusBadges effects={enemy.effects} stun={enemy.stun} recent={effect} target="enemy"/></span>
+        </div>}
     </>;
 }

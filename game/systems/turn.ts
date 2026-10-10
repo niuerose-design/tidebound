@@ -9,6 +9,7 @@ import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
 import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, monsterById, stageById, dungeonById } from '../data/world';
+import { mineBonusOf } from './azeroth';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
@@ -215,7 +216,7 @@ function azerothFighter(s: State, usable: string[]): Partial<Fighter> {
     const sks = usable.map(id => skillById(id)).filter(Boolean);
     const out: Partial<Fighter> = {};
     if (sks.some(sk => sk!.essenceCost)) out.essence = s.essence || 0;
-    const mine = sks.reduce((n, sk) => n + (sk!.type === 'passive' ? (sk!.mineBonus || 0) + (sk!.mineGrowth ? Math.min(sk!.mineGrowth.cap, Math.floor((s.pearlsMined || 0) / sk!.mineGrowth.per) * sk!.mineGrowth.bonus) : 0) : 0), 0);
+    const mine = mineBonusOf(s, sks);
     if (mine) out.mineBonus = mine;
     return out;
 }

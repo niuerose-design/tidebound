@@ -1778,3 +1778,117 @@
 .az-mine .az-title{color:#ffe1a8;font-size:18px;top:16%}
 .az-mine.critical .az-title{color:var(--az-pearl)}
 @media(prefers-reduced-motion:reduce){.az-fx i,.az-fx svg{display:none}}
+
+/* v3.247 전투 장면 개편: 장면에는 나(왼쪽 아래) · 몬스터(오른쪽, 발밑 HP · 이름) · 연출 · 전투 기록(왼쪽에서 올라옴) · 전용 HUD(왼쪽 위)만.
+   사냥터 이름 · 단계 · 출현 문구와 조작 버튼은 아래 몬스터 카드(.battle-dock)로. 몬스터 자리(--foe-x · --foe-y)와 연출 좌표는 그대로입니다. */
+.battle-hud .battle-console .battle-scene{height:340px}
+.battle-scene{container-type:size}
+.scene-foe-wrap{position:absolute;inset:0;z-index:1;pointer-events:none}
+.scene-foe.spawn:not(.kkami){animation:foeSpawn .45s ease-out both,foeDrift 4s ease-in-out .45s infinite}
+@keyframes foeSpawn{from{opacity:0;translate:28px 0;scale:.9}}
+.scene-foe-wrap.dying .scene-foe{animation:foeDie .75s ease-in forwards}
+@keyframes foeDie{0%{filter:brightness(3) saturate(0)}25%{scale:1.08 .92}100%{opacity:0;translate:0 18px;scale:1.15 .25;filter:brightness(2) saturate(0)}}
+.scene-foe-name{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 5px;margin-top:4px;font-size:11.5px;font-weight:700;color:#f3ede2;text-shadow:0 1px 3px #041219,0 0 6px #041219;white-space:nowrap;line-height:1.3}
+.scene-foe-name small{font-size:10px;font-weight:700;color:#ffd76a}
+.scene-foe-name small.boss{color:#ff8f7a;letter-spacing:.08em}
+.scene-foe-name .name-statuses{pointer-events:auto}
+.scene-foe-hud{width:120px;left:min(var(--foe-x),calc(100% - 92px))}
+/* 나: 직업 그림 + 이름 · HP · 마나 판 */
+.scene-me{position:absolute;left:12px;bottom:10px;z-index:4;display:flex;align-items:flex-end;gap:8px;pointer-events:none;max-width:calc(100% - 24px)}
+.scene-hero{flex:none;width:clamp(56px,24cqh,84px);transform-origin:50% 100%}
+.scene-hero-art{display:block;width:100%;height:auto;filter:drop-shadow(0 6px 8px #0009)}
+.battle-scene.running .scene-hero-art{animation:heroIdle 2.6s ease-in-out infinite}
+@keyframes heroIdle{50%{translate:0 -2px}}
+.scene-me-plate{min-width:0;width:176px;padding:6px 9px 7px;border-radius:9px;background:#06100fcc;border:1px solid #ffffff1c;backdrop-filter:blur(3px);pointer-events:auto}
+.scene-me-plate{position:relative}
+.scene-me-name{display:flex;align-items:center;gap:4px;min-width:0}
+.scene-me-name .name-statuses{position:absolute;left:0;bottom:calc(100% + 4px);display:flex;flex-wrap:wrap;gap:3px;max-width:100%}
+.scene-me-name b{font-size:12.5px;color:#eef5ef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.scene-me-name b small{display:block;font-size:9.5px;color:#f0c46a;font-weight:600}
+.scene-me-sub{display:block;font-size:10.5px;color:#9db3ab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.scene-me-plate .meter-label{display:flex;justify-content:space-between;font:600 10px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#dbe8e1;margin-bottom:2px}
+.scene-me-plate .meter [data-slot=progress]{height:6px}
+.scene-me-mana{height:4px;margin-top:4px;border-radius:2px;background:#ffffff14;overflow:hidden}
+.scene-me-mana i{display:block;height:100%;background:#5aa8f0;transition:width .3s}
+.scene-me-plate .bar-fx>b{left:40%;top:-62px;font-size:15px}
+.scene-me-plate .bar-fx-heal>b{left:70%}
+/* 전투 기록: 캐릭터 위 왼쪽에서 한 줄씩 올라오고 위로 갈수록 흐려집니다. */
+.scene-log{position:absolute;left:12px;bottom:calc(10px + clamp(56px,24cqh,84px) * 1.375 + 8px);width:min(52%,330px);z-index:3;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;pointer-events:none;-webkit-mask:linear-gradient(transparent,#000 45%);mask:linear-gradient(transparent,#000 45%)}
+.scene-log p{margin:0;padding:2px 8px;border-radius:6px;background:#040b0aa6;font-size:11.5px;line-height:1.4;color:#d6e3dc;text-shadow:0 1px 2px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:sceneLogIn .35s ease-out}
+.scene-log p b{color:#a8ecd0;font-weight:700}
+.scene-log p.foe{color:#f0b9b0}.scene-log p.foe b{color:#ffc7bd}
+.scene-log p.reward{color:#f0c46a}
+.scene-log p .n{font-weight:700;font-variant-numeric:tabular-nums;color:#fff}
+.scene-log p.crit .n{color:#ffcf4d}
+.scene-log p .miss{color:#9fb3c8}
+.scene-log p .heal{color:#7dffb0}
+@keyframes sceneLogIn{from{opacity:0;translate:0 12px}}
+/* 전용 HUD(이계 · 아제로스 히든만) */
+.scene-job-slot{position:absolute;left:12px;top:10px;z-index:5;display:grid;gap:6px;max-width:min(60%,300px);pointer-events:none}
+.scene-job-slot:empty{display:none}
+.scene-job-slot>*{pointer-events:auto}
+.ow-hud.scene-job-hud{margin:0;flex-direction:column;align-items:stretch;gap:5px;padding:7px 10px;background:#06100fcc;backdrop-filter:blur(3px);font-size:11.5px}
+.ow-hud.scene-job-hud>*{flex:none}
+.ow-hud.scene-job-hud .ow-hud-fuel{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:center}
+.ow-hud.scene-job-hud .ow-hud-fuel .bar{grid-column:1/-1;order:3}
+.ow-hud.scene-job-hud .ow-hud-pnl svg{display:block}
+.az-hud{display:grid;gap:4px;padding:7px 10px;border-radius:10px;background:#06100fcc;border:1px solid var(--azc);backdrop-filter:blur(3px);font-size:11.5px;color:#d6e3dc;min-width:150px}
+.az-hud.devour{--azc:#a96bff}.az-hud.mine{--azc:#d79a4a}
+.az-hud .t{font-size:9.5px;letter-spacing:.14em;font-weight:700;color:var(--azc)}
+.az-hud .row{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.az-hud .row b{color:#fff}
+.az-hud .attrs{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:10.5px;color:#9db3ab}
+.az-hud .attrs b{color:#5ef2c8}
+.az-hud .gauge{height:5px;border-radius:3px;background:#ffffff14;overflow:hidden}
+.az-hud .gauge i{display:block;height:100%;background:var(--azc)}
+.az-hud small{font-size:10px;color:#9db3ab}
+.az-hud .warn{font-size:10.5px;color:#ff9d8a}
+.scene-idle{position:absolute;left:50%;top:44%;translate:-50% -50%;z-index:3;padding:6px 14px;border-radius:999px;background:#06100fb3;font-size:12.5px;color:#c9dbd2;white-space:nowrap;pointer-events:none}
+.scene-idle.recovery{color:#f0c46a}
+.scene-wave{position:absolute;right:12px;top:10px;z-index:5;padding:3px 10px;border-radius:999px;background:#06100fcc;font-size:11px;font-weight:700;color:#e6efe9}
+/* 아래 몬스터 카드: 사냥터 · 몬스터 정보와 조작 */
+.battle-dock{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-bottom:12px;padding:10px 12px;border:1px solid var(--stage-tone,#2c4744);border-radius:10px;background:#0d1a1c}
+.battle-dock-info{flex:1 1 240px;display:grid;gap:2px;min-width:0}
+.battle-dock-info .eyebrow{color:var(--stage-tone,#7fd6b3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.battle-dock-info .combatant-name strong{font-size:15px}
+.battle-dock-info small{color:#9db3ab;font-size:11.5px;overflow:hidden;text-overflow:ellipsis}
+.battle-dock-info .enemy-hint{color:#7f9c98}
+.battle-dock-info .battle-dock-me{color:#7f9c98}
+.battle-dock-actions{flex:0 1 auto;display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;align-items:center;margin-left:auto}
+.battle-dock-actions .scene-control{display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}
+.battle-dock-actions .scene-control.primary{color:#0b1b1f;background:#a4e9ba;border:1px solid #d7ffe6}
+.battle-dock-actions .scene-control.pause-button{color:#2a1a0c;background:#f6c999;border:1px solid #ffd9b3}
+.battle-dock-actions .scene-link{display:inline-flex;align-items:center;gap:3px;padding:7px 10px;border-radius:6px;border:1px solid var(--stage-tone,#2c4744);background:#12262a;color:#e3ece5;font-size:12px;white-space:nowrap}
+.battle-dock-actions .scene-whistle{position:static}
+.battle-dock .ow-fuel-actions{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;color:#9db3ab}
+.battle-dock .ow-fuel-actions .ow-hud-actions{display:flex;gap:4px;flex-wrap:wrap}
+.dungeon-scene .scene-log{width:min(55%,330px)}
+@media(max-width:767px){
+  .battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:380px}
+  .battle-console>.battle-dock{order:2}
+  .battle-dock-actions{flex:1 1 100%;justify-content:stretch;margin-left:0}
+  .battle-dock-actions>*{flex:1 1 auto;justify-content:center}
+  .scene-me-plate{width:150px}
+  .scene-log{width:min(60%,250px)}
+  .scene-job-slot{max-width:62%}
+}
+@container (max-width:560px){.scene-hero{width:clamp(48px,20cqh,64px)}.scene-me-plate{width:140px;padding:5px 7px 6px}.scene-me-sub{display:none}.scene-log{bottom:calc(10px + clamp(48px,20cqh,64px) * 1.375 + 8px);width:min(56%,250px)}}
+@media(prefers-reduced-motion:reduce){.scene-log p,.scene-foe.spawn,.scene-foe-wrap.dying,.battle-scene.running .scene-hero-art{animation:none}.scene-foe-wrap.dying{display:none}}
+@media(min-width:1600px){.battle-hud .battle-console .battle-scene{height:420px}}
+/* v3.247 스킬 이름 쌓기: 장면 가운데 위에 모아 띄우고, 새 줄이 아래에 찍히면 이전 줄은 위로 밀려 흐려집니다. 따로 뜨던 캡션 · 큰 제목 · 몬스터 스킬 알림은 장면에서 숨깁니다. */
+.battle-scene .tide-fx-caption,.battle-scene .monster-skill-cue,.battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .ow-title,.battle-scene .xen-title,.battle-scene .pun-title,.battle-scene .foe-title{display:none}
+.skill-receipt{position:absolute;left:50%;bottom:62%;translate:-50% 0;z-index:7;display:flex;flex-direction:column;align-items:center;gap:3px;width:max-content;max-width:min(78%,360px);pointer-events:none}
+.battle-scene:has(.scene-job-slot>*) .skill-receipt{left:auto;right:14px;translate:none;align-items:flex-end;max-width:min(52%,300px)}
+.skill-slip{display:flex;align-items:baseline;gap:6px;max-width:100%;color:#fff2c4;font-size:15px;font-weight:800;letter-spacing:.3px;line-height:1.3;white-space:nowrap;text-shadow:0 0 12px #efd28acc,0 2px 5px #071a20,0 0 3px #071a20;transform-origin:50% 100%;animation:slipIn .3s cubic-bezier(.2,.8,.3,1) backwards,slipLife 2.6s linear both;transition:opacity .25s,scale .25s}
+.skill-slip b{font-weight:800;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.skill-slip small{flex:none;font-size:11px;font-weight:700;color:#ffd76a}
+.skill-slip .who{color:#ff9d8a;letter-spacing:.06em}
+.skill-slip.foe{color:#ffd2c8;text-shadow:0 0 12px #ff6a5acc,0 2px 5px #071a20,0 0 3px #071a20}
+.skill-slip.big{font-size:20px;color:#fff6d8;text-shadow:0 0 16px #f0c46a,0 0 30px #f0c46a88,0 2px 5px #071a20}
+.skill-slip:not(:last-child){opacity:.8;scale:.92}
+.skill-slip:nth-last-child(3){opacity:.55;scale:.85}
+.skill-slip:nth-last-child(4){opacity:.32;scale:.78}
+@keyframes slipIn{from{opacity:0;translate:0 12px;scale:1.15}to{opacity:1;translate:0 0;scale:1}}
+@keyframes slipLife{0%,82%{filter:none}100%{filter:opacity(0)}}
+@media(max-width:767px){.skill-receipt{bottom:64%}.skill-slip{font-size:13px}.skill-slip.big{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.skill-slip{animation:none}}
