@@ -106,7 +106,7 @@ result.fuzzSuccessfulActions = Object.fromEntries(Object.entries(okTypes).sort()
     }
     for (const s of samples) {
         display.push(statsM.stats(s), statsM.dropRate(s), statsM.goldMultiplier(s), statsM.expMultiplier(s), statsM.dungeonGoldMultiplier(s), statsM.snapshot(s), statsM.power(statsM.stats(s)));
-        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s, 2), meta.rebirthLevel(s), commerceM.gambleCost(s), commerceM.imprintGambleCost(s), commerceM.pityLeft(s));
+        display.push(prog.apCapacity(s), prog.apUsed(s), meta.rebirthReward(s), meta.rebirthLevel(s), commerceM.gambleCost(s), commerceM.imprintGambleCost(s), commerceM.pityLeft(s));
         for (const j of JOBS) display.push(prog.jobRequirements(s, j), prog.canChangeJob(s, j.id));
         for (const x of SHOP) display.push(commerceM.shopPreview(s, x.id));
         for (const f of MONSTERS) display.push(prog.bookReward(s, f.id));

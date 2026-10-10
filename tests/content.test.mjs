@@ -54,7 +54,7 @@ test('Abyss pearls scale with depth and milestone SP is granted once and survive
 test('v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then the over-target wall compounds',()=>{
  const meta=metaMod;
  const s=newState(0);s.rebirths=6;s.level=100;assert.equal(meta.rebirthLevel(s),60);
- act(s,{type:'sync'},0);const pearls=s.pearls,expected=meta.rebirthReward(s,stats(s).rebirthBonus||0);act(s,{type:'rebirth'},0);
+ act(s,{type:'sync'},0);const pearls=s.pearls,expected=meta.rebirthReward(s);act(s,{type:'rebirth'},0);
  assert.equal(s.pearls-pearls,expected,'no deep voyage pearls');assert.equal(victoryMastery(s,{id:'minnow',boss:false}).amount,1,'no deep voyage mastery');
  const f=newState(0);f.rebirths=7;f.level=10;assert.ok(meta.tailwindActive(f));assert.ok(!meta.tailwindActive({...f,rebirths:0}),'no tailwind before the first rebirth');
  const e=stats(f).expBonus,off={...f,level:meta.tailwindLevel(f)};assert.ok(!meta.tailwindActive(off),'v3.227 tailwind ends at the previous life\'s top level');
@@ -106,7 +106,7 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
 });
 
 test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{
- for(const [lv,rb,bonus] of [[30,0,0],[45,3,2],[60,6,0],[100,6,1],[100,25,3],[70,400,5]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s,bonus);assert.equal(p.level+p.count+p.bonus,metaMod.rebirthReward(s,bonus));}
+ for(const [lv,rb] of [[30,0],[45,3],[60,6],[100,6],[100,25],[70,400]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s);assert.equal(p.level+p.count,metaMod.rebirthReward(s));}
 });
 
 test('Follow-up hits: each hit counted once, total equals HP lost, stops when the target dies, works for player and enemy',()=>{

@@ -5,8 +5,6 @@ export type Stats = {
     goldBonus?: number;
     /** Additional item drop chance in percentage points (0.05 = +5%). */
     dropBonus?: number;
-    /** Additional pearls granted on reincarnation, kept as a data-driven stat. */
-    rebirthBonus?: number;
     /** Extra gold multiplier applied to dungeon clear rewards. */
     dungeonGoldBonus?: number;
     magic?: number;

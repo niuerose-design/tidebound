@@ -14,7 +14,7 @@ import { RebirthHistory } from './rebirth-history';
 import { SLOTS } from '@/game/data/balance';
 import { researchRefund } from '@/game/systems/commerce';
 import { rebirthRewardParts, tailwindActive, tailwindExp, tailwindLevel, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
-import { stats, permanentExpBonus } from '@/game/systems/stats';
+import { permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity, researchAP } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
@@ -149,12 +149,12 @@ function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy
 export function Rebirth({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
-    const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
-    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
+    const required = rebirthLevel(s);
+    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }), permanentExp = 1 + permanentExpBonus(s);
     const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) };
-    const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
+    const parts = rebirthRewardParts(projected), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
     const lifeText = `순풍 · 다음 생 Lv.${Math.max(s.level, required)}(이번 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
@@ -179,7 +179,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             </section>
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
-                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
+                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>

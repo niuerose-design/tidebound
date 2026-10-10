@@ -27,7 +27,7 @@ export async function researchBudgetTools({ load, huntHours = HUNT.hoursPerDay }
     const lerp = (a, b, t) => a + (b - a) * Math.max(0, Math.min(1, t));
     /** 기준 몸(reference-body.mjs extras)과 같은 업적 수령 비율: 초보 10→30%, 중수 40→60%, 고수 75→90%. */
     const achievementShare = r => r < 10 ? lerp(.1, .3, r / 10) : r < 50 ? lerp(.4, .6, (r - 10) / 40) : lerp(.75, .9, (r - 50) / 50);
-    const rebirthPearls = r => { let sum = 0; for (let i = 0; i < r; i++) sum += rebirthReward({ level: Math.min(100, rebirthLevel({ rebirths: i })), rebirths: i }, 0); return sum; };
+    const rebirthPearls = r => { let sum = 0; for (let i = 0; i < r; i++) sum += rebirthReward({ level: Math.min(100, rebirthLevel({ rebirths: i })), rebirths: i }); return sum; };
     const ACHIEVEMENT_PEARLS = ACHIEVEMENTS.filter(a => !a.honor).reduce((n, a) => n + (a.reward.pearls || 0), 0);
     const achievementPearls = frac => Math.round(ACHIEVEMENT_PEARLS * Math.pow(Math.max(0, Math.min(1, frac)), 1.5));
     const GOAL_PEARLS_PER_REBIRTH = 8;

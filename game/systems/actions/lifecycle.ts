@@ -62,7 +62,7 @@ export function rebirthNow(s: State, now: number) {
         throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
     if (s.level < rebirthLevel(s))
         throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
-    const base = rebirthReward(s, stats(s).rebirthBonus || 0);
+    const base = rebirthReward(s);
     // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
     const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
     const vows = cleanVows(s, s.nextVows);

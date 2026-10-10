@@ -187,7 +187,7 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     // 깊은 사냥터에서는 10분 안에 쓰러집니다(2시간을 돌리던 것을 줄임).
     advance(o, 10 * 60_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
-    const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
+    const base = rebirthReward(plain);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
     // 둘 다 같은 업적 보상을 받으므로 차이가 하드코어 보너스(= 기본 세계석)입니다.
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');

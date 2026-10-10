@@ -31,7 +31,7 @@ test('v3.80 role-unique effects stay with their role (docs/concept.md 11.3): swa
     const CAT = [
         { keys: ['swarmFind', 'thorns'], ok: (sub, role) => role === 'tank' },
         { keys: ['dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'dotTurnsBonus', 'poisonStackBonus'], ok: sub => sub === 'status' },
-        { keys: ['goldBonus', 'expBonus', 'dropBonus', 'variantFind', 'goldenFind', 'rebirthBonus', 'dungeonGoldBonus'], ok: sub => sub === 'utility' },
+        { keys: ['goldBonus', 'expBonus', 'dropBonus', 'variantFind', 'goldenFind', 'dungeonGoldBonus'], ok: sub => sub === 'utility' },
     ];
     const bad = [];
     for (const j of JOBS.filter(j => !j.retired && j.subRole !== 'training' && j.id !== 'fisher')) {
