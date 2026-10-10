@@ -1,11 +1,11 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
-import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown, ArrowUpRight, Mountain, Flame, Snowflake, Star, Music, HeartPulse, Skull, Sparkles, Hammer, ScrollText, Droplet, Droplets, Bone, Hourglass, Bug, Crosshair, Bomb, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import { createElement, useEffect, useState, type ReactNode } from 'react';
+import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown, ArrowUpRight, Mountain, Flame, Snowflake, Star, Music, HeartPulse, Skull, Sparkles, Hammer, ScrollText, Droplet, Droplets, Bone, Hourglass, Bug, Crosshair, Bomb, TrendingUp, TrendingDown, Activity, Axe, WandSparkles, ShieldHalf, ShieldCheck, Dices, FlaskConical, FlaskRound, Drill, Wind, Gauge, BookOpen, PiggyBank, Package, Search, Sprout, Syringe, Crown, Biohazard, Orbit, Award, CircleSlash, HandHeart, Dumbbell, Brain, Eye, Clover, Flag, Megaphone, Layers, Fuel, Sunrise, Snail, VolumeX, ArrowBigUp } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { skillById } from '@/game/data/skills';
 import { fxVariantOf } from '@/game/systems/combat-feedback';
-import type { State } from '@/game/types';
+import type { Skill, State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
 import { SKILL_ART } from '@/game/data/art-manifest';
@@ -45,6 +45,35 @@ const ID_ICON: [RegExp, LucideIcon][] = [
     [/^(shortSell|stopLoss|blackSwan)$/, TrendingDown],
     [/^circuitBreaker$/, Activity],
 ];
+/**
+ * v3.263 기본 갈래(충격 · 비전)로만 잡히던 스킬은 효과로 아이콘을 다시 고릅니다. 전에는 패시브 176개가 모두 보석, 액티브 43개가 산 · 반짝이로 겹쳤습니다.
+ * 패시브: 가장 먼저 적힌 능력치(bonus → 핵심 → 횟수 비례 → 능력치 수련) · 지원 효과. 액티브: 궁극기 · 각성 · 상태이상 · 자기 버프 · 추가타 · 관통 · 연료 순.
+ */
+const STAT_ICON: Record<string, LucideIcon> = {
+    attack: Axe, magic: WandSparkles, hp: Heart, hpRegen: HeartPulse, defense: ShieldHalf, resist: ShieldCheck, statusResist: ShieldCheck, crit: Target, critDamage: Dices,
+    mana: FlaskConical, manaRegen: FlaskRound, accuracy: Crosshair, penetration: Drill, evasion: Wind, speed: Gauge, expBonus: BookOpen, goldBonus: PiggyBank, dungeonGoldBonus: PiggyBank,
+    dropBonus: Package, variantFind: Search, swarmFind: Search, goldenFind: Search, thorns: Sprout, lifesteal: Syringe, bossDamage: Crown, poisonBonus: Biohazard, dotBonus: Biohazard,
+    dotTurnsBonus: Biohazard, bleedBonus: Droplet, arcaneRatioBonus: Orbit, allStats: Award, varietyBonus: Award, stunBonus: CircleSlash, healBonus: HandHeart, executeBonus: Skull,
+    combatScale: TrendingUp, str: Dumbbell, dex: Feather, int: Brain, wis: Eye, vit: HeartPulse, luk: Clover,
+};
+const EFFECT_ICON: Partial<Record<NonNullable<Skill['effect']>, LucideIcon>> = { stun: CircleSlash, bleed: Droplet, poison: Biohazard, burn: Flame, weaken: TrendingDown, drain: Syringe, silence: VolumeX, slow: Snail, corrode: Biohazard, heal: HeartPulse };
+function effectGlyph(sk: Skill): LucideIcon | null {
+    if (sk.type === 'passive') {
+        if (sk.support || sk.supportAmp) return Flag;
+        if (sk.commandPer) return Megaphone;
+        const key = [...Object.keys(sk.bonus || {}), ...Object.keys({ ...sk.core?.flat, ...sk.core?.scale }), ...(sk.perCount || []).flatMap(p => Object.keys(p.bonus)), ...Object.keys(sk.attrBonus || {})].find(k => STAT_ICON[k]);
+        return key ? STAT_ICON[key] : null;
+    }
+    if (sk.exclusiveUltimate) return Crown;
+    if (sk.awaken) return Sunrise;
+    if (sk.effect && EFFECT_ICON[sk.effect]) return EFFECT_ICON[sk.effect]!;
+    if (sk.selfBuff) return ArrowBigUp;
+    if (sk.extraAttacks) return Layers;
+    if (sk.sureHit) return Crosshair;
+    if (sk.penetrationBonus) return Drill;
+    if (sk.fuelCost) return Fuel;
+    return null;
+}
 export function SkillIcon({ id, size = 24 }: {
     id: string;
     size?: number;
@@ -58,7 +87,11 @@ export function SkillIcon({ id, size = 24 }: {
     // v3.258 이계 무기 · 시장 기술은 id로 따로 고릅니다(갈래로는 모두 충격이 되어 구분이 안 됨).
     const own = ID_ICON.find(([re]) => re.test(id))?.[1];
     if (!Icon && own) { const Own = own; return <Own size={size} className="skill-glyph v-own"/>; }
-    if (!Icon) { const sk = skillById(id), v = fxVariantOf(id, sk?.damageType === 'magic'), Glyph = sk?.type === 'passive' && (v === 'impact' || v === 'arcane') ? Gem : VARIANT_ICON[v] ?? Zap; return <Glyph size={size} className={`skill-glyph v-${sk?.type === 'passive' ? 'passive' : v}`}/>; }
+    if (!Icon) {
+        const sk = skillById(id), v = fxVariantOf(id, sk?.damageType === 'magic'), plain = v === 'impact' || v === 'arcane';
+        const Glyph = (plain && sk && effectGlyph(sk)) || (sk?.type === 'passive' && plain ? Gem : VARIANT_ICON[v] ?? Zap);
+        return createElement(Glyph, { size, className: `skill-glyph v-${sk?.type === 'passive' ? 'passive' : v}` });
+    }
     return <Icon size={size}/>;
 }
 export function SlotIcon({ slot, size = 24 }: {
