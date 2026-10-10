@@ -57,7 +57,7 @@ test('v3.23 Rebirth: tailwind adds +50% to the exp bonus until the target, then 
  act(s,{type:'sync'},0);const pearls=s.pearls,expected=meta.rebirthReward(s,stats(s).rebirthBonus||0);act(s,{type:'rebirth'},0);
  assert.equal(s.pearls-pearls,expected,'no deep voyage pearls');assert.equal(victoryMastery(s,{id:'minnow',boss:false}).amount,1,'no deep voyage mastery');
  const f=newState(0);f.rebirths=7;f.level=10;assert.ok(meta.tailwindActive(f));assert.ok(!meta.tailwindActive({...f,rebirths:0}),'no tailwind before the first rebirth');
- const e=stats(f).expBonus,off={...f,level:meta.rebirthLevel(f)};assert.ok(!meta.tailwindActive(off),'tailwind ends at the rebirth level');
+ const e=stats(f).expBonus,off={...f,level:meta.tailwindLevel(f)};assert.ok(!meta.tailwindActive(off),'v3.227 tailwind ends at the previous life\'s top level');
  assert.ok(Math.abs(expMultiplier(f)/expMultiplier(off)-(1+e+.5)/(1+e))<1e-9,'additive with the exp bonus');
  const w=meta.xpWall(f);assert.deepEqual(w,{target:meta.rebirthLevel(f),growth:1.6});
  assert.equal(xpNeeded(w.target-1,f.rebirths,w),xpNeeded(w.target-1,f.rebirths),'below the target: unchanged');
@@ -469,4 +469,18 @@ test('v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level 
  act(s,{type:'lv1Vow',id:'quit'},0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);
  const t=newState(0);t.vows={rough:1};assert.throws(()=>act(t,{type:'lv1Vow',id:'start'},0),/다른 서약/);
  const u=newState(0);act(u,{type:'lv1Vow',id:'start'},0);u.lv1AbyssBest=7;const {restartLife}=await L.load('systems/actions/lifecycle');act(u,{type:'lv1Vow',id:'quit'},0);restartLife(u,10);assert.equal(u.lv1AbyssBest,7,'record kept across lives');
+});
+
+test('v3.227 tailwind lasts until the previous life\'s top level (rebirth log), not the current rebirth level; old saves fall back to the previous life\'s required level',()=>{
+ const meta=metaMod;
+ // 요구 레벨이 상한(Lv.100)인 회차라도 직전 생이 Lv.100에서 환생했다면 Lv.100까지, Lv.80까지만 갔던 기록이면 Lv.80까지.
+ const s=newState(0);s.rebirths=60;s.rebirthLog=[{n:60,at:0,realMs:0,playMs:0,level:80,pearls:0}];
+ assert.equal(meta.rebirthLevel(s),100);assert.equal(meta.tailwindLevel(s),80);
+ s.level=79;assert.ok(meta.tailwindActive(s));s.level=80;assert.ok(!meta.tailwindActive(s),'off from the previous top level, though the rebirth level is 100');
+ // 실제 환생: Lv.70에서 환생하면 다음 생 순풍은 Lv.70까지.
+ const r=newState(0);r.rebirths=6;r.level=70;act(r,{type:'rebirth'},0);
+ assert.equal(meta.tailwindLevel(r),70);assert.ok(r.logs.some(l=>l.text.includes('직전 생 최고 레벨 Lv.70')));
+ // 기록이 없거나 직전 생 것이 아니면 직전 생의 요구 레벨.
+ const old=newState(0);old.rebirths=8;old.rebirthLog=[{n:5,at:0,realMs:0,playMs:0,level:99,pearls:0}];
+ assert.equal(meta.tailwindLevel(old),meta.rebirthLevel({rebirths:7}));
 });
