@@ -11,6 +11,7 @@ import { stats } from '../stats';
 import { salvageRate, startingLevel, researchRank, researchById } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence, dismantleInto, primalGaugeGain, keepsAcrossLives, syncRelicPower } from '../equipment';
+import { spendAutoAttributes } from '../encounter';
 import { grantOnyxMilestones } from '../onyx-grant';
 import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
 /** v27.63 세이브에 남기는 최근 환생 기록 수. */
@@ -98,6 +99,8 @@ export function rebirthNow(s: State, now: number) {
         const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
         if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
     }
+    // v3.240 능력치 자동 배분: 새 생의 포인트를 직전 생 비율로 나눕니다.
+    if (s.autoAttr && s.statPoints > 0) { const n = spendAutoAttributes(s, Object.values(s.attributes).some(x => x > 0) ? s.attributes : prevAttr); if (n) addLog(s, `능력치 자동 배분 · ${n}포인트를 직전 생 비율로 나눴습니다`, 'system'); }
 }
 
 /**
@@ -157,14 +160,17 @@ export function ascend(s: State, now: number) {
     }
     const refund = achievementRefund(s), pastLog = s.ascensionLog || [];
     const fresh = newState(now);
-    // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.
+    // v3.240 칠흑 장신구(별 · 각성 · 착용 그대로)와 칠흑 격파 기록은 보스 코어처럼 승천해도 남습니다.
+    fresh.inventory = s.inventory.filter(i => i.onyx);
+    for (const [slot, item] of Object.entries(s.equipment)) if (item?.onyx) fresh.equipment[slot] = item;
+    // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 칠흑 장신구, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.
     const keep: Partial<State> = {
         name: s.name, rank: s.rank, title: s.title, badge: s.badge, achievements: s.achievements, achievementClaims: s.achievementClaims,
         rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
-        autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
+        autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, autoAttr: s.autoAttr, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
-        newsMark: s.newsMark, /** v3.215 모험 일지는 승천해도 남습니다. */ story: s.story, /** v3.202 보스 코어는 승천해도 남습니다(금고 없음). */ lv1AbyssBest: s.lv1AbyssBest, bossCores: s.bossCores, coreSlot: s.coreSlot, bossLootMiss: s.bossLootMiss, onyxMilestones: s.onyxMilestones, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, extremeFx: s.extremeFx, support: s.support, expEarned: s.expEarned, masteryLog: s.masteryLog, masteryEarned: s.masteryEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled, offlineRescaled: s.offlineRescaled,
+        newsMark: s.newsMark, /** v3.215 모험 일지는 승천해도 남습니다. */ story: s.story, /** v3.202 보스 코어는 승천해도 남습니다(금고 없음). */ lv1AbyssBest: s.lv1AbyssBest, bossCores: s.bossCores, coreSlot: s.coreSlot, bossLootMiss: s.bossLootMiss, onyxMilestones: s.onyxMilestones, onyxBook: s.onyxBook, onyxSeen: s.onyxSeen, onyxMiss: s.onyxMiss, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, extremeFx: s.extremeFx, support: s.support, expEarned: s.expEarned, masteryLog: s.masteryLog, masteryEarned: s.masteryEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled, offlineRescaled: s.offlineRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.

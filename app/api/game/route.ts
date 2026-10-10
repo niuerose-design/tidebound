@@ -12,7 +12,6 @@ import { announceHacker } from '@/game/server/hacks';
 import { postPlayerNews } from '@/game/server/news';
 import { collectNews, type NewsEvent } from '@/game/systems/news';
 import { vaultAfterAscend } from '@/game/server/vault';
-import { addLog } from '@/game/systems/state';
 import { marketFeed, marketStatus } from '@/game/systems/market';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
@@ -24,7 +23,7 @@ export async function POST(req: Request) { try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
         let news: NewsEvent[] = [];
-        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; news = collectNews(s, now); syncTraderPnl(s, now); if (a.type === 'ascend') { await afterAscend(account, id, now); const gone = await vaultAfterAscend(account, slot, now); if (gone) addLog(s, `계정 금고에 이 캐릭터가 넣은 칠흑 장신구 ${gone}개도 함께 사라졌습니다.`, 'system'); } await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
+        const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; news = collectNews(s, now); syncTraderPnl(s, now); if (a.type === 'ascend') { await afterAscend(account, id, now); await vaultAfterAscend(account, now); } await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
             // v3.32 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
             if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now);
             crewFlush?.(s); });

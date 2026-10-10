@@ -52,6 +52,8 @@ export function Character({ s, send, busy }: PanelProps) {
     <div><Target size={22}/><span>남은 능력치 포인트<strong>{s.statPoints} <small>P</small></strong></span></div>
     <div><span>직접 투자한 포인트<strong>{Object.values(s.attributes).reduce((a, n) => a + n, 0)}</strong></span></div>
     <div><span>레벨마다<strong>+{PROGRESSION.statPerLevel} <small>P</small></strong></span></div>
+    {/* v3.240 능력치 자동 배분: 레벨업 포인트를 지금 직접 투자한 비율대로 나눕니다(자리를 비운 동안 · 환생 직후에도). */}
+    <div className="auto-attr"><span>자동 배분<small>지금 투자 비율대로</small></span><button type="button" className={s.autoAttr ? 'primary small' : 'secondary small'} disabled={busy} aria-pressed={!!s.autoAttr} title="레벨업으로 받은 포인트를 지금 직접 투자한 비율대로 바로 나눕니다. 환생 직후에는 직전 생 비율을 씁니다." onClick={() => send({ type: 'autoAttr', id: s.autoAttr ? 'off' : 'on' })}>{s.autoAttr ? '켜짐' : '꺼짐'}</button></div>
     </section>
     <div className="build-columns">
     <section className="panel attribute-panel">

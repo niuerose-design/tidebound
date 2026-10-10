@@ -105,8 +105,8 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냄 · 세계석 인출 주당 {VAULT_PEARL_OUT_WEEKLY}개 · 골드 불가</span></div>
         {error && <p className="login-error" role="alert">{error}</p>}
         <ul className="account-rows vault-rows">{row('pearls', '세계석', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
-        {/* v3.116 칠흑 장신구: 별 · 각성 그대로 옮김. 받는 분신이 같은 종을 가졌으면 각성 +1. 넣은 분신이 승천하면 사라짐. */}
-        <h3 className="vault-onyx-title">칠흑 장신구 <small>금고 {vault?.onyx.length ?? '…'}/{VAULT_ONYX_CAP} · 별 · 각성 그대로 · 같은 종을 가진 분신이 꺼내면 각성 +1 · 넣은 분신이 승천하면 금고에서도 사라짐</small></h3>
+        {/* v3.116 칠흑 장신구: 별 · 각성 그대로 옮김. 받는 분신이 같은 종을 가졌으면 각성 +1. v3.240 승천해도 남음. */}
+        <h3 className="vault-onyx-title">칠흑 장신구 <small>금고 {vault?.onyx.length ?? '…'}/{VAULT_ONYX_CAP} · 별 · 각성 그대로 · 같은 종을 가진 분신이 꺼내면 각성 +1</small></h3>
         <ul className="account-rows vault-rows">
             {s.inventory.filter(i => i.onyx).map(i => <li key={i.id}><div><strong>{i.name}{i.onyxRank ? ` +${i.onyxRank}` : ''}</strong><small>가방 · {starLabel(i.enhance || 0, true)} · Lv.{i.level}</small></div>
                 <div className="vault-row"><button className="secondary small" disabled={busy || !vault || vault.onyx.length >= VAULT_ONYX_CAP} onClick={() => act({ action: 'deposit', kind: 'onyx', id: i.id })}>넣기</button></div></li>)}

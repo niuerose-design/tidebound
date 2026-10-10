@@ -35,7 +35,8 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     s.skillPractice = { hook: hook + 50_000 }; s.learned = { hook: 4 }; s.skillSpent = { hook: 3 }; s.limitBreaks = { hook: 2 };
     s.achievements = { 'rebirths:1': 1, 'rebirths:3': 1 }; s.achievementClaims = { 'rebirths:1': true, 'rebirths:3': true };
     s.rank = { exp: 12345, perks: { drill: 2 } }; s.book = { slime: 50 }; s.abyssBest = 40; s.abyssMilestones = [10, 20]; s.kills = 777;
-    s.inventory = [{ id: 'x', name: 'x', slot: 'rod', rarity: 3, power: 10, level: 1, relic: 'memoryRod' }];
+    s.inventory = [{ id: 'x', name: 'x', slot: 'rod', rarity: 3, power: 10, level: 1, relic: 'memoryRod' }, { id: 'ox', name: 'ox', slot: 'charm', rarity: 6, power: 600, level: 90, onyx: 'onyxLucid', onyxRank: 2, enhance: 15 }];
+    s.equipment.charm = { id: 'oxw', name: 'oxw', slot: 'charm', rarity: 6, power: 600, level: 90, onyx: 'onyxDusk' };
     act(s, { type: 'ascend' }, 5000);
     assert.equal(s.ascension, 1); assert.equal(s.rebirths, 0); assert.equal(s.level, 1); assert.equal(s.job, 'fisher');
     assert.deepEqual(s.ascensionLog.map(x => [x.n, x.rebirths, x.abyssBest]), [[1, 100, 40]]);
@@ -44,8 +45,9 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     assert.deepEqual(s.limitBreaks, {}, 'limit breaks reset'); assert.equal(s.refineBase.hook, hook + 50_000, 'refinement base moved');
     assert.equal(s.rank.exp, 12345); assert.ok(s.achievementClaims['rebirths:3'], 'achievements kept'); assert.equal(s.kills, 777, 'records kept');
     assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0); assert.equal(s.gold, 100, 'gold back to a new character'); assert.equal('skillSpecializations' in s, false, 'deleted content is not carried');
-    for (const key of ['vows', 'nextVows', 'variantBook', 'onyxBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
-    assert.equal(s.inventory.length, 0, 'relics reset too');
+    for (const key of ['vows', 'nextVows', 'variantBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
+    assert.deepEqual(s.onyxBook, { onyxDusk: 1 }, 'v3.240 onyx kill record kept');
+    assert.deepEqual(s.inventory.map(i => i.id), ['ox'], 'relics reset, v3.240 onyx accessories kept'); assert.equal(s.equipment.charm?.id, 'oxw', 'worn onyx stays worn');
     // v3.154 승천 무료 지급 ‘자동 수령’이 승천 직후 새로 달성한 업적(승천 1회 등)의 보상까지 바로 받으므로, 받은 업적 합계(환급 1 + 3 + 자동 수령분)와 세계석이 같습니다.
     const refund = Lc.achievementRefund(s); assert.ok(refund.pearls >= 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded'); assert.ok(s.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
     assert.equal(s.permanent.attack || 0, 0, 'combat research reset'); assert.equal(s.permanent.messageBottle || 0, 0, 'lucky letter must be rebought');
@@ -583,7 +585,7 @@ test('v3.114 rebirth 50 · 100 onyx milestones: random accessory once per charac
     Mig.migrateState(old, 0); assert.equal(onyx(old).length, got.length, 'idempotent');
     // 같은 종 두 번: 각성.
     const same = newState(0); same.rebirths = 100; G.grantOnyxMilestones(same, () => 0); assert.equal(onyx(same).length, 1); assert.equal(onyx(same)[0].onyx, O.ONYX_BOSSES[0].id); assert.equal(onyx(same)[0].onyxRank, 1);
-    // 승천: 칠흑은 사라지고(유물 · 칠흑과 같음) 이정표는 남아 다시 50회에 닿아도 주지 않음. 승천 기록은 이어 붙음.
+    // 승천: 이정표는 남아 다시 50회에 닿아도 주지 않음. 승천 기록은 이어 붙음.
     const a = newState(0); a.rebirths = 100; G.grantOnyxMilestones(a, () => .5); act(a, { type: 'ascend' }, 5000);
     assert.deepEqual(a.onyxMilestones, [50, 100]); a.rebirths = 49; a.level = 100; act(a, { type: 'rebirth' }, 6000); assert.equal(a.logs.filter(l => l.text.includes('달성 보상')).length, 0, 'not again after ascension');
     a.rebirths = 125; act(a, { type: 'ascend' }, 9000); assert.deepEqual(a.ascensionLog.map(x => [x.n, x.rebirths]), [[1, 100], [2, 125]], 'v3.114 earlier ascension records survive');
@@ -602,7 +604,7 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
-test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension removes only that slot\'s deposits', async () => {
+test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.240)', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-vault-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     const V = await L.load('server/vault'), O = await L.load('data/onyx');
@@ -624,12 +626,12 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
         info = (await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-c', now, 1)).info;
         await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2);
         assert.equal(b.inventory.filter(i => i.onyx === 'onyxDusk').length, 1); assert.equal(got.onyxRank, 3, 'awaken +1');
-        // 승천: 그 분신이 넣은 칠흑만 사라지고 다른 분신 몫은 남음(세계석 · 정수는 전처럼 비움).
+        // v3.240 승천: 칠흑은 승천해도 남으므로 금고의 칠흑도 모두 남음(세계석 · 정수는 전처럼 비움).
         const lucid = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxHilla'), 'h', 60);
         a.inventory.push(lucid); b.inventory.push(hilla); a.pearls = 50;
         await V.vaultMove(acc, a, 'deposit', 'onyx', 'l', now, 1); await V.vaultMove(acc, b, 'deposit', 'onyx', 'h', now, 2); await V.vaultMove(acc, a, 'deposit', 'pearls', 10, now, 1);
-        assert.equal(await V.vaultAfterAscend(acc, 1, now), 1);
-        info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx), ['onyxHilla']); assert.equal(info.pearls, 0);
+        await V.vaultAfterAscend(acc, now);
+        info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx).sort(), ['onyxHilla', 'onyxLucid']); assert.equal(info.pearls, 0);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
@@ -807,4 +809,19 @@ test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), nev
     Enc.drop(s, 100, () => .5, true, undefined, 5); assert.ok(!s.inventory.at(-1).heir);
     Enc.drop(s, 100, () => 0, true, undefined, 5); assert.equal(s.inventory.at(-1).heir, 'ancient');
     assert.ok(Od.ODDS.drop.heir.primal === SERVER_ODDS.drop.heir.primal);
+});
+
+test('v3.240 onboarding: novice menus open at Lv.10 / first clear, auto attribute split keeps the ratio across rebirth', async () => {
+    const G = await L.load('systems/guidance');
+    const s = newState(0);
+    assert.ok(G.noviceMenuLocked(s) && G.noviceMarketLocked(s), 'first life hides later menus');
+    s.level = 10; assert.ok(!G.noviceMenuLocked(s)); s.clears = { mushroom: 1 }; assert.ok(!G.noviceMarketLocked(s));
+    assert.ok(!G.noviceMenuLocked({ rebirths: 0, ascension: 1, level: 1 }), 'ascended players see every menu');
+    // 자동 배분: 지금 비율(근력 2 : 기민 1)대로 남은 포인트를 모두 나누고, 환생 직후에는 직전 생 비율을 씁니다.
+    const a = newState(0); a.statPoints = 9; a.attributes.str = 2; a.attributes.dex = 1;
+    act(a, { type: 'autoAttr', id: 'on' }, 0); assert.equal(a.statPoints, 0); assert.equal(a.attributes.str, 8); assert.equal(a.attributes.dex, 4);
+    a.exp = 1e9; E.gainLevels(a); assert.equal(a.statPoints, 0, 'level-up points split at once'); assert.ok(a.attributes.str > a.attributes.dex);
+    a.level = 100; a.rebirths = 0; act(a, { type: 'rebirth' }, 1000); assert.equal(a.rebirths, 1);
+    assert.equal(a.statPoints, 0); const sum = a.attributes.str + a.attributes.dex; assert.ok(sum === 0 || Math.abs(a.attributes.str / sum - 2 / 3) < .1, JSON.stringify(a.attributes));
+    act(a, { type: 'autoAttr', id: 'off' }, 0); assert.equal(a.autoAttr, false);
 });

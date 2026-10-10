@@ -438,8 +438,9 @@ test('v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura
     assert.equal(progressCounts({ playMs: 2000 * 12345, deaths: 7, book: {}, attributes: {} }).turns, 12345);
     const s = newState(0); s.job = 'seaDragonGod'; s.level = 100; s.deaths = 40; s.playMs = 2000 * 25000; s.learned.dragonGodScale = 1;
     const g = passiveGrowthBonus(s, sk('dragonGodScale'));
-    assert.ok(Math.abs(g.attack - 80) < 1e-9 && Math.abs(g.hp - 150) < 1e-9, `growth ${JSON.stringify(g)}`);
-    s.deaths = 500; s.playMs = 2000 * 1e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 200) < 1e-9 && Math.abs(capped.hp - 600) < 1e-9, 'capped at 100 steps');
+    // v3.240 쓰러진 횟수 3회마다 +3 · 보낸 턴 3,000마다 +9(상한 100번 그대로, 300회 · 30만 턴에 참).
+    assert.ok(Math.abs(g.attack - 39) < 1e-9 && Math.abs(g.hp - 72) < 1e-9, `growth ${JSON.stringify(g)}`);
+    s.deaths = 500; s.playMs = 2000 * 1e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 300) < 1e-9 && Math.abs(capped.hp - 900) < 1e-9, 'capped at 100 steps');
     assert.deepEqual(sk('dragonGodScale').lastStand, { charges: 1, heal: .25 });
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const knight = { name: 'K', stats: { ...base, hp: 1000 }, hp: 50, mana: 200, skills: ['dragonGodScale'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} };

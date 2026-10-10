@@ -582,6 +582,9 @@
 .main-content>.tide-selector .button-row span,.workspace .tide-selector .button-row span{white-space:nowrap;min-width:48px;text-align:center}
 /* v25.20 능력치 화면 위 띠를 다른 화면의 재화 띠와 같은 모양으로 */
 .build-resource-bar{margin-bottom:22px}
+/* v3.240 능력치 자동 배분 스위치. */
+.build-resource-bar .auto-attr { justify-content:space-between; }
+.build-resource-bar .auto-attr small { display:block; margin-top:4px; font-size:12px; color:var(--muted); }
 /* v25.20 스킬별 연출 갈래: 색 · 궤적 모양 · 파편 움직임이 갈래마다 다릅니다 (.tide-fx-<갈래>, .scene-fx-<갈래>) */
 .tide-fx-pierce{--fx:#f1e3b6}.tide-fx-slash{--fx:#ffe9cf}.tide-fx-quake{--fx:#e0b98a}.tide-fx-bite{--fx:#b7f08a}.tide-fx-fire{--fx:#ff9a5c}.tide-fx-frost{--fx:#bfe9ff}.tide-fx-star{--fx:#fff1a8}.tide-fx-gold{--fx:#ffd76a}.tide-fx-song{--fx:#ffb6e6}.tide-fx-ward{--fx:#9fe3c8}.tide-fx-heal{--fx:#9ce8b4}.tide-fx-curse{--fx:#b48cff}.tide-fx-glyph{--fx:#ffe38b}.tide-fx-venom{--fx:#9af06a}.tide-fx-ink{--fx:#8d86b8}.tide-fx-bone{--fx:#ece6d2}.tide-fx-time{--fx:#a9c7ff}
 .scene-fx-pierce{--fx:#f1e3b6}.scene-fx-slash{--fx:#ffe9cf}.scene-fx-quake{--fx:#e0b98a}.scene-fx-bite{--fx:#b7f08a}.scene-fx-fire{--fx:#ff9a5c}.scene-fx-frost{--fx:#bfe9ff}.scene-fx-star{--fx:#fff1a8}.scene-fx-gold{--fx:#ffd76a}.scene-fx-song{--fx:#ffb6e6}.scene-fx-ward{--fx:#9fe3c8}.scene-fx-heal{--fx:#9ce8b4}.scene-fx-curse{--fx:#b48cff}.scene-fx-glyph{--fx:#ffe38b}.scene-fx-venom{--fx:#9af06a}.scene-fx-ink{--fx:#8d86b8}.scene-fx-bone{--fx:#ece6d2}.scene-fx-time{--fx:#a9c7ff}
