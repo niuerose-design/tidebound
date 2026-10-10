@@ -152,14 +152,29 @@ const TargetStrip = memo(function TargetStrip({ base: s, busy, send, inline = fa
 function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; setView: SetView }) {
     const activeIds = s.skills.filter(id => skillById(id)?.type === 'active');
     const fired = (id: string) => effect.findLast(fx => fx.actor === 'player' && fx.skillId === id)?.id;
+    // v3.264 터치 화면: 칸을 길게 누르면(0.45초) 정보 창이 열리고, 짧게 누르면 전처럼 스킬 편성으로 갑니다. 열린 창은 다른 곳을 누르거나 4초 뒤 닫힙니다.
+    const [open, setOpen] = useState<string | null>(null), press = useRef<{ timer: number; held: boolean } | null>(null);
+    useEffect(() => {
+        if (!open) return;
+        const close = () => setOpen(null), timer = window.setTimeout(close, 4000);
+        document.addEventListener('pointerdown', close);
+        return () => { window.clearTimeout(timer); document.removeEventListener('pointerdown', close); };
+    }, [open]);
+    const hold = (id: string) => ({
+        onPointerDown: (e: React.PointerEvent) => { if (e.pointerType === 'mouse') return; e.stopPropagation(); const p = { timer: window.setTimeout(() => { p.held = true; setOpen(id); }, 450), held: false }; press.current = p; },
+        onPointerUp: () => { if (press.current) window.clearTimeout(press.current.timer); },
+        onPointerLeave: () => { if (press.current) window.clearTimeout(press.current.timer); },
+        onContextMenu: (e: React.MouseEvent) => { if (press.current) e.preventDefault(); },
+    });
+    const go = () => { if (press.current?.held) { press.current = null; return; } setView('skills'); };
     return <div className="skill-hotbar" role="group" aria-label="전투 스킬">
         {activeIds.map(id => {
             const sk = skillById(id)!, effective = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id));
             const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0, hit = fired(id);
             const tipId = `hotbar-tip-${id}`, state = wait > 0 ? `대기 ${wait}턴` : '사용 준비';
             // v3.263 마우스를 올리거나 키보드로 고르면 위로 스킬 정보 창(발동률 · 재사용 대기 · 마나 · 효과 요약 · 지금 상태)이 뜹니다. 전에는 브라우저 기본 title 한 줄.
-            return <span key={id} className="hotbar-cell">
-                <button type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} aria-label={`${sk.name} ${state}`} aria-describedby={tipId} onClick={() => setView('skills')}>
+            return <span key={id} className={`hotbar-cell ${open === id ? 'open' : ''}`}>
+                <button type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} aria-label={`${sk.name} ${state}`} aria-describedby={tipId} onClick={go} {...hold(id)}>
                     <SkillIcon id={id} size={20}/><small className="hotbar-name">{sk.name}</small>
                     {wait > 0 && <b className="hotbar-cd">{wait}</b>}
                     {hit !== undefined && <i key={hit} className="hotbar-fire"/>}
@@ -173,7 +188,7 @@ function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; set
                         {(effective.manaCost || 0) > 0 && <span>마나 <b>{format(effective.manaCost!)}</b></span>}
                     </span>
                     <span className="hotbar-tip-brief">{skillBrief(effective)}</span>
-                    <span className={`hotbar-tip-state ${wait > 0 ? 'cooling' : 'ready'}`}>{state} · 눌러서 스킬 편성</span>
+                    <span className={`hotbar-tip-state ${wait > 0 ? 'cooling' : 'ready'}`}>{state} · {open === id ? '짧게 누르면 스킬 편성' : '눌러서 스킬 편성'}</span>
                 </span>
             </span>;
         })}
