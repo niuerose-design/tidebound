@@ -4,6 +4,7 @@
  * 화면은 이 파일(종목 · 수치 · 수수료 계산)만 씁니다. 시세 계산(서버 키)은 가져가지 않습니다.
  */
 import type { State } from '../types';
+import { jobById } from './classes';
 
 /** 시세 한 칸(틱)의 길이. 시세 · 소문이 이 단위로 바뀝니다. */
 export const MARKET_TICK_MS = 10 * 60_000;
@@ -61,11 +62,14 @@ export const RUMORS: Record<string, { up: string; down: string }> = {
 export const rumorText = (stock: string, up: boolean) => RUMORS[stock]?.[up ? 'up' : 'down'] || '';
 export const marketTick = (now: number) => Math.floor(now / MARKET_TICK_MS);
 /** 수수료(최소 1주화). */
-export const marketFee = (amount: number) => Math.max(1, Math.ceil(amount * MARKET.fee));
+/** v3.231 scale: 직업 수수료 배율(트레이더 0.5). */
+export const marketFee = (amount: number, scale = 1) => Math.max(1, Math.ceil(amount * MARKET.fee * scale));
 /** 매수에 드는 주화(체결 금액 올림 + 수수료). */
-export const buyCost = (price: number, qty: number) => { const gross = Math.ceil(price * qty); return { gross, fee: marketFee(gross), total: gross + marketFee(gross) }; };
+export const buyCost = (price: number, qty: number, scale = 1) => { const gross = Math.ceil(price * qty); return { gross, fee: marketFee(gross, scale), total: gross + marketFee(gross, scale) }; };
 /** 매도로 받는 주화(체결 금액 내림 − 수수료, 0 아래로는 안 감). */
-export const sellGain = (price: number, qty: number) => { const gross = Math.floor(price * qty), fee = Math.min(gross, marketFee(gross)); return { gross, fee, net: gross - fee }; };
+export const sellGain = (price: number, qty: number, scale = 1) => { const gross = Math.floor(price * qty), fee = Math.min(gross, marketFee(gross, scale)); return { gross, fee, net: gross - fee }; };
+/** v3.231 지금 직업의 수수료 배율(트레이더 계보 0.5). */
+export const feeScaleOf = (s: Pick<State, 'job'>) => jobById(s.job)?.marketFeeScale ?? 1;
 /** 총 보유 원금. */
 export const marketCost = (s: Pick<State, 'market'>) => Object.values(s.market?.holdings || {}).reduce((a, h) => a + h.cost, 0);
 

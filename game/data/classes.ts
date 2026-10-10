@@ -11,6 +11,7 @@ import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
 import { SPECIAL_JOBS, RESTRAINT_LINEAGE, STAFF_LINEAGE } from './specials';
+import { OTHERWORLD_JOBS, OTHERWORLD_COMBAT_JOBS, HACKER_LINEAGE, AGENT_LINEAGE, TRADER_LINEAGE } from './otherworld';
 import { TRAINING_JOBS, RETIRED_TRAINING } from './training';
 import { STAT_TRAINING_JOBS } from './stat-training';
 /** 전직 전 기본 직업(무직) id. 세이브에 저장되는 값이라 바꾸지 않습니다. */
@@ -65,6 +66,17 @@ export type Job = {
     /** v3.221 이 직업이 현재 직업일 때 칠흑 보스 출현 확률 가산(0.5 = ×1.5)과 머무는 턴(기본 ONYX.turns). 칠흑의 화신. */
     onyxFind?: number;
     onyxTurns?: number;
+    /** v3.231 이계: 전직 화면에서 이만큼 세계석을 내면 다른 조건 없이 해금(한 번, 환생 · 승천에도 남음). */
+    pearlCost?: number;
+    /** v3.231 이계 전투 직업: 이계 액티브(Skill.fuelCost)가 세계석 연료를 태우고, 연료가 0이면 절전 모드(data/otherworld.ts FUEL). */
+    fuelJob?: boolean;
+    /** v3.231 절전 모드 두 공격 배율(없으면 FUEL.powerSave). */
+    powerSave?: number;
+    /** v3.231 요원 계보: 탄창 크기. 액티브가 확률 · 대기 없이 장착 순서대로 한 발씩 나가고, 다 쏘면 재장전 1행동. */
+    magazine?: number;
+    /** v3.231 트레이더 계보: 증권거래소 평가 손익률이 두 공격 배율(s.marketPnl). marketFeeScale: 거래 수수료 배율. */
+    trader?: boolean;
+    marketFeeScale?: number;
     /** v3.230 이 직업이 현재 직업일 때 무릉도장 층 주화 배율. 무릉 수행자 1.5. */
     abyssCoinScale?: number;
     /** v3.230 이 직업이 현재 직업일 때 변종 · 황금 개체 확률 가산(0.5 = ×1.5). 변종 학자. */
@@ -362,10 +374,12 @@ export function upsertJobs(list: Job[]) {
  * v3.220 세계: 계보 위의 한 단계 묶음. 전직 화면은 세계(책의 장)를 먼저 고르고, 그 세계의 계보만 보여 줍니다.
  * world가 없는 계보는 메이플 월드입니다. 아제로스는 처치 기록으로 드러나는 히든 계보의 세계입니다.
  */
-export type WorldId = 'maple' | 'azeroth';
+export type WorldId = 'maple' | 'azeroth' | 'otherworld';
 export const WORLDS: { id: WorldId; name: string; subtitle: string; description: string; accent: string }[] = [
     { id: 'maple', name: '메이플 월드', subtitle: '모험이 시작된 세계', description: '지금까지의 모든 계열과 계보가 있는 세계입니다.', accent: '#e0a24f' },
     { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥했거나 계급장을 단 모험가에게 길이 열리는 세계입니다. 히든 계보와 참모 계보가 있습니다.', accent: '#7f8fd8' },
+    // v3.231 제3장 이계: 세계석만 내면 들어오는 세계(Job.pearlCost). 기존과 다른 규칙으로 움직이는 계보들.
+    { id: 'otherworld', name: '이계', subtitle: '세계석이 여는 세계', description: '세계석을 내면 다른 조건 없이 들어오는 세계입니다. 이계의 직업은 기존과 전혀 다른 규칙으로 움직이고, 전투 직업은 세계석을 연료로 태웁니다. 해커 · 요원 · 트레이더 계보가 있습니다.', accent: '#3fc7c0' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
@@ -412,6 +426,9 @@ export const LINEAGES: Lineage[] = [
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
     STAFF_LINEAGE,
+    HACKER_LINEAGE,
+    AGENT_LINEAGE,
+    TRADER_LINEAGE,
     independent('support'),
     RESTRAINT_LINEAGE,
     independent('mystery'),
@@ -453,5 +470,9 @@ export function jobById(id: string | undefined) {
 }
 // v3.65 공개 특수 직업(유리 대포 · v3.199 은월 3~5차, data/specials.ts).
 registerJobs(SPECIAL_JOBS, true);
+// v3.231 이계 직업(해커 계보, data/otherworld.ts). 비밀 표에 있던 때처럼 finishJobs로 숙달 목표를 차수 배율에 맞춥니다.
+registerJobs(OTHERWORLD_JOBS);
+// v3.231 이계 전투 직업(요원 · 트레이더). 숙달 목표는 적힌 값 그대로(아제로스처럼 직접 정함).
+registerJobs(OTHERWORLD_COMBAT_JOBS, true);
 // v3.70 능력치 수련 I~III(data/stat-training.ts, 완성된 모양).
 registerJobs(STAT_TRAINING_JOBS, true);

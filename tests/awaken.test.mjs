@@ -13,7 +13,10 @@ const turn = (a, b, rng, chained = false) => { const ev = []; strike(a, b, rng, 
 test('v3.86 every tier-5+ active is an awakening skill with a 10-turn cooldown that starts full', () => {
     const tier = id => JOBS.find(j => j.id === id)?.tier ?? 0;
     // v3.132 도트 퍼니셔(dotFinisher)는 5차 일반 액티브로 남습니다. v3.199 제로 (5차)의 태그 기술도 행동마다 굴리는 보통 액티브입니다.
-    const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher && sk.job !== 'chronarch');
+    // v3.231 이계 5차는 대표기(데드아이 · 블랙 스완)만 각성기이고, 나머지는 탄창 · 연료로 쓰는 보통 액티브입니다.
+    const fuelJob = id => !!JOBS.find(j => j.id === id)?.fuelJob;
+    for (const id of ['deadEye', 'tacticalNuke', 'blackSwan']) assert.ok(SKILLS.find(x => x.id === id).awaken, id);
+    const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher && sk.job !== 'chronarch' && (!fuelJob(sk.job) || ['deadEye', 'tacticalNuke', 'blackSwan'].includes(sk.id)));
     for (const id of ['frozenTime', 'precede', 'rewind']) assert.ok(!SKILLS.find(x => x.id === id).awaken, `${id} stays a per-action active`);
     // v3.135 나이트워커 · v3.138 미하일 계보 폐지로 5차 각성기 수가 줄었습니다(34 → 32).
     assert.ok(awakened.length >= 32, `${awakened.length}`);
