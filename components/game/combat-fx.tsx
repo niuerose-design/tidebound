@@ -345,7 +345,7 @@ export function PlayerHitEffect({ effect }: { effect: CombatFx[] }) {
 
 /**
  * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자),
- * 왼쪽 아래 내 체력바(받은 피해 · 회복 숫자). 상대 · 내 카드의 체력바는 숫자 없이 그대로 남습니다. v3.234 던전 화면도 같은 장면을 씁니다.
+ * 왼쪽 아래 내 체력바(받은 피해 · 회복 숫자). 상대 · 내 카드의 체력바는 숫자 없이 그대로 남습니다. v3.235 던전 화면도 같은 장면을 씁니다.
  */
 export function SceneCombatHud({ s, enemy, playerHp, effect, combo }: { s: State; enemy: State['enemy']; playerHp: number; effect: CombatFx[]; combo: CombatCombo | null }) {
     return <>

@@ -68,7 +68,7 @@ test('v3.231 데드샷 무한 탄창: 탄창이 비면 두 번에 한 번은 재
     assert.ok(SK.skillById('tacticalNuke').awaken && SK.skillById('deadEye').job === 'deadshot');
 });
 
-test('v3.234 요원 · 트레이더 1차는 세계석 없이 조건 없이 들어옵니다(4차 1,000 · 5차 10,000, 해커는 그대로)', () => {
+test('v3.235 요원 · 트레이더 1차는 세계석 없이 조건 없이 들어옵니다(4차 1,000 · 5차 10,000, 해커는 그대로)', () => {
     const s = newState(0); s.pearls = 0;
     for (const id of ['agentRookie', 'retailInvestor']) { assert.deepEqual(P.jobRequirements(s, jobById(id)), []); act(s, { type: 'job', id }, 0); assert.equal(s.job, id); }
     assert.equal(s.pearls, 0);

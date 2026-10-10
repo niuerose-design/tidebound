@@ -1668,7 +1668,7 @@
   .scene-foe-hud .bar-fx>b{font-size:15px;bottom:calc(100% + 56px)}.scene-foe-hud .bar-fx>b.critical{font-size:18px}
   .battle-scene .tide-fx-target-enemy .tide-fx-caption{top:-88px;right:-40px}
 }
-/* v3.234 던전 진행 패널의 장면: 사냥 화면과 같은 장면을 조금 낮게. 제목은 왼쪽 위에 웨이브 · 몬스터 이름만. */
+/* v3.235 던전 진행 패널의 장면: 사냥 화면과 같은 장면을 조금 낮게. 제목은 왼쪽 위에 웨이브 · 몬스터 이름만. */
 .dungeon-scene{height:280px;margin:12px 0}
 .dungeon-scene .scene-copy{position:absolute;left:18px;top:16px;z-index:3;pointer-events:none}
 .dungeon-scene .scene-copy h2{margin:4px 0 0;font-size:22px}

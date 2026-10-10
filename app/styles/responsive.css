@@ -601,3 +601,9 @@ details.stage-region > .region-research { display: block; margin: -4px 0 12px; f
 /* v27.80 도감: 지역 안에 장소 묶음 */
 .book-area > .book-region { margin-left: 4px; padding-left: 12px; border-left: 1px solid #34464b; }
 .book-area > .region-research { display: block; margin: -4px 0 12px; font-size: 12px; color: var(--muted); }
+
+/* v3.234 모바일 전투 화면은 세로로 길어(약 2,600px) 재생 프레임마다 화면 밖 패널까지 다시 그렸습니다.
+   화면 밖 패널(실시간 효율 · 스킬 · 누적 기록 · 난이도 · 기록판)은 보일 때만 그리게 합니다. 장면 · 상대 카드는 타격 연출이 상자 밖으로 나가므로 빼고 둡니다. */
+@media (max-width:767px) {
+  .battle-console > .panel, .battle-console > .session-metrics, .battle-utility-rail > .panel { content-visibility:auto; contain-intrinsic-size:auto 300px; }
+}
