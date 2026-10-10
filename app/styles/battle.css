@@ -2382,3 +2382,15 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
   .battle-scene .scene-foe-name small{font-size:9.5px}
   .battle-scene .scene-foe-hp{font-size:10px}
 }
+
+/* v3.269 장면 섬광의 중심을 옛 몬스터 자리(62% · 48%)에서 지금 몬스터 자리(--foe-x · --foe-y, 같은 지면)로 옮깁니다. 색 · 크기는 그대로. */
+.battle-scene .scene-fx-burst .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 42%,transparent),transparent 62%)}
+.battle-scene .scene-fx-burst.critical .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 62%,transparent),transparent 70%)}
+.battle-scene .scene-fx-tier5 .scene-fx-flash,.battle-scene .scene-fx-ult .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 70%,#fff) 0%,color-mix(in srgb,var(--fx) 45%,transparent) 30%,transparent 64%)}
+.battle-scene .ult-flamecircle .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#fff1c4 0%,#ff9a3c88 24%,#ff3b1a33 46%,transparent 64%)}
+.battle-scene .scene-fx-punisher .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),color-mix(in srgb,var(--fx) 45%,transparent),transparent 58%)}
+.battle-scene .scene-fx-kkami .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#fff3c8 0%,#ffd76a99 24%,transparent 60%)}
+.battle-scene .scene-fx-nuri .scene-fx-flash{background:radial-gradient(ellipse at var(--foe-x) var(--foe-y),#ffffff 0%,#fff1c499 26%,transparent 62%)}
+.battle-scene .scene-fx-kkami.scene-fx-kkami-kill .scene-fx-flash{background:radial-gradient(circle at var(--foe-x) var(--foe-y),#fff8dc 0%,#ffd76a66 18%,transparent 40%)}
+/* 조커 슬롯: 몬스터 머리 위, 오른쪽 끝에서 잘리지 않게. */
+.battle-scene .ult-jackpot .ult-a{left:min(var(--foe-x),calc(100% - 115px));top:calc(var(--foe-top) - 92px)}
