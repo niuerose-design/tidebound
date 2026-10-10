@@ -1,7 +1,10 @@
 'use client';
 import { Progress } from '@/components/ui/progress';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown } from 'lucide-react';
+import { Fish, Anchor, Zap, Heart, Shield, Swords, Target, Waves, Coins, Gem, ShoppingBag, Sword, Diamond, Feather, ChevronDown, ArrowUpRight, Mountain, Flame, Snowflake, Star, Music, HeartPulse, Skull, Sparkles, Hammer, ScrollText, Droplet, Droplets, Bone, Hourglass, Bug, Crosshair, Bomb, TrendingUp, TrendingDown, Activity } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { skillById } from '@/game/data/skills';
+import { fxVariantOf } from '@/game/systems/combat-feedback';
 import type { State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
@@ -29,6 +32,19 @@ export function Heading({ eyebrow, title, description, children }: {
     <div className="eyebrow">{eyebrow}</div>
     {title && <h1>{title}</h1>}{description && <p>{description}</p>}</div>{children}</div>;
 }
+/** v3.258 스킬 갈래별 기본 아이콘(그림 파일이 없을 때). 색은 battle.css의 .skill-glyph.v-<갈래>. */
+const VARIANT_ICON: Record<string, LucideIcon> = {
+    pierce: ArrowUpRight, slash: Sword, quake: Hammer, bite: Bug, wave: Waves, lightning: Zap, fire: Flame, frost: Snowflake, star: Star, gold: Coins, song: Music,
+    ward: Shield, heal: HeartPulse, curse: Skull, arcane: Sparkles, impact: Mountain, glyph: ScrollText, venom: Droplet, ink: Droplets, bone: Bone, time: Hourglass,
+};
+const ID_ICON: [RegExp, LucideIcon][] = [
+    [/^(pistolBurst|suppressFire|fullAuto|doubleTap|shotgunBlast)$/, Zap],
+    [/^(snipe|armorPiercer|deadEye)$/, Crosshair],
+    [/^(grenadeLauncher|tacticalNuke|flashbang)$/, Bomb],
+    [/^(buyOrder|leverage|shortSqueeze)$/, TrendingUp],
+    [/^(shortSell|stopLoss|blackSwan)$/, TrendingDown],
+    [/^circuitBreaker$/, Activity],
+];
 export function SkillIcon({ id, size = 24 }: {
     id: string;
     size?: number;
@@ -37,7 +53,12 @@ export function SkillIcon({ id, size = 24 }: {
     const [broken, setBroken] = useState(false);
     // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일(목록에 있는 것만 요청)
     if (SKILL_ART.has(id) && !broken) return <img className="skill-art" src={skillArtSrc(id)} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
-    const Icon = id === 'breath' || id === 'spring' || id === 'innerBreath' ? Heart : id === 'temperedSkin' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : Zap;
+    const Icon = id === 'breath' || id === 'spring' || id === 'innerBreath' ? Heart : id === 'temperedSkin' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : null;
+    // v3.258 따로 정한 아이콘이 없으면 스킬 갈래(연출과 같은 기준)로 아이콘 · 색을 고릅니다(전에는 모두 번개).
+    // v3.258 이계 무기 · 시장 기술은 id로 따로 고릅니다(갈래로는 모두 충격이 되어 구분이 안 됨).
+    const own = ID_ICON.find(([re]) => re.test(id))?.[1];
+    if (!Icon && own) { const Own = own; return <Own size={size} className="skill-glyph v-own"/>; }
+    if (!Icon) { const sk = skillById(id), v = fxVariantOf(id, sk?.damageType === 'magic'), Glyph = sk?.type === 'passive' && (v === 'impact' || v === 'arcane') ? Gem : VARIANT_ICON[v] ?? Zap; return <Glyph size={size} className={`skill-glyph v-${sk?.type === 'passive' ? 'passive' : v}`}/>; }
     return <Icon size={size}/>;
 }
 export function SlotIcon({ slot, size = 24 }: {

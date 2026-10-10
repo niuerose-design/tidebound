@@ -2149,3 +2149,17 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .dungeon-run-panel .dungeon-scene{margin:0}
 @media(max-width:767px){.dungeon-run-panel .dungeon-run-header{flex-direction:row;align-items:center}.dungeon-run-panel .dungeon-run-header>button{flex:none;width:auto}}
 @media(max-width:767px){.dungeon-run-panel .dungeon-run-header h2{font-size:19px}}
+/* v3.258 스킬 갈래별 기본 아이콘 색(그림 파일이 없는 스킬). 단축키 줄 · 스킬 화면 공통. */
+.skill-glyph{color:#cfe0da}
+.skill-glyph.v-pierce{color:#f1e3b6}.skill-glyph.v-slash{color:#ffe9cf}.skill-glyph.v-quake,.skill-glyph.v-impact{color:#e0b98a}.skill-glyph.v-bite{color:#b7f08a}
+.skill-glyph.v-wave{color:#8ce4ed}.skill-glyph.v-lightning{color:#ffe38b}.skill-glyph.v-fire{color:#ff9a4a}.skill-glyph.v-frost{color:#a8e4ff}.skill-glyph.v-star{color:#fff2a8}
+.skill-glyph.v-gold{color:#ffd36b}.skill-glyph.v-song{color:#f7b6e8}.skill-glyph.v-ward{color:#9fd3ff}.skill-glyph.v-heal{color:#8ff0b0}.skill-glyph.v-curse{color:#c08bff}
+.skill-glyph.v-arcane{color:#b9a6ff}.skill-glyph.v-glyph{color:#ffe38b}.skill-glyph.v-venom{color:#9fe870}.skill-glyph.v-ink{color:#8c8cff}.skill-glyph.v-bone{color:#e8e2d0}.skill-glyph.v-time{color:#9fe0d8}.skill-glyph.v-passive{color:#9db3ab}
+/* v3.258 처치 보상 팝업: 몬스터 자리에서 한 줄씩 떠올라 흩어집니다. */
+.scene-loot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+.scene-loot{position:absolute;left:calc(var(--foe-x) - 70px);top:calc(var(--foe-y) - 20px - var(--row,0) * 22px);translate:-50% 0;white-space:nowrap;font:800 15px/1.2 ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;opacity:0;animation:sceneLoot 1.8s ease-out var(--d,0ms) both}
+.scene-loot.exp{color:#9fe0ff}.scene-loot.gold{color:#ffd36b}.scene-loot.mastery{color:#b7f08a}.scene-loot.pearl{color:#8fe7ff}.scene-loot.essence{color:#7dffb0}.scene-loot.item{color:#d9b8ff}.scene-loot.other{color:#f0e6c8;font-size:13px}
+@keyframes sceneLoot{0%{opacity:0;transform:translateY(10px) scale(.7)}12%{opacity:1;transform:translateY(0) scale(1.08)}22%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:translateY(-40px)}}
+@media(max-width:767px){.scene-loot{font-size:13px}.scene-loot.other{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.scene-loot-layer{display:none}}
+.skill-glyph.v-own{color:#ffcf8a}

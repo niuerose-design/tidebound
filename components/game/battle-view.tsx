@@ -31,7 +31,7 @@ import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { useSkillFx } from './skill-fx-setting';
 import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
-import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage } from './scene-stage';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
 import type { CombatFx } from '@/game/systems/combat-feedback';
 import { TideSelector } from './tide-selector';
@@ -188,9 +188,9 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
         </>}/>
         <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
         {idle && <span className={`scene-idle ${recoveryText ? 'recovery' : ''}`} aria-live="polite">{idle}</span>}
-        <CastFx effect={combatFx} boss={!!enemy?.boss}/>
-        <SceneDamage effect={combatFx}/>
-        <SkillReceipt effect={combatFx} boss={!!enemy?.boss}/>
+        {/* v3.258 회복 대기 · 출정 준비 중(몬스터 없음)에는 지난 타격의 숫자 · 스킬 이름 · 투사체를 지웁니다. */}
+        {!s.recovery && <><CastFx effect={combatFx} boss={!!enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!enemy?.boss}/></>}
+        <SceneLoot logs={s.logs}/>
         <SceneLog logs={s.logs} playerName={s.name}/>
         <SceneMe s={s} stats={playerStats} effect={combatFx}/>
     </section>
