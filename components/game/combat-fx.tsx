@@ -346,9 +346,9 @@ function AzerothFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
 }
 /**
  * v3.269 아제로스 5차 각성기 전용 연출(이계 연출과 같은 좌표: 쏘는 자리 --sx · --sy = 내 무기 손, 과녁 --tx · --ty = 몬스터 가운데, 땅 = 장면 아래 10px).
- * 스킬 데이터의 scene 값으로 고릅니다: assault · artillery · convoy · depot(참모 계보 5차), eclipse · judgment(히든 계보 5차, 카탈로그로만 받음). 제목은 로그의 스킬 이름(fx.title).
+ * 스킬 데이터의 scene 값으로 고릅니다: assault · artillery · convoy · depot(참모 계보 5차), eclipse · judgment · shadowrain · rewind(히든 5차, 카탈로그로만 받음). 제목은 로그의 스킬 이름(fx.title).
  */
-const AZ_ULT: Record<string, { impact: number }> = { assault: { impact: 760 }, artillery: { impact: 640 }, convoy: { impact: 720 }, depot: { impact: 820 }, eclipse: { impact: 1050 }, judgment: { impact: 900 } };
+const AZ_ULT: Record<string, { impact: number }> = { assault: { impact: 760 }, artillery: { impact: 640 }, convoy: { impact: 720 }, depot: { impact: 820 }, eclipse: { impact: 1050 }, judgment: { impact: 900 }, shadowrain: { impact: 560 }, rewind: { impact: 820 } };
 /** 스킬의 전용 장면 이름(Skill.scene). 비밀 스킬은 카탈로그로 받은 스킬에만 있습니다. */
 const sceneOf = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && !fx.finale ? skillById(fx.skillId)?.scene : undefined;
 /** v3.269 전용 장면이 ‘맞는 순간’까지 걸리는 시간(ms). 장면 피해 숫자 · 몬스터 피격 흔들림을 이만큼 늦춰 연출과 박자를 맞춥니다. */
@@ -364,6 +364,8 @@ function AzerothUltFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
         {k === 'convoy' && <><i className="azu-truck"><b/><b/></i><i className="azu-speed"/>{Array.from({ length: 6 }, (_, n) => <i key={n} className="azu-crate" style={i(n, { '--ang': `${-150 + n * 22}deg` })}/>)}<i className="azu-hit big"/></>}
         {k === 'depot' && <><i className="azu-stack"/><i className="azu-fuse"/>{Array.from({ length: 3 }, (_, n) => <i key={n} className="azu-boom chain" style={i(n, { '--off': `${(n - 1) * 30}px` })}/>)}{Array.from({ length: 12 }, (_, n) => <i key={`s${n}`} className="azu-shrap" style={i(n, { '--ang': `${n * 30 + 8}deg` })}/>)}</>}
         {k === 'eclipse' && <><i className="azu-sun"/><i className="azu-corona"/><i className="azu-blackbeam"/><i className="azu-darkring"/><i className="azu-darkring late"/></>}
+        {k === 'shadowrain' && <>{Array.from({ length: 10 }, (_, n) => <i key={n} className="azu-blade" style={fxStyle(d + ((n * 7) % 10) * 55, { '--i': n, '--x': `${((n * 37) % 11 - 5) * 16}px` })}/>)}<i className="azu-shadowpool"/><b className="azu-again">ONE MORE</b></>}
+        {k === 'rewind' && <><i className="azu-clock"><b className="h"/><b className="m"/></i><i className="azu-ripple"/><i className="azu-ripple late"/><i className="azu-heal"/>{Array.from({ length: 6 }, (_, n) => <i key={n} className="azu-mote" style={i(n, { '--ang': `${n * 60}deg` })}/>)}</>}
         {k === 'judgment' && <><i className="azu-sigil"/><i className="azu-pillar"/>{Array.from({ length: 8 }, (_, n) => <b key={n} className="azu-feather" style={fxStyle(d + (n * 5 % 8) * 90, { '--i': n, '--x': `${(n - 3.5) * 30}px` })}>{n % 2 ? '✝' : '✦'}</b>)}</>}
         <strong className="ow-title az-title azu-title">{fx.title}</strong>
     </div>;
