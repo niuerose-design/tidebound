@@ -17,11 +17,15 @@ const STATS: { stat: Attribute; label: string; parent: string; tree: JobTreeId }
     { stat: 'wis', label: '정신', parent: 'trainingHybrid', tree: 'hybrid' },
     { stat: 'dex', label: '기민', parent: 'trainingSupport', tree: 'support' },
 ];
+/**
+ * v3.237 능력치 두 배(20 · 50 · 100 → 40 · 100 · 200) · AP 낮춤(4 · 6 · 8 → 3 · 4 · 5). 숙련 4억을 들인 III 최대가 AP 1당 전투력 약 3.7%로
+ * 직업 5차 패시브(약 20%)의 5분의 1이었습니다. 어느 직업이든 계승해 쓰는 범용 패시브라 그 절반쯤(약 11%)에 맞췄습니다.
+ */
 /** 단계: 들어가는 데 필요한 부모 숙련 · 숙달 목표(v3.70 결정: 1,000만 · 2,500만 · 5,000만) · 패시브 능력치 · AP(높게: 고레벨은 SP 한계돌파·계승으로 씀) · 스킬 숙련 단계. */
 export const STAT_TRAINING_STEPS = [
-    { roman: 'I', tier: 2, entry: 1_000_000, target: 10_000_000, attr: 20, cost: 4, milestones: [10_000_000, 20_000_000, 40_000_000, 80_000_000] },
-    { roman: 'II', tier: 3, entry: 10_000_000, target: 25_000_000, attr: 50, cost: 6, milestones: [25_000_000, 50_000_000, 100_000_000, 200_000_000] },
-    { roman: 'III', tier: 4, entry: 25_000_000, target: 50_000_000, attr: 100, cost: 8, milestones: [50_000_000, 100_000_000, 200_000_000, 400_000_000] },
+    { roman: 'I', tier: 2, entry: 1_000_000, target: 10_000_000, attr: 40, cost: 3, milestones: [10_000_000, 20_000_000, 40_000_000, 80_000_000] },
+    { roman: 'II', tier: 3, entry: 10_000_000, target: 25_000_000, attr: 100, cost: 4, milestones: [25_000_000, 50_000_000, 100_000_000, 200_000_000] },
+    { roman: 'III', tier: 4, entry: 25_000_000, target: 50_000_000, attr: 200, cost: 5, milestones: [50_000_000, 100_000_000, 200_000_000, 400_000_000] },
 ];
 /** 스킬 숙련 단계(0~4)마다 능력치 +25%. */
 export const STAT_TRAINING_GROWTH = .25;

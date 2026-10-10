@@ -161,8 +161,8 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     const before = stats({ ...h, skills: [] }).attack;
     assert.equal(stats(h).attack, before, 'not inherited yet: no effect');
     h.skillPractice.strDrill1 = 10_000_000; const S1 = S.trainedAttributes(h).str, base = S.trainedAttributes({ ...h, skills: [] }).str;
-    assert.equal(S1 - base, 25, '+20 × (1 + 25% for the first mastery stage)');
-    assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [4, 6, 8], 'high AP cost'); assert.ok(stats(h).attack > before);
+    assert.equal(S1 - base, 50, 'v3.237 +40 × (1 + 25% for the first mastery stage)');
+    assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [3, 4, 5], 'v3.237 AP 3 · 4 · 5'); assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).attrBonus.str), [40, 100, 200], 'v3.237 base doubled'); assert.ok(stats(h).attack > before);
 });
 
 test('v3.80 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
@@ -524,11 +524,11 @@ test('v3.169 stat training passives: detail view shows the attribute gain per ma
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const P = await load('game/systems/progression.js'), D = await load('game/systems/skill-description.js');
     const sk = SKILLS.find(x => x.id === 'dexDrill1');
-    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [20, 25, 30, 40, 40], 'display value follows the combat formula, capped at ×2');
-    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 20, 'SP ranks do not raise it');
-    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +25')), 'effect line names the attribute');
-    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+20 → +25'), P.skillRankHint(sk, 1, 0));
+    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [40, 50, 60, 80, 80], 'display value follows the combat formula, capped at ×2');
+    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 40, 'SP ranks do not raise it');
+    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +50')), 'effect line names the attribute');
+    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+40 → +50'), P.skillRankHint(sk, 1, 0));
     assert.equal(P.skillRankHint(sk, 1, 4), '최대 강화 레벨입니다.');
-    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [20, 25, 30, 35, 40], 'stage table grows by mastery stage');
-    assert.equal(sk.attrBonus.dex, 20, 'the data itself is untouched');
+    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [40, 50, 60, 70, 80], 'stage table grows by mastery stage');
+    assert.equal(sk.attrBonus.dex, 40, 'the data itself is untouched');
 });
