@@ -1565,13 +1565,15 @@
 @keyframes owHalt{0%{scale:0 1;opacity:0}25%{scale:1 1;opacity:.85}80%{opacity:.85}100%{opacity:0}}
 @keyframes owRound{0%{translate:0 -14px;opacity:0}60%{opacity:1}100%{opacity:0}}
 .ow-deadeye .ow-tracer{height:3px;background:linear-gradient(90deg,transparent,#9cc7ff 30%,#fff);box-shadow:0 0 12px #fff,0 0 24px var(--ow-steel)}
-.ow-deadeye .ow-casing{animation-delay:calc(var(--fx-delay) + .55s + var(--i) * 60ms)}
+.ow-deadeye .ow-casing{animation-delay:calc(var(--fx-delay) + .62s + var(--i) * 170ms)}
+.ow-pop{left:calc(62% + (var(--i) - 1) * 26px);top:calc(48% + (var(--i) - 1) * 14px);width:46px;height:46px;margin:-23px;border-radius:50%;background:radial-gradient(circle,#fff 0 18%,#ff5470 40%,transparent 70%);mix-blend-mode:screen;animation:owPop .35s ease-out calc(var(--fx-delay) + .7s + var(--i) * 170ms) both}
+@keyframes owPop{0%{scale:.3;opacity:0}30%{scale:1.2;opacity:1}100%{scale:1.6;opacity:0}}
 .ow-deadeye .ow-mark{left:calc(62% + (var(--i) - 1) * 26px);top:calc(48% + (var(--i) - 1) * 14px);animation-delay:calc(var(--fx-delay) + .4s + var(--i) * 110ms)}
-.ow-deadeye .ow-beam{height:8px;animation-delay:calc(var(--fx-delay) + 1.1s)}
-.ow-ring{left:62%;top:48%;width:120px;height:120px;margin:-60px;border:3px solid #cfe3ff;border-radius:50%;box-shadow:0 0 20px var(--ow-steel),inset 0 0 14px var(--ow-steel);animation:owRing .8s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.15s) both}
-.ow-ring.late{border-color:var(--ow-gold);box-shadow:0 0 20px var(--ow-gold);animation-delay:calc(var(--fx-delay) + 1.28s)}
-.ow-spark{left:62%;top:48%;width:4px;height:16px;margin:-8px -2px;border-radius:2px;background:linear-gradient(#fff,var(--ow-gold));box-shadow:0 0 8px var(--ow-gold);rotate:calc(var(--ang) + 90deg);animation:owBurst .7s ease-out calc(var(--fx-delay) + 1.15s) both}
-.battle-scene:has(.ow-deadeye) .ocean-art{animation:sceneQuake .5s ease-out 1.15s both}
+.ow-deadeye .ow-beam{height:8px;animation-delay:calc(var(--fx-delay) + 1.2s)}
+.ow-ring{left:62%;top:48%;width:120px;height:120px;margin:-60px;border:3px solid #cfe3ff;border-radius:50%;box-shadow:0 0 20px var(--ow-steel),inset 0 0 14px var(--ow-steel);animation:owRing .8s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.25s) both}
+.ow-ring.late{border-color:var(--ow-gold);box-shadow:0 0 20px var(--ow-gold);animation-delay:calc(var(--fx-delay) + 1.38s)}
+.ow-spark{left:62%;top:48%;width:4px;height:16px;margin:-8px -2px;border-radius:2px;background:linear-gradient(#fff,var(--ow-gold));box-shadow:0 0 8px var(--ow-gold);rotate:calc(var(--ang) + 90deg);animation:owBurst .7s ease-out calc(var(--fx-delay) + 1.25s) both}
+.battle-scene:has(.ow-deadeye) .ocean-art{animation:sceneQuake .5s ease-out 1.25s both}
 @keyframes owRing{0%{scale:.2;opacity:1}100%{scale:3.2;opacity:0}}
 .fx-no-glow .ow-whiteout,.fx-no-glow .ow-fx .scene-fx-dark{display:none}
 @media(prefers-reduced-motion:reduce){.ow-fx i,.ow-fx svg{display:none}.ow-title,.ow-mult{animation-name:tideReduced}}

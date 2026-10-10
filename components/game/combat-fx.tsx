@@ -236,8 +236,9 @@ function OtherworldFx({ fx, pnl }: { fx: CombatFx; pnl: number }) {
         {shots > 0 && Array.from({ length: Math.min(shots, 4) }, (_, n) => <i key={`s${n}`} className="ow-casing" style={i(n)}/>)}
         {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-scope"><b/></i>}
         {kind === 'deadeye' && <><i className="ow-scope late"><b/></i>{Array.from({ length: 3 }, (_, n) => <i key={`m${n}`} className="ow-mark" style={i(n)}/>)}
-            {Array.from({ length: 9 }, (_, n) => <i key={`d${n}`} className="ow-tracer" style={i(n, { '--spread': `${(n - 4) * 3.2}deg`, '--t': `${550 + n * 55}ms` })}/>)}
-            {Array.from({ length: 6 }, (_, n) => <i key={`c${n}`} className="ow-casing" style={i(n)}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`d${n}`} className="ow-tracer" style={i(n, { '--spread': `${(n - 1) * 2.4}deg`, '--t': `${620 + n * 170}ms` })}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`o${n}`} className="ow-pop" style={i(n)}/>)}
+            {Array.from({ length: 3 }, (_, n) => <i key={`c${n}`} className="ow-casing" style={i(n)}/>)}
             <i className="ow-ring"/><i className="ow-ring late"/>{Array.from({ length: 14 }, (_, n) => <i key={`p${n}`} className="ow-spark" style={i(n, { '--ang': `${n * 360 / 14}deg` })}/>)}</>}
         {(kind === 'snipe' || kind === 'deadeye') && <i className="ow-beam"/>}
         {kind === 'ap' && <><i className="ow-beam ap"/><i className="ow-crack"/>{Array.from({ length: 8 }, (_, n) => <i key={n} className="ow-rust" style={i(n, { '--ang': `${n * 45 + 10}deg` })}/>)}</>}
@@ -267,7 +268,9 @@ function ExtremeFx({ fx }: { fx: CombatFx }) {
 }
 
 /** v3.178 처형 연출: 빈사(체력 35% 이하) 적에게 추가 피해가 붙은 검 계열 처형기. 배경 몬스터가 반으로 갈라지고 HP 바가 베입니다. */
-const EXECUTE_CLEAVE = new Set(['braveSlash']);
+const EXECUTE_CLEAVE = new Set(['braveSlash', 'deadEye']);
+/** v3.231 처형 연출을 늦게 시작하는 기술(ms): 데드아이는 표식 · 정밀 사격 뒤 관통선에서 갈라집니다. */
+const CLEAVE_LEAD: Record<string, number> = { deadEye: 1200 };
 const cleaveFx = (effect: CombatFx[]) => effect.find(fx => fx.execute && fx.actor === 'player' && !!fx.skillId && EXECUTE_CLEAVE.has(fx.skillId) && fx.hits.some(h => !h.miss));
 /** 처형 연출 길이(ms): 검 0.7초 + 조각이 날아간 뒤 빈 채로 두는 시간까지. 이 동안 원본(몬스터 그림 · HP 바)은 비어 보이고, 끝나면 RESTORE_MS 동안 눈에 보이게 복구됩니다. */
 const CLEAVE_MS = 2400, RESTORE_MS = 450;
@@ -277,7 +280,8 @@ function useCleave(effect: CombatFx[]): CleaveHold | null {
     const found = cleaveFx(effect);
     const [held, setHeld] = useState<CleaveHold | null>(null), [doneId, setDoneId] = useState<number | null>(null);
     // 새 처형 타격이 오면 렌더 중에 붙잡아 둡니다(이전 값과 비교하는 파생 상태). 끝난 타격(doneId)은 효과 목록에 남아 있어도 다시 잡지 않습니다. 시각은 effect 안의 타이머가 셈니다.
-    if (found && held?.fx.id !== found.id && doneId !== found.id) setHeld({ fx: found, phase: 'cut' });
+    // v3.231 데드아이는 마지막 관통선(1.2초 뒤)에 맞춰 갈라집니다.
+    if (found && held?.fx.id !== found.id && doneId !== found.id) setHeld({ fx: { ...found, delay: found.delay + (CLEAVE_LEAD[found.skillId!] || 0) }, phase: 'cut' });
     useEffect(() => {
         if (!held) return;
         const timer = window.setTimeout(() => {
