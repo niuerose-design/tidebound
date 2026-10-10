@@ -30,9 +30,9 @@ export const tailwindLevel = (s: Pick<State, 'rebirths'> & Partial<Pick<State, '
 export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'> & Partial<Pick<State, 'rebirthLog'>>) => (s.rebirths || 0) > 0 && s.level < tailwindLevel(s);
 /** v3.23 목표 레벨 너머 벽(OVER_TARGET). 배율은 고정입니다. */
 export const xpWall = (s: Pick<State, 'rebirths'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
-export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
+export const rebirthReward = (s: Pick<State, 'level' | 'rebirths'>) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20)));
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
-export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)) });
+export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
