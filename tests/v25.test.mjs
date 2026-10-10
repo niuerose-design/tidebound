@@ -117,7 +117,7 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     const gain = (r, k) => stats({ ...s, rebirths: r })[k] - stats({ ...s, rebirths: r, skills: [] })[k];
     assert.ok(gain(5, 'attack') - gain(0, 'attack') >= 25 && gain(5, 'attack') - gain(0, 'attack') <= 30, `+5 per rebirth before job scaling (${gain(5, 'attack') - gain(0, 'attack')})`);
     assert.ok(gain(12, 'hp') - gain(0, 'hp') >= 12 * 18); assert.equal(SKILLS.find(x => x.id === 'memoryOfTides').perCount[0].cap, 12, 'rebirth scaling caps at 12');
-    // v3.243 환생 세계석 보너스를 빼고 마법 공격 +40.
+    // v3.244 환생 세계석 보너스를 빼고 마법 공격 +40.
     assert.equal('rebirthBonus' in stats({ ...s, rebirths: 3 }), false);
     // 떠돌이 모험가: v3.199 숙달 직업 5개(전에는 3개)에서 숨은 조건이 열리고, 패시브는 숙달 직업 수에 비례합니다.
     const j = newState(0); j.level = 10; j.attributes = { str: 10, int: 10, vit: 10, dex: 0, wis: 0, luk: 0 };
@@ -141,7 +141,7 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     for (const id of ['axeArm', 'innerBreath', 'lullaby', 'driftwoodGuard']) { const m = maxSkillLevel(sk(id)); assert.equal(effectiveSkill(sk(id), 1, m).cost, (sk(id).cost ?? 2) - 1, id); assert.equal(effectiveSkill(sk(id), 1, m - 1).cost, sk(id).cost ?? 2, `${id} before max`); }
     assert.equal(effectiveSkill(sk('glyphNothing'), 1, 4).cost, 0, 'floor at 0'); assert.equal(effectiveSkill(sk('glyphCut'), 1, 4).cost, 1, 'actives unchanged');
     for (const [id, last] of [['titanFieldNotes', 0], ['pearlLedger', 0], ['chronicleStudy', -1], ['serpentFolklore', 0], ['abyssObservation', -1]]) { const m = maxSkillLevel(sk(id)); assert.equal(sk(id).levelEffects.length, m + 1, id); assert.equal(effectiveSkill(sk(id), 1, m).cost, last, id); assert.ok(effectiveSkill(sk(id), 1, 0).cost >= 3, `${id} starts expensive`); }
-    // v3.243 마법 잔해: 환생 세계석 대신 경험치(최대 단계 +15%, 숙련 배율 별도).
+    // v3.244 마법 잔해: 환생 세계석 대신 경험치(최대 단계 +15%, 숙련 배율 별도).
     assert.ok(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.expBonus > effectiveSkill(sk('pearlLedger'), 1, 0).bonus.expBonus);
     // 떠돌이 계보: 숙달 직업 수 관문과 숙달 비례 피해.
     const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = jobMasteryTarget(JOBS.find(x => x.id === 'journeyman')); s.unlockedJobs.push('journeyman');
