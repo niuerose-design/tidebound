@@ -1499,3 +1499,70 @@
   .battle-target-strip.inline [data-slot=tabs-trigger]{font-size:11px;padding:5px 8px}
   .battle-hud .battle-console>.battle-scene{height:320px}
 }
+
+/* v3.231 이계 전용 연출: 요원(예광탄 · 조준경 · 철갑 균열 · 섬광 · 유탄 · 재장전) · 트레이더(양봉 · 음봉 · 급등선 · 금화 · 손절선 · 거래 정지). 쏘는 자리 14% · 64%, 표적 62% · 48%. */
+.ow-fx{--ow-tracer:#ffb547;--ow-steel:#7fb4ff;--ow-corrode:#b6e05a;--ow-bull:#31d07f;--ow-bear:#ff5470;--ow-gold:#ffd36b}
+.ow-fx .scene-fx-dark{inset:0;background:#05080d;animation:owDark 1.6s ease-in-out var(--fx-delay) both}
+.ow-tracer{left:14%;top:64%;width:48%;height:2px;transform-origin:0 50%;rotate:calc(-12deg + var(--spread,0deg));background:linear-gradient(90deg,transparent,var(--ow-tracer) 40%,#fff);box-shadow:0 0 8px var(--ow-tracer);animation:owTracer .26s ease-out calc(var(--fx-delay) + var(--t,0ms)) both}
+.ow-shotgun .ow-tracer{width:44%;height:3px}
+.ow-casing{left:12%;top:60%;width:4px;height:9px;border-radius:1px;background:linear-gradient(#ffe2a6,#b07a2a);animation:owCasing .9s cubic-bezier(.2,.7,.4,1) calc(var(--fx-delay) + var(--i) * 80ms) both}
+.ow-scope{left:62%;top:48%;width:150px;height:150px;margin:-75px 0 0 -75px;border:2px solid var(--ow-steel);border-radius:50%;box-shadow:0 0 0 2000px #04080e88,inset 0 0 30px #7fb4ff44;animation:owScope .9s ease-in var(--fx-delay) both}
+.ow-scope::before,.ow-scope::after{content:"";position:absolute;background:var(--ow-steel)}
+.ow-scope::before{left:50%;top:8%;bottom:8%;width:1px}.ow-scope::after{top:50%;left:8%;right:8%;height:1px}
+.ow-scope b{left:50%;top:50%;width:10px;height:10px;margin:-5px;border:1px solid var(--ow-bear);border-radius:50%}
+.ow-scope.late{width:90px;height:90px;margin:-45px 0 0 -45px;box-shadow:none;animation-delay:calc(var(--fx-delay) + .25s)}
+.ow-mark{left:62%;top:48%;width:24px;height:24px;margin:-12px;border:2px solid var(--ow-bear);rotate:45deg;box-shadow:0 0 14px var(--ow-bear);animation:owMark .9s ease-out calc(var(--fx-delay) + .5s) both}
+.ow-beam{left:14%;top:64%;width:48%;height:3px;transform-origin:0 50%;rotate:-12deg;background:linear-gradient(90deg,transparent,#cfe3ff 20%,#fff);box-shadow:0 0 22px #fff,0 0 40px var(--ow-steel);animation:owTracer .4s ease-out calc(var(--fx-delay) + .8s) both}
+.ow-deadeye .ow-beam{height:6px;animation-delay:calc(var(--fx-delay) + 1s)}
+.ow-beam.ap{height:4px;background:linear-gradient(90deg,transparent,var(--ow-corrode) 30%,#fff);box-shadow:0 0 14px var(--ow-corrode);animation-delay:var(--fx-delay)}
+.ow-crack{left:62%;top:48%;width:90px;height:90px;margin:-45px;border-radius:50%;background:conic-gradient(from 10deg,transparent 0 8deg,#b6e05aaa 8deg 10deg,transparent 10deg 70deg,#b6e05aaa 70deg 72deg,transparent 72deg 150deg,#b6e05aaa 150deg 152deg,transparent 152deg 230deg,#b6e05aaa 230deg 233deg,transparent 233deg);mask:radial-gradient(circle,transparent 18%,#000 20%,#000 60%,transparent 70%);animation:owCrack .9s ease-out calc(var(--fx-delay) + .15s) both}
+.ow-rust{left:62%;top:48%;width:7px;height:7px;border-radius:50%;background:var(--ow-corrode);box-shadow:0 0 8px var(--ow-corrode);animation:owBurst .8s ease-out calc(var(--fx-delay) + .15s) both}
+.ow-whiteout{inset:0;background:#fff;mix-blend-mode:screen;animation:owWhite .5s ease-out var(--fx-delay) both}
+.ow-grenade{left:14%;top:60%;width:12px;height:12px;border-radius:50%;background:#59684a;box-shadow:0 0 6px #000;animation:owArc .55s cubic-bezier(.3,0,.7,1) var(--fx-delay) both}
+.ow-boom{left:62%;top:48%;width:140px;height:140px;margin:-70px;border-radius:50%;background:radial-gradient(circle,#fff 0 10%,#ffcf6b 25%,#ff6a2a 45%,transparent 68%);mix-blend-mode:screen;animation:owBoom .7s ease-out calc(var(--fx-delay) + .5s) both}
+.ow-boom.late{animation-delay:calc(var(--fx-delay) + .62s);scale:.6}
+.ow-candle{left:62%;width:26px;margin-left:-13px;border-radius:3px;animation:owCandle .8s cubic-bezier(.2,.8,.3,1) var(--fx-delay) both}
+.ow-candle::before{content:"";position:absolute;left:50%;width:2px;margin-left:-1px;top:-16px;bottom:-16px;background:inherit;opacity:.8}
+.ow-candle.bull{top:22%;height:30%;background:var(--ow-bull);box-shadow:0 0 20px #31d07f88;transform-origin:bottom}
+.ow-candle.bear{top:48%;height:26%;background:var(--ow-bear);box-shadow:0 0 20px #ff547088;transform-origin:top;animation-delay:calc(var(--fx-delay) + .4s)}
+.ow-squeeze .ow-candle.bull{animation-delay:calc(var(--fx-delay) + .9s);height:40%;top:10%}
+.ow-stamp{left:calc(62% - 34px);top:18%;font:700 20px/1 var(--font-display,system-ui);letter-spacing:.1em;padding:2px 10px;border:3px solid currentColor;border-radius:4px;rotate:-12deg;animation:owStamp .9s ease-out var(--fx-delay) both}
+.ow-stamp.bull{color:var(--ow-bull)}.ow-squeeze .ow-stamp{animation-delay:calc(var(--fx-delay) + .9s)}
+.ow-arrow{left:62%;top:30%;width:0;height:0;margin-left:-24px;border-left:24px solid transparent;border-right:24px solid transparent;border-top:64px solid var(--ow-bear);filter:drop-shadow(0 0 12px var(--ow-bear));animation:owArrow .5s cubic-bezier(.6,0,.9,.5) var(--fx-delay) both}
+.ow-aura{left:14%;top:78%;width:90px;height:22px;margin-left:-45px;border-radius:50%;border:2px solid var(--ow-bull);box-shadow:0 0 14px var(--ow-bull);animation:owAura 1.2s ease-out var(--fx-delay) both}
+.ow-spike{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ow-spike path{fill:none;stroke:var(--ow-gold);stroke-width:.8;vector-effect:non-scaling-stroke;stroke-width:3px;filter:drop-shadow(0 0 6px var(--ow-gold));stroke-dasharray:400;stroke-dashoffset:400;animation:owDraw .5s ease-out var(--fx-delay) both,owFade .5s calc(var(--fx-delay) + .8s) forwards}
+.ow-swan .ow-spike path{stroke:#e8e2ff;filter:drop-shadow(0 0 8px #8a6cff)}
+.ow-coin{left:62%;top:48%;width:13px;height:13px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6c8,var(--ow-gold) 45%,#b58520);box-shadow:0 0 8px #ffd36b88;animation:owBurst 1s ease-out calc(var(--fx-delay) + .5s) both}
+.ow-swan .ow-coin{background:radial-gradient(circle at 35% 35%,#fff,#2a2240 60%);box-shadow:0 0 8px #8a6cff}
+.ow-stopline{left:4%;width:50%;top:66%;height:2px;background:repeating-linear-gradient(90deg,var(--ow-bear) 0 10px,transparent 10px 16px);box-shadow:0 0 10px var(--ow-bear);transform-origin:left;animation:owStop 1.4s ease-out var(--fx-delay) both}
+.ow-shield{left:14%;top:62%;width:110px;height:130px;margin:-65px 0 0 -55px;border-radius:50%/45%;border:2px solid var(--ow-steel);background:radial-gradient(circle,transparent 50%,#7fb4ff33 80%);animation:owShield 1.4s ease-out var(--fx-delay) both}
+.ow-halt{left:0;right:0;top:calc(30% + var(--i) * 16%);height:10px;background:repeating-linear-gradient(-45deg,#ffd36b 0 12px,#111 12px 24px);opacity:.85;animation:owHalt 1.4s ease-out calc(var(--fx-delay) + var(--i) * 90ms) both}
+.ow-round{left:calc(10% + var(--i) * 10px);top:84%;width:6px;height:16px;border-radius:2px 2px 1px 1px;background:linear-gradient(180deg,#ffe2a6,var(--ow-tracer) 40%,#8a5a1a);animation:owRound .5s ease-out calc(var(--fx-delay) + var(--i) * 40ms) both}
+.ow-mult{left:calc(62% - 80px);top:12%;font:600 14px/1.2 ui-monospace,monospace;padding:2px 8px;border-radius:4px;background:#0b121ccc;border:1px solid var(--ow-gold);color:var(--ow-gold);white-space:nowrap;animation:sceneTitle 1.6s ease-out var(--fx-delay) both}
+.ow-title{position:absolute;left:50%;top:22%;translate:-50% 0;font:800 26px/1 var(--font-display,system-ui);letter-spacing:.12em;color:#fff;text-shadow:0 0 14px currentColor,0 2px 6px #000;white-space:nowrap;animation:sceneTitle 1.4s ease-out var(--fx-delay) both}
+.ow-snipe .ow-title,.ow-deadeye .ow-title{color:#cfe3ff}.ow-ap .ow-title{color:var(--ow-corrode)}.ow-buy .ow-title,.ow-squeeze .ow-title{color:var(--ow-bull)}.ow-short .ow-title,.ow-stop .ow-title{color:var(--ow-bear)}
+.ow-leverage .ow-title,.ow-circuit .ow-title{color:var(--ow-gold)}.ow-swan .ow-title{color:#c9b8ff;font-size:32px}.ow-deadeye .ow-title{font-size:32px}.ow-reload .ow-title{top:72%;left:22%;font-size:16px;color:var(--ow-tracer)}
+.ow-burst .ow-title,.ow-shotgun .ow-title,.ow-flash .ow-title,.ow-grenade .ow-title{font-size:18px;top:16%}
+@keyframes owDark{0%{opacity:0}15%{opacity:.72}80%{opacity:.6}100%{opacity:0}}
+@keyframes owTracer{0%{clip-path:inset(0 100% 0 0);opacity:1}50%{clip-path:inset(0 0 0 0);opacity:1}100%{clip-path:inset(0 0 0 70%);opacity:0}}
+@keyframes owCasing{0%{translate:0 0;rotate:0deg;opacity:1}40%{translate:-18px -36px;rotate:220deg}100%{translate:-30px 56px;rotate:520deg;opacity:0}}
+@keyframes owScope{0%{scale:2.2;opacity:0}30%{opacity:1}85%{scale:1;opacity:1}100%{scale:.9;opacity:0}}
+@keyframes owMark{0%{scale:2;opacity:0}30%{scale:1;opacity:1}100%{opacity:0}}
+@keyframes owCrack{0%{scale:.3;rotate:-20deg;opacity:1}100%{scale:1.1;opacity:0}}
+@keyframes owBurst{0%{translate:0 0;scale:.4;opacity:1}100%{translate:calc(cos(var(--ang)) * 90px) calc(sin(var(--ang)) * 70px);scale:1;opacity:0}}
+@keyframes owWhite{0%{opacity:.9}100%{opacity:0}}
+@keyframes owArc{0%{translate:0 0}50%{translate:24vw -70px}100%{translate:48vw -16px;opacity:.2}}
+@keyframes owBoom{0%{scale:.2;opacity:0}20%{opacity:1}100%{scale:1.5;opacity:0}}
+@keyframes owCandle{0%{scale:1 0;opacity:1}55%{scale:1 1.08}75%{scale:1 1;opacity:1}100%{opacity:0}}
+@keyframes owStamp{0%{scale:2.6;opacity:0}18%{scale:1;opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes owArrow{0%{translate:0 -160px;opacity:0}30%{opacity:1}85%{translate:0 0;opacity:1}100%{opacity:0}}
+@keyframes owAura{0%{scale:.5;opacity:1}100%{scale:1.5;translate:0 -60px;opacity:0}}
+@keyframes owDraw{to{stroke-dashoffset:0}}
+@keyframes owFade{to{opacity:0}}
+@keyframes owStop{0%{scale:0 1}30%{scale:1 1}80%{opacity:1}100%{opacity:0}}
+@keyframes owShield{0%{scale:.6;opacity:0}20%{scale:1.05;opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes owHalt{0%{scale:0 1;opacity:0}25%{scale:1 1;opacity:.85}80%{opacity:.85}100%{opacity:0}}
+@keyframes owRound{0%{translate:0 -14px;opacity:0}60%{opacity:1}100%{opacity:0}}
+.fx-no-glow .ow-whiteout,.fx-no-glow .ow-fx .scene-fx-dark{display:none}
+@media(prefers-reduced-motion:reduce){.ow-fx i,.ow-fx svg{display:none}.ow-title,.ow-mult{animation-name:tideReduced}}
