@@ -188,7 +188,7 @@ export const V24_SKILLS: Skill[] = [
     // v3.144 다크나이트 재개편: 물리 창술. 비늘(다크니스 오라)은 리인카네이션(lastStand 1회 · 25% 회복) + 쓰러진 횟수 · 보낸 턴 비례 성장.
     { ...A, ...spear, id: 'dragonGodSpear', name: '좀비 루팡신의 창', desc: '', level: 70, job: 'seaDragonGod', chance: .5, cooldown: 5, multiplier: 3.4, cost: 6, manaCost: 20, effect: 'stun', masteryMilestones: M5 },
     // v3.98 다크니스 오라의 치명타 · 치명 피해는 팬텀 5차 패시브와 같은 값입니다.
-    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '물리 공격과 체력이 크게 오르고 치명타 · 치명 피해가 오릅니다. 쓰러질 피해를 받으면 전투당 한 번 체력 1로 버티고 최대 체력의 25%를 되찾습니다. 쓰러진 횟수 3회마다 물리 공격, 보낸 턴 3,000마다 최대 체력이 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 70, hp: 300, crit: .08, critDamage: .45 }, lastStand: { charges: 1, heal: .25 }, perCount: [{ source: 'deaths', per: 3, bonus: { attack: 3 }, cap: 100 }, { source: 'turns', per: 3000, bonus: { hp: 9 }, cap: 100 }], masteryMilestones: M5 },
+    { ...P, id: 'dragonGodScale', name: '좀비 루팡신의 비늘', desc: '물리 공격과 체력이 크게 오르고 치명타 · 치명 피해가 오릅니다. 쓰러질 피해를 받으면 전투당 한 번 체력 1로 버티고 최대 체력의 25%를 되찾습니다. 쓰러진 횟수 3회마다 물리 공격, 보낸 턴 3,000마다 최대 체력이 오릅니다.', level: 70, job: 'seaDragonGod', cost: 3, bonus: { attack: 70, hp: 300, crit: .08, critDamage: .45 }, lastStand: { charges: 1, heal: .25 }, perCount: [{ source: 'deaths', per: 3, bonus: { attack: 3 }, cap: 1000 }, { source: 'turns', per: 3000, bonus: { hp: 9 }, cap: 1000 }], masteryMilestones: M5 },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */
