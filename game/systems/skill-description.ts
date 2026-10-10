@@ -2,7 +2,7 @@ import type { Attribute, Skill, Stats } from '../types';
 import { STATUS_TUNING, SKILL_FORMULA, diceMultiplier, diceRange } from '../data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay, PROGRESSION, ATTRIBUTE_NAMES } from '../data/progression';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
-import { effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillExclusiveLabel } from './progression';
+import { CORE_PASSIVE, effectiveSkill, masteryGainBonus, masteryMilestonesFor, maxSkillLevel, skillExclusiveLabel } from './progression';
 import { masteryConditionText, masteryPerVictory } from './mastery';
 import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
@@ -17,6 +17,13 @@ export function skillBonusText(key: string, value: number) {
     return `${STAT_LABELS[key as keyof Stats] || key} ${statDeltaDisplay(key, value)}`;
 }
 const COUNT_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '던전 클리어·보스 처치', species: '지정 몬스터 처치', gold: '보유 골드 자릿수', rebirth: '환생', mastered: '숙달한 직업', variant: '변종·황금 처치', deaths: '쓰러진 횟수', turns: '보낸 턴', kkami: '숙련의 까미 처치', nuri: '경험의 누리 처치', dungeonBoss: '지역 던전 정복', onyx: '칠흑 보스 처치', cores: '보유한 지역 보스 코어', coreRanks: '지역 보스 코어 각성 단계', onyxOwned: '보유한 칠흑 장신구', onyxRanks: '칠흑 장신구 각성 단계', str: '근력', dex: '기민', int: '지능', vit: '체질', wis: '정신', luk: '행운' };
+/** v3.228 핵심 패시브 한 줄: '마법 공격 +250 · 최대 체력 +300' 또는 '마법 공격 +35% · 최대 체력 +22%'(숙련 마지막 단계 기준). */
+export function coreText(sk: Skill) {
+    if (!sk.core) return '';
+    const flat = byStatOrder(Object.entries(sk.core.flat || {})).map(([key, n]) => skillBonusText(key, n as number));
+    const scale = byStatOrder(Object.entries(sk.core.scale || {})).map(([key, n]) => `${STAT_LABELS[key as keyof Stats] || key} +${skillPercent(n as number)}`);
+    return [...flat, ...scale].join(' · ');
+}
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록', relic: '렐릭의 힘(경험치 보너스)' };
 const goldCapText = (g: NonNullable<Skill['goldSpend']>, magic: boolean) => [g.capAttack ? `${magic ? '마법' : '물리'} 공격 × ${number(g.capAttack)}` : '', g.cap ? g.cap.toLocaleString() : ''].filter(Boolean).join(' · ');
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' };
@@ -42,6 +49,7 @@ export function skillExtraNotes(sk: Skill): string[] {
     const notes: string[] = [];
     if (sk.perRebirth) notes.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     for (const pc of sk.perCount || []) notes.push(`${COUNT_WORD[pc.source]}${pc.per === 1 ? '' : ` ${pc.per.toLocaleString()}`}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
+    if (sk.core) notes.push(`핵심 패시브 ${coreText(sk)} (숙련 마지막 단계, 0단계는 ${skillPercent(CORE_PASSIVE.base)} · 다른 계보 직업은 절반)`);
     if (sk.masteryGain) notes.push('지정한 적 처치 시 숙련 추가 획득');
     const special = sk.cooldownReset || sk.lastStand || sk.sealFinale || sk.tagBonus || sk.borrowedDiscount;
     if (special && sk.desc) notes.push(sk.desc);
@@ -77,6 +85,7 @@ export function skillBrief(sk: Skill): string {
         if (sk.followUpExtra) parts.push(`전류 중 추가타 +${sk.followUpExtra.hits}`);
         if (sk.tagBonus) parts.push(`태그 전환 피해 +${skillPercent(sk.tagBonus)}`);
         if (sk.borrowedDiscount) parts.push(`방랑 계보에서 다른 계보 스킬 AP −${sk.borrowedDiscount}`);
+        if (sk.core) parts.push(`핵심 ${coreText(sk)}`);
         if (sk.song) parts.unshift('노래 · AP 0');
         return parts.join(' · ') || '장착 효과';
     }
@@ -195,6 +204,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     // v3.169 능력치 수련 패시브: 기본 능력치 자체가 오릅니다(effectiveSkill이 숙련 단계 배율을 적용한 값).
     for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
+    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. ${sk.core.scale ? '배율은 직업 보정처럼 최종 능력치에 곱합니다' : '고정 수치는 배율 전에 더합니다'}. 숙련 0단계는 ${skillPercent(CORE_PASSIVE.base)}이고 단계마다 올라 마지막 단계에서 100%가 됩니다. 다른 계보 직업이 계승해 쓰면 핵심 몫은 ${skillPercent(CORE_PASSIVE.borrowed)}만 받습니다(같은 계보는 100%).`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
     if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');

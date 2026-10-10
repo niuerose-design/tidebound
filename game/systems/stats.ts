@@ -19,7 +19,7 @@ import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { supportMultiplier, supportAmount, commandBonus } from './support';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -158,6 +158,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.202 보스 코어(칸 · 공명). 장비 규칙 상한(RULE_CAPS) 밖이라 장비의 기절 · 침묵 +1과 따로 더해집니다.
     { const res = coreStats(s, coreResonanceOf(s)); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     const passiveJobs = new Set<string>();
+    // v3.228 핵심 패시브 배율(5차): 합쳐서 아래 직업 배율 뒤에 한 번 곱합니다.
+    const coreMul: Partial<Record<'attack' | 'magic' | 'hp', number>> = {};
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
     const counts = progressCounts(s);
@@ -172,6 +174,12 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         if (sk.bonus) {
             const bonus = effectiveSkill(sk, rank, mastery).bonus!, scale = signature ??= signatureScale(sk, s.job);
             for (const key in bonus) { const n = bonus[key as keyof typeof bonus] as number; add(key as keyof CombatStats, 'skills', n > 0 ? n * scale : n); }
+        }
+        // v3.228 핵심 패시브: 고정 수치(4차)는 여기서 더하고, 배율(5차)은 모아 두었다가 곱합니다.
+        if (sk.core) {
+            const f = coreScale(sk, s.job, mastery);
+            for (const key in sk.core.flat) add(key as 'attack', 'skills', sk.core.flat[key as 'attack']! * f);
+            for (const key in sk.core.scale) coreMul[key as 'attack'] = (coreMul[key as 'attack'] || 0) + sk.core.scale[key as 'attack']! * f;
         }
         // v27.28 횟수 비례 패시브도 한계돌파 단계마다 +10%.
         if (sk.perCount || sk.perRebirth) {
@@ -203,6 +211,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v3.219 참모 계보 지휘 체계: 장착한 지원 스킬 수만큼 두 공격 배율.
     const command = commandBonus(s);
     if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
+    for (const key in coreMul) mul(key as 'attack', [['skills', 1 + coreMul[key as 'attack']!]]);
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
     mul('resist', [['job', mult(j.resist)], ['achievement', 1 + feats.resist]]);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));

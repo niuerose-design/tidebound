@@ -39,8 +39,8 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'apprentice', name: '견습 마법사', title: '첫 번째 주문서', desc: '오비탈 플레임 하나와 마법 공격 패시브를 익히는 마법 입문 직업입니다.', ...neutral, bonus: { magic: 4 }, tier: 1, level: 10, requires: { int: 12, wis: 10 }, mastery: 0, role: '마법 입문', tree: 'magic', masteryTarget: 400, masteryBoost: .08 },
     { id: 'mage', name: '마법사', title: '불꽃을 다루는 학도', desc: '화상을 남기는 플레임 디스차지와 마나 패시브로 주문 순환을 만듭니다.', ...neutral, bonus: { magic: 36, resist: 3 }, crit: .03, tier: 2, level: 25, parent: 'apprentice', requires: { int: 32, wis: 22 }, mastery: 75, requiresSkillMastery: { manaBolt: 2 }, role: '마법·화상', tree: 'magic', masteryTarget: 2800, masteryBoost: .18 },
     { id: 'archmage', name: '대마법사', title: '하늘에서 떨어지는 불', desc: '마법 계보의 3차 직업입니다. 블레이징 익스팅션으로 상대를 기절시키고, 패시브로 마법 관통을 올립니다.', ...neutral, hp: 1, bonus: { magic: 102, resist: 6 }, crit: .05, tier: 3, level: 40, parent: 'mage', requires: { int: 48, wis: 35 }, mastery: 150, requiresSkillMastery: { fireball: 3 }, role: '마법·폭발', tree: 'magic', masteryTarget: 10500, masteryBoost: .3 },
-    { id: 'sage', name: '현자', title: '별의 흐름을 읽는다', desc: '환생 후 4차 마법 직업입니다. 피닉스 드라이브는 두 번 떨어지며 화상을 남깁니다. 패시브로 마나 회복과 마법 방어를 올립니다.', ...neutral, defense: 1.12, magic: 1.5, hp: 1.16, resist: 1.21, crit: .06, tier: 4, ...T4, parent: 'archmage', requires: { int: 58, wis: 45 }, requiresSkillMastery: { meteor: 3 }, role: '마법·연속 주문', tree: 'magic' },
-    { id: 'grandMagus', name: '대마도사', title: '세계를 다시 쓰는 주문', desc: '쌓인 화상을 모두 터뜨리는 인피니티 플레임 서클(중첩당 +35%)로 마법 계열의 정점에 선 5차 직업입니다.', ...neutral, magic: 1.77, hp: 1.25, defense: 1.07, resist: 1.28, crit: .08, tier: 5, ...T5, parent: 'sage', requires: { int: 72, wis: 55 }, requiresSkillMastery: { starfall: 3 }, role: '마법 최상위', tree: 'magic' },
+    { id: 'sage', name: '현자', title: '별의 흐름을 읽는다', desc: '환생 후 4차 마법 직업입니다. 피닉스 드라이브는 두 번 떨어지며 화상을 남깁니다. 패시브로 마나 회복과 마법 방어를 올립니다.', ...neutral, defense: 1.12, magic: 1.06, hp: 1, resist: 1.21, crit: .06, tier: 4, ...T4, masteryBoost: .1, parent: 'archmage', requires: { int: 58, wis: 45 }, requiresSkillMastery: { meteor: 3 }, role: '마법·연속 주문', tree: 'magic' },
+    { id: 'grandMagus', name: '대마도사', title: '세계를 다시 쓰는 주문', desc: '쌓인 화상을 모두 터뜨리는 인피니티 플레임 서클(중첩당 +35%)로 마법 계열의 정점에 선 5차 직업입니다.', ...neutral, magic: 1.09, hp: 1, defense: 1.07, resist: 1.28, crit: .08, tier: 5, ...T5, masteryBoost: .1, parent: 'sage', requires: { int: 72, wis: 55 }, requiresSkillMastery: { starfall: 3 }, role: '마법 최상위', tree: 'magic' },
 
     // ── 마검의 길 (물리·마법 복합 최상위: 천검) ─────────────────
     // v3.145 데몬슬레이어 재개편: 마나 대신 체력을 바쳐 싸우는 피의 딜러. 액티브는 물리 피해 + 체력 소모, 패시브는 잃은 체력 비례 피해(피의 분노)와 흡혈.
@@ -131,9 +131,9 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'arcanePierce', name: '마력 관통', desc: '방어 관통과 마법 공격이 오릅니다.', level: 40, job: 'archmage', cost: 3, bonus: { penetration: .06, magic: 30 } },
     // v3.148 플레임위자드 재개편: 화상을 쌓아(플레임 디스차지 · 피닉스 드라이브) 인피니티 플레임 서클로 터뜨립니다(화상 폭발, 중첩당 +35%). 5차의 최대 마나 비례는 아델 계보 장치라 뺐습니다.
     { ...A, ...magic, id: 'starfall', name: '별의 비', desc: '', level: 55, job: 'sage', chance: .55, cooldown: 4, multiplier: 2.5, cost: 5, manaCost: 30, effect: 'burn', extraAttacks: 1, extraAttackMultiplier: .6, masteryMilestones: M4 },
-    { ...P, id: 'sageWisdom', name: '현자의 지혜', desc: '마나 회복·마법 공격·마법 방어가 오릅니다.', level: 55, job: 'sage', cost: 3, bonus: { manaRegen: 4, magic: 45, resist: 30 }, masteryMilestones: M4 },
+    { ...P, id: 'sageWisdom', name: '현자의 지혜', desc: '마나 회복·마법 공격·마법 방어가 오릅니다.', level: 55, job: 'sage', cost: 3, bonus: { manaRegen: 4, magic: 45, resist: 30 }, core: { flat: { magic: 250, hp: 300 } }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'genesis', name: '창세의 빛', desc: '', level: 70, job: 'grandMagus', chance: .55, cooldown: 5, multiplier: 3.4, cost: 6, manaCost: 40, burnConsume: .35, masteryMilestones: M5 },
-    { ...P, id: 'magusDomain', name: '대마도사의 영역', desc: '마법 공격과 치명 피해가 크게 오릅니다.', level: 70, job: 'grandMagus', cost: 3, bonus: { magic: 120, critDamage: .2, hp: 300 }, masteryMilestones: M5 },
+    { ...P, id: 'magusDomain', name: '대마도사의 영역', desc: '마법 공격과 치명 피해가 크게 오릅니다.', level: 70, job: 'grandMagus', cost: 3, bonus: { magic: 120, critDamage: .2, hp: 300 }, core: { scale: { magic: .35, hp: .22 } }, masteryMilestones: M5 },
     // 마검의 길
     // v3.145 데몬슬레이어 재개편: 마나 0, 현재 체력 비율 소모(hpCost) · 물리 피해 · 피의 분노(bloodRage, 잃은 체력 비례) · 흡혈로 되찾기.
     { ...A, ...blood, id: 'runeEdge', name: '룬 베기', desc: '', level: 10, job: 'spellbladeNovice', chance: .5, cooldown: 3, multiplier: 1.45, cost: 2, hpCost: .06 },

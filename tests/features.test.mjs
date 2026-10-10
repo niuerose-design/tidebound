@@ -214,3 +214,14 @@ test('v26.8 registerItemAll registers one weakest unlocked item per missing slot
     assert.deepEqual(Object.keys(s.itemBook).sort(), ['charm:0', 'rod:0']); assert.deepEqual(s.inventory.map(x => x.id).sort(), ['c1', 'm2', 'r0a'], 'weakest rod consumed, locked/relic kept');
     assert.throws(() => act(s, { type: 'registerItemAll' }, 0), /미등록 장비가 가방에 없습니다/);
 });
+test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow 70% → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),St=await L.load('systems/stats'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
+ const sage=C.jobById('sage'),magus=C.jobById('grandMagus');assert.equal(sage.magic,1.06);assert.equal(magus.magic,1.09);assert.equal(sage.masteryBoost,.1);
+ const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.35,hp:.22});
+ assert.equal(P.coreScale(d,'grandMagus',0),.7);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
+ assert.equal(P.coreScale(w,'grandMagus',4),1,'same lineage keeps it whole');assert.equal(P.coreScale(d,'hero',4),.5,'another lineage gets half');
+ const body=(job,ids,practice)=>{const s=newState(0);s.level=100;s.job=job;s.unlockedJobs.push(job);for(const id of ids){s.learned[id]=1;s.skillPractice[id]=practice;}s.skillInheritances=Object.fromEntries(ids.map(id=>[id,true]));s.skills=ids;return St.stats(s);};
+ const core=d.core;delete d.core;const hero0=body('hero',['magusDomain'],1e9),mage0=body('grandMagus',['magusDomain'],0);d.core=core;const hero1=body('hero',['magusDomain'],1e9),mage1=body('grandMagus',['magusDomain'],0);
+ assert.ok(Math.abs(hero1.magic/hero0.magic-1.175)<.01&&Math.abs(hero1.hp/hero0.hp-1.11)<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-1.245)<.01,'stage 0 = 70% of 35%');
+ const flat0=body('sage',[],0),flat1=body('sage',['sageWisdom'],1e9);assert.ok(flat1.magic>=flat0.magic+250+45&&flat1.hp>=flat0.hp+300,'flat core lands before the multipliers');
+});
