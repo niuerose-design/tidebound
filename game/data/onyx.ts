@@ -18,7 +18,8 @@ import { ODDS } from './odds';
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
 export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, /** v3.188 체력 배율은 보스마다(ONYX_BOSSES[].hpMul). 공격은 서식지 최강 ×3 그대로. */ attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,
     /** v3.125 위력 계수: Lv.100에서 650(환생 60 계승 태초 606과 환생 200 계승 태초 788 사이). 각성 · 7종 세트까지 모으면 환생 200 계승 태초 장신구를 넘도록 둔 값입니다. */
-    power: 6.37, affixes: 5,
+    /** v3.284 무작위 옵션 6줄(고유 옵션까지 7줄). 이미 가진 장신구는 불러올 때 빠진 줄을 최고 수치로 채웁니다(systems/equipment tuneOnyx). */
+    power: 6.37, affixes: 6,
     /** v3.113 각성: 이미 가진 칠흑을 다시 얻으면(같은 드롭 확률 · 천장) 고유 옵션 +awakenStep씩, 최대 awakenMax단계. 세계석은 그대로 받습니다. */
     awakenMax: 5, awakenStep: .1,
     /** v3.113 공명: 착용하지 않은 칠흑 장신구의 고유 옵션을 이 비율만큼 받습니다(각성 포함, 강화 · 별 보정 없음). */

@@ -1,10 +1,10 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rarityQuality, optionAtQuality, type ItemAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rollAffixes, rarityQuality, optionAtQuality, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { monsterGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
-import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
+import { ONYX, onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
 
 /** 가방과 장착 칸의 장비를 한 목록으로(장착 칸의 빈자리는 null). */
 export const ownedItems = (s: Pick<State, 'inventory' | 'equipment'>): (Item | null)[] => [...s.inventory, ...Object.values(s.equipment)];
@@ -112,6 +112,14 @@ export function tuneOnyx(item: Item) {
     if (!item.onyx) return;
     const next = onyxPower(item.level || 1), before = item.power;
     if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
+    // v3.284 칠흑은 무작위 옵션 ONYX.affixes(6)줄: 예전(5줄) 장신구는 빠진 줄을 최고 수치로 채웁니다. 장신구 id로 정해지는 난수라 몇 번 불러도 같습니다.
+    const extra = (item.affixes || []).filter(x => !x.rule).length;
+    if (item.affixes && extra < ONYX.affixes) {
+        let seed = [...item.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0;
+        const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296), had = item.affixes.length;
+        item.affixes = rollAffixes(had + ONYX.affixes - extra, item.power, item.origin, rng, item.affixes, item.slot, item.level || 1, item.rarity)
+            .map((x, i) => i < had ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
+    }
     if (item.onyxTuned) return;
     item.affixes = (item.affixes || []).map(x => x.rule ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
     item.onyxTuned = true;

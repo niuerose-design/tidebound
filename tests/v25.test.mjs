@@ -1343,7 +1343,7 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.ok(s.inventory.some(i => i.onyx), `${O.ONYX.dropPity}th kill is guaranteed`); assert.equal(s.onyxMiss.onyxDusk, 0); assert.equal(s.onyxBook.onyxDusk, 5);
     const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .001); assert.ok(s2.inventory.some(i => i.onyx), 'roll .001 drops'); assert.equal(s2.itemBook['onyx:onyxDusk'], true, 'v3.14 auto-registered in the item codex');
     const Mig = await L.load('systems/migrations'); const s3 = newState(0); s3.inventory.push({ ...s2.inventory.find(i => i.onyx), id: 'mig' }); Mig.registerOnyxCodex(s3); assert.equal(s3.itemBook['onyx:onyxDusk'], true, 'existing owners get the codex entry');
-    const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 6 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
+    const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 7 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
     assert.equal(s.pearls, pearls);
     Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .5); assert.equal(s.inventory.filter(i => i.onyx).length, 1, 'one per boss'); assert.equal(s.pearls, pearls + O.ONYX.duplicatePearls);
     // 떠남: leavesAt 이후 턴에 사라집니다.
@@ -1396,6 +1396,20 @@ test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고
     const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
     assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
     assert.equal(O.onyxCollected(all), 9); assert.ok(Math.abs(O.onyxSetBonus(9).bossDamage - b8 - .1) < 1e-9);
+});
+
+test('v3.284 onyx accessories carry 7 lines (unique + 6 random); old 6-line ones fill the missing line at its best roll, the same on every load', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), G = await L.load('systems/onyx-grant'), Eq = await L.load('systems/equipment'), Gear = await L.load('data/gear');
+    assert.equal(O.ONYX.affixes, 6);
+    const s = newState(0); s.level = 60; G.grantOnyx(s, 'onyxDusk', 5, () => .4, 'test'); const got = s.inventory.find(i => i.onyx);
+    assert.equal(got.affixes.length, 7); assert.equal(got.affixes.filter(a => a.rule).length, 1); assert.equal(got.affixes[0].id, 'onyxThorns');
+    const old = { ...got, id: 'old-dusk', affixes: got.affixes.slice(0, 6).map(a => ({ ...a })) }, copy = JSON.parse(JSON.stringify(old));
+    Eq.tuneOnyx(old); Eq.tuneOnyx(copy); assert.equal(old.affixes.length, 7, 'filled to 7'); assert.deepEqual(old.affixes, copy.affixes, 'deterministic');
+    assert.deepEqual(old.affixes.slice(0, 6), got.affixes.slice(0, 6), 'existing lines untouched');
+    const added = old.affixes[6]; assert.ok(!added.rule && !old.affixes.slice(0, 6).some(a => a.id === added.id), 'a new non-rule line');
+    assert.equal(Gear.refineOption(added, old.power, old.rarity, () => 1, old.level).value, added.value, 'best roll');
+    Eq.tuneOnyx(old); assert.equal(old.affixes.length, 7, 'stays 7');
 });
 
 test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart', async () => {
