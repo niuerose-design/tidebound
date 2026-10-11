@@ -1688,6 +1688,8 @@ test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of th
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
     const s = newState(0); s.level = 120; s.rebirths = 60; s.kills = 5000; s.stage = 'brook'; s.tide = 30; s.running = true;
     const pm = Mi.mimicChance(30, 0); Enc.spawn(s, () => pm + N.nuriChance(30) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id);
+    // v3.290 누리 · 슬라임 확률의 난이도 몫은 40에서 멈춥니다.
+    assert.equal(N.nuriChance(200), N.nuriChance(40)); assert.ok(N.nuriChance(40) > N.nuriChance(39));
     s.enemy.hp = 0; const per = Enc.stageEncounterExp(s), e0 = s.exp, base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
     assert.ok(per > 0); Enc.reward(s, () => .99);
     assert.equal(s.exp - e0, base + Math.floor(per * 30), 'Lv.100+: big win = 30 encounters of this stage');

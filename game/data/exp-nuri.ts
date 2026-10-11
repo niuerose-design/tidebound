@@ -16,6 +16,8 @@ export const EXP_NURI = {
     minKills: 1000,
     /** v27.59 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). */
     minTier: 10,
+    /** v3.290 확률의 난이도 몫은 이 난이도에서 멈춥니다(까미 MIMIC.tierCap처럼). 높은 난이도에서 출현 보너스를 겹치면 출현의 40%가 누리가 되던 것. */
+    tierCap: 40,
     /** 체력·공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. 오래 버티지만 거의 아프지 않습니다. */
     hp: 3, attack: .4,
     /** v3.112 사냥터 출현 몫: 레벨 % 대신 ‘지금 사냥터 평균 출현 경험치 × pct × 이 값’이 더 크면 그쪽(1%당 10회분, 소 · 중 · 대 = 10 · 20 · 30회분). Lv.100부터는 이 몫만. */
@@ -37,8 +39,8 @@ export function rollNuriTier(rng: () => number) {
 export const NURI_IDS: ReadonlySet<string> = new Set([EXP_NURI.id, 'kingNuri']);
 /** v3.221 하얀 발자국 표식: 경험치 로또를 한 단계 위로(이미 ‘대’면 그대로). */
 export function upgradeNuriTier(t: (typeof EXP_NURI.tiers)[number]) { const i = EXP_NURI.tiers.findIndex(x => x.pct === t.pct); return EXP_NURI.tiers[Math.min(EXP_NURI.tiers.length - 1, i + 1)]; }
-/** 등장 확률 = 기본 + 사냥터 난이도 × 단계당. */
-export const nuriChance = (tier: number) => EXP_NURI.chance + tier * EXP_NURI.chancePerTier;
+/** 등장 확률 = 기본 + 사냥터 난이도(v3.290 tierCap까지) × 단계당. */
+export const nuriChance = (tier: number) => EXP_NURI.chance + Math.max(0, Math.min(EXP_NURI.tierCap, tier)) * EXP_NURI.chancePerTier;
 /** 누리가 나올 수 있는지(사냥터 난이도·레벨·누적 처치). */
 /** v3.112 Lv.100 이상도 나옵니다(보상은 사냥터 출현 몫). */
 export const nuriEligible = (s: { level: number; kills: number }, tier: number) => tier >= EXP_NURI.minTier && s.level >= EXP_NURI.minLevel && s.kills >= EXP_NURI.minKills;
