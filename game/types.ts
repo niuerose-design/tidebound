@@ -766,6 +766,8 @@ export type State = {
     primalGauge?: number;
     /** v3.66 유물 위력 규칙 이전 표시(true면 이미 처리함). 새 캐릭터·승천 뒤에는 처음부터 true. */
     relicRule?: boolean;
+    /** v3.297 이미 붙은 마력 · 순환 줄의 턴당 마나 회복을 ×3으로 바꿨는지(한 번만). */
+    manaRegenRescaled?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
     /** 끝없는 수련으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */

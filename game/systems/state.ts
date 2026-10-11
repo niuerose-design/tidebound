@@ -20,7 +20,7 @@ export function newState(now: number): State {
     const state: State = {
         ...initialProgress(),
         version: SAVE_VERSION,
-        relicRefunded: true, autoStarRefunded: true, placeApMoved: true, plainCodex: true, relicRule: true,
+        relicRefunded: true, autoStarRefunded: true, placeApMoved: true, plainCodex: true, relicRule: true, manaRegenRescaled: true,
         masteryRescaled: true,
         ultimateRemade: true,
         trainingRescaled: true,
