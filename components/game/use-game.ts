@@ -8,6 +8,7 @@ import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
 import type { MarketFeed } from '@/game/data/market';
 import { marketKnown, ingestMarket, ingestMarketStatus, type MarketStatus } from './market-records';
 import { OPEN_CATALOG, applyCatalog, catalogNow, type Catalog } from '@/game/data/catalog';
+import { GAME_BUILD } from '@/game/data/update-log';
 export type Ranking = Snapshot & {
     /** v3.18 가린 항목(v3.26 신원 조작)(name · job · level · gear · skills · title · guild). */
     masked?: string[];
@@ -131,10 +132,12 @@ export function useGame() {
     /** v27.62 지금 화면이 전투(사냥·던전)를 보여 주는지. 아니면 동기화를 늦춥니다. */
     const live = useRef(true);
     /** v3.43 정보 비공개 카탈로그(docs/concept.md 10장). 받기 전에는 오픈 베타와 같은 전체 공개. */
-    const [catalog, setCatalog] = useState<Catalog>(OPEN_CATALOG);
+    const [catalog, setCatalog] = useState<Catalog>(OPEN_CATALOG), [newBuild, setNewBuild] = useState<string | null>(null);
     const [frames] = useState(createFrameStore), [replay] = useState(() => createReplay(frames.set));
     useEffect(() => replay.reset, [replay]);
-    const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) }); const data = await res.json() as {
+    const request = useCallback(async (path: string, body?: unknown) => { const res = await fetch(path, { method: body ? 'POST' : 'GET', headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(20000) });
+        // v3.305 서버 버전(X-Game-Build)이 이 화면의 코드 버전과 다르면 새로고침 안내(오래 열어 둔 탭은 옛 코드로 수치를 계산합니다).
+        const build = res.headers.get('X-Game-Build'); if (build && build !== GAME_BUILD) setNewBuild(build); const data = await res.json() as {
         error?: string;
         state: State;
         result?: DuelResult;
@@ -300,5 +303,5 @@ export function useGame() {
     }, [replay]);
     /** 화면이 바뀔 때 GameShell이 부릅니다. 전투 화면으로 돌아오면 바로 한 번 동기화합니다. */
     const setLive = useCallback((on: boolean) => { const was = live.current; live.current = on; if (on && !was) send({ type: 'sync' }); }, [send]);
-    return { state, catalog, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    return { state, catalog, newBuild, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
 }
