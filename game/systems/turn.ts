@@ -19,6 +19,10 @@ import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel }
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
+import { KING } from '../data/king';
+import { MIMIC } from '../data/mimic';
+import { EXP_NURI } from '../data/exp-nuri';
+import { ESSENCE_SLIME } from '../data/essence-slime';
 import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, fuelCovers, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
@@ -187,6 +191,8 @@ export function advance(s: State, now: number, rng = Math.random) {
     const warmup = sampling ? OFFLINE_SAMPLE.warmup : 0, count = sampling ? warmup + OFFLINE_SAMPLE.turns : Math.min(budget, CATCH_UP_CHUNK);
     let truncated = count < budget;
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
+    // v3.289 부재중 정산 알림에 까미 · 누리 · 슬라임(대왕 포함) 처치 수를 함께 보여 줍니다(도감 처치 수 차이).
+    const rareBook = () => ({ mimic: (s.book[MIMIC.id] || 0) + (s.book[KING.mimic.id] || 0), nuri: (s.book[EXP_NURI.id] || 0) + (s.book[KING.nuri.id] || 0), slime: (s.book[ESSENCE_SLIME.id] || 0) + (s.book[KING.slime.id] || 0) }), rareBefore = rareBook();
     let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
     if (away) s.away = true;
@@ -207,6 +213,8 @@ export function advance(s: State, now: number, rng = Math.random) {
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
         s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + Math.max(0, s.gold - before.gold), exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
+        const after = rareBook(), rares = { mimic: (prev?.rares?.mimic || 0) + after.mimic - rareBefore.mimic, nuri: (prev?.rares?.nuri || 0) + after.nuri - rareBefore.nuri, slime: (prev?.rares?.slime || 0) + after.slime - rareBefore.slime };
+        if (rares.mimic + rares.nuri + rares.slime > 0) s.lastOffline.rares = rares;
     }
 }
 
