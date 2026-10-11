@@ -30,6 +30,9 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'papTimeStop', name: '시간 정지', desc: '피해 없이 3턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 7, multiplier: 1, effect: 'stun', statusTurns: 3, statusOnly: true, manaCost: 0 },
     { id: 'papRift', name: '차원의 균열', desc: '마법 공격 140% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .28, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
     { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 160%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 1.6, damageType: 'split', manaCost: 0 },
+    // v3.278 스우 · 데미안.
+    { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 140% 피해 + 3턴 부식(물리 · 마법 방어와 속도 감소).', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.4, effect: 'corrode', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxBrand', name: '낙인', desc: '복합 피해 150% + 3턴 출혈. 물리 · 마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.5, damageType: 'split', effect: 'bleed', statusTurns: 3, manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
 ];
 let enemySkillIndex: Map<string, Skill> | undefined;
@@ -75,6 +78,8 @@ const PROFILES: Record<string, {
     onyxWill: { name: '거미의 왕', hint: '기본 공격부터 복합 피해. 감속·기절·침묵으로 턴 우선권을 빼앗습니다.', skills: ['onyxWeb', 'foeCrush', 'foeSilence'], splitBasic: true, defense: 1.3, resist: 1.3, evasion: .04, speed: .9 },
     onyxLucid: { name: '꿈의 여왕', hint: '마법 피해만 줍니다. 침묵·약화에 대비해 마법 방어를 올리세요.', skills: ['onyxNightmare', 'foeShock', 'foeInkBurst'], magicBasic: true, defense: .9, resist: 1.6, evasion: .1, speed: 1.1 },
     onyxHilla: { name: '사령술사', hint: '중독을 걸고 흡혈로 체력을 되찾는 마법 보스. 빨리 끝내거나 중독에 대비하세요.', skills: ['onyxSoulDrain', 'foeVenom', 'foeInkBurst'], magicBasic: true, defense: 1.1, resist: 1.4, evasion: .05, speed: 1.05 },
+    onyxSwoo: { name: '검은 날개의 군단장', hint: '부식으로 방어와 속도를 깎은 뒤 기절로 짓누르는 물리 보스. 상태이상 저항과 물리 방어를 챙기세요.', skills: ['onyxGravity', 'foeCrush', 'foeSlow'], defense: 1.6, resist: 1.2, evasion: .04, speed: 1 },
+    onyxDamien: { name: '타락한 복수자', hint: '기본 공격부터 복합 피해. 출혈과 화상을 겹쳐 거니 물리 · 마법 방어와 회복을 함께 챙기세요.', skills: ['onyxBrand', 'foeBurn', 'foeHaste'], splitBasic: true, defense: 1.3, resist: 1.3, evasion: .07, speed: 1.15 },
     onyxSeren: { name: '태양의 사제', hint: '화상을 쌓고 가속으로 몰아치는 마법 보스. 화상 중에는 받는 피해가 커지니 회복을 준비하세요.', skills: ['onyxSunfire', 'foeBurn', 'foeHaste'], magicBasic: true, defense: 1.2, resist: 1.3, evasion: .06, speed: 1.2 },
     onyxBlackMage: { name: '창세의 마법사', hint: '기본 공격부터 복합 피해. 침묵·감속·약화에 170% 복합 강타까지 모두 씁니다. 물리·마법 방어를 고루 갖추세요.', skills: ['onyxGenesis', 'foeSilence', 'foeSlow', 'foeInkBurst', 'foeTideSlam'], splitBasic: true, defense: 1.4, resist: 1.4, evasion: .08, speed: 1.05 },
 };
@@ -82,7 +87,7 @@ const profileIds: Record<string, string> = {
     masteryMimic: 'armored', expNuri: 'armored', essenceSlime: 'armored', kingMimic: 'boss', kingNuri: 'boss', kingSlime: 'boss', minnow: 'swift', carp: 'armored', perch: 'tidal', mackerel: 'swift', ray: 'tidal', puffer: 'venom', lionfish: 'venom', eel: 'arcane', barracuda: 'swift', ghost: 'arcane', angler: 'arcane', shark: 'armored', viper: 'venom', squid: 'arcane', leviathan: 'armored', moonfish: 'arcane', dragon: 'swift', ancient: 'armored',
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venom', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
     aqSeaco: 'swift', aqShark: 'frenzy', aqSquid: 'arcane', aqFlower: 'venom', aqGuard: 'armored', lfBlueTurtle: 'armored', lfRedTurtle: 'blaze', lfWyvern: 'swift', lfSkelegon: 'controller', lfManticore: 'venom', ttMonitor: 'silencer', ttGuardian: 'armored', ttChimera: 'tidal', ttDodo: 'swift', ttLyka: 'frenzy', arErdaSpirit: 'arcane', arMemoryGuard: 'controller', arMysticErda: 'stormEel', arVanishSoul: 'silencer', arTrueErda: 'tidal',
-    onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
+    onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSwoo: 'onyxSwoo', onyxDamien: 'onyxDamien', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
     ventColossus: 'zakum', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'papulatus'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';

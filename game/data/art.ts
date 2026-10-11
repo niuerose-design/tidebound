@@ -37,7 +37,7 @@ export const MONSTER_SHAPES: Record<string, MonsterShape> = {
     ttMonitor: 'eye', ttGuardian: 'statue', ttChimera: 'demon', ttDodo: 'bat', ttLyka: 'croc', arErdaSpirit: 'ghost', arMemoryGuard: 'statue', arMysticErda: 'bubble', arVanishSoul: 'ghost', arTrueErda: 'bubble',
     // 까미 · 보스
     masteryMimic: 'chest', expNuri: 'ghost', essenceSlime: 'slime', kingMimic: 'chest', kingNuri: 'ghost', kingSlime: 'slime',
-    onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSeren: 'fighter', onyxBlackMage: 'mage',
+    onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSwoo: 'fighter', onyxDamien: 'demon', onyxSeren: 'fighter', onyxBlackMage: 'mage',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
 export const monsterShape = (id: string): MonsterShape => MONSTER_SHAPES[id] ?? 'slime';

@@ -1468,6 +1468,18 @@
 .foe-genesis .foe-b{left:var(--tx);top:var(--oy);width:420px;height:240px;margin:-120px 0 0 -210px;border:4px solid #fff;border-radius:50%;box-shadow:0 0 30px #ffe08a,inset 0 0 30px #ffe08a;animation:foeRing 1.4s ease-out calc(var(--fx-delay) + .5s) both}
 .foe-genesis .foe-frag{left:var(--tx);font-size:28px;--ang:calc(var(--i) * 45deg);animation-delay:calc(var(--fx-delay) + .55s + var(--i) * .05s)}
 .foe-genesis .foe-title{font-size:24px;color:#fff8e0}
+/* v3.278 중력 붕괴(스우): 주인공 위로 보랏빛 중력장이 내려앉아 짓누르고 파편이 아래로 떨어집니다. */
+.foe-gravity{--fx:#b49cff}.foe-gravity .scene-fx-dark{background:#06030f;--dark:.75}
+.foe-gravity .foe-a{left:var(--tx);top:var(--oy);width:240px;height:240px;margin:-120px 0 0 -120px;border-radius:50%;background:repeating-radial-gradient(circle,rgba(180,156,255,.85) 0 3px,transparent 3px 22px);mask-image:radial-gradient(circle,#000 40%,transparent 70%);-webkit-mask-image:radial-gradient(circle,#000 40%,transparent 70%);filter:drop-shadow(0 0 12px #7a5cff);animation:foeGravityWell 1.4s ease-in var(--fx-delay) both}
+.foe-gravity .foe-b{left:var(--tx);top:-5%;width:150px;height:calc(var(--oy) + 5%);margin-left:-75px;background:linear-gradient(180deg,transparent,rgba(122,92,255,.55) 60%,#d8ccff);clip-path:polygon(15% 0,85% 0,62% 100%,38% 100%);transform-origin:50% 0;animation:foeBeam .7s ease-in calc(var(--fx-delay) + .6s) both}
+.foe-gravity .foe-frag{left:var(--tx);top:calc(var(--oy) - 40px);--ang:calc(60deg + var(--i) * 8deg);color:#d8ccff;animation-delay:calc(var(--fx-delay) + .7s + var(--i) * .04s)}
+@keyframes foeGravityWell{0%{opacity:0;scale:1.8}35%{opacity:1}80%{opacity:1;scale:.55}100%{opacity:0;scale:.4}}
+/* v3.278 낙인(데미안): 주인공 발밑에 검붉은 낙인이 새겨지고 검은 불꽃이 솟습니다. */
+.foe-brand{--fx:#ff4a5a}.foe-brand .scene-fx-dark{background:#0d0204;--dark:.8}
+.foe-brand .foe-a{left:var(--tx);top:calc(var(--oy) + 62px);width:220px;height:90px;margin:-45px 0 0 -110px;border-radius:50%;border:3px solid #ff4a5a;background:repeating-conic-gradient(from 0deg,rgba(255,74,90,.8) 0 4deg,transparent 4deg 45deg);box-shadow:0 0 24px #b0122a,inset 0 0 18px #ff4a5a;animation:foeGrow 1.5s ease-out var(--fx-delay) both}
+.foe-brand .foe-b{left:var(--tx);top:calc(var(--oy) - 150px);width:110px;height:190px;margin-left:-55px;background:radial-gradient(ellipse at 50% 100%,#ff6a3a 0,#3a0610 45%,transparent 70%);filter:drop-shadow(0 0 14px #ff2a3a);transform-origin:50% 100%;animation:foeFlame 1.1s ease-out calc(var(--fx-delay) + .35s) both}
+.foe-brand .foe-frag{left:var(--tx);top:calc(var(--oy) + 30px);--ang:calc(-160deg + var(--i) * 18deg);color:#ff8a8a;animation-delay:calc(var(--fx-delay) + .45s + var(--i) * .05s)}
+@keyframes foeFlame{0%{opacity:0;scale:.6 .1}30%{opacity:1;scale:1 1}70%{opacity:1;scale:.9 1.1}100%{opacity:0;scale:.7 1.25}}
 @media(prefers-reduced-motion:reduce){.scene-fx-foe .foe-a,.scene-fx-foe .foe-b,.scene-fx-foe .foe-hit,.scene-fx-foe .foe-frag{display:none}.scene-fx-foe .scene-fx-dark,.scene-fx-foe .scene-fx-flash,.foe-title{animation-name:tideReduced;animation-duration:1.4s}}
 /* v3.211 극한돌파 전용 연출(combat-fx.tsx ExtremeFx · .tide-fx.extreme): 진홍 · 금빛. 원래 스킬 연출 위에 겹칩니다. */
 .tide-fx.extreme{--ext-a:#ff4d6d;--ext-b:#ffd36e}
