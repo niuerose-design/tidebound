@@ -181,7 +181,8 @@ export const SKILL_FORMULA = {
     // 대기 초기화 패시브(처치·치명타·연속 행동)는 각성기 대기를 0으로 만들지 않고 reset턴만 줄입니다.
     // 각성기로 상대를 쓰러뜨리면 대기를 kill턴으로 줄입니다.
     // perTurn: 한 턴에 나가는 각성기 수(나중에 승천 연구로 늘릴 자리, 전투원별 awakenPerTurn이 있으면 그 값).
-    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1 },
+    /** v3.288 wardPierce: 상태이상을 거는 각성기의 각성 관통 확률(기술 숙련 단계 0~4별, Skill.wardPierce). */
+    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1, wardPierce: [0, .25, .5, .75, 1] as readonly number[] },
     // v3.86 추가 판정: 액티브가 발동한 행동에서 남은 액티브로 한 번 더 판정해 줄어든 위력으로 함께 씁니다. 단계마다 장착 AP · 위력(세계석 연구 ‘시스템 파괴 I’으로 해금).
     extraRoll: { ap: [12], power: [.6] },
     // v25.4 패시브는 최대 성장(마지막 숙련 단계)에 닿으면 장착 AP가 이만큼 줄어듭니다(0 아래로는 안 내려감). 노래와 단계별 AP가 정해진 대기만성형은 제외.

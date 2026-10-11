@@ -140,6 +140,8 @@ export function awakenSkill(sk: Skill) {
     sk.cooldown = cd;
     // 덜 자주 걸리는 만큼 거는 상태이상의 지속(패시브 보너스 포함)도 같은 비율로 늘려 유지율을 맞춥니다(예: 출혈 3+2턴 → 9턴).
     // v3.132 alsoEffect(포이즌 노바)는 적힌 지속(7턴 + 패시브)을 그대로 씁니다.
+    // v3.288 상태이상을 거는 각성기는 각성 관통(숙련 단계별 몬스터 각성 버팀 · 면역 무시)을 얻습니다.
+    if ((['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as string[]).includes(sk.effect || '')) sk.wardPierce ??= [...A.wardPierce];
     sk.awaken = { start: sk.awakenCooldown ?? A.start, ...(sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined && !sk.alsoEffect ? { statusScale: Math.round(after / before * 100) / 100 } : {}) };
 }
 
@@ -203,5 +205,5 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }
     // v3.86 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
-    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '');
+    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '') + (sk.wardPierce?.length && !(sk.desc || '').includes('각성 관통') ? ` 각성 관통(숙련 단계별 ${sk.wardPierce.map(p => `${Math.round(p * 100)}%`).join('/')}).` : '');
 }
