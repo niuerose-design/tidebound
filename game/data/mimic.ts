@@ -39,14 +39,14 @@ export function upgradeMimicTier(t: (typeof MIMIC.tiers)[number]) { const i = MI
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
 /** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 · 랜덤게임 제외). docs/currency-rank-review.md 1.4절. */
 export const WHISTLE = { sp: 5, perDay: 3 } as const;
-export const LETTER = { offlineRank: 6, /** v3.189 기본 부재중 배율(.5)보다 완화. */ offlineScale: .75, jackpotRank: 8, /** v3.52 값은 서버 전용(odds). */ get jackpotChance() { return ODDS.mimic.letterJackpot; }, recipientRank: 10, recipientShare: .01 } as const;
+export const LETTER = { offlineRank: 6, /** v3.189 기본 부재중 배율(.5)보다 완화. */ offlineScale: .75, /** v3.287 8단계: ‘중’ 당첨 확률 상승(전에는 ‘대’). */ midRank: 8, /** v3.52 값은 서버 전용(odds). */ get midChance() { return ODDS.mimic.letterMid; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
 export const letterRank = (s?: LetterState) => s?.permanent?.messageBottle || 0;
-/** 까미 로또 표. 행운의 편지 8단계부터 ‘대’ 당첨 확률이 오릅니다(늘어난 몫은 ‘소’에서 뺌). */
+/** 까미 로또 표. v3.287 행운의 편지 8단계부터 ‘중’ 당첨 확률이 오릅니다(늘어난 몫은 ‘소’에서 뺌). 대박 의존을 줄이려고 ‘대’ 대신 ‘중’을 올립니다. */
 export const mimicTiers = (s?: LetterState) => {
-    if (letterRank(s) < LETTER.jackpotRank) return MIMIC.tiers;
-    const extra = LETTER.jackpotChance - MIMIC.tiers[2].chance;
-    return [{ ...MIMIC.tiers[0], chance: MIMIC.tiers[0].chance - extra }, MIMIC.tiers[1], { ...MIMIC.tiers[2], chance: LETTER.jackpotChance }];
+    if (letterRank(s) < LETTER.midRank) return MIMIC.tiers;
+    const extra = LETTER.midChance - MIMIC.tiers[1].chance;
+    return [{ ...MIMIC.tiers[0], chance: MIMIC.tiers[0].chance - extra }, { ...MIMIC.tiers[1], chance: LETTER.midChance }, MIMIC.tiers[2]];
 };
 /** 부재중 정산 중 까미·누리·슬라임 등장 확률 배율. 기본 ×0.5, 행운의 편지 6단계부터 ×0.75. */
 export const specialOfflineScale = (s: LetterState | undefined, base: number) => letterRank(s) >= LETTER.offlineRank ? Math.max(base, LETTER.offlineScale) : base;
@@ -65,6 +65,9 @@ export const mimicTier = (tier: number) => Math.max(0, Math.min(MIMIC.tierCap, t
  * 예: 난이도 10, 열 번째 사냥터 → 0.65% × 3.25 ≈ 2.1%. 최대(난이도 20 · 용의 둥지) ≈ 4.3%. */
 export const mimicChance = (tier: number, stageIndex = 0) => (MIMIC.chance + mimicTier(tier) * MIMIC.chancePerTier) * mimicStageMultiplier(stageIndex);
 export const mimicStageMultiplier = (stageIndex: number) => 1 + Math.min(Math.max(0, stageIndex), MIMIC_STAGE_CAP_INDEX) * MIMIC.stageStep;
-/** v27.60 행운의 편지(세계석 연구 id messageBottle): 까미·경험의 누리 등장 확률 배율. 단계마다 +15%. */
+/** v27.60 행운의 편지(세계석 연구 id messageBottle): 까미·경험의 누리 등장 확률 배율. 단계마다 +15%.
+ * v3.287 이 보너스(배율 − 1)는 제단 축복 · 서버 이벤트 · 직업 보너스와 곱하지 않고 더합니다(specialFind). */
 export const LUCKY_LETTER_PER_RANK = .15;
 export const specialLuck = (s: { permanent?: Record<string, number> }) => 1 + (s.permanent?.messageBottle || 0) * LUCKY_LETTER_PER_RANK;
+/** v3.287 까미 · 누리 출현 보너스 합산: 1 + (편지 − 1) + (이벤트 · 제단 축복 − 1) + 직업 보너스. 전에는 모두 곱해 겹치면 최대 ×19까지 갔습니다. */
+export const specialFind = (letter: number, event: number, job: number) => Math.max(0, 1 + (letter - 1) + (event - 1) + job);
