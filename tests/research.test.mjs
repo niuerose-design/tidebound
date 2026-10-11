@@ -377,6 +377,7 @@ test('v3.161 essence slime: shares the special roll right after the nuri band, p
     const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.skills = ['hook']; return s; };
     const c = Enc.specialChances(make());
     assert.ok(c.slimeP > 0 && Math.abs(c.slimeP - Sl.slimeChance(10)) < 1e-12, 'slime band = base + 10 × per tier');
+    assert.equal(Sl.slimeChance(200), Sl.slimeChance(40), 'v3.290 tier part stops at 40'); assert.ok(Sl.slimeBundle(200) > Sl.slimeBundle(40), 'the bundle still grows');
     assert.deepEqual(c.king, { mimic: 0, nuri: 0, slime: 0 }, 'no king before 30 small ones');
     assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP / 2, c), 'slime'); assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP * 1.01, c), undefined);
     const s = make(); Enc.spawn(s, () => c.mimicP + c.nuriP + c.slimeP / 2);
