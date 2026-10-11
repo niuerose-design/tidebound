@@ -2476,3 +2476,16 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .m-dark b:nth-child(2),.m-dark b:nth-child(3){display:none}
 @keyframes markDark{0%{scale:1.6;opacity:0}40%{opacity:1}100%{scale:.4;opacity:0}}
 @media(prefers-reduced-motion:reduce){.cast-mark{display:none}}
+
+/* v3.273 다듬기: 몬스터 HP · 이름 칸은 타격 자국(낙뢰 등, .cast-layer z-index 4) 위에 둡니다. 얼음 파편은 더 크게 · 멀리. */
+.battle-scene .scene-foe-hud{z-index:5}
+.m-frost b{left:-7px;top:-20px;width:14px;height:40px}
+.m-frost b:nth-child(1){--a:-70deg}.m-frost b:nth-child(2){--a:10deg}.m-frost b:nth-child(3){--a:160deg}
+@keyframes markShard{0%{rotate:var(--a);translate:0 0;opacity:0;scale:.6}20%{opacity:1;scale:1}100%{rotate:var(--a);translate:calc(cos(var(--a)) * 64px) calc(sin(var(--a)) * 64px);opacity:0}}
+/* v3.273 처치 보상 문구: 넓은 장면은 몬스터 왼쪽 옆(HP 칸 · 피해 숫자와 떨어짐), 좁은 장면은 HP 칸 위로. */
+.battle-scene .scene-loot{left:calc(var(--foe-x) - var(--foe-size) * .5 - 90px);top:calc(var(--foe-top) - 24px - var(--row,0) * 22px)}
+@container (max-width:560px){.battle-scene .scene-loot{left:calc(var(--foe-x) - 40px);top:calc(var(--foe-top) - 74px - var(--row,0) * 20px)}}
+
+/* v3.273 피해 숫자 기준선: 머리 위 HP 칸에 상태이상 줄이 붙어 칸이 높아져도 겹치지 않게 조금 더 위. */
+.battle-scene .scene-dmg.foe{top:calc(var(--foe-top) - 132px + var(--dy,0px))}
+@container (max-width:560px){.battle-scene .scene-dmg.foe{top:calc(var(--foe-top) - 104px + var(--dy,0px))}}
