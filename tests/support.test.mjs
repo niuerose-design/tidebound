@@ -206,3 +206,13 @@ test('v3.296 tier-5 magic/split actives cost 670 mana (80% of the Fire/Poison ar
     for (const [id, mana] of [['veinBurst', 80], ['genesisRune', 80], ['divineWard', 120], ['oceanOfLife', 128]]) assert.equal(SKILLS.find(s => s.id === id).manaCost, mana, id);
     assert.equal(SKILLS.find(s => s.id === 'doomMark').manaCost, 880); assert.equal(SKILLS.find(s => s.id === 'endOfAll').manaCost, 800);
 });
+
+test('v3.298 monster bleed/burn/poison: tick × foeDotScale and no instant first tick; the player\'s own bleed keeps the first tick', () => {
+    const mk = (foe, id) => ({ name: foe ? 'M' : 'P', foe, stats: { ...base, attack: 2000, magic: 2000 }, hp: 1e6, mana: 0, skills: [id], cooldowns: {}, stun: 0, effects: {}, ranks: { [id]: 1 }, mastery: {}, practice: {} });
+    const victim = () => ({ name: 'V', stats: { ...base, defense: 1000, resist: 1000, hp: 20000 }, hp: 20000, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const b = victim(), ev = []; strike(mk(true, 'foeBarbs'), b, () => 0, ev);
+    assert.ok(!ev.some(e => e.onset), 'no instant tick from a monster');
+    assert.equal(b.effects.dot.damage, Math.floor(2000 * .42 * .5), 'tick = attack × bleedRatio × foeDotScale');
+    const p = victim(); p.foe = true; const ev2 = []; strike(mk(false, 'foeBarbs'), p, () => 0, ev2);
+    assert.ok(ev2.some(e => e.onset), 'player bleed still opens with a tick');
+});

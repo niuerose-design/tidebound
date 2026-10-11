@@ -136,6 +136,8 @@ export const SKILL_FORMULA = {
     poisonRatio: .12, poisonHpRatio: .0015,
     /** v27.48 화상(중독과 출혈의 중간): 한 중첩의 틱 비율, 받는 직접 피해 증가(출혈의 절반). */
     burnRatio: .18, burnHpRatio: .0025, burnVulnerability: .06,
+    /** v3.298 몬스터가 거는 출혈 · 중독 · 화상: 틱(위력분 · 체력분) × foeDotScale, 처음 걸 때 첫 틱을 바로 주지 않습니다. 방어를 무시해 방어 1,000에서 기본 공격의 35~42배가 들어왔습니다. 대신 몬스터의 다른 피해 기술을 올렸습니다(encounters.ts). */
+    foeDotScale: .5,
     /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +5%(superCritPerHundred, v3.210 +1% → +5%). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
     critCap: 1, superCritPerHundred: .05, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
     // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
