@@ -162,6 +162,12 @@ export const SKILL_FORMULA = {
     thornsLifestealScale: 2,
     // v27.2 탱커 개편: 반격은 공격자 방어를 thornsPierce만큼 무시하고, 무리(×N)를 상대할 때 (1 + log2 N)배(최대 swarmThornsCap)로 커집니다. 여러 마리가 한꺼번에 가시에 부딪히는 셈.
     thornsPierce: .5, swarmThornsCap: 10,
+    /** v3.298 수호력: (방어 + 마방) × (floor + (1 − floor) × 작은 쪽 ÷ 큰 쪽). 방어 · 마방을 고르게 맞출수록 합이 온전히 들어갑니다(방어 · 마방 비례 기술 · 가시). */
+    bulwarkFloor: .5,
+    /** v3.298 방어 계열 직업은 보스(사냥감)와 무리(×2 이상)에게 주는 피해 · 반격이 +tankEdge. 무리 서식지 · 보스전을 탱커 담당으로 만듭니다. */
+    tankEdge: .25,
+    /** v3.298 수호의 일격: 방어 계열 직업의 모든 공격(기본 공격 포함) 기준값에 수호력 × tankStrike를 더합니다. 방어 · 마방을 맞출수록 화력이 됩니다. */
+    tankStrike: .5,
     // v27.3 지속 피해는 틱마다 대상 최대 체력 비례 피해를 더합니다(무리는 한 마리 기준). v27.57부터 종류별 비율(bleedHpRatio·poisonHpRatio·burnHpRatio). 이 값은 옛 기준(설명용).
     // v3.54 지속 피해의 체력 비례분은 틱 때 대상의 현재 체력 기준입니다. 보스·월드보스처럼 체력이 큰 상대에게 비례분이 끝없이 커지던 것을 막고, 체력이 깎일수록 줄어듭니다.
     // 무리에게는 한 마리 체력 × √N(swarmDotShare)으로 셉니다.

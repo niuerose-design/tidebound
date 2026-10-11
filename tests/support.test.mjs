@@ -76,7 +76,7 @@ test('v25.24 swap scaling: brawnWave deals magic damage from physical attack; v3
 });
 
 test('v25.25 thorns lifesteal: the defender heals by reflected damage × lifesteal', () => {
-    const a = fighter('hook'), b = target({ hp: 1000, stats: { ...base, defense: 100, thorns: .5, lifesteal: .1 } });
+    const a = fighter('hook'), b = target({ hp: 1000, stats: { ...base, defense: 100, resist: 100, thorns: .5, lifesteal: .1 } /* v3.298 수호력은 방어 · 마방을 함께 봄 */ });
     strike(a, b, () => 0);
     assert.ok(a.hp < 1000, 'thorns hurt the attacker');
     const reflected = 1000 - a.hp; assert.ok(b.hp > 1000 - reflected, 'thorns lifesteal healed the defender'); assert.ok(b.hp > 0 && b.hp <= b.stats.hp, 'never above max');
@@ -173,12 +173,12 @@ test('v26.7 magic attacks take half of the target evasion and never a negative t
 
 test('v27.2 thorns scale with swarm size, ignore half of attacker defense, and tank passives raise swarm encounter odds', async () => {
     const { SKILL_FORMULA, variantChances } = await import('./harness.mjs');
-    const tank = () => ({ name: 'T', stats: { ...base, defense: 100, thorns: .4 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
+    const tank = () => ({ name: 'T', stats: { ...base, defense: 100, resist: 100, thorns: .4 } /* v3.298 수호력 200 */, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {} });
     const foe = (swarm) => ({ name: 'F', stats: { ...base, attack: 50, defense: 100 }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 100, ...(swarm ? { swarm } : {}) });
     const t1 = tank(), f1 = foe(); strike(f1, t1, () => .5); const single = 1e6 - f1.hp;
     const t2 = tank(), f2 = foe(100); strike(f2, t2, () => .5); const crowd = 1e6 - f2.hp;
     assert.ok(single >= 1, 'thorns fired'); assert.ok(Math.abs(crowd / single - (1 + Math.log2(100))) < .15, `×100 swarm reflects (1+log2 100)≈7.6x: ${crowd}/${single}`);
-    assert.equal(single, Math.round(100 * .4 * 100 / (100 + 100 * 2 * (1 - SKILL_FORMULA.thornsPierce))), 'attacker defense counted at thornsPierce');
+    assert.equal(single, Math.round(200 * .4 * 100 / (100 + 100 * 2 * (1 - SKILL_FORMULA.thornsPierce))), 'attacker defense counted at thornsPierce (수호력 200)');
     const s = newState(0); s.level = 30; s.unlockedJobs.push('bulwark'); s.job = 'bulwark'; s.learned.ironWill = 1;
     const before = variantChances(s).swarm; s.skills = ['ironWill']; assert.ok(canUse(s, 'ironWill')); const after = variantChances(s).swarm;
     assert.ok(Math.abs(after / before - 1.5) < 1e-6, `파워 가드 +50% 무리 조우: ${before} → ${after}`);

@@ -266,3 +266,13 @@ test('v3.297 마력 line regen ×3: new rolls use base2 .036; existing flow/curr
  migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30);assert.equal(s.inventory[0].affixes[0].value,200,'max mana unchanged');assert.equal(s.inventory[0].affixes[1].value,12);
  migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30,'once');assert.equal(newState(0).manaRegenRescaled,true,'fresh saves skip it');
 });
+test('v3.298 tanks: 수호력 rewards balanced 방어 · 마방; defense-tree jobs (not healers) get 수호의 일격 and +tankEdge vs bosses and swarms', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),St=await L.load('systems/stats'),C=await L.load('systems/combat'),B=await L.load('data/balance');
+ assert.equal(St.bulwark({defense:100,resist:0}),50);assert.equal(St.bulwark({defense:100,resist:100}),200);assert.ok(St.bulwark({defense:100,resist:100})>St.bulwark({defense:150,resist:50}),'same sum, balanced is bigger');
+ const job=id=>{const s=newState(0);s.job=id;return stats(s).tankEdge;};
+ assert.equal(job('abyssBastion'),B.SKILL_FORMULA.tankEdge);assert.equal(job('wardDeity'),B.SKILL_FORMULA.tankEdge);assert.equal(job('lifeOcean'),0,'healer');assert.equal(job('hero'),0);
+ const base={hp:1e9,attack:100,magic:0,defense:100,resist:100,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
+ const f=(extra={},more={})=>({name:'A',stats:{...base,...extra},hp:1e9,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{},...more});
+ const hit=(edge,prey)=>{const t=f({defense:0,resist:0},{foe:true,prey});C.strike(f({tankEdge:edge}),t,()=>0);return 1e9-t.hp;};
+ assert.ok(hit(.25,false)>hit(0,false),'수호의 일격 adds 수호력 to every hit');assert.ok(Math.abs(hit(.25,true)/hit(.25,false)-1.25)<.01,'+tankEdge vs a boss');
+});

@@ -41,6 +41,8 @@ export type Stats = {
     wardAffinity?: number;
     /** 회복 직업이면 1. 회복이 필요 없을 때 쓴 회복 기술도 피해가 줄지 않습니다. */
     healFocus?: number;
+    /** v3.298 탱커(방어 계열 직업)의 보스 · 무리 상대 피해 · 반격 배율 보너스. */
+    tankEdge?: number;
     /** 마법 직업의 기본 공격이 마력 평타(마법 공격 × arcaneStrikeRatio, 마나 없음)로 바뀔 확률. */
     arcaneStrike?: number;
     /** v22 장비 규칙 옵션. 기존 기술 규칙의 숫자 하나만 바꿉니다(상한은 data/gear.ts RULE_CAPS). */
