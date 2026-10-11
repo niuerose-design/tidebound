@@ -295,7 +295,7 @@ test('v3.303 gear hp · defense · resist · mana ×0.6 (bases, affixes, existin
  const C=await L.load('data/classes'),Sk=await L.load('data/skills'),core=id=>Sk.SKILLS.find(k=>k.core&&k.job===id)?.core.scale;
  for(const id of ['abyssBastion','worldTurtle']){assert.equal(C.jobById(id).tree,'defense');const c=core(id);assert.ok(c.defense>=.25&&c.resist>=.25,`${id} tank guard ${JSON.stringify(c)}`);}
  assert.equal(core('hero').defense,.08,'dealers get the small defense share and more mana');assert.equal(core('hero').mana,.5);
- const E=Pg.ATTRIBUTE_EFFECTS;assert.deepEqual([E.vit.hp,E.vit.defense,E.wis.resist,E.wis.mana,E.str.defense,E.int.resist,E.int.mana],[18,2.4,4,4,undefined,undefined,1.4],'gear → attributes; defense only from vit, resist only from wis');
+ const E=Pg.ATTRIBUTE_EFFECTS;assert.deepEqual([E.vit.hp,E.vit.defense,E.wis.resist,E.wis.mana,E.str.defense,E.int.resist,E.int.mana],[18,2.2,3.3,4,undefined,undefined,1.4],'gear → attributes; defense only from vit, resist only from wis');
  const g=newState(0);g.level=100;g.job='grandMagus';g.unlockedJobs.push('grandMagus');g.learned.magusDomain=1;g.skills=['magusDomain'];const t={};stats(g,t);
  for(const k of ['defense','resist','mana'])assert.ok(t[k].some(x=>x.source==='skills'&&x.factor>1),`core passive multiplies ${k}`);
 });
