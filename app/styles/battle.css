@@ -1929,6 +1929,16 @@
 .scene-foe-name{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 5px;margin-top:4px;font-size:11.5px;font-weight:700;color:#f3ede2;text-shadow:0 1px 3px #041219,0 0 6px #041219;white-space:nowrap;line-height:1.3}
 .scene-foe-name small{font-size:10px;font-weight:700;color:#ffd76a}
 .scene-foe-name small.boss{color:#ff8f7a;letter-spacing:.08em}
+/* v3.294 대왕: 👑 KING 표시 · 보라~금 그라데이션 이름 · 보라 체력바, 몸에는 보라 오라와 머리 위 왕관. */
+.scene-foe-name small.king{color:#e2c2ff;letter-spacing:.08em;text-shadow:0 0 6px #a35cff}
+.scene-foe-hud.king .scene-foe-label{background:linear-gradient(90deg,#c58cff,#ffd98a);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;filter:drop-shadow(0 1px 1px #0009)}
+.scene-foe-hud.king .meter.enemy [data-slot=progress-indicator]{background:linear-gradient(90deg,#7b2fd6,#c58cff)}
+.scene-foe-hud.king{width:150px}
+.battle-scene .scene-foe.king img{animation:kingAura 2.4s ease-in-out infinite}
+.battle-scene .scene-foe-wrap .scene-foe.king::after{content:'👑';position:absolute;left:50%;top:-14%;translate:-50% 0;font-size:calc(var(--foe-size,128px) * .2);filter:drop-shadow(0 0 6px #ffd98a);animation:kingCrown 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes kingAura{0%,100%{filter:drop-shadow(0 0 6px #a35cffaa) drop-shadow(0 0 2px #ffd98a66)}50%{filter:drop-shadow(0 0 18px #b06cffee) drop-shadow(0 0 6px #ffd98aaa)}}
+@keyframes kingCrown{0%,100%{translate:-50% 0}50%{translate:-50% -4px}}
+@media(prefers-reduced-motion:reduce){.battle-scene .scene-foe.king img{animation:none;filter:drop-shadow(0 0 10px #a35cffcc)}.battle-scene .scene-foe-wrap .scene-foe.king::after{animation:none}}
 .scene-foe-name .name-statuses{pointer-events:auto}
 .scene-foe-hud{width:120px;left:min(var(--foe-x),calc(100% - 92px));top:calc(var(--foe-feet) + 10px)}
 /* HP 숫자는 몬스터 그림을 가리지 않게 바 아래에. */
