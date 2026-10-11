@@ -305,12 +305,12 @@ export function CastFx({ effect, boss = false }: { effect: CombatFx[]; boss?: bo
 type Pop = { key: string; at: 'foe' | 'me'; text: string; kind: 'hit' | 'crit' | 'super' | 'miss' | 'heal' | 'dot' | 'taken'; delay: number; dx: number; dy: number };
 /** v3.269 연타 숫자는 위로 25px씩 쌓고, 장면 안쪽으로 조금씩 비켜 둡니다(몬스터는 오른쪽 끝이라 왼쪽, 내 캐릭터는 왼쪽 끝이라 오른쪽). */
 const jitter = (n: number, spread: number) => ((n * 37) % 11 - 5) / 5 * spread;
-function popsOf(fx: CombatFx): Pop[] {
+function popsOf(fx: CombatFx, lane = 0): Pop[] {
     const out: Pop[] = [], target = fx.target === 'player' ? 'me' : 'foe', self = fx.actor === 'player' ? 'me' : 'foe';
     const impact = target === 'foe' ? sceneImpactMs(fx) : 0;
     if (fx.dot) out.push({ key: `${fx.id}-dot`, at: self, text: `${fx.dot.name} −${fx.dot.value.toLocaleString()}`, kind: 'dot', delay: fx.delay, dx: 0, dy: 26 });
     fx.hits.forEach((h, i) => out.push({
-        key: `${fx.id}-${i}`, at: target, delay: fx.delay + impact + i * 160, dx: (target === 'foe' ? -1 : 1) * i * 12 + jitter(fx.id + i * 3, 4), dy: -i * 25,
+        key: `${fx.id}-${i}`, at: target, delay: fx.delay + impact + i * 160, dx: (target === 'foe' ? -1 : 1) * (i * 12 + lane * 44) + jitter(fx.id + i * 3, 4), dy: -i * 30 - lane * 18,
         text: h.miss ? 'MISS' : `${target === 'me' ? '−' : ''}${h.value.toLocaleString()}`,
         kind: h.miss ? 'miss' : target === 'me' ? 'taken' : h.superCritical ? 'super' : h.critical ? 'crit' : 'hit',
     }));
@@ -320,7 +320,11 @@ function popsOf(fx: CombatFx): Pop[] {
     return out;
 }
 export function SceneDamage({ effect }: { effect: CombatFx[] }) {
-    return <div className="scene-dmg-layer" aria-hidden="true">{effect.flatMap(popsOf).map(p => <b key={p.key} className={`scene-dmg ${p.at} ${p.kind}`} style={{ '--fx-delay': `${p.delay}ms`, '--dx': `${p.dx}px`, '--dy': `${p.dy}px` } as React.CSSProperties}>{p.kind === 'crit' || p.kind === 'super' ? <small>{p.kind === 'super' ? 'SUPER CRITICAL' : 'CRITICAL'}</small> : null}{p.text}</b>)}</div>;
+    // v3.273 잇달아 맞은 스킬마다 다른 줄(lane)에 숫자를 띄워 겹치지 않게 합니다. 줄 = 화면에 남은 같은 대상 연출 가운데 순서(0~3).
+    // 오래된 연출은 숫자가 다 사라진 뒤(1.5초) 묶음째 지워지므로, 뜨는 동안 숫자가 옮겨 가지 않습니다.
+    const order = { player: 0, enemy: 0 };
+    const pops = effect.flatMap(fx => popsOf(fx, order[fx.target]++ % 4));
+    return <div className="scene-dmg-layer" aria-hidden="true">{pops.map(p => <b key={p.key} className={`scene-dmg ${p.at} ${p.kind}`} style={{ '--fx-delay': `${p.delay}ms`, '--dx': `${p.dx}px`, '--dy': `${p.dy}px` } as React.CSSProperties}>{p.kind === 'crit' || p.kind === 'super' ? <small>{p.kind === 'super' ? 'SUPER CRITICAL' : 'CRITICAL'}</small> : null}{p.text}</b>)}</div>;
 }
 
 /**
