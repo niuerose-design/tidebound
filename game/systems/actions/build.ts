@@ -245,7 +245,16 @@ export const buildActions: ActionHandlers = {
     savePreset(s, { a, id }) {
         if (!['1', '2', '3'].includes(id))
             throw Error('저장 칸을 확인하세요.');
-        s.presets[id] = { name: (a.value || `편성 ${id}`).slice(0, 20), skills: [...s.skills] };
+        // v3.295 다시 저장해도 붙여 둔 이름은 그대로 둡니다(이름을 함께 보내면 그 이름).
+        s.presets[id] = { name: (a.value?.trim() || s.presets[id]?.name || `편성 ${id}`).slice(0, 20), skills: [...s.skills] };
+    },
+    /** v3.295 편성 이름 바꾸기(1~20자). 저장한 칸만 바꿀 수 있습니다. */
+    renamePreset(s, { a, id }) {
+        const preset = s.presets[id];
+        if (!preset) throw Error('저장한 편성만 이름을 바꿀 수 있습니다.');
+        const name = (a.value || '').trim().slice(0, 20);
+        if (!name) throw Error('편성 이름을 적으세요.');
+        preset.name = name;
     },
     loadPreset(s, { id }) {
         const preset = s.presets[id];
