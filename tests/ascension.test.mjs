@@ -717,20 +717,22 @@ test('v3.122 onyx accessory level: the higher of its habitat level and my level 
 test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
     const Eq = await L.load('systems/equipment');
     const sum = k => ['rod', 'coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
-    assert.equal(sum('hp'), 8); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(sum('defense'), 1); assert.equal(sum('resist'), .5);
-    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .5 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.5, mana: .5, defense: .6, resist: .3 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.5, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 2, mana: .5, defense: .4, resist: .2 });
+    // v3.302: hp · defense · resist ×0.9 everywhere (gear → skill · attribute weight), slot ratios unchanged.
+    const rd = n => Math.round(n * 100) / 100;
+    assert.equal(rd(sum('hp')), 7.2); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(rd(sum('defense')), .9); assert.equal(rd(sum('resist')), .45);
+    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .5 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.15, mana: .5, defense: .54, resist: .27 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.25, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 1.8, mana: .5, defense: .36, resist: .18 });
     const base = (slot) => ({ id: slot, slot, style: 'balanced', rarity: 0, power: 100, level: 100, enhance: 0, name: slot, affixes: [] });
     const coat = Eq.itemStats(base('coat')), cape = Eq.itemStats(base('cape')), charm = Eq.itemStats(base('charm')), rod = Eq.itemStats({ ...base('rod'), style: 'physical' });
-    assert.equal(coat.hp, 350); assert.equal(coat.defense, 60); assert.equal(coat.resist, 30); assert.equal(coat.mana, 50);
-    assert.equal(cape.hp, 250); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
-    assert.equal(charm.hp, 200); assert.equal(charm.defense, 40); assert.equal(charm.resist, 20); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
+    assert.equal(Math.round(coat.hp), 315); assert.equal(Math.round(coat.defense), 54); assert.equal(Math.round(coat.resist), 27); assert.equal(coat.mana, 50);
+    assert.equal(Math.round(cape.hp), 225); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
+    assert.equal(Math.round(charm.hp), 180); assert.equal(Math.round(charm.defense), 36); assert.equal(Math.round(charm.resist), 18); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
     assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
     // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 지능 → 마방 .25만 추가(v3.136 체질 → 마방 .4는 제거). 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
     const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
-    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .25);
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .3, 'v3.302 .25 → .3');
     const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
     assert.ok(r1 === r0 && r2 > r0, 'v3.136 only int raises resist; vit no longer does');
-    assert.equal(coat.hp + cape.hp + charm.hp, 800, 'four-slot hp total is unchanged (6 + 2 before)');
+    assert.equal(Math.round(coat.hp + cape.hp + charm.hp), 720, 'four-slot hp total (800 before v3.302 ×0.9)');
 });
 test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
     const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');

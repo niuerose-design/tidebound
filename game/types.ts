@@ -772,7 +772,7 @@ export type State = {
     relicRule?: boolean;
     /** v3.297 이미 붙은 마력 · 순환 줄의 턴당 마나 회복을 ×3으로 바꿨는지(한 번만). */
     manaRegenRescaled?: boolean;
-    /** v3.302 이미 붙은 주 능력치 옵션(맹공 · 신비 · 위력 · 생명)을 −10%로 맞췄는지(한 번만). */
+    /** v3.302 이미 붙은 주 능력치 · 방어 옵션(맹공 · 신비 · 위력 · 생명 · 철갑 · 정신 · 수호)을 −10%로 맞췄는지(한 번만). */
     mainAffixRescaled?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
