@@ -2,38 +2,38 @@ import { tierHealth, tierAttack } from '../systems/meta';
 import type { Skill, Stats } from '../types';
 import { bossLevelScale, monsterLevelScale, dungeonPressure, MONSTER_TUNING, DUNGEON_TUNING, ABYSS_TUNING } from './balance';
 export const ENEMY_SKILLS: Skill[] = [
-    { id: 'foeShock', name: '마력 방출', desc: '마법 공격', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.5, damageType: 'magic', manaCost: 0 },
-    { id: 'foeBurn', name: '불꽃 숨결', desc: '마법 공격 110% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .28, cooldown: 3, multiplier: 1.1, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    { id: 'foeShock', name: '마력 방출', desc: '마법 공격 170% 피해. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 3, multiplier: 1.7, penetrationBonus: .57, damageType: 'magic', manaCost: 0 },
+    { id: 'foeBurn', name: '불꽃 숨결', desc: '마법 공격 190% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .28, cooldown: 3, multiplier: 1.9, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'foeVenom', name: '독 포자', desc: '피해 없이 중독 1중첩.', type: 'active', level: 1, chance: .25, cooldown: 4, multiplier: 1, effect: 'poison', statusTurns: 5, statusOnly: true, manaCost: 0 },
     { id: 'foeCrush', name: '몸통 박치기', desc: '피해 없이 2턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 5, multiplier: 1.3, effect: 'stun', statusTurns: 2, statusOnly: true, manaCost: 0 },
     { id: 'foeSilence', name: '무음의 포효', desc: '피해 없이 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.15, effect: 'silence', damageType: 'magic', statusTurns: 4, statusOnly: true, manaCost: 0 },
     { id: 'foeSlow', name: '끈적한 점액', desc: '피해 없이 5턴 감속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, effect: 'slow', damageType: 'magic', statusTurns: 5, statusOnly: true, manaCost: 0 },
-    { id: 'foeHaste', name: '광폭화', desc: '물리 공격 110% 피해, 자신을 3턴 가속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, effect: 'haste', statusTurns: 3, manaCost: 0 },
+    { id: 'foeHaste', name: '광폭화', desc: '물리 공격 170% 피해, 자신을 3턴 가속. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.7, penetrationBonus: .57, effect: 'haste', statusTurns: 3, manaCost: 0 },
     // v27.69 각성: 자신에게 상태이상이 걸렸을 때만(condition 'afflicted') 출혈·중독·화상·감속·약화를 풀고 wardTurns턴 동안 모든 상태이상 면역. 보스와 고레벨 몬스터가 씁니다. 침묵 중에는 못 씁니다.
     { id: 'foeWard', name: '각성', desc: '자신의 출혈·중독·화상·감속·약화를 풀고 3턴 동안 모든 상태이상에 면역.', type: 'active', level: 1, chance: .45, cooldown: 8, multiplier: 1, statusOnly: true, cleanseSelf: true, wardTurns: 3, condition: 'afflicted', manaCost: 0 },
-    { id: 'foeFrenzy', name: '난타', desc: '물리 공격 후 1회의 추가타.', type: 'active', level: 1, chance: .22, cooldown: 5, multiplier: 1.35, extraAttacks: 1, extraAttackMultiplier: .7, manaCost: 0 },
+    { id: 'foeFrenzy', name: '난타', desc: '물리 공격 100% 피해 후 1회의 추가타. 방어 57% 관통.', type: 'active', level: 1, chance: .22, cooldown: 5, multiplier: 1.0, penetrationBonus: .57, extraAttacks: 1, extraAttackMultiplier: .7, manaCost: 0 },
     // v27 피해 유형 다양화: 물리 출혈기 · 마법 약화기 · 복합 강타.
-    { id: 'foeBarbs', name: '가시 찌르기', desc: '물리 공격 105% 피해 + 3턴 출혈.', type: 'active', level: 1, chance: .24, cooldown: 4, multiplier: 1.05, effect: 'bleed', statusTurns: 3, manaCost: 0 },
-    { id: 'foeInkBurst', name: '어둠의 기운', desc: '마법 공격 115% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.15, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
-    { id: 'foeShellRam', name: '돌진', desc: '물리 공격 125% 피해.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.25, manaCost: 0 },
-    { id: 'foeTideSlam', name: '대지 강타', desc: '복합 피해 120%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.2, damageType: 'split', manaCost: 0 },
+    { id: 'foeBarbs', name: '가시 찌르기', desc: '물리 공격 190% 피해 + 3턴 출혈.', type: 'active', level: 1, chance: .24, cooldown: 4, multiplier: 1.9, effect: 'bleed', statusTurns: 3, manaCost: 0 },
+    { id: 'foeInkBurst', name: '어둠의 기운', desc: '마법 공격 170% 피해 + 3턴 약화. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.7, penetrationBonus: .57, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'foeShellRam', name: '돌진', desc: '물리 공격 170% 피해. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.7, penetrationBonus: .57, manaCost: 0 },
+    { id: 'foeTideSlam', name: '대지 강타', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.7, penetrationBonus: .57, damageType: 'split', manaCost: 0 },
     // v3.12 칠흑의 보스 고유 기술: 보스마다 하나씩, 성향(PROFILES onyx*)과 함께 공격 패턴을 가릅니다.
-    { id: 'onyxDread', name: '공포의 포효', desc: '물리 공격 130% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.3, effect: 'weaken', statusTurns: 3, manaCost: 0 },
-    { id: 'onyxCommand', name: '지휘관의 돌격', desc: '물리 공격 120% 피해 후 2회의 추가타.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.2, extraAttacks: 2, extraAttackMultiplier: .6, manaCost: 0 },
-    { id: 'onyxWeb', name: '거미줄', desc: '복합 피해 110% + 5턴 감속.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.1, damageType: 'split', effect: 'slow', statusTurns: 5, manaCost: 0 },
-    { id: 'onyxNightmare', name: '악몽', desc: '마법 공격 135% 피해 + 4턴 침묵.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.35, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
-    { id: 'onyxSoulDrain', name: '사령 흡수', desc: '마법 공격 120% 피해, 깎은 체력의 60%를 흡혈.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.2, damageType: 'magic', effect: 'drain', drainRatio: .6, manaCost: 0 },
-    { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 140% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    { id: 'onyxDread', name: '공포의 포효', desc: '물리 공격 195% 피해 + 3턴 약화. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.95, penetrationBonus: .57, effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxCommand', name: '지휘관의 돌격', desc: '물리 공격 90% 피해 후 2회의 추가타. 방어 57% 관통.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 0.9, penetrationBonus: .57, extraAttacks: 2, extraAttackMultiplier: .6, manaCost: 0 },
+    { id: 'onyxWeb', name: '거미줄', desc: '복합 피해 195% + 5턴 감속. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.95, penetrationBonus: .57, damageType: 'split', effect: 'slow', statusTurns: 5, manaCost: 0 },
+    { id: 'onyxNightmare', name: '악몽', desc: '마법 공격 195% 피해 + 4턴 침묵. 방어 57% 관통.', type: 'active', level: 1, chance: .28, cooldown: 5, multiplier: 1.95, penetrationBonus: .57, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
+    { id: 'onyxSoulDrain', name: '사령 흡수', desc: '마법 공격 195% 피해, 깎은 체력의 60%를 흡혈. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.95, penetrationBonus: .57, damageType: 'magic', effect: 'drain', drainRatio: .6, manaCost: 0 },
+    { id: 'onyxSunfire', name: '태양의 불꽃', desc: '마법 공격 240% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 2.4, damageType: 'magic', effect: 'burn', manaCost: 0 },
     // v3.202 자쿰 · 파풀라투스 고유 기술: 전에는 무공과 같은 '고대 보스' 기술 묶음이었습니다.
-    { id: 'zakumArms', name: '여덟 팔 난타', desc: '물리 공격 90% 피해 후 3회의 추가타(각 50%).', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: .9, extraAttacks: 3, extraAttackMultiplier: .5, manaCost: 0 },
-    { id: 'zakumFlame', name: '불꽃 기둥', desc: '마법 공격 130% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 1.3, damageType: 'magic', effect: 'burn', manaCost: 0 },
+    { id: 'zakumArms', name: '여덟 팔 난타', desc: '물리 공격 100% 피해 후 3회의 추가타(각 50%). 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.0, penetrationBonus: .57, extraAttacks: 3, extraAttackMultiplier: .5, manaCost: 0 },
+    { id: 'zakumFlame', name: '불꽃 기둥', desc: '마법 공격 220% 피해 + 화상 1중첩.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 2.2, damageType: 'magic', effect: 'burn', manaCost: 0 },
     { id: 'papTimeStop', name: '시간 정지', desc: '피해 없이 3턴 기절.', type: 'active', level: 1, chance: .2, cooldown: 7, multiplier: 1, effect: 'stun', statusTurns: 3, statusOnly: true, manaCost: 0 },
-    { id: 'papRift', name: '차원의 균열', desc: '마법 공격 140% 피해 + 3턴 약화.', type: 'active', level: 1, chance: .28, cooldown: 4, multiplier: 1.4, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
-    { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 160%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 1.6, damageType: 'split', manaCost: 0 },
+    { id: 'papRift', name: '차원의 균열', desc: '마법 공격 195% 피해 + 3턴 약화. 방어 57% 관통.', type: 'active', level: 1, chance: .28, cooldown: 4, multiplier: 1.95, penetrationBonus: .57, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
+    { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 210%. 물리·마법 방어를 절반씩 적용합니다. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 2.1, penetrationBonus: .57, damageType: 'split', manaCost: 0 },
     // v3.278 스우 · 데미안.
-    { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 140% 피해 + 3턴 부식(물리 · 마법 방어와 속도 감소).', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.4, effect: 'corrode', statusTurns: 3, manaCost: 0 },
-    { id: 'onyxBrand', name: '낙인', desc: '복합 피해 150% + 3턴 출혈. 물리 · 마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 1.5, damageType: 'split', effect: 'bleed', statusTurns: 3, manaCost: 0 },
-    { id: 'onyxGenesis', name: '창세', desc: '복합 피해 170%. 물리·마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 1.7, damageType: 'split', manaCost: 0 },
+    { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 195% 피해 + 3턴 부식(물리 · 마법 방어와 속도 감소). 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.95, penetrationBonus: .57, effect: 'corrode', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxBrand', name: '낙인', desc: '복합 피해 250% + 3턴 출혈. 물리 · 마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 2.5, damageType: 'split', effect: 'bleed', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxGenesis', name: '창세', desc: '복합 피해 210%. 물리·마법 방어를 절반씩 적용합니다. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 2.1, penetrationBonus: .57, damageType: 'split', manaCost: 0 },
 ];
 let enemySkillIndex: Map<string, Skill> | undefined;
 /** 몬스터 스킬 id로 찾기. */

@@ -838,18 +838,20 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
+    // v3.298 몬스터가 거는 지속 피해는 틱 × foeDotScale, 첫 틱 즉시 없음.
+    const foeDot = a.foe ? SKILL_FORMULA.foeDotScale : 1;
     if (landed && chosen && effect === 'bleed' && immuneTo('bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
     else if (landed && chosen && effect === 'bleed') {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus);
         const name = chosen.dotName || '출혈';
         // v27.3 틱 피해 = 위력 비례 + 대상 체력 비례(v3.54 틱 때 현재 체력 × bleedHpRatio, 무리는 × swarmDotShare). 방어·반격을 모두 무시하므로 탱커의 카운터입니다.
-        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpRatio = SKILL_FORMULA.bleedHpRatio * swarmDotShare(b.swarm);
+        const tick = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.bleedRatio) * (1 + (sa.dotBonus || 0) + (sa.bleedBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * foeDot));
+        const hpRatio = SKILL_FORMULA.bleedHpRatio * swarmDotShare(b.swarm) * foeDot;
         // v27.17 출혈은 중첩되지 않습니다. 다시 걸면 더 강한 피해와 더 긴 지속으로 갱신합니다.
         const current = b.effects.dot;
         // v3.54 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
         // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
-        if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(dotHp(b), hpRatio, 0) });
+        if (opens(b, 'bleed') && !a.foe) onset.push({ name, value: tick + hpPart(dotHp(b), hpRatio, 0) });
         markPierce('bleed', !!current);
         b.effects.dot = { damage: Math.max(tick, current?.hpRatio === undefined ? 0 : current.damage), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
@@ -861,12 +863,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (landed && chosen && (effect === 'poison' || also === 'poison') && immuneTo('poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
     else if (landed && chosen && (effect === 'poison' || also === 'poison')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus);
-        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpRatio = SKILL_FORMULA.poisonHpRatio * swarmDotShare(b.swarm);
+        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * foeDot));
+        const hpRatio = SKILL_FORMULA.poisonHpRatio * swarmDotShare(b.swarm) * foeDot;
         const current = b.effects.poison;
         // v3.54 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
-        if (first) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
+        if (first && !a.foe) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         markPierce('poison', !!current);
         b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
@@ -876,12 +878,12 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (landed && chosen && (effect === 'burn' || also === 'burn') && immuneTo('burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
     else if (landed && chosen && (effect === 'burn' || also === 'burn')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus);
-        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
-        const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm);
+        const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * foeDot));
+        const hpRatio = SKILL_FORMULA.burnHpRatio * swarmDotShare(b.swarm) * foeDot;
         const current = b.effects.burn;
         // v3.54 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
-        if (first) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
+        if (first && !a.foe) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
         markPierce('burn', !!current);
         b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
