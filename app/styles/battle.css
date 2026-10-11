@@ -712,7 +712,7 @@
 .scene-fx-ult .scene-fx-dark{inset:0;background:#040c10;animation:sceneDark 2.4s ease-in-out var(--fx-delay) both}
 .scene-fx-ult .scene-fx-flash{inset:0;background:radial-gradient(ellipse at 62% 48%,color-mix(in srgb,var(--fx) 70%,#fff) 0%,color-mix(in srgb,var(--fx) 45%,transparent) 30%,transparent 64%);animation:sceneFinaleFlash 2.4s ease-out var(--fx-delay) both;mix-blend-mode:screen}
 .scene-fx-ult .ult-a,.scene-fx-ult .ult-b{position:absolute;pointer-events:none}
-.scene-fx-ult .ult-frag{position:absolute;left:var(--foe-x,62%);top:var(--foe-y,48%);font:700 24px/1 monospace;color:var(--fx);text-shadow:0 0 12px var(--fx);animation:ultFrag 1.4s ease-out calc(var(--fx-delay) + .5s + var(--i) * .07s) both;--ang:calc(var(--i) * 45deg)}
+.scene-fx-ult .ult-frag{position:absolute;left:var(--foe-x,62%);top:var(--foe-y,48%);font:700 24px/1 monospace;color:var(--fx);text-shadow:0 0 12px var(--fx);animation:ultFrag 1.4s ease-out calc(var(--fx-delay) + .9s + var(--i) * .05s) both;--ang:calc(var(--i) * 45deg)}
 .ult-title{position:absolute;left:50%;top:calc(50% + 78px);translate:-50% 0;font-size:22px;font-weight:800;letter-spacing:5px;color:#fff2c4;text-shadow:0 0 16px var(--fx),0 2px 6px #000;white-space:nowrap;animation:sceneTitle 2.4s ease-out var(--fx-delay) both}
 @keyframes ultFrag{0%{opacity:0;transform:rotate(var(--ang)) translateX(10px) scale(.4)}20%{opacity:1}100%{opacity:0;transform:rotate(var(--ang)) translateX(150px) scale(1)}}
 /* 용사의 일격: 흑백 정지 뒤 화면을 가르는 참격 */
@@ -1036,6 +1036,21 @@
 @keyframes ultMahaSweep{0%,25%{opacity:0;rotate:-140deg;scale:.6}32%{opacity:1}55%{opacity:1;rotate:40deg;scale:1.1}100%{opacity:0;rotate:80deg;scale:1.3}}
 @keyframes ultMahaPole{0%{opacity:0;rotate:-120deg;translate:-120px 60px}22%{opacity:1;rotate:-90deg;translate:-120px 40px}36%{opacity:1;rotate:-10deg;translate:0 0}48%{rotate:12deg}75%{opacity:1;rotate:8deg}100%{opacity:0;rotate:20deg}}
 /* v3.177 카르마 퓨리(듀얼블레이드): 참격 네 줄이 엇갈려 연달아 그어집니다 */
+/* v3.280 쿼드러플 스로우(나이트로드): 거대한 표창 넷이 내 쪽에서 돌며 날아가 몬스터에 박힙니다. */
+.ult-shuriken{--fx:#cfe8ff}.ult-shuriken .scene-fx-dark{background:#040810}
+.ult-shuriken .ult-a,.ult-shuriken .ult-b,.ult-shuriken .ult-a::before,.ult-shuriken .ult-b::before{width:70px;height:70px;margin:-35px 0 0 -35px;clip-path:polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%);background:radial-gradient(circle,#fff 0 12%,#cfe8ff 13% 30%,#6a8cb8 60%,#2a3a52);filter:drop-shadow(0 0 10px #9fd0ff)}
+.ult-shuriken .ult-a{top:calc(var(--foe-y) - 22px);animation:ultShurikenFly 1.1s cubic-bezier(.5,0,.7,1) calc(var(--fx-delay) + .2s) both}
+.ult-shuriken .ult-b{top:calc(var(--foe-y) + 18px);animation:ultShurikenFly 1.1s cubic-bezier(.5,0,.7,1) calc(var(--fx-delay) + .35s) both}
+.ult-shuriken .ult-a::before,.ult-shuriken .ult-b::before{content:'';position:absolute;left:50%;top:50%;translate:-80px -26px;scale:.8}
+.ult-shuriken .ult-frag{color:#e8f4ff;text-shadow:0 0 10px #9fd0ff}
+@keyframes ultShurikenFly{0%{opacity:0;left:12%;rotate:0deg}12%{opacity:1}68%{opacity:1;left:var(--foe-x);rotate:1080deg;scale:1}78%{scale:1.35}100%{opacity:0;left:var(--foe-x);rotate:1260deg;scale:.6}}
+/* v3.280 파이널 컷(팬텀): 몬스터 앞에 거대한 카드가 서고, 대각선 일섬에 두 쪽으로 갈라집니다. */
+.ult-cardcut{--fx:#ffd6e8}.ult-cardcut .scene-fx-dark{background:#0c0408}
+.ult-cardcut .ult-a{left:calc(var(--foe-x) - 90px);top:var(--foe-y);width:84px;height:120px;margin:-60px 0 0 -42px;z-index:2;border-radius:10px;border:3px solid #fff;background:linear-gradient(160deg,#fff 0,#ffe6f0 60%,#ffc0d8);box-shadow:0 0 24px #ff7aa8;animation:ultCardStand 2.4s cubic-bezier(.4,0,.2,1) var(--fx-delay) both}
+.ult-cardcut .ult-a::before{content:'♠';position:absolute;inset:0;display:grid;place-items:center;font:700 60px/1 serif;color:#2a0a18}
+.ult-cardcut .ult-b{left:calc(var(--foe-x) - 70px);top:var(--foe-y);width:340px;height:5px;margin:-2px 0 0 -170px;border-radius:3px;background:linear-gradient(90deg,transparent,#ffd6e8 15%,#fff 50%,#ffd6e8 85%,transparent);box-shadow:0 0 18px #ff7aa8,0 0 36px #fff;rotate:-55deg;animation:ultSlashLine 2.4s cubic-bezier(.2,.9,.2,1) var(--fx-delay) both}
+.ult-cardcut .ult-frag{color:#ffe6f0;text-shadow:0 0 10px #ff7aa8;font-size:26px}
+@keyframes ultCardStand{0%{opacity:0;scale:.2;rotate:-30deg}18%{opacity:1;scale:1;rotate:0deg}40%{clip-path:inset(0);translate:0 0}46%,72%{opacity:1;clip-path:polygon(0 0,100% 0,100% 30%,0 75%);translate:-14px -14px}100%{opacity:0;clip-path:polygon(0 0,100% 0,100% 30%,0 75%);translate:-40px -40px}}
 .ult-karma{--fx:#c9a0ff}.ult-karma .scene-fx-dark{background:#0c0616}
 .ult-karma .ult-a,.ult-karma .ult-b{left:var(--foe-x,62%);top:var(--foe-y,48%);width:260px;height:5px;margin:-2px 0 0 -130px;border-radius:3px;background:linear-gradient(90deg,transparent,#c9a0ff 15%,#fff 50%,#c9a0ff 85%,transparent);box-shadow:0 0 14px #9a5cff;rotate:-35deg;transform-origin:50% 50%;animation:ultKarmaSlash 2.4s steps(1) var(--fx-delay) both}
 .ult-karma .ult-b{rotate:35deg;animation-name:ultKarmaSlashB}
@@ -2435,6 +2450,13 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .battle-scene .scene-fx-kkami.scene-fx-kkami-kill .scene-fx-flash{background:radial-gradient(circle at var(--foe-x) var(--foe-y),#fff8dc 0%,#ffd76a66 18%,transparent 40%)}
 /* 조커 슬롯: 몬스터 머리 위, 오른쪽 끝에서 잘리지 않게. */
 .battle-scene .ult-jackpot .ult-a{left:min(var(--foe-x),calc(100% - 115px));top:calc(var(--foe-top) - 92px)}
+/* v3.280 5차 궁극기 장면 중 옛 화면 비율(50% · 52% · 78%)에 놓였던 장치를 지금 몬스터 자리(가운데 --foe-y · 발밑 --foe-feet)로 옮깁니다. */
+.battle-scene .ult-light .ult-a{left:var(--foe-x)}.battle-scene .ult-light .ult-b{top:var(--foe-y)}
+.battle-scene .ult-venom .ult-a,.battle-scene .ult-nova .ult-a,.battle-scene .ult-nova .ult-b{top:var(--foe-feet)}
+.battle-scene .ult-quiver .ult-b{top:var(--foe-y)}
+.battle-scene .ult-demon .ult-b,.battle-scene .ult-gungnil .ult-b,.battle-scene .ult-vein .ult-b{top:calc(var(--foe-feet) - 6px)}
+.battle-scene .ult-gate .ult-b{top:calc(var(--foe-y) - 40px)}
+.battle-scene .ult-tentacle .ult-a,.battle-scene .ult-tentacle .ult-b{top:var(--foe-y)}
 
 /* v3.270 히든 5차 장면 두 가지 더(.az-ult): 쉐도우 레인(검은 칼날 그림자 비 + ‘한 번 더’), 리와인드(거꾸로 도는 시계 · 시간 물결 · 내 캐릭터 회복 빛). */
 .az-shadowrain .scene-fx-dark{background:#05030a}
