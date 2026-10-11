@@ -160,8 +160,8 @@ export const EXPANSION_SKILLS: Skill[] = [
     // v3.282 피해 없이 상태이상만 겁니다(statusOnly). 발동률 100%, 각성 대기 5턴, 계보 밖에서 계승하면 발동률 25%(outsiderChance). 마나 ×10.
     { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 5, awakenCooldown: 5, multiplier: 1, statusOnly: true, cost: 6, manaCost: 220, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .25, masteryMilestones: M5 },
     // v3.132 도트 퍼니셔: 일반 액티브. 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
-    // v3.282 배율 2.4 → 4, 상태이상 적 추가 피해(+50%) 삭제, 마나 ×10, 대기 4턴. 둘 다 최대 중첩인 적에게 쓰면 대기가 바로 초기화됩니다(fullReset).
-    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 4, cost: 6, manaCost: 200, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1, fullReset: true }, masteryMilestones: M5 },
+    // v3.282 배율 2.4 → 4, 상태이상 적 추가 피해(+50%) 삭제, 마나 ×10, 대기 4턴. 둘 다 최대 중첩인 적에게 쓰면 대기가 바로 초기화됩니다(fullReset). v3.283 발동률 100%.
+    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 4, multiplier: 4, cost: 6, manaCost: 200, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1, fullReset: true }, masteryMilestones: M5 },
     // v3.282 핵심 패시브(아케인 에임(불,독)): 이 패시브가 있어야 5차 핵심 개편(data/core-passive)이 적용됩니다(직업 마법 ×1.55 → ×1.09 + 핵심 몫).
     // v3.283 포이즌 노바 · 도트 퍼니셔 마나 ×10에 맞춰 최대 마나 · 마나 회복을 더합니다(아델 '루인'과 같은 크기).
     { ...P, id: 'plagueAscendant', name: '파멸의 조준', desc: '마법 공격 · 최대 마나 · 마나 회복 · 지속 피해 · 방어 관통이 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { magic: 150, mana: 1000, manaRegen: 30, dotBonus: .2, penetration: .05 }, masteryMilestones: M5 },
