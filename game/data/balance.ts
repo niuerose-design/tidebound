@@ -269,7 +269,7 @@ export const STATUS_GUIDE = [
  * 그중 Lv.50~100은 20~40분이라 벽이 느껴지지 않았습니다. Lv.70부터 ×1.25 복리(Lv.100 약 ×1,000, 지금의 약 50배)로 높은 레벨 구간을 한 생의 대부분으로 만듭니다.
  * 적용 뒤(무리 서식지 경험치 ×0.5 · 누리 출현 몫 절반과 함께): 환생 50~99회 일반 사냥터 6.9~11시간 · 서식지 3.1~10.4시간, 100회부터 9.9~26.9시간.
  */
-export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, lateWallGrowth: [[50, 1.25]] as [number, number][], rebirthWalls: [[50, 8.9], [100, 35]] as [number, number][] };
+export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, lateWallGrowth: [[50, 1.25]] as [number, number][], rebirthWalls: [[50, 30], [100, 120]] as [number, number][] };
 /** 환생 벽 배율: 지난 벽 중 가장 큰 값(50회부터 ×8.9, 100회부터 ×35). */
 export const xpRebirthWall = (rebirths = 0) => XP_SCALING.rebirthWalls.reduce((m, [from, x]) => rebirths >= from ? x : m, 1);
 export const xpRebirthFactor = (rebirths = 0) => (XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom)) * xpRebirthWall(rebirths);
