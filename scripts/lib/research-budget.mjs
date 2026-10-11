@@ -12,9 +12,9 @@
 // 사용: const { researchByBudget, researchBudget } = await researchBudgetTools(loadGame()); const permanent = researchByBudget(60, 'attack');
 const argNumber = (flag, env, fallback) => { const i = process.argv.indexOf(flag); const v = i >= 0 ? process.argv[i + 1] : process.env[env]; return v !== undefined && v !== '' && !Number.isNaN(Number(v)) ? Number(v) : fallback; };
 /** 사냥 수입 가정. hoursPerDay 0이면 사냥 수입을 더하지 않습니다. */
-export const HUNT = { hoursPerDay: argNumber('--hunt-hours', 'TIDEBOUND_HUNT_HOURS', 12), pearlsPerHourMax: 100, pearlsPerHourStart: 30, dailyPearls: 25 };
+const HUNT = { hoursPerDay: argNumber('--hunt-hours', 'TIDEBOUND_HUNT_HOURS', 12), pearlsPerHourMax: 100, pearlsPerHourStart: 30, dailyPearls: 25 };
 /** 환생 r회에 닿기까지 쌓인 사냥 시간(시간). 구간별 선형: 0→10회 26h · 10→50회 74h · 50→100회 220h · 100회부터 한 생 18.9h에서 200회 29.8h까지 선형. */
-export function huntHoursUntil(r) {
+function huntHoursUntil(r) {
     if (r <= 10) return 2.6 * r;
     if (r <= 50) return 26 + (r - 10) * 1.85;
     if (r <= 100) return 100 + (r - 50) * 4.4;

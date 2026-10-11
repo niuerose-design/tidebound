@@ -5,7 +5,7 @@ import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, type DungeonMode } from '../dat
 import { dungeonClosed, dungeonById } from '../data/world';
 import { addLog, endRun } from './state';
 /** 반복 설정 문자열: 'once' | 'fail' | 숫자(총 도전 횟수) | 'deeper:N'(무릉도장, 현재 최고 깊이 + N층까지). */
-export function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
+function parseRepeat(s: State, id: string, value?: string): { left: number | null; until?: number } | undefined {
     if (!value || value === 'once' || value === '1') return undefined;
     if (value === 'fail') return { left: null };
     if (id === 'abyss' && value.startsWith('deeper:')) {

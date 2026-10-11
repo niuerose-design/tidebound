@@ -15,7 +15,7 @@ import { isHackerJob } from '../data/hacker';
 import { RANKS } from '../data/rank';
 import { ALTAR, RAIDS } from '../data/altar';
 
-export const NEWS_CHANNEL = 'news';
+const NEWS_CHANNEL = 'news';
 /** 소식 한 줄. 실패해도 본 처리는 그대로입니다. */
 export async function postNews(text: string, now: number, from = 'system-news', label = '소식') {
     try { await db().postChat({ channel: NEWS_CHANNEL, account_id: from, name: label, text, created_at: now }); } catch { /* 소식은 부가 기능 */ }
@@ -34,7 +34,7 @@ export const NEWS_SAMPLES = [
     { id: 'star22', label: '22성 강화' }, { id: 'general', label: '진급(하사)' }, { id: 'onyxAwaken', label: '칠흑 각성' }, { id: 'core', label: '보스 코어' }, { id: 'coreAwaken', label: '코어 완전 각성' }, { id: 'hacker', label: '해커 전직(빨간 줄)' },
     { id: 'god', label: '제단 · 신 깨어남' }, { id: 'raid', label: '제단 · 월드보스 출현' }, { id: 'custom', label: '직접 입력' },
 ] as const;
-export type NewsSampleId = typeof NEWS_SAMPLES[number]['id'];
+type NewsSampleId = typeof NEWS_SAMPLES[number]['id'];
 export async function postNewsSample(kind: string, opts: { name?: string; text?: string; tag?: boolean }, now: number) {
     const name = String(opts.name || '테스트 모험가').slice(0, 20), tag = opts.tag === false ? '' : '[테스트] ';
     const job = JOBS.find(j => j.tier === 5 && !isHackerJob(j.id)), raid = RAIDS[0];
@@ -61,7 +61,7 @@ export async function postNewsSample(kind: string, opts: { name?: string; text?:
     return recentNews();
 }
 /** v3.190 운영 페이지: 소식 · 전체 채팅 · 길드 채팅(모든 길드) · 모두를 지웁니다. 지운 줄 수와 남은 소식 목록을 돌려줍니다. 이미 열려 있는 화면은 새로고침 전까지 옛 줄이 남습니다(after 커서). */
-export const CHAT_CLEAR_SCOPES = ['news', 'global', 'guild', 'all'] as const;
+const CHAT_CLEAR_SCOPES = ['news', 'global', 'guild', 'all'] as const;
 export async function clearChatScope(scope: string) {
     if (!(CHAT_CLEAR_SCOPES as readonly string[]).includes(scope)) throw new ApiError('지울 범위를 고르세요(news · global · guild · all).', 400);
     const database = db();

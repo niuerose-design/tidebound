@@ -60,14 +60,14 @@ export function rollMimicMastery(rng: () => number, s?: LetterState) {
 /** 사냥터 순서 상한(용의 둥지의 순서). */
 export const MIMIC_STAGE_CAP_INDEX = Math.max(0, STAGES.findIndex(x => x.id === MIMIC.stageCap));
 /** 확률에 쓰는 난이도(상한 적용). */
-export const mimicTier = (tier: number) => Math.max(0, Math.min(MIMIC.tierCap, tier));
+const mimicTier = (tier: number) => Math.max(0, Math.min(MIMIC.tierCap, tier));
 /** 등장 확률 = (기본 + 사냥터 난이도 × 단계당) × (1 + 사냥터 순서 × stageStep). 난이도는 20, 사냥터 순서는 용의 둥지에서 멈춥니다.
  * 예: 난이도 10, 열 번째 사냥터 → 0.65% × 3.25 ≈ 2.1%. 최대(난이도 20 · 용의 둥지) ≈ 4.3%. */
 export const mimicChance = (tier: number, stageIndex = 0) => (MIMIC.chance + mimicTier(tier) * MIMIC.chancePerTier) * mimicStageMultiplier(stageIndex);
 export const mimicStageMultiplier = (stageIndex: number) => 1 + Math.min(Math.max(0, stageIndex), MIMIC_STAGE_CAP_INDEX) * MIMIC.stageStep;
 /** v27.60 행운의 편지(세계석 연구 id messageBottle): 까미·경험의 누리 등장 확률 배율. 단계마다 +15%.
  * v3.287 이 보너스(배율 − 1)는 제단 축복 · 서버 이벤트 · 직업 보너스와 곱하지 않고 더합니다(specialFind). */
-export const LUCKY_LETTER_PER_RANK = .15;
+const LUCKY_LETTER_PER_RANK = .15;
 export const specialLuck = (s: { permanent?: Record<string, number> }) => 1 + (s.permanent?.messageBottle || 0) * LUCKY_LETTER_PER_RANK;
 /** v3.287 까미 · 누리 출현 보너스 합산: 1 + (편지 − 1) + (이벤트 · 제단 축복 − 1) + 직업 보너스. 전에는 모두 곱해 겹치면 최대 ×19까지 갔습니다. */
 export const specialFind = (letter: number, event: number, job: number) => Math.max(0, 1 + (letter - 1) + (event - 1) + job);

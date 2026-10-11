@@ -50,7 +50,7 @@ export const STOCKS: StockDef[] = [
 export const stockById = (id: string) => STOCKS.find(x => x.id === id);
 
 /** 시황 소문 문장(종목별 오름 · 내림). */
-export const RUMORS: Record<string, { up: string; down: string }> = {
+const RUMORS: Record<string, { up: string; down: string }> = {
     lith: { up: '대형 상선이 입항한다는 소문', down: '폭풍으로 배편이 끊긴다는 소문' },
     henesys: { up: '버섯 풍년이라는 소문', down: '주황버섯 병충해 소문' },
     perion: { up: '새 광맥을 찾았다는 소문', down: '갱도가 무너졌다는 소문' },
@@ -63,7 +63,7 @@ export const rumorText = (stock: string, up: boolean) => RUMORS[stock]?.[up ? 'u
 export const marketTick = (now: number) => Math.floor(now / MARKET_TICK_MS);
 /** 수수료(최소 1주화). */
 /** v3.231 scale: 직업 수수료 배율(트레이더 0.5). */
-export const marketFee = (amount: number, scale = 1) => Math.max(1, Math.ceil(amount * MARKET.fee * scale));
+const marketFee = (amount: number, scale = 1) => Math.max(1, Math.ceil(amount * MARKET.fee * scale));
 /** 매수에 드는 주화(체결 금액 올림 + 수수료). */
 export const buyCost = (price: number, qty: number, scale = 1) => { const gross = Math.ceil(price * qty); return { gross, fee: marketFee(gross, scale), total: gross + marketFee(gross, scale) }; };
 /** 매도로 받는 주화(체결 금액 내림 − 수수료, 0 아래로는 안 감). */

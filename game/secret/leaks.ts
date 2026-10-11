@@ -15,7 +15,7 @@ import { APPRAISAL } from '../data/economy';
 import { jobById } from '../data/classes';
 import { jobRequirements } from '../systems/progression';
 
-export type Leak = { id: string; text: string };
+type Leak = { id: string; text: string };
 const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
 /** 숨은 조건의 정확한 문장(정확한 조건은 여기서만). secret/unlocks.ts의 test와 같은 내용입니다. */
 export const UNLOCK_CONDITIONS: Record<string, string> = {

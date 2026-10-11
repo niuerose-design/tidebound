@@ -1,4 +1,4 @@
-export type UpdateEntry = {
+type UpdateEntry = {
     version: string;
     date: string;
     title: string;

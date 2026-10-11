@@ -4,12 +4,12 @@ import { CHAT_KEEP } from '../data/chat';
  * 저장소 계층. DATABASE_URL(또는 POSTGRES_URL)이 있으면 Neon Postgres의 HTTP 쿼리 엔드포인트를,
  * 없으면 개발용 로컬 JSON 파일(.data/dev-db.json)을 사용합니다. 추가 패키지 없이 fetch만 씁니다.
  */
-export type PlayerRow = { state: string; revision: number };
+type PlayerRow = { state: string; revision: number };
 export type RankingRow = { id: string; snapshot: string; rating: number; power: number; updated_at: number };
-export type AccountRow = { id: string; username: string; pass_hash: string; salt: string; created_at: number };
+type AccountRow = { id: string; username: string; pass_hash: string; salt: string; created_at: number };
 export type CrewRow = { id: string; code: string; data: string; revision: number };
 /** v25.4 채팅 한 줄. 채널마다 최근 CHAT_KEEP개만 남깁니다. */
-export type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
+type ChatRow = { id: number; channel: string; account_id: string; name: string; text: string; created_at: number };
 /** v25.11 공유 길드. 주간 합산(week가 현재 주와 다르면 0으로 보고 다시 셉니다). */
 export type GuildRow = { id: string; name: string; code: string; leader: string; treasury: number; created_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; points: number };
 export type GuildMemberRow = { account_id: string; guild_id: string; name: string; joined_at: number; week: string; catches: number; clears: number; bosses: number; abyss: number; donated: number; claimed: string };
@@ -19,21 +19,21 @@ export type WalletRow = { account_id: string; pearls: number; essence: number; w
 /** v27.43 제단(서버에 한 줄). god_state: none(깨어난 적 없음)·alive·slain·gone(시간이 지나 떠남은 god_until로 판단). */
 export type AltarRow = { /** v27.91 월드보스: 세대·종류·상태(none/alive/slain/gone)·남은/최대 공유 체력·떠나는 시각·마지막 일격·격파 시각 */ raid_gen: number; raid_id: string; raid_state: string; raid_hp: number; raid_hp_max: number; raid_until: number; raid_slayer: string; raid_slain_at: number; gen: number; god_state: string; god: string; god_until: number; throne: string; throne_name: string; throne_since: number; throne_snapshot: string; tithe_gold: number; tithe_pearls: number; tithe_essence: number; total_gold: number; total_pearls: number; total_essence: number; total_points: number };
 /** 제단 게이지(축복·신 소환). until은 축복이 열려 있는 시각(신 소환은 쓰지 않음). */
-export type AltarGaugeRow = { id: string; points: number; until: number; level?: number; /** v3.16 4단계 이상이 유지되는 시각. 지나면 3단계로 봅니다. */ high_until?: number };
+type AltarGaugeRow = { id: string; points: number; until: number; level?: number; /** v3.16 4단계 이상이 유지되는 시각. 지나면 3단계로 봅니다. */ high_until?: number };
 /** 이번 주 제단 기여. id는 주:모험가. anonymous=1이면 순위표에 이름을 숨깁니다. */
 export type AltarTotalRow = { player_id: string; name: string; anonymous: number; points: number };
 export type AltarOfferRow = { id: string; week: string; player_id: string; account_id: string; name: string; anonymous: number; points: number; gold: number; pearls: number; essence: number; updated_at: number };
-export type AltarAmounts = { gold: number; pearls: number; essence: number };
+type AltarAmounts = { gold: number; pearls: number; essence: number };
 /** v3.22 보스별 월드보스 상태(none/alive/slain/gone). */
 export type AltarRaidRow = { id: string; gen: number; state: string; hp: number; hp_max: number; until: number; slayer: string; slain_at: number; /** v3.191 소환 단계와 그날의 첫 소환 시각(RAID_STAGE). */ stage: number; day_start: number };
-export type AltarRaidHitRow = { id: string; gen: number; player_id: string; name: string; dealt: number; hits: number; updated_at: number };
+type AltarRaidHitRow = { id: string; gen: number; player_id: string; name: string; dealt: number; hits: number; updated_at: number };
 /** v3.84 모험가별 가장 최근 월드보스 도전 기록(요약 JSON · 전투 기록 JSON). 피해 순위에서 다른 모험가도 봅니다. */
-export type AltarRaidLogRow = { id: string; gen: number; player_id: string; summary: string; logs: string; updated_at: number };
+type AltarRaidLogRow = { id: string; gen: number; player_id: string; summary: string; logs: string; updated_at: number };
 const ALTAR_EMPTY: AltarRow = { raid_gen: 0, raid_id: '', raid_state: 'none', raid_hp: 0, raid_hp_max: 0, raid_until: 0, raid_slayer: '', raid_slain_at: 0, gen: 0, god_state: 'none', god: '', god_until: 0, throne: '', throne_name: '', throne_since: 0, throne_snapshot: '', tithe_gold: 0, tithe_pearls: 0, tithe_essence: 0, total_gold: 0, total_pearls: 0, total_essence: 0, total_points: 0 };
-export type GuildDelta = { catches?: number; clears?: number; bosses?: number; abyss?: number; donated?: number };
+type GuildDelta = { catches?: number; clears?: number; bosses?: number; abyss?: number; donated?: number };
 /** 저장소에 넣는 상태 문자열. 파일 DB는 개발 편의를 위해 평문을 유지하고, TIDEBOUND_PACK_STATE=1 이면 파일 DB도 압축합니다(e2e 검증용). */
 const packing = (always: boolean) => always || process.env.TIDEBOUND_PACK_STATE === '1';
-export interface Storage {
+interface Storage {
     getPlayer(id: string): Promise<PlayerRow | null>;
     createPlayerIfMissing(id: string, state: string, now: number): Promise<void>;
     updatePlayer(id: string, state: string, now: number, revision: number): Promise<boolean>;
@@ -219,7 +219,7 @@ const OPTIONAL_SCHEMA = [
 ];
 /** v3.91 SCHEMA 지문(FNV-1a): 문장이 하나라도 바뀌면 달라집니다. settings의 SCHEMA_SETTING 칸에 둡니다. */
 const SCHEMA_SETTING = 'schemaSignature';
-export const SCHEMA_SIGNATURE = (() => { let h = 0x811c9dc5; for (const ch of [...SCHEMA, ...OPTIONAL_SCHEMA].join('\n')) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return `${SCHEMA.length + OPTIONAL_SCHEMA.length}:${h.toString(16)}`; })();
+const SCHEMA_SIGNATURE = (() => { let h = 0x811c9dc5; for (const ch of [...SCHEMA, ...OPTIONAL_SCHEMA].join('\n')) { h ^= ch.codePointAt(0)!; h = Math.imul(h, 0x01000193) >>> 0; } return `${SCHEMA.length + OPTIONAL_SCHEMA.length}:${h.toString(16)}`; })();
 const slotRowId = (accountId: string, slot: number) => `${accountId}#${slot}`;
 function neonStorage(url: string): Storage {
     // Neon 서버리스 드라이버와 같은 규칙: 호스트의 첫 레이블을 api.로 바꾼 주소의 /sql 에 쿼리를 보냅니다.

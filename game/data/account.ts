@@ -28,7 +28,7 @@ export const ACCOUNT_RULES = {
 export type SlotSummary = { slot: number; name: string; job: string; level: number; rebirths: number; mastered: string[]; species: string[]; bossKills: number; abyssBest: number; updatedAt: number; /** v3.31 모든 승천을 합친 누적 환생(슬롯 해금 판정)과 승천 횟수. */ lifetimeRebirths?: number; ascension?: number; /** v3.219 이 분신이 다른 분신에게 주는 참모 지원(없으면 없음). */ support?: import('../types').SupportMap };
 /** 세이브에 캐시되는 계정 합계. slots 는 설정 화면의 슬롯 목록용, ownKey 는 마지막으로 올린 내 요약의 비교 키. */
 export type AccountSummary = { slot: number; rebirths: number; mastered: number; species: number; bossKills: number; abyssBest: number; slots: SlotSummary[]; syncedAt: number; ownKey?: string; /** v3.31 누적 환생 합계(슬롯 해금 판정). */ lifetimeRebirths?: number };
-export type AccountState = Pick<State, 'account'>;
+type AccountState = Pick<State, 'account'>;
 export const accountSlot = (s: AccountState) => s.account?.slot || 1;
 export function mergeSlots(slot: number, slots: SlotSummary[], now: number): AccountSummary {
     const mastered = new Set<string>(), species = new Set<string>();

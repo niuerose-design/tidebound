@@ -25,7 +25,7 @@ type HeroKind = HeroKindId;
 const TREE_HERO: Record<string, HeroKind> = { physical: 'warrior', magic: 'mage', defense: 'guardian', status: 'rogue', hybrid: 'spellblade', support: 'merchant', mystery: 'mystic' };
 
 /** 장면에 그릴 캐릭터 모양. 전용 자원 기술(정수 소모 · 채굴)을 끼면 그 모습, 이계 직업은 요원 · 트레이더, 나머지는 계열별. */
-export function heroKind(s: Pick<State, 'job' | 'skills'>, job: Job | undefined): HeroKind {
+function heroKind(s: Pick<State, 'job' | 'skills'>, job: Job | undefined): HeroKind {
     const sks = s.skills.map(id => skillById(id));
     if (sks.some(sk => sk?.essenceCost)) return 'devour';
     if (sks.some(sk => sk?.mineChance)) return 'miner';
@@ -68,7 +68,7 @@ const WEAPON_RULES: [RegExp, Weapon][] = [
     [/매지션|위자드|메이지|비숍|클레릭|프리스트|썬콜|불독|플레임|에반|루미너스|배틀메이지/, 'staff'],
 ];
 const TREE_WEAPON: Record<string, Weapon> = { physical: 'sword', magic: 'staff', defense: 'shield', status: 'dagger', hybrid: 'sword', support: 'fan', mystery: 'orb' };
-export function heroWeapon(job: Pick<Job, 'name' | 'tree'> | undefined): Weapon {
+function heroWeapon(job: Pick<Job, 'name' | 'tree'> | undefined): Weapon {
     const name = job?.name || '';
     return WEAPON_RULES.find(([re]) => re.test(name))?.[1] ?? TREE_WEAPON[job?.tree || ''] ?? 'sword';
 }

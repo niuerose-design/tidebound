@@ -18,7 +18,7 @@ import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
 import { regionCores, regionCoreRanks, coreEntry } from '../data/boss-core';
 import { ONYX_CORE_ID } from '../data/onyx';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
-export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
+const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
 export function initialProgress(level = 1) { return { attributes: emptyAttributes(), statPoints: PROGRESSION.startingStats + (level - 1) * PROGRESSION.statPerLevel, sp: PROGRESSION.startingSP, peakLevel: level, learned: { hook: 1 } as Record<string, number>, skillSpent: {} as Record<string, number>, skillInheritances: {} as Record<string, boolean>, skillPractice: {} as Record<string, number>, jobMastery: {} as Record<string, number>, unlockedJobs: ['fisher'], bookClaims: {} as Record<string, number>, itemBook: plainCodexBook() as Record<string, boolean>, target: null as string | null, presets: {} as State['presets'], mana: 40, effects: {}, playerStun: 0 }; }
 export function attributes(s: State) {
@@ -123,7 +123,7 @@ function borrowedDiscount(s: State, ids: string[]) {
     return n;
 }
 /** 스킬 하나의 장착 AP. v3.198 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
-export function skillAP(s: State, id: string, discount = 0, supportCut = 0) {
+function skillAP(s: State, id: string, discount = 0, supportCut = 0) {
     const sk = skillById(id);
     if (!sk) return 2;
     const raw = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
@@ -336,7 +336,7 @@ function computeEffectiveSkill(sk: Skill, rank: number, mastery: number): Skill 
     };
     return result;
 }
-export type SkillRankDelta = { label: string; from: string; to: string; };
+type SkillRankDelta = { label: string; from: string; to: string; };
 function skillDeltas(current: Skill, next: Skill): SkillRankDelta[] {
     const out: SkillRankDelta[] = [];
     if (current.cost !== next.cost)

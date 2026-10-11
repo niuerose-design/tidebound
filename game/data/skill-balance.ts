@@ -120,14 +120,14 @@ function progressDesc(sk: Skill) {
 const MAGIC_MANA_COST_SCALE = 4;
 /** v3.296 아크메이지(불,독) 5차 두 기술(파멸의 낙인 220 · 만물의 끝 200, 배율 적용 뒤 880 · 800). 다른 5차 마법 · 복합 기술은 이 평균의 80%를 씁니다. */
 const APOSTLE_SKILLS = new Set(['doomMark', 'endOfAll']);
-export const TIER5_MAGIC_MANA = Math.round((220 + 200) / 2 * MAGIC_MANA_COST_SCALE * .8 / 10) * 10;
+const TIER5_MAGIC_MANA = Math.round((220 + 200) / 2 * MAGIC_MANA_COST_SCALE * .8 / 10) * 10;
 /** 탱커 · 힐러 역할 5차(라라 · 메카닉 · 호영 · 비숍)는 긴 전투를 버텨야 해서 원래 마나를 씁니다(670이면 라라가 던전을 못 깸, check-tier5). */
 const TIER5_MANA_KEEP = new Set(['veinBurst', 'genesisRune', 'divineWard', 'oceanOfLife']);
 /** v3.304 회복 액티브(각성기 제외) 마나 배율: 힐러는 회복기 4~5개를 같이 돌려 긴 전투(무리 · 던전)에서 마나가 말라 마력 평타만 남았음(비숍 무리 ×100 마나 4~13%). 0.6이면 95% 이상 유지(check-tier5). */
 const HEAL_MANA_SCALE = .6;
 
 /** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
-export function awakenExpectedRolls(c: number) {
+function awakenExpectedRolls(c: number) {
     let rolls = 0, miss = 1;
     for (let k = 1; miss > 1e-9; k++) { rolls += miss; miss *= 1 - Math.min(1, k * Math.max(.01, c)); }
     return rolls;

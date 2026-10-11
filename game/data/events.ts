@@ -12,7 +12,7 @@ export type ActiveEvent = { id: string; name: string; until: number; exp: number
  * v27.51 오프라인 정산(1분 넘게 밀린 정산) 배율: 정산하는 순간 열려 있는 이벤트·제단 축복 배율의 절반만큼(×m → ×(1 + (m − 1) × OFFLINE_EVENT_SCALE)).
  * 백그라운드 탭에서는 동기화가 멈춰 오프라인 정산이 되므로, 탭을 화면에 띄워 두지 않아도 이벤트를 일부 받습니다. 계산량은 같습니다.
  */
-export const OFFLINE_EVENT_SCALE = .5;
+const OFFLINE_EVENT_SCALE = .5;
 const halfOf = (m: number | undefined) => m === undefined ? undefined : 1 + (m - 1) * OFFLINE_EVENT_SCALE;
 export function offlineEvent(e: ActiveEvent | null): ActiveEvent | null {
     if (!e) return null;
@@ -40,7 +40,7 @@ let tamper: Record<string, { minutes: number; rate: number }> = {};
 export function setEventTamper(t: Record<string, { minutes: number; rate: number }>) { tamper = t; }
 const tweak = (m: number | undefined, rate: number) => m === undefined || m === 1 ? m : Math.max(1, Math.round((m + rate) * 100) / 100);
 /** 변조를 적용한 이벤트. 배율은 정해진 배율(경험치·골드·드롭·숙련)에만 더하고 ×1.0 아래로는 내리지 않습니다. */
-export function tamperedEvent(e: ServerEvent): ServerEvent {
+function tamperedEvent(e: ServerEvent): ServerEvent {
     const t = tamper[e.id];
     if (!t) return e;
     return { ...e, until: new Date(Date.parse(e.until) + t.minutes * 60_000).toISOString(), exp: tweak(e.exp, t.rate), gold: tweak(e.gold, t.rate), drop: tweak(e.drop, t.rate), mastery: tweak(e.mastery, t.rate) };

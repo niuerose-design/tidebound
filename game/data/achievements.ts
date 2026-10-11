@@ -22,13 +22,13 @@ import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent }
  * v27.58 무릉도장 묶음을 던전 묶음으로 넓혔습니다(던전 정복·보스 업적이 옮겨 옴, id는 그대로라 세이브와 호환).
  * 조건 판정은 저장 상태만 보며 난수를 쓰지 않습니다. 기존 세이브는 이미 달성한 업적을 조용히 채우되 보상은 지급합니다.
  */
-export type AchievementReward = { pearls?: number; sp?: number; ap?: number };
-export type AchievementBonusKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';
+type AchievementReward = { pearls?: number; sp?: number; ap?: number };
+type AchievementBonusKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';
 /**
  * v3.38 업적 보너스: 받은 업적 1개마다 더하는 능력치 배율. 전부 받으면 공격·마법 약 +41%, 체력 +49%, 방어·저항 +21% 수준이 되도록 고르게 나눈 값입니다.
  */
 export const ACHIEVEMENT_BONUS_PER: Record<AchievementBonusKey, number> = { attack: .0022, magic: .0022, hp: .0026, defense: .0011, resist: .0011 };
-export type Achievement = { /** v3.38 명예 업적: 업적 보너스(능력치) 집계에서 빠지고 칭호를 줍니다. 새로 늘리는 업적은 명예 업적으로 둡니다. */ honor?: boolean; id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
+type Achievement = { /** v3.38 명예 업적: 업적 보너스(능력치) 집계에서 빠지고 칭호를 줍니다. 새로 늘리는 업적은 명예 업적으로 둡니다. */ honor?: boolean; id: string; group: '모험' | '사냥' | '숙련' | '던전' | '환생' | '계급' | '도전' | '강화'; title: string; desc: string; reward: AchievementReward; /** 진행도(0~target). */ progress: (s: State) => number; target: number };
 
 const kills = (s: State) => s.kills || 0;
 /** 도감 업적 대상. v27.58 경험의 누리는 빼서 '도감 전체' 업적 id(codex:종 수)가 바뀌지 않게 합니다. */

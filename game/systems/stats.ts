@@ -29,7 +29,7 @@ const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 export function normalizeStats(a: Stats): CombatStats { return { dotScale: 1, expBonus: 0, goldBonus: 0, dropBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, tankEdge: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, combatScale: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'support', 'equipment', 'limit'] as const;
-export type StatSource = typeof STAT_SOURCES[number];
+type StatSource = typeof STAT_SOURCES[number];
 const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', support: '분신 지원', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
@@ -281,7 +281,7 @@ export function dropRate(s: State, a = stats(s)) {
  *   버티는 힘 = 체력 × 방어 경감(물리·마법 조화 평균, 피해 = 원래 × 100 ÷ (100 + 방어 × 2)) ÷ (1 − 회피) × (1 + 흡혈)
  * scripts/check-power.mjs가 실제 전투 판정(strike)과 비교합니다.
  */
-export const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } as const;
+const POWER_REF = { accuracy: 1.1, evasion: .1, penetrationWeight: .6 } as const;
 /**
  * 전투력 = POWER_SCALE × 공격^offense × 버티는 힘^durability(v3.134). 표시 · 장비 미리보기 · 결투 상대 · 제단 신 위력에 쓰이고 전투 판정에는 쓰지 않습니다. 랭킹은 저장값이 아니라 스냅샷 능력치로 다시 계산해 보여 줍니다(v3.66).
  * 공격과 버티는 힘을 같은 무게로 곱하면 방어 부위가 전투력을 지배하고(장비 4부위가 공격은 ×4, 버티는 힘은 ×39), 환생이 쌓이면 버티는 힘은 포화라 진행 속도는 공격만 정합니다.

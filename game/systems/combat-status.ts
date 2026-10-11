@@ -2,7 +2,7 @@ import type { StatusEffects } from '../types';
 import type { CombatFx } from './combat-feedback';
 import { SKILL_FORMULA } from '../data/balance';
 
-export const STATUS_LABELS = { stun: '기절함', silence: '침묵', bleed: '출혈', poison: '중독', burn: '화상', weaken: '공격 약화', slow: '감속', haste: '가속', corrode: '부식' } as const;
+const STATUS_LABELS = { stun: '기절함', silence: '침묵', bleed: '출혈', poison: '중독', burn: '화상', weaken: '공격 약화', slow: '감속', haste: '가속', corrode: '부식' } as const;
 export function visibleStatuses(effects: StatusEffects = {}, stun = 0, recent: CombatFx[] = [], target: 'player' | 'enemy' = 'player') {
     const values = { stun, silence: effects.silence || 0, bleed: effects.dot?.turns || 0, poison: effects.poison?.turns || 0, burn: effects.burn?.turns || 0, weaken: effects.weaken || 0, slow: effects.slow || 0, haste: effects.haste || effects.buffs?.haste?.turns || 0, corrode: effects.corrode || 0 };
     const dotLabel = effects.dot ? effects.dot.name : STATUS_LABELS.bleed;

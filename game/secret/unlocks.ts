@@ -19,8 +19,8 @@ const variantKills = (s: State) => Object.values(s.variantBook || {}).reduce((x,
 const masteredTier5 = (s: State) => Object.entries(s.jobMastery || {}).filter(([id, n]) => { const j = jobById(id); return !!j && !j.retired && j.tier >= 5 && n >= jobMasteryTarget(j); }).length;
 
 /** 숨은 조건. 정확한 조건 문장은 해커 정보 해킹 조각(leaks.ts UNLOCK_CONDITIONS)에만 있습니다. */
-export type HiddenUnlock = { job: string; test: (s: State) => boolean };
-export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
+type HiddenUnlock = { job: string; test: (s: State) => boolean };
+const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'undead', test: s => (s.deaths || 0) >= 100 },
     { job: 'clockmaker', test: s => (s.playMs || 0) >= 100 * HOUR },
     { job: 'journeyman', test: s => masteredJobCount(s) >= 5 },

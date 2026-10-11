@@ -8,7 +8,7 @@ import type { BackdropTheme } from './art';
  */
 export type HeroKindId = 'warrior' | 'mage' | 'guardian' | 'rogue' | 'spellblade' | 'merchant' | 'mystic' | 'devour' | 'miner' | 'agent' | 'trader' | 'hacker';
 export type WeaponId = 'sword' | 'spear' | 'bow' | 'dagger' | 'gun' | 'fist' | 'staff' | 'shield' | 'orb' | 'fan';
-export type SceneLook = { backdrop: BackdropTheme | 'auto'; hero: HeroKindId | 'auto'; weapon: WeaponId | 'auto' };
+type SceneLook = { backdrop: BackdropTheme | 'auto'; hero: HeroKindId | 'auto'; weapon: WeaponId | 'auto' };
 export const BACKDROP_LABELS: Record<BackdropTheme, string> = {
     harbor: '항구 (리스항구)', village: '마을 언덕 (헤네시스)', canyon: '바위 협곡 (페리온)', forest: '큰 숲 (엘리니아)', city: '도시 (커닝시티)', underwater: '바닷속 (아쿠아로드)',
     dragon: '용의 둥지 (리프레)', temple: '신전 (시간의 신전)', arcane: '아케인 리버', swamp: '늪 (슬리피우드)', mountain: '설산 (무릉 · 엘나스)',

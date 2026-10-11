@@ -37,7 +37,7 @@ export const ALTAR = {
 } as const;
 
 export type BlessingId = 'gold' | 'mimic' | 'exp' | 'nuri';
-export type RaidId = 'balrog' | 'zakum' | 'horntail';
+type RaidId = 'balrog' | 'zakum' | 'horntail';
 export type AltarGaugeId = BlessingId | 'god' | RaidId;
 type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: number };
 /**
@@ -46,7 +46,7 @@ type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: numb
  * 비용: 1~3단계는 단계마다 ×BLESSING_LEVEL_STEP, 4단계부터는 기여도 절대값 BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당, 고레벨 골드 싱크)이고 6단계 연장도 6단계 값입니다.
  */
 export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 2, BLESSING_HIGH_FROM = 3;
-export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
+const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
 /**
  * v3.16 상위 단계는 짧게: 4·5·6단계는 올린 순간부터 BLESSING_HIGH_MINUTES만큼만 유지되고(겹치지 않음, 다시 채우면 새로 셈)
  * 지나면 3단계로 내려와 그때부터 blessingCapMs(12시간) 동안 이어집니다(상위 단계를 올릴 때 전체 시간 = 그 단계 시간 + 12시간 보장).

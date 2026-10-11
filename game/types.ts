@@ -95,7 +95,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+type CountSource = 'codex' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;
@@ -529,7 +529,7 @@ export type CombatEvent = {
     /** 연속 행동 번호: 이 턴에서 이 전투원의 몇 번째 행동인지(1부터). 오래된 로그에는 없습니다. */
     chain?: number;
 };
-export type LifeStart = { at: number; playMs: number; partial?: boolean };
+type LifeStart = { at: number; playMs: number; partial?: boolean };
 /** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
 export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
 /** v3.31 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
@@ -940,7 +940,7 @@ export type HackerState = {
     /** v3.25 해커 순위(월): 최고 침투 깊이 · 해킹 실행 · 화이트 해커 복구. dirty면 저장 전에 순위표에 올립니다. */
     season?: { key: string; depth: number; hacks: number; restores: number; dirty?: boolean };
 };
-export type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload'
+type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'backdoor' | 'restore' | 'patch' | 'spoof' | 'unspoof' | 'trace' | 'overload'
     /** v3.28 해킹 VI~X(봇넷은 세이브 안에서만 계산). */
     | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root'
     /** v3.28 블랙 해커 실패(추적 공지만). */

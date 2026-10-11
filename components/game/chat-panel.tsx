@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Megaphone, MessageCircle, Send } from 'lucide-react';
 import { CHAT_MAX_CHARS, CHAT_COOLDOWN_MS, CHAT_KEEP } from '@/game/data/chat';
 
-export type ChatLine = { id: number; name: string; text: string; at: number; self: boolean; /** v3.26 시스템 알림 종류(hacker = 해킹 공지 빨간 줄, system = 제단·모험가 소식). */ kind?: 'hacker' | 'system' };
+type ChatLine = { id: number; name: string; text: string; at: number; self: boolean; /** v3.26 시스템 알림 종류(hacker = 해킹 공지 빨간 줄, system = 제단·모험가 소식). */ kind?: 'hacker' | 'system' };
 /** 열려 있는 동안만 이 간격으로 새 줄을 묻습니다. 닫히거나 탭이 숨으면 멈춥니다. */
 const POLL_MS = 8000, KEEP = 120;
 
@@ -11,7 +11,7 @@ const POLL_MS = 8000, KEEP = 120;
  * 전체 채팅. 서버 부하를 줄이려고 (1) 열려 있을 때만 폴링, (2) after 커서로 새 줄만 받기, (3) 보낸 직후 한 번 더 받기만 합니다.
  * 메시지는 서버가 채널당 최근 300줄만 보관합니다.
  */
-export type ChatChannel = 'global' | 'guild' | 'news';
+type ChatChannel = 'global' | 'guild' | 'news';
 function useChat(open: boolean, channel: ChatChannel = 'global') {
     const [lines, setLines] = useState<ChatLine[]>([]), [error, setError] = useState(''), [sending, setSending] = useState(false);
     const last = useRef(0), inflight = useRef(false);

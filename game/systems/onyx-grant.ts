@@ -57,9 +57,9 @@ export function receiveOnyx(s: State, item: Item) {
 }
 
 /** v3.114 환생 이정표 칠흑: 이 환생 횟수에 닿으면(승천 전 기록 포함) 무작위 칠흑 1개. 캐릭터 평생 한 번씩이라 승천 뒤 다시 닿아도 주지 않습니다. */
-export const ONYX_MILESTONES = [50, 100] as const;
+const ONYX_MILESTONES = [50, 100] as const;
 /** 이 캐릭터가 지금까지 닿은 가장 높은 환생 횟수(지금 생과 남아 있는 승천 기록). */
-export const bestRebirths = (s: Pick<State, 'rebirths' | 'ascensionLog'>) => Math.max(s.rebirths || 0, ...(s.ascensionLog || []).map(x => x.rebirths || 0));
+const bestRebirths = (s: Pick<State, 'rebirths' | 'ascensionLog'>) => Math.max(s.rebirths || 0, ...(s.ascensionLog || []).map(x => x.rebirths || 0));
 /** 받을 이정표를 모두 지급합니다(여러 번 불러도 같음). 소급 적용은 세이브를 불러올 때(migrateState), 새로 닿는 것은 환생할 때 부릅니다. */
 export function grantOnyxMilestones(s: State, rng: () => number = Math.random) {
     const got = new Set(s.onyxMilestones || []), best = bestRebirths(s);

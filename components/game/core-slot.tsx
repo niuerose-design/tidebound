@@ -10,7 +10,7 @@ import type { PanelProps } from './panel-props';
 
 const CORE_COLOR = '#d6b879';
 /** 이 코어의 기본 능력치 줄(지금 레벨 · 각성 · 칸 여부 반영). */
-export function coreAttrText(s: PanelProps['s'], id: string, worn = s.coreSlot === id) {
+function coreAttrText(s: PanelProps['s'], id: string, worn = s.coreSlot === id) {
     const e = coreEntry(s.bossCores?.[id]);
     if (!e) return '';
     const m = coreAwaken(e.rank) * (worn ? 1 : BOSS_CORE_RULES.resonance);

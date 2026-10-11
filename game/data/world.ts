@@ -2,7 +2,7 @@ import { ODDS, oddsKnown, STAGE_REWARD_AVG, type StageRewardAvg } from './odds';
 import { MAPLE_MONSTERS } from './maple-monsters';
 /** v27.34 메이플 지역 개편: region(지역) · place(세부 장소). name은 ‘지역 · 장소’로, 로그·기록·도감에 그대로 씁니다. id는 그대로라 세이브가 유지됩니다. */
 /** 사냥터 정의. habitat는 v27.80 무리 서식지(지역마다 하나)입니다. */
-export type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; monsters: string[]; tone: string; habitat?: boolean; /** v3.103 적정 환생(측정, docs/hunting-ground-plan.md 9절). 입장 조건(rebirth)보다 클 때만 따로 보입니다. */ fit?: number };
+type StageDef = { id: string; region: string; place: string; name: string; subtitle: string; level: number; rebirth: number; description: string; monsters: string[]; tone: string; habitat?: boolean; /** v3.103 적정 환생(측정, docs/hunting-ground-plan.md 9절). 입장 조건(rebirth)보다 클 때만 따로 보입니다. */ fit?: number };
 /** 일반 사냥터(무리 서식지 제외). 사냥터 수·도감·업적처럼 장소를 세는 곳에서 씁니다. */
 export const BASE_STAGES: StageDef[] = [
     { id: 'brook', region: '리스항구', place: '선착장', name: '리스항구 · 선착장', subtitle: 'LITH HARBOR · PIER', level: 1, rebirth: 0, description: '빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.', monsters: ['minnow', 'carp', 'perch'], tone: '#79bca8' },
@@ -43,7 +43,7 @@ const HABITAT_META: Record<string, { id: string; subtitle: string; description: 
 /** 지역 이름 목록(사냥터 순서). */
 export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
 /** 지역의 일반 사냥터(무리 서식지 제외). */
-export const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
+const regionPlaces = (region: string) => BASE_STAGES.filter(st => st.region === region);
 /** 지역에 사는 몬스터(중복 없이, 사냥터 순서). */
 const regionMonsterCache = new Map<string, string[]>();
 /** v3.104 사냥터 표는 바뀌지 않으므로 지역마다 한 번만 만듭니다(능력치 계산이 턴마다 부름). 돌려받은 배열은 고치지 마세요. */
@@ -97,7 +97,7 @@ export const SWARM_ESSENCE_PER_ITEM = 3;
 /** v3.42 ×500 도전 무리(공격도 490배)의 추가 보상: 경험치·골드 ×1.5(v3.48 숙련은 swarmMasteryKills로), 드롭 판정 ×2(44번). */
 export const SWARM_BIG = { size: 500, reward: 1.5, drops: 2 } as const;
 export const swarmRewardMultiplier = (size: number) => size >= SWARM_BIG.size ? SWARM_BIG.reward : 1;
-export type MonsterDef = {
+type MonsterDef = {
     id: string;
     name: string;
     level: number;
@@ -142,7 +142,7 @@ export const monsterGoldAt = (level: number) => Math.round(GOLD_CURVE.base * Mat
 export const PRICE_LEVEL_CAP = 65;
 export const priceScale = (level: number) => Math.max(1, monsterGoldAt(Math.min(PRICE_LEVEL_CAP, Math.max(1, level))) / monsterGoldAt(GOLD_CURVE.knee));
 /** v3.11 몬스터 경험치 곡선: Lv.66까지 레벨당 15% 복리, 그 위로는 EXP_CURVE.late(고레벨 사냥터에서 환생이 너무 빨라지지 않게). 플레이어 필요 경험치 곡선과는 별개입니다. */
-export const EXP_CURVE = { knee: 66, drop: .35, late: 1.115 };
+const EXP_CURVE = { knee: 66, drop: .35, late: 1.115 };
 export const monsterExpAt = (level: number) => Math.round(9 * Math.pow(1.15, Math.min(level, EXP_CURVE.knee) - 1) * (level > EXP_CURVE.knee ? EXP_CURVE.drop * Math.pow(EXP_CURVE.late, level - EXP_CURVE.knee) : 1));
 /**
  * v27.66 레벨 차 경험치 보정: 몬스터가 내 레벨보다 EXP_LEVEL_GAP 넘게 높으면 경험치를 ‘내 레벨 + EXP_LEVEL_GAP’ 몬스터 기준으로 줄입니다.
@@ -274,7 +274,7 @@ export const monsterById = (id: string | undefined) => id === undefined ? undefi
  */
 export type Closures = { dungeons: string[]; stages: string[] };
 export const DEFAULT_CLOSURES: Closures = { dungeons: ['abyss'], stages: [] };
-export const CLOSED_DUNGEONS = new Set<string>(DEFAULT_CLOSURES.dungeons);
+const CLOSED_DUNGEONS = new Set<string>(DEFAULT_CLOSURES.dungeons);
 const CLOSED_STAGES = new Set<string>(DEFAULT_CLOSURES.stages);
 export const dungeonClosed = (id: string) => CLOSED_DUNGEONS.has(id);
 export const stageClosed = (id: string) => CLOSED_STAGES.has(id);

@@ -6,7 +6,7 @@ import { starSound } from './star-catch-setting';
  * v3.8 스타캐치 미니게임: 별이 좌우로 오갑니다(한 번 건너는 데 CATCH_SWEEP_MS). 가운데 구역(폭 CATCH_ZONE)에 있을 때 누르면 ‘캐치’.
  * 결과는 onResult(caught)로 넘기고, 누르지 않으면 CATCH_TIMEOUT_MS 뒤에 놓친 것으로 칩니다. 키보드는 스페이스·엔터.
  */
-export const CATCH_SWEEP_MS = 1100, CATCH_ZONE = .2, CATCH_TIMEOUT_MS = 8000;
+const CATCH_SWEEP_MS = 1100, CATCH_ZONE = .2, CATCH_TIMEOUT_MS = 8000;
 export function StarCatch({ onResult, bonus }: { onResult: (caught: boolean) => void; bonus: number }) {
     const [done, setDone] = useState<null | boolean>(null);
     const start = useRef(0), raf = useRef(0), fired = useRef(false), lastTick = useRef(-1), star = useRef<HTMLSpanElement>(null);

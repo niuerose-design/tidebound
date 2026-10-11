@@ -6,8 +6,8 @@ import type { State } from '../types';
 import { HOUR } from '../data/time';
 
 export const INCOME_HOURS = 24;
-export type IncomeBucket = { h: number; g: number };
-export const playHour = (s: Pick<State, 'playMs'>) => Math.floor((s.playMs || 0) / HOUR);
+type IncomeBucket = { h: number; g: number };
+const playHour = (s: Pick<State, 'playMs'>) => Math.floor((s.playMs || 0) / HOUR);
 
 /** 이번 턴에 늘어난 골드를 지금 플레이 시간 칸에 더합니다. 0 이하면 아무것도 하지 않습니다. */
 export function recordIncome(s: State, gold: number) {

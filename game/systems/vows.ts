@@ -17,7 +17,7 @@ export const vowUnlocked = (s: Pick<State, 'permanent'>, id: VowId) => researchR
 /** 하드코어(전 ‘한 번의 숨’) 환생 세계석 보너스: +50% → +75% → +100%. */
 export const breathBonus = (s: Pick<State, 'permanent'>) => .5 * vowBoost(s, 'breath');
 /** 힘의 길(전 ‘험한 길’) 선택 단계(0~3). */
-export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;
+const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;
 /**
  * v27.86 힘의 길: 난이도를 내려서 피할 수 없는 세 가지 제약.
  * - 난이도 하한: 지금 난이도(사냥터 난이도·던전 모드·무릉도장 층)가 floor 미만이면 보상이 꺼집니다.
@@ -26,14 +26,14 @@ export const roughLevel = (s: Pick<State, 'vows'>) => s.vows?.rough || 0;
  * 보상: 골드·장비 드롭 확률 ×(1 + 0.5 × 단계 × 강화 배율). 드롭은 드롭 상한 뒤에 곱합니다.
  */
 export const ROUGH = { floor: [10, 20, 30], gear: [.3, .5, .7], heal: [.5, .75, 1] };
-export const roughFloor = (s: Pick<State, 'vows'>) => roughLevel(s) ? ROUGH.floor[roughLevel(s) - 1] : 0;
+const roughFloor = (s: Pick<State, 'vows'>) => roughLevel(s) ? ROUGH.floor[roughLevel(s) - 1] : 0;
 export const roughGear = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.gear[roughLevel(s) - 1] : 1;
 export const roughHeal = (s: Pick<State, 'vows'>) => roughLevel(s) ? 1 - ROUGH.heal[roughLevel(s) - 1] : 1;
 /** 보상 배율. 단계가 없거나 지금 난이도가 하한 미만이면 정확히 1입니다(tier는 encounterTier). */
 export const roughReward = (s: Pick<State, 'vows' | 'permanent'>, tier: number) => roughLevel(s) && tier >= roughFloor(s) ? 1 + .5 * roughLevel(s) * vowBoost(s, 'rough') : 1;
 /** v27.86 절제: 장착 AP −4·−8·−12, 경험치 +20·+40·+60% × 강화 배율(하드코어 세계석 · 힘의 길 골드·드롭과 겹치지 않게 경험치). */
 export const RESTRAINT = { ap: [4, 8, 12], exp: [.2, .4, .6], /** 장착 개수 상한: 액티브·패시브 각각 3·2·1개. */ slots: [3, 2, 1] };
-export const restraintLevel = (s: Pick<State, 'vows'>) => s.vows?.restraint || 0;
+const restraintLevel = (s: Pick<State, 'vows'>) => s.vows?.restraint || 0;
 export const restraintAP = (s: Pick<State, 'vows'>) => restraintLevel(s) ? RESTRAINT.ap[restraintLevel(s) - 1] : 0;
 /** 절제 장착 개수 상한(액티브·패시브 각각). 절제가 없으면 null. */
 export const restraintSlots = (s: Pick<State, 'vows'>) => restraintLevel(s) ? RESTRAINT.slots[restraintLevel(s) - 1] : null;

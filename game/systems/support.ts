@@ -10,15 +10,15 @@ import { jobById } from '../data/classes';
 import { skillById } from '../data/skills';
 import { canUse, skillMastery, masteryMilestonesFor } from './progression';
 
-export const STAFF_LINEAGE_ID = 'staff';
+const STAFF_LINEAGE_ID = 'staff';
 export const SUPPORT_EFFECTS: SupportEffect[] = ['exp', 'gold', 'mastery', 'hp', 'mana', 'hpRegen', 'ap', 'boss', 'rank', 'penetration', 'critDamage', 'power'];
-export const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득', hp: '최대 체력', mana: '최대 마나', hpRegen: '턴당 체력 회복', ap: '장착 AP', boss: '보스 · 사냥감 피해', rank: '계급 경험치', penetration: '방어 관통', critDamage: '치명 피해', power: '두 공격 · 최대 체력' };
+const SUPPORT_LABELS: Record<SupportEffect, string> = { exp: '경험치', gold: '골드', mastery: '직업 · 스킬 숙련 획득', hp: '최대 체력', mana: '최대 마나', hpRegen: '턴당 체력 회복', ap: '장착 AP', boss: '보스 · 사냥감 피해', rank: '계급 경험치', penetration: '방어 관통', critDamage: '치명 피해', power: '두 공격 · 최대 체력' };
 /** v3.225 총사령관 지휘 계통의 최대 증폭(AP는 증폭하지 않음). */
-export const SUPPORT_AMP_MAX = 1.25;
+const SUPPORT_AMP_MAX = 1.25;
 /** 지원 스킬 최대값(군의관 체력 · 마나 5% · 회복 15%, 작전참모 AP 2 · 보스 5% · 계급 6%, 화력참모 관통 5%p · 치명 15%p, v3.225 군수사령관 AP 3 · 총사령관 공격 · 체력 4%). */
 const BASE_CAP: Record<SupportEffect, number> = { exp: .08, gold: .08, mastery: .08, hp: .05, mana: .05, hpRegen: .15, ap: 3, boss: .05, rank: .06, penetration: .05, critDamage: .15, power: .04 };
 /** 효과별 상한 = 지원 스킬 최대값 × 지휘 계통 최대 증폭(AP는 증폭 없이 3). */
-export const SUPPORT_CAP = Object.fromEntries(SUPPORT_EFFECTS.map(e => [e, e === 'ap' ? BASE_CAP.ap : Math.round(BASE_CAP[e] * SUPPORT_AMP_MAX * 1e4) / 1e4])) as Record<SupportEffect, number>;
+const SUPPORT_CAP = Object.fromEntries(SUPPORT_EFFECTS.map(e => [e, e === 'ap' ? BASE_CAP.ap : Math.round(BASE_CAP[e] * SUPPORT_AMP_MAX * 1e4) / 1e4])) as Record<SupportEffect, number>;
 /** 화면 표기: AP는 정수, 관통 · 치명 피해는 %p, 나머지는 %. */
 export const supportText = (e: SupportEffect, v: number) => e === 'ap' ? `${SUPPORT_LABELS[e]} +${Math.floor(v)}` : `${SUPPORT_LABELS[e]} +${Math.round(v * 1000) / 10}${e === 'penetration' || e === 'critDamage' ? '%p' : '%'}`;
 /** 받은 지원 값(상한 적용). */
@@ -31,7 +31,7 @@ const byStage = (s: State, id: string, range: { min: number; max: number }) => {
     const sk = skillById(id), steps = masteryMilestonesFor(sk).length, stage = Math.min(steps, skillMastery(s, id));
     return range.min + (range.max - range.min) * stage / steps;
 };
-export function supportValue(s: State, id: string) {
+function supportValue(s: State, id: string) {
     const sk = skillById(id);
     return sk?.support ? Math.round(byStage(s, id, sk.support) * 1e4) / 1e4 : 0;
 }

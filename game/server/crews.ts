@@ -73,7 +73,7 @@ async function updateCrew(crewId: string, now: number, change: (c: CrewData, row
  * v3.32 합동 작전 단계 보상 수령(쓰기 없음): 이번 주·지난주에 1노드 이상 뚫었으면, 그 주에 도달한 단계 중 아직 받지 않은 만큼 받습니다.
  * 받은 기록은 세이브(crewClaimed, 조직 id:주)에 두어 같은 단계를 두 번 받지 않습니다.
  */
-export function claimOp(s: State, crewId: string, c: CrewData, me: string) {
+function claimOp(s: State, crewId: string, c: CrewData, me: string) {
     const h = hackerState(s), claimed = h.crewClaimed ??= {}, keep = new Set<string>();
     for (const w of [c.prev, c.week].filter((x): x is CrewWeek => !!x)) {
         const key = `${crewId}:${w.key}`, got = claimed[key] || 0;

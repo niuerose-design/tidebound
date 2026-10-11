@@ -13,7 +13,7 @@ export const SPROUT = { expUntil: 10, expPerRebirth: .2, survivalUntil: 5, recov
 /** v3.31 새싹 판정에 쓰는 환생 횟수. 승천한 모험가는 새싹이 아닙니다(경험치 축복·생존 보조 모두 꺼짐, 대신 승천 초반 가속). */
 export const sproutCount = (s: { rebirths: number; ascension?: number }) => (s.ascension || 0) > 0 ? Infinity : (s.rebirths || 0);
 export const sproutExp = (rebirths = 0) => rebirths < SPROUT.expUntil ? 1 + SPROUT.expPerRebirth * (SPROUT.expUntil - Math.max(0, rebirths)) : 1;
-export const sproutSurvival = (rebirths = 0) => rebirths < SPROUT.survivalUntil;
+const sproutSurvival = (rebirths = 0) => rebirths < SPROUT.survivalUntil;
 /** v3.17 쓰러진 뒤 회복 대기 턴. 환생 10회 미만은 3턴. 그 뒤는 기본 25턴에서 연구 ‘불굴의 의지’(단계당 -3턴)와 장착 패시브의 revive(턴)를 빼고 최저 10턴. */
 export const deathRecoveryTurns = (s: Pick<State, 'rebirths'> & Partial<Pick<State, 'permanent' | 'skills' | 'ascension'>>) => {
     if (sproutCount(s) < SPROUT.recoveryUntil) return SPROUT.recoveryTurns;

@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { BASE_STAGES } from '../data/world';
 import { noteOneTimeReward } from './offline-tally';
 
-export type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
+type TutorialStep = { id: string; title: string; hint: string; view: string; done: (s: State) => boolean; /** v3.17 보상 조건(없으면 done). 환생으로 자동 완료되는 단계는 실제로 해냈을 때만 보상합니다. */ earned?: (s: State) => boolean; /** v3.17 완료 보상(완료되는 순간 자동 지급, 한 번). */ reward?: { pearls?: number; sp?: number } };
 /**
  * 짧은 튜토리얼 단계. 조건은 저장 상태에서 판정하고, 한 번 만족한 단계는 tutorial.done에 기록해 되돌아가지 않습니다
  * (v27.72: 강화한 장비를 팔거나 녹여도 ‘장비 강화’가 미완료로 돌아가지 않음). v3.17 단계마다 완료 보상(세계석·SP)을 자동 지급합니다(강제 없음).

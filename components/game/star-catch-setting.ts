@@ -7,7 +7,7 @@ import { useSyncExternalStore } from 'react';
  */
 const KEYS = { catch: 'tidebound.starCatch', sound: 'tidebound.starSound' } as const;
 const EVENT = 'tidebound:starCatch';
-export type StarSettingKey = keyof typeof KEYS;
+type StarSettingKey = keyof typeof KEYS;
 const DEFAULTS: Record<StarSettingKey, boolean> = { catch: true, sound: false };
 const read = (key: StarSettingKey) => { try { const v = localStorage.getItem(KEYS[key]); return v === 'on' ? true : v === 'off' ? false : DEFAULTS[key]; } catch { return DEFAULTS[key]; } };
 function subscribe(fn: () => void) {

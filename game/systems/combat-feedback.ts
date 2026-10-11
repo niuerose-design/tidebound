@@ -161,7 +161,7 @@ export type ReplayFrame = {
     lastLogId: number;
 };
 /** turn: prev.lastTick 뒤 몇 번째 턴인지(1부터). */
-export type ReplayTurn = { turn: number; frames: ReplayFrame[] };
+type ReplayTurn = { turn: number; frames: ReplayFrame[] };
 
 /**
  * 로그를 턴 단위로 묶습니다. 한 턴은 먼저 행동한 쪽의 타격(연속 행동 포함)과 나중 쪽의 타격, 그 뒤의 보상·패배 줄, 또는 회복 완료 한 줄입니다.

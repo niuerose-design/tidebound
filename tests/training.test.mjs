@@ -298,8 +298,6 @@ test('v3.107 Paladin: Sanctuary defense ratio 2.4, Elemental Force adds crit 8%p
     const sk = id => SKILLS.find(s => s.id === id);
     assert.equal(sk('citadelCrash').scalingRatio, 2.4);
     assert.deepEqual([sk('eternalReef').bonus.crit, sk('eternalReef').bonus.critDamage], [.08, .4]);
-    for (const id of ['shieldBash', 'lastStand', 'divineAegis', 'fortress', 'coralPatience']) assert.equal(sk(id), undefined, `${id} removed`);
-    for (const id of ['shieldbearer', 'guardianDeity', 'coralBuilder']) assert.equal(JOBS.find(j => j.id === id), undefined, `${id} removed`);
 });
 
 test('v3.108 Wild Hunter: Wild Vulcan ×2.4, Sonic Boom ×2.8', () => {

@@ -31,7 +31,7 @@ export function grantDungeonCoins(s: State, base: number) {
 }
 export const allItems = (s: Pick<State, 'inventory' | 'equipment'>) => [...s.inventory, ...Object.values(s.equipment)].filter((x): x is Item => !!x);
 /** v3.201 오늘 산 칠흑 상품 수(제작 · 각성 합산). */
-export const onyxBoughtToday = (s: Pick<State, 'dungeonShopDay'>, now: number) => boughtToday(s, 'onyx', now);
+const onyxBoughtToday = (s: Pick<State, 'dungeonShopDay'>, now: number) => boughtToday(s, 'onyx', now);
 type DailyKey = 'onyx' | 'coreBox' | GrowthGood;
 /** v3.201 오늘(한국 시간) 산 하루 한도 상품 수. */
 export const boughtToday = (s: Pick<State, 'dungeonShopDay'>, key: DailyKey, now: number) => s.dungeonShopDay?.day === dayKey(now) ? s.dungeonShopDay[key] || 0 : 0;

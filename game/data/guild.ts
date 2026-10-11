@@ -10,7 +10,7 @@ export type GuildTotals = { catches: number; clears: number; bosses: number; aby
 export const emptyTotals = (): GuildTotals => ({ catches: 0, clears: 0, bosses: 0, abyss: 0 });
 /** 주간 길드 점수(기록판 정렬). 처치 1 · 던전 정복 20 · 보스 5 · 무릉도장 최고 층 10. v3.241 길드 금고 기부(1,000 G당 1점)는 삭제. */
 export const guildPoints = (t: GuildTotals) => t.catches + t.clears * 20 + t.bosses * 5 + t.abyss * 10;
-export type GuildGoal = { id: 'catches' | 'clears' | 'bosses' | 'abyss'; title: string; target: number; pearls: number };
+type GuildGoal = { id: 'catches' | 'clears' | 'bosses' | 'abyss'; title: string; target: number; pearls: number };
 /** 주간 길드 목표: 길드원 수(최소 3명 기준)에 비례하는 합산 목표 3개와 고정 심연 목표 1개. 길드원 각자가 한 번씩 받습니다. */
 export function makeGuildGoals(memberCount: number): GuildGoal[] {
     const n = Math.max(3, memberCount);

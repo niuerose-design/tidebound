@@ -8,7 +8,7 @@
  */
 import type { CombatEvent, Log } from '../types';
 
-export type BattleResult = 'win' | 'lose' | 'flee';
+type BattleResult = 'win' | 'lose' | 'flee';
 export type BattleRecord = {
     /** 첫 줄의 로그 id(기록 구분용). */
     id: number;
