@@ -57,16 +57,17 @@ export const RULE_CAPS: Partial<Record<GearStat, number>> = {
 export const STATUS_RESIST_BASE = .137, STATUS_RESIST_STAR = .03;
 export const AFFIX_POOL: AffixDef[] = [
     // 능력치 옵션
-    { id: 'might', name: '맹공', stat: 'attack', kind: 'flat', base: .3, description: '물리 공격이 오릅니다.' },
-    { id: 'arcana', name: '신비', stat: 'magic', kind: 'flat', base: .3, description: '마법 공격이 오릅니다.' },
-    { id: 'vigor', name: '생명', stat: 'hp', kind: 'flat', base: 1.5, description: '최대 체력이 오릅니다.' },
+    // v3.302 장비 → 스킬 비중 이동: 주 능력치 옵션(맹공 · 신비 · 위력 · 생명) 고정 수치 −10%, 대신 5차 핵심 패시브 상한을 올림(data/core-passive). 이미 붙은 줄도 한 번 맞춤(migrations).
+    { id: 'might', name: '맹공', stat: 'attack', kind: 'flat', base: .27, description: '물리 공격이 오릅니다.' },
+    { id: 'arcana', name: '신비', stat: 'magic', kind: 'flat', base: .27, description: '마법 공격이 오릅니다.' },
+    { id: 'vigor', name: '생명', stat: 'hp', kind: 'flat', base: 1.35, description: '최대 체력이 오릅니다.' },
     { id: 'plating', name: '철갑', stat: 'defense', kind: 'flat', base: .3, description: '물리 방어가 오릅니다.' },
     { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .3, description: '마법 방어가 오릅니다.' },
     { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, retired: true, description: '최대 마나가 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .036, retired: true, description: '턴당 마나 회복이 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
-    { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .2, stat2: 'magic', base2: .2, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
+    { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .18, stat2: 'magic', base2: .18, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
     { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .2, stat2: 'resist', base2: .2, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
     // v3.90 최대 마나 위력 ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
     // v3.297 턴당 마나 회복 ×3(.012 → .036): 태초 Lv.100 한 줄 +14 → +42. 마법 직업은 환생 64에서 회복 38~51/턴에 평균 마나 3~7%로 늘 모자랐습니다.

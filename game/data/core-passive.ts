@@ -13,7 +13,8 @@ export const CORE_REWORK = {
     main: { 4: .06, 5: .09 } as Record<number, number>,
     masteryBoost: .1,
     flat: { attack: 421, magic: 421, hp: 1422 },
-    cap: { attack: .35, magic: .35, hp: .22 },
+    /** v3.302 장비 → 스킬 비중 이동으로 상한 상향(공격 .35 → .45, 체력 .22 → .28). 숙련 0단계는 70%, 마지막 단계 100%. */
+    cap: { attack: .45, magic: .45, hp: .28 },
     /** 4차 핵심의 작은 배율(주 공격). */
     scale4: .15,
     scale4Hp: .05,

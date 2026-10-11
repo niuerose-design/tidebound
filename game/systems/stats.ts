@@ -329,7 +329,7 @@ export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefi
 /** 마법 직업이면 1(기본 공격이 항상 마력 평타), 아니면 0. */
 export const arcaneStrikeChance = (j: { magic: number; attack: number; tier: number }) => j.magic - j.attack >= .045 ? SKILL_FORMULA.arcaneStrikeChance[Math.min(j.tier, SKILL_FORMULA.arcaneStrikeChance.length - 1)] || 0 : 0;
 /** 직업의 물리 방어 배율로 정하는 방어 친화도(0.2~1). 방어 비례 피해·반격의 효율입니다. */
-/** v3.298 수호력(탱커 피해 · 가시의 기준값): (방어 + 마방) × (bulwarkFloor + (1 − bulwarkFloor) × 작은 쪽 ÷ 큰 쪽). 고르게 맞출수록 커집니다. */
+/** v3.301 수호력(탱커 피해 · 가시의 기준값): (방어 + 마방) × (bulwarkFloor + (1 − bulwarkFloor) × 작은 쪽 ÷ 큰 쪽). 고르게 맞출수록 커집니다. */
 export const bulwark = (a: { defense: number; resist: number }) => { const d = Math.max(0, a.defense || 0), r = Math.max(0, a.resist || 0), hi = Math.max(d, r); return hi > 0 ? (d + r) * (SKILL_FORMULA.bulwarkFloor + (1 - SKILL_FORMULA.bulwarkFloor) * Math.min(d, r) / hi) : 0; };
 export const guardAffinity = (defenseMultiplier: number) => Math.min(1, Math.max(SKILL_FORMULA.guardFloor, (defenseMultiplier - SKILL_FORMULA.guardBase) / SKILL_FORMULA.guardSpan));
 /** 올라운드 밸런스의 원시 피해. 직접 배분한 포인트(s.attributes)만 사용합니다. */

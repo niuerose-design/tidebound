@@ -214,15 +214,15 @@ test('v26.8 registerItemAll registers one weakest unlocked item per missing slot
     assert.deepEqual(Object.keys(s.itemBook).sort(), ['charm:0', 'rod:0']); assert.deepEqual(s.inventory.map(x => x.id).sort(), ['c1', 'm2', 'r0a'], 'weakest rod consumed, locked/relic kept');
     assert.throws(() => act(s, { type: 'registerItemAll' }, 0), /미등록 장비가 가방에 없습니다/);
 });
-test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow 70% → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
+test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow from CORE_PASSIVE.base (v3.302 55%) → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),St=await L.load('systems/stats'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
  const sage=C.jobById('sage'),magus=C.jobById('grandMagus');assert.equal(sage.magic,1.06);assert.equal(magus.magic,1.09);assert.equal(sage.masteryBoost,.1);
- const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.35,hp:.22});
- assert.equal(P.coreScale(d,'grandMagus',0),.7);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
+ const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.45,hp:.28},'v3.302 cap');
+ assert.equal(P.coreScale(d,'grandMagus',0),P.CORE_PASSIVE.base);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
  assert.equal(P.coreScale(w,'grandMagus',4),1,'same lineage keeps it whole');assert.equal(P.coreScale(d,'hero',4),.5,'another lineage gets half');
  const body=(job,ids,practice)=>{const s=newState(0);s.level=100;s.job=job;s.unlockedJobs.push(job);for(const id of ids){s.learned[id]=1;s.skillPractice[id]=practice;}s.skillInheritances=Object.fromEntries(ids.map(id=>[id,true]));s.skills=ids;return St.stats(s);};
  const core=d.core;delete d.core;const hero0=body('hero',['magusDomain'],1e9),mage0=body('grandMagus',['magusDomain'],0);d.core=core;const hero1=body('hero',['magusDomain'],1e9),mage1=body('grandMagus',['magusDomain'],0);
- assert.ok(Math.abs(hero1.magic/hero0.magic-1.175)<.01&&Math.abs(hero1.hp/hero0.hp-1.11)<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-1.245)<.01,'stage 0 = 70% of 35%');
+ assert.ok(Math.abs(hero1.magic/hero0.magic-(1+.45*.5))<.01&&Math.abs(hero1.hp/hero0.hp-(1+.28*.5))<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-(1+.45*P.CORE_PASSIVE.base))<.01,'stage 0 = base share of the cap');
  const flat0=body('sage',[],0),flat1=body('sage',['sageWisdom'],1e9);assert.ok(flat1.magic>=flat0.magic+250+45&&flat1.hp>=flat0.hp+300,'flat core lands before the multipliers');
 });
 test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Azeroth jobs keep small multipliers and a lineage-only core growing from 40%',async()=>{
@@ -266,7 +266,7 @@ test('v3.297 마력 line regen ×3: new rolls use base2 .036; existing flow/curr
  migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30);assert.equal(s.inventory[0].affixes[0].value,200,'max mana unchanged');assert.equal(s.inventory[0].affixes[1].value,12);
  migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30,'once');assert.equal(newState(0).manaRegenRescaled,true,'fresh saves skip it');
 });
-test('v3.298 tanks: 수호력 rewards balanced 방어 · 마방; defense-tree jobs (not healers) get 수호의 일격 and +tankEdge vs bosses and swarms', async () => {
+test('v3.301 tanks: 수호력 rewards balanced 방어 · 마방; defense-tree jobs (not healers) get 수호의 일격 and +tankEdge vs bosses and swarms', async () => {
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),St=await L.load('systems/stats'),C=await L.load('systems/combat'),B=await L.load('data/balance');
  assert.equal(St.bulwark({defense:100,resist:0}),50);assert.equal(St.bulwark({defense:100,resist:100}),200);assert.ok(St.bulwark({defense:100,resist:100})>St.bulwark({defense:150,resist:50}),'same sum, balanced is bigger');
  const job=id=>{const s=newState(0);s.job=id;return stats(s).tankEdge;};
@@ -275,4 +275,10 @@ test('v3.298 tanks: 수호력 rewards balanced 방어 · 마방; defense-tree jo
  const f=(extra={},more={})=>({name:'A',stats:{...base,...extra},hp:1e9,mana:100,skills:[],cooldowns:{},stun:0,effects:{},ranks:{},mastery:{},practice:{},...more});
  const hit=(edge,prey)=>{const t=f({defense:0,resist:0},{foe:true,prey});C.strike(f({tankEdge:edge}),t,()=>0);return 1e9-t.hp;};
  assert.ok(hit(.25,false)>hit(0,false),'수호의 일격 adds 수호력 to every hit');assert.ok(Math.abs(hit(.25,true)/hit(.25,false)-1.25)<.01,'+tankEdge vs a boss');
+});
+test('v3.302 gear → skill weight: main-stat affix bases −10% (existing lines rescaled once), core passive caps .45/.28', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Gr=await L.load('data/gear'),CP=await L.load('data/core-passive');
+ assert.deepEqual(['might','arcana','vigor'].map(id=>Gr.affixDef(id).base),[.27,.27,1.35]);assert.deepEqual(CP.CORE_REWORK.cap,{attack:.45,magic:.45,hp:.28});
+ const s=newState(0);delete s.mainAffixRescaled;s.inventory=[{id:'x',name:'x',slot:'rod',rarity:5,power:400,level:100,affixes:[{id:'might',name:'맹공',stat:'attack',value:100},{id:'force',name:'위력',stat:'attack',value:50,stat2:'magic',value2:50},{id:'lucky',name:'행운',stat:'crit',value:.05}]}];
+ migrateState(s,0);const a=s.inventory[0].affixes;assert.deepEqual([a[0].value,a[1].value,a[1].value2,a[2].value],[90,45,45,.05]);migrateState(s,0);assert.equal(a[0].value,90,'once');
 });

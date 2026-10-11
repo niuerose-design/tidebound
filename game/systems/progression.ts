@@ -164,7 +164,8 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
  * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
  * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
  */
-export const CORE_PASSIVE = { base: .7, borrowed: .5, azerothBase: .4 } as const;
+/** v3.302 숙련 0단계 몫 .7 → .55: 핵심 패시브 상한을 올린 몫이 숙련을 키울수록 들어오게(장비 → 스킬 비중 이동). */
+export const CORE_PASSIVE = { base: .55, borrowed: .5, azerothBase: .4 } as const;
 export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
     // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.

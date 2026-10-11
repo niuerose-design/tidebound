@@ -655,8 +655,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'harmony' ? (sa.harmony || 0) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'arcane' ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical || chosen?.baseStat === 'magic' ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
     if (chosen?.scaling === 'defense')
-        base += bulwark(sa) * (chosen.scalingRatio ?? 1) * sa.guardAffinity; // v3.298 방어 대신 수호력(방어 + 마방, 고를수록 큼)
-    // v3.298 수호의 일격: 방어 계열 직업(tankEdge)은 모든 공격 기준값에 수호력 × tankStrike를 더합니다(회복 · 상태이상 전용 제외).
+        base += bulwark(sa) * (chosen.scalingRatio ?? 1) * sa.guardAffinity; // v3.301 방어 대신 수호력(방어 + 마방, 고를수록 큼)
+    // v3.301 수호의 일격: 방어 계열 직업(tankEdge)은 모든 공격 기준값에 수호력 × tankStrike를 더합니다(회복 · 상태이상 전용 제외).
     if (sa.tankEdge && !chosen?.healOnly) base += bulwark(sa) * SKILL_FORMULA.tankStrike;
     // v3.143 전탄발사: 쌓인 충전 중첩을 모두 소모해 중첩당 chargeBonus만큼 피해를 키웁니다(추가타 · 지속 피해 기준값에도 적용).
     const targetWeakened = (b.effects.weaken || 0) > 0;
@@ -684,7 +684,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (consumedBurn > 0) { base *= 1 + consumedBurn * chosen!.burnConsume!; notes.push(`화상 ${consumedBurn}중첩 폭발`); }
     // v25.14 마법 방어 비례 피해: 결계 계열(마법 방어 배율이 높은 직업)에서 온전히, 다른 직업이 계승하면 일부만.
     if (chosen?.scaling === 'resist')
-        base += bulwark(sa) * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1); // v3.298 마방 대신 수호력
+        base += bulwark(sa) * (chosen.scalingRatio ?? 1) * (sa.wardAffinity ?? 1); // v3.301 마방 대신 수호력
     // v25.22 행운 비례 피해(도박 기술): 물리 공격 × (치명 피해 배율 − 1) × 비율. 행운을 몰아주면 치명 피해 배율이 커져 주사위 기술이 세집니다.
     // v26.4 능력치 비례 피해(외길 계보): 기준값 = 배분 능력치 × 비율(공격력은 쓰지 않음). 그 능력치만 올려도 사냥이 됩니다.
     // v3.97 scalingAttack: 외길 기술은 공격력 × 비율을 더합니다(장비 · 연구가 쌓여도 기술 피해가 따라 커짐). v3.172 마법 기술이면 마법 공격.
@@ -737,8 +737,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     if (chosen?.tag) a.effects.tag = chosen.tag;
     // v3.211 극한 단계: 그 스킬의 최종 피해 배율(방어 경감이 곱셈이라 피해 숫자에 그대로 +2%씩).
     const extremeFinal = chosen ? a.skillFinal?.[chosen.id] || 1 : 1;
-    // v3.298 탱커의 보스 · 무리 특화: 방어 계열 직업은 사냥감(보스 · 지정 몬스터)과 무리에게 피해 +tankEdge.
-    const tankHit = sa.tankEdge && (b.prey || (b.swarm || 1) > 1) ? 1 + sa.tankEdge : 1;
+    // v3.301 탱커의 보스 · 무리 특화: 방어 계열 직업은 사냥감(보스 · 지정 몬스터)과 무리에게 피해 +tankEdge.
+    const tankHit = !sa.tankEdge ? 1 : b.prey ? 1 + sa.tankEdge : (b.swarm || 1) > 1 ? 1 + SKILL_FORMULA.tankSwarmEdge : 1;
     const linkMultiplier = tankHit * extremeFinal * (1 + tagBonus) * comboBoost * balanceBoost * buffDamage * varietyBoost * (linked ? 1 + (chosen?.conditionalDamageBonus || 0) * (chosen?.damageBonusCondition === 'statuses' ? statusCount : 1) : 1) * bleedBoost * sealBoost * (preyHit ? 1 + chosen!.preyBonus! : 1) * (b.prey && sa.bossDamage ? 1 + sa.bossDamage : 1) * (1 + (a.damageDealt || 0)) * (1 - (b.damageTaken || 0));
     if (linked) { notes.push(chosen?.damageBonusCondition === 'statuses' ? `헥스 ${statusCount}` : '연계'); ev.linked = true; }
     // 상태이상 전용 기술: 명중 판정만 하고 직접 피해·반격·흡혈·추가타는 없습니다.
@@ -794,9 +794,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v27.2 공격자 방어를 절반만 적용하고, 무리 규모에 따라 (1 + log2 N)배(최대 10배). 탱커가 무리 사냥에서 빛나는 장치입니다.
         const crowd = a.swarm && a.swarm > 1 ? Math.min(SKILL_FORMULA.swarmThornsCap, 1 + Math.log2(a.swarm)) : 1;
         // v27.2 마법 공격을 맞으면 마법 방어로 반격합니다(결계 계보가 마법 무리를 갈 수 있도록). 공격자도 같은 종류의 방어로 막습니다.
-        // v3.298 반격 위력은 맞은 종류와 상관없이 수호력(방어 + 마방, 고를수록 큼). 공격자는 같은 종류의 방어로 막습니다.
+        // v3.301 반격 위력은 맞은 종류와 상관없이 수호력(방어 + 마방, 고를수록 큼). 공격자는 같은 종류의 방어로 막습니다.
         const guard = bulwark(sb), foeGuard = magical ? sa.resist : sa.defense;
-        const edge = sb.tankEdge && (a.prey || (a.swarm || 1) > 1) ? 1 + sb.tankEdge : 1; // v3.298 탱커 반격도 보스 · 무리에게 +tankEdge
+        const edge = !sb.tankEdge ? 1 : a.prey ? 1 + sb.tankEdge : (a.swarm || 1) > 1 ? 1 + SKILL_FORMULA.tankSwarmEdge : 1; // v3.301 탱커 반격도 보스 · 무리에게 +tankEdge
         const reflected = Math.min(a.hp, Math.max(1, Math.round(mitigate(guard * sb.thorns * crowd * edge, foeGuard * (1 - SKILL_FORMULA.thornsPierce), guard))));
         a.hp = Math.max(0, a.hp - reflected);
         endure(a, sa, notes, ev, true);

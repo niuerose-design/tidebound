@@ -377,6 +377,14 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     for (const key of ['swarm', 'lifeBonus', 'privacy']) if (key in s) delete (s as Record<string, unknown>)[key];
     // v3.66 유물 위력 공식 변경: 이미 가진 유물은 다음 승천까지 예전 공식과 새 공식 중 높은 쪽을 씁니다(약해지지 않게).
     // v3.297 마력(flow) · 순환(current) 줄의 턴당 마나 회복 ×3: 이미 붙은 줄도 같은 비율로 올립니다(가방 · 장착, 이식한 유물 줄 포함, 한 번만).
+    // v3.302 장비 → 스킬 비중 이동: 이미 붙은 주 능력치 옵션도 새 굴림과 같이 −10%(가방 · 장착, 이식한 유물 줄 포함, 한 번만). 대신 5차 핵심 패시브 상한이 오릅니다.
+    if (!s.mainAffixRescaled) {
+        for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) for (const a of item?.affixes || []) {
+            if (a.id === 'might' || a.id === 'arcana' || a.id === 'vigor') a.value *= .9;
+            else if (a.id === 'force') { a.value *= .9; if (a.value2) a.value2 *= .9; }
+        }
+        s.mainAffixRescaled = true;
+    }
     if (!s.manaRegenRescaled) {
         for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) for (const a of item?.affixes || []) {
             if (a.id === 'flow' && a.stat2 === 'manaRegen' && a.value2) a.value2 *= 3;
