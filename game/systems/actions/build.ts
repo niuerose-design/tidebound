@@ -202,8 +202,9 @@ export const buildActions: ActionHandlers = {
             throw Error('해커는 능력치에 투자할 수 없습니다. 포인트는 전직한 뒤 쓸 수 있습니다.');
         if (!['str', 'dex', 'int', 'vit', 'wis', 'luk'].includes(id))
             throw Error('알 수 없는 능력치입니다.');
+        // v3.292 찍기 단위(×1 · ×5 · ×10 · ×50 · ×100): 남은 포인트 안의 양의 정수면 받습니다(화면은 단위와 남은 포인트 중 작은 값을 보냄).
         const amount = a.value === 'max' ? s.statPoints : Number(a.value || '1');
-        if (!Number.isInteger(amount) || amount < 1 || (a.value !== 'max' && ![1, 5, 10].includes(amount)) || s.statPoints < amount)
+        if (!Number.isInteger(amount) || amount < 1 || s.statPoints < amount)
             throw Error('능력치 포인트가 부족합니다.');
         s.attributes[id as Attribute] += amount;
         s.statPoints -= amount;

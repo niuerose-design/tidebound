@@ -242,3 +242,12 @@ test('v3.282 core rework covers every Maple 4th/5th job: none keeps an old main 
   assert.ok(Math.max(j.attack,j.magic)<=cut[j.tier]+1e-9,`${j.id} attack ${j.attack} magic ${j.magic}`);}
  const a=C.JOBS.find(j=>j.id==='apostle');assert.deepEqual([a.magic,a.hp,a.masteryBoost],[1.09,1,.1]);
 });
+
+test('v3.292 stat step: any whole amount up to the remaining points (×1 · ×5 · ×10 · ×50 · ×100 or the rest), never more', async () => {
+    const s = newState(0); s.statPoints = 120;
+    act(s, { type: 'attribute', id: 'str', value: '100' }, 0); assert.equal(s.attributes.str, 100); assert.equal(s.statPoints, 20);
+    act(s, { type: 'attribute', id: 'dex', value: '7' }, 0); assert.equal(s.attributes.dex, 7); assert.equal(s.statPoints, 13);
+    assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '50' }, 0), /부족/);
+    assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '0' }, 0)); assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '1.5' }, 0));
+    act(s, { type: 'attribute', id: 'luk', value: 'max' }, 0); assert.equal(s.attributes.luk, 13); assert.equal(s.statPoints, 0);
+});
