@@ -9,7 +9,7 @@ import { weekKey } from '../data/time';
 /** v25.13 계정 공유 금고. 계정당 요청은 세이브 저장과 함께 직렬로 처리되므로 읽고-쓰기로 충분합니다. */
 const fresh = (account: string, week: string): WalletRow => ({ account_id: account, pearls: 0, essence: 0, week, pearl_out: 0, items: '[]' });
 /** v3.116 금고 칠흑 목록(JSON 칸). 깨진 값은 빈 목록으로 봅니다. */
-export const vaultOnyx = (w: Pick<WalletRow, 'items'>): VaultOnyx[] => { try { const x = JSON.parse(w.items || '[]'); return Array.isArray(x) ? x : []; } catch { return []; } };
+const vaultOnyx = (w: Pick<WalletRow, 'items'>): VaultOnyx[] => { try { const x = JSON.parse(w.items || '[]'); return Array.isArray(x) ? x : []; } catch { return []; } };
 async function wallet(account: string, now: number) {
     const week = weekKey(now), w = (await db().getWallet(account)) || fresh(account, week);
     return w.week === week ? w : { ...w, week, pearl_out: 0 };

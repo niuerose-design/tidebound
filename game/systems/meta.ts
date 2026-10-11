@@ -36,7 +36,7 @@ export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ l
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
-export const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
+const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
 /** 지금 전투의 난이도: 던전은 던전 난이도(무릉도장 층·모드), 사냥터는 사냥터 난이도. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode) : (s.tide || 0);
 /**
@@ -64,7 +64,7 @@ export function killReward(f: { exp: number; gold: number; rewardMultiplier?: nu
     return { exp: Math.round(f.exp * mult * tierExp(tier) * rewardScale), gold: Math.round(f.gold * mult * tierReward(tier) * rewardScale) };
 }
 /** v27.35 던전 보상에 쓰는 층 배율 단계(무릉도장은 rewardTierCap에서 멈춤). */
-export const dungeonRewardTier = (tier: number, id = 'abyss') => id === 'abyss' ? Math.min(tier, DUNGEON_TUNING.rewardTierCap) : tier;
+const dungeonRewardTier = (tier: number, id = 'abyss') => id === 'abyss' ? Math.min(tier, DUNGEON_TUNING.rewardTierCap) : tier;
 /** 던전 처치 보상(배율 적용 전). 보스는 권장 레벨 몬스터 몇 마리분, 일반 웨이브는 몬스터 레벨을 권장 레벨 + 2까지만 셉니다. */
 export function dungeonKillReward(f: { level: number; rewardMultiplier?: number }, dungeonLevel: number, tier: number, boss: boolean, id = 'abyss') {
     const rt = dungeonRewardTier(tier, id), t = tierReward(rt), tx = tierExp(rt);

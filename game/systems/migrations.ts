@@ -33,7 +33,7 @@ function refundGoldenResearch(s: State) {
  * v3.261 v3.202에서 같은 id(dungeon)로 새 연구 ‘던전 탐험 I’이 생겨, 불러올 때마다 그 단계를 지우고 옛 가격으로 세계석을 돌려주던 복사 버그:
  * 옛 던전의 금고는 이미 모두 정리됐으므로 dungeon은 더 건드리지 않습니다(상점 단골만).
  */
-export function mergeResearch337(s: State) {
+function mergeResearch337(s: State) {
     const perm = s.permanent as Record<string, number | undefined> | undefined;
     if (!perm) return 0;
     const granted = { ...(s.researchGranted || {}) };
@@ -58,7 +58,7 @@ export function mergeResearch337(s: State) {
     return refund;
 }
 /** v3.38 장소 완성 장착 AP를 업적 ‘지역 연구 N곳 완성’으로 옮깁니다. 이미 완성한 곳의 업적은 바로 받은 것으로 처리해 AP가 줄지 않습니다(한 번만). */
-export function movePlaceAp(s: State) {
+function movePlaceAp(s: State) {
     if (s.placeApMoved) return 0;
     s.placeApMoved = true;
     const had = new Set(Object.keys(s.achievements || {}));
@@ -70,7 +70,7 @@ export function movePlaceAp(s: State) {
     return ids.length;
 }
 /** v3.24 세계석 연구 ‘역풍 견디기’(옛 바람목 넓히기, base 6·step 4) 삭제: 투자한 세계석을 전액 돌려줍니다. */
-export function refundTailwindWindow(s: State) {
+function refundTailwindWindow(s: State) {
     const perm = s.permanent as Record<string, number | undefined> | undefined, rank = perm?.tailwindWindow || 0;
     if (!perm || !('tailwindWindow' in perm)) return 0;
     delete perm.tailwindWindow;
@@ -94,7 +94,7 @@ export function refundPearlResearch(s: State) {
     return spent;
 }
 /** v3.209 랜덤게임 삭제: 연구 ‘랜덤게임’(vowAnchor, base 10 · step 10, 최대 3)에 쓴 세계석을 돌려주고(승천 무료 지급분 제외) 기록 · 진행 중 판을 지웁니다. */
-export function retireRandomGame(s: State) {
+function retireRandomGame(s: State) {
     const any = s as Record<string, unknown>;
     for (const key of ['randomGameRuns', 'randomGameDay', 'randomGameStats']) if (key in any) delete any[key];
     if (s.dungeon?.id === 'randomGame') { s.dungeon = null; s.enemy = null; s.running = false; }
@@ -161,7 +161,7 @@ export function grantLimitBreakResearch(s: State) {
  * v27.95 숙련 요구치 상향(3차 이상 스킬 숙련 단계 ×3~×25): 옛 기준 1단계(= 숙련 계승)를 이미 넘긴 스킬은 계승을 유지합니다.
  * 한 번만 처리하고(masteryRescaled), 직업 숙달·스킬 숙련 단계 자체는 새 기준을 따릅니다.
  */
-export function keepLegacyInheritance(s: State) {
+function keepLegacyInheritance(s: State) {
     if (s.masteryRescaled) return 0;
     s.masteryRescaled = true;
     let kept = 0;
@@ -197,7 +197,7 @@ export function stampResearchLegacy(s: State) {
     return Object.keys(s.researchLegacy).length;
 }
 /** v3.58 확정 구매(일반 등급 구매)를 없애며 물건 도감 ‘일반’ 4칸을 한 번 등록해 줍니다(이미 등록한 칸은 그대로). */
-export function registerPlainCodex(s: State) {
+function registerPlainCodex(s: State) {
     if (s.plainCodex) return 0;
     s.plainCodex = true;
     const book = (s.itemBook ??= {}), add = Object.keys(plainCodexBook()).filter(k => !book[k]);
@@ -208,13 +208,13 @@ export function registerPlainCodex(s: State) {
  * v3.62 문 폐지(docs/concept.md 11.7): 이번 생 윤회의 문으로 열려 있던 직업은 드러난 것으로 남기고(doorsOpened) 추첨 값을 지웁니다.
  * 운영자가 연 문(openDoors)도 더는 쓰지 않습니다. 여러 번 불러도 같습니다.
  */
-export function retireDoors(s: State) {
+function retireDoors(s: State) {
     const legacy = s as State & { rebirthDoor?: string; openDoors?: unknown };
     if (legacy.rebirthDoor) { if (!s.doorsOpened?.includes(legacy.rebirthDoor)) (s.doorsOpened ??= []).push(legacy.rebirthDoor); delete legacy.rebirthDoor; }
     if ('openDoors' in legacy) delete legacy.openDoors;
 }
 /** v3.64 삭제한 히든 직업 6개와 그 스킬(docs/concept.md 11.7-2). */
-export const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor', 'sunriseAngler', 'noonDiver', 'nightHeron',
+const RETIRED_JOBS = ['barehandFisher', 'mistSwordsman', 'headwindSailor', 'sunriseAngler', 'noonDiver', 'nightHeron',
     /** v3.138 5차 통폐합 1: 미하일 계보(팔라딘과 같은 반사 탱커)와 숨은 2차 성벽 기사(산호 축성가). */
     'shieldbearer', 'gatekeeper', 'fortressLord', 'unyielding', 'guardianDeity', 'coralBuilder', 'fistMagus', 'deckGunner',
     /** v3.146 은월 재개편: 곁가지 구미호(흡혈)는 제논과 겹쳐 지웠습니다. */
@@ -302,12 +302,12 @@ export function remakeRebirthFisher(s: State) {
     if (s.masteryKept) s.masteryKept = s.masteryKept.filter(id => id !== job);
 }
 /** v3.135 나이트워커 2~5차 · 골령술사와 그 스킬을 지우고 1차 망인(undead)만 남깁니다. */
-export const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
-export const NIGHT_WALKER_SKILLS = ['marrowGuard', 'ossuaryRite', 'harvestEcho', 'soulTax', 'soulTyranny', 'undyingThrone', 'soulReap', 'undeathThrone'];
+const NIGHT_WALKER_JOBS = ['skeleton', 'bonecaster', 'soulHarvester', 'lichKing', 'deathEmperor'];
+const NIGHT_WALKER_SKILLS = ['marrowGuard', 'ossuaryRite', 'harvestEcho', 'soulTax', 'soulTyranny', 'undyingThrone', 'soulReap', 'undeathThrone'];
 /**
  * v3.135 지운 직업에 있으면 망인으로 옮기고, 지운 직업 · 스킬의 기록(숙련 · 숙달 · 습득 · 계승 · SP · 한계돌파 · 편성)을 지웁니다. 여러 번 불러도 같습니다.
  */
-export function retireNightWalker(s: State) {
+function retireNightWalker(s: State) {
     const jobs = new Set(NIGHT_WALKER_JOBS), skills = new Set(NIGHT_WALKER_SKILLS), drop = (ids?: string[]) => ids?.filter(id => !skills.has(id));
     if (jobs.has(s.job)) { s.job = 'undead'; addLog(s, '나이트워커 2~5차가 사라져 망인으로 돌아왔습니다.', 'system'); }
     if (s.jobGoal && jobs.has(s.jobGoal)) delete s.jobGoal;
@@ -325,7 +325,7 @@ export function retireNightWalker(s: State) {
 /**
  * v3.69 수련 패시브 숙련 요구치 상향(data/training.ts TRAINING_PASSIVE): 예전 기준(첫 단계 250)으로 이미 계승 자격이 있던 수련 패시브는 계승을 유지합니다. 한 번만 처리합니다.
  */
-export function keepTrainingInheritance(s: State) {
+function keepTrainingInheritance(s: State) {
     if (s.trainingRescaled) return 0;
     s.trainingRescaled = true;
     let kept = 0;
@@ -356,7 +356,7 @@ export function keepMasteredJobs(s: State) {
  * v3.69 독립 수련 통합(data/training.ts): 지금 옛 수련 직업이면 새 수련 직업으로 옮깁니다(스킬은 id 그대로 새 직업 것이라 편성·습득은 그대로).
  * 옛 직업의 숙련 기록은 지우지 않습니다(숙달 수에는 세지 않음). 여러 번 불러도 같습니다.
  */
-export function moveToTraining(s: State) {
+function moveToTraining(s: State) {
     const next = trainingFor(s.job);
     if (!next) return;
     s.job = next;
@@ -426,7 +426,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
 }
 
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
-export const AUTO_STAR_REFUND = 90;
+const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
 export function registerOnyxCodex(s: State) { for (const id of ownedOnyx(s)) { s.itemBook ??= {}; s.itemBook[onyxCodexKey(id)] = true; } }
 export function refundAutoStar(s: State) {
@@ -454,13 +454,13 @@ export function renameMapleGear(s: State) {
     return changed;
 }
 /** v27.63 환생 통계: 이번 생 시작 기록이 없는 기존 세이브는 지금부터 잽니다(언제 시작했는지 몰라 partial로 표시). 한 번만 적용됩니다. */
-export function startLifeClock(s: State, now: number) {
+function startLifeClock(s: State, now: number) {
     if (s.lifeStart) return;
     s.lifeStart = { at: now, playMs: s.playMs || 0, partial: true };
 }
 
 /** v3.84 관통 장비 옵션 ×2(PENETRATION.gearScale): 새로 굴리는 옵션은 기본값이 이미 2배라, 지금 가진 장비(가방 · 착용 · 유물 이식 줄)의 관통 줄만 한 번 맞춥니다. */
-export function boostPenetrationAffixes(s: State) {
+function boostPenetrationAffixes(s: State) {
     if (s.penetrationBoosted) return 0;
     let n = 0;
     const scale = (v: number) => Math.round(v * PENETRATION.gearScale * 10000) / 10000;

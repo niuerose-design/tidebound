@@ -197,7 +197,7 @@ export async function setClosed(kind: string, id: string, closed: boolean) {
 
 // ---------- v27.32 통계 ----------
 
-export type AdminStats = {
+type AdminStats = {
     at: number; accounts: number; saves: number;
     active: { hour: number; day: number; week: number }; running: number; inDungeon: number;
     level: { avg: number; max: number; buckets: { label: string; count: number }[] };
@@ -328,7 +328,7 @@ export async function resetAltar(kind: string) {
  */
 export type IncomeRate = { perHour: number; hours: number; estimated: boolean; earned: number };
 export type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number; exp: IncomeRate; mastery: IncomeRate };
-export type IncomeLog = { ago: number; gold: number; exp: number; mastery: number };
+type IncomeLog = { ago: number; gold: number; exp: number; mastery: number };
 export async function adminIncome(query = '', now = Date.now()) {
     const database = db(), accounts = new Map((await database.listAccounts()).map(a => [a.id, a.username]));
     const rows: IncomeRow[] = [], q = query.trim().toLowerCase(), picked: (IncomeRow & { log: IncomeLog[] })[] = [];

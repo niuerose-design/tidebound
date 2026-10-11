@@ -8,7 +8,7 @@ import type { State } from '../types';
  * 24시간 쉬지 않아도 약 1.08년 걸립니다(환생 200회 이후의 경험치 환산은 나중에 따로). v3.46 무리는 SWARM_RANK_PER_TURN.
  * v3.19 특전 최대의 합계 41 = 총 진급 포인트.
  */
-export type RankDef = { id: string; name: string; /** 이전 계급에서 이 계급까지 필요한 처치 수 */ need: number; /** 이 계급에 오를 때 받는 진급 포인트 */ points: number; group: '병' | '부사관' | '장교' | '장성' };
+type RankDef = { id: string; name: string; /** 이전 계급에서 이 계급까지 필요한 처치 수 */ need: number; /** 이 계급에 오를 때 받는 진급 포인트 */ points: number; group: '병' | '부사관' | '장교' | '장성' };
 /** v3.19 계급 그룹별 필요 처치 배율. */
 export const RANK_GROUP_SCALE: Record<RankDef['group'], number> = { 병: 1, 부사관: 10, 장교: 100, 장성: 80 };
 /** v3.19 조정 전 필요 처치(옛 세이브의 강등 판정용). */
@@ -38,8 +38,8 @@ export const RANK_CUMULATIVE: number[] = RANKS.reduce<number[]>((acc, r, i) => {
 export const RANK_TOTAL_POINTS = RANKS.reduce((a, r) => a + r.points, 0);
 
 /** 진급 포인트로 사는 특전. 단계당 1P, 합계 41단계 = 총 진급 포인트 41(전부 찍으면 중장). */
-export type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => string; max: number; cost: number; per: number };
-export type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
+type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => string; max: number; cost: number; per: number };
+type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
 export const RANK_PERKS: RankPerkDef[] = [
     { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다`, max: 10, cost: 1, per: 1 },
     { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 12, cost: 1, per: 1 },
@@ -57,10 +57,10 @@ export const SWARM_RANK_PER_TURN: Record<number, number> = { 5: 1.1, 100: 1.32, 
  * v3.48 무리 처치 숙련: 계급과 같은 구조(싸운 턴 × 규모별 턴당 값, 마리 수 상한)로 숙련 배수를 셉니다.
  * 한 마리 처치는 턴당 약 1이므로 서식지 숙련은 처치 숙련의 약 10~20배(×100 · ×500), 까미 상한 지역의 1/10 정도입니다.
  */
-export const SWARM_MASTERY_PER_TURN: Record<number, number> = { 5: 2, 100: 10, 500: 20 };
+const SWARM_MASTERY_PER_TURN: Record<number, number> = { 5: 2, 100: 10, 500: 20 };
 export const swarmMasteryKills = (size: number, turns: number) => size <= 1 ? 1 : Math.min(size, Math.max(1, turns) * (SWARM_MASTERY_PER_TURN[size] ?? 1));
 export const swarmRankKills = (size: number, turns: number) => size <= 1 ? 1 : Math.min(size, Math.max(1, turns) * (SWARM_RANK_PER_TURN[size] ?? 1));
-export type RankSource = Pick<State, 'rank' | 'kills'>;
+type RankSource = Pick<State, 'rank' | 'kills'>;
 
 export const rankState = (s: RankSource): RankState => s.rank ?? { exp: s.kills || 0, perks: {} };
 /** 지금 계급 번호(0 = 이등병). */

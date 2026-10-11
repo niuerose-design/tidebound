@@ -11,7 +11,7 @@ import { leakPool } from '../../secret/leaks';
 import { dayKey, weekKey } from '../../data/time';
 
 const needHacker = (s: Parameters<ActionHandlers[string]>[0]) => { if (!isHacker(s)) throw Error('해커 직업일 때만 할 수 있습니다.'); };
-export const BROADCAST_PATTERN = /^[^\n\r<>]{1,40}$/;
+const BROADCAST_PATTERN = /^[^\n\r<>]{1,40}$/;
 const ROMAN = 'I II III IV V VI VII VIII IX X'.split(' ');
 /** stage:<id> · dungeon:<id>. 첫 사냥터는 다운·패치 대상이 아닙니다. */
 function parsePlace(value: string) {
@@ -22,7 +22,7 @@ function parsePlace(value: string) {
 }
 
 /** v3.28 미끼 이름: 12자까지, 구분 문자(| ,)·줄바꿈·꺾쇠 제외, ???는 쓸 수 없음. */
-export const DECOY_NAME = /^[^\n\r<>|,]{1,12}$/;
+const DECOY_NAME = /^[^\n\r<>|,]{1,12}$/;
 /** v3.28 미끼 정보 검사(숙련 3단계). 공개로 남긴 항목은 미끼를 쓰지 않습니다. 돌려주는 값: '이름|직업|레벨' 또는 ''(미끼 없음). */
 function parseDecoy(level: number, show: PrivacyField[], name: string, job: string, lv: string) {
     if (!name && !job && !lv) return '';

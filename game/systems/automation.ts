@@ -61,9 +61,9 @@ export function rotationChoices(s: State): ('mastered' | number)[] {
     const top = n === 3 ? 3 : n === 4 ? 5 : 7;
     return ['mastered', ...Array.from({ length: top }, (_, i) => i + 1)];
 }
-export type RotationRule = { on: boolean; at: 'mastered' | number };
+type RotationRule = { on: boolean; at: 'mastered' | number };
 /** 지금 직업이 순회 시점에 닿았는지. */
-export function rotationDue(s: State, at: RotationRule['at']) {
+function rotationDue(s: State, at: RotationRule['at']) {
     const j = jobById(s.job);
     if (!j || isHackerJob(j.id)) return false;
     const have = s.jobMastery?.[j.id] || 0, target = jobMasteryTarget(j);

@@ -99,7 +99,7 @@ export const keepsAcrossLives = (item: Pick<Item, 'relic' | 'onyx' | 'heir'>) =>
 /** v3.66 계승 위력 종류: 유물은 relic, 계승 장비는 heir 값. 일반 장비는 null. */
 export const heirKind = (item: Pick<Item, 'relic' | 'heir'>): HeirKind | null => item.relic ? 'relic' : item.heir || null;
 /** 유물·계승 장비의 위력. 예전부터 가진 유물(relicLegacy)은 예전 공식과 새 공식 중 높은 쪽입니다. */
-export const heirItemPower = (item: Pick<Item, 'relic' | 'heir' | 'relicLegacy'>, kind: HeirKind, rebirths: number, level: number) => Math.max(heirPower(kind, rebirths, level), item.relic && item.relicLegacy ? legacyRelicPower(item.relic, rebirths, level) : 0);
+const heirItemPower = (item: Pick<Item, 'relic' | 'heir' | 'relicLegacy'>, kind: HeirKind, rebirths: number, level: number) => Math.max(heirPower(kind, rebirths, level), item.relic && item.relicLegacy ? legacyRelicPower(item.relic, rebirths, level) : 0);
 /** v3.3 유물 · v3.66 계승 장비 위력을 환생 횟수와 레벨에 맞춥니다(heirPower). 불러오기·환생·수령·계승 때 불러 저장된 위력을 고칩니다. 계승 장비의 고정 수치 옵션은 위력 비율만큼 함께 바뀝니다(유물 이식 옵션은 그대로). */
 export function syncRelicPower(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>) {
     for (const item of ownedItems(s)) {
@@ -153,7 +153,7 @@ export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: n
  * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
  * 레벨 환산이 없던 때 낮은 레벨 유물에 높은 레벨 줄을 옮기고 유물 레벨을 올려 부푼 줄을 불러올 때 이 값으로 줄입니다. 늘리지는 않습니다.
  */
-export function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
+function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
     const def = affixDef(x.id);
     if (!def || x.rule || def.fixed || def.kind !== 'flat') return x;
     const src = Math.min(RARITIES.length - 1, Math.max(0, x.srcRarity ?? RARITIES.length - 1)), level = relic.level || 1;
@@ -168,7 +168,7 @@ export function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'leve
  * 전에는 비율 줄만 태초 품질 그대로 옮겨져, 최고 굴림 3줄을 모은 유물이 같은 줄을 가진 태초보다도 강했습니다(docs/research-review.md 뒤 장비 점검).
  * 양날 옵션의 손해 쪽(음수)과 규칙 · 고정 옵션은 그대로. 유물보다 낮은 등급에서 온 줄은 올리지 않습니다. 보정한 줄은 pctFixed로 표시해 다시 손대지 않습니다.
  */
-export function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
+function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
     const def = affixDef(affix.id);
     if (!def || affix.rule || def.kind !== 'percent' || def.fixed) return affix;
     const q = Math.min(1, rarityQuality(relicRarity) / rarityQuality(Math.max(srcRarity, relicRarity)));
@@ -176,7 +176,7 @@ export function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRa
     return { ...affix, value: pct(affix.value)!, ...(affix.value2 !== undefined ? { value2: pct(affix.value2) } : {}), pctFixed: true };
 }
 /** v3.82 원래 등급이 기록되지 않은 예전 이식 줄: 그 수치가 나올 수 있는 가장 낮은 등급(Lv.100 · 최고 굴림 기준)으로 봅니다. 실제보다 덜 깎이는 쪽입니다. */
-export function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
+function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
     const def = affixDef(affix.id);
     if (!def || affix.rule || def.fixed || !(affix.value > 0)) return relicRarity;
     // v3.141 비율 옵션: Lv.100 최고 굴림(기본 × 1.4 × 등급 품질)이 그 수치 이상이 되는 가장 낮은 등급.

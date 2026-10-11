@@ -24,7 +24,7 @@ const RAW: TrainingJob[] = [
  * v3.300 수련 직업 제약: 수련 직업으로 있는 동안만(패시브를 계승해 쓰는 다른 직업은 없음). 계열마다 하나, 수련(1차) → 능력치 수련 I · II · III으로 갈수록 셉니다.
  * 막기(물리 · 마법)는 70 · 80 · 90 · 100%, 나머지는 60 · 70 · 80 · 90%.
  */
-export const TRAINING_RESTRAINT: Record<Exclude<JobTreeId, 'mystery'>, { steps: number[]; label: string }> = {
+const TRAINING_RESTRAINT: Record<Exclude<JobTreeId, 'mystery'>, { steps: number[]; label: string }> = {
     physical: { steps: [.7, .8, .9, 1], label: '마법 공격(마법 피해 · 복합 피해의 마법 몫)' },
     magic: { steps: [.7, .8, .9, 1], label: '물리 공격(물리 피해)' },
     defense: { steps: [.6, .7, .8, .9], label: '물리 방어 · 마법 방어' },

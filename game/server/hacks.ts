@@ -19,7 +19,7 @@ import { dayKey } from '../data/time';
 
 type Down = { kind: 'stage' | 'dungeon'; id: string; until: number; by: string; byId: string };
 type Tamper = { minutes: number; rate: number; by: string; byId: string; at: number };
-export type Hacks = {
+type Hacks = {
     broadcast?: { text: string; by: string; byId: string; at: number; until: number };
     cracked: Record<string, number>;
     /** v3.25 이벤트 id → 변조(이벤트당 1회). */
@@ -350,7 +350,7 @@ export async function clearHackEffects(now: number) {
 }
 
 /** v3.25 해커 순위(월). 시즌 키는 20,000,000 + YYYYMM이라 다른 기록판과 섞이지 않습니다. 행 id는 hacker:<모험가>. */
-export const hackerSeason = (key: string) => 20_000_000 + Number(key.replace('-', ''));
+const hackerSeason = (key: string) => 20_000_000 + Number(key.replace('-', ''));
 export async function syncHackerBoard(id: string, s: State, now: number) {
     const x = s.hacker?.season;
     if (!x?.dirty) return;

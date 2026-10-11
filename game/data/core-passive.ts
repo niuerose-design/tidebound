@@ -32,7 +32,7 @@ const round = (n: number, step: number) => Math.round(n / step) * step;
 type Key = 'attack' | 'magic' | 'hp';
 
 /** 그 직업의 핵심 패시브로 쓸 스킬: 주 공격을 올리는 패시브 → AP가 큰 패시브 → 먼저 나온 패시브. 계보 전용(exclusiveLineage)은 빼고 고릅니다. */
-export function pickCorePassive(job: Job, skills: Skill[]) {
+function pickCorePassive(job: Job, skills: Skill[]) {
     const own = skills.filter(sk => sk.job === job.id && sk.type === 'passive' && !sk.exclusiveLineage);
     const main: Key = job.magic > job.attack ? 'magic' : 'attack';
     return [...own].sort((a, b) => Number(!!(b.bonus?.[main] && b.bonus[main]! > 0)) - Number(!!(a.bonus?.[main] && a.bonus[main]! > 0)) || (b.cost || 0) - (a.cost || 0))[0];

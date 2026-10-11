@@ -113,7 +113,7 @@ export type Job = {
     constraint?: JobConstraint;
 };
 /** 제약 직업의 생존 장치. 전투 엔진(combat.ts)과 능력치(stats.ts)가 그대로 읽습니다. */
-export type ConstraintDevices = {
+type ConstraintDevices = {
     /** 턴 순서에서 항상 먼저 행동합니다(속도 비교 생략). 연속 행동 확률은 속도대로입니다. */
     firstStrike?: boolean;
     /** 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번, heal은 최대 체력 비율 회복). */
@@ -127,7 +127,7 @@ export type ConstraintDevices = {
     /** 모든 공격이 반드시 명중합니다. */
     sureHit?: boolean;
 };
-export type JobConstraint = { label: string; desc: string; devices: ConstraintDevices };
+type JobConstraint = { label: string; desc: string; devices: ConstraintDevices };
 /** 제약 장치를 사람이 읽는 문구로. 직업 상세·도움말이 씁니다. */
 export function constraintDeviceLabels(d: ConstraintDevices) {
     const out: string[] = [];
@@ -145,7 +145,7 @@ export const isConstraintJob = (j: Pick<Job, 'attack' | 'magic' | 'hp' | 'defens
 /** 직업 보정을 받는 다섯 능력치. */
 export type JobStatKey = 'attack' | 'magic' | 'hp' | 'defense' | 'resist';
 export type JobTreeId = 'physical' | 'magic' | 'defense' | 'status' | 'hybrid' | 'support' | 'mystery';
-export type JobTree = {
+type JobTree = {
     id: JobTreeId;
     name: string;
     subtitle: string;

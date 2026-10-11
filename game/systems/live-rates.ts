@@ -10,10 +10,10 @@ export const LEVEL_CAP = 100;
 
 export const RATE_WINDOW_MS = 5 * 60_000;
 /** 측정값을 보여 주기 시작하는 최소 실측 시간. */
-export const RATE_MIN_MS = 30_000;
+const RATE_MIN_MS = 30_000;
 export const GAP_RESET_MS = 90_000;
 type Totals = { at: number; exp: number; gold: number; kills: number; dmg: number; mastery: number };
-export type LiveRates = {
+type LiveRates = {
     /** 창 안의 실측 시간(ms). */
     elapsedMs: number;
     ready: boolean;

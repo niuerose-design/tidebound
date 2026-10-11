@@ -20,7 +20,7 @@ export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.junk && !a.rare && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
 const appraisalState = (s: State) => (s.appraisal ??= { count: 0, byRarity: [0, 0, 0, 0, 0, 0, 0], pity: { myth: 0, ancient: 0, primal: 0 } });
 /** v3.58 다음 감정에서 천장이 터지는 등급(없으면 0). */
-export const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
+const pityRarity = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.reduce((r, p) => (s.appraisal?.pity[p.key] || 0) + 1 >= p.count ? Math.max(r, p.rarity) : r, 0);
 /** v3.58 천장까지 남은 감정 수(이번 감정 포함). */
 export const pityLeft = (s: Pick<State, 'appraisal'>) => APPRAISAL_PITY.map(p => ({ ...p, left: Math.max(1, p.count - (s.appraisal?.pity[p.key] || 0)) }));
 /** v3.60 장비 감정은 부위를 고르지 않습니다(id 'all'): 부위는 같은 확률로 무작위, 무기는 물리·마법 중 같은 확률. 각인 감정·자동 감정은 부위를 고릅니다. */
@@ -41,7 +41,7 @@ function appraiseOnce(s: State, rng: () => number, cost: number, imprint?: strin
     const fixed = imprint ? [rollOption(affixDef(imprint)!, power, rarity, rng, s.level)] : [];
     return syncOrnateName({ ...base, name: gearName(offer.slot, rarity, base.style), rarity, power, affixes: rollAffixes(rarity, power, undefined, rng, fixed, offer.slot, s.level), paid: cost, ...(imprint ? { imprinted: imprint } : {}) });
 }
-export function ownsRelic(s: State, id: string) { return ownedItems(s).some(x => x?.relic === id); }
+function ownsRelic(s: State, id: string) { return ownedItems(s).some(x => x?.relic === id); }
 export function shopPreview(s: State, id: string): Item { const o = SHOP.find(x => x.id === id)!; return { id: 'preview', name: gearName(o.slot, 1, o.style), slot: o.slot, style: o.style, description: o.description, level: s.level, rarity: 1, power: Math.round((s.level + 2) * RARITIES[1].factor), affix: { stat: o.slot === 'charm' ? 'accuracy' : o.style === 'magic' ? 'magic' : o.slot === 'coat' ? 'hp' : 'attack', name: '제작', value: o.slot === 'charm' ? .05 : o.slot === 'coat' ? 20 : 5 } }; }
 /** v3.40 세계석 연구를 지금 살 수 없는 이유(세계석 부족 제외). 살 수 있으면 null. 연구 구매와 연구 구매 예약이 같은 판정을 씁니다. */
 export function researchBlock(s: State, id: string) {

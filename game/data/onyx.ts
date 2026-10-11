@@ -25,7 +25,7 @@ export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTi
  * v3.276 칠흑 장신구는 보스와 따로 정의합니다(id는 예전 보스 id를 그대로 써 세이브 · 도감 키가 이어짐).
  * boss는 지금 그 장신구를 떨어뜨리는 칠흑 보스이고, 없으면 지금은 새로 얻거나 각성할 수 없습니다(이미 가진 장신구는 그대로).
  */
-export type OnyxItemDef = { id: string; name: string; desc: string; affix: ItemAffix; /** 장신구 출신 서식지(origin) */ region: string; boss?: string };
+type OnyxItemDef = { id: string; name: string; desc: string; affix: ItemAffix; /** 장신구 출신 서식지(origin) */ region: string; boss?: string };
 export const ONYX_ITEMS: OnyxItemDef[] = [
     { id: 'onyxDusk', boss: 'onyxDusk', region: '리스항구', name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } },
     { id: 'onyxDunkel', boss: 'onyxDunkel', region: '헤네시스', name: '커맨더 포스 이어링', desc: '듄켈의 귀걸이. 연속 행동 확률이 오릅니다.', affix: { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', value: .1, rule: true } },

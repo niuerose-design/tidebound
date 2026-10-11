@@ -9,9 +9,9 @@ import type { Attribute, CombatStats, State } from '../types';
 
 export const BOSS_CORE_RULES = { awakenMax: 5, awakenStep: .1, duplicatePearls: 5, resonance: .1 };
 type CoreStat = keyof CombatStats;
-export type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.208 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[]; /** v3.276 칠흑 보스코어: 이 칠흑 보스 격파로만 얻고 각성합니다(칠흑 드롭 확률 · 천장, 상자 · 보너스 정복 없음). */ onyx?: string };
+type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.208 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[]; /** v3.276 칠흑 보스코어: 이 칠흑 보스 격파로만 얻고 각성합니다(칠흑 드롭 확률 · 천장, 상자 · 보너스 정복 없음). */ onyx?: string };
 /** 정수 턴 효과: 각성 배율 · 공명을 받지 않습니다. */
-export const CORE_TURN_STATS = new Set<CoreStat>(['stunBonus', 'controlBonus', 'dotTurnsBonus']);
+const CORE_TURN_STATS = new Set<CoreStat>(['stunBonus', 'controlBonus', 'dotTurnsBonus']);
 /** 던전 id → 보스 코어. 모두 보스 · 사냥감 피해 +5%에 그 보스의 기술을 이어받는 효과가 붙습니다. */
 export const BOSS_CORES: Record<string, BossCore> = {
     grotto: { name: '머쉬맘의 포자 코어', boss: '머쉬맘', desc: '보스 · 사냥감 피해 +5%, 최대 체력 +2,000 · 최대 마나 +300.', bonus: { bossDamage: .05, hp: 2000, mana: 300 } },
@@ -37,7 +37,7 @@ export const BOSS_CORES: Record<string, BossCore> = {
  */
 export const CORE_ATTRS = { count: 2, min: .2, max: 1 };
 export type CoreAttr = { k: Attribute; f: number };
-export type CoreEntry = { rank: number; attrs: CoreAttr[]; forges?: number };
+type CoreEntry = { rank: number; attrs: CoreAttr[]; forges?: number };
 const ATTR_KEYS: Attribute[] = ['str', 'dex', 'int', 'vit', 'wis', 'luk'];
 /** 저장 값(예전 숫자 형식 포함)을 코어 항목으로. */
 export const coreEntry = (v: number | { rank: number; attrs?: CoreAttr[]; forges?: number } | undefined): CoreEntry | undefined => v === undefined ? undefined : typeof v === 'number' ? { rank: v, attrs: [] } : { rank: v.rank || 0, attrs: v.attrs || [], ...(v.forges ? { forges: v.forges } : {}) };

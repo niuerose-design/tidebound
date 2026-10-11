@@ -14,7 +14,7 @@ export async function readMarketControl(): Promise<MarketControl> {
     try { const v = raw ? JSON.parse(raw) : null; return { closed: !!v?.closed, haltUntil: Number(v?.haltUntil) || 0, reason: typeof v?.reason === 'string' ? v.reason.slice(0, 100) : '' }; }
     catch { return { closed: false, haltUntil: 0, reason: '' }; }
 }
-export async function writeMarketControl(c: MarketControl, now = Date.now()) {
+async function writeMarketControl(c: MarketControl, now = Date.now()) {
     const clean: MarketControl = { closed: !!c.closed, haltUntil: c.haltUntil > now ? Math.floor(c.haltUntil) : 0, reason: String(c.reason || '').slice(0, 100) };
     await db().setSetting(KEY, JSON.stringify(clean), now);
     setMarketControl(clean);

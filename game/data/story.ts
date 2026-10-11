@@ -12,7 +12,7 @@ import { BOSS_CORES, coreEntry } from './boss-core';
 import { RANKS, rankIndex, rankState } from './rank';
 import { bestStar } from '../systems/equipment';
 
-export type StoryScene = {
+type StoryScene = {
     id: string;
     /** 장 번호(STORY_CHAPTERS의 인덱스). */
     chapter: number;

@@ -11,8 +11,8 @@ import { ODDS } from './odds';
  * - 규칙 옵션은 영웅(3) 이상에서 장비당 최대 1개. 기존 기술 규칙의 숫자 하나만 바꾸며, 같은 규칙은 cap까지만 합산합니다.
  * - 드롭한 사냥터·던전(origin)에 따라 특정 옵션이 잘 나옵니다.
  */
-export type GearStat = keyof Stats;
-export type AffixDef = {
+type GearStat = keyof Stats;
+type AffixDef = {
     id: string;
     name: string;
     stat: GearStat;
@@ -174,13 +174,13 @@ const THEME_WEIGHT = 4;
 export const rarityQuality = (rarity: number) => 1 + rarity * .2;
 /** 분해 시 얻는 정수와 옵션 재설정에 드는 정수. */
 export const ESSENCE_BY_RARITY = [1, 2, 4, 8, 16, 32, 64];
-export const rerollEssence = (rarity: number) => 2 + rarity * 2;
+const rerollEssence = (rarity: number) => 2 + rarity * 2;
 /** v27.94 같은 장비를 재설정할수록 골드·정수 비용이 오릅니다. 1회마다 기본 비용의 +10%(선형, 상한 없음). */
 export const REROLL_STEP_PCT = 10;
 /** 기본 비용에 곱해 올림·내림하기 전 값. 정수 % 단위로 계산해 1.1 같은 소수 오차로 정수가 1 더 붙지 않게 합니다. */
 export const rerollScaled = (base: number, rerolls = 0) => base * (100 + REROLL_STEP_PCT * Math.max(0, Math.floor(rerolls))) / 100;
 /** v27.94 수치 재련: 옵션 종류는 그대로 두고 수치(0.6~1.4배 굴림)만 다시 굴립니다. 비용은 재설정 기본 비용의 절반(올림)이고 오르지 않습니다. */
-export const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
+const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
 /**
  * v3.118 장비 비용 개편.
  * - 재련: 골드 없이 정수만. 이 장비를 재련할 때마다 정수가 ×REFINE_GROWTH(복리)로 오릅니다(Item.refines).
@@ -297,7 +297,7 @@ export function rollAffixes(count: number, power: number, origin: string | undef
 export const affixDef = (id: string) => AFFIX_POOL.find(a => a.id === id);
 const JUNK_AFFIXES = AFFIX_POOL.filter(a => a.junk);
 /** v3.75 장식(꽝)이 붙은 장비 이름 앞에 붙는 말. 옵션이 바뀌면 syncOrnateName으로 맞춥니다. */
-export const ORNATE_PREFIX = '반짝이는 ';
+const ORNATE_PREFIX = '반짝이는 ';
 export function syncOrnateName<T extends { name: string; affixes?: ItemAffix[] }>(item: T): T {
     const base = item.name.startsWith(ORNATE_PREFIX) ? item.name.slice(ORNATE_PREFIX.length) : item.name;
     item.name = item.affixes?.some(a => a.id === 'ornate') ? ORNATE_PREFIX + base : base;

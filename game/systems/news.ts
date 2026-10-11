@@ -13,7 +13,7 @@ import { dayKey } from '../data/time';
 import { bestStar } from './equipment';
 import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry } from '../data/boss-core';
 
-export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist' | 'core' | 'coreAwaken' | 'onyxAwaken';
+type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist' | 'core' | 'coreAwaken' | 'onyxAwaken';
 export type NewsMark = { onyx: string[]; ascension: number; tier5: string[]; abyss: number; star: number; rank: number; /** v3.160 재입대 횟수 */ reenlist?: number; /** v3.212 가진 보스 코어 · 완전 각성한 코어(없던 표시는 지금 상태로 채우고 소식 없음) */ cores?: string[]; coreFull?: string[]; /** v3.212 칠흑 장신구별 각성 단계 */ onyxRanks?: Record<string, number>; day: Partial<Record<NewsKind, string>> };
 export type NewsEvent = { kind: NewsKind; text: (name: string) => string };
 /** 무릉도장은 이 층 단위로 새로 넘을 때 알립니다. */
@@ -21,7 +21,7 @@ export const NEWS_ABYSS_STEP = 50;
 /** v3.190 진급 소식: 하사(첫 부사관) · 소위(첫 장교)에 올랐을 때, 그리고 소위 이후로는 진급할 때마다 알립니다(전에는 장성만). */
 export const NEWS_RANK_FIRST = 'ssg', NEWS_RANK_FROM = 'lt2';
 const newsRankFrom = RANKS.findIndex(r => r.id === NEWS_RANK_FROM);
-export const rankNewsworthy = (index: number) => index >= newsRankFrom || RANKS[index]?.id === NEWS_RANK_FIRST;
+const rankNewsworthy = (index: number) => index >= newsRankFrom || RANKS[index]?.id === NEWS_RANK_FIRST;
 
 /** v3.212 가진 칠흑 장신구별 가장 높은 각성 단계. */
 const onyxRanks = (s: State) => { const out: Record<string, number> = {}; for (const i of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (i?.onyx) out[i.onyx] = Math.max(out[i.onyx] || 0, i.onyxRank || 0); return out; };

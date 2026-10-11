@@ -17,7 +17,7 @@ export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity:
  * v3.81 scale 30: 환생 30~100 구간이 수입보다 싸면 뽑기 태초로 계승 태초를 빨리 만들 수 있어, 약 환생 38부터 직선(환생 30 ×10 · 60 ×28 · 100 ×46 · 200 ×91)이 되게 해
  * 환생 60~200에서 감정 태초 기대 비용이 그 구간 시간당 골드의 약 5일분(사냥 태초와 비슷)으로 남습니다.
  */
-export const APPRAISAL_REBIRTH = { scale: 30, perRebirth: .45 };
+const APPRAISAL_REBIRTH = { scale: 30, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
 export const IMPRINT_APPRAISAL = { goldMultiplier: 5, essence: 50 };
@@ -26,7 +26,7 @@ export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
 export const APPRAISAL: readonly { rarity: number; readonly chance: number }[] = [1, 2, 3, 4, 5, 6].map((rarity, i) => ({ rarity, get chance() { return ODDS.appraisal[i]; } }));
 export type ResearchTab = 'combat' | 'utility' | 'gold';
-export type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special' | 'vow';
+type ResearchGroup = 'attack' | 'defense' | 'basic' | 'special' | 'vow';
 export type ResearchDef = {
     id: string; name: string; desc: string; max: number; base: number; step: number;
     tab: ResearchTab; group?: ResearchGroup;

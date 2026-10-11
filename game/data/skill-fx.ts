@@ -2,7 +2,7 @@
  * v27.14 스킬별 연출 갈래 지정. combat-feedback의 id 규칙보다 먼저 봅니다.
  * 규칙으로 잘못 걸리는 스킬만 적고, 나머지는 id 규칙에 맡깁니다. 갈래 목록은 CombatFxVariant.
  */
-export type SkillFx = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
+type SkillFx = 'pierce' | 'slash' | 'quake' | 'bite' | 'wave' | 'lightning' | 'fire' | 'frost' | 'star' | 'gold' | 'song' | 'ward' | 'heal' | 'curse' | 'arcane' | 'impact' | 'glyph' | 'venom' | 'ink' | 'bone' | 'time';
 export const SKILL_FX: Record<string, SkillFx> = {
     // 행운 외길: 주사위 계열은 모두 금빛
     heavenlyDice: 'gold', luckyBreak: 'gold', heavenlyStrike: 'gold',

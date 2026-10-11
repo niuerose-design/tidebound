@@ -217,7 +217,7 @@ function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) 
     base.exp = Math.round(base.exp * k); base.gold = Math.round(base.gold * k);
 }
 /** v3.161 특별 몬스터 종류(정수의 슬라임 · 대왕 3종 포함). */
-export type SpecialKind = 'mimic' | 'nuri' | 'slime' | 'kingMimic' | 'kingNuri' | 'kingSlime';
+type SpecialKind = 'mimic' | 'nuri' | 'slime' | 'kingMimic' | 'kingNuri' | 'kingSlime';
 /** v3.104 부재중 정산 표본 환산(offline-sample.ts)이 남은 시간의 희귀 출현 판정을 따로 굴린 뒤, 나온 희귀 몬스터를 판정 없이 바로 세울 때 씁니다. */
 export type ForcedRare = 'onyx' | 'starlit' | SpecialKind;
 const SPECIAL_KINDS: readonly SpecialKind[] = ['mimic', 'nuri', 'slime', 'kingMimic', 'kingNuri', 'kingSlime'];

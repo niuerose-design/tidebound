@@ -8,17 +8,17 @@ import { MONOSTAT_LINEAGES } from '@/game/data/expansion-monostat';
 import { isHackerJob } from '@/game/data/hacker';
 import { percent } from '@/game/data/progression';
 
-export type JobStatus = 'current' | 'mastered' | 'ready' | 'near' | 'locked';
+type JobStatus = 'current' | 'mastered' | 'ready' | 'near' | 'locked';
 /** 화면의 기준 시각. 클라이언트 시계 대신 마지막 서버 시각(lastTick)을 씁니다. */
 export const serverNow = (s: State) => s.lastTick;
 
 /** 직업 상태: 현재 → 숙달(조건 무시) → 전직 가능 → 거의 다 됨(부족 1~2개) → 조건 부족 N. */
-export function jobStatus(s: State, j: Job) {
+function jobStatus(s: State, j: Job) {
     const req = jobRequirements(s, j), missing = req.filter(r => !r.met);
     const status: JobStatus = j.id === s.job ? 'current' : jobMastered(s, j) ? 'mastered' : !missing.length ? 'ready' : missing.length <= 2 ? 'near' : 'locked';
     return { status, req, missing };
 }
-export type StatusReader = (j: Job) => ReturnType<typeof jobStatus>;
+type StatusReader = (j: Job) => ReturnType<typeof jobStatus>;
 const readers = new WeakMap<State, StatusReader>();
 /** v3.93 화면용 직업 상태: 같은 상태 객체(동기화마다 새로 옴)에서는 직업마다 한 번만 계산합니다. 상태를 고쳐 쓰는 곳(서버 · 시험)은 jobStatus를 쓰세요. */
 export function statusReader(s: State): StatusReader {
@@ -36,7 +36,7 @@ export const canEnter = (st: ReturnType<typeof jobStatus>) => st.status === 'mas
 export const treeName = (id: string) => JOB_TREES.find(t => t.id === id)?.name || id;
 /** 계보별 직업 목록(직업 데이터는 고정이라 한 번만 묶어 둡니다). */
 let lineageIndex: Map<string, Job[]> | undefined;
-export const lineageJobs = (lineageId: string) => {
+const lineageJobs = (lineageId: string) => {
     if (!lineageIndex) { lineageIndex = new Map(); for (const j of JOBS) { const id = lineageOf(j); lineageIndex.set(id, [...(lineageIndex.get(id) || []), j]); } }
     return lineageIndex.get(lineageId) || [];
 };
@@ -58,7 +58,7 @@ export const tierLabel = (tier: number) => tier ? `0${tier}` : '시작';
 export const tierName = (j: Job) => j.tier ? `${j.tier}차` : '시작';
 /** 직업 보정 능력치(숙달하면 강화). */
 export const JOB_BONUS_KEYS = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
-export type JobBonusKey = typeof JOB_BONUS_KEYS[number];
+type JobBonusKey = typeof JOB_BONUS_KEYS[number];
 /** 이 능력치에 직업 보정이 있는지(고정 수치·배율 어느 쪽이든). */
 export const hasJobBonus = (j: Job, key: JobBonusKey) => j[key] !== 1 || !!j.bonus?.[key];
 /** 숙달로 강화되는 플러스 보정이 있는지. */
@@ -98,7 +98,7 @@ export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
  * 직업의 tree(전투 · 숙련 집중 계열)는 그대로라 숙련 진행판 · 계열 집중 서약에는 영향이 없고, 전직 화면의 묶음만 다릅니다.
  */
 export type JobTabId = JobTreeId | 'monostat';
-export const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle: '능력치 하나', description: '능력치 하나만 키워 전직하는 외길 계보의 모음입니다. 그 능력치 자체가 피해가 되고, 계열은 원래 계열(물리 · 마법 · 방어 · 상태이상 · 보조)을 따릅니다.', accent: '#d6a3c4' };
+const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle: '능력치 하나', description: '능력치 하나만 키워 전직하는 외길 계보의 모음입니다. 그 능력치 자체가 피해가 되고, 계열은 원래 계열(물리 · 마법 · 방어 · 상태이상 · 보조)을 따릅니다.', accent: '#d6a3c4' };
 export const JOB_TABS: { id: JobTabId; name: string; subtitle: string; description: string; accent: string }[] = [...JOB_TREES, MONOSTAT_TAB];
 const monostatIds = new Set(MONOSTAT_LINEAGES.map(l => l.id));
 export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId);
@@ -146,7 +146,7 @@ export function jobGoalOf(s: State) {
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
 export type Finder = 'starter' | 'ready' | 'mastered' | 'near';
 /** v3.242 처음 추천: 1차 직업이 70개가 넘어 첫 생에는 메이플 대표 계보(전사 둘 · 마법사 · 궁수 · 도적 · 해적)부터 보여 줍니다. */
-export const STARTER_JOBS = ['ronin', 'warden', 'tide', 'harpoon', 'relicScavenger', 'martialArtist'];
+const STARTER_JOBS = ['ronin', 'warden', 'tide', 'harpoon', 'relicScavenger', 'martialArtist'];
 export function finderJobs(s: State, kind: Finder, status: StatusReader = j => jobStatus(s, j)) {
     if (kind === 'starter') return STARTER_JOBS.map(id => jobById(id)).filter((j): j is Job => !!j);
     const visible = shownJobs(s);

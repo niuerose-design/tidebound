@@ -160,7 +160,7 @@ function buffsOf(effects: StatusEffects | undefined) {
     return Object.entries(effects.buffs || {}).filter(([, b]) => b.turns > 0);
 }
 /** 같은 id의 버프가 있으면 더 긴 쪽으로 갱신합니다(효과는 새 값). */
-export function grantBuff(effects: StatusEffects, buff: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number }) {
+function grantBuff(effects: StatusEffects, buff: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number }) {
     const buffs = (effects.buffs ??= {}), cur = buffs[buff.id];
     buffs[buff.id] = { turns: Math.max(buff.turns, cur?.turns || 0), ...(buff.name ? { name: buff.name } : {}), ...(buff.stats ? { stats: buff.stats } : {}), ...(buff.speedMultiplier ? { speedMultiplier: buff.speedMultiplier } : {}), ...(buff.damageMultiplier ? { damageMultiplier: buff.damageMultiplier } : {}) };
 }
@@ -260,10 +260,10 @@ function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, s
  * - ratio(B안, 공격 대비): 피해 × 공격 / (공격 + c × 방어). 공격 = 때리는 쪽의 물리 또는 마법 공격.
  * - constant(C안, 기준값 키우기): 피해 × k / (k + 방어 × 2)
  */
-export type DefenseModel = { kind: 'legacy' } | { kind: 'ratio'; c: number } | { kind: 'constant'; k: number };
+type DefenseModel = { kind: 'legacy' } | { kind: 'ratio'; c: number } | { kind: 'constant'; k: number };
 let defenseModel: DefenseModel = { kind: 'legacy' };
 export function setDefenseModel(model: DefenseModel) { defenseModel = model; }
-export function mitigate(raw: number, defense: number, attackStat: number) {
+function mitigate(raw: number, defense: number, attackStat: number) {
     const m = defenseModel;
     if (m.kind === 'ratio') { const a = Math.max(1, attackStat); return raw * a / (a + m.c * defense); }
     if (m.kind === 'constant') return raw * m.k / (m.k + defense * 2);
@@ -431,7 +431,7 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
 }
 /** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다.
  * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
-export type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
+type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
 function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     a.effects ??= {};
     b.effects ??= {};

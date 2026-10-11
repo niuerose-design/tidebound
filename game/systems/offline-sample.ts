@@ -38,7 +38,7 @@ import { FUEL } from '../data/otherworld';
  */
 export const OFFLINE_SAMPLE = { warmup: 300, turns: 900 };
 /** 측정 구간에 이보다 많이 레벨이 오르면 환산하지 않습니다(아래 sampleStable). */
-export const OFFLINE_SAMPLE_MAX_LEVELS = 1;
+const OFFLINE_SAMPLE_MAX_LEVELS = 1;
 
 /** 비례로 늘리는 누적 값. */
 type Counters = {
@@ -81,7 +81,7 @@ function addGains(into: Gains, g: Gains, sign = 1) {
 /** 측정 구간의 희귀 처치로 얻은 양(비례에서 뺌). markOffline이 비웁니다. */
 let rareGains: Gains = emptyGains();
 /** 비례에서 빼고 남은 시간에 따로 굴리는 희귀 몬스터. */
-export const isOfflineRare = (e: Pick<Enemy, 'id' | 'onyx' | 'variant'>) => !!e.onyx || isSpecialId(e.id) || e.variant === 'starlit';
+const isOfflineRare = (e: Pick<Enemy, 'id' | 'onyx' | 'variant'>) => !!e.onyx || isSpecialId(e.id) || e.variant === 'starlit';
 /** 부재중 정산 중 희귀 몬스터 처치 직전에 부릅니다(turn.ts). 돌려받은 값을 처치 뒤 noteOfflineRare에 넘깁니다. */
 export const markOfflineRare = (s: State) => (s.catchingUp && s.enemy && isOfflineRare(s.enemy) ? counters(s) : null);
 export function noteOfflineRare(s: State, before: Counters | null) { if (before) addGains(rareGains, gainsSince(s, before)); }

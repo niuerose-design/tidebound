@@ -6,7 +6,7 @@ import { BASE_STAGES, DUNGEONS, PLAIN_DUNGEONS, monsterById, dungeonById } from 
  * 진행은 처치·정복 때 쌓이고, 다 채우면 보상(세계석·정수)을 바로 받습니다. 하루 목표를 모두 채우면 추가 세계석.
  */
 export type GoalKind = 'catch' | 'species' | 'dungeon' | 'boss' | 'swarm' | 'duel';
-export type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean; /** v27.81 다시 뽑은 날짜 키(한국 시간). 목표마다 하루 1회만 다시 뽑습니다. */ rerolled?: string };
+type Goal = { id: string; kind: GoalKind; target: number; /** species면 몬스터 id, dungeon이면 던전 id(빈 값은 아무 곳). */ subject?: string; pearls: number; essence?: number; /** v25.12 선택 목표: 모두 달성 보너스 계산에서 뺍니다(상대가 없을 수 있는 결투). */ optional?: boolean; progress: number; claimed?: boolean; /** v27.81 다시 뽑은 날짜 키(한국 시간). 목표마다 하루 1회만 다시 뽑습니다. */ rerolled?: string };
 export type GoalBoard = { key: string; goals: Goal[]; /** 모두 완료 보너스를 받았는지. */ bonus?: boolean };
 export const DAILY_ALL_BONUS = 3, WEEKLY_ALL_BONUS = 10;
 
@@ -30,7 +30,7 @@ export function makeGoals(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, ke
     return goals;
 }
 /** v27.81 다시 뽑기 후보. 지금 갈 수 있는 사냥터·던전 기준이며 진행은 0부터입니다(결투는 후보에서 뺍니다). */
-export function goalCandidates(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, weekly: boolean): Omit<Goal, 'id' | 'progress'>[] {
+function goalCandidates(s: Pick<State, 'rebirths' | 'level' | 'peakLevel'>, weekly: boolean): Omit<Goal, 'id' | 'progress'>[] {
     const level = Math.max(s.level, s.peakLevel || 0, 10), scale = weekly ? 6 : 1;
     const stages = BASE_STAGES.filter(st => st.level <= level && st.rebirth <= s.rebirths), dungeons = DUNGEONS.filter(d => d.level <= level && d.rebirth <= s.rebirths);
     const monsterPool = [...new Set(stages.flatMap(st => st.monsters))].filter(id => { const f = monsterById(id); return !!f && !f.minTier; });

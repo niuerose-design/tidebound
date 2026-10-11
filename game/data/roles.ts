@@ -5,7 +5,7 @@
  */
 import type { Job } from './classes';
 
-export type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
+type RoleId = 'dealer' | 'tank' | 'buffer' | 'border' | 'none';
 export type SubRoleId = 'physical' | 'magic' | 'status' | 'reflect' | 'control' | 'drain' | 'healer' | 'utility' | 'border' | 'borderBuffer' | 'borderReflect' | 'borderStand' | 'borderBuff' | 'borderHarmony' | 'borderTempo' | 'borderRecoil' | 'borderCore' | 'morph' | 'absorb' | 'training' | 'none';
 export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
     physical: { role: 'dealer', name: '물리 딜러' },
@@ -44,7 +44,7 @@ export const SUB_ROLES: Record<SubRoleId, { role: RoleId; name: string }> = {
 };
 
 /** 계보 기본 역할(11.6-1). 독립 수련은 training. */
-export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
+const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     harpoon: 'physical', tidalBrawler: 'borderTempo', krakenkin: 'physical', ronin: 'physical', brawnFisher: 'physical', nimbleAngler: 'physical', luckyAngler: 'physical',
     squidJester: 'physical', spellbladeNovice: 'physical', brawnMage: 'physical', nerveNeedler: 'borderBuff', tideLancer: 'borderStand',
     tide: 'magic', chantNovice: 'magic', apprentice: 'magic', manaDevotee: 'magic',
@@ -63,7 +63,7 @@ export const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     'status-independent': 'training', 'hybrid-independent': 'training', 'support-independent': 'training',
 };
 /** 계보 기본값과 다른 직업(갈림길·곁가지). */
-export const ROLE_BY_JOB: Record<string, SubRoleId> = {
+const ROLE_BY_JOB: Record<string, SubRoleId> = {
     oracle: 'healer', lunarOracle: 'healer', coralSaint: 'healer', tideMender: 'healer', tidalSinger: 'borderBuffer',
     reefBrawler: 'drain',
     glyphMonk: 'physical',

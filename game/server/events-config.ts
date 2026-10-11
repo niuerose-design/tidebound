@@ -10,7 +10,7 @@ import { setMarketControl } from '../systems/market';
 import { readMarketControl } from './market-config';
 import { DEFAULT_CLOSURES, STAGES, setClosures, type Closures, stageById, dungeonById } from '../data/world';
 
-export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
+type EventConfig = { extra: ServerEvent[]; disabled: string[] };
 const KEY = 'events', TTL = 30_000;
 let cached: { at: number; config: EventConfig } | null = null;
 
@@ -51,7 +51,7 @@ export async function writeEventConfig(config: EventConfig, now = Date.now()) {
     setRuntimeEvents(clean.extra, clean.disabled);
 }
 /** 열려 있는 제단 축복을 서버 이벤트 형식으로. 시작 시각은 쓰지 않으므로 과거로 둡니다. 이름은 비워 이벤트 배너에 겹쳐 쓰지 않고, 제단 알림 줄이 따로 보여 줍니다. */
-export async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
+async function altarBlessingEvents(now: number): Promise<ServerEvent[]> {
     const gauges = await db().listAltarGauges();
     return BLESSINGS.flatMap(b => {
         const g = gauges.find(x => x.id === b.id), until = g?.until || 0;

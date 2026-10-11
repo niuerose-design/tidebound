@@ -12,7 +12,7 @@ export const ADGUARD_ID = 'adGuard';
 export const WHITE_HACKER_ID = 'whiteHacker';
 /** v3.28 블랙 해커(해커 계열 2차). 해커와 같은 제약을 받고, 해킹을 더 자주·더 비싸게 쓰되 실패하면 추적됩니다. */
 export const BLACK_HACKER_ID = 'blackHacker';
-export const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID];
+const HACKER_LINE: readonly string[] = [HACKER_ID, WHITE_HACKER_ID, BLACK_HACKER_ID];
 export const FIREWALL_ID = 'firewall';
 /** v3.28 블랙 해커 전용 패시브: 실패해 추적당하는 시간을 절반으로. */
 export const WIPE_TRACE_ID = 'wipeTrace';

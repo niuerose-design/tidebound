@@ -24,7 +24,7 @@ const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
 const DEVOUR_HOLD_MS = 4000;
 const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.actor === 'player' && fx.devour ? DEVOUR_HOLD_MS : fx.actor === 'player' && (fx.essence || fx.mineSwing) ? SCENE_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && (ultimateOf(fx.skillId) || AZ_ULT[sceneOf(fx) ?? ''])) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
-export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
+type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
  * 새 전투 로그의 연출. 재생 버퍼가 타격마다 로그를 한 줄씩 드러내므로 박자마다 이어 붙이고, 각 묶음은 제 시간이 지나면 지웁니다.
  * 한꺼번에 많이 들어오면(밀린 턴 건너뛰기) 최근 6개만 보여 줍니다(v3.275부터 잘린 수는 띄우지 않음).
@@ -87,7 +87,7 @@ const STATUS_GLYPHS: Partial<Record<CombatFxKind, string[]>> = {
 const fragmentsFor = (fx: CombatFx) => { const base = STATUS_GLYPHS[fx.kind] ?? glyphs[fx.variant]; const n = (fx.tier || 0) >= 5 ? 12 : (fx.tier || 0) >= 4 ? 9 : 6; return Array.from({ length: n }, (_, i) => base[i % base.length]); };
 /** 상대 카드 위의 연출. 기본 공격은 체력바 숫자만, 스킬은 궤적·충격파·파편·섬광, 天은 일곱 글자 고리까지 띄웁니다. ‘×N 연속’은 연속으로 행동한 쪽 카드에 붙습니다.
  * v3.195 연속 배지는 행동한 쪽이 같으면 타격마다 다시 만들지 않고 그대로 두며, 숫자가 바뀔 때만 숫자가 살짝 튑니다(전에는 묶음마다 깜박였습니다). */
-export function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
+function CombatFxOverlay({ effect, combo = null }: { effect: CombatFx[]; combo?: CombatCombo | null }) {
     return <div className="tide-fx-layer" aria-hidden="true">{combo && <div key={`combo-${combo.actor}`} className={`tide-fx-combo tide-fx-combo-${combo.actor}`}><small>{combo.actor === 'player' ? '내 연속 행동' : '상대 연속 행동'}</small><strong key={combo.count}>×{combo.count.toLocaleString()}</strong></div>}{effect.filter(fx => !fx.basic && fx.status !== '행동 불가' && !owScene(fx)).map(fx => fx.actor === 'enemy' ? <div key={fx.id} className={`monster-skill-cue monster-skill-${fx.kind}`} style={fxStyle(fx.delay)}><small>몬스터 스킬</small><strong>{fx.title}</strong></div> : <div key={fx.id} className={`tide-fx tide-fx-${fx.kind} tide-fx-${fx.variant} tide-fx-target-${fx.target} ${fx.critical ? 'critical' : ''} ${fx.finale ? 'finale' : ''} ${(fx.tier || 0) >= 4 ? `tier-${Math.min(5, fx.tier!)}` : ''} ${fx.extreme ? 'extreme' : ''}`} style={fxStyle(fx.delay)}>
         {fx.extreme && <><i className="tide-fx-extreme-halo"/><i className="tide-fx-extreme-halo late"/><b className="tide-fx-extreme-mark">極</b></>}<i className="tide-fx-flash"/>{(fx.tier || 0) >= 4 && <i className="tide-fx-big"/>}<i className="tide-fx-trail"/>{fx.gamble === undefined && <><i className="tide-fx-ring"/><i className="tide-fx-ring tide-fx-shock"/></>}
         {fx.kind !== 'miss' && fragmentsFor(fx).map((glyph, i, all) => <i key={i} className="tide-fx-fragment" style={fxStyle(fx.delay + (i >= 6 ? 90 : 0), { '--fx-x': `${Math.cos(i * 2 * Math.PI / all.length) * (i >= 6 ? 128 : 88)}px`, '--fx-y': `${Math.sin(i * 2 * Math.PI / all.length) * (i >= 6 ? 72 : 52)}px`, '--fx-rotate': `${i * 41}deg` })}>{glyph}</i>)}
@@ -366,7 +366,7 @@ const OW_IMPACT: Record<string, number> = { grenadeLauncher: 520 };
  * v3.271 일반 스킬(전용 장면이 없는 내 스킬)의 투사체 비행 시간. 재생은 한 박자에 연출 하나라 delay가 늘 0이어서, 전에는 투사체가 출발 전에 이미 끝나 보이지 않았습니다.
  * 이제 시전 → 0.28초 비행 → 닿는 순간 타격 섬광 · 피해 숫자 · 몬스터 흔들림 · 배경 섬광이 함께 뜹니다.
  */
-export const CAST_TRAVEL_MS = 280;
+const CAST_TRAVEL_MS = 280;
 const castTravels = (fx: CombatFx) => fx.actor === 'player' && fx.target === 'enemy' && !fx.basic && fx.hits.length > 0 && fx.status !== '행동 불가' && !hasSceneTitle(fx, false);
 /** v3.280 5차 궁극기 · 각성기 장면(ULTIMATES · 각성 빛)은 공용 섬광(sceneFinaleFlash 42% × 2.4초)이 터질 때 맞습니다. 전에는 피해 숫자가 장면보다 먼저 떴습니다. */
 const ULT_IMPACT_MS = 1000;
@@ -438,7 +438,7 @@ export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: 
     </div>;
 }
 /** 상대 카드 HP 바: 검이 지나간 자리에서 HP 바 UI(라벨 · 숫자 · 막대)가 비스듬히 두 조각으로 잘려, 아래 조각이 튕겨 날아갑니다(원본 바는 CSS가 숨김). */
-export function BarCleave({ effect, value, max, label }: { effect: CombatFx[]; value: number; max: number; label?: string }) {
+function BarCleave({ effect, value, max, label }: { effect: CombatFx[]; value: number; max: number; label?: string }) {
     const held = useCleave(effect);
     if (!held) return null;
     const { fx, phase } = held;

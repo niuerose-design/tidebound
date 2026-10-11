@@ -6,7 +6,7 @@
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
 
-export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
+type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.

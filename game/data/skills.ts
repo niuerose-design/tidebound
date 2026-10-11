@@ -272,12 +272,12 @@ registerSkills(STAT_TRAINING_SKILLS);
  * 따로 정한 체계는 예외: 수련 패시브(3차 곡선) · 능력치 수련 · 玄의 天 · 해커 스킬. 예전 첫 단계는 LEGACY_FIRST_MILESTONE에 남겨 계승을 보존합니다.
  */
 export const SKILL_TIER_CURVE: Record<number, number[]> = { 0: [120, 600, 2400, 8000], 1: [250, 1200, 4500, 14000], 2: [600, 3000, 12000, 36000], 3: [4500, 22500, 84000, 225000], 4: [25000, 120000, 400000, 1000000], 5: [100000, 450000, 1500000, 3750000] };
-export const SKILL_CURVE_BAND = .5;
+const SKILL_CURVE_BAND = .5;
 /**
  * v3.80 제약형 스킬: 최대 숙련에서 AP가 0 이하가 되는 스킬(노래 제외)과 제약 직업(유리 대포 · 玄)의 스킬.
  * 숙련 요구치를 천만 단위로 둡니다: AP를 돌려주는(음수) 스킬 5,000만 · 그 밖 1,000만(같은 모양 비율). 직업 숙달 목표 계산에서는 뺍니다.
  */
-export const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
+const CONSTRAINT_MASTERY = { free: 10_000_000, refund: 50_000_000 };
 /** v3.80 개별 예외: 본 레거시(죽지않은 영혼)는 v3.137부터 마지막 단계 1,000만(100만 · 400만 · 1,000만, 망인 숙달 목표와 같음). */
 export const CONSTRAINT_MASTERY_BY_SKILL: Record<string, number> = { boneLegacy: 10_000_000 };
 const CONSTRAINT_JOBS = new Set(['glassHarpooner', 'glyphMonk']);

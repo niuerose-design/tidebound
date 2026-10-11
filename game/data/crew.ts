@@ -43,7 +43,7 @@ export const crewSide = (id: string) => CREW_SIDES.find(x => x.id === id);
 export const sideAllows = (side: string, job: string) => !!crewSide(side)?.jobs.includes(job);
 
 /** crews.data에 담기는 조직 한 개. members는 모험가 id → 조직원 정보. */
-export type CrewMember = { name: string; joined: number; seen: number; deposited: number; /** 해커 계열이 아니게 된 시각(돌아오면 지움). */ offSince?: number };
+type CrewMember = { name: string; joined: number; seen: number; deposited: number; /** 해커 계열이 아니게 된 시각(돌아오면 지움). */ offSince?: number };
 /** v3.32 합동 작전 한 주: 목표, 합계, 도달한 단계, 조직원별 기여. */
 export type CrewWeek = { key: string; goal: number; nodes: number; hacks: number; steps: number; by: Record<string, { nodes: number; hacks: number }> };
 export type CrewData = { name: string; side: CrewSide; leader: string; created: number; vault: number; exp: number; members: Record<string, CrewMember>;
@@ -81,7 +81,7 @@ export const opSteps = (nodes: number, goal: number) => CREW.op.steps.filter(r =
  * v3.33 조직 모듈: 조직장이 조직 등급만큼 슬롯 안에서 켭니다. 켤 때 그 주 유지비를, 주가 바뀔 때마다 다시 유지비를 조직 자금에서 냅니다.
  * 조직 자금이 모자라면 뒤에 켠 모듈부터 꺼집니다. 효과는 해커 계열 조직원에게만 적용됩니다.
  */
-export type CrewModuleId = 'distributed' | 'sharedMemory' | 'proxyChain' | 'jointPatch' | 'launder' | 'detour';
+type CrewModuleId = 'distributed' | 'sharedMemory' | 'proxyChain' | 'jointPatch' | 'launder' | 'detour';
 export const CREW_MODULES: { id: CrewModuleId; name: string; desc: string; upkeep: number; side?: CrewSide }[] = [
     { id: 'distributed', name: '분산 처리', desc: '조직원 브루트포스 비트 +10%', upkeep: 150 },
     { id: 'sharedMemory', name: '공유 메모리', desc: '조직원 프로그램 메모리 +1', upkeep: 200 },

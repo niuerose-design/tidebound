@@ -244,7 +244,7 @@ function AutoStar({ s, send, busy, item, safeguard }: PanelProps & { item: Item;
     </div>;
 }
 
-export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
+function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v27.93 스타포스: 성공·실패(유지/하락)·파괴 확률과 찬스 타임, 15·16성 파괴 방지(비용 2배).
     const [safeguard, setSafeguard] = useState(false);
     const star = item.enhance || 0, max = enhanceMaxFor(item), chance = chanceTime(item), guard = safeguard && canSafeguard(star);

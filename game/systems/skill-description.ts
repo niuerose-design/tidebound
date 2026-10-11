@@ -22,7 +22,7 @@ const coreWorld = (sk: Skill) => { const owner = jobById(sk.job || ''); return o
 const coreAzeroth = (sk: Skill) => coreWorld(sk) !== 'maple';
 const coreBase = (sk: Skill) => coreWorld(sk) === 'azeroth' ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base;
 /** v3.228 핵심 패시브 한 줄: '마법 공격 +250 · 최대 체력 +300' 또는 '마법 공격 +35% · 최대 체력 +22%'(숙련 마지막 단계 기준). */
-export function coreText(sk: Skill) {
+function coreText(sk: Skill) {
     if (!sk.core) return '';
     const flat = byStatOrder(Object.entries(sk.core.flat || {})).map(([key, n]) => skillBonusText(key, n as number));
     const scale = byStatOrder(Object.entries(sk.core.scale || {})).map(([key, n]) => `${STAT_LABELS[key as keyof Stats] || key} +${skillPercent(n as number)}`);

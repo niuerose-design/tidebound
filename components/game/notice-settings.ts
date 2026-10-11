@@ -14,7 +14,7 @@ export const NOTICE_KINDS = [
     { id: 'slots', label: '분신 바로가기', desc: '캐릭터 슬롯 칩' },
     { id: 'liveRates', label: '실시간 효율', desc: '시간당 경험치·골드·숙련 카드' },
 ] as const;
-export type NoticeKind = typeof NOTICE_KINDS[number]['id'];
+type NoticeKind = typeof NOTICE_KINDS[number]['id'];
 
 const KEY = 'tidebound.notices';
 const EVENT = 'tidebound:notices';

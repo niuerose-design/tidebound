@@ -15,7 +15,7 @@ export const DUNGEON_COINS: Record<DungeonMode, number> = { normal: 1, hell: 2, 
  */
 export const DAILY_BONUS: { clears: number; coins: Record<DungeonMode, number> } = { clears: 30, coins: { normal: 20, hell: 40, nightmare: 60 } };
 /** 무릉도장 층 정복의 주화: 1 + ⌊층 ÷ abyssEvery⌋. */
-export const ABYSS_COINS = { base: 1, abyssEvery: 10 };
+const ABYSS_COINS = { base: 1, abyssEvery: 10 };
 export const abyssCoins = (depth: number) => ABYSS_COINS.base + Math.floor(Math.max(1, depth) / ABYSS_COINS.abyssEvery);
 
 /**
