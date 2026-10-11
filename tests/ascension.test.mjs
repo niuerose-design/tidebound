@@ -433,7 +433,7 @@ test('v3.71 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lo
     const seen = new Set(); for (let i = 0; i < 400; i++) { let x = i * 7919 % 1000 / 1000; for (const a of G.rollAffixes(6, 500, undefined, () => (x = (x * 9301 + .4927) % 1), [], 'rod', 100)) seen.add(a.id); }
     assert.ok(ancientOnly.some(id => seen.has(id)), 'primal rolls can carry ancient+ options');
     for (const slot of ['rod', 'coat', 'charm', 'cape']) assert.ok(!Co.imprintChoices(slot).some(a => ancientOnly.includes(a.id)), 'imprint appraisal cannot pick them');
-    const berserk = G.affixDef('berserk'); assert.equal(berserk.base, 1.35); assert.equal(berserk.base2, -.675);
+    const berserk = G.affixDef('berserk'); assert.equal(berserk.base, 1.35); assert.equal(berserk.base2, -.405, 'v3.303 defense side ×0.6');
     assert.equal(G.GEAR_CAPS.lifesteal, .1);
 });
 test('v3.72 draws: accuracy+evasion merged into sense (both rolled), precise/drift/runic retired but still readable, auto draw spends everything with limit "max"', async () => {
@@ -717,22 +717,22 @@ test('v3.122 onyx accessory level: the higher of its habitat level and my level 
 test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses, totals unchanged, weapon untouched', async () => {
     const Eq = await L.load('systems/equipment');
     const sum = k => ['rod', 'coat', 'cape', 'charm'].reduce((n, sl) => n + (Eq.SLOT_GEAR[sl][k] || 0), 0);
-    // v3.302: hp · defense · resist ×0.9 everywhere (gear → skill · attribute weight), slot ratios unchanged.
+    // v3.302: hp · defense · resist ×0.9 everywhere (gear → skill · attribute weight), v3.303 hp · defense · resist · mana ×0.6 again; slot ratios unchanged.
     const rd = n => Math.round(n * 100) / 100;
-    assert.equal(rd(sum('hp')), 7.2); assert.equal(Math.round(sum('mana') * 10) / 10, 1.8, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape'); assert.equal(rd(sum('defense')), .9); assert.equal(rd(sum('resist')), .45);
-    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .5 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 3.15, mana: .5, defense: .54, resist: .27 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 2.25, mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 1.8, mana: .5, defense: .36, resist: .18 });
+    assert.equal(rd(sum('hp')), 4.32); assert.equal(rd(sum('mana')), 1.08, 'mana 1.3 → 1.8 spread over weapon · coat · charm · cape (v3.303 ×0.6)'); assert.equal(rd(sum('defense')), .54); assert.equal(rd(sum('resist')), .27);
+    assert.deepEqual(Eq.SLOT_GEAR.rod, { mana: .3 }); assert.deepEqual(Eq.SLOT_GEAR.coat, { hp: 1.89, mana: .3, defense: .324, resist: .162 }); assert.deepEqual(Eq.SLOT_GEAR.cape, { hp: 1.35, mana: .18 }); assert.deepEqual(Eq.SLOT_GEAR.charm, { hp: 1.08, mana: .3, defense: .216, resist: .108 });
     const base = (slot) => ({ id: slot, slot, style: 'balanced', rarity: 0, power: 100, level: 100, enhance: 0, name: slot, affixes: [] });
     const coat = Eq.itemStats(base('coat')), cape = Eq.itemStats(base('cape')), charm = Eq.itemStats(base('charm')), rod = Eq.itemStats({ ...base('rod'), style: 'physical' });
-    assert.equal(Math.round(coat.hp), 315); assert.equal(Math.round(coat.defense), 54); assert.equal(Math.round(coat.resist), 27); assert.equal(coat.mana, 50);
-    assert.equal(Math.round(cape.hp), 225); assert.equal(cape.mana, 30); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
-    assert.equal(Math.round(charm.hp), 180); assert.equal(Math.round(charm.defense), 36); assert.equal(Math.round(charm.resist), 18); assert.equal(charm.mana, 50); assert.ok(charm.crit > 0);
-    assert.equal(rod.attack, 140); assert.equal(rod.mana, 50, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
+    assert.equal(Math.round(coat.hp), 189); assert.equal(Math.round(coat.defense), 32); assert.equal(Math.round(coat.resist), 16); assert.equal(Math.round(coat.mana), 30);
+    assert.equal(Math.round(cape.hp), 135); assert.equal(Math.round(cape.mana), 18); assert.equal(cape.defense, undefined); assert.ok(cape.evasion > 0);
+    assert.equal(Math.round(charm.hp), 108); assert.equal(Math.round(charm.defense), 22); assert.equal(Math.round(charm.resist), 11); assert.equal(Math.round(charm.mana), 30); assert.ok(charm.crit > 0);
+    assert.equal(rod.attack, 140); assert.equal(Math.round(rod.mana), 30, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
     // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 지능 → 마방 .25만 추가(v3.136 체질 → 마방 .4는 제거). 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
     const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
-    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .3, 'v3.302 .25 → .3');
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .4, 'v3.302 .25 → .3 → v3.303 .4');
     const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
     assert.ok(r1 === r0 && r2 > r0, 'v3.136 only int raises resist; vit no longer does');
-    assert.equal(Math.round(coat.hp + cape.hp + charm.hp), 720, 'four-slot hp total (800 before v3.302 ×0.9)');
+    assert.equal(Math.round(coat.hp + cape.hp + charm.hp), 432, 'four-slot hp total (800 before v3.302 ×0.9 · v3.303 ×0.6)');
 });
 test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {
     const G = await L.load('data/gear'), Eq = await L.load('systems/equipment');
@@ -764,7 +764,7 @@ test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items ca
 test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3), Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
     const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
     assert.deepEqual(POWER_WEIGHT, { offense: .7, durability: .3 });
-    const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 45) <= 1, `Lv.1 power ${power(fresh)}`);
+    const fresh = stats(newState(0)), p = powerParts(fresh); assert.ok(Math.abs(power(fresh) - 47) <= 1, `Lv.1 power ${power(fresh)} (v3.303 attributes give more hp · defense · resist: 45 → 47)`);
     assert.ok(Math.abs(power(fresh) - Math.round(.88 * p.offense ** .7 * p.durability ** .3)) <= 1);
     const body = () => { const s = newState(0); s.level = 100; s.rebirths = 200; s.statPoints = 0; s.attributes = { str: 300, dex: 100, int: 0, vit: 100, wis: 0, luk: 300 }; Object.assign(s.permanent, { attack: 200, hp: 200, guard: 100, magicGuard: 100 }); s.equipment = { rod: null, coat: null, charm: null, cape: null }; return s; };
     let x = 3; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const drop = { rod: 0, coat: 0, charm: 0, cape: 0 }, N = 40;

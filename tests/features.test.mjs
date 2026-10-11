@@ -217,17 +217,17 @@ test('v26.8 registerItemAll registers one weakest unlocked item per missing slot
 test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow from CORE_PASSIVE.base (v3.302 55%) → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),St=await L.load('systems/stats'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
  const sage=C.jobById('sage'),magus=C.jobById('grandMagus');assert.equal(sage.magic,1.06);assert.equal(magus.magic,1.09);assert.equal(sage.masteryBoost,.1);
- const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.45,hp:.32},'v3.302 cap');
+ const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.45,hp:.54,defense:.15,resist:.15,mana:.4},'v3.303 cap .38 + guard');
  assert.equal(P.coreScale(d,'grandMagus',0),P.CORE_PASSIVE.base);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
  assert.equal(P.coreScale(w,'grandMagus',4),1,'same lineage keeps it whole');assert.equal(P.coreScale(d,'hero',4),.5,'another lineage gets half');
  const body=(job,ids,practice)=>{const s=newState(0);s.level=100;s.job=job;s.unlockedJobs.push(job);for(const id of ids){s.learned[id]=1;s.skillPractice[id]=practice;}s.skillInheritances=Object.fromEntries(ids.map(id=>[id,true]));s.skills=ids;return St.stats(s);};
  const core=d.core;delete d.core;const hero0=body('hero',['magusDomain'],1e9),mage0=body('grandMagus',['magusDomain'],0);d.core=core;const hero1=body('hero',['magusDomain'],1e9),mage1=body('grandMagus',['magusDomain'],0);
- assert.ok(Math.abs(hero1.magic/hero0.magic-(1+.45*.5))<.01&&Math.abs(hero1.hp/hero0.hp-(1+.32*.5))<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-(1+.45*P.CORE_PASSIVE.base))<.01,'stage 0 = base share of the cap');
+ assert.ok(Math.abs(hero1.magic/hero0.magic-(1+.45*.5))<.01&&Math.abs(hero1.hp/hero0.hp-(1+.54*.5))<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-(1+.45*P.CORE_PASSIVE.base))<.01,'stage 0 = base share of the cap');
  const flat0=body('sage',[],0),flat1=body('sage',['sageWisdom'],1e9);assert.ok(flat1.magic>=flat0.magic+250+45&&flat1.hp>=flat0.hp+300,'flat core lands before the multipliers');
 });
 test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Azeroth jobs keep small multipliers and a lineage-only core growing from 40%',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
- assert.deepEqual(Sk.skillById('sageWisdom').core,{flat:{magic:250,hp:300},scale:{magic:.15,hp:.05}});
+ assert.deepEqual(Sk.skillById('sageWisdom').core,{flat:{magic:250,hp:300},scale:{magic:.15,hp:.15,defense:.08,resist:.08,mana:.2}},'v3.303 guard4');
  const cap={3:1,4:1.06,5:1.09};
  for(const j of C.JOBS){if(C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))!=='azeroth')continue;
   assert.equal(j.masteryBoost,.1,j.id);for(const k of ['attack','magic','hp','defense','resist'])assert.ok(j[k]<=cap[j.tier]+1e-9,`${j.id} ${k} ${j[k]}`);}
@@ -278,12 +278,21 @@ test('v3.301 tanks: 수호력 rewards balanced 방어 · 마방; defense-tree jo
 });
 test('v3.302 gear → skill weight: main-stat affix bases −10% (existing lines rescaled once), core passive caps .45/.32, def/res bases −10%', async () => {
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Gr=await L.load('data/gear'),CP=await L.load('data/core-passive');
- assert.deepEqual(['might','arcana','vigor'].map(id=>Gr.affixDef(id).base),[.27,.27,1.35]);assert.deepEqual(CP.CORE_REWORK.cap,{attack:.45,magic:.45,hp:.32});
+ assert.deepEqual(['might','arcana','vigor'].map(id=>Gr.affixDef(id).base),[.27,.27,.81],'vigor ×0.6 again in v3.303');assert.deepEqual(CP.CORE_REWORK.cap,{attack:.45,magic:.45,hp:.38});
  const s=newState(0);delete s.mainAffixRescaled;s.inventory=[{id:'x',name:'x',slot:'rod',rarity:5,power:400,level:100,affixes:[{id:'might',name:'맹공',stat:'attack',value:100},{id:'force',name:'위력',stat:'attack',value:50,stat2:'magic',value2:50},{id:'lucky',name:'행운',stat:'crit',value:.05}]}];
  migrateState(s,0);const a=s.inventory[0].affixes;assert.deepEqual([a[0].value,a[1].value,a[1].value2,a[2].value],[90,45,45,.05]);migrateState(s,0);assert.equal(a[0].value,90,'once');
- assert.deepEqual(['plating','ward','guardian'].map(id=>Gr.affixDef(id).base),[.27,.27,.18]);
  const s2=newState(0);delete s2.mainAffixRescaled;s2.inventory=[{id:'y',name:'y',slot:'coat',rarity:5,power:400,level:100,affixes:[{id:'plating',name:'철갑',stat:'defense',value:100},{id:'guardian',name:'수호',stat:'defense',value:40,stat2:'resist',value2:40}]}];
  migrateState(s2,0);const b=s2.inventory[0].affixes;assert.deepEqual([b[0].value,b[1].value,b[1].value2],[90,36,36]);
- const Eq=await L.load('systems/equipment'),Pg=await L.load('data/progression');assert.deepEqual(Eq.SLOT_GEAR.coat,{hp:3.15,mana:.5,defense:.54,resist:.27});
- assert.deepEqual([Pg.ATTRIBUTE_EFFECTS.vit.hp,Pg.ATTRIBUTE_EFFECTS.vit.defense,Pg.ATTRIBUTE_EFFECTS.wis.resist,Pg.ATTRIBUTE_EFFECTS.str.defense,Pg.ATTRIBUTE_EFFECTS.int.resist],[10,.7,1.4,.3,.3],'gear → attributes');
+ });
+test('v3.303 gear hp · defense · resist · mana ×0.6 (bases, affixes, existing lines once); research, core passive guard and attributes fill it', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Gr=await L.load('data/gear'),Eq=await L.load('systems/equipment'),Pg=await L.load('data/progression'),CP=await L.load('data/core-passive'),Ec=await L.load('data/economy');
+ assert.equal(Gr.GEAR_GUARD_SHARE,.6);assert.deepEqual(Eq.SLOT_GEAR.coat,{hp:1.89,mana:.3,defense:.324,resist:.162});assert.deepEqual(Eq.SLOT_GEAR.rod,{mana:.3});
+ assert.deepEqual(['vigor','plating','ward','guardian','flow','bulwark'].map(id=>Gr.affixDef(id).base),[.81,.162,.162,.108,.135,.81]);assert.deepEqual(['guardian','flow','berserk','glassCannon','bloodPact'].map(id=>Gr.affixDef(id).base2),[.108,.036,-.405,-1.98,-1.35]);
+ const s=newState(0);delete s.guardAffixRescaled;s.inventory=[{id:'y',name:'y',slot:'coat',rarity:5,power:400,level:100,affixes:[{id:'vigor',name:'생명',stat:'hp',value:100},{id:'guardian',name:'수호',stat:'defense',value:40,stat2:'resist',value2:40},{id:'flow',name:'마력',stat:'mana',value:50,stat2:'manaRegen',value2:2},{id:'glassCannon',name:'유리 대포',stat:'magic',value:80,stat2:'hp',value2:-200},{id:'might',name:'맹공',stat:'attack',value:30}]}];
+ migrateState(s,0);const b=s.inventory[0].affixes.map(a=>[a.value,a.value2].map(n=>n===undefined?n:Math.round(n*1e6)/1e6));assert.deepEqual(b,[[60,undefined],[24,24],[30,2],[80,-120],[30,undefined]],'only the hp · defense · resist · mana side');
+ migrateState(s,0);assert.equal(Math.round(s.inventory[0].affixes[0].value),60,'once');
+ assert.deepEqual([Ec.HP_RESEARCH_PER,Ec.GUARD_RESEARCH_PER,Ec.MANA_RESEARCH_PER],[.1,.04,.1]);assert.deepEqual(CP.CORE_REWORK.guard,{hp:.2,defense:.15,resist:.15,mana:.4});
+ const E=Pg.ATTRIBUTE_EFFECTS;assert.deepEqual([E.vit.hp,E.vit.defense,E.wis.resist,E.wis.mana,E.str.defense,E.int.resist,E.int.mana],[12,.9,1.8,4,.4,.4,1.4],'gear → attributes');
+ const g=newState(0);g.level=100;g.job='grandMagus';g.unlockedJobs.push('grandMagus');g.learned.magusDomain=1;g.skills=['magusDomain'];const t={};stats(g,t);
+ for(const k of ['defense','resist','mana'])assert.ok(t[k].some(x=>x.source==='skills'&&x.factor>1),`core passive multiplies ${k}`);
 });

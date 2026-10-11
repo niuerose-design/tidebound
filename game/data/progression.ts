@@ -25,12 +25,13 @@ export const PROGRESSION = {
 export const ATTRIBUTE_EFFECTS = {
     // v25.2 기민의 속도는 낮게, 근력·지능의 공격은 높게(기민 +20이 근력 +20보다 처치 효율이 2.5배 높던 편중 완화).
     // v3.302 장비 → 능력치 비중 이동: 근력 · 지능의 방어 · 마방 .25 → .3, 체질 체력 9 → 10 · 방어 .6 → .7, 지혜 마방 1.2 → 1.4.
-    str: { attack: 2.3, defense: .3 },
+    // v3.303 장비의 체력 · 방어 · 마방 · 마나 몫 ×0.6: 근력 방어 · 지능 마방 .3 → .4, 지능 마나 1 → 1.4, 체질 체력 10 → 12 · 방어 .7 → .9, 지혜 마방 1.4 → 1.8 · 마나 3 → 4.
+    str: { attack: 2.3, defense: .4 },
     dex: { accuracy: .0025, evasion: .0015, speed: .15 },
     // v3.129 지능이 마법 방어도 조금 올립니다. v3.136 체질은 마법 방어를 올리지 않습니다(체력 · 물리 방어 · 체력 회복만).
-    int: { magic: 2.8, mana: 1, resist: .3 },
-    vit: { hp: 10, defense: .7, hpRegen: .3 },
-    wis: { resist: 1.4, mana: 3, manaRegen: .25 },
+    int: { magic: 2.8, mana: 1.4, resist: .4 },
+    vit: { hp: 12, defense: .9, hpRegen: .3 },
+    wis: { resist: 1.8, mana: 4, manaRegen: .25 },
     luk: { crit: .003, critDamage: .005, dropBonus: .001, goldBonus: .002 },
 } as const;
 const EFFECT_LABELS: Record<string, string> = { attack: '물리 공격', defense: '물리 방어', accuracy: '명중', evasion: '회피 수치', speed: '속도', magic: '마법 공격', mana: '최대 마나', hp: '최대 체력', resist: '마법 방어', manaRegen: '마나 회복', hpRegen: '턴당 체력 회복', crit: '치명타', critDamage: '치명 피해', dropBonus: '장비 드롭', goldBonus: '골드' };

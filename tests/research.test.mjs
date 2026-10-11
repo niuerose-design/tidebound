@@ -296,7 +296,7 @@ test('v3.90 max mana: base grows with level, research ‘마나 강화 I’ ×(1
     const s = newState(0);
     const lv1 = stats(s).mana; s.level = 11; assert.equal(stats(s).mana - lv1, 30, '+3 per level');
     const r = research('mana'); assert.deepEqual([r.max, r.base, r.step, r.rebirth || 0, r.tab, r.group], [200, 2, 2, 0, 'combat', 'attack']);
-    s.permanent.mana = 10; close(researchFactor(s, 'mana'), 1.8);
+    s.permanent.mana = 10; close(researchFactor(s, 'mana'), 2); // v3.303 8% → 10%/rank
     const t = {}; s.rebirths = 100; stats(s, t); assert.ok(t.mana.some(x => x.source === 'rebirth' && x.factor > 1), 'rebirth memory multiplies mana');
     const coat = { id: 'c', slot: 'coat', style: 'balanced', rarity: 0, power: 100, level: 100, name: 'c', affixes: [] };
     const bare = newState(0); bare.equipment.coat = null; const before = stats(bare).mana; bare.equipment.coat = coat; assert.ok(stats(bare).mana > before, 'coat gives max mana');

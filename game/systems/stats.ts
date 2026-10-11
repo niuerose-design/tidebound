@@ -9,7 +9,7 @@ import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
-import { researchRank, MANA_RESEARCH_PER, researchById } from '../data/economy';
+import { researchRank, MANA_RESEARCH_PER, HP_RESEARCH_PER, GUARD_RESEARCH_PER, researchById } from '../data/economy';
 import { roughReward, roughGear, roughHeal, restraintExp, vowBadges, lv1Active } from './vows';
 import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
@@ -162,7 +162,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     { const res = coreStats(s, coreResonanceOf(s)); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     const passiveJobs = new Set<string>();
     // v3.228 핵심 패시브 배율(5차): 합쳐서 아래 직업 배율 뒤에 한 번 곱합니다.
-    const coreMul: Partial<Record<'attack' | 'magic' | 'hp', number>> = {};
+    // v3.303 방어 · 마방 · 최대 마나도 핵심 패시브 배율을 받습니다(연구 배율과 같은 자리에서 곱함).
+    const coreMul: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist' | 'mana', number>> = {};
     let relief = 0;
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
     const counts = progressCounts(s);
@@ -208,13 +209,13 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (j.constraint?.devices.evasion) add('evasion', 'job', j.constraint.devices.evasion);
     add('harmony', 'job', (jobFlatBonus(j, 'attack', mastered) + jobFlatBonus(j, 'magic', mastered)) / 2);
     const feats = achievementTotals(s).bonus, account = accountPower(s);
-    mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * .08], ['achievement', 1 + feats.hp], ['account', account]]);
+    mul('hp', [['job', mult(j.hp)], ['research', 1 + (s.permanent.hp || 0) * HP_RESEARCH_PER], ['achievement', 1 + feats.hp], ['account', account]]);
     mul('attack', [['job', mult(j.attack)], ['research', 1 + (s.permanent.attack || 0) * .05], ['achievement', 1 + feats.attack], ['account', account]]);
     mul('magic', [['job', mult(j.magic)], ['research', 1 + (s.permanent.magicAttack || 0) * .05], ['achievement', 1 + feats.magic], ['account', account]]);
     // v3.219 참모 계보 지휘 체계: 장착한 지원 스킬 수만큼 두 공격 배율.
     const command = commandBonus(s);
     if (command > 0) { mul('attack', [['skills', 1 + command]]); mul('magic', [['skills', 1 + command]]); }
-    for (const key in coreMul) mul(key as 'attack', [['skills', 1 + coreMul[key as 'attack']!]]);
+    for (const key of ['attack', 'magic', 'hp'] as const) if (coreMul[key]) mul(key, [['skills', 1 + coreMul[key]!]]);
     // v3.231 이계: 트레이더 평가 손익(±25%를 traderFactor로 ×0.08 ~ ×3.25, 헤지 · 유동성이 범위를 바꿈) · 연료가 없으면 절전 모드(두 공격 × job.powerSave ?? FUEL.powerSave).
     if (j.trader) { const { r, factor } = traderMultiplier(s.marketPnl || 0, usable.map(u => u.sk)); if (r) for (const k of ['attack', 'magic'] as const) mul(k, [['job', factor]]); }
     if (powerSaving(s)) for (const k of ['attack', 'magic'] as const) mul(k, [['job', j.powerSave ?? FUEL.powerSave]]);
@@ -231,6 +232,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
     // v3.90 최대 마나도 체력처럼 연구(‘마나 강화 I’) · 계정 · 환생 배율을 받습니다.
     mul('mana', [['research', 1 + researchRank(s, 'mana') * MANA_RESEARCH_PER], ['account', account], ['rebirth', memory]]);
+    if (coreMul.mana) mul('mana', [['skills', 1 + coreMul.mana]]);
     // v3.219 군의관 지원(다른 분신): 최대 체력 · 최대 마나 · 턴당 체력 회복 배율. 결투 등록 스냅샷은 s.support를 빼고 만듭니다.
     if (s.support) for (const [k, e] of [['hp', 'hp'], ['mana', 'mana'], ['hpRegen', 'hpRegen']] as const) if (s.support[e]) mul(k, [['support', supportMultiplier(s, e)]]);
     // v3.225 총사령관 총동원령: 두 공격 · 최대 체력.
@@ -245,8 +247,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (restraint?.tree === 'hybrid') mul('harmony', [['job', keep]]);
     // 반격은 방어 친화도만큼만 발휘됩니다.
     mul('thorns', [['job', a.guardAffinity]]);
-    mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
-    mul('resist', [['research', 1 + (s.permanent.magicGuard || 0) * .03]]);
+    mul('defense', [['research', 1 + (s.permanent.guard || 0) * GUARD_RESEARCH_PER]]);
+    mul('resist', [['research', 1 + (s.permanent.magicGuard || 0) * GUARD_RESEARCH_PER]]);
+    for (const key of ['defense', 'resist'] as const) if (coreMul[key]) mul(key, [['skills', 1 + coreMul[key]!]]);
     mul('manaRegen', [['research', 1 + researchRank(s, 'manaRegen') * .05]]);
     const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed', 'harmony', 'hpRegen'] as (keyof CombatStats)[])

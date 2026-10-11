@@ -55,23 +55,26 @@ export const RULE_CAPS: Partial<Record<GearStat, number>> = {
 
 /** v3.5 불굴(상태이상 저항) 기본값: Lv.100 태초 22성(×1.66) 평균 굴림에서 상한 50%에 닿는 값. */
 export const STATUS_RESIST_BASE = .137, STATUS_RESIST_STAR = .03;
+/** v3.303 장비의 체력 · 방어 · 마방 · 마나 몫(기본 수치와 그 옵션, 양날 옵션의 손해 포함). 줄인 만큼 세계석 연구(체력 · 방어 · 마방 · 마나 강화)와 핵심 패시브가 채웁니다. */
+export const GEAR_GUARD_SHARE = .6;
 export const AFFIX_POOL: AffixDef[] = [
     // 능력치 옵션
+    // v3.303 체력 · 방어 · 마방 · 마나 옵션(생명 · 철갑 · 정신 · 수호 · 마력의 최대 마나 · 성벽, 광전사 · 유리 대포 · 피의 계약의 손해)은 ×0.6(GEAR_GUARD_SHARE). 이미 붙은 줄도 한 번 같은 비율로 바뀝니다(migrations guardAffixRescaled).
     // v3.302 장비 → 스킬 비중 이동: 주 능력치 · 방어 옵션(맹공 · 신비 · 위력 · 생명 · 철갑 · 정신 · 수호) 고정 수치 −10%, 대신 5차 핵심 패시브 상한을 올림(data/core-passive). 이미 붙은 줄도 한 번 맞춤(migrations).
     { id: 'might', name: '맹공', stat: 'attack', kind: 'flat', base: .27, description: '물리 공격이 오릅니다.' },
     { id: 'arcana', name: '신비', stat: 'magic', kind: 'flat', base: .27, description: '마법 공격이 오릅니다.' },
-    { id: 'vigor', name: '생명', stat: 'hp', kind: 'flat', base: 1.35, description: '최대 체력이 오릅니다.' },
-    { id: 'plating', name: '철갑', stat: 'defense', kind: 'flat', base: .27, description: '물리 방어가 오릅니다.' },
-    { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .27, description: '마법 방어가 오릅니다.' },
-    { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, retired: true, description: '최대 마나가 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
+    { id: 'vigor', name: '생명', stat: 'hp', kind: 'flat', base: .81, description: '최대 체력이 오릅니다.' },
+    { id: 'plating', name: '철갑', stat: 'defense', kind: 'flat', base: .162, description: '물리 방어가 오릅니다.' },
+    { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .162, description: '마법 방어가 오릅니다.' },
+    { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .12, retired: true, description: '최대 마나가 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .036, retired: true, description: '턴당 마나 회복이 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
     { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .18, stat2: 'magic', base2: .18, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
-    { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .18, stat2: 'resist', base2: .18, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
+    { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .108, stat2: 'resist', base2: .108, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
     // v3.90 최대 마나 위력 ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
     // v3.297 턴당 마나 회복 ×3(.012 → .036): 태초 Lv.100 한 줄 +14 → +42. 마법 직업은 환생 64에서 회복 38~51/턴에 평균 마나 3~7%로 늘 모자랐습니다.
-    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .225, stat2: 'manaRegen', base2: .036, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
+    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .135, stat2: 'manaRegen', base2: .036, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 2 */ base: .05, description: '방어 관통이 오릅니다.' },
@@ -88,11 +91,11 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해. v3.71 이득과 손해를 함께 ×1.5(맞는 빌드엔 확실한 이득, 안 맞으면 확실한 손해).
-    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.675, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
-    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -3.3, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다. 마법 직업용(물리 직업에는 공격 이득이 거의 없음). 체력 손해는 장비 위력에 비례하고 굴림 없이 고정이며, 연구 · 직업의 체력 배율이 곱해져 실제 최대 체력은 표시보다 크게 줄어듭니다.' },
-    { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: 1.35, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다. 속도 손해는 고정 폭입니다.' },
+    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.405, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
+    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -1.98, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다. 마법 직업용(물리 직업에는 공격 이득이 거의 없음). 체력 손해는 장비 위력에 비례하고 굴림 없이 고정이며, 연구 · 직업의 체력 배율이 곱해져 실제 최대 체력은 표시보다 크게 줄어듭니다.' },
+    { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .81, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다. 속도 손해는 고정 폭입니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다. 치명타 100%를 아직 못 채운 캐릭터에게 이득이고, 명중 손해는 고정 폭입니다.' },
-    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -2.25, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
+    { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -1.35, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     // v3.197 가중치를 따로 둡니다(기본 1이라 일반 옵션만큼 나와 태초 5개 중 1개꼴로 초월이 붙었음): 초월 .2(태초 약 4~5%), 나머지 .4.
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },

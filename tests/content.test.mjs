@@ -157,8 +157,8 @@ test('Pearl research: physical and magic attack/defense are separate research li
  const factor=(s,k)=>{const t={};stats(s,t);return (t[k]||[]).filter(x=>x.source==='research'&&x.factor!==undefined).reduce((a,x)=>a*x.factor,1);};
  const s=newState(0);s.permanent.attack=10;assert.ok(Math.abs(factor(s,'attack')-1.5)<1e-9);assert.equal(factor(s,'magic'),1);
  s.permanent.magicAttack=4;assert.ok(Math.abs(factor(s,'magic')-1.2)<1e-9);assert.ok(Math.abs(factor(s,'attack')-1.5)<1e-9);
- s.permanent.guard=5;assert.ok(Math.abs(factor(s,'defense')-1.15)<1e-9);assert.equal(factor(s,'resist'),1);
- s.permanent.magicGuard=2;assert.ok(Math.abs(factor(s,'resist')-1.06)<1e-9);
+ s.permanent.guard=5;assert.ok(Math.abs(factor(s,'defense')-1.2)<1e-9,'v3.303 +4% per rank');assert.equal(factor(s,'resist'),1);
+ s.permanent.magicGuard=2;assert.ok(Math.abs(factor(s,'resist')-1.08)<1e-9);
 });
 test('Pearl research reset: per-tab refund, always free (v27.29), refusal conditions',()=>{
  const s=newState(0);s.pearls=0;s.permanent.attack=3;s.permanent.magicAttack=1;s.permanent.hp=2;s.permanent.gold=2;
