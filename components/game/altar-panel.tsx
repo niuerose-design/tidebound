@@ -5,12 +5,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { PanelProps } from './panel-props';
 import { Heading, Meter, format, formatRemaining } from './shared';
-import { ALTAR, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
+import { ALTAR, josa, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, SUMMON_GAUGE_IDS, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
 import type { AltarInfo, AltarResult } from './use-game';
 
 type Props = PanelProps & { info: AltarInfo | null; error: string; load: () => Promise<void>; act: (body: Record<string, unknown>) => Promise<boolean>; result: AltarResult | null; clearResult: () => void };
 const remaining = (ms: number) => formatRemaining(ms, 0);
+/** v3.284 신의 자리 임기(최대 7일)는 ‘n일 n시간’으로(132시간 0분처럼 읽기 어렵지 않게). */
+const termLeft = (ms: number) => { const h = Math.max(0, Math.ceil(ms / 3600_000)); return h >= 24 ? `${Math.floor(h / 24)}일${h % 24 ? ` ${h % 24}시간` : ''}` : remaining(ms); };
 const stamp = () => Date.now();
 const num = (v: string) => Math.max(0, Math.floor(Number(v.replace(/[^0-9]/g, '')) || 0));
 const QUICK = [10, 25, 50, 100];
@@ -109,9 +111,9 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                 <Tabs value={gaugeTab} onValueChange={v => setGaugeTab(v as typeof gaugeTab)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="bless"><Sparkles size={14}/> 축복</TabsTrigger><TabsTrigger value="summon"><Skull size={14}/> 소환</TabsTrigger></TabsList></Tabs>
                 {/* v3.279 신의 자리에 주인이 있으면 신이 깨어나지 않는 이유 · 남은 임기 · 탄핵 길을 소환 탭 위에 알립니다. */}
                 {gaugeTab === 'summon' && throne && <div className="altar-throne-note" role="status"><Crown size={16}/><div>
-                    <strong>{throne.mine ? '당신이 신의 자리에 앉아 있습니다' : `${throne.name}이(가) 신의 자리에 앉아 있습니다`}</strong>
-                    <span>자리에 주인이 있는 동안에는 신이 깨어나지 않고 신 소환 게이지도 닫힙니다. 임기 {remaining(throne.since + ALTAR.throneTermMs - now)} 남음{throne.mine ? '' : ' · 탄핵에 성공하면 자리가 비고 다시 소환할 수 있습니다'}.</span>
-                    {!throne.mine && <button type="button" className="secondary small" onClick={() => setGodTab('throne')}>신의 자리 보기</button>}
+                    <strong>{throne.mine ? '당신이 신의 자리에 앉아 있습니다' : `${josa(throne.name, '이가')} 신의 자리에 앉아 있습니다`}</strong>
+                    <span>자리에 주인이 있는 동안에는 신이 깨어나지 않고 신 소환 게이지도 닫힙니다. 임기 {termLeft(throne.since + ALTAR.throneTermMs - now)} 남음{throne.mine ? '' : ' · 탄핵에 성공하면 자리가 비고 다시 소환할 수 있습니다'}.</span>
+                    {!throne.mine && <button type="button" className="secondary small" onClick={() => { setGodTab('throne'); requestAnimationFrame(() => document.getElementById('altar-god')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }}>신의 자리 보기</button>}
                 </div></div>}
                 {info.gauges.filter(g => (gaugeTab === 'summon') === SUMMON_GAUGE_IDS.includes(g.id)).map(g => {
                     const open = g.until > now, summon = SUMMON_GAUGE_IDS.includes(g.id);
@@ -120,7 +122,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                     return <button key={g.id} type="button" className={`altar-gauge ${gauge === g.id ? 'selected' : ''} ${summon ? 'god' : ''}`} onClick={() => pickGauge(g.id)} aria-pressed={gauge === g.id} disabled={locked} title={locked ? '신의 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다' : undefined}>
                         <div className="altar-gauge-head"><strong>{g.id === 'god' ? <Skull size={14}/> : isRaidGauge(g.id) ? <Swords size={14}/> : <Sparkles size={14}/>} {g.name}{open && g.level ? ` · ${g.level}단계` : ''}</strong>{open ? <em className="altar-open">진행 중 · {g.desc} · {remaining(g.until - now)} 남음</em> : <small>{g.desc}</small>}</div>
                         <Meter value={Math.min(g.points, g.cost)} max={g.cost} color={g.id === 'god' ? 'gold' : 'teal'}/>
-                        <small className="micro">{format(g.points)} / {format(g.cost)}{locked ? ` · 신의 자리가 비어야 바칠 수 있음(임기 ${remaining(info.throne!.since + ALTAR.throneTermMs - now)} 남음)` : g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
+                        <small className="micro">{format(g.points)} / {format(g.cost)}{locked ? ` · 신의 자리가 비어야 바칠 수 있음(임기 ${termLeft(info.throne!.since + ALTAR.throneTermMs - now)} 남음)` : g.points >= g.cost && g.id === 'god' ? ' · 신이 떠나면 바로 깨어납니다' : g.id !== 'god' ? ` · ${g.next}` : ''}</small>
                     </button>;
                 })}
                 <p className="footnote">{gaugeTab === 'bless' ? `축복은 최대 ${BLESSING_MAX_LEVEL}단계 · 최대 ${ALTAR.blessingCapMs / 3600_000}시간까지 쌓이고, 끝나면 단계는 처음으로 돌아갑니다.` : `게이지가 차면 바로 나타납니다. ${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')} 머물고, 쓰러지면 ${RAID.respawnMs / 3600_000}시간 뒤에 다시 소환할 수 있습니다. 신은 ${ALTAR.godLifetimeMs / 3600_000}시간.`}</p>
@@ -152,7 +154,7 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
             <p className="footnote">순위는 월요일 0시(한국 시간)에 새로 시작합니다. 축복 {BLESSINGS.length}종 · 신 소환은 순위와 상관없이 함께 채웁니다.</p>
                 </>}
             </section>
-            <section className="panel altar-god">
+            <section className="panel altar-god" id="altar-god">
                 <div className="section-title"><h2><Skull size={16}/> 신</h2>{god && <span className="micro">{god.gen}번째 신</span>}</div>
                 <Tabs value={godTab} onValueChange={v => setGodTab(v as typeof godTab)}><TabsList className="game-tabs altar-tabs"><TabsTrigger value="god"><Skull size={14}/> 신{god?.alive ? ' · 깨어남' : ''}</TabsTrigger><TabsTrigger value="throne"><Crown size={14}/> 신의 자리{throne ? ` · ${throne.name}` : ''}</TabsTrigger></TabsList></Tabs>
                 {godTab === 'god' ? <>
@@ -161,10 +163,10 @@ export function Altar({ s, busy, info, error, load, act, result, clearResult }: 
                         {god.mine ? <p className="footnote">지금 깨어난 신은 당신을 본뜬 모습입니다. 다른 모험가가 쓰러뜨리면 자리를 빼앗깁니다.</p>
                             : <button className="primary" disabled={busy || wait > 0} onClick={() => void act({ action: 'challenge' })}>{wait > 0 ? `${remaining(wait)} 뒤 다시 도전` : '신에게 도전'}</button>}
                         <p className="footnote">가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉습니다. 도전은 {ALTAR.challengeCooldownMs / 60000}분에 한 번, 무릉도장처럼 끝까지(최대 {ALTAR.godMaxTurns}턴) 겨룹니다.</p>
-                    </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'}{throne ? ` 지금은 ${throne.mine ? '당신' : throne.name}이(가) 신의 자리에 있어 임기(${remaining(throne.since + ALTAR.throneTermMs - now)} 남음)가 끝나거나 탄핵되기 전까지 신이 깨어나지 않습니다.` : ''} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급)입니다. 신의 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다(임기가 끝나거나 탄핵되면 다시 소환).</p>}
+                    </> : <p className="footnote">{god ? '신이 잠들어 있습니다.' : '아직 깨어난 신이 없습니다.'}{throne ? ` 지금은 ${throne.mine ? '당신이' : josa(throne.name, '이가')} 신의 자리에 있어 임기(${termLeft(throne.since + ALTAR.throneTermMs - now)} 남음)가 끝나거나 탄핵되기 전까지 신이 깨어나지 않습니다.` : ''} 신 소환 게이지({format(ALTAR.godCost)})가 차면 신이 깨어납니다. 깨어나는 신은 {ALTAR.firstGod.name}(무릉도장 {ALTAR.firstGod.depth}층 보스급)입니다. 신의 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다(임기가 끝나거나 탄핵되면 다시 소환).</p>}
                 </> : <>
                     {throne ? <>
-                        <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${remaining(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {remaining(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
+                        <div className="altar-god-card"><strong>{throne.name}{throne.mine ? ' (나)' : ''}{!throne.mine && !god?.alive && <button className="secondary small altar-impeach" disabled={busy || wait > 0} title={`신이 된 ${throne.name}(최대 체력 ${format(throne.hp)} · 전투력 ${format(throne.power)})과 겨뤄 이기면 자리에서 내려옵니다. 자리는 비고, 다시 앉으려면 신을 소환해 쓰러뜨려야 합니다.`} onClick={() => void act({ action: 'impeach' })}>{wait > 0 ? `탄핵 · ${remaining(wait)} 뒤` : '탄핵'}</button>}</strong><small>{new Date(throne.since).toLocaleString('ko-KR')}부터 · 임기 {termLeft(throne.since + ALTAR.throneTermMs - now)} 남음(지나면 자리와 몫이 비고 다음 신은 {ALTAR.firstGod.name})</small></div>
                         {throne.mine && throne.tithe && <>
                             <p className="altar-tithe">쌓인 몫 · {format(throne.tithe.gold)} G · 세계석 {format(throne.tithe.pearls)} · 정수 {format(throne.tithe.essence)}</p>
                             <button className="primary" disabled={busy || !(throne.tithe.gold || throne.tithe.pearls || throne.tithe.essence)} onClick={() => void act({ action: 'harvest' })}>몫 거두기</button>

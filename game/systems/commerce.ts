@@ -422,7 +422,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`세계석이 부족합니다(필요 ${GEAR_RESET_PEARLS}).`);
         s.pearls -= GEAR_RESET_PEARLS;
         const fixed = (item.affixes || []).filter(x => item.onyx && x.rule), count = (item.affixes || []).length - fixed.length;
-        if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
+        if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level, item.rarity).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
         else if (item.affix) item.affix = rollAffix(item.rarity, rng);
         item.enhance = 0; item.starFails = 0; item.rerolls = 0; item.refines = 0;
         syncOrnateName(item); syncRelicPower(s);

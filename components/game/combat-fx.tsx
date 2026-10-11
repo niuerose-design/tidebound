@@ -367,7 +367,9 @@ export const CAST_TRAVEL_MS = 280;
 const castTravels = (fx: CombatFx) => fx.actor === 'player' && fx.target === 'enemy' && !fx.basic && fx.hits.length > 0 && fx.status !== '행동 불가' && !hasSceneTitle(fx, false);
 /** v3.280 5차 궁극기 · 각성기 장면(ULTIMATES · 각성 빛)은 공용 섬광(sceneFinaleFlash 42% × 2.4초)이 터질 때 맞습니다. 전에는 피해 숫자가 장면보다 먼저 떴습니다. */
 const ULT_IMPACT_MS = 1000;
-export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId && OW_IMPACT[fx.skillId] ? OW_IMPACT[fx.skillId] : fx.actor === 'player' && !fx.finale && !owScene(fx) && fx.skillId !== 'aberrantSurge' && fx.skillId !== 'genesisRune' && fx.skillId !== 'endOfAll' && ultimateOf(fx.skillId) ? ULT_IMPACT_MS : castTravels(fx) ? CAST_TRAVEL_MS : 0);
+/** v3.284 전용 장면이 있는 5차(제논 메가 스매셔 · 메카닉 전탄발사)는 그 장면이 실제로 맞히는 순간: 광선이 닿을 때(xenBeam 1.15초 + 이동), 전탄 착탄 섬광(mechImpact 2.02초). */
+const OWN_SCENE_IMPACT: Record<string, number> = { aberrantSurge: 1250, genesisRune: 2050 };
+export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId && OW_IMPACT[fx.skillId] ? OW_IMPACT[fx.skillId] : fx.actor === 'player' && !fx.finale && fx.skillId && OWN_SCENE_IMPACT[fx.skillId] ? OWN_SCENE_IMPACT[fx.skillId] : fx.actor === 'player' && !fx.finale && !owScene(fx) && fx.skillId !== 'aberrantSurge' && fx.skillId !== 'genesisRune' && fx.skillId !== 'endOfAll' && ultimateOf(fx.skillId) ? ULT_IMPACT_MS : castTravels(fx) ? CAST_TRAVEL_MS : 0);
 function AzerothUltFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     const k = sceneOf(fx)!, ult = AZ_ULT[k], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra }), hits = Math.max(1, fx.hits.filter(h => !h.miss).length);
     return <div className={`scene-fx ow-fx az-ult az-${k} ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d, { '--hits': hits, '--impact': `${ult.impact}ms` })}>
