@@ -1929,6 +1929,16 @@
 .scene-foe-name{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 5px;margin-top:4px;font-size:11.5px;font-weight:700;color:#f3ede2;text-shadow:0 1px 3px #041219,0 0 6px #041219;white-space:nowrap;line-height:1.3}
 .scene-foe-name small{font-size:10px;font-weight:700;color:#ffd76a}
 .scene-foe-name small.boss{color:#ff8f7a;letter-spacing:.08em}
+/* v3.294 대왕: 👑 KING 표시 · 보라~금 그라데이션 이름 · 보라 체력바, 몸에는 보라 오라와 머리 위 왕관. */
+.scene-foe-name small.king{color:#e2c2ff;letter-spacing:.08em;text-shadow:0 0 6px #a35cff}
+.scene-foe-hud.king .scene-foe-label{background:linear-gradient(90deg,#c58cff,#ffd98a);-webkit-background-clip:text;background-clip:text;color:transparent;font-weight:800;filter:drop-shadow(0 1px 1px #0009)}
+.scene-foe-hud.king .meter.enemy [data-slot=progress-indicator]{background:linear-gradient(90deg,#7b2fd6,#c58cff)}
+.scene-foe-hud.king{width:150px}
+.battle-scene .scene-foe.king img{animation:kingAura 2.4s ease-in-out infinite}
+.battle-scene .scene-foe-wrap .scene-foe.king::after{content:'👑';position:absolute;left:50%;top:-14%;translate:-50% 0;font-size:calc(var(--foe-size,128px) * .2);filter:drop-shadow(0 0 6px #ffd98a);animation:kingCrown 2.4s ease-in-out infinite;pointer-events:none}
+@keyframes kingAura{0%,100%{filter:drop-shadow(0 0 6px #a35cffaa) drop-shadow(0 0 2px #ffd98a66)}50%{filter:drop-shadow(0 0 18px #b06cffee) drop-shadow(0 0 6px #ffd98aaa)}}
+@keyframes kingCrown{0%,100%{translate:-50% 0}50%{translate:-50% -4px}}
+@media(prefers-reduced-motion:reduce){.battle-scene .scene-foe.king img{animation:none;filter:drop-shadow(0 0 10px #a35cffcc)}.battle-scene .scene-foe-wrap .scene-foe.king::after{animation:none}}
 .scene-foe-name .name-statuses{pointer-events:auto}
 .scene-foe-hud{width:120px;left:min(var(--foe-x),calc(100% - 92px));top:calc(var(--foe-feet) + 10px)}
 /* HP 숫자는 몬스터 그림을 가리지 않게 바 아래에. */
@@ -2317,6 +2327,8 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
  */
 .battle-scene{--ground:calc(100% - 10px);--foe-size:clamp(88px,30cqh,128px);--foe-x:calc(100% - 84px);--foe-y:calc(var(--ground) - var(--foe-size) * .5);--foe-top:calc(var(--ground) - var(--foe-size));--foe-feet:var(--ground)}
 .battle-scene:has(.scene-foe.boss){--foe-size:clamp(110px,38cqh,160px);--foe-x:calc(100% - 100px)}
+/* v3.294 대왕 까미 · 누리 · 슬라임: 작은 녀석과 같은 그림을 보스보다 크게 그립니다. */
+.battle-scene:has(.scene-foe.king){--foe-size:clamp(124px,44cqh,184px);--foe-x:calc(100% - 112px)}
 .battle-scene .scene-foe-wrap .scene-foe,.battle-scene .scene-foe-cleave .scene-foe{left:calc(var(--foe-x) - var(--foe-size) * .5);right:auto;top:var(--foe-top);width:var(--foe-size)!important;height:var(--foe-size)!important;transform-origin:50% 100%}
 .battle-scene .scene-foe svg,.battle-scene .scene-foe img{width:100%;height:100%}
 /* 발밑 그림자: 둘 다 같은 땅에 서 있다는 느낌을 줍니다. */
@@ -2335,6 +2347,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @media(max-width:767px){
   .battle-scene{--foe-size:clamp(76px,28cqh,108px);--foe-x:calc(100% - 62px)}
   .battle-scene:has(.scene-foe.boss){--foe-size:clamp(96px,34cqh,130px);--foe-x:calc(100% - 72px)}
+  .battle-scene:has(.scene-foe.king){--foe-size:clamp(108px,40cqh,150px);--foe-x:calc(100% - 80px)}
   .battle-scene .scene-foe-wrap .scene-foe,.battle-scene .scene-foe-cleave .scene-foe{top:var(--foe-top)}
   .battle-scene .ow-fx,.battle-scene .xen-fx{--tx:calc(100cqw - 62px);--ty:calc(100cqh - 10px - var(--foe-size) * .5)}
   .battle-scene .xen-fx.xen-boss{--tx:calc(100cqw - 72px)}
