@@ -9,6 +9,7 @@ import { ODDS } from './odds';
  * 능력치는 그 서식지에서 가장 강한 몬스터(난이도 보정 뒤)의 체력 ×hp, 공격 ×attack인 단일 개체이고, turns턴 안에 못 잡으면 떠납니다(도망 보상 없음).
  * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개를 받습니다(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
  * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 400이면 장신구 1개에 기대 약 18일, 최장 약 31일(난이도 50에서는 절반). 7종 완성은 반년 남짓.
+ * v3.278 아쿠아로드 스우(루즈 컨트롤 머신 마크) · 리프레 데미안(마력이 깃든 안대)을 더해 칠흑 보스 9마리, 9종 모두 얻을 수 있습니다.
  * v3.276 장신구와 보스를 나눴습니다(ONYX_ITEMS · ONYX_BOSSES.drop). 윌은 칠흑 보스코어 ‘저주받은 마도서’, 진 힐라는 ‘고통의 근원’을 줍니다. 수집은 9종(장신구 8 + 마도서).
  * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
  * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
@@ -30,9 +31,9 @@ export type OnyxItemDef = { id: string; name: string; desc: string; affix: ItemA
 export const ONYX_ITEMS: OnyxItemDef[] = [
     { id: 'onyxDusk', boss: 'onyxDusk', region: '리스항구', name: '거대한 공포', desc: '더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.', affix: { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', value: .1, rule: true } },
     { id: 'onyxDunkel', boss: 'onyxDunkel', region: '헤네시스', name: '커맨더 포스 이어링', desc: '듄켈의 귀걸이. 연속 행동 확률이 오릅니다.', affix: { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', value: .1, rule: true } },
-    { id: 'onyxWill', region: '페리온', name: '루즈 컨트롤 머신 마크', desc: '거미줄 장치의 증표. 상태이상 저항이 오르고 내 기절·침묵·감속이 1턴 길어집니다.', affix: { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', value: .15, stat2: 'controlBonus', value2: 1, rule: true } },
+    { id: 'onyxWill', boss: 'onyxSwoo', region: '아쿠아로드', name: '루즈 컨트롤 머신 마크', desc: '스우의 제어 장치. 상태이상 저항이 오르고 내 기절·침묵·감속이 1턴 길어집니다.', affix: { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', value: .15, stat2: 'controlBonus', value2: 1, rule: true } },
     { id: 'onyxLucid', boss: 'onyxLucid', region: '엘리니아', name: '몽환의 벨트', desc: '루시드의 벨트. 마력 평타 확률과 마력 평타 배율이 오릅니다.', affix: { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', value: .1, stat2: 'arcaneRatioBonus', value2: .1, rule: true } },
-    { id: 'onyxHilla', region: '커닝시티', name: '마력이 깃든 안대', desc: '마력이 스민 안대. 상태이상 저항이 크게 오르고 턴마다 체력을 회복합니다.', affix: { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', value: .2, stat2: 'hpRegen', value2: 15, rule: true } },
+    { id: 'onyxHilla', boss: 'onyxDamien', region: '리프레', name: '마력이 깃든 안대', desc: '데미안의 안대. 상태이상 저항이 크게 오르고 턴마다 체력을 회복합니다.', affix: { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', value: .2, stat2: 'hpRegen', value2: 15, rule: true } },
     { id: 'onyxPain', boss: 'onyxHilla', region: '커닝시티', name: '고통의 근원', desc: '진 힐라가 품은 고통의 결정. 준 피해로 체력을 빼앗고 빈사의 적을 더 쉽게 끝냅니다.', affix: { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', value: .05, stat2: 'executeBonus', value2: .05, rule: true } },
     { id: 'onyxSeren', boss: 'onyxSeren', region: '시간의 신전', name: '미트라의 분노', desc: '세렌의 증표. 보스·사냥감에게 주는 피해가 오릅니다.', affix: { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', value: .15, rule: true } },
     { id: 'onyxBlackMage', boss: 'onyxBlackMage', region: '아케인 리버', name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } },
@@ -49,6 +50,8 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxWill', hpMul: 750, name: '윌', region: '페리온', drop: { core: ONYX_CORE_ID } },
     { id: 'onyxLucid', hpMul: 800, name: '루시드', region: '엘리니아', drop: { charm: 'onyxLucid' } },
     { id: 'onyxHilla', hpMul: 400, name: '진 힐라', region: '커닝시티', drop: { charm: 'onyxPain' } },
+    { id: 'onyxSwoo', hpMul: 200, name: '스우', region: '아쿠아로드', drop: { charm: 'onyxWill' } },
+    { id: 'onyxDamien', hpMul: 120, name: '데미안', region: '리프레', drop: { charm: 'onyxHilla' } },
     { id: 'onyxSeren', hpMul: 70, name: '세렌', region: '시간의 신전', drop: { charm: 'onyxSeren' } },
     { id: 'onyxBlackMage', hpMul: 80, name: '검은 마법사', region: '아케인 리버', drop: { charm: 'onyxBlackMage' } },
 ];

@@ -253,6 +253,9 @@ const specialMonsters: Array<{
     { id: 'onyxWill', name: '윌', level: 30, lore: '페리온 협곡에 거미줄을 친 거울의 마법사. 거울 속에도 윌이 있다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'onyxLucid', name: '루시드', level: 40, lore: '엘리니아 숲의 꿈을 다스리는 요정 여왕. 나비 한 마리마다 악몽이 깃든다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'onyxHilla', name: '진 힐라', level: 61, lore: '커닝시티 배수로 아래 되살아난 사령술사. 죽은 것들이 그녀의 숨으로 움직인다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    // v3.278 아쿠아로드 · 리프레 칠흑 보스.
+    { id: 'onyxSwoo', name: '스우', level: 76, lore: '아쿠아로드 심해 기지에 내려앉은 검은 날개의 군단장. 중력을 비틀어 모든 것을 바닥으로 끌어내린다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'onyxDamien', name: '데미안', level: 86, lore: '리프레 세계수의 그루터기에서 타락한 날개를 펼친 복수자. 낙인이 쌓일수록 검은 불꽃이 거세진다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'onyxSeren', name: '세렌', level: 96, lore: '시간의 신전에 내려온 태양의 수호자. 미트라의 분노가 회랑을 태운다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'onyxBlackMage', name: '검은 마법사', level: 106, lore: '아케인 리버의 끝에서 세계를 다시 쓰려는 초월자. 그의 뒤에는 창세의 빛이 있다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },

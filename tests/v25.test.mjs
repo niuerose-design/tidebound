@@ -1325,7 +1325,7 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
 test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
-    assert.equal(O.ONYX_BOSSES.length, 7); assert.ok(O.onyxBossFor('리스항구') && !O.onyxBossFor('아쿠아로드'));
+    assert.equal(O.ONYX_BOSSES.length, 9, 'v3.278 스우 · 데미안'); assert.ok(O.onyxBossFor('리스항구') && O.onyxBossFor('아쿠아로드')?.id === 'onyxSwoo' && !O.onyxBossFor('루디브리엄'));
     assert.equal(O.onyxChance(0, 0), .003); assert.ok(Math.abs(O.onyxChance(50, 0) - .006) < 1e-9); assert.equal(O.onyxChance(0, O.ONYX.pity), 1, 'pity guarantees');
     for (const b of O.ONYX_BOSSES) assert.ok(W.MONSTERS.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
     // 서식지에서만 나옵니다. 첫 난수(까미·누리 없음 → 칠흑 판정)가 0이면 출현.
@@ -1335,7 +1335,7 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     const miss = newState(0); miss.level = 60; miss.rebirths = 10; miss.stage = 'lithSwarm'; Enc.spawn(miss, () => .5); assert.ok(!miss.enemy.onyx); assert.equal(miss.onyxSeen['리스항구'], 1, 'pity counter grows');
     // 처치: 장신구 1개(태초, 고유 옵션 + 5줄), 두 번째는 세계석.
     const E = await L.load('data/encounters');
-    const skillSets = O.ONYX_BOSSES.map(b => E.profile(b.id).skills.join(',')); assert.equal(new Set(skillSets).size, 7, 'each onyx boss has its own skill set');
+    const skillSets = O.ONYX_BOSSES.map(b => E.profile(b.id).skills.join(',')); assert.equal(new Set(skillSets).size, O.ONYX_BOSSES.length, 'each onyx boss has its own skill set');
     for (const b of O.ONYX_BOSSES) { const own = E.profile(b.id).skills.filter(id => id.startsWith('onyx')); assert.equal(own.length, 1, b.id); assert.ok(E.ENEMY_SKILLS.some(sk => sk.id === own[0]), own[0]); assert.ok(s.enemy.onyx !== b.id || s.enemy.skills.includes(own[0]) && s.enemy.skills.includes('foeWard')); }
     // 드랍 0.3%: 미획득이면 연속 횟수만 오르고 400번째 격파는 확정.
     s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5); assert.ok(!s.inventory.some(i => i.onyx), 'roll .5 misses the 0.3% drop'); assert.equal(s.onyxMiss.onyxDusk, 1); assert.equal(s.onyxBook.onyxDusk, 1); assert.ok(s.logs.some(l => l.text.includes('남기지 않았습니다')));
@@ -1375,11 +1375,17 @@ test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고
     const pain = h.inventory.find(i => i.onyx === 'onyxPain'); assert.ok(pain && pain.affixes[0].id === 'onyxSoul' && pain.affixes[0].stat === 'lifesteal' && pain.affixes[0].stat2 === 'executeBonus');
     assert.equal(patch.onyxRank, 2, 'the old eye patch keeps its awakening'); assert.equal(O.onyxCollected(h), 2);
     // 상점 · 환생 이정표: 지금 주는 보스가 없는 장신구(마크 · 안대)는 팔지 않고, 고통의 근원은 진 힐라 처치로 열립니다.
-    assert.match(DC.onyxOffer(h, 'onyxHilla').reason, /얻을 수 없는/); assert.match(DC.onyxOffer(h, 'onyxWill').reason, /얻을 수 없는/); assert.equal(DC.onyxOffer(h, 'onyxPain').kind, 'awaken');
-    assert.ok(O.ONYX_DROP_ITEMS.every(i => i.boss) && !O.ONYX_DROP_ITEMS.some(i => i.id === 'onyxWill' || i.id === 'onyxHilla'));
+    // v3.278 마크 · 안대는 스우 · 데미안이 줍니다. 상점은 그 보스를 처치해야 열립니다.
+    assert.match(DC.onyxOffer(h, 'onyxHilla').reason, /처치해야/); assert.match(DC.onyxOffer(h, 'onyxWill').reason, /처치해야/); assert.equal(DC.onyxOffer(h, 'onyxPain').kind, 'awaken');
+    assert.equal(O.ONYX_DROP_ITEMS.length, O.ONYX_ITEMS.length, 'every accessory has a boss again'); assert.equal(O.onyxItemById('onyxWill').boss, 'onyxSwoo'); assert.equal(O.onyxItemById('onyxHilla').boss, 'onyxDamien');
     const m = newState(0); m.rebirths = 100; G.grantOnyxMilestones(m, () => .99); assert.ok(m.inventory.filter(i => i.onyx).every(i => O.onyxItemById(i.onyx).boss), 'milestones only give obtainable accessories');
     // 고통의 근원 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
     const ls = newState(0); ls.level = 60; ls.equipment.charm = O.onyxAccessory(O.onyxItemById('onyxPain'), 'p', 60); assert.ok(stats(ls).lifesteal >= .05 - 1e-9 && stats(ls).executeBonus >= .05 - 1e-9);
+    // v3.278 스우(아쿠아로드) · 데미안(리프레): 마크 · 안대를 다시 줍니다. 이미 가진 안대는 데미안 격파로 각성합니다.
+    const d = newState(0); d.level = 90; d.rebirths = 10; d.kills = 5000; d.stage = 'leafreSwarm'; d.tide = 0;
+    const old = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'old', 60); old.onyxRank = 1; d.inventory.push(old);
+    Enc.spawn(d, () => 0); assert.equal(d.enemy.onyx, 'onyxDamien'); d.enemy.hp = 0; Enc.reward(d, () => .001); assert.equal(old.onyxRank, 2, 'Damien awakens the old eye patch');
+    const sw = hunt('aquaSwarm', .001); assert.equal(sw.onyxBook.onyxSwoo, 1); assert.ok(sw.inventory.some(i => i.onyx === 'onyxWill'), 'Swoo drops the control mark');
     // 9종: 장신구 8 + 마도서. 9종 세트는 보스 피해 +10%가 더 붙습니다.
     const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
     assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };

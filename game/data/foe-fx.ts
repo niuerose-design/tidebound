@@ -60,6 +60,10 @@ export const FOE_FX: Record<string, FoeFx> = {
     onyxSoulDrain: { kind: 'drain', glyphs: ['✚', '◌', '✚', '◌', '✚', '◌', '✚', '◌'] },
     // 태양의 불꽃: 태양 원반이 떠오르고 불기둥이 내리꽂힙니다.
     onyxSunfire: { kind: 'sunfire', glyphs: ['🔥', '✦', '🔥', '✦', '🔥', '✦', '🔥', '✦'] },
+    // v3.278 중력 붕괴: 주인공 머리 위로 보랏빛 중력장이 내려앉아 바닥으로 짓누르고 파편이 떨어집니다.
+    onyxGravity: { kind: 'gravity', glyphs: ['▼', '◆', '▼', '◆', '▼', '◆', '▼', '◆'] },
+    // v3.278 낙인: 주인공 발밑에 검붉은 낙인이 새겨지고 검은 불꽃이 솟습니다.
+    onyxBrand: { kind: 'brand', glyphs: ['✠', '🜂', '✠', '🜂', '✠', '🜂', '✠', '🜂'] },
     // 창세: 하늘에서 창세의 빛기둥이 내려오고 빛의 고리가 퍼집니다.
     onyxGenesis: { kind: 'genesis', glyphs: ['✦', '✧', '創', '✦', '✧', '世', '✦', '✧'] },
 };
