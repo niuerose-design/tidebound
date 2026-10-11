@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { ConfirmButton } from './confirm-button';
 import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
@@ -41,7 +42,13 @@ function RankPerkBreakdown({ s }: { s: State }) {
         <p className="stat-note">{active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해집니다(계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않음). 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}</p>
     </details>;
 }
+/** v3.292 능력치 찍기 단위(이 기기에 기억). */
+const STAT_STEPS = [1, 5, 10, 50, 100] as const, STEP_KEY = 'tb-stat-step';
+const readStep = () => { try { const n = Number(localStorage.getItem(STEP_KEY)); return (STAT_STEPS as readonly number[]).includes(n) ? n : 1; } catch { return 1; } };
 export function Character({ s, send, busy }: PanelProps) {
+    const [step, setStepState] = useState(readStep);
+    const setStep = (n: number) => { setStepState(n); try { localStorage.setItem(STEP_KEY, String(n)); } catch { /* 저장 못 해도 이번 화면에서는 씀 */ } };
+    const put = Math.min(step, s.statPoints);
     // v3.49 정보 비공개(10.2-7): 켜져 있으면 드롭·변종 확률 대신 보너스만 보여 줍니다.
     const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s), secret = catalogNow().secret;
     return <>
@@ -60,7 +67,9 @@ export function Character({ s, send, busy }: PanelProps) {
     <div className="section-title">
     <h2>기본 능력치</h2>
     <span>기본 + 성장 + 직접 투자</span>
-    </div>{ATTRIBUTES.map(attr => <div className="attribute-row" key={attr.id}>
+    </div>
+    {/* v3.292 찍기 단위: 줄마다 +1 · +5 대신 고른 단위 한 버튼(남은 포인트가 적으면 남은 만큼). */}
+    <div className="stat-step" role="radiogroup" aria-label="능력치 찍기 단위"><span>찍기 단위</span>{STAT_STEPS.map(n => <button key={n} type="button" role="radio" aria-checked={step === n} className={step === n ? 'primary small' : 'secondary small'} onClick={() => setStep(n)}>×{n}</button>)}</div>{ATTRIBUTES.map(attr => <div className="attribute-row" key={attr.id}>
         <div className="attribute-code">{attr.code}</div>
         <div className="attribute-copy">
         <h3>{attr.name}<strong>{v[attr.id]}</strong>
@@ -69,8 +78,7 @@ export function Character({ s, send, busy }: PanelProps) {
         <small>직접 투자 {s.attributes[attr.id]}포인트</small>
         </div>
         <div className="attribute-buttons">
-        <button className="secondary small" aria-label={`${attr.name} 1 증가`} disabled={busy || s.statPoints < 1} onClick={() => send({ type: 'attribute', id: attr.id, value: '1' })}>+1</button>
-        <button className="secondary small" aria-label={`${attr.name} 5 증가`} disabled={busy || s.statPoints < 5} onClick={() => send({ type: 'attribute', id: attr.id, value: '5' })}>+5</button>
+        <button className="secondary small" aria-label={`${attr.name} ${put || step} 증가`} disabled={busy || s.statPoints < 1} title={s.statPoints > 0 && s.statPoints < step ? `남은 ${s.statPoints}포인트만 투자합니다` : undefined} onClick={() => send({ type: 'attribute', id: attr.id, value: String(put) })}>+{put || step}</button>
         {s.skipStatConfirm ? <button className="secondary" disabled={busy || s.statPoints < 1} title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자합니다(설정에서 확인 창을 다시 켤 수 있습니다).`} onClick={() => send({ type: 'attribute', id: attr.id, value: 'max' })}>최대</button> : <ConfirmButton label="최대" title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자할까요?`} description={`${attr.description}. 재분배는 무료지만 자동 사냥 중에는 할 수 없습니다.`} confirmLabel="모두 투자" disabled={busy || s.statPoints < 1} onConfirm={() => send({ type: 'attribute', id: attr.id, value: 'max' })}/>}
         </div>
         </div>)}</section>
