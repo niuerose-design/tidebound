@@ -16,7 +16,7 @@ import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
-import { MIMIC, LETTER, letterRank, rollMimicMastery, upgradeMimicTier, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
+import { MIMIC, LETTER, letterRank, rollMimicMastery, upgradeMimicTier, mimicChance, specialLuck, specialFind, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
 import { EXP_NURI, rollNuriTier, upgradeNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
@@ -237,8 +237,9 @@ export function specialChances(s: State) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
-    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck * (1 + (jobById(s.job)?.mimicFind || 0)) : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck * (1 + (jobById(s.job)?.nuriFind || 0)) : 0;
+    // v3.287 행운의 편지 · 이벤트(제단 축복 포함) · 직업 보너스는 곱하지 않고 더합니다(specialFind).
+    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * specialFind(luck, s.event?.mimic ?? 1, jobById(s.job)?.mimicFind || 0) : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * specialFind(luck, s.event?.nuri ?? 1, jobById(s.job)?.nuriFind || 0) : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
     const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
     const slimeP = slimeOk ? slimeChance(tier) * (s.away ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;

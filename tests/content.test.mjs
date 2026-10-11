@@ -260,7 +260,7 @@ test('v27.22 mastery mimic: rare stage-only spawn with the strongest local body,
  const low=newState(0);low.level=5;low.kills=500;low.stage='reef';low.tide=5;spawn(low,()=>0);assert.notEqual(low.enemy.id,'masteryMimic','not before Lv.10');
  const d=newState(0);d.level=20;d.kills=500;d.dungeon={id:'grotto',wave:0};spawn(d,()=>0);assert.notEqual(d.enemy.id,'masteryMimic','never in dungeons');
  s.enemy.hp=0;reward(s,()=>.99);
- assert.ok((s.jobMastery.fisher||0)>=100000,'big ticket: '+s.jobMastery.fisher);assert.ok((s.skillPractice.hook||0)>=100000);assert.equal(s.book.masteryMimic,1);assert.ok(s.logs.some(l=>l.text.includes('숙련의 까미')));
+ assert.ok((s.jobMastery.fisher||0)>=MIMIC_DATA.tiers[2].mastery,'big ticket: '+s.jobMastery.fisher);assert.ok((s.skillPractice.hook||0)>=MIMIC_DATA.tiers[2].mastery);assert.equal(s.book.masteryMimic,1);assert.ok(s.logs.some(l=>l.text.includes('숙련의 까미')));
 });
 
 test('v27.24 ultimate finale skills exist, belong to 5th-tier jobs, and the fx parser carries the skill id',()=>{

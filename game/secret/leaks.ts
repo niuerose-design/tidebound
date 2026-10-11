@@ -37,7 +37,7 @@ function oddsLeaks(): Leak[] {
         { id: 'drop:dungeon', text: `던전 반복 정복의 확률 장비(예전 ${pct(o.drop.dungeonRepeat)})는 v3.201에 없어졌고, 던전 주화 상점의 희귀 이상 장비 상자가 대신합니다.` },
         { id: 'drop:golden', text: `황금 개체 기본 확률은 처치마다 ${pct(o.drop.goldenBase)}입니다.` },
         { id: 'mimic:chance', text: `숙련의 까미: 출현마다 ${pct(o.mimic.chance)} + 난이도 1당 ${pct(o.mimic.perTier)}p, 사냥터 순서마다 ×${o.mimic.stageStep}씩 더 곱합니다.` },
-        { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 대 ${pct(o.mimic.letterJackpot)}).` },
+        { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 중 ${pct(o.mimic.letterMid)}).` },
         { id: 'nuri:chance', text: `경험의 누리: 출현마다 ${pct(o.nuri.chance)} + 난이도 1당 ${pct(o.nuri.perTier)}p.` },
         { id: 'nuri:tiers', text: `누리 당첨: 소 ${pct(o.nuri.tiers[0])} · 중 ${pct(o.nuri.tiers[1])} · 대 ${pct(o.nuri.tiers[2])}.` },
         { id: 'onyx:spawn', text: `칠흑의 보스: 무리 서식지 출현마다 ${pct(o.onyx.chance)} × (1 + 난이도 × ${o.onyx.perTier}), ${o.onyx.pity.toLocaleString()}번 못 보면 확정.` },

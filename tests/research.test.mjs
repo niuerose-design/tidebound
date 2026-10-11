@@ -143,6 +143,10 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
     const roll = mimicChanceOf(MIMIC_DATA.minTier, 0) * 1.5; // 기본 확률 밖, 5단계(×1.75) 안
     const plain = make(0); spawn(plain, () => roll); assert.notEqual(plain.enemy.id, MIMIC_DATA.id);
     const lucky = make(5); spawn(lucky, () => roll); assert.equal(lucky.enemy.id, MIMIC_DATA.id);
+    // v3.287 편지 · 이벤트(제단 축복) 보너스는 곱하지 않고 더합니다: 5단계(+75%) + 축복 ×3(+200%) = ×3.75(전에는 ×5.25).
+    const both = make(5); both.event = { mimic: 3 }; const inBand = mimicChanceOf(MIMIC_DATA.minTier, 0) * 3.7, outBand = mimicChanceOf(MIMIC_DATA.minTier, 0) * 3.8;
+    spawn(both, () => inBand); assert.equal(both.enemy.id, MIMIC_DATA.id, 'inside 3.75x');
+    const over = make(5); over.event = { mimic: 3 }; spawn(over, () => outBand); assert.notEqual(over.enemy.id, MIMIC_DATA.id, 'not multiplied to 5.25x');
 });
 
 // 세계석 연구 4단계: 서약 3개
@@ -400,7 +404,7 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
     assert.equal(s.enemy.leavesAt, s.turn + K.KING.turns, 'leaves after 80 turns');
     assert.equal(Enc.enemyLabel(s.enemy), '[보스] 대왕 까미');
     s.enemy.hp = 0; Enc.reward(s, () => .99);
-    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 300,000 guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
+    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 대 × rewardMul guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
     // 대왕 누리 · 대왕 정수 슬라임 보상
     { const t = make(); Enc.spawn(t, () => 1, 'kingNuri'); assert.equal(t.enemy.id, K.KING.nuri.id); const before = t.exp; t.enemy.hp = 0; Enc.reward(t, () => .99);
         const byField = Math.floor(Enc.stageEncounterExp(t, stats(t)) * Math.round(N.EXP_NURI.tiers[2].pct * K.KING.rewardMul * N.EXP_NURI.encountersPerPct));
