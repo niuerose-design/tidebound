@@ -134,7 +134,7 @@ export async function syncDuelSeason(id: string, s: State, now: number) {
  * v3.31 승천 직후 서버 정리(docs/balance-rebirth.md 10·12절): 계정 금고를 비우고, 이번 달 결투 기록판과 이번 주 무릉도장 기록판에서 즉시 뺍니다.
  * 금고는 계정 공용이라 다른 분신이 넣어 둔 몫도 함께 사라집니다(의도).
  */
-export async function afterAscend(account: string, id: string, now: number) {
+export async function afterAscend(id: string, now: number) {
     // v3.116 금고 비우기는 vaultAfterAscend(칠흑은 그 분신 몫만)로 옮겼습니다.
     const database = db();
     await database.deleteRanking(duelRowId(duelSeasonKey(now), id));

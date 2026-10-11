@@ -8,6 +8,8 @@ import { ONYX, onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../da
 
 /** 가방과 장착 칸의 장비를 한 목록으로(장착 칸의 빈자리는 null). */
 export const ownedItems = (s: Pick<State, 'inventory' | 'equipment'>): (Item | null)[] => [...s.inventory, ...Object.values(s.equipment)];
+/** 보유 장비(가방 · 착용) 중 가장 높은 별(업적 · 이야기 · 소식이 함께 씀). */
+export const bestStar = (s: Pick<State, 'inventory' | 'equipment'>) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 /** v27.36 장신구 치명타: 레벨·위력과 무관한 등급 고정값 × (1 + 강화 × CHARM_CRIT_ENHANCE). */
 const CHARM_CRIT = [.03, .05, .07, .10, .12, .14, .16], CHARM_CRIT_ENHANCE = .05;
 /** v3.5 망토 회피: 등급 고정값 × (1 + 별 × CAPE_EVASION_ENHANCE). 기민 외 회피 60%p 상한과 50% 이후 점감이 그대로 적용됩니다(태초 22성 ≈ +28%p). 속도는 주지 않습니다. */

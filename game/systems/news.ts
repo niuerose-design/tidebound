@@ -10,6 +10,7 @@ import { jobById } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
 import { josa } from '../data/altar';
 import { dayKey } from '../data/time';
+import { bestStar } from './equipment';
 import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry } from '../data/boss-core';
 
 export type NewsKind = 'onyx' | 'ascend' | 'tier5' | 'abyss' | 'star22' | 'general' | 'reenlist' | 'core' | 'coreAwaken' | 'onyxAwaken';
@@ -22,7 +23,6 @@ export const NEWS_RANK_FIRST = 'ssg', NEWS_RANK_FROM = 'lt2';
 const newsRankFrom = RANKS.findIndex(r => r.id === NEWS_RANK_FROM);
 export const rankNewsworthy = (index: number) => index >= newsRankFrom || RANKS[index]?.id === NEWS_RANK_FIRST;
 
-const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 /** v3.212 가진 칠흑 장신구별 가장 높은 각성 단계. */
 const onyxRanks = (s: State) => { const out: Record<string, number> = {}; for (const i of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (i?.onyx) out[i.onyx] = Math.max(out[i.onyx] || 0, i.onyxRank || 0); return out; };
 const fullCores = (s: State) => ownedCores(s).filter(id => (coreEntry(s.bossCores![id])?.rank || 0) >= BOSS_CORE_RULES.awakenMax);

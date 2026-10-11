@@ -3,11 +3,29 @@ import { loadGame } from './game-modules.mjs';
 
 const { load } = loadGame();
 const { tick, act } = await load('systems/engine');
-const { canChangeJob, canUse, validLoadout, attributes } = await load('systems/progression');
+const { canChangeJob, canUse, validLoadout, attributes, lineage } = await load('systems/progression');
 const { itemStats } = await load('systems/equipment');
 const { STAGES } = await load('data/world');
 const { SKILLS } = await load('data/skills');
 const { xpNeeded } = await load('data/balance');
+const { xpWall } = await load('systems/meta');
+
+/** 명령줄 옵션: `--key 값`이 있으면 그 값, 없으면 기본값. */
+export const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
+/** 중앙값(비어 있으면 0). */
+export const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length ? v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2 : 0; };
+/** 큰 수를 억 · 만 단위로. */
+export const fmtKo = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
+/** 레벨 L · 경험치 E에서 지금 상태까지 번 누적 경험치. */
+export const expBetween = (s, L, E) => { let n = s.exp - E; for (let l = L; l < s.level; l++) n += xpNeeded(l, s.rebirths, xpWall(s)); return n; };
+/** 직업 점검용 편성: 자기 직업 → 계보(선행 직업) → 공용(피해 유형 일치 · 패시브 우선) 순서로 AP가 허락하는 만큼. */
+export function loadout(s, j, magic) {
+    const line = lineage(j.id);
+    const rank = sk => sk.job === j.id ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? (sk.damageType === 'magic') === magic || sk.type === 'passive' ? 2 : 3 : 9;
+    const pool = SKILLS.filter(sk => canUse(s, sk.id) && rank(sk) < 9).sort((a, b) => rank(a) - rank(b) || b.level - a.level);
+    s.skills = [];
+    for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
+}
 
 /** mulberry32 계열 시드 난수. */
 export function random(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }

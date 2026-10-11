@@ -9,7 +9,7 @@
 // 값은 5차 중앙값 = 1.00인 비율(턴은 적을수록 좋아 역수). 사용: node scripts/check-tier5.mjs [--tier N] [--seeds N] [--rarity N] [--star N] [--gold N] [--json 파일]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, loadout, median } from './lib/sim.mjs';
 import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
@@ -20,7 +20,7 @@ const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 const { MONSTERS, swarmHpMultiplier, swarmAttackMultiplier } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { canUse, validLoadout, skillMasteryRanks, lineage, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { skillMasteryRanks, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, SUB_ROLES } = await load('data/roles');
 const { RARITIES } = await load('data/balance');
 const { rollAffixes } = await load('data/gear');
@@ -28,7 +28,6 @@ const { gearName } = await load('data/maple-gear');
 const { duel: pvpDuel, raidBossSnapshot } = await load('systems/duel');
 const { raidById, RAID } = await load('data/altar');
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const SEEDS = Number(arg('--seeds', 20)), TIER = Number(arg('--tier', 30)), RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
 // 연구: 그 환생까지의 세계석 예산으로 산 단계(scripts/lib/research-budget.mjs, 직업의 주 공격 종류만 다르고 단계는 같아 직업 사이 공정).
 // 전에는 공격 150 · 체력 150 … 고정표였는데 그 비용(약 1억 개)은 벌 수 없는 양이라 실제 몸보다 공격 ×3 강했습니다(docs/research-review.md).
@@ -80,13 +79,6 @@ for (const style of ['physical', 'magic']) GEAR[style] = Object.fromEntries(['ro
     const st = slot === 'rod' ? style : 'balanced', pw = Math.round(102 * RARITIES[RARITY].factor);
     return [slot, { id: `${slot}-${style}`, slot, style: st, rarity: RARITY, power: pw, level: LEVEL, enhance: STAR, name: gearName(slot, RARITY, st), affixes: rollAffixes(RARITY, pw, undefined, random(slot.length * 31 + RARITY), [], slot, LEVEL) }];
 }));
-function loadout(s, j, magic) {
-    const line = lineage(j.id);
-    const rank = sk => sk.job === j.id ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? (sk.damageType === 'magic') === magic || sk.type === 'passive' ? 2 : 3 : 9;
-    const pool = SKILLS.filter(sk => canUse(s, sk.id) && rank(sk) < 9).sort((a, b) => rank(a) - rank(b) || b.level - a.level);
-    s.skills = [];
-    for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
-}
 function body(j) {
     const s = newState(0), { attrs, magic, main } = attributesFor(j);
     Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(MONSTERS.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(MONSTERS.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id), deaths: DEATHS, playMs: TURNS * 2000 });
@@ -172,7 +164,6 @@ if (arg('--scale')) for (const [id, f] of Object.entries(JSON.parse(arg('--scale
 // v3.88 --jscale '{"jobId":1.3}': 그 직업의 공격 · 마법 계수를 실험으로 곱합니다.
 if (arg('--jscale')) for (const [id, f] of Object.entries(JSON.parse(arg('--jscale')))) { const j = JOBS.find(x => x.id === id); if (j) { j.attack *= f; j.magic *= f; } }
 const rows = JOBS.filter(j => (!ONE_JOB || j.id === ONE_JOB) && (!ONLY_JOBS || ONLY_JOBS.has(j.id)) && j.tier === JOB_TIER && !j.retired && (j.level || 0) <= LEVEL && (j.rebirth || 0) <= REBIRTHS).map(measure);
-const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 for (const k of KEYS) { const m = median(rows.map(r => r.out[k].score)) || 1; for (const r of rows) r[k] = r.out[k].score / m; }
 const f2 = n => n.toFixed(2), pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : `${Math.round(n / 1e4)}만`;
 console.log(`5차 직업 비교 [피해식 ${MODEL}${MDEF !== 1 ? ` · 몬스터 방어 ×${MDEF}` : ''}${MDEF_TIER ? ' · 난이도 비례' : ''}] (Lv.${LEVEL} · 환생 ${REBIRTHS} · 연구 = 환생 ${REBIRTHS} 세계석 예산${RESEARCH_SCALE !== 1 ? ` ×${RESEARCH_SCALE}` : ''}(공격 ${RESEARCH_BY_MAIN.attack.attack || 0} · 체력 ${RESEARCH_BY_MAIN.attack.hp || 0} · 관통 ${RESEARCH_BY_MAIN.attack.penetration || 0}) · ${RARITIES[RARITY].name} ${STAR}성 4부위 · 사냥터 난이도 ${TIER} · 던전 난이도 ${DUNGEON_TIER} · ×500 무리 난이도 ${SWARM500_TIER} ${PEN === null ? '' : ` · 관통 ${PEN}`} · 시드 ${SEEDS}, 5차 중앙값 = 1.00)`);

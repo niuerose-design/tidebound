@@ -3,12 +3,11 @@
 // 사용: node scripts/check-pearl-income.mjs [--rebirths 50,100,150,200] [--jobs hero,grandMagus] [--stages moon,trench] [--hours 3] [--supply 10] [--tide 0]
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg } from './lib/sim.mjs';
 const game = loadGame(), { load } = game;
 const { tick } = await load('systems/turn');
 const { STAGES } = await load('data/world');
 const { referenceBody } = await referenceBodies(game);
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '50,100,150,200').split(',').map(Number);
 const JOBS = arg('--jobs', 'hero,grandMagus').split(',');
 const HOURS = Number(arg('--hours', 1)), TICKS = Math.round(HOURS * 1800), SUPPLY = Number(arg('--supply', 10)), TIDE = Number(arg('--tide', 0));

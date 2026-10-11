@@ -1,15 +1,13 @@
 // 시드 고정 관리형 플레이(장비 유무·물리/마법)로 낚시터·던전 경로와 첫 정복 시점을 확인합니다. 사용: node scripts/check-active-routing.mjs
 const baseline=process.argv.includes('--baseline');
 import { loadGame } from './lib/game-modules.mjs';
-import { random, totalXP } from './lib/sim.mjs';
+import { random, totalXP, gearScore } from './lib/sim.mjs';
 const {load:moduleAt}=loadGame();
 
 const {newState,tick,act}=await moduleAt('systems/engine');
 const {canChangeJob,canUse,validLoadout,attributes,skillLevel,skillMastery,maxSkillLevel,bookReward}=await moduleAt('systems/progression');
-const {itemStats}=await moduleAt('systems/equipment');
 const {STAGES,DUNGEONS,MONSTERS}=await moduleAt('data/world');
 const {SKILLS}=await moduleAt('data/skills');
-const gearScore=(item,magic)=>{const v=itemStats(item);return (v[magic?'magic':'attack']||0)*4+(v.hp||0)*.22+(v.defense||0)*1.5+(v.resist||0)*1.2+(v.accuracy||0)*150+(v.crit||0)*150;};
 function manage(s,magic,gear,rng){
  const action=a=>act(s,a,s.turn*2000,rng);
  while(s.statPoints){const v=attributes(s),goal=s.level<10?12:35;action({type:'attribute',id:magic?(v.int<goal?'int':v.wis<(s.level<10?10:20)?'wis':s.statPoints%4===0?'vit':'int'):(v.str<goal?'str':v.dex<(s.level<10?10:20)?'dex':s.statPoints%4===0?'vit':'str')});}

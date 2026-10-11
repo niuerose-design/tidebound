@@ -5,7 +5,7 @@
 //   약 10~20분(환생 6개 × 직업 1개 × 시드 2). run-checks.mjs에서는 SLOW.
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
-import { random, totalXP } from './lib/sim.mjs';
+import { random, totalXP, arg } from './lib/sim.mjs';
 const game = loadGame();
 const { advance, tick } = await game.load('systems/engine');
 const { stats, snapshot, power } = await game.load('systems/stats');
@@ -15,7 +15,6 @@ const { RAIDS, RAID } = await game.load('data/altar');
 const { STAGES } = await game.load('data/world');
 const { tideLimit } = await game.load('systems/meta');
 const { referenceBody } = await referenceBodies(game);
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '3,12,30,60,90,150').split(',').map(Number), JOBS = arg('--jobs', 'hero').split(','), SEEDS = Array.from({ length: Number(arg('--seeds', 2)) }, (_, i) => 11 * (i + 1));
 const FIXED_TIDE = arg('--tide', '') === '' ? null : Number(arg('--tide', 0));
 const IDS = arg('--ids', 'attack,magicAttack,mana,crit,manaRegen,critDamage,penetration,hp,guard,magicGuard,recovery,evasion,lifesteal,exp,gold,drop,mastery,revive').split(',');

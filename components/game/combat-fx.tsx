@@ -467,10 +467,6 @@ export function CombatBarEffect({ effect, target }: { effect: CombatFx[]; target
     })}</span>;
 }
 
-export function PlayerHitEffect({ effect }: { effect: CombatFx[] }) {
-    return <CombatBarEffect effect={effect} target="player"/>;
-}
-
 /**
  * v3.232 사냥터 장면 위 전투 표시: 스킬 연출(전에는 상대 카드 위) · 몬스터 스킬 알림 · 연속 배지, 몬스터 발밑 체력바(처형 베기 · 피해 숫자).
  * v3.235 던전 화면도 같은 장면을 씁니다. v3.247 체력바 아래 몬스터 이름(변종 · 무리 · 보스 표시), 내 체력바는 왼쪽 아래 캐릭터 판(SceneMe)으로 옮겼습니다.

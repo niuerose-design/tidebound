@@ -33,7 +33,7 @@ const settings: Record<string, Partial<Skill>> = {
     hook: { cost: 2, manaCost: 0 },
     breath: { cost: 2, manaCost: 7, condition: 'wounded' }, pierce: { cost: 4, manaCost: 8 }, hunt: { cost: 5, manaCost: 12 },
     wave: { cost: 4, manaCost: 10, damageType: 'magic', desc: '마법 공격 240% 피해, 적을 1턴 기절.' }, spring: { cost: 4, manaCost: 12, damageType: 'magic', condition: 'wounded', desc: '최대 체력 22% 회복, 마법 공격 250% 피해.' },
-    anchor: { cost: 3, manaCost: 6 }, fortress: { cost: 4, manaCost: 10, condition: 'wounded' }, focus: { cost: 2 }, scales: { cost: 2 }, vital: { cost: 2 }, resolve: { cost: 3 },
+    anchor: { cost: 3, manaCost: 6 }, focus: { cost: 2 },
 };
 for (const sk of SKILLS)
     Object.assign(sk, settings[sk.id]);
@@ -162,7 +162,7 @@ const masteryTuning: Record<string, number[]> = {
 const rankEffects: Record<string, Skill['rankEffects']> = {
     hook: { chanceIncrease: .04 }, breath: { chanceIncrease: .05, manaReduction: 1 },
     pierce: { apReduction: 1 }, hunt: { chanceIncrease: .05 }, wave: { manaReduction: 1 }, spring: { chanceIncrease: .05, manaReduction: 1 },
-    anchor: { apReduction: 1 }, fortress: { manaReduction: 1 }, focus: { bonusScale: .3 },
+    anchor: { apReduction: 1 }, focus: { bonusScale: .3 },
     insight: { bonusScale: .3 }, flow: { bonusScale: .3 }, precision: { bonusScale: .3 },
     whaleStrike: { apReduction: 1 }, barb: { bonusScale: .3 }, razor: { chanceIncrease: .05 }, drift: { bonusScale: .3 }, maelstrom: { manaReduction: 2 }, abyssMind: { bonusScale: .3 },
     pearlPrayer: { chanceIncrease: .05, manaReduction: 1 }, soulTide: { bonusScale: .3 }, crush: { apReduction: 1 }, ironWill: { bonusScale: .3 }, oath: { chanceIncrease: .05, manaReduction: 1 }, balance: { bonusScale: .3 },

@@ -10,12 +10,11 @@ import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX
 import { ONYX, ONYX_DROP_ITEMS, ONYX_CORE_ID, onyxById } from '@/game/data/onyx';
 import { OnyxArt } from './onyx-art';
 import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
-import { ATTRIBUTES } from '@/game/data/progression';
+import { attrName } from '@/game/data/progression';
 import { Heading, format, useNow } from './shared';
 import type { PanelProps } from './panel-props';
 
 type Buy = (id: string, value?: string) => void;
-const attrName = (k: string) => ATTRIBUTES.find(t => t.id === k)?.name || k;
 
 /** 상품 카드: 상점 뽑기 카드와 같은 줄(머리 · 설명 · 고르는 칸 · 가격 줄 · 버튼 줄). */
 function Good({ eyebrow, title, desc, controls, cost, children }: { eyebrow: string; title: string; desc: ReactNode; controls?: ReactNode; cost: ReactNode; children: ReactNode }) {

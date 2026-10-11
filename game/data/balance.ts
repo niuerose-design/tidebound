@@ -140,12 +140,8 @@ export const SKILL_FORMULA = {
     foeDotScale: .5,
     /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +5%(superCritPerHundred, v3.210 +1% → +5%). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
     critCap: 1, superCritPerHundred: .05, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
-    // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
-    // 편중 배분보다 균형 배분이 강하도록 check-all-rounder.mjs 결과로 맞춘 값입니다.
-    harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
-    // v21 올라운더: 원시 피해도 연구·환생·직업 배율을 받고, 장착한 능력치 패시브의
-    // 출신 직업이 서로 다를수록(최대 harmonyJobCap개) 직업당 harmonyPerJob만큼 강해집니다.
-    harmonyScale: 2, harmonyPerJob: .15, harmonyJobCap: 6,
+    /** 복합(split) 피해 중 물리 몫. */
+    splitPhysical: .5,
     // v21 회복 기술은 체력이 가득 차도 발동합니다. 체력이 healThreshold 이상일 때 쓰면
     // 회복 직업이 아닌 경우 그 공격의 피해가 idleHealDamage 배가 됩니다.
     idleHealDamage: .6,

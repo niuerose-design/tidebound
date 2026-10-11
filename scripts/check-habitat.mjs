@@ -4,7 +4,7 @@
 //          장비 4부위 = GEAR_BY_REBIRTH(등급 · 별), 스킬 숙련 완료 · 추천 편성(게임 규칙 그대로).
 // 사용: node scripts/check-habitat.mjs [--rebirths 10,20,30,40,50,60] [--jobs hero,grandMagus,...] [--hours 1] [--seeds 2]
 import { loadGame } from './lib/game-modules.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, expBetween, fmtKo as fmt } from './lib/sim.mjs';
 import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
@@ -13,14 +13,13 @@ const { stats } = await load('systems/stats');
 const { SKILLS } = await load('data/skills');
 const { JOBS, jobById } = await load('data/classes');
 const { STAGES } = await load('data/world');
-const { RARITIES, xpNeeded } = await load('data/balance');
+const { RARITIES } = await load('data/balance');
 const { rollAffixes } = await load('data/gear');
 const { gearName } = await load('data/maple-gear');
 const { masteryMilestonesFor, jobFactor } = await load('systems/progression');
 const { recommendLoadout } = await load('systems/loadout');
-const { rebirthLevel, xpWall, tideLimit } = await load('systems/meta');
+const { rebirthLevel, tideLimit } = await load('systems/meta');
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '10,20,30,40,50,60').split(',').map(Number);
 // 역할별 대표 5차: 물리 딜러 · 마법 딜러 · 탱커 · 출혈 · 회복. R<20은 각 5차의 4차 부모로 잽니다.
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,crimsonAvatar,lifeOcean').split(',');
@@ -51,7 +50,6 @@ function body(r, jobId) {
     return s;
 }
 /** 지금 레벨에서 경험치 e만큼을 쌓인 경험치로 환산합니다(레벨이 오르면 그만큼 더함). */
-const expBetween = (s, L, E) => { let n = s.exp - E; for (let l = L; l < s.level; l++) n += xpNeeded(l, s.rebirths, xpWall(s)); return n; };
 function hunt(r, jobId, stageId, tide, seed) {
     const s = body(r, jobId), rng = random(seed * 7919 + r * 31 + tide);
     Object.assign(s, { stage: stageId, tide, running: true, enemy: null, recovery: 0, target: null });
@@ -66,7 +64,6 @@ function hunt(r, jobId, stageId, tide, seed) {
     }
     return { exp: exp / HOURS, gold: gold / HOURS, kills: kills / HOURS, deaths: deaths / HOURS };
 }
-const fmt = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
 const avg = xs => xs.reduce((a, x) => ({ exp: a.exp + x.exp / xs.length, gold: a.gold + x.gold / xs.length, kills: a.kills + x.kills / xs.length, deaths: a.deaths + x.deaths / xs.length }), { exp: 0, gold: 0, kills: 0, deaths: 0 });
 const out = [];
 for (const r of REBIRTHS) {
