@@ -10,7 +10,7 @@ test('Mana budget, magic defense, accuracy and damage over time',()=>{const wave
 test('Silence blocks active skills but keeps basic attacks',()=>{const st={hp:1000,attack:20,magic:100,defense:0,resist:0,crit:0,mana:1000,manaRegen:0};const caster={name:'Caster',stats:st,hp:1000,skills:['sealHex'],cooldowns:{},stun:0,mana:1000,effects:{}};const target={name:'Target',stats:st,hp:1000,skills:['wave'],cooldowns:{},stun:0,mana:1000,effects:{}};assert.match(strike(caster,target,()=>0),/침묵 4턴/);assert.equal(target.effects.silence,4);assert.equal(target.hp,1000);const before=caster.hp;const log=strike(target,caster,()=>0);assert.match(log,/침묵 중/);assert.match(log,/기본 공격/);assert.doesNotMatch(log,/매직 클로/);assert.ok(caster.hp<before);assert.equal(target.cooldowns.wave,undefined);});
 test('Slow and haste change round priority without adding actions',()=>{const st={hp:1000,attack:10,defense:0,crit:0,speed:20};const normal={name:'normal',stats:st,hp:1000,skills:[],cooldowns:{},stun:0,effects:{}};const slow={...normal,name:'slow',effects:{slow:3}};const haste={...normal,name:'haste',effects:{haste:3}};assert.ok(fighterSpeed(slow)<fighterSpeed(normal));assert.ok(fighterSpeed(haste)>fighterSpeed(normal));assert.equal(Math.round(fighterSpeed(slow)),13);assert.equal(Math.round(fighterSpeed(haste)),27);});
 test('Extra attacks are data-driven and capped',()=>{const st={hp:1000,attack:70,defense:0,crit:0,mana:1000,manaRegen:0};const a={name:'연타자',stats:st,hp:1000,skills:['twinHook'],cooldowns:{},stun:0,mana:1000,effects:{}};const b={name:'표적',stats:st,hp:1000,skills:[],cooldowns:{},stun:0,mana:1000,effects:{}};const log=strike(a,b,()=>0);assert.match(log,/선풍/);assert.match(log,/추가타/);assert.ok(b.hp<900);assert.ok(SKILLS.find(x=>x.id==='tentacleBarrage').extraAttacks<=2);});
-test('Economy jobs change rewards without forcing combat stats',()=>{const s=newState(0);s.level=25;s.job='trainingSupport';s.learned.chartedCurrents=1;s.skills=['hook','chartedCurrents'];const survey=stats(s);assert.ok(survey.dropBonus>=.03);assert.ok(survey.goldBonus>=.04);assert.ok(dropRate(s)>1.2*BALANCE.dropChance&&dropRate(s)<=BALANCE.dropChanceCap);s.job='pearlBroker';s.rebirths=1;s.learned.pearlLedger=1;s.skills=['hook','pearlLedger'];/* v3.244 마법 잔해는 환생 세계석 대신 경험치 */assert.ok(stats(s).expBonus>stats({...s,skills:['hook']}).expBonus);assert.equal(rebirthReward(s),Math.floor(s.level/10)+s.rebirths);s.job='salvageMerchant';s.learned.salvageContract=1;s.skills=['hook','salvageContract'];assert.ok(dungeonGoldMultiplier(s)>1);});
+test('Economy jobs change rewards without forcing combat stats',()=>{const s=newState(0);s.level=25;s.job='trainingSupport';s.learned.chartedCurrents=1;s.skills=['hook','chartedCurrents'];const survey=stats(s);assert.ok(survey.dropBonus>=.03);assert.ok(survey.goldBonus>=.04);assert.ok(dropRate(s)>1.2*BALANCE.dropChance*.4&&dropRate(s)<=BALANCE.dropChanceCap*.4,'v3.300 보조 수련 제약 −60%');s.job='pearlBroker';s.rebirths=1;s.learned.pearlLedger=1;s.skills=['hook','pearlLedger'];/* v3.244 마법 잔해는 환생 세계석 대신 경험치 */assert.ok(stats(s).expBonus>stats({...s,skills:['hook']}).expBonus);assert.equal(rebirthReward(s),Math.floor(s.level/10)+s.rebirths);s.job='salvageMerchant';s.learned.salvageContract=1;s.skills=['hook','salvageContract'];assert.ok(dungeonGoldMultiplier(s)>1);});
 test('Rare monster, dungeon bosses and monster-derived skills are present',()=>{assert.ok(MONSTERS.length>=35);assert.ok(MONSTERS.some(f=>f.rarity==='rare'&&f.spawnWeight&&f.spawnWeight<1));assert.ok(MONSTERS.some(f=>f.boss));assert.ok(DUNGEONS.length>=7);assert.ok(DUNGEONS.every(d=>d.bossMonster));assert.ok(profile('grottoWarden').skills.includes('electricBite'));assert.ok(profile('abyssSovereign').skills.includes('tentacleBarrage'));});
 
 test('v3.58 fixed purchase is gone; appraisal overspending is rejected',()=>{const s=newState(0);assert.throws(()=>act(s,{type:'buy',id:'magic'},0));s.gold=0;assert.throws(()=>act(s,{type:'gamble',id:'all'},0),/골드/);assert.equal(s.gold,0);assert.equal(s.inventory.length,0);assert.equal(s.appraisal,undefined,'nothing counted');});
@@ -134,4 +134,27 @@ test('v3.214 research Soul Expansion II: rebirth 20 gate, +1 AP per rank on top 
     assert.throws(() => act(s, { type: 'permanent', id: 'ap2' }, 0));
     const pearls = s.pearls; act(s, { type: 'resetResearch', id: 'utility' }, 0);
     assert.equal(s.permanent.ap2, undefined); assert.ok(s.pearls >= pearls + 3840, 'reset refunds II too');
+});
+
+test('v3.300 training restraint: each tree cuts its own thing while you are the training job (I · II · III cut more); magic training now uses arcane strikes', () => {
+    const at = (job, lv = 60) => { const s = newState(0); s.level = lv; s.job = job; s.skills = []; return s; };
+    const base = stats(at('fisher'));
+    const ratio = (job, key) => stats(at(job))[key] / stats(at('trainingPhysical'))[key];
+    // 물리 수련: 마법 −70%, 물리 공격은 그대로(마법 수련 대비).
+    assert.ok(Math.abs(stats(at('trainingPhysical')).magic / stats(at('trainingMagic')).magic - .3) < .02);
+    assert.ok(Math.abs(stats(at('trainingMagic')).attack / stats(at('trainingPhysical')).attack - .3) < .02);
+    // 근력 수련(물리 계열) III는 마법 0.
+    assert.equal(stats(at('strTraining3')).magic, 0);
+    assert.equal(stats(at('intTraining3')).attack, 0);
+    // 방어 수련: 두 방어 −60%.
+    assert.ok(Math.abs(ratio('trainingDefense', 'defense') - .4) < .02 && Math.abs(ratio('trainingDefense', 'resist') - .4) < .02);
+    // 상태이상 수련: 지속 피해 배율 0.4 · 행운 수련 III 0.1.
+    assert.equal(stats(at('trainingStatus')).dotScale, .4); assert.ok(Math.abs(stats(at('lukTraining3')).dotScale - .1) < 1e-9);
+    // 복합 수련: 두 공격 −60%.
+    assert.ok(Math.abs(ratio('trainingHybrid', 'attack') - .4) < .02);
+    // 보조 수련: 경험치 배율 ×0.4(다른 수련 대비).
+    assert.ok(Math.abs(expMultiplier(at('trainingSupport')) / expMultiplier(at('trainingPhysical')) - .4) < .02);
+    // 마법 수련은 마력 평타가 나갑니다.
+    assert.ok(stats(at('trainingMagic')).arcaneStrike > 0); assert.equal(stats(at('trainingPhysical')).arcaneStrike, 0);
+    assert.ok(base.magic > 0);
 });

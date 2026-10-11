@@ -33,6 +33,8 @@ export type Stats = {
     bleedBonus?: number;
     poisonBonus?: number;
     burnBonus?: number;
+    /** v3.300 내가 거는 지속 피해 배율(1 = 그대로). 상태이상 수련 직업의 제약이 낮춥니다. */
+    dotScale?: number;
     /** 방어 비례 피해·반격이 얼마나 제대로 발휘되는지(0.2~1). 방어 배율이 높은 수호 계열일수록 1에 가깝습니다. */
     guardAffinity?: number;
     /** v25.14 마법 방어 비례 피해가 발휘되는 정도(0.2~1). 마법 방어 배율이 높은 결계 계열일수록 1. */

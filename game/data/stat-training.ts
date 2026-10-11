@@ -7,7 +7,7 @@
  */
 import type { Attribute, Skill } from '../types';
 import type { Job, JobTreeId } from './classes';
-import { TRAINING_PENALTY } from './training';
+import { TRAINING_PENALTY, restraintText } from './training';
 
 const STATS: { stat: Attribute; label: string; parent: string; tree: JobTreeId }[] = [
     { stat: 'str', label: '근력', parent: 'trainingPhysical', tree: 'physical' },
@@ -33,7 +33,7 @@ const jobId = (stat: Attribute, i: number) => `${stat}Training${i + 1}`;
 
 export const STAT_TRAINING_JOBS: Job[] = STATS.flatMap(({ stat, label, parent, tree }) => STAT_TRAINING_STEPS.map((step, i): Job => ({
     id: jobId(stat, i), name: `${label} 수련 ${step.roman}`, title: `${label}을(를) 몸에 새긴다`,
-    desc: `${label} 자체가 오르는 패시브를 익히는 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 다른 직업이 계승해서 씁니다.`,
+    desc: `${label} 자체가 오르는 패시브를 익히는 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 다른 직업이 계승해서 씁니다. ${restraintText({ subRole: 'training', tree, tier: step.tier })}`,
     attack: TRAINING_PENALTY.attack, magic: TRAINING_PENALTY.magic, hp: TRAINING_PENALTY.hp, defense: 1, resist: 1, crit: 0, rewardScale: TRAINING_PENALTY.reward,
     tier: step.tier, level: 10, parent: i ? jobId(stat, i - 1) : parent, requires: {}, mastery: step.entry, role: '수련·능력치', tree,
     lineage: `${tree}-independent`, subRole: 'training', masteryTarget: step.target, masteryBoost: 0,
