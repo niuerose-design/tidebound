@@ -201,6 +201,8 @@ test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes g
 });
 
 test('v3.296 tier-5 magic/split actives cost 670 mana (80% of the Fire/Poison archmage average); Fire/Poison keeps 880 · 800', () => {
-    for (const id of ['infiniteChant', 'genesis', 'oceanWrath', 'grandTransmutation', 'aeonRecall', 'oceanOfLife', 'genesisRune', 'goldenStorm', 'galaxyFall', 'titanFell', 'sirenSong', 'doomCurse', 'divineWard', 'worldInversion', 'grimReaper', 'veinBurst']) assert.equal(SKILLS.find(s => s.id === id).manaCost, 670, id);
+    for (const id of ['infiniteChant', 'genesis', 'oceanWrath', 'grandTransmutation', 'aeonRecall', 'goldenStorm', 'galaxyFall', 'titanFell', 'sirenSong', 'doomCurse', 'worldInversion', 'grimReaper']) assert.equal(SKILLS.find(s => s.id === id).manaCost, 670, id);
+    // 탱커 · 힐러 역할 5차는 원래 마나(라라 80 · 메카닉 80 · 호영 120 · 비숍 128).
+    for (const [id, mana] of [['veinBurst', 80], ['genesisRune', 80], ['divineWard', 120], ['oceanOfLife', 128]]) assert.equal(SKILLS.find(s => s.id === id).manaCost, mana, id);
     assert.equal(SKILLS.find(s => s.id === 'doomMark').manaCost, 880); assert.equal(SKILLS.find(s => s.id === 'endOfAll').manaCost, 800);
 });
