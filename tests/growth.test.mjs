@@ -154,7 +154,8 @@ test('v24 late-bloomer passives start expensive and pay off at three stages (v3.
 const STATUS_TUNING_CAPS = (await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/balance')).STATUS_TUNING.earlyStatusMultiplierCap;
 test('v24.1 status rules: support skills are status-only; early damage+stun/silence skills are multiplier-capped', () => {
  // v3.221 코어 비례 자기 버프(어둠의 의식)는 적에게 거는 상태이상이 아니라 자기 버프라 타임 리와인드처럼 뺍니다.
- for (const sk of SKILLS.filter(x => x.statusOnly && !x.timeRewind && !x.coreBuff)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
+ // v3.282 각성기(포이즌 노바)는 행동마다가 아니라 턴마다 따로 굴리고 각성 대기를 쓰므로 30% · 대기 규칙에서 뺍니다.
+ for (const sk of SKILLS.filter(x => x.statusOnly && !x.timeRewind && !x.coreBuff && !x.awaken)) assert.ok(sk.statusTurns > 0 && sk.chance <= .3 && sk.cooldown >= sk.statusTurns, sk.id);
  const caps = STATUS_TUNING_CAPS;
  for (const sk of SKILLS.filter(x => x.type === 'active' && !x.statusOnly && caps[x.effect] !== undefined)) {
   const tier = JOBS.find(j => j.id === sk.job)?.tier ?? 0;

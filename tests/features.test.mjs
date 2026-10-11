@@ -235,3 +235,10 @@ test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Aze
  assert.equal(P.coreScale(ledger,'kkamiHunter',0),.4);assert.equal(P.coreScale(ledger,'kkamiHunter',4),1);assert.equal(P.coreScale(ledger,'hero',4),0,'Azeroth core is lineage-only');
  assert.equal(Sk.skillById('marshalCommand').commandPer,.07);assert.equal(Sk.skillById('warRoom').commandPer,.06);
 });
+test('v3.282 core rework covers every Maple 4th/5th job: none keeps an old main multiplier because it has no passive (Arch Mage F/P was missed)',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/classes');await L.load('data/skills');
+ const cut={4:1.06,5:1.09};
+ for(const j of C.JOBS){if((j.tier!==4&&j.tier!==5)||j.retired||j.constraint||C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))==='azeroth')continue;
+  assert.ok(Math.max(j.attack,j.magic)<=cut[j.tier]+1e-9,`${j.id} attack ${j.attack} magic ${j.magic}`);}
+ const a=C.JOBS.find(j=>j.id==='apostle');assert.deepEqual([a.magic,a.hp,a.masteryBoost],[1.09,1,.1]);
+});

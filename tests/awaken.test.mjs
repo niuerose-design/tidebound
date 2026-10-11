@@ -22,7 +22,8 @@ test('v3.86 every tier-5+ active is an awakening skill with a 10-turn cooldown t
     assert.ok(awakened.length >= 32, `${awakened.length}`);
     // 5차 액티브가 둘인 팬텀은 둘 다 각성기(조커 · 파이널 컷).
     for (const id of ['jackpotStrike', 'allOrNothing']) assert.ok(SKILLS.find(x => x.id === id).awaken, id);
-    for (const sk of awakened) { assert.equal(sk.awaken.start, 10, sk.id); assert.equal(sk.cooldown, 10, sk.id); assert.equal(!!sk.awaken.statusScale, !!sk.effect && sk.effect !== 'heal' && sk.effect !== 'drain' && !sk.alsoEffect, sk.id); }
+    // v3.282 포이즌 노바는 awakenCooldown으로 대기 · 첫 대기 5턴입니다.
+    for (const sk of awakened) { const cd = sk.awakenCooldown ?? 10; assert.equal(sk.awaken.start, cd, sk.id); assert.equal(sk.cooldown, cd, sk.id); assert.equal(!!sk.awaken.statusScale, !!sk.effect && sk.effect !== 'heal' && sk.effect !== 'drain' && !sk.alsoEffect, sk.id); }
     // 덜 자주 걸리는 만큼 상태이상 지속(패시브 보너스 포함)이 늘어납니다.
     const a = { name: 'A', stats: { ...base, dotTurnsBonus: 2 }, hp: 1e9, mana: 1000, skills: ['trenchPierce'], cooldowns: { trenchPierce: 0 }, stun: 0, effects: {}, ranks: { trenchPierce: 1 }, mastery: {}, practice: {} }, ev = [];
     strike(a, dummy(), () => 0, ev);
