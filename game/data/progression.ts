@@ -63,6 +63,8 @@ export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'bleedBonus', 'pois
 const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
 /** v3.76 화면에 숫자로 보이지 않는 능력치(꽝 옵션 장식은 이름 앞 '반짝이는'으로만 보입니다). */
 export const HIDDEN_STATS = new Set(['ornament']);
+/** v3.283 렐릭의 힘은 패스파인더 계보(voyageScribe)만 쓰므로, 다른 직업의 능력치 비교에서는 숨깁니다. */
+export const RELIC_LINEAGE = 'voyageScribe';
 export const byStatOrder = <T extends [string, unknown]>(entries: T[]) => entries.filter(e => !HIDDEN_STATS.has(e[0])).sort((a, b) => (STAT_ORDER.indexOf(a[0]) + 1 || 99) - (STAT_ORDER.indexOf(b[0]) + 1 || 99));
 /** 명중·회피는 적중 확률이 아닌 수치입니다. 실제 적중률은 상대 회피·속도와 함께 1~99.5%로 계산됩니다. */
 export const RATING_STATS = new Set(['accuracy', 'evasion']);

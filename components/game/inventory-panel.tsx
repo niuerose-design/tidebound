@@ -9,7 +9,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CombatStats, Item, State, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS, RELIC_LINEAGE } from '@/game/data/progression';
+import { jobById, lineageOf } from '@/game/data/classes';
 import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
 import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS, HEIR_ROLL_TAIL, HEIR_ROLL_TOP, heirRollChanceAbove } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
@@ -18,6 +19,8 @@ import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
 import type { PanelProps } from './panel-props';
 import { CoreSlot } from './core-slot';
+/** v3.283 렐릭의 힘(경험치 보너스에서 계산)은 패스파인더 계보일 때만 비교에 보입니다. */
+const relicShown = (s: State) => { const j = jobById(s.job); return !!j && lineageOf(j) === RELIC_LINEAGE; };
 /** v3.93 교체 미리보기 캐시: 장비 · 가방 · 성장(레벨 · 직업 · 스킬 · 능력치 · 연구)이 같으면 지난 계산을 씁니다. 화면 하나만 쓰므로 한 칸이면 충분합니다. */
 let previewCache: { key: string; value: { current: CombatStats; currentPower: number; preview: Map<string, { after: Stats; gain: number }> } } | null = null;
 function gearPreview(s: State) {
@@ -84,7 +87,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key}>{STAT_LABELS[key as keyof Stats]} <b>{statDeltaDisplay(key, value as number)}</b></span>);
     const detail = (item: Item, equipped: boolean) => {
         const after = equipped ? current : preview.get(item.id)!.after;
-        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001));
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001 && (k !== 'relicPower' || relicShown(s))));
         // v3.76 상세는 작업대 하나: 왼쪽 능력치 · 옵션(가방 장비는 교체 비교 · 판매/분해), 오른쪽 강화.
         return <div className="gear-detail"><ForgeBench s={s} send={send} busy={busy} item={item} extra={!equipped && <>
             <div className="equipment-comparison">
@@ -165,7 +168,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
         const next = [...lines]; next[slot] = imprintAffix(picked.affix, picked.item.rarity, item.rarity, picked.item.level, item.level);
         const withRelic = (affixes: Item['affixes']) => ({ ...s, equipment: { ...s.equipment, [item.slot]: { ...item, affixes } } });
         const before = stats(withRelic(lines)), after = stats(withRelic(next.filter(Boolean)));
-        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - before[k as keyof Stats]) > .001)).map(([k, n]) => [k, n - before[k as keyof Stats]] as const);
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - before[k as keyof Stats]) > .001 && (k !== 'relicPower' || relicShown(s)))).map(([k, n]) => [k, n - before[k as keyof Stats]] as const);
         return { delta, gain: power(after) - power(before) };
     })();
     return <div className="relic-imprint">
