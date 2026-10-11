@@ -2317,6 +2317,8 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
  */
 .battle-scene{--ground:calc(100% - 10px);--foe-size:clamp(88px,30cqh,128px);--foe-x:calc(100% - 84px);--foe-y:calc(var(--ground) - var(--foe-size) * .5);--foe-top:calc(var(--ground) - var(--foe-size));--foe-feet:var(--ground)}
 .battle-scene:has(.scene-foe.boss){--foe-size:clamp(110px,38cqh,160px);--foe-x:calc(100% - 100px)}
+/* v3.291 대왕 까미 · 누리 · 슬라임: 작은 녀석과 같은 그림을 보스보다 크게 그립니다. */
+.battle-scene:has(.scene-foe.king){--foe-size:clamp(124px,44cqh,184px);--foe-x:calc(100% - 112px)}
 .battle-scene .scene-foe-wrap .scene-foe,.battle-scene .scene-foe-cleave .scene-foe{left:calc(var(--foe-x) - var(--foe-size) * .5);right:auto;top:var(--foe-top);width:var(--foe-size)!important;height:var(--foe-size)!important;transform-origin:50% 100%}
 .battle-scene .scene-foe svg,.battle-scene .scene-foe img{width:100%;height:100%}
 /* 발밑 그림자: 둘 다 같은 땅에 서 있다는 느낌을 줍니다. */
@@ -2335,6 +2337,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @media(max-width:767px){
   .battle-scene{--foe-size:clamp(76px,28cqh,108px);--foe-x:calc(100% - 62px)}
   .battle-scene:has(.scene-foe.boss){--foe-size:clamp(96px,34cqh,130px);--foe-x:calc(100% - 72px)}
+  .battle-scene:has(.scene-foe.king){--foe-size:clamp(108px,40cqh,150px);--foe-x:calc(100% - 80px)}
   .battle-scene .scene-foe-wrap .scene-foe,.battle-scene .scene-foe-cleave .scene-foe{top:var(--foe-top)}
   .battle-scene .ow-fx,.battle-scene .xen-fx{--tx:calc(100cqw - 62px);--ty:calc(100cqh - 10px - var(--foe-size) * .5)}
   .battle-scene .xen-fx.xen-boss{--tx:calc(100cqw - 72px)}

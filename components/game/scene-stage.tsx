@@ -6,6 +6,7 @@ import type { Job } from '@/game/data/classes';
 import { jobById } from '@/game/data/classes';
 import { skillById } from '@/game/data/skills';
 import { isHackerJob } from '@/game/data/hacker';
+import { KING_IDS } from '@/game/data/king';
 import { displayTitle } from '@/game/data/titles';
 import { mineBonusOf } from '@/game/systems/azeroth';
 import { MonsterArt } from './art';
@@ -148,8 +149,8 @@ export function SceneFoe({ enemy, hidden, effect, kkami = false }: { enemy: Stat
         return () => window.clearTimeout(timer);
     }, [key, enemy?.id, enemy?.boss]);
     return <>
-        {ghost && <div key={ghost.n} className="scene-foe-wrap dying" aria-hidden="true"><MonsterArt id={ghost.id} boss={ghost.boss} size={128} className="scene-foe"/></div>}
-        <div ref={ref} className="scene-foe-wrap" aria-hidden="true">{key && enemy && <MonsterArt key={key} id={enemy.id} boss={!!enemy.boss} size={128} className={`scene-foe spawn ${kkami ? 'kkami' : ''}`}/>}</div>
+        {ghost && <div key={ghost.n} className="scene-foe-wrap dying" aria-hidden="true"><MonsterArt id={ghost.id} boss={ghost.boss} size={128} className={`scene-foe ${KING_IDS.includes(ghost.id) ? 'king' : ''}`}/></div>}
+        <div ref={ref} className="scene-foe-wrap" aria-hidden="true">{key && enemy && <MonsterArt key={key} id={enemy.id} boss={!!enemy.boss} size={128} className={`scene-foe spawn ${KING_IDS.includes(enemy.id) ? 'king' : ''} ${kkami ? 'kkami' : ''}`}/>}</div>
     </>;
 }
 

@@ -6,6 +6,7 @@ import { MonsterArt } from './art';
 import { StatusBadges } from './combat-status';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { variantById } from '@/game/data/variants';
+import { KING_IDS } from '@/game/data/king';
 const DICE_FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 import type { CSSProperties, ReactNode } from 'react';
 import type { Log, State } from '@/game/types';
@@ -425,7 +426,7 @@ function useCleave(effect: CombatFx[]): CleaveHold | null {
 export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
     const held = useCleave(effect);
     if (!held || !enemy) return null;
-    const { fx, phase } = held, boss = enemy.boss ? 'boss' : '';
+    const { fx, phase } = held, boss = `${enemy.boss ? 'boss' : ''} ${KING_IDS.includes(enemy.id) ? 'king' : ''}`;
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         {phase === 'cut' ? <>
             <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
