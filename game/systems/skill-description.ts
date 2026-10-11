@@ -130,7 +130,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.disguise) return [sk.disguise];
     const out: string[] = [];
     if (sk.type === 'active') {
-        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [sk.scalingAttack ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)} + 물리 공격 × ${number(sk.scalingAttack)}` : `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'harmony' ? `${number(SKILL_FORMULA.harmonyBase)} + 배분 포인트 합 × ${number(SKILL_FORMULA.harmonyPerPoint)} + 가장 낮은 배분 포인트 × ${number(SKILL_FORMULA.harmonyPerLowest)}` : sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
+        const base = sk.scaling === 'attr' && sk.scalingAttribute ? [sk.scalingAttack ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)} + 물리 공격 × ${number(sk.scalingAttack)}` : `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${number(sk.scalingRatio ?? 1)}(배분 능력치, 공격력 미사용)`] : [sk.scaling === 'dual' ? '(물리 공격 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해로 바꿈)' : '마법 공격(물리 피해로 바꿈)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격'];
         if (sk.scaling === 'defense') base.push(`물리 방어 × ${number(sk.scalingRatio ?? 1)} × 방어 친화도`);
         if (sk.scaling === 'resist') base.push(`마법 방어 × ${number(sk.scalingRatio ?? 1)} × 결계 친화도`);
         if (sk.scaling === 'hp') base.push(`최대 체력 × ${number(sk.scalingRatio ?? SKILL_FORMULA.hpScaling)}`);
@@ -144,7 +144,6 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         const damage = `${typeWord}${base.length > 1 ? `(${base.join(' + ')})` : base[0]}의 ${number((sk.multiplier || 1) * 100)}%로 때립니다${sk.id === 'crush' ? `. 물리 방어 × ${number(SKILL_FORMULA.crushDefense)}를 더합니다` : ''}`;
         out.push(sk.timeRewind ? `직접 피해 없음. ${sk.condition === 'wounded' ? `체력이 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때만 나가고, ` : ''}내 체력·마나를 가득 채우고 이 기술 말고 대기 중인 내 기술을 모두 되돌립니다(각성기 제외). 상대는 그대로입니다(전투당 1회, 쓸 때마다 직업 숙련 +${TIME_MACHINE_MASTERY}).` : sk.statusOnly ? '직접 피해 없음.' : `${damage}.`);
         if (sk.scaling === 'codex') out.push(`도감 기록(발견한 몬스터 + 등록한 물건) 1개마다 피해가 ${skillPercent(sk.scalingRatio ?? 0)} 커집니다.`);
-        if (sk.scaling === 'catch') out.push(`피해 × (1 + log10(누적 처치 + 1) × ${number(sk.scalingRatio ?? 0)}) · 처치 10배마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'relic') out.push(`피해 × (1 + 렐릭의 힘 × ${number(sk.scalingRatio ?? 0)}) · 렐릭의 힘 = 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫(환생 · 연구 제외). 경험치 보너스 +100%마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 처치) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 처치 수) × ${number(sk.scalingRatio ?? 0)})`);

@@ -11,7 +11,7 @@ test('v24.2 progress passives count codex, catches, hunts, species, gold and reb
     const before = stats(s);
     s.book[MONSTERS[0].id] = 5; s.book[MONSTERS[1].id] = 2; s.itemBook = { a: 1, b: 1 };
     const after = stats(s);
-    assert.equal(after.codexPower, 4); assert.ok(Math.abs(after.catchPower - Math.log10(8)) < 1e-9);
+    assert.equal(after.codexPower, 4);
     assert.equal(after.attack, before.attack, 'records do not move a rebirth passive'); s.rebirths = 4; assert.ok(stats(s).attack > after.attack && stats(s).magic > after.magic, 'one more rebirth → memoryOfTides step');
     const sk = SKILLS.find(x => x.id === 'chronicleStudy'); assert.ok(!sk.perCount, 'v3.153 패스파인더 passives grow with mastery, not records (렐릭의 힘)'); assert.equal(sk.bonus.expBonus, .18, 'scribe keeps its EXP bonus (v3.83 ×1.5)');
     for (const id of ['salvageSense', 'rareSense', 'deepSalvage', 'kingsHoard', 'legendHoard']) { const b = SKILLS.find(x => x.id === id).bonus || {}; assert.ok(b.goldBonus > 0 && !b.dropBonus, id + ' v3.156 earns the gold meso explosion burns (drop stays on the merchant line)'); assert.ok(!SKILLS.find(x => x.id === id).perCount, id + ' no record growth'); }

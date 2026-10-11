@@ -20,7 +20,6 @@ export type Stats = {
     penetration?: number;
     lifesteal?: number;
     /** 올라운드 밸런스의 원시 피해. 직접 배분한 여섯 능력치로만 계산하며 장비·버프는 제외. */
-    harmony?: number;
     /** 반격: 맞을 때마다 (내 물리 방어 × 이 값)을 공격자에게 돌려줍니다. 직업의 방어 친화도가 곱해진 최종값. */
     thorns?: number;
     /** v26.6 손가락 자르기 단계(최대 3). 주사위의 최저 배율을 올리고 최고 배율을 낮춥니다. */
@@ -73,7 +72,6 @@ export type Stats = {
     ornament?: number;
     /** v24.2 진행도 비례 피해의 기준값(능력치 계산이 채움). 도감 종 수 · log10(누적 처치) · √(던전 클리어+보스 처치) · log10(보유 골드). */
     codexPower?: number;
-    catchPower?: number;
     /** v3.153 렐릭의 힘: 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫(환생 · 연구 몫 제외). 패스파인더의 렐릭 비례 피해 기준값. */
     relicPower?: number;
     huntPower?: number;
@@ -97,7 +95,7 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
     /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
     jackpotUp?: number;
@@ -286,7 +284,7 @@ export type Skill = {
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
     revive?: number;
     /** defense: 물리 방어 × 비율을 더함(방어 친화도 적용). dual: (물리+마법 공격)/2를 기반으로 사용. swap: 피해 유형과 반대 공격력을 기준값으로(물리 계수 마법 피해 등). */
-    scaling?: 'hp' | 'mana' | 'hybrid' | 'harmony' | 'defense' | 'resist' | 'dual' | 'codex' | 'catch' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.153 렐릭의 힘 비례: 피해 × (1 + relicPower × scalingRatio). 패스파인더. */ 'relic' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
+    scaling?: 'hp' | 'mana' | 'hybrid' | 'defense' | 'resist' | 'dual' | 'codex' | 'hunt' | 'gold' | 'mastered' | 'luck' | 'variant' | 'swap' | 'attr' | /** v3.153 렐릭의 힘 비례: 피해 × (1 + relicPower × scalingRatio). 패스파인더. */ 'relic' | /** v3.151 마력 평타 계수 기준값: 마법 공격 × (arcaneStrikeRatio + 마력 평타 계수 보너스). 일리움. */ 'arcane';
     /** v26.2 scaling 'attr'가 비례하는 능력치. 기준값 += 능력치 × scalingRatio. */
     scalingAttribute?: Attribute;
     /** v3.97 scaling 'attr'에 공격력 × 이 비율을 더합니다(외길 계보: 장비 · 연구가 쌓여도 기술이 따라 커지도록). v3.172 마법 기술이면 마법 공격을 더합니다. */

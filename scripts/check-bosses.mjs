@@ -9,7 +9,7 @@
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, fmtKo as big } from './lib/sim.mjs';
 const game = loadGame(), { load } = game;
 const { stats, snapshot } = await load('systems/stats');
 const { strike, fighterSpeed } = await load('systems/combat');
@@ -24,7 +24,6 @@ const { abyssReference, onyxEnemyStats } = await load('systems/encounter');
 const { duel, raidBossSnapshot } = await load('systems/duel');
 const { referenceBody, bodyReport } = await referenceBodies(game);
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const ONLY = arg('--only'), SEEDS = Number(arg('--seeds', 2)), BORROW = !process.argv.includes('--own');
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,curseQueen,lifeOcean').split(',');
 const REBIRTHS = arg('--rebirths') ? arg('--rebirths').split(',').map(Number) : null;
@@ -52,7 +51,7 @@ function fight(a, b, rng, cap = MAX_TURNS) {
     return { won: a.hp > 0 && b.hp <= 0, turns: n };
 }
 const avg = xs => xs.reduce((a, x) => a + x, 0) / Math.max(1, xs.length);
-const pct = n => `${Math.round(n * 100)}%`, big = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
+const pct = n => `${Math.round(n * 100)}%`;
 const monsterById = id => MONSTERS.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 

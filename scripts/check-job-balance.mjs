@@ -5,7 +5,7 @@
 // 사용: node scripts/check-job-balance.mjs [--mastered] [--skill-mastered] [--json out.json]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
-import { random } from './lib/sim.mjs';
+import { random, loadout, median } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats } = await load('systems/stats');
@@ -16,7 +16,7 @@ const { JOBS, lineageOf } = await load('data/classes');
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 const { MONSTERS } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { canUse, validLoadout, skillMasteryRanks, lineage, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { skillMasteryRanks, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 
 const MASTERED = process.argv.includes('--mastered'), SKILL_MASTERED = process.argv.includes('--skill-mastered');
 const SEEDS = 60, MAX_TURNS = 300;
@@ -43,14 +43,6 @@ function attributesFor(j, level) {
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
     out.vit += total - used;
     return { attrs: out, magic };
-}
-/** 스킬 편성: 자기 직업 → 계보(선행 직업) → 공용(피해 유형 일치 우선) 순서로 AP가 허락하는 만큼. */
-function loadout(s, j, magic) {
-    const line = lineage(j.id);
-    const rank = sk => sk.job === j.id ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? (sk.damageType === 'magic') === magic || sk.type === 'passive' ? 2 : 3 : 9;
-    const pool = SKILLS.filter(sk => canUse(s, sk.id) && rank(sk) < 9).sort((a, b) => rank(a) - rank(b) || b.level - a.level);
-    s.skills = [];
-    for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
 }
 function fight(st, s, foeId, tier) {
     const monster = MONSTERS.find(f => f.id === foeId), foe = scaledEnemyStats(monster, { tier });
@@ -81,7 +73,6 @@ function evaluate(j, T) {
     return { tier: j.tier, id: j.id, name: j.name, tree: j.tree, magic, skills: s.skills.length, hp: Math.round(st.hp), atk: Math.round(magic ? st.magic : st.attack), win, turns, hpLeft, score: win * (0.5 + hpLeft / 2) / turns };
 }
 const rows = JOBS.map(j => evaluate(j, TIERS[j.tier]));
-const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2; };
 const pct = n => `${Math.round(n * 100)}%`;
 console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}${SKILL_MASTERED ? ' · 스킬 숙련 완료' : ''}, 시드 ${SEEDS}, 상대별 평균)`);
 const report = {};

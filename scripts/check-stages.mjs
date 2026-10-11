@@ -7,21 +7,17 @@
 // 사용: node scripts/check-stages.mjs [--own] [--rebirths 0,2,5,...] [--jobs hero,grandMagus,abyssBastion] [--hours .5] [--seeds 1] [--json out.json]
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, expBetween, fmtKo as fmt } from './lib/sim.mjs';
 const game = loadGame(), { load } = game;
 const { tick } = await load('systems/turn');
 const { STAGES } = await load('data/world');
-const { xpNeeded } = await load('data/balance');
-const { xpWall } = await load('systems/meta');
 const { referenceBody } = await referenceBodies(game);
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const REBIRTHS = arg('--rebirths', '0,2,5,8,10,15,20,25,30,35,40,50,60,80,100').split(',').map(Number);
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion').split(',');
 const HOURS = Number(arg('--hours', .5)), SEEDS = Number(arg('--seeds', 1)), TICKS = Math.round(HOURS * 1800);
 const ONLY = arg('--stages', '') ? arg('--stages', '').split(',') : null;
 
-const expBetween = (s, L, E) => { let n = s.exp - E; for (let l = L; l < s.level; l++) n += xpNeeded(l, s.rebirths, xpWall(s)); return n; };
 const bodies = new Map();
 const bodyFor = (r, jobId, stage) => { const k = `${r}:${jobId}`; if (!bodies.has(k)) bodies.set(k, referenceBody(r, jobId, { borrow: !process.argv.includes('--own') })); const s = structuredClone(bodies.get(k)); for (const id of stage.monsters) delete s.book[id]; return s; };
 function hunt(r, jobId, stage, tide, seed) {
@@ -39,7 +35,6 @@ function hunt(r, jobId, stage, tide, seed) {
     return { exp: exp / HOURS, kills: kills / HOURS, deaths: deaths / HOURS, turns: fights ? fight / fights : Infinity };
 }
 const avg = xs => ({ exp: xs.reduce((a, x) => a + x.exp, 0) / xs.length, kills: xs.reduce((a, x) => a + x.kills, 0) / xs.length, deaths: xs.reduce((a, x) => a + x.deaths, 0) / xs.length, turns: xs.reduce((a, x) => a + x.turns, 0) / xs.length });
-const fmt = n => n >= 1e8 ? `${(n / 1e8).toFixed(1)}억` : n >= 1e4 ? `${Math.round(n / 1e4)}만` : `${Math.round(n)}`;
 
 const stages = STAGES.filter(st => !ONLY || ONLY.includes(st.id)).filter(st => st.monsters?.length);
 const normal = stages.filter(st => !st.habitat);

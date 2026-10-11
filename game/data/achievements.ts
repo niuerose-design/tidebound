@@ -8,6 +8,7 @@ import { EXP_NURI } from './exp-nuri';
 import { ESSENCE_SLIME } from './essence-slime';
 import { KING_IDS } from './king';
 import { stats } from '../systems/stats';
+import { bestStar } from '../systems/equipment';
 import { DUNGEON_MODES, type DungeonMode } from './balance';
 import { onyxCollected } from './onyx';
 import { BOSS_CORES, BOSS_CORE_RULES, ABYSS_CORE_IDS, ownedCores, coreEntry } from './boss-core';
@@ -45,7 +46,6 @@ const goldens = (s: State) => sum(s.goldenBook);
 const onyxOwned = (s: State) => onyxCollected(s);
 /** v3.6 스타포스 누적 기록과 보유 장비(가방·착용) 중 가장 높은 별. */
 const sf = (s: State) => s.starforce || { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
-const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 const variants = (s: State) => Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
 const dungeonsAt = (n: number) => (s: State) => PLAIN_DUNGEONS.filter(d => (s.clears?.[d.id] || 0) >= n).length;
 const bestEnhance = (s: State) => Math.max(0, ...Object.values(s.equipment || {}).map(i => i?.enhance || 0));

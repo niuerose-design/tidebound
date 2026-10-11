@@ -10,6 +10,7 @@ import { isHackerJob } from './hacker';
 import { ONYX_TOTAL, onyxCollected } from './onyx';
 import { BOSS_CORES, coreEntry } from './boss-core';
 import { RANKS, rankIndex, rankState } from './rank';
+import { bestStar } from '../systems/equipment';
 
 export type StoryScene = {
     id: string;
@@ -36,7 +37,6 @@ const visited = (s: State, region: string) => STAGES.some(st => st.region === re
 const reachedTier = (s: State, tier: number) => [s.job, ...(s.unlockedJobs || [])].some(id => (jobById(id)?.tier ?? 0) >= tier);
 const slain = (s: State, monster: string) => (s.book?.[monster] || 0) > 0;
 const rankAtLeast = (s: State, id: string) => rankIndex(rankState(s).exp) >= RANKS.findIndex(r => r.id === id) || (rankState(s).reenlist || 0) > 0;
-const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
 const cores = (s: State) => Object.entries(s.bossCores || {}).filter(([id]) => BOSS_CORES[id]).map(([, v]) => coreEntry(v)?.rank || 0);
 /** 승천 뒤에도 앞선 생의 기록으로 열린 것으로 봅니다(환생 횟수는 승천하면 0부터). */
 const lives = (s: State) => (s.rebirths || 0) + (s.ascension || 0) * 100;

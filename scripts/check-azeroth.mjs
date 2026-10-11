@@ -5,21 +5,20 @@
 // 지원 계열(참모 계보, tree 'support')은 다른 분신에게 주는 지원이 힘이라 자기 전투력이 약해도 되므로 빼고 봅니다.
 // 사용: node scripts/check-azeroth.mjs
 import { loadGame } from './lib/game-modules.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, loadout } from './lib/sim.mjs';
 import { researchBudgetTools } from './lib/research-budget.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats, powerParts } = await load('systems/stats');
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf, LINEAGES } = await load('data/classes');
-const { canUse, validLoadout, lineage, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf } = await load('data/roles');
 const { RARITIES } = await load('data/balance');
 const { rollAffixes } = await load('data/gear');
 const { gearName } = await load('data/maple-gear');
 
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const RARITY = Number(arg('--rarity', 6)), STAR = Number(arg('--star', 22));
 const LEVEL = Number(arg('--level', 100)), REBIRTHS = Number(arg('--rebirths', 100)), RESEARCH_SCALE = 1;
 const { researchByBudget } = await researchBudgetTools({ load });
@@ -48,13 +47,6 @@ for (const style of ['physical', 'magic']) GEAR[style] = Object.fromEntries(['ro
     const st = slot === 'rod' ? style : 'balanced', pw = Math.round(102 * RARITIES[RARITY].factor);
     return [slot, { id: `${slot}-${style}`, slot, style: st, rarity: RARITY, power: pw, level: LEVEL, enhance: STAR, name: gearName(slot, RARITY, st), affixes: rollAffixes(RARITY, pw, undefined, random(slot.length * 31 + RARITY), [], slot, LEVEL) }];
 }));
-function loadout(s, j, magic) {
-    const line = lineage(j.id);
-    const rank = sk => sk.job === j.id ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? (sk.damageType === 'magic') === magic || sk.type === 'passive' ? 2 : 3 : 9;
-    const pool = SKILLS.filter(sk => canUse(s, sk.id) && rank(sk) < 9).sort((a, b) => rank(a) - rank(b) || b.level - a.level);
-    s.skills = [];
-    for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
-}
 function body(j) {
     const s = newState(0), { attrs, magic, main } = attributesFor(j);
     Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: {}, unlockedJobs: JOBS.map(x => x.id) });

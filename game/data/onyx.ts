@@ -57,8 +57,6 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxBlackMage', hpMul: 80, name: '검은 마법사', region: '아케인 리버', drop: { charm: 'onyxBlackMage' } },
 ];
 export const onyxItemById = (id: string) => ONYX_ITEMS.find(i => i.id === id);
-/** 그 보스가 주는 칠흑 장신구 정의(보스코어를 주는 보스면 undefined). */
-export const onyxCharmOf = (boss: OnyxBoss) => 'charm' in boss.drop ? onyxItemById(boss.drop.charm) : undefined;
 /** 지금 칠흑 보스에게서 얻을 수 있는 장신구(상점 · 환생 이정표 후보). */
 export const ONYX_DROP_ITEMS = ONYX_ITEMS.filter(i => !!i.boss);
 export const onyxBossFor = (region: string) => ONYX_BOSSES.find(b => b.region === region);

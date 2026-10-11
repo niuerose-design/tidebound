@@ -2,14 +2,13 @@
 /** v3.204 보스 코어 칸: 장비 보관함의 착용 장비 아래에 보입니다(던전 주화 상점 보스 코어 탭은 v3.206부터 타일 · 상세 칸). */
 import { Hexagon } from 'lucide-react';
 import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
-import { ATTRIBUTES } from '@/game/data/progression';
+import { attrName } from '@/game/data/progression';
 import { format } from './shared';
 import { OnyxArt } from './onyx-art';
 import { ONYX_TOTAL, onyxCollected } from '@/game/data/onyx';
 import type { PanelProps } from './panel-props';
 
 const CORE_COLOR = '#d6b879';
-const attrName = (k: string) => ATTRIBUTES.find(t => t.id === k)?.name || k;
 /** 이 코어의 기본 능력치 줄(지금 레벨 · 각성 · 칸 여부 반영). */
 export function coreAttrText(s: PanelProps['s'], id: string, worn = s.coreSlot === id) {
     const e = coreEntry(s.bossCores?.[id]);

@@ -8,7 +8,7 @@
 // 사용: node scripts/check-roles.mjs [--json out.json] [--seeds N]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
-import { random } from './lib/sim.mjs';
+import { random, arg, loadout, median } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats, goldMultiplier, expMultiplier } = await load('systems/stats');
@@ -17,10 +17,9 @@ const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 const { MONSTERS, swarmHpMultiplier } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { canUse, validLoadout, skillMasteryRanks, lineage, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { skillMasteryRanks, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, roleOf, SUB_ROLES } = await load('data/roles');
 
-const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.indexOf(k) + 1] : d;
 const SEEDS = Number(arg('--seeds', 30)), MAX_TURNS = 400, SWARM = 5, DUNGEON_WAVES = 3;
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 // check-job-balance와 같은 차수 조건. 보스는 그 레벨 근처 사냥터 보스.
@@ -42,13 +41,6 @@ function attributesFor(j, level) {
     for (const [k, p] of Object.entries(w)) { out[k] = Math.floor(total * p / 100); used += out[k]; }
     out.vit += total - used;
     return { attrs: out, magic };
-}
-function loadout(s, j, magic) {
-    const line = lineage(j.id);
-    const rank = sk => sk.job === j.id ? 0 : sk.job && line.includes(sk.job) ? 1 : !sk.job ? (sk.damageType === 'magic') === magic || sk.type === 'passive' ? 2 : 3 : 9;
-    const pool = SKILLS.filter(sk => canUse(s, sk.id) && rank(sk) < 9).sort((a, b) => rank(a) - rank(b) || b.level - a.level);
-    s.skills = [];
-    for (const sk of pool) if (validLoadout(s, [...s.skills, sk.id])) s.skills.push(sk.id);
 }
 const player = (st, s, hp = st.hp, mana = st.mana) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
 function foe(id, tier, swarm = 1) {
@@ -89,7 +81,6 @@ function measure(j) {
 }
 // v3.80 옛 독립 수련(retired)은 전직할 수 없어 재지 않습니다.
 const rows = JOBS.filter(j => !j.retired).map(measure);
-const median = xs => { const v = [...xs].sort((a, b) => a - b), m = v.length >> 1; return v.length ? v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2 : 0; };
 // 같은 차수 중앙값(전 직업) 대비 비율.
 for (const tier of Object.keys(TIERS).map(Number)) {
     const g = rows.filter(r => r.tier === tier);

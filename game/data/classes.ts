@@ -283,7 +283,6 @@ const advancedRequirements: Record<string, Pick<Job, 'requiresSkillMastery' | 'r
     bellTurtle: { requiresSkillMastery: { anchor: 3 } },
     coralSaint: { requiresSkillMastery: { soulTide: 4 }, requiresJobMastery: { warden: 150 } },
     brineThorn: { requiresSkillMastery: { ironWill: 4 } },
-    clockworkAngler: { requiresSkillMastery: { precision: 3 } },
     gambler: { requiresSkillMastery: { inkTrick: 3 } },
     bloodTide: { requiresSkillMastery: { vitalSurge: 4 }, requiresJobMastery: { wanderer: 150 } },
     pearlBroker: { requiresSkillMastery: { fishWhisper: 3 }, requiresJobMastery: { fishWhisperer: 75 } },
