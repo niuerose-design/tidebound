@@ -44,7 +44,7 @@ test('v24.2 gamble rolls the multiplier; all-in spends HP and mana; gold toss sp
 
 test('v24.2 prey bonus hits bosses and designated species harder', () => {
     // v3.86 거신 쓰러뜨리기는 각성기: 대기를 비워 두면 기본 행동 뒤 턴 판정으로 나갑니다. 그 줄의 피해만 견줍니다.
-    const awakened = b => { const a = fighter('titanFell', { fields: { cooldowns: { titanFell: 0 } } }), ev = []; strike(a, b, () => 0, ev); return ev.find(e => e.awaken).total; };
+    const awakened = b => { const a = /* v3.296 5차 마법 670 */ fighter('titanFell', { stats: { mana: 1000 }, fields: { mana: 1000, cooldowns: { titanFell: 0 } } }), ev = []; strike(a, b, () => 0, ev); return ev.find(e => e.awaken).total; };
     const plain = awakened(target()), prey = awakened(target({ prey: true }));
     assert.ok(Math.abs(prey / plain - 1.5) < .02, `${prey}/${plain}`);
 });
@@ -198,4 +198,9 @@ test('v27.6 limit break: needs full mastery, practice multiples and SP; pushes g
     assert.ok(!limitBreakNext(s, 'hook').ok, 'stage 2 needs 4x practice'); s.skillPractice.hook = last * 8;
     act(s, { type: 'limitBreak', id: 'hook' }, 0); act(s, { type: 'limitBreak', id: 'hook' }, 0); assert.equal(s.limitBreaks.hook, 3); assert.equal(s.sp, 18 - 3 - 4);
     const e3 = effectiveSkill(sk, 1, skillMastery(s, 'hook')); assert.equal(e3.cost, Math.max(1, (sk.cost ?? 2)) - 1, 'stage 3 AP -1'); assert.throws(() => act(s, { type: 'limitBreak', id: 'hook' }, 0), /최대 단계/);
+});
+
+test('v3.296 tier-5 magic/split actives cost 670 mana (80% of the Fire/Poison archmage average); Fire/Poison keeps 880 · 800', () => {
+    for (const id of ['infiniteChant', 'genesis', 'oceanWrath', 'grandTransmutation', 'aeonRecall', 'oceanOfLife', 'genesisRune', 'goldenStorm', 'galaxyFall', 'titanFell', 'sirenSong', 'doomCurse', 'divineWard', 'worldInversion', 'grimReaper', 'veinBurst']) assert.equal(SKILLS.find(s => s.id === id).manaCost, 670, id);
+    assert.equal(SKILLS.find(s => s.id === 'doomMark').manaCost, 880); assert.equal(SKILLS.find(s => s.id === 'endOfAll').manaCost, 800);
 });

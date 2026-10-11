@@ -121,6 +121,9 @@ function progressDesc(sk: Skill) {
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 const MAGIC_MANA_COST_SCALE = 4;
+/** v3.296 아크메이지(불,독) 5차 두 기술(파멸의 낙인 220 · 만물의 끝 200, 배율 적용 뒤 880 · 800). 다른 5차 마법 · 복합 기술은 이 평균의 80%를 씁니다. */
+const APOSTLE_SKILLS = new Set(['doomMark', 'endOfAll']);
+export const TIER5_MAGIC_MANA = Math.round((220 + 200) / 2 * MAGIC_MANA_COST_SCALE * .8 / 10) * 10;
 
 /** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
 export function awakenExpectedRolls(c: number) {
@@ -155,6 +158,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const magic = sk.damageType === 'magic' || sk.damageType === 'split' || sk.damageType === 'fixed' && sk.baseStat === 'magic';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
         sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
+        if (magic && tierOf(sk) >= 5 && !APOSTLE_SKILLS.has(sk.id)) sk.manaCost = TIER5_MAGIC_MANA;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' || sk.statusOnly ? .01 : magic ? .025 : .02,
