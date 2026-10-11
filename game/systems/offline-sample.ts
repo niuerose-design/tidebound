@@ -24,7 +24,7 @@ import { gainLevels, spawn, specialChances, pickSpecial, noteExtreme, type Force
 import { extremeStage } from './progression';
 import { recordIncome, recordExpIncome, recordMasteryIncome } from './income';
 import { oneTimeRewards, offlineTally, resetOfflineTally } from './offline-tally';
-import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxChance, onyxSpawnPity } from '../data/onyx';
 import { stageById } from '../data/world';
 import { KING, isSpecialId } from '../data/king';
 import { variantChances } from '../data/variants';
@@ -187,7 +187,7 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         s.onyxSeen ??= {};
         for (let i = 0; i < rolls.onyx; i++) {
             const seen = s.onyxSeen[region] || 0;
-            if (rng() < onyxChance(encounterTier(s), seen, jobById(s.job)?.onyxFind || 0)) { s.onyxSeen[region] = 0; found.push('onyx'); }
+            if (rng() < onyxChance(encounterTier(s), seen, jobById(s.job)?.onyxFind || 0, onyxSpawnPity(s))) { s.onyxSeen[region] = 0; found.push('onyx'); }
             else s.onyxSeen[region] = seen + 1;
         }
     }

@@ -40,6 +40,8 @@ export type ResearchDef = {
     levels?: string[];
     /** v3.31 이 단계를 넘는 단계는 승천한 모험가만 살 수 있습니다(행운의 편지 6~10단계). */
     ascendAbove?: number;
+    /** v3.299 단계별 가격을 직접 정한 연구(칠흑 추적). 있으면 base · step 대신 이 표를 씁니다. */
+    costs?: readonly number[];
 };
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '훈련' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
@@ -85,6 +87,8 @@ export const RESEARCH: ResearchDef[] = [
     /** v3.86 추가 판정(docs/combat-rework.md B): 해금 단계까지 스킬 편성에서 장착 AP를 내고 켭니다. 지금은 1단계까지(최대 4단계 = 액티브 5개 동시 판정 예정). */
     { id: 'extraRoll', name: '시스템 파괴 I', desc: '추가 판정 해금. 액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 발동 판정을 한 번 더 굴려, 성공하면 60% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동에서는 묶음 최대 개수가 1 늘어납니다. 스킬 편성에서 장착 AP 12를 내고 켭니다', max: 1, base: 1000, step: 1000, tab: 'utility', group: 'special', rebirth: 10, per: 1, unit: 'flat', label: '추가 판정', suffix: '단계', levels: ['잠김', '추가 판정 1단계(AP 12)'] },
     { id: 'limitBreak', name: '리미터 해제', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
+    /** v3.299 칠흑 추적(docs/research-mechanics-plan.md 3.1): 칠흑의 보스 출현 천장을 단계마다 낮춥니다(ODDS.onyx.trackPity, 서버 전용 · 비공개면 수치를 숨김). */
+    { id: 'onyxTrack', name: '칠흑 추적', get desc() { return `칠흑의 보스 출현 천장이 줄어듭니다(못 본 출현이 천장에 닿으면 확정 출현). ${oddsKnown() ? `천장 ${ODDS.onyx.pity.toLocaleString()} → ${ODDS.onyx.trackPity.map(n => n.toLocaleString()).join(' · ')}회` : '단계마다 더 빨리 확정'}`; }, max: 3, base: 300, step: 0, costs: [300, 500, 1000], tab: 'utility', group: 'special', rebirth: 30, per: 1, unit: 'flat', label: '칠흑 추적', suffix: '단계', get levels() { return ['없음', ...[1, 2, 3].map(n => oddsKnown() && ODDS.onyx.trackPity[n - 1] ? `출현 천장 ${ODDS.onyx.trackPity[n - 1].toLocaleString()}회` : `출현 천장 단축 ${n}단계`)]; } },
     { id: 'vowBreath', name: '하드코어', desc: '서약 해금. 2·3단계는 환생 세계석 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 세계석 +50%', '환생 세계석 +75%', '환생 세계석 +100%'] },
     { id: 'vowRough', name: '힘의 길', desc: '서약 해금(난이도 하한·장비 능력치 감소·회복 봉쇄 대신 골드·드롭 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     /** v27.86 절제: 장착 AP를 줄이는 서약. */
@@ -111,7 +115,7 @@ export const researchById = (id: string | undefined) => id === undefined ? undef
  */
 export const RESEARCH_GROWTH = { from: 20, rate: 1.06, lateFrom: 45, lateRate: 1.03 } as const;
 /** v3.42 전 가격(기본 + 단계 × 증가분 + 20단계 뒤 제곱 항). 그때 산 단계(researchLegacy)를 재분배할 때 이 가격으로 돌려줍니다. */
-export const researchLegacyCost = (id: string, rank: number) => { const r = researchById(id); return r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
+export const researchLegacyCost = (id: string, rank: number) => { const r = researchById(id); return r?.costs ? r.costs[rank] ?? Infinity : r ? r.base + r.step * rank + Math.floor(Math.pow(Math.max(0, rank - 19), 2) * .4) : Infinity; };
 export const researchCost = (id: string, rank: number): number => {
     const g = RESEARCH_GROWTH;
     if (rank >= g.lateFrom) return Math.round(researchCost(id, g.lateFrom - 1) * Math.pow(g.lateRate, rank - g.lateFrom + 1));

@@ -35,7 +35,7 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
 import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems, inheritGear } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ONYX, onyxBossFor, onyxById, onyxChance, onyxCollected, onyxSetBonus } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxById, onyxChance, onyxCollected, onyxSetBonus, onyxSpawnPity } from '../data/onyx';
 import { offlineTally } from './offline-tally';
 import { grantOnyxDrop, onyxDropName, onyxDropRank } from './onyx-grant';
 import { recordGoal, recordAbyssDepth } from './progress';
@@ -277,7 +277,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
     if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
-    else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen, jobById(s.job)?.onyxFind || 0); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
+    else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen, jobById(s.job)?.onyxFind || 0, onyxSpawnPity(s)); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
     const rare = !!special || onyx, rareId = onyx ? onyxDef!.id : special?.id ?? '', rareDef = onyx ? { hp: onyxDef!.hpMul, attack: ONYX.attack } : special ?? { hp: 1, attack: 1 };
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossMonster ? dungeon.bossMonster : dungeon.monsters[s.dungeon!.wave]) : (targetOk ? s.target! : weightedMonsterId(st.monsters, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftMonster). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.

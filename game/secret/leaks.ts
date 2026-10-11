@@ -40,7 +40,7 @@ function oddsLeaks(): Leak[] {
         { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 중 ${pct(o.mimic.letterMid)}).` },
         { id: 'nuri:chance', text: `경험의 누리: 출현마다 ${pct(o.nuri.chance)} + 난이도 1당 ${pct(o.nuri.perTier)}p.` },
         { id: 'nuri:tiers', text: `누리 당첨: 소 ${pct(o.nuri.tiers[0])} · 중 ${pct(o.nuri.tiers[1])} · 대 ${pct(o.nuri.tiers[2])}.` },
-        { id: 'onyx:spawn', text: `칠흑의 보스: 무리 서식지 출현마다 ${pct(o.onyx.chance)} × (1 + 난이도 × ${o.onyx.perTier}), ${o.onyx.pity.toLocaleString()}번 못 보면 확정.` },
+        { id: 'onyx:spawn', text: `칠흑의 보스: 무리 서식지 출현마다 ${pct(o.onyx.chance)} × (1 + 난이도 × ${o.onyx.perTier}), ${o.onyx.pity.toLocaleString()}번 못 보면 확정(연구 칠흑 추적 1 · 2 · 3단계면 ${o.onyx.trackPity.map(n => n.toLocaleString()).join(' · ')}번).` },
         { id: 'bossLoot', text: `보스 코어: 하루 보너스 정복마다 ${pct(o.bossLoot.chance)}, ${o.bossLoot.pity}번째 연속 미획득은 확정.` },
         { id: 'onyx:drop', text: `칠흑 장신구: 격파마다 ${pct(o.onyx.drop)}, ${o.onyx.dropPity}번째 연속 미획득 격파는 확정.` },
         { id: 'variant:chance', text: `변종 기본 확률: ${VARIANTS.map(v => `${v.name} ${pct(o.variant.chance[v.id] ?? 0)}`).join(' · ')}.` },
