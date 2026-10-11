@@ -1552,6 +1552,18 @@ test('v3.104 offline extrapolation math: gains grow by remaining/turns; one-time
     assert.equal(s.kills, kills + 100, 'normal kills ×2'); assert.equal(s.jobMastery[job], mastery + 300 + 10_000 + 600, 'rare mastery not multiplied');
     assert.equal(s.pearls, pearls + 12, '(10 − 4 one-time) × 2, rare pearls not multiplied'); assert.equal(rngCalls.n, 0, 'no rare rolls tallied → no rolls');
 });
+test('v3.289 offline rare batch: 까미 · 누리 · 슬라임 fought back to back in the extrapolated part collapse into one log line (rewards unchanged)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const O = await L.load('systems/offline-sample'), R = await L.load('systems/offline-tally'), Enc = await L.load('systems/encounter'), { MIMIC } = await L.load('data/mimic');
+    const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 500; s.stage = 'brook'; s.tide = 10; s.running = true;
+    const m = O.markOffline(s), job = s.job, mastery = s.jobMastery[job] || 0, book = s.book[MIMIC.id] || 0;
+    R.resetOfflineTally(); R.offlineTally.specialRolls = 3;
+    // 판정 3번 모두 까미(난수 0), 전투는 한 턴에 잡습니다.
+    O.extrapolateOffline(s, m, 100, 100, () => 0, () => { if (s.enemy) { s.enemy.hp = 0; Enc.reward(s, () => .99); s.enemy = null; } });
+    assert.equal((s.book[MIMIC.id] || 0) - book, 3, 'three kkami killed'); assert.ok(s.jobMastery[job] - mastery >= 3 * MIMIC.tiers[0].mastery, 'their mastery is paid');
+    const lines = s.logs.filter(l => l.text.includes('숙련의 까미'));
+    assert.equal(lines.length, 1, lines.map(l => l.text).join(' / ')); assert.match(lines[0].text, /부재중 특별 몬스터 · 숙련의 까미 3마리 처치 · 숙련 \+/);
+    R.resetOfflineTally();
+});
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
     assert.ok(G.TUTORIAL_STEPS.every(st => st.reward && (st.reward.pearls || st.reward.sp)));

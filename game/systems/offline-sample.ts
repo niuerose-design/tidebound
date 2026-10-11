@@ -28,6 +28,7 @@ import { ONYX, onyxBossFor, onyxChance } from '../data/onyx';
 import { stageById } from '../data/world';
 import { KING, isSpecialId } from '../data/king';
 import { variantChances } from '../data/variants';
+import { addLog } from './state';
 import { FUEL } from '../data/otherworld';
 
 /**
@@ -201,7 +202,11 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
     let turns = 0;
     if (!found.length) return { found, turns };
     const resume = s.enemy;
+    // v3.289 까미 · 누리 · 슬라임(대왕 포함)은 남은 시간의 판정을 한꺼번에 굴려 연달아 싸우므로, 그 전투 · 보상 줄은 한 줄로 묶습니다(보상은 그대로).
+    // 레벨업 · 숙련 단계 같은 시스템 · 스킬 줄과 칠흑 · 별빛 전투 줄은 그대로 남깁니다.
+    const batch = { count: {} as Record<string, number>, missed: 0, mastery: 0, essence: 0, exp: 0 };
     for (const kind of found) {
+        const special = kind !== 'onyx' && kind !== 'starlit', logStart = s.logId, m0 = s.jobMastery[s.job] || 0, e0 = s.essence || 0, lv0 = s.level, x0 = s.exp, booked = () => Object.values(s.book).reduce((a, b) => a + b, 0), b0 = booked();
         if (!s.running || s.dungeon) break;
         // 쓰러져 회복 대기 중이면 회복을 마저 돌립니다(희귀 몬스터를 그냥 기다려 주지 않음).
         for (let t = 0; t < 200 && s.recovery > 0 && s.running; t++) { step(); turns++; }
@@ -212,7 +217,20 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         // 칠흑 보스는 ONYX.turns턴, 대왕은 KING.turns턴 뒤 떠나고, 다른 희귀 몬스터도 교착 안전장치로 끝납니다(여유를 둔 상한).
         for (let t = 0; t < Math.max(ONYX.turns, KING.turns) + 120 && s.enemy === foe && s.running; t++) { step(); turns++; }
         if (s.enemy === foe) s.enemy = null;
+        if (!special) continue;
+        s.logs = s.logs.filter(l => l.id <= logStart || (l.type !== 'battle' && l.type !== 'reward'));
+        // 도감 처치 수가 늘었으면 잡은 것, 아니면 놓친 것(떠남 · 쓰러짐)입니다.
+        if (booked() > b0) batch.count[kind] = (batch.count[kind] || 0) + 1; else batch.missed++;
+        batch.mastery += Math.max(0, (s.jobMastery[s.job] || 0) - m0); batch.essence += Math.max(0, (s.essence || 0) - e0);
+        let gained = s.exp - x0; for (let lv = lv0; lv < s.level; lv++) gained += xpNeeded(lv, s.rebirths, xpWall(s));
+        batch.exp += Math.max(0, gained);
     }
+    const n = (k: string) => batch.count[k] || 0, parts = [
+        n('mimic') + n('kingMimic') ? `숙련의 까미 ${n('mimic') + n('kingMimic')}마리${n('kingMimic') ? `(대왕 ${n('kingMimic')})` : ''}` : '',
+        n('nuri') + n('kingNuri') ? `경험의 누리 ${n('nuri') + n('kingNuri')}마리${n('kingNuri') ? `(대왕 ${n('kingNuri')})` : ''}` : '',
+        n('slime') + n('kingSlime') ? `정수의 슬라임 ${n('slime') + n('kingSlime')}마리${n('kingSlime') ? `(대왕 ${n('kingSlime')})` : ''}` : '',
+    ].filter(Boolean), gains = [batch.mastery ? `숙련 +${batch.mastery.toLocaleString()}` : '', batch.exp ? `경험치 +${batch.exp.toLocaleString()}` : '', batch.essence ? `정수 +${batch.essence.toLocaleString()}` : ''].filter(Boolean);
+    if (parts.length || batch.missed) addLog(s, `✦ 부재중 특별 몬스터 · ${parts.length ? `${parts.join(' · ')} 처치` : '처치 없음'}${gains.length ? ` · ${gains.join(' · ')}` : ''}${batch.missed ? ` · 놓침 ${batch.missed}` : ''}`, 'reward');
     // 싸우던 몬스터로 돌아갑니다. 무리는 싸운 턴 수로 숙련 · 계급을 세므로, 희귀 전투로 흐른 턴만큼 등장 턴을 미룹니다.
     if (!s.enemy && resume && !isOfflineRare(resume)) { if (resume.born !== undefined) resume.born += turns; s.enemy = resume; }
     return { found, turns };

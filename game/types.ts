@@ -865,6 +865,8 @@ export type State = {
         kills: number;
         gold: number;
         exp: number;
+        /** v3.289 부재중에 잡은 숙련의 까미 · 경험의 누리 · 정수의 슬라임(대왕 포함). */
+        rares?: { mimic: number; nuri: number; slime: number };
     };
 };
 /** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
