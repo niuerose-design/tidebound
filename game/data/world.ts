@@ -28,7 +28,8 @@ export const BASE_STAGES: StageDef[] = [
  * 입장: 지역 사냥터의 최고 레벨 · 환생은 HABITAT_REBIRTH 표(v3.103).
  */
 // v3.52 ×500 확률(bigChance)은 서버 전용(game/secret/odds.ts).
-export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2 };
+/** v3.291 expScale: 무리 서식지 무리 처치 경험치 배율(골드 · 숙련 · 도감은 그대로). 측정(scripts/check-life-hours --habitat)에서 서식지가 같은 환생의 최상위 일반 사냥터보다 시간당 5~6배(누리 포함)라 한 생이 1.6시간이던 것을 약 2배 수준으로. */
+export const HABITAT = { sizes: [100, 500] as const, get bigChance() { return ODDS.variant.habitatBig; }, rebirthOver: 2, minRebirth: 2, expScale: .5 };
 const HABITAT_META: Record<string, { id: string; subtitle: string; description: string; tone: string }> = {
     '리스항구': { id: 'lithSwarm', subtitle: 'LITH HARBOR · SWARM NEST', description: '항구 뒤편 갯바위. 첫 바다의 몬스터들이 떼로 몰려와 한 덩어리로 덤빈다.', tone: '#5fa8a0' },
     '헤네시스': { id: 'henesysSwarm', subtitle: 'HENESYS · SWARM MEADOW', description: '돼지와 버섯이 끝없이 몰려드는 들판. 한 번 휩쓸면 도감이 백 장씩 넘어간다.', tone: '#c98a6a' },

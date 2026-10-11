@@ -121,14 +121,14 @@ test('v3.31 ascended hunters meet the mimic at difficulty 0 and its jackpot gets
     assert.ok((s.jobMastery[s.job] || 0) - before >= 2 * 1000, 'jackpot 1,000 × 2');
 });
 
-test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), middle prize 35% (v3.287), letter recipient 1%', () => {
+test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), middle prize 35% (v3.291), letter recipient 1%', () => {
     const s = newState(0); s.rebirths = 10; s.pearls = 1e6; s.permanent.messageBottle = 5;
     assert.throws(() => act(s, { type: 'permanent', id: 'messageBottle' }, 0), /승천한 뒤/);
     s.ascension = 1; act(s, { type: 'permanent', id: 'messageBottle' }, 0); assert.equal(s.permanent.messageBottle, 6);
     assert.equal(Ec.researchMaxFor({}, Ec.RESEARCH.find(r => r.id === 'messageBottle')), 5);
     assert.equal(Mi.MIMIC.offlineScale, .5, 'v3.189 base offline rate'); assert.equal(Mi.specialOfflineScale(s, .5), .75); assert.equal(Mi.specialOfflineScale({ permanent: { messageBottle: 5 } }, .5), .5);
     const tiers = Mi.mimicTiers({ permanent: { messageBottle: 8 } });
-    assert.equal(tiers[1].chance, .35, 'v3.287 rank 8 raises the middle prize'); assert.equal(tiers[2].chance, Mi.MIMIC.tiers[2].chance); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
+    assert.equal(tiers[1].chance, .35, 'v3.291 rank 8 raises the middle prize'); assert.equal(tiers[2].chance, Mi.MIMIC.tiers[2].chance); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
     const r = newState(0); r.ascension = 1; r.permanent.messageBottle = 10; r.level = 20; r.kills = 500; r.stage = 'brook'; r.unlockedJobs = ['fisher', 'wanderer']; r.jobMastery = {};
     E.spawn(r, () => 0); r.enemy.hp = 0; E.reward(r, () => 0);
     const gift = Math.floor(Mi.MIMIC.tiers[0].mastery * 2 * .01); assert.equal(r.jobMastery.wanderer, gift, 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', gift], 'v3.40 recipient record for the mastery board');
