@@ -930,6 +930,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const poisonFill = Math.min(1, (b.effects.poison?.stacks || 0) / (STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus)), burnFill = Math.min(1, (b.effects.burn?.stacks || 0) / STATUS_TUNING.burnMaxStacks), fill = (poisonFill + burnFill) / 2;
     const fullFinish = !!finisher && poisonFill >= 1 && burnFill >= 1, finisherHits = !finisher || fill <= 0 ? 0 : fullFinish ? finisher.maxHits : Math.min(finisher.maxHits - 1, Math.max(1, Math.round(finisher.maxHits * (1 + fill) / 2)));
     if (finisher) notes.push(finisherHits ? `퍼니시 ${finisherHits}회` : '퍼니시 없음');
+    // v3.282 도트 퍼니셔: 둘 다 최대 중첩인 적에게 쓰면 대기를 바로 초기화합니다.
+    if (fullFinish && finisher.fullReset && chosen) { a.cooldowns[chosen.id] = 0; notes.push('대기 초기화'); }
     // v3.164 전류(스트라이커): 살아 있는 전류 버프가 있으면 패시브만큼 추가타가 늘어납니다(상한 뒤에 더함).
     const currentExtra = statusOnly || finisher || !(chosen?.extraAttacks) ? 0 : Math.max(0, ...a.skills.map(id => { const x = skillById(id)?.followUpExtra; return x && (a.effects?.buffs?.[x.buff]?.turns || 0) > 0 ? x.hits : 0; }));
     const skillFollowUps = statusOnly ? 0 : finisher ? finisherHits : Math.min(chosen?.awaken ? STATUS_TUNING.maxExtraAttacksAwaken : STATUS_TUNING.maxExtraAttacks, Math.max(0, chosen?.extraAttacks || 0)) + currentExtra + chargeHitSpent * (chosen?.chargeHits || 0);

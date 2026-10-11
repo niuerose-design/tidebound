@@ -104,7 +104,7 @@ export function skillBrief(sk: Skill): string {
     if (sk.effect === 'haste') parts.push(`자신 가속 ${sk.statusTurns ?? STATUS_TUNING.hasteTurns}턴`);
     if (sk.alsoEffect) parts.push(`${STATUS_WORD[sk.alsoEffect]} ${sk.statusTurns}턴`);
     if (sk.extraAttacks) parts.push(`추가타 ${sk.extraAttacks}회`);
-    if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴`);
+    if (sk.dotFinisher) parts.push(`중독·화상 중첩 비례 추가타 최대 ${sk.dotFinisher.maxHits}회 · 기절 ${sk.dotFinisher.partStun}~${sk.dotFinisher.fullStun}턴${sk.dotFinisher.fullReset ? ' · 최대 중첩이면 대기 초기화' : ''}`);
     if (sk.charge) parts.push(`명중 시 충전 +${sk.charge}(약화 적 +${SKILL_FORMULA.charge.weakenedExtra})`);
     if (sk.chargeNeed) parts.push(`충전 ${sk.chargeNeed}중첩부터 · 중첩당 피해 +${skillPercent(sk.chargeBonus || 0)}`);
     if (sk.chargeHits) parts.push(`명중 시 충전 모두 소모 · 중첩당 추가타 +${sk.chargeHits}`);
@@ -199,9 +199,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'drain') out.push(`깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}를 회복합니다. 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지입니다.`);
         const statusKey = ({ stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow', corrode: 'corrode' } as Record<string, keyof typeof STATUS_TUNING.immuneTurns>)[sk.effect || ''];
         if (statusKey) out.push(`${statusKey === 'poison' ? '중첩은 계속 쌓입니다.' : statusKey === 'burn' ? `최대 ${STATUS_TUNING.burnMaxStacks}중첩까지 쌓고, 가득 차 있으면 이 기술은 건너뜁니다.` : '상대에게 이미 걸려 있으면 이 기술은 건너뜁니다.'} 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴은 면역입니다.`);
-        if (sk.outsiderChance !== undefined) out.push(`아크메이지(불,독) 계보 밖에서 계승하면 발동률이 ${skillPercent(sk.outsiderChance)}로 줄어듭니다(피해는 다른 5차 기술처럼 계승 효율을 따름).`);
+        if (sk.outsiderChance !== undefined) out.push(`아크메이지(불,독) 계보 밖에서 계승하면 발동률이 ${skillPercent(sk.outsiderChance)}로 줄어듭니다${sk.statusOnly ? '' : '(피해는 다른 5차 기술처럼 계승 효율을 따름)'}.`);
         if (sk.alsoEffect) out.push(`같은 공격으로 ${STATUS_WORD[sk.alsoEffect]}도 한 중첩 겁니다(${sk.statusTurns}턴, 지속 턴 옵션이 그대로 더해집니다).`);
-        if (sk.dotFinisher) out.push(`맞히면 상대의 중독·화상 중첩(각 최대 대비 비율의 평균)에 비례해 위 피해식의 ${skillPercent(sk.dotFinisher.hitMultiplier)}(+추가타 위력)로 추가 공격을 최대 ${sk.dotFinisher.maxHits}회 합니다. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 하나라도 걸려 있으면 중첩에 따라 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴, 둘 다 없으면 추가타·기절 없이 피해만 줍니다.`);
+        if (sk.dotFinisher) out.push(`맞히면 상대의 중독·화상 중첩(각 최대 대비 비율의 평균)에 비례해 위 피해식의 ${skillPercent(sk.dotFinisher.hitMultiplier)}(+추가타 위력)로 추가 공격을 최대 ${sk.dotFinisher.maxHits}회 합니다. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 하나라도 걸려 있으면 중첩에 따라 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴, 둘 다 없으면 추가타·기절 없이 피해만 줍니다.${sk.dotFinisher.fullReset ? ' 둘 다 최대 중첩인 적에게 쓰면 이 기술의 대기가 바로 초기화됩니다.' : ''}`);
         if (sk.extraAttacks) out.push(`이어서 추가 공격을 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 합니다. 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}입니다.`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));

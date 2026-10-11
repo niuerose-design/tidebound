@@ -403,16 +403,17 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     const nova = SKILLS.find(s => s.id === 'doomMark'), punisher = SKILLS.find(s => s.id === 'endOfAll');
     assert.ok(nova.awaken && !nova.awaken.statusScale, 'nova is the awakened skill with its written duration');
     assert.deepEqual([nova.effect, nova.alsoEffect, nova.statusTurns], ['poison', 'burn', 7]);
-    assert.equal(punisher.type, 'active'); assert.equal(punisher.awaken, undefined); assert.equal(punisher.cooldown, 0, 'no cooldown; AP cost is the price');
+    assert.equal(punisher.type, 'active'); assert.equal(punisher.awaken, undefined); assert.equal(punisher.cooldown, 4, 'v3.282 cooldown 4, reset at full stacks'); assert.equal(punisher.damageBonusCondition, undefined, 'v3.282 no afflicted-target bonus');
     assert.equal(punisher.bonus, undefined, 'no equip bonus');
     const base = { hp: 1e9, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: 1e9, mana: 1000, skills, cooldowns: Object.fromEntries(skills.map(id => [id, 0])), stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     // 포이즌 노바: 중독·화상을 함께, 지속 7턴 + 지속 턴 옵션.
     let b = mk([]); strike(mk(['doomMark'], { dotTurnsBonus: 2 }), b, () => 0);
     assert.deepEqual([b.effects.poison.turns, b.effects.burn.turns], [9, 9]);
-    // 포이즌 노바를 계보 밖에서 계승하면 발동률이 outsiderChance배(난수 .3: 계보 안 .5면 발동, 밖 .25면 실패).
-    const novaFires = job => { const a = { ...mk(['doomMark']), job }, ev = []; strike(a, mk([]), () => .3, ev); return ev.some(e => e.skillId === 'doomMark'); };
-    assert.equal(nova.outsiderChance, .5); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
+    // v3.282 포이즌 노바: 피해 없이 상태이상만, 발동률 100% · 각성 대기 5턴. 계보 밖에서 계승하면 발동률 25%(난수 .3: 계보 안 발동, 밖 실패).
+    assert.deepEqual([nova.statusOnly, nova.chance, nova.cooldown, nova.awaken.start], [true, 1, 5, 5]);
+    const novaFires = job => { const a = { ...mk(['doomMark']), job }, t = mk([]), ev = []; strike(a, t, () => .3, ev); const e = ev.find(x => x.skillId === 'doomMark'); if (e) assert.equal(e.total, 0, 'nova deals no direct damage'); return !!e; };
+    assert.equal(nova.outsiderChance, .25); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
     // 도트 퍼니셔: 상태 없음 → 추가타·기절 없음 / 일부 → 추가타 일부 + 기절 1 / 둘 다 최대 → 추가타 최대 + 기절 2.
     const finish = effects => { const t = mk([]); t.effects = effects; const ev = []; strike(mk(['endOfAll']), t, () => 0, ev); const e = ev.find(x => x.skillId === 'endOfAll'); return [e.hits.filter(h => h.kind === 'follow').length, t.stun]; };
     const dot = (stacks) => ({ perStack: 1, stacks, turns: 5, hpRatio: 0 });
@@ -420,6 +421,10 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual(finish({ poison: dot(2) }), [2, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(2) }), [3, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), [punisher.dotFinisher.maxHits, 2]);
+    // v3.282 둘 다 최대 중첩이면 대기 초기화, 일부면 대기 4턴.
+    const wait = effects => { const a = mk(['endOfAll']), t = mk([]); t.effects = effects; strike(a, t, () => 0, []); return a.cooldowns.endOfAll; };
+    assert.equal(wait({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), 0);
+    assert.ok(wait({ poison: dot(2) }) > 0);
 });
 
 test('v3.138 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped', () => {
