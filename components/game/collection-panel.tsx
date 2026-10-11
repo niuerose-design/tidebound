@@ -13,7 +13,7 @@ import { ESSENCE_SLIME, slimeChance, slimeBundle } from '@/game/data/essence-sli
 import { KING, KING_KINDS } from '@/game/data/king';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
-import { keepsAcrossLives } from '@/game/systems/equipment';
+import { keepsAcrossLives, ownedItems } from '@/game/systems/equipment';
 import { PROGRESSION, statDisplay, percent } from '@/game/data/progression';
 import { completedStages, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
@@ -239,6 +239,7 @@ export function Collection({ s, send, busy }: PanelProps) {
             <div className="item-icon"><OnyxArt id={b.id} size={36}/></div>
             <h3><span className="onyx-name">{b.accessory.name}</span></h3>
             <p>{b.name} 격파 보상 · {secret ? `장비 드롭 보너스 +${perEntryBonus}%` : `장비 드롭 확률 +${percent(perEntryDrop, 4)}p`}</p>
+            <OnyxPity s={s} bossId={b.id} owned={ownedOnyx(s).has(b.id)}/>
             <button className="secondary" disabled>{registered ? '영구 보너스 적용 중' : '얻으면 자동 등록(소모 없음)'}</button>
             </article>; })}</div>
     </details>
@@ -290,3 +291,18 @@ export function Collection({ s, send, busy }: PanelProps) {
     </>;
 }
 
+/**
+ * v3.276 칠흑 장신구 천장: 이 보스를 연속으로 못 얻은 격파 수 / 천장(그 번째 격파는 확정). 이미 가진 장신구는 같은 천장으로 각성 단계가 오릅니다.
+ * 천장 수가 비공개(확률 비공개 모드)면 연속 미획득 횟수만 보여 줍니다.
+ */
+function OnyxPity({ s, bossId, owned }: { s: State; bossId: string; owned: boolean }) {
+    const miss = s.onyxMiss?.[bossId] || 0, pity = ONYX.dropPity, rank = ownedItems(s).find(x => x?.onyx === bossId)?.onyxRank || 0;
+    if (owned && rank >= ONYX.awakenMax) return <p className="onyx-pity done">각성 완료 {ONYX.awakenMax}/{ONYX.awakenMax}</p>;
+    const label = owned ? `각성 ${rank}/${ONYX.awakenMax} · 다음 각성 천장` : '획득 천장';
+    if (!Number.isFinite(pity)) return <p className="onyx-pity">{label} · 연속 미획득 {miss.toLocaleString()}회</p>;
+    return <div className="onyx-pity">
+        <span>{label} <b>{miss.toLocaleString()} / {pity.toLocaleString()}</b></span>
+        <Meter value={miss} max={pity} color="gold"/>
+        <small>{pity.toLocaleString()}번째 연속 미획득 격파는 확정{miss > 0 ? ` · ${(pity - miss).toLocaleString()}회 남음` : ''}</small>
+    </div>;
+}
