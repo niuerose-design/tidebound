@@ -10,7 +10,7 @@ const NOTICE_KEY = 'tidebound:altar-notice';
 const readSeen = () => { try { return localStorage.getItem(NOTICE_KEY) || ''; } catch { return ''; } };
 
 /**
- * v27.44 전투 화면 제단 알림(문 알림과 같은 한 줄). v3.18 축복은 이름(단계)과 남은 시간만, 월드보스는 아래 별도 줄로 분리(각각 따로 닫음).
+ * v27.44 전투 화면 제단 알림(한 줄). v3.18 축복은 이름(단계)과 남은 시간만, 월드보스는 아래 별도 줄로 분리(각각 따로 닫음).
  * 누르면 제단 화면으로 갑니다. 닫으면 축복·신·자리 주인이 바뀔 때까지 다시 띄우지 않습니다(이 브라우저만).
  */
 export function AltarNotice({ s, setView }: { s: State; setView: (view: string) => void }) {

@@ -1,4 +1,4 @@
-// v25 ??? 특수 직업: 시계공·시간의 지배자·玄
+// v25 ??? 특수 직업: 제로 (1차)·제로 (5차)·玄
 import { newState, tick, stats, strike, canUse, canChangeJob, effectiveSkill, SKILLS, JOBS, combatFxFromLog, act, jobMasteryTarget, assert, test } from './harness.mjs';
 const { actTurn } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/combat');
 const { skillVeiled, skillBlockReason } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/progression');

@@ -2,12 +2,12 @@ import type { Job } from './classes';
 import type { Skill } from '../types';
 
 /**
- * v24.2 보조 계열 개편 + ??? 문 직업 풀.
+ * v24.2 보조 계열 개편 + ??? 직업 풀.
  *
  * - 팬텀 (1차): 골드 대신 '주사위'. 도박 기술은 쓸 때마다 피해 배율·명중을 굴리고(gamble), 올인은 체력·마나를 겁니다(allIn).
- * - 로그(섀도어): 골드·드롭을 내려놓고 도감 기록(발견한 몬스터 + 등록한 물건)에 비례합니다(scaling 'codex', perCount codex).
- * - 해적(캡틴): 골드·던전 주화에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold')·골드 투척(goldSpend) 기술을 씁니다.
- * - 패스파인더 (1차): 경험치는 그대로, 누적 처치(scaling 'catch')과 환생 횟수(perCount rebirth)에 비례합니다.
+ * - 로그(섀도어): 골드를 벌어 태웁니다(v3.156 goldSpend: 액티브가 보유 골드를 태워 피해에 더하고, 패시브는 처치 골드 · 변종 조우를 올림).
+ * - 해적(캡틴): 골드·던전 주화에 수집가의 드롭을 넘겨받고, 보유 골드 비례(scaling 'gold') 기술을 씁니다.
+ * - 패스파인더 (1차): 경험치는 그대로, 렐릭의 힘(scaling 'relic' = 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫)에 비례합니다(v3.153).
  * - 와일드헌터 (1차): 던전 클리어 + 보스 처치(scaling 'hunt', perCount hunt)과 지정 몬스터 처치(perCount species), 사냥감 추가 피해(preyBonus).
  * - 엔젤릭버스터 (1차): 직업마다 AP 0 노래 패시브(song). 엔젤릭버스터 계보 전용(exclusiveLineage)입니다.
  * - ??? 계열: 숨은 조건(secret/unlocks.ts, v3.62 옛 문)으로 드러나는 독립 1차 직업을 더합니다.
@@ -32,7 +32,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     // v3.89 조커 행운 비례 비율 .3: 치명 피해 ×4 안팎의 엔드에서 다른 5차 최상위(보우마스터)를 넘지 않게. 파이널 컷(체력 · 마나 올인)은 그대로.
     jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
-    // ── 로그(섀도어): 변종 기록(√변종·황금 처치 수) 비례 ──
+    // ── 로그(섀도어): 보유 골드를 태우는 메소 익스플로전(goldSpend) ──
     relicToss: { chance: .26, cooldown: 3, multiplier: 1.3, goldSpend: { ratio: .005, capAttack: .25, scale: 1 } },
     spoilsStrike: { goldSpend: { ratio: .01, capAttack: .4, scale: 1 } },
     treasureStrike: { goldSpend: { ratio: .01, capAttack: .6, scale: 1 } },
@@ -94,7 +94,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     apexLore: { desc: '빈사 기준이 오르고, 사냥 기록·지정 몬스터 처치에 비례해 크게 강해집니다.', bonus: { executeBonus: .06 }, perCount: [{ source: 'hunt', per: 4, bonus: { attack: 4, magic: 4, hp: 10 }, cap: 60 }, { source: 'species', per: 25, bonus: { critDamage: .01, penetration: .002 }, cap: 25 }] },
 };
 
-/** 새 기술: 도박·수집·상인·생태 보강 액티브, 음유시인 노래, ??? 문 직업 기술. 액티브 수치는 SUPPORT_BALANCE. */
+/** 새 기술: 도박·수집·상인·생태 보강 액티브, 음유시인 노래, ??? 직업 기술. 액티브 수치는 SUPPORT_BALANCE. */
 export const SUPPORT_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'allOrNothing', name: '배수진', desc: '', level: 70, job: 'luckDeity', cost: 6, effect: 'drain', masteryMilestones: [4000, 18000, 60000, 150000] },
     { ...A, ...physical, id: 'relicToss', name: '유물 던지기', desc: '', level: 10, job: 'relicScavenger', cost: 2 },

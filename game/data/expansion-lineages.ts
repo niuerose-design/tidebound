@@ -6,7 +6,7 @@ import type { Skill } from '../types';
  *
  * - 일반 계열은 21~28개, 이름 있는 계보는 4~8개가 되도록 짧은 계보에 후속 차수·분기를 더하고,
  *   상태이상(출혈·마비)과 복합(드래곤나이트·메카닉 (1차))에 새 계보를 둡니다.
- * - ??? 계열은 문이 걸린 기존 첫 직업의 후속 차수만 더합니다. 새 첫 직업을 만들지 않으므로 문 규칙은 그대로입니다.
+ * - ??? 계열은 기존 첫 직업의 후속 차수만 더합니다(새 첫 직업은 만들지 않음).
  * - 수치는 같은 차수의 기존 직업을 기준으로 잡고 scripts/check-job-balance.mjs로 중앙값 근처에 맞췄습니다.
  *   액티브의 발동률·배율·재사용 대기·마나는 expansion.ts와 같은 규칙(물리 30% 이하·마나 없음, 마법·복합 45% 이상·마나 사용)을 따릅니다.
  */
@@ -73,7 +73,7 @@ export const LINEAGE_JOBS: NewJob[] = [
     { id: 'beastTracker', name: '거수 추적자', title: '큰 발자국을 따른다', desc: '보스 사냥 계보의 2차 직업입니다. 창격으로 방어를 꿰뚫고, 패시브로 물리 공격과 명중을 올립니다.', ...neutral, bonus: { attack: 30 }, crit: .08, ...T2, parent: 'bossNaturalist', requires: { str: 26, dex: 26 }, requiresSkillMastery: { titanFieldNotes: 2 }, role: '보스·물리', tree: 'support' },
     { id: 'tidalSinger', name: '해조 가수', title: '파도가 따라 부른다', desc: '노래 계보의 2차 직업입니다. 합창으로 체력을 회복하고, 패시브로 경험치와 마나 회복을 올립니다.', ...neutral, bonus: { magic: 36, hp: 15, resist: 2 }, ...T2, parent: 'bard', requires: { wis: 30, int: 22 }, requiresSkillMastery: { tempoSong: 2 }, role: '회복·노래', tree: 'support' },
 
-    // ── ???: 문 직업의 후속 차수만 ──────────────────────────────
+    // ── ???: 히든 첫 직업의 후속 차수 ──────────────────────────────
 ];
 
 /** 새 계보. 계열 안의 위치는 classes.ts의 LINEAGES 순서를 따릅니다. */
@@ -82,10 +82,6 @@ export const NEW_LINEAGES = {
     nerveNeedler: { id: 'nerveNeedler', name: '마비 침술사 계보', tree: 'status' as const, summary: '체인아츠마다 서로 다른 자기 버프를 걸고, 살아 있는 버프 수만큼 세지는 자기 버프 계보입니다.' },
     tideLancer: { id: 'tideLancer', name: '조류 창기병 계보', tree: 'hybrid' as const, summary: '딜러와 불굴 탱커의 경계에 선 창술 계보입니다. 쓰러진 횟수와 보낸 턴에 비례해 강해지고, 5차에서는 쓰러질 피해를 한 번 버텨 냅니다.' },
     runesmith: { id: 'runesmith', name: '룬 대장장이 계보', tree: 'hybrid' as const, summary: '반사 탱커와 마법 딜러의 경계에 선 계보입니다. 약화를 걸고 물리 방어에 비례한 마법 피해로 때리며 충전을 쌓고, 충전이 차면 전탄발사로 쏟아냅니다.' },
-};
-
-/** 새 히든 직업의 실루엣 힌트. */
-export const LINEAGE_HINTS: Record<string, string> = {
 };
 
 const P = { type: 'passive' as const, chance: 0, cooldown: 0, multiplier: 0, rankEffects: { bonusScale: .3 } };

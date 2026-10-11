@@ -41,17 +41,10 @@ export type RaidId = 'balrog' | 'zakum' | 'horntail';
 export type AltarGaugeId = BlessingId | 'god' | RaidId;
 type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: number };
 /**
- * 축복: 게이지가 차면 서버 전체에 hours시간 동안 열립니다(1단계). 배율은 서버 이벤트와 곱해집니다.
- * v27.48 축복 단계: 진행 중에 게이지를 다시 채우면 단계가 오르고(최대 3단계) 시간도 hours만큼 늘어납니다.
- * 다음 단계 비용은 단계마다 ×LEVEL_STEP이라 3단계 유지는 비쌉니다. 축복이 끝나면 단계는 0으로 돌아갑니다.
- * v3.19 1·2·3단계 모두 유지 12시간(hours 12 = blessingCapMs): 열 때와 단계를 올릴 때마다 지금부터 12시간으로 맞춥니다.
- * 까미·누리는 숙련·경험치와 직결돼 다른 축복보다 비쌉니다.
+ * 축복: 게이지가 차면 서버 전체에 hours시간 동안 열립니다(1단계). 배율은 서버 이벤트와 곱해집니다. 까미·누리는 숙련·경험치와 직결돼 다른 축복보다 비쌉니다.
+ * 단계: 진행 중에 게이지를 다시 채우면 단계가 오르고(최대 BLESSING_MAX_LEVEL), 열 때와 올릴 때마다 지금부터 12시간(blessingCapMs)으로 맞춥니다. 끝나면 0단계로 돌아갑니다.
+ * 비용: 1~3단계는 단계마다 ×BLESSING_LEVEL_STEP, 4단계부터는 기여도 절대값 BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당, 고레벨 골드 싱크)이고 6단계 연장도 6단계 값입니다.
  */
-/**
- * v3.16 축복 4~6단계: 수백억 골드를 굴리는 고레벨 모험가의 싱크. 1~3단계는 그대로(×1.5), 4단계부터는 기여도 절대값
- * BLESSING_HIGH_COSTS(골드 3,000억 · 1조 · 3조 상당)이고 6단계 유지(연장)도 6단계 값입니다.
- */
-/** v3.16 1~3단계 단계 승수 2(4~6단계에 비해 너무 싸지 않게). */
 export const BLESSING_MAX_LEVEL = 6, BLESSING_LEVEL_STEP = 2, BLESSING_HIGH_FROM = 3;
 export const BLESSING_HIGH_COSTS = [300_000_000, 1_000_000_000, 3_000_000_000];
 /**
@@ -121,7 +114,6 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
 /**
  * v3.83 방어 재조정: 체력은 그대로 두고, 목표 몸의 중앙 직업이 한 번 도전(80턴)에 깎는 양으로 필요한 도전 횟수를 맞춥니다
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
- * 예전 혼테일 방어 15,000은 엔드 몬스터(100~150)의 100배라 직접 피해가 거의 들어가지 않았습니다. 지속 피해(체력 비례)는 그대로입니다.
  * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
  */

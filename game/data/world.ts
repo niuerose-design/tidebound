@@ -70,7 +70,7 @@ let stageIndex: Map<string, StageDef> | undefined;
 export const stageById = (id: string | undefined) => id === undefined ? undefined : (stageIndex ??= new Map(STAGES.map(st => [st.id, st]))).get(id);
 /**
  * v3.9 깊이 계수: 난이도 레벨 보정으로 사냥터가 평준화된 뒤에도 뒤 사냥터가 조금 더 어렵고 조금 더 주도록, 입장 레벨 순서(0부터)마다 +DEPTH_SCALE을 체력·공격·골드·경험치에 곱합니다.
- * 서식지는 자기 레벨 자리, 일반 던전은 지역 던전 순서 기준. 무릉도장·랜덤게임·까미·누리는 1.
+ * 서식지는 자기 레벨 자리, 일반 던전은 지역 던전 순서 기준. 무릉도장·까미·누리는 1.
  */
 export const DEPTH_SCALE = .04;
 const placeLevels = () => [...new Set(BASE_STAGES.map(st => st.level))].sort((a, b) => a - b);
@@ -316,6 +316,6 @@ export const PLAIN_DUNGEONS = DUNGEONS;
 let dungeonIndex: Map<string, (typeof DUNGEONS)[number]> | undefined;
 /** 던전 id로 찾기. */
 export const dungeonById = (id: string | undefined) => id === undefined ? undefined : (dungeonIndex ??= new Map(DUNGEONS.map(d => [d.id, d]))).get(id);
-/** v3.9 지역 던전(까미·누리·무릉도장·랜덤게임 제외)의 입장 레벨 순서 깊이 계수. */
+/** v3.9 지역 던전(까미·누리·무릉도장 제외)의 입장 레벨 순서 깊이 계수. */
 const REGION_DUNGEONS = () => PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && d.id !== 'masteryMimic' && d.id !== 'expNuri');
 export const dungeonDepth = (id: string) => { const d = REGION_DUNGEONS().find(x => x.id === id); return d ? 1 + DEPTH_SCALE * [...new Set(REGION_DUNGEONS().map(x => x.level))].filter(l => l < d.level).length : 1; };

@@ -255,7 +255,7 @@ export function pickSpecial(r: number, c: ReturnType<typeof specialChances>): Sp
     if (r < c.slimeP) return r < c.slimeP * c.king.slime ? 'kingSlime' : 'slime';
     return undefined;
 }
-/** v3.160 호루라기: 사냥터 출현(던전 · 랜덤게임 제외)에 한 번 쓰고 지웁니다. */
+/** v3.160 호루라기: 사냥터 출현(던전 제외)에 한 번 쓰고 지웁니다. */
 export function takeWhistle(s: State): ForcedRare | undefined {
     if (!s.whistle || s.dungeon) return undefined;
     const kind = s.whistle; delete s.whistle; return kind;
@@ -291,7 +291,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
         : onyx ? onyxEnemyStats(f, tier)
         : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: boss ? BOSS_PRESSURE_WAVE : s.dungeon.wave } : {}) });
     const base = dungeon ? dungeonKillReward(field, dLevel, tier, boss, dungeon.id) : killReward(field, tier, boss);
-    // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·랜덤게임·까미·누리는 1.
+    // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·까미·누리는 1.
     applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));
     const gold = base.gold;
     // v27.66 레벨 차 경험치 보정(EXP_LEVEL_GAP). 던전은 보상에 쓰는 몬스터 레벨(권장 + expLevelOver, 보스는 권장 레벨), 사냥터는 실제 몬스터 레벨 기준.

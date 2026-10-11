@@ -32,7 +32,7 @@ export const SKILLS: Skill[] = [
 const settings: Record<string, Partial<Skill>> = {
     hook: { cost: 2, manaCost: 0 },
     breath: { cost: 2, manaCost: 7, condition: 'wounded' }, pierce: { cost: 4, manaCost: 8 }, hunt: { cost: 5, manaCost: 12 },
-    wave: { cost: 4, manaCost: 10, damageType: 'magic', desc: '마법 공격 240% 피해, 적을 1턴 기절.' }, spring: { cost: 4, manaCost: 12, damageType: 'magic', condition: 'wounded', desc: '최대 체력 22% 회복, 마법 공격 250% 피해.' },
+    wave: { cost: 4, manaCost: 10, damageType: 'magic' }, spring: { cost: 4, manaCost: 12, damageType: 'magic', condition: 'wounded' },
     anchor: { cost: 3, manaCost: 6 }, focus: { cost: 2 },
 };
 for (const sk of SKILLS)
@@ -87,7 +87,7 @@ SKILLS.push(
 // 보스가 사용하는 일부 스킬은 같은 ID를 플레이어도 배울 수 있어, 몬스터의 기술을 직업으로 계승하는 구조를 유지합니다.
 SKILLS.push(
     { id: 'twinHook', name: '쌍갈고리', desc: '물리 공격 135% 피해 후 1회의 추가타(기본 위력의 58%).', type: 'active', level: 14, chance: .3, cooldown: 4, multiplier: 1.35, extraAttacks: 1, extraAttackMultiplier: .58, cost: 4, manaCost: 5 },
-    { id: 'chartedCurrents', name: '해류 측량', desc: '장비 드롭 확률 +30%, 골드 획득 +4%. 전투력 대신 더 좋은 항로를 찾습니다.', type: 'passive', level: 10, job: 'tideSurveyor', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { dropBonus: .03, goldBonus: .04 } },
+    { id: 'chartedCurrents', name: '해류 측량', desc: '장비 드롭 확률과 골드 획득이 오릅니다. 전투력 대신 더 좋은 항로를 찾습니다.', type: 'passive', level: 10, job: 'tideSurveyor', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { dropBonus: .03, goldBonus: .04 } },
     { id: 'pearlLedger', name: '진주 장부', desc: '획득 경험치가 오릅니다. 숙련할수록 장착 AP가 3 → 0으로 줄고 경험치 · 골드 보너스가 커집니다.', type: 'passive', level: 25, job: 'pearlBroker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { expBonus: .06 }, levelEffects: [{ cost: 3, bonus: { expBonus: .06 } }, { cost: 3, bonus: { expBonus: .08, goldBonus: .04 } }, { cost: 2, bonus: { expBonus: .1, goldBonus: .08 } }, { cost: 1, bonus: { expBonus: .12, goldBonus: .1 } }, { cost: 0, bonus: { expBonus: .15, goldBonus: .12, dungeonGoldBonus: .1 } }] },
     { id: 'salvageContract', name: '인양 계약', desc: '골드 획득 +10%, 던전 주화 +8%.', type: 'passive', level: 10, job: 'salvageMerchant', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { goldBonus: .1, dungeonGoldBonus: .08 } },
     { id: 'rareSense', name: '전리품 감지', desc: '장비 드롭 확률 +50%, 처치 골드 +4%. 몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.', type: 'passive', level: 25, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { dropBonus: .05, goldBonus: .04 } },
@@ -126,8 +126,6 @@ SKILLS.push(
 
 // 장기 성장의 누적 숙련 곡선. 직업 해금은 무료 기본 Lv.0이며
 // 각 숫자가 성장 Lv.1, 2, ...의 목표입니다. SP와 숙련이 같은 단계를 엽니다.
-// 올라운더: 원시 피해 = 40 + 직접 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12 (장비·버프 제외), 스킬 배율 2.2.
-// 물리 50%·마법 50%로 나눠 각각 방어를 적용하며, 일반 공격력은 더하지 않습니다. 수치는 검증 초안입니다.
 
 // v21 직업 확장 기술. 직업 레벨·숙련 곡선·밸런스 표는 아래 공통 처리에서 적용됩니다.
 SKILLS.push(...EXPANSION_SKILLS);
@@ -141,7 +139,7 @@ SKILLS.push(...DEFENSE_SKILLS);
 SKILLS.push(...INVERSION_SKILLS);
 // v25.26 외길 계보 기술.
 SKILLS.push(...MONOSTAT_SKILLS);
-// v24.2 보조 계열 개편·??? 문 직업 기술. 패시브 수치는 여기서 덮어씁니다(액티브는 skill-balance.ts).
+// v24.2 보조 계열 개편·??? 직업 기술. 패시브 수치는 여기서 덮어씁니다(액티브는 skill-balance.ts).
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);

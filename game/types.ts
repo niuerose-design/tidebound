@@ -639,7 +639,7 @@ export type State = {
     /** Paid inheritance is independent of growth and never fabricates mastery wins. */
     skillInheritances: Record<string, boolean>;
     skillPractice: Record<string, number>;
-    /** v3.31 승천할 때의 스킬 숙련. 연마 단계·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
+    /** v3.31 승천할 때의 스킬 숙련. 극한돌파·한계 돌파 조건은 이 값 위로 쌓인 숙련만 셉니다(refinePractice). */
     refineBase?: Record<string, number>;
     /** v3.31 승천 횟수와 기록, 이번 승천의 시작 시각. */
     ascension?: number;
@@ -877,7 +877,7 @@ export type State = {
         rares?: { mimic: number; nuri: number; slime: number };
     };
 };
-/** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
+/** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(삭제됨) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };

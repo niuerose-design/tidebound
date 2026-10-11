@@ -5,15 +5,12 @@ import { RARITIES } from './balance';
 import { ODDS } from './odds';
 
 /**
- * v3.12 칠흑의 보스: 무리 서식지에서만 아주 드물게 나오는 지역 보스. 집중 사냥 대상이 될 수 없고 변종·까미·누리와 겹치지 않습니다.
- * 능력치는 그 서식지에서 가장 강한 몬스터(난이도 보정 뒤)의 체력 ×hp, 공격 ×attack인 단일 개체이고, turns턴 안에 못 잡으면 떠납니다(도망 보상 없음).
- * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개를 받습니다(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
- * 엔드 콘텐츠 기준: 서식지 방치 시 출현 약 180회/시간 → 보스 약 13회/일(난이도 0). drop .003 · 천장 300이면 장신구 1개에 기대 약 15일, 최장 약 23일(난이도 50에서는 절반). v3.281 칠흑이 9종으로 늘어 천장을 400(기대 18일 · 최장 31일)에서 낮췄습니다.
- * v3.278 아쿠아로드 스우(루즈 컨트롤 머신 마크) · 리프레 데미안(마력이 깃든 안대)을 더해 칠흑 보스 9마리, 9종 모두 얻을 수 있습니다.
- * v3.276 장신구와 보스를 나눴습니다(ONYX_ITEMS · ONYX_BOSSES.drop). 윌은 칠흑 보스코어 ‘저주받은 마도서’, 진 힐라는 ‘고통의 근원’을 줍니다. 수집은 9종(장신구 8 + 마도서).
- * 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
- * v3.77 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음).
- * v3.125 power 6.37(Lv.100 650). 이미 가진 장신구는 불러올 때 위력과 고정 수치 옵션을 함께 맞춥니다(tuneOnyx).
+ * 칠흑의 보스(v3.12): 무리 서식지에서만 아주 드물게 나오는 지역 보스. 집중 사냥 대상이 될 수 없고 변종·까미·누리와 겹치지 않습니다.
+ * 능력치는 그 서식지에서 가장 강한 몬스터(난이도 보정 뒤)의 체력 ×hpMul(보스마다), 공격 ×attack인 단일 개체이고, turns턴 안에 못 잡으면 떠납니다(도망 보상 없음).
+ * 처치하면 drop 확률로 그 보스의 칠흑 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석 duplicatePearls). 장신구는 환생해도 남습니다.
+ * 보스 9마리(ONYX_BOSSES) · 수집 9종(장신구 8 + 윌의 보스코어 ‘저주받은 마도서’, ONYX_ITEMS). 보스마다 고유 성향·기술이 있습니다(data/encounters PROFILES onyx*).
+ * 엔드 기준 서식지 방치 시 보스 약 13회/일(난이도 0): drop .003 · 천장 300이면 장신구 1개에 기대 약 15일, 최장 약 23일(난이도 50에서는 절반).
+ * 무작위 옵션은 얻을 때 최고 굴림(systems/equipment tuneOnyx), 강화 파괴 시 12성으로 돌아갑니다. 위력은 (레벨 + 2) × power(onyxPower, Lv.100 650)이고 골드로 레벨을 올려 키웁니다(환생으로 저절로 오르지 않음). 이미 가진 장신구는 불러올 때 tuneOnyx가 맞춥니다.
  */
 // v3.52 출현·드롭 확률과 천장은 서버 전용(game/secret/odds.ts). 체력·공격·머무는 턴·옵션 수는 공개.
 export const ONYX = { get chance() { return ODDS.onyx.chance; }, get chancePerTier() { return ODDS.onyx.perTier; }, get pity() { return ODDS.onyx.pity; }, /** v3.188 체력 배율은 보스마다(ONYX_BOSSES[].hpMul). 공격은 서식지 최강 ×3 그대로. */ attack: 3, turns: 80, get drop() { return ODDS.onyx.drop; }, get dropPity() { return ODDS.onyx.dropPity; }, duplicatePearls: 5,

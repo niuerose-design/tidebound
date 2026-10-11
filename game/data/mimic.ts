@@ -37,7 +37,7 @@ export const KKAMI_IDS: ReadonlySet<string> = new Set([MIMIC.id, 'kingMimic']);
 /** v3.221 황금 올가미 표식: 숙련 로또를 한 단계 위로(이미 ‘대’면 그대로). */
 export function upgradeMimicTier(t: (typeof MIMIC.tiers)[number]) { const i = MIMIC.tiers.findIndex(x => x.mastery === t.mastery); return MIMIC.tiers[Math.min(MIMIC.tiers.length - 1, i + 1)]; }
 /** v3.31 행운의 편지 6~10단계(승천 후) 기능. */
-/** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 · 랜덤게임 제외). docs/currency-rank-review.md 1.4절. */
+/** v3.160 호루라기: SP를 내고 다음 사냥터 출현을 숙련의 까미 · 경험의 누리로 정합니다(하루 perDay개, 던전 제외). docs/currency-rank-review.md 1.4절. */
 export const WHISTLE = { sp: 5, perDay: 3 } as const;
 export const LETTER = { offlineRank: 6, /** v3.189 기본 부재중 배율(.5)보다 완화. */ offlineScale: .75, /** v3.287 8단계: ‘중’ 당첨 확률 상승(전에는 ‘대’). */ midRank: 8, /** v3.52 값은 서버 전용(odds). */ get midChance() { return ODDS.mimic.letterMid; }, recipientRank: 10, recipientShare: .01 } as const;
 type LetterState = { permanent?: Record<string, number> };
