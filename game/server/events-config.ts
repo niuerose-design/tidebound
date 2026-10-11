@@ -6,6 +6,8 @@
 import { db } from './db';
 import { setRuntimeEvents, setAltarEvents, SERVER_EVENTS, type ServerEvent } from '../data/events';
 import { BLESSINGS, blessingEffect, effectiveBlessingLevel } from '../data/altar';
+import { setMarketControl } from '../systems/market';
+import { readMarketControl } from './market-config';
 import { DEFAULT_CLOSURES, STAGES, setClosures, type Closures, stageById, dungeonById } from '../data/world';
 
 export type EventConfig = { extra: ServerEvent[]; disabled: string[] };
@@ -30,8 +32,9 @@ const cleanClosures = (c: Closures): Closures => ({ dungeons: [...new Set(c.dung
 export async function refreshEvents(now = Date.now()) {
     if (cached && now - cached.at < TTL) return;
     try {
-        const [config, closures, blessings] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now)]);
-        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings);
+        // v3.213 증권거래소 운영 스위치(장 폐쇄 · 서킷브레이커)도 같은 30초 캐시로 읽습니다.
+        const [config, closures, blessings, market] = await Promise.all([readEventConfig(), readClosures(), altarBlessingEvents(now), readMarketControl()]);
+        cached = { at: now, config }; setRuntimeEvents(config.extra, config.disabled); setClosures(closures); setAltarEvents(blessings); setMarketControl(market);
     }
     catch { cached = { at: now, config: cached?.config ?? { extra: [], disabled: [] } }; }
 }

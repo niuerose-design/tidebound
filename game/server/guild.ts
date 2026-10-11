@@ -3,7 +3,7 @@ import { db, type GuildRow, type GuildMemberRow } from './db';
 import { ApiError } from './store';
 import { addLog } from '../systems/state';
 import { guildStatsFor } from '../systems/progress';
-import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_DONATIONS, GUILD_CODE_LENGTH, randomInviteCode, normalizeGuildCode, makeGuildGoals, guildGoalProgress, guildPoints, emptyTotals, type GuildTotals } from '../data/guild';
+import { GUILD_MAX_MEMBERS, GUILD_CREATE_COST, GUILD_RENAME_COST, GUILD_CODE_LENGTH, randomInviteCode, normalizeGuildCode, makeGuildGoals, guildGoalProgress, guildPoints, emptyTotals, type GuildTotals } from '../data/guild';
 import { weekKey } from '../data/time';
 
 /**
@@ -13,7 +13,7 @@ import { weekKey } from '../data/time';
 const UPLOAD_MS = 5 * 60_000, REFRESH_MS = 10 * 60_000, BOARD_SIZE = 20;
 const cleanName = (name: unknown) => String(name ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 16);
 const randomCode = () => randomInviteCode(GUILD_CODE_LENGTH);
-const totalsOf = (g: { week: string } & GuildTotals, week: string): GuildTotals => g.week === week ? { catches: g.catches, clears: g.clears, bosses: g.bosses, abyss: g.abyss, donated: g.donated } : emptyTotals();
+const totalsOf = (g: { week: string } & GuildTotals, week: string): GuildTotals => g.week === week ? { catches: g.catches, clears: g.clears, bosses: g.bosses, abyss: g.abyss } : emptyTotals();
 const claimsOf = (m: GuildMemberRow, week: string) => m.week === week && m.claimed ? m.claimed.split(',').filter(Boolean) : [];
 /** 채팅 채널 판정용 소속 캐시(인스턴스 메모리, 5분). 탈퇴·추방은 즉시 지웁니다. */
 const channelCache = new Map<string, { guildId: string | null; until: number }>();
@@ -30,7 +30,7 @@ const cacheMember = (s: State, g: GuildRow, account: string, now: number) => { s
 
 export type GuildInfo = {
     week: string;
-    guild: null | { id: string; name: string; code?: string; leader: boolean; treasury: number; totals: GuildTotals; points: number; goals: { id: string; title: string; target: number; pearls: number; progress: number; claimed: boolean }[]; members: { account: string; name: string; leader: boolean; self: boolean; joinedAt: number; totals: GuildTotals; points: number }[] };
+    guild: null | { id: string; name: string; code?: string; leader: boolean; totals: GuildTotals; points: number; goals: { id: string; title: string; target: number; pearls: number; progress: number; claimed: boolean }[]; members: { account: string; name: string; leader: boolean; self: boolean; joinedAt: number; totals: GuildTotals; points: number }[] };
     board: { rank: number; id: string; name: string; points: number; self: boolean }[];
 };
 export async function guildInfo(account: string, now: number): Promise<GuildInfo> {
@@ -41,7 +41,7 @@ export async function guildInfo(account: string, now: number): Promise<GuildInfo
     const [g, members] = await Promise.all([database.getGuild(member.guild_id), database.listGuildMembers(member.guild_id)]);
     if (!g) { await database.removeGuildMember(account); forget(account); return { week, guild: null, board }; }
     const totals = totalsOf(g, week), claimed = claimsOf(member, week);
-    return { week, board, guild: { id: g.id, name: g.name, code: g.leader === account ? g.code : undefined, leader: g.leader === account, treasury: g.treasury, totals, points: guildPoints(totals),
+    return { week, board, guild: { id: g.id, name: g.name, code: g.leader === account ? g.code : undefined, leader: g.leader === account, totals, points: guildPoints(totals),
         goals: makeGuildGoals(members.length).map(goal => ({ ...goal, progress: guildGoalProgress(goal, totals), claimed: claimed.includes(goal.id) })),
         members: members.map(m => { const t = totalsOf(m, week); return { account: m.account_id, name: m.name, leader: m.account_id === g.leader, self: m.account_id === account, joinedAt: m.joined_at, totals: t, points: guildPoints(t) }; }) } };
 }
@@ -130,16 +130,6 @@ export async function renameGuild(account: string, s: State, rawName: unknown, n
     s.gold -= GUILD_RENAME_COST;
     cacheMember(s, { ...g, name }, account, now);
     addLog(s, `길드 이름 변경 · ${g.name} → ${name} · -${GUILD_RENAME_COST} G`, 'reward');
-}
-export async function donate(account: string, s: State, rawAmount: unknown, now: number) {
-    const { g } = await requireMember(account);
-    const amount = Number(rawAmount);
-    if (!GUILD_DONATIONS.includes(amount)) throw new ApiError('기부 금액을 확인하세요.');
-    if (s.gold < amount) throw new ApiError('골드가 부족합니다.');
-    const week = weekKey(now);
-    await Promise.all([db().bumpGuild(g.id, week, { donated: amount }), db().bumpGuildMember(account, week, { donated: amount })]);
-    s.gold -= amount;
-    addLog(s, `길드 금고 기부 · -${amount.toLocaleString()} G · 이번 주 길드 점수 +${Math.floor(amount / 1000)}`, 'reward');
 }
 export async function claimGoal(account: string, s: State, goalId: unknown, now: number) {
     const { m, g } = await requireMember(account);

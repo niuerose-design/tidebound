@@ -1,5 +1,5 @@
 /** 환생, 하드코어 소프트 리셋, 서약 선택과 전체 초기화 */
-import { tailwindExp, rebirthLevel, rebirthReward } from '../meta';
+import { tailwindExp, tailwindLevel, rebirthLevel, rebirthReward } from '../meta';
 import { ASCENSION, ASCENSION_RESEARCH, ASCENSION_LOG_KEEP, ASCENSION_PERKS, ascensionOf, ascensionPerk, ascensionRequirement } from '../../data/ascension';
 import { AUTO_REBIRTH_LEVELS, RESEARCH_PLAN_MAX, runResearchPlan } from '../research-plan';
 import { FOLLOW_STAGE, FOLLOW_TIDE, rotationChoices, type FollowRule } from '../automation';
@@ -11,6 +11,7 @@ import { stats } from '../stats';
 import { salvageRate, startingLevel, researchRank, researchById } from '../../data/economy';
 import { PROGRESSION } from '../../data/progression';
 import { saleValue, dismantleEssence, dismantleInto, primalGaugeGain, keepsAcrossLives, syncRelicPower } from '../equipment';
+import { spendAutoAttributes } from '../encounter';
 import { grantOnyxMilestones } from '../onyx-grant';
 import type { State, Vows, RebirthRecord, AscensionRecord } from '../../types';
 /** v27.63 세이브에 남기는 최근 환생 기록 수. */
@@ -45,7 +46,11 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
     }
     fresh.abyssBest = s.abyssBest;
     fresh.shopSerial = s.shopSerial;
-    Object.assign(s, { ...fresh, limitBreaks: s.limitBreaks, abyssMilestones: s.abyssMilestones, name: s.name, pearls: next.pearls, essence: s.essence || 0, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, researchLegacy: s.researchLegacy, goldLog: s.goldLog, goldEarned: s.goldEarned, appraisal: s.appraisal, primalDropPity: s.primalDropPity, primalGauge: s.primalGauge, plainCodex: s.plainCodex, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, randomGameStats: s.randomGameStats, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, onyxMilestones: s.onyxMilestones, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    Object.assign(s, { ...fresh, limitBreaks: s.limitBreaks, abyssMilestones: s.abyssMilestones, lv1AbyssBest: s.lv1AbyssBest, name: s.name, pearls: next.pearls, essence: s.essence || 0, dungeonCoins: s.dungeonCoins || 0, dungeonCoinFrac: s.dungeonCoinFrac || 0, market: s.market, story: s.story, bossLootMiss: s.bossLootMiss || 0, bossCores: s.bossCores, coreSlot: s.coreSlot, rebirths: next.rebirths, permanent: s.permanent, researchGranted: s.researchGranted, researchLegacy: s.researchLegacy, goldLog: s.goldLog, goldEarned: s.goldEarned, extremeFx: s.extremeFx, support: s.support, expEarned: s.expEarned, masteryLog: s.masteryLog, masteryEarned: s.masteryEarned, appraisal: s.appraisal, primalDropPity: s.primalDropPity, primalGauge: s.primalGauge, plainCodex: s.plainCodex, book: s.book, /** v27.80 변종·황금 개체·난이도 이정표·최고 난이도 기록도 환생 뒤에 남깁니다(전에는 초기화되던 버그). */ variantBook: s.variantBook, goldenBook: s.goldenBook, tideBest: s.tideBest, bookTier: s.bookTier, clears: s.clears, kills: s.kills, rank: s.rank, badge: s.badge, playMs: s.playMs || 0, lifeStart: s.lifeStart, rebirthLog: s.rebirthLog, deaths: s.deaths, starforce: s.starforce, onyxSeen: s.onyxSeen, onyxBook: s.onyxBook, onyxMiss: s.onyxMiss, onyxMilestones: s.onyxMilestones, rating: s.rating, wins: s.wins, losses: s.losses, lastDuel: s.lastDuel, bestStage: s.bestStage, sp: s.sp, peakLevel: s.peakLevel, learned: s.learned, skillSpent: s.skillSpent, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited, hacker: s.hacker, skillPractice: s.skillPractice, jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, bookClaims: s.bookClaims, itemBook: s.itemBook, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, voyage: s.voyage, tutorial: s.tutorial, achievements: s.achievements, achievementClaims: s.achievementClaims, daily: s.daily, weekly: s.weekly, abyssWeek: s.abyssWeek, account: s.account, guildMember: s.guildMember, guildStats: s.guildStats, duelSeason: s.duelSeason, altar: s.altar });
+    // v3.201 처치 경험치 기록은 레벨이 다시 낮아지는 새 생에 맞지 않아 지웁니다(골드 기록은 운영 통계라 남김).
+    delete s.expLog;
+    // v3.246 정수 포식으로 오른 기본 능력치는 환생하면 초기화됩니다.
+    delete s.devoured;
     syncRelicPower(s);
     s.hp = stats(s).hp;
     s.mana = stats(s).mana;
@@ -53,12 +58,13 @@ function startLife(s: State, now: number, next: { pearls: number; rebirths: numb
 
 /** 환생: 요구 레벨을 넘긴 생을 마치고 다음 생을 시작합니다. v3.40 자동 환생(systems/automation)도 이 함수를 씁니다. */
 export function rebirthNow(s: State, now: number) {
+    if (s.vows?.lv1) throw Error('LV1 모험가 서약 중에는 환생할 수 없습니다. 먼저 서약을 포기하세요.');
     // v3.31 환생 상한: 200회부터는 환생할 수 없고 승천만 할 수 있습니다.
     if (s.rebirths >= ASCENSION.rebirthCap)
         throw Error(`환생은 ${ASCENSION.rebirthCap}회까지입니다. 승천할 수 있습니다.`);
     if (s.level < rebirthLevel(s))
         throw Error(`레벨 ${rebirthLevel(s)}부터 환생할 수 있습니다.`);
-    const base = rebirthReward(s, stats(s).rebirthBonus || 0);
+    const base = rebirthReward(s);
     // 하드코어: 이번 생에 한 번도 쓰러지지 않고(쓰러지면 서약이 풀림) 환생하면 세계석 보너스.
     const breath = s.vows?.breath ? Math.floor(base * breathBonus(s)) : 0, pearls = base + breath;
     const vows = cleanVows(s, s.nextVows);
@@ -69,6 +75,8 @@ export function rebirthNow(s: State, now: number) {
     // v27.80 지겨운 환생: 직전 직업·스킬·능력치 비율을 기억했다가 숙달한 것만 복원합니다.
     const habit = researchRank(s, 'habit'), prevJob = jobById(s.job), prevMastered = !!prevJob && jobMastered(s, prevJob), prevSkills = [...s.skills], prevAttr = { ...s.attributes };
     startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1 });
+    // v3.295 새 생의 기본 편성(달팽이 세마리)은 직전 생에 끼고 있던 경우에만 남깁니다(환생마다 다시 빼야 했음).
+    if (!prevSkills.includes('hook')) s.skills = s.skills.filter(id => id !== 'hook');
     // v3.114 환생 50 · 100회 이정표 칠흑(캐릭터 평생 한 번씩).
     grantOnyxMilestones(s);
     s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);
@@ -82,7 +90,7 @@ export function rebirthNow(s: State, now: number) {
     // v27.86 절제: 새 생의 편성을 AP·장착 개수 상한에 맞춥니다.
     if (s.vows?.restraint) trimLoadout(s);
     addLog(s, `새로운 모험이 시작됩니다. 환생 세계석 +${pearls}${breath ? ` · 하드코어 +${breath}` : ''}`);
-    addLog(s, `순풍 · Lv.${rebirthLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
+    addLog(s, `순풍 · 직전 생 최고 레벨 Lv.${tailwindLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 환생 요구 레벨 Lv.${rebirthLevel(s)} 너머는 필요 경험치가 레벨마다 크게 늘어납니다`, 'reward');
     if (s.vows) addLog(s, `서약 · ${VOW_IDS.filter(id => s.vows![id]).map(id => (LEVELED_VOWS as readonly string[]).includes(id) ? `${VOW_NAMES[id]} ${s.vows![id]}단계` : VOW_NAMES[id]).join(' · ')}`, 'system');
     if (habit >= 1 && prevJob && prevMastered && prevJob.id !== s.job && canChangeJob(s, prevJob.id)) {
         s.job = prevJob.id; if (!s.unlockedJobs.includes(prevJob.id)) s.unlockedJobs.push(prevJob.id); grantJobSkills(s);
@@ -95,6 +103,8 @@ export function rebirthNow(s: State, now: number) {
         const total = Object.values(prevAttr).reduce((a, b) => a + b, 0);
         if (total > 0 && s.statPoints > 0) { const points = s.statPoints; let used = 0; for (const key of Object.keys(prevAttr) as (keyof typeof prevAttr)[]) { const n = Math.floor(points * prevAttr[key] / total); s.attributes[key] += n; used += n; } s.statPoints -= used; if (used) addLog(s, `지겨운 환생 · 능력치 ${used}포인트를 이전 비율로 배분`, 'system'); }
     }
+    // v3.242 능력치 자동 배분: 새 생의 포인트를 직전 생 비율로 나눕니다.
+    if (s.autoAttr && s.statPoints > 0) { const n = spendAutoAttributes(s, Object.values(s.attributes).some(x => x > 0) ? s.attributes : prevAttr); if (n) addLog(s, `능력치 자동 배분 · ${n}포인트를 직전 생 비율로 나눴습니다`, 'system'); }
 }
 
 /**
@@ -102,10 +112,8 @@ export function rebirthNow(s: State, now: number) {
  * 요구 레벨도 보지 않습니다. 모든 서약이 풀립니다. 자동 사냥 중이었다면 첫 사냥터에서 이어갑니다.
  */
 export function breathReset(s: State, now: number) {
-    const running = s.running, runs = s.randomGameRuns, runDay = s.randomGameDay;
+    const running = s.running;
     startLife(s, now, { pearls: s.pearls, rebirths: s.rebirths });
-    // v27.86 같은 생을 다시 시작하는 것이라 랜덤게임 입장 횟수는 그대로 둡니다.
-    if (runs) { s.randomGameRuns = runs; s.randomGameDay = runDay; }
     delete s.vows;
     s.running = running;
     addLog(s, '하드코어 · 쓰러져 이번 생을 처음부터 다시 시작합니다. 서약이 풀렸습니다.', 'system');
@@ -147,6 +155,7 @@ export function ascend(s: State, now: number) {
     const n = ascensionOf(s), need = ascensionRequirement(s);
     if (s.rebirths < need) throw Error(`환생 ${need}회부터 승천할 수 있습니다.`);
     if (s.dungeon) throw Error('던전에서 나온 뒤 승천하세요.');
+    if (s.vows?.lv1) throw Error('LV1 모험가 서약 중에는 승천할 수 없습니다. 먼저 서약을 포기하세요.');
     const record: AscensionRecord = { n: n + 1, at: now, rebirths: s.rebirths, abyssBest: s.abyssBest || 0, realMs: Math.max(0, now - (s.ascensionStart || now)), kills: s.kills };
     const refineBase: Record<string, number> = { ...(s.refineBase || {}) };
     for (const [id, practice] of Object.entries(s.skillPractice || {})) {
@@ -155,14 +164,17 @@ export function ascend(s: State, now: number) {
     }
     const refund = achievementRefund(s), pastLog = s.ascensionLog || [];
     const fresh = newState(now);
-    // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.
+    // v3.242 칠흑 장신구(별 · 각성 · 착용 그대로)와 칠흑 격파 기록은 보스 코어처럼 승천해도 남습니다.
+    fresh.inventory = s.inventory.filter(i => i.onyx);
+    for (const [slot, item] of Object.entries(s.equipment)) if (item?.onyx) fresh.equipment[slot] = item;
+    // 남기는 것: 숙련·직업, 업적·계급장·칭호, 기록, 칠흑 장신구, 진행이 아닌 것(이름·길드·제단·목표·설정·계정·분신), 해커, 마이그레이션 표시.
     const keep: Partial<State> = {
         name: s.name, rank: s.rank, title: s.title, badge: s.badge, achievements: s.achievements, achievementClaims: s.achievementClaims,
-        rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, randomGameStats: s.randomGameStats, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
+        rebirthLog: s.rebirthLog, kills: s.kills, deaths: s.deaths, playMs: s.playMs || 0, bestStage: s.bestStage, tideBest: s.tideBest, clears: s.clears, modeClears: s.modeClears, starforce: s.starforce, rating: s.rating, wins: s.wins, losses: s.losses, duelDay: s.duelDay,
         guildMember: s.guildMember, guildStats: s.guildStats, altar: s.altar, daily: s.daily, weekly: s.weekly, duelSeason: s.duelSeason,
-        autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, swarmCap: s.swarmCap,
+        autoSell: s.autoSell, autoVend: s.autoVend, autoSellGrades: s.autoSellGrades, autoVendGrades: s.autoVendGrades, salvageMode: s.salvageMode, presets: s.presets, skillPins: s.skillPins, skillHidden: s.skillHidden, skipStatConfirm: s.skipStatConfirm, autoAttr: s.autoAttr, swarmCap: s.swarmCap,
         account: s.account, hacker: s.hacker, hackFeed: s.hackFeed, doorsOpened: s.doorsOpened, shopSerial: s.shopSerial, logId: s.logId,
-        newsMark: s.newsMark, onyxMilestones: s.onyxMilestones, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled, offlineRescaled: s.offlineRescaled,
+        newsMark: s.newsMark, /** v3.215 모험 일지는 승천해도 남습니다. */ story: s.story, /** v3.202 보스 코어는 승천해도 남습니다(금고 없음). */ lv1AbyssBest: s.lv1AbyssBest, bossCores: s.bossCores, coreSlot: s.coreSlot, bossLootMiss: s.bossLootMiss, onyxMilestones: s.onyxMilestones, onyxBook: s.onyxBook, onyxSeen: s.onyxSeen, onyxMiss: s.onyxMiss, letterLog: s.letterLog, goldLog: s.goldLog, goldEarned: s.goldEarned, extremeFx: s.extremeFx, support: s.support, expEarned: s.expEarned, masteryLog: s.masteryLog, masteryEarned: s.masteryEarned, autoRebirth: s.autoRebirth, researchPlan: s.researchPlan, autoFollow: s.autoFollow, rotation: s.rotation, relicRefunded: s.relicRefunded, autoStarRefunded: s.autoStarRefunded, plainCodex: s.plainCodex, masteryRescaled: s.masteryRescaled, rankRescaled: s.rankRescaled, offlineRescaled: s.offlineRescaled,
         jobMastery: s.jobMastery, unlockedJobs: s.unlockedJobs, skillPractice: s.skillPractice, skillInheritances: s.skillInheritances, legacyInherited: s.legacyInherited,
         learned: Object.fromEntries(Object.keys(s.learned || {}).map(id => [id, 1])),
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.
@@ -273,6 +285,31 @@ export const lifecycleActions: ActionHandlers = {
         const { weekly, goal } = rerollBoardGoal(s, id, now);
         addLog(s, `${weekly ? '주간' : '오늘의'} 목표 다시 뽑기 · ${goalText(goal)} · 세계석 +${goal.pearls}`, 'system');
     },
+    /** v3.210 LV1 모험가(테스트용 서약): id 'start'면 지금 바로 걸고(레벨 · 경험치 · 배분 능력치 보관 → Lv.1), 'quit'면 포기하고 보관한 상태로 돌아갑니다. */
+    lv1Vow(s, { id }) {
+        if (id === 'start') {
+            if (s.vows?.lv1) throw Error('이미 LV1 모험가 서약 중입니다.');
+            if (hasVows(s.vows)) throw Error('다른 서약이 걸린 생에는 LV1 모험가를 걸 수 없습니다(서약은 함께 걸 수 없음).');
+            if (s.dungeon) throw Error('던전에서 나온 뒤 거세요.');
+            const fresh = newState(s.lastTick);
+            s.vows = { ...(s.vows || {}), lv1: { level: s.level, exp: s.exp, attributes: { ...s.attributes }, statPoints: s.statPoints } };
+            s.level = 1; s.exp = 0; s.attributes = { ...fresh.attributes }; s.statPoints = fresh.statPoints;
+            const a = stats(s); s.hp = a.hp; s.mana = a.mana;
+            addLog(s, 'LV1 모험가(테스트용) 서약을 걸었습니다 · 레벨 1 고정 · 환생 불가 · 레벨 제한 무시 · 언제든 포기하면 원래 레벨로 돌아갑니다.', 'system');
+            return;
+        }
+        if (id === 'quit') {
+            const saved = s.vows?.lv1;
+            if (!saved) throw Error('LV1 모험가 서약 중이 아닙니다.');
+            s.level = saved.level; s.exp = saved.exp; s.attributes = { ...saved.attributes }; s.statPoints = saved.statPoints;
+            const rest = { ...s.vows! }; delete rest.lv1;
+            s.vows = Object.keys(rest).length ? rest : undefined;
+            const a = stats(s); s.hp = Math.min(s.hp, a.hp); s.mana = Math.min(s.mana, a.mana);
+            addLog(s, `LV1 모험가 서약을 포기했습니다 · Lv.${saved.level}로 돌아왔습니다${s.lv1AbyssBest ? ` · 기록 무릉도장 ${s.lv1AbyssBest}층` : ''}.`, 'system');
+            return;
+        }
+        throw Error('start 또는 quit');
+    },
     nextVow(s, { id, a }) {
         // v25.6 조건 카드: value는 'stage:<id>' · 'tree:<id>' · 'gold' · 'off'.
         if (id === 'focus') {
@@ -308,6 +345,6 @@ export const lifecycleActions: ActionHandlers = {
         const name = s.name;
         Object.assign(s, newState(now), { name });
         // newState에 없는 선택 필드도 함께 지웁니다(계정당 첫 재분배 사용 여부는 유지).
-        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'randomGameStats', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades'] as const) delete s[key];
+        for (const key of ['vows', 'nextVows', 'goldenBook', 'variantBook', 'tideBest', 'bookTier', 'masteryCarry', 'autoSell', 'autoVend', 'autoSellGrades', 'autoVendGrades'] as const) delete s[key];
     },
 };

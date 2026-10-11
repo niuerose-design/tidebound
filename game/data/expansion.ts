@@ -120,9 +120,9 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'voidRay', name: '공허 광선', desc: '', level: 40, job: 'tripleCaster', chance: .5, cooldown: 4, multiplier: 2.6, cost: 4, manaCost: 18, multicast: true },
     { ...P, id: 'chantReservoir', name: '영창 저수지', desc: '마법 공격·최대 마나·마나 회복이 오릅니다.', level: 40, job: 'tripleCaster', cost: 3, bonus: { magic: 45, mana: 40, manaRegen: 2 } },
     { ...A, ...magic, id: 'stormChant', name: '폭풍 영창', desc: '', level: 55, job: 'chantMaster', chance: .55, cooldown: 4, multiplier: 4, cost: 5, manaCost: 24, multicast: true, masteryMilestones: M4 },
-    { ...P, id: 'masterCadence', name: '대가의 운율', desc: '마법 공격·최대 마나·마나 회복이 크게 오릅니다.', level: 55, job: 'chantMaster', cost: 3, bonus: { magic: 50, mana: 60, manaRegen: 3 }, masteryMilestones: M4 },
+    { ...P, id: 'masterCadence', name: '대가의 운율', desc: '마법 공격·최대 마나·마나 회복이 크게 오르고, 싸이킥 포스 · 스매싱 · 그랩 · 얼티메이트-트레인의 피해가 50% 커집니다.', level: 55, job: 'chantMaster', cost: 3, bonus: { magic: 50, mana: 60, manaRegen: 3 }, boostSkills: { ids: ['twinSpark', 'emberVerse', 'frostLance', 'voidRay'], value: .5 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'infiniteChant', name: '무한 영창', desc: '', level: 70, job: 'thousandChants', chance: .6, cooldown: 5, multiplier: 6.2, cost: 6, manaCost: 34, multicast: true, masteryMilestones: M5 },
-    { ...P, id: 'endlessVerse', name: '끝없는 절', desc: '마법 공격·최대 마나·마나 회복·치명 피해가 크게 오릅니다.', level: 70, job: 'thousandChants', cost: 3, bonus: { magic: 110, mana: 120, manaRegen: 4, critDamage: .15 }, masteryMilestones: M5 },
+    { ...P, id: 'endlessVerse', name: '끝없는 절', desc: '마법 공격·최대 마나·마나 회복·치명 피해가 크게 오르고, 싸이킥 포스 · 스매싱 · 그랩 · 얼티메이트-트레인의 피해가 50% 커집니다.', level: 70, job: 'thousandChants', cost: 3, bonus: { magic: 110, mana: 120, manaRegen: 4, critDamage: .15 }, boostSkills: { ids: ['twinSpark', 'emberVerse', 'frostLance', 'voidRay'], value: .5 }, masteryMilestones: M5 },
     { ...A, ...magic, id: 'manaBolt', name: '마력 화살', desc: '', level: 10, job: 'apprentice', chance: .55, cooldown: 2, multiplier: 1.45, cost: 2, manaCost: 8 },
     { ...P, id: 'arcaneStudy', name: '마법 이론', desc: '마법 공격이 오릅니다.', level: 10, job: 'apprentice', cost: 2, bonus: { magic: 16 } },
     { ...A, ...magic, id: 'fireball', name: '화염구', desc: '', level: 25, job: 'mage', chance: .55, cooldown: 3, multiplier: 1.5, cost: 3, manaCost: 14, effect: 'burn' },
@@ -156,10 +156,15 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'plagueVessel', name: '역병의 그릇', desc: '지속 피해와 방어 관통이 오릅니다.', level: 40, job: 'plagueDoctor', cost: 3, bonus: { dotBonus: .2, penetration: .04 } },
     { ...A, ...magic, id: 'rotBloom', name: '부패의 꽃', desc: '', level: 55, job: 'plagueLord', chance: .5, cooldown: 4, multiplier: 1.8, cost: 5, manaCost: 16, effect: 'poison', dotRatio: .16, statusTurns: 4, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M4 },
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
-    // v3.132 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 계보 밖에서 계승하면 발동률 절반(outsiderChance). 각성 지속 배율 없이 적힌 턴 그대로.
-    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 2.3, cost: 6, manaCost: 22, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .5, damageBonusCondition: 'bleeding', conditionalDamageBonus: .6, masteryMilestones: M5 },
-    // v3.132 도트 퍼니셔: 일반 액티브(대기 0 · 비용 6, AP 부담이 대가). 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
-    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 0, multiplier: 2.4, cost: 6, manaCost: 20, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1 }, damageBonusCondition: 'bleeding', conditionalDamageBonus: .5, masteryMilestones: M5 },
+    // v3.132 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 각성 지속 배율 없이 적힌 턴 그대로.
+    // v3.282 피해 없이 상태이상만 겁니다(statusOnly). 발동률 100%, 각성 대기 5턴, 계보 밖에서 계승하면 발동률 25%(outsiderChance). 마나 ×10.
+    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 5, awakenCooldown: 5, multiplier: 1, statusOnly: true, cost: 6, manaCost: 220, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .25, masteryMilestones: M5 },
+    // v3.132 도트 퍼니셔: 일반 액티브. 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
+    // v3.282 배율 2.4 → 4, 상태이상 적 추가 피해(+50%) 삭제, 마나 ×10, 대기 4턴. 둘 다 최대 중첩인 적에게 쓰면 대기가 바로 초기화됩니다(fullReset). v3.283 발동률 100%.
+    { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 4, multiplier: 4, cost: 6, manaCost: 200, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1, fullReset: true }, masteryMilestones: M5 },
+    // v3.282 핵심 패시브(아케인 에임(불,독)): 이 패시브가 있어야 5차 핵심 개편(data/core-passive)이 적용됩니다(직업 마법 ×1.55 → ×1.09 + 핵심 몫).
+    // v3.283 포이즌 노바 · 도트 퍼니셔 마나 ×10에 맞춰 최대 마나 · 마나 회복을 더합니다(아델 '루인'과 같은 크기).
+    { ...P, id: 'plagueAscendant', name: '파멸의 조준', desc: '마법 공격 · 최대 마나 · 마나 회복 · 지속 피해 · 방어 관통이 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { magic: 150, mana: 1000, manaRegen: 30, dotBonus: .2, penetration: .05 }, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },
     { ...P, id: 'spiritWard', name: '정령의 가호', desc: '마법 방어·최대 마나와 마력 평타 계수가 오릅니다.', level: 10, job: 'shaman', cost: 2, bonus: { resist: 14, mana: 15, arcaneRatioBonus: .5 } },

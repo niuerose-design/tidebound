@@ -92,6 +92,8 @@ function body(j) {
     Object.assign(s, { level: LEVEL, rebirths: REBIRTHS, job: j.id, attributes: attrs, inventory: [], permanent: { ...RESEARCH_BY_MAIN[main] }, book: BOOK ? Object.fromEntries(MONSTERS.map(f => [f.id, BOOK])) : {}, ...(BOOK ? { clears: { record: BOOK }, gold: 1e9, variantBook: Object.fromEntries(MONSTERS.map(f => [f.id, { giant: Math.round(BOOK * VARIANT_SHARE) }])) } : {}), unlockedJobs: JOBS.map(x => x.id), deaths: DEATHS, playMs: TURNS * 2000 });
     s.equipment = { ...GEAR[magic ? 'magic' : 'physical'] };
     s.jobMastery = { [j.id]: 0 };
+    // v3.231 이계 전투 직업은 연료가 가득 찬 몸으로 잽니다(연료 0이면 절전 모드).
+    s.fuel = 100_000;
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
     // v3.86 추가 판정을 켜면 그 AP를 빼고 편성합니다.
     if (EXTRA) { s.permanent.extraRoll = EXTRA; s.extraRolls = EXTRA; }

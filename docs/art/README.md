@@ -10,6 +10,7 @@
 | 몬스터·보스 | `public/art/monsters/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
 | 직업 계보 | `public/art/jobs/` | `{계보 id}.png` 또는 `.webp` | 512×512, 정방형 |
 | 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
+| 스토리 삽화 | `public/art/story/` | 장 배너 `chapter-{0~5}`, 장면 `{장면 id}` (.png/.webp). 프롬프트 · 목록은 `docs/art/story-prompts.md` | 배너 1600×400, 장면 1280×720 |
 
 - 몬스터 id는 `game/data/maple-monsters.ts`(원작 이름과 함께), 직업 계보 id는 `game/data/maple-names.ts`에 있습니다. 대소문자를 그대로 지킵니다.
 - 같은 id에 png·webp가 둘 다 있으면 png를 씁니다.
@@ -49,3 +50,20 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 ## 실루엣(폴백) 규칙
 
 어종마다 `game/data/art.ts`의 `MONSTER_SHAPES`에 모양 하나를 적어 둡니다(물고기·비단잉어·가오리·곰치·오징어·게·해파리·상어·복어·해마·아귀·망령·거수). 새 어종을 추가하면 이 표에도 넣어야 하며, 테스트가 빠진 어종을 잡습니다.
+
+## 계보 문장(엠블럼) 그림 (v3.223)
+
+`public/art/jobs/`의 계보 그림 53장은 모두 임시 문장(엠블럼) 그림입니다. 원형 배지(테두리는 계열 색: 물리 · 마법 · 방어 · 상태이상 · 복합 · 보조 · ???) 안에 계보의 상징을 SVG로 그려 512×512 WebP로 뽑았습니다. 수련 계보 6개는 계열 색만 다른 두루마리를 함께 씁니다.
+그린 그림으로 바꿀 때는 같은 이름의 `.png`를 넣으면 png가 우선합니다.
+
+### 아제로스 계보
+
+`public/art/jobs/{kkamiHunter,nuriTracker,darkFollower,onyxAvatar}.webp`는 임시 문장(엠블럼) 그림입니다. 원형 배지 안에 계보의 상징을 SVG로 그려 512×512로 뽑았습니다.
+그린 그림으로 바꿀 때는 같은 이름의 `.png`를 넣으면 png가 우선합니다(웹p는 지워도 됨). 프롬프트는 위 ‘직업 계보’ 공통 스타일 뒤에 붙입니다.
+
+| 계보 id | 이름 | 지금 그림 | 프롬프트(뒤에 붙임) |
+|---|---|---|---|
+| `kkamiHunter` | 까미 사냥꾼 | 금빛 올가미가 감은 고양이 귀 보물상자(까미) · 금화 | `, a hunter holding a glowing golden lasso, a cat-eared mimic treasure chest peeking nearby, scattered gold coins` |
+| `nuriTracker` | 누리 추적자 | 후광 · 하얀 날개 · 하얀 발자국 | `, a tracker following a trail of small white glowing paw prints, angel halo and white feathers drifting` |
+| `darkFollower` | 어둠의 추종자 | 두건 쓴 그림자와 둘레를 도는 보스 코어 7개 | `, a hooded shadowy figure with glowing violet eyes, seven colored crystal cores orbiting around them` |
+| `onyxAvatar` | 칠흑의 화신 | 금테 두른 칠흑 결정 불꽃과 일곱 조각 | `, an avatar wreathed in black onyx flame, seven onyx shards with golden rims floating in an arc, faint violet glow` |

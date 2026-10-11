@@ -5,8 +5,6 @@ export type Stats = {
     goldBonus?: number;
     /** Additional item drop chance in percentage points (0.05 = +5%). */
     dropBonus?: number;
-    /** Additional pearls granted on reincarnation, kept as a data-driven stat. */
-    rebirthBonus?: number;
     /** Extra gold multiplier applied to dungeon clear rewards. */
     dungeonGoldBonus?: number;
     magic?: number;
@@ -52,6 +50,8 @@ export type Stats = {
     bossDamage?: number;
     /** v3.12 체력·물리/마법 공격·물리/마법 방어 배율 가산(0.05 = +5%). */
     allStats?: number;
+    /** v3.221 물리/마법 공격 · 물리/마법 방어 배율 가산(체력 · 마나 제외, 0.05 = +5%). 아제로스 패시브. */
+    combatScale?: number;
     stunBonus?: number;
     controlBonus?: number;
     dotTurnsBonus?: number;
@@ -93,8 +93,10 @@ export type Stats = {
 };
 export type CombatStats = Required<Stats>;
 /** 진행도 비례 기능이 세는 기록. */
-export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
+export type CountSource = 'codex' | 'catch' | 'hunt' | 'species' | 'gold' | 'rebirth' | 'mastered' | 'variant' | 'deaths' | /** v3.144 보낸 턴(누적 플레이 시간 ÷ 턴 길이, 환생해도 유지) */ 'turns' | /** v3.220 아제로스 계보: 까미 · 누리 처치, 지역 던전 정복, 칠흑 보스 처치 */ 'kkami' | 'nuri' | 'dungeonBoss' | 'onyx' | /** v3.221 보유한 지역 보스 코어 수 · 그 각성 단계 합 */ 'cores' | 'coreRanks' | /** v3.221 보유한 칠흑 장신구 종류 수 · 그 각성 단계 합 */ 'onyxOwned' | 'onyxRanks' | /** v3.230 무릉도장 최고 층 · 신 도전 횟수 */ 'abyssBest' | 'altar' | /** v3.246 아제로스: 평생 쓴 정수 · 평생 캔 세계석 */ 'essenceSpent' | 'pearlsMined' | 'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk';
 export type StatusEffects = {
+    /** v3.221 황금 올가미 · 하얀 발자국 표식: 이 까미 · 누리를 잡을 때 로또 한 단계 상향 확률. */
+    jackpotUp?: number;
     /** v3.54 이번 전투에서 첫 틱을 이미 바로 준 지속 피해(전투당 한 번). */
     opened?: Partial<Record<'bleed' | 'poison' | 'burn', true>>;
     dot?: {
@@ -123,10 +125,17 @@ export type StatusEffects = {
     buffs?: Record<string, { turns: number; name?: string; stats?: Partial<Stats>; speedMultiplier?: number; /** v3.158 내 직접 피해 배율(접신). */ damageMultiplier?: number }>;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
     immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow' | 'corrode', number>>;
+    /** v3.288 각성 관통: 5차 각성기가 건 상태이상이 몬스터 각성(정화)을 버틸 확률(그 기술의 숙련 단계). 상태이상이 처음 걸릴 때 각성 관통이 없는 기술이면 지웁니다. */
+    pierce?: Partial<Record<'bleed' | 'poison' | 'burn' | 'weaken' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
     timeUsed?: boolean;
+    /** v3.231 요원 탄창: 남은 발 · 다음 칸(장착 순서 위치). */
+    mag?: { left: number; next: number };
+    /** v3.231 무한 탄창(데드샷): 남은 행동 수 · 이번에 걸렸으면 다음 빈 탄창은 보통 재장전. */
+    overdrive?: number;
+    odCool?: boolean;
     /** v3.198 태그(제로): 이번 전투에 마지막으로 쓴 태그 기술의 쪽(알파 · 베타). */
     tag?: 'alpha' | 'beta';
     /** v25 이번 전투에 無로 막은 횟수. */
@@ -180,9 +189,14 @@ export type Item = {
     power: number;
     level: number;
 };
+/** v3.219 참모 지원 효과 종류. */
+export type SupportEffect = 'exp' | 'gold' | 'mastery' | 'hp' | 'mana' | 'hpRegen' | 'ap' | 'boss' | 'rank' | 'penetration' | 'critDamage' | 'power';
+export type SupportMap = Partial<Record<SupportEffect, number>>;
 export type Skill = {
     /** v3.47 연출 갈래(skill-fx.ts SKILL_FX와 같은 값). 서버 전용 비밀 스킬은 공개 표 대신 여기에 둡니다. */
     fx?: string;
+    /** v3.269 전용 장면 연출 이름(combat-fx.tsx AZ_ULT의 키). 비밀 스킬도 카탈로그로 이 값만 받아 화면 코드에 스킬 id · 이름을 두지 않습니다. */
+    scene?: string;
     /** A rare native technique requires this much mastery in its owning job. */
     unlockJobMastery?: number;
     sourceEnemySkill?: string;
@@ -201,6 +215,17 @@ export type Skill = {
     effect?: 'heal' | 'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'drain' | 'silence' | 'slow' | 'haste' | 'corrode';
     /** v3.151 자기 버프: 이 기술을 쓰면 시전자가 turns 동안 stats(고정값)와 speedMultiplier를 얻습니다(같은 id면 더 긴 쪽으로 갱신). */
     selfBuff?: { id: string; name?: string; turns: number; stats?: Partial<Stats>; speedMultiplier?: number; damageMultiplier?: number };
+    /**
+     * v3.221 코어 비례 자기 버프(어둠의 추종자 어둠의 의식): 쓸 때 보유한 지역 보스 코어 수(n)로 selfBuff를 만듭니다.
+     * 피해 배율 1 + damage × n, 능력치 stats × n. steps는 n이 at 이상이면 지속 턴 · 상태이상 면역 턴 · 추가 행동을 덧붙입니다.
+     */
+    /** v3.221 물리 · 마법 공격 중 높은 쪽으로 피해(그 종류로 방어 적용). 칠흑 일식. */
+    bestOf?: boolean;
+    /** v3.223 회복 효과(effect 'heal')를 힐러가 아니어도 피해 감소(idleHealDamage) 없이 씁니다. 칠흑 일식 진 힐라 형태만의 예외(역할 규칙 예외). */
+    healNoPenalty?: boolean;
+    /** v3.221 끼고 있는 칠흑 장신구(보스 id)에 따라 덧붙는 효과(칠흑 일식). */
+    onyxForms?: Record<string, Partial<Skill>>;
+    coreBuff?: { id: string; name: string; turns: number; damage: number; stats: Partial<Stats>; steps: { at: number; turns?: number; wardTurns?: number; extraTurn?: boolean }[] };
     /** v3.158 접신(아크 패시브): 충전이 need에 닿으면 충전을 비우고 자기 버프 ‘접신’(피해 × damageMultiplier · 속도 × speedMultiplier, turns턴)에 들어갑니다. 장착한 것 중 가장 센 하나만. */
     spectre?: { need: number; turns: number; damageMultiplier: number; speedMultiplier?: number; /** v3.163 버프 이름(기본 접신) · 고정 능력치(카이저 파이널 피규레이션의 흡혈). */ name?: string; stats?: Partial<Stats> };
     /** v3.163 피격 충전(카이저 패시브): 피해를 입는 공격을 맞을 때마다 충전 +N(치명타로 맞으면 +1 더). 장착한 것 중 가장 큰 값. */
@@ -246,7 +271,12 @@ export type Skill = {
     cleanseSelf?: boolean;
     healRatio?: number;
     drainRatio?: number;
-    condition?: 'wounded' | 'healthyTarget' | 'afflicted';
+    /** v3.221 'kkami': 숙련의 까미 · 대왕 까미에게만, 'nuri': 경험의 누리 · 대왕 누리에게만 발동합니다(까미 사냥꾼 · 누리 추적자). */
+    condition?: 'wounded' | 'healthyTarget' | 'afflicted' | 'kkami' | 'nuri';
+    /** v3.221 대상 최대 체력의 이 비율만큼 고정 피해(방어 · 치명 · 피해 배율 무시). 황금 올가미. */
+    maxHpDamage?: number;
+    /** v3.221 명중하면 대상에 표식: 그 까미 · 누리를 잡을 때 이 확률로 숙련 · 경험치 로또가 한 단계 위로 굴러갑니다(소 → 중, 중 → 대). */
+    jackpotUp?: number;
     /** v27.69 사용하면 이만큼의 턴 동안 모든 상태이상 면역(몬스터 각성). */
     wardTurns?: number;
     /** v3.17 장착 패시브: 쓰러진 뒤 회복 대기를 이만큼(턴) 줄입니다(환생 10회 이상). */
@@ -257,8 +287,37 @@ export type Skill = {
     scalingAttribute?: Attribute;
     /** v3.97 scaling 'attr'에 공격력 × 이 비율을 더합니다(외길 계보: 장비 · 연구가 쌓여도 기술이 따라 커지도록). v3.172 마법 기술이면 마법 공격을 더합니다. */
     scalingAttack?: number;
+    /**
+     * v3.228 핵심 패시브: 직업 보정을 한 자리 %로 줄인 몫을 메웁니다. flat은 고정 수치(4차, 다른 고정 수치처럼 배율 전에 더함), scale은 배율(5차, ×(1 + 값)).
+     * 적힌 값은 숙련 마지막 단계 기준이고 0단계는 70%(coreScale). 다른 계보 직업에서 쓰면 절반입니다.
+     */
+    core?: { flat?: Partial<Record<'attack' | 'magic' | 'hp', number>>; scale?: Partial<Record<'attack' | 'magic' | 'hp', number>> };
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
+    /** v3.231 이계 액티브: 쓸 때 태우는 세계석 연료(이계 전투 직업만 씀, data/otherworld.ts FUEL). */
+    fuelCost?: number;
+    /** v3.246 정수 소모(정수 포식자): 쓸 때마다 정수를 이만큼 씁니다. 모자라면 나가지 않습니다(허기). */
+    essenceCost?: number;
+    /** v3.246 이 기술로 처치하면 기본 능력치 하나가 무작위로 +1(State.devoured, 환생하면 초기화). */
+    devourStat?: boolean;
+    /** v3.246 채굴(세계석 광부): 맞히면 이 확률로 세계석 1개(치명타면 2배). 패시브 mineBonus가 더해집니다. */
+    mineChance?: number;
+    mineBonus?: number;
+    /** v3.246 채굴이 쌓일수록 오르는 채굴 확률(세계석 광부 패시브): 캔 세계석 per개마다 +bonus, 최대 cap. */
+    mineGrowth?: { per: number; bonus: number; cap: number };
+    /** v3.231 요원 패시브: 탄창 +n발 · 재장전할 때 이 확률로 행동을 쓰지 않음. */
+    magazineBonus?: number;
+    /** v3.239 패시브: 장착하면 ids 액티브의 피해 배율 ×(1 + value)(여럿이면 더함). 겹영창 4 · 5차 패시브가 1~3차 주문을 키웁니다. */
+    boostSkills?: { ids: string[]; value: number };
+    reloadSkip?: number;
+    /** v3.231 무한 탄창(패시브): 탄창이 비면 재장전 대신 actions행동 동안 탄을 쓰지 않고, 행동마다 탄창 기술을 shots발 더(위력 power) 쏩니다. 두 번에 한 번(그 사이는 보통 재장전). */
+    overdrive?: { actions: number; shots: number; power: number };
+    /** v3.231 트레이더 액티브: 피해 × (1 + 평가 손익률 × pnlScale). 패시브 pnlFloor: 손익 배율의 하한. */
+    pnlScale?: number;
+    pnlFloor?: number;
+    /** v3.231 pnlAbs: 손익의 절댓값으로(블랙 스완). pnlCap: 손익 배율 범위의 위아래(마켓 메이커 ±35%). */
+    pnlAbs?: boolean;
+    pnlCap?: number;
     /** v24.2 도박: 쓸 때마다 피해 배율을 [min, max]에서, 명중을 ±accuracy에서 무작위로 굴립니다. */
     gamble?: { min: number; max: number; accuracy?: number };
     /** v26.6 주사위: 능력치(attribute) per마다 주사위 1개(최대 max). 가장 높은 눈이 1이면 ×low, 6이면 ×high(눈마다 같은 비율로 커짐). 손가락 자르기(diceTrim)로 양 끝을 좁힐 수 있습니다. */
@@ -292,6 +351,14 @@ export type Skill = {
     burnConsume?: number;
     /** v3.146 정령(은월 패시브): 장착하면 기본 공격을 포함한 모든 공격 행동에 정령의 추가타가 hits회 붙습니다(위력 power, 기술 배율에 곱함). 여러 개를 장착하면 횟수 · 위력 각각 가장 큰 값. */
     companion?: { hits: number; power: number };
+    /** v3.219 참모 계보 지원 스킬: 장착하면 같은 계정의 다른 분신에게 effect 배율(숙련 단계에 따라 min → max). systems/support.ts */
+    support?: { effect: SupportEffect; min: number; max: number };
+    /** v3.219 지휘 체계: 장착한 지원 스킬 1개마다 자기 두 공격 +commandPer. */
+    commandPer?: number;
+    /** v3.225 총사령관 지휘 계통: 이 분신이 주는 다른 지원(AP 제외)을 숙련 단계에 따라 ×min → ×max. */
+    supportAmp?: { min: number; max: number };
+    /** v3.225 군수사령관 경량 편제: 참모 계보일 때 장착한 지원 스킬의 장착 AP -n(최소 1). */
+    supportCostCut?: number;
     /** v25 자기 상태이상: 쓰고 나면 자신이 기절·감속·약화됩니다. waivedBy 기술을 장착하면 생략. */
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
@@ -316,6 +383,8 @@ export type Skill = {
     song?: boolean;
     /** v3.187 계보 전용: 이 직업 id가 지금 직업의 계보(자신 + 선행 직업)에 있어야 장착하고 효과가 납니다. 숙련 · SP 계승으로도 계보 밖에서는 못 씁니다. */
     exclusiveLineage?: string;
+    /** v3.221 계보 전용이지만 궁극의 모험가(signatureFree)는 예외로 씁니다(황금 올가미). */
+    exclusiveUltimate?: boolean;
     /** v24.2 골드 투척: 보유 골드의 ratio(최대 cap)를 쓰고, 쓴 골드 × scale을 피해에 더합니다. */
     /** 골드 투척: 보유 골드 × ratio를 실제로 쓰고 쓴 골드 × scale을 기준값에 더합니다. 상한은 cap(절대값)과 capAttack(기준 공격력 × 배수, v3.157 섀도어: 수백억 골드도 새 생의 Lv.10도 공격력에 맞춘 만큼만) 중 작은 쪽. */
     goldSpend?: { ratio: number; cap?: number; capAttack?: number; scale: number };
@@ -329,8 +398,12 @@ export type Skill = {
     disguise?: string;
     /** v3.132 계보 밖 직업이 계승해 쓰면 발동률에 곱하는 값(5차 전용 기술, signatureScale과 함께). */
     outsiderChance?: number;
+    /** v3.288 각성 관통: 기술 숙련 단계(0부터)별 확률. 이 기술이 건 상태이상이 그 확률로 몬스터 각성(정화)을 버티고(버티면 각성 면역도 걸리지 않음), 상태이상 면역도 그 확률로 무시합니다(5차 각성기). */
+    wardPierce?: number[];
+    /** v3.282 각성기의 대기(턴)와 첫 대기. 없으면 SKILL_FORMULA.awaken.cooldown · start(포이즌 노바 5턴). */
+    awakenCooldown?: number;
     /** v3.132 도트 퍼니셔: 적의 중독·화상 중첩에 비례한 추가타(최대 maxHits회, 위력 hitMultiplier). 둘 다 최대 중첩이면 기절 fullStun턴, 일부면 partStun턴, 없으면 추가타·기절 없음. */
-    dotFinisher?: { maxHits: number; hitMultiplier: number; fullStun: number; partStun: number };
+    dotFinisher?: { maxHits: number; hitMultiplier: number; fullStun: number; partStun: number; /** v3.282 둘 다 최대 중첩인 적에게 쓰면 이 기술의 대기를 바로 초기화합니다. */ fullReset?: boolean };
     /** v3.143 충전(메카닉): 이 기술이 명중하면 자신의 충전 중첩 +charge(약화된 적이면 +1 더, 최대 SKILL_FORMULA.charge.max). 전투가 끝나면 사라집니다. */
     charge?: number;
     /** v3.143 전탄발사: 충전 중첩이 chargeNeed 이상일 때만 쓰고, 쓰면 중첩을 모두 소모해 중첩당 피해 +chargeBonus. */
@@ -404,8 +477,14 @@ export type Enemy = {
 export type CombatHit = { kind: 'main' | 'follow'; value: number; raw?: number; critical: boolean; miss: boolean; /** v27.18 극 치명타 */ superCritical?: boolean };
 export type CombatEvent = {
     actor: string; skillId?: string; skillName: string; damageType: 'physical' | 'magic' | 'split' | 'fixed';
+    /** v3.246 아제로스: 쓴 정수 · 포식 처치로 오른 기본 능력치 · 채굴한 세계석 · 채굴 기술로 친 행동. */
+    essenceSpent?: number; devour?: Attribute; mined?: number; mineSwing?: boolean;
     hits: CombatHit[]; total: number; healed: number; drained: number;
     statuses: { id: string; turns: number; onSelf?: boolean }[];
+    /** v3.211 극한돌파 전용 연출이 열린 스킬로 한 행동. */
+    extreme?: boolean;
+    /** v3.248 충전 중첩을 모두 방출한 기술(전탄발사 등)이 쓴 중첩 수. 연출이 미사일 수를 맞춥니다. */
+    charged?: number;
     /** v3.145 이 행동에 바친 체력(체력 소모 기술). */
     hpSpent?: number;
     /** v3.148 이 행동에 태운 마나(마나 연소 기술). */
@@ -432,6 +511,10 @@ export type CombatEvent = {
     followUp?: { index: number; power: number };
     /** v25: 타임 리와인드. v3.198부터 나만 처음 상태로(상대는 그대로). */
     restored?: boolean;
+    /** v3.231 요원 재장전으로 쓴 행동. */
+    reload?: boolean;
+    /** v3.231 무한 탄창에 들어간 행동. */
+    overdrive?: boolean;
     /** v25: 無로 버틴 쪽(heal은 되찾은 체력). self면 행동한 쪽이 자기 지속 피해·반격을 버틴 것입니다. */
     endured?: { heal: number; self?: boolean };
     /** 행동 시작 때 턴당 체력 회복으로 되찾은 체력(있을 때만). */
@@ -501,6 +584,8 @@ export type State = {
     guildStats?: { key: string; catches: number; clears: number; bosses: number; abyss: number; sentCatches: number; sentClears: number; sentBosses: number; sentAbyss: number; sentAt: number };
     /** v25.6 계정 합계 캐시(캐릭터 슬롯 보너스). 서버가 저장 전에 채웁니다. 없으면 보너스 0. */
     account?: import('./data/account').AccountSummary;
+    /** v3.219 다른 분신의 참모 지원(효과별 최고값). 서버가 계정 동기화(최대 10분 주기)에서 채우는 캐시입니다. 승천 캐릭터도 받습니다. */
+    support?: SupportMap;
     /** 이 세이브에 적용된 레벨당 능력치 포인트. 없으면 이전 규칙(레벨당 4)으로 보고 차액을 한 번 지급합니다. */
     statRate?: number;
     tide: number;
@@ -508,6 +593,41 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
+    /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
+    dungeonCoins?: number;
+    dungeonCoinFrac?: number;
+    /**
+     * v3.213 주화 증권거래소 계좌(공유 시장, 첫 매수 때 생김).
+     * holdings는 종목 → 수량 · 원금(수수료 포함 매수 금액), realized는 누적 실현 손익. 환생해도 남고 승천하면 사라집니다.
+     */
+    /** v3.215 모험 일지(스토리): 열린 장면 id → 열린 시각(ms). 환생 · 승천해도 남습니다. 장면 표는 data/story.ts. */
+    story?: Record<string, number>;
+    market?: { holdings: Record<string, { qty: number; cost: number }>; realized?: number };
+    /** v3.201 하루 보너스 정복: 그날(한국 시간 날짜)과 쓴 횟수. 날짜가 바뀌면 0부터. */
+    dungeonBonus?: { day: string; used: number };
+    /** v3.202 보스 전리품 연속 미획득 수(보너스 정복마다 +1, 받으면 0). 환생해도 남습니다. */
+    bossLootMiss?: number;
+    /** v3.202 보스 코어: 가진 코어(던전 id → 각성 단계 0~5)와 보스 코어 칸에 낀 코어. 환생 · 승천해도 남습니다. */
+    bossCores?: Record<string, number | { rank: number; attrs?: { k: Attribute; f: number }[]; forges?: number }>;
+    /** v3.231 이계 연료(세계석 1 = 100). fuelAuto: 자동 충전 때 남길 세계석(없으면 자동 충전 끔). */
+    fuel?: number;
+    /** v3.246 정수 포식으로 오른 기본 능력치(환생하면 초기화) · 평생 쓴 정수 · 평생 채굴한 세계석. */
+    devoured?: Partial<Record<Attribute, number>>;
+    essenceSpent?: number;
+    pearlsMined?: number;
+    /** v3.240 동시 시전 기록(업적용): 4개 이상 묶음 횟수 · 가장 큰 묶음. */
+    chantFull?: number;
+    chantBest?: number;
+    fuelAuto?: number;
+    /** v3.231 연료로 바꾼 세계석 누계(부재중 정산 환산이 측정 구간의 충전을 셈). */
+    fuelBought?: number;
+    /** v3.231 트레이더: 동기화 때 서버가 구한 평가 손익 배율(가중 · 자름 전 손익률 × 포지션 비중). */
+    marketPnl?: number;
+    coreSlot?: string;
+    /** v3.210 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
+    lv1AbyssBest?: number;
+    /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
+    dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
     statPoints: number;
     sp: number;
@@ -626,6 +746,16 @@ export type State = {
     researchLegacy?: Record<string, number>;
     /** v3.58 사냥 골드 수입: 플레이 시간 1시간 칸(h = playMs ÷ 1시간)마다 번 골드. 최근 24칸(systems/income.ts). */
     goldLog?: { h: number; g: number }[];
+    /** v3.201 처치 경험치 수입 기록(goldLog와 같은 칸). 환생하면 지웁니다. */
+    expLog?: { h: number; g: number }[];
+    /** v3.211 극한돌파 전용 연출이 열린 스킬(처음 극한돌파한 순간 기록). 환생 · 승천해도 남습니다. */
+    extremeFx?: Record<string, true>;
+    /** v3.207 기록을 시작한 뒤 처치로 번 경험치 합계(expLog와 달리 환생해도 남음). */
+    expEarned?: number;
+    /** v3.207 처치 숙련 수입 기록(goldLog와 같은 칸, 현재 직업 숙련). 환생해도 남습니다. */
+    masteryLog?: { h: number; g: number }[];
+    /** v3.207 기록을 시작한 뒤 처치로 번 숙련 합계. */
+    masteryEarned?: number;
     /** v3.58 기록을 시작한 뒤 사냥으로 번 골드 합계. */
     goldEarned?: number;
     /** v3.58 감정 기록: 총 횟수, 등급별 횟수(0~6), 천장 카운트(그 등급 이상이 마지막으로 나온 뒤 감정 수). 환생해도 남고 승천하면 초기화. */
@@ -636,6 +766,8 @@ export type State = {
     primalGauge?: number;
     /** v3.66 유물 위력 규칙 이전 표시(true면 이미 처리함). 새 캐릭터·승천 뒤에는 처음부터 true. */
     relicRule?: boolean;
+    /** v3.297 이미 붙은 마력 · 순환 줄의 턴당 마나 회복을 ×3으로 바꿨는지(한 번만). */
+    manaRegenRescaled?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
     plainCodex?: boolean;
     /** 끝없는 수련으로 생긴 숙련 소수점 누적(1/20 단위, 0~19). */
@@ -649,6 +781,8 @@ export type State = {
     autoVendGrades?: number[];
     /** v25.15 설정: 능력치 ‘최대’ 투자 확인 창을 건너뜁니다. */
     skipStatConfirm?: boolean;
+    /** v3.242 능력치 자동 배분: 레벨업으로 받은 포인트를 지금 직접 투자한 비율대로 바로 나눕니다(자리를 비운 동안에도). */
+    autoAttr?: boolean;
     /** v27.32 설정: 만날 무리의 최대 규모(0이면 무리 끔). 없으면 제한 없음. 상한을 넘게 뽑힌 무리는 상한 규모로 나옵니다. */
     swarmCap?: number;
     /** v25.7 청산 방식(설정). 없으면 판매. */
@@ -686,16 +820,7 @@ export type State = {
         repeat?: { left: number | null; until?: number };
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
-        /** v27.86 랜덤게임: 쌓인 판돈(배율 적용 전)과 목표 웨이브(0이면 없음). */
-        stake?: { essence: number };
-        until?: number;
     };
-    /** v27.86 이번 생에 랜덤게임에 들어간 횟수(환생하면 0). v3.24 randomGameDay와 날이 다르면 0으로 봅니다. */
-    randomGameRuns?: number;
-    /** v3.24 randomGameRuns를 센 날(한국 시간 dayKey). */
-    randomGameDay?: string;
-    /** v27.88 랜덤게임 기록: 가장 멀리 간 웨이브·총 입장·받고 나간 횟수(환생해도 유지). */
-    randomGameStats?: { best: number; runs: number; cashed: number };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
     /** v3.26 저장 전에 /api/game이 읽고 지우는 임시 표시: 해커 계열로 전직함(채팅 알림). */
@@ -742,12 +867,16 @@ export type State = {
         kills: number;
         gold: number;
         exp: number;
+        /** v3.289 부재중에 잡은 숙련의 까미 · 경험의 누리 · 정수의 슬라임(대왕 포함). */
+        rares?: { mimic: number; nuri: number; slime: number };
     };
 };
 /** 서약. breath는 걸었는지, rough는 힘의 길 선택 단계. v27.86 anchor·seal은 옛 ‘잠든 힘’(지금은 던전 랜덤게임) 세이브 호환용으로만 남깁니다. restraint는 절제(1~3단계). */
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
-    focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string } };
+    focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };
+    /** v3.210 LV1 모험가(테스트용): 거는 순간의 레벨 · 경험치 · 배분 능력치를 보관하고 Lv.1로 고정합니다. 포기하면 되돌립니다. */
+    lv1?: { level: number; exp: number; attributes: Record<Attribute, number>; statPoints: number } };
 /** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {
     seed: number;
@@ -824,6 +953,8 @@ export type Snapshot = {
     skillPractice?: Record<string, number>;
     skillRanks?: Record<string, number>;
     skillMastery?: Record<string, number>;
+    /** v3.211 극한 단계 최종 피해 배율(스킬 id → 1.02~1.1). 없으면 없음. */
+    skillFinal?: Record<string, number>;
     name: string;
     level: number;
     job: string;
@@ -831,6 +962,10 @@ export type Snapshot = {
     stats: Stats;
     skills: string[];
     /** v3.86 추가 판정 단계(결투·제단·월드보스에도 그대로). */
+    /** v3.221 보유한 지역 보스 코어 수(어둠의 추종자 어둠의 의식). */
+    /** v3.221 끼고 있는 칠흑 장신구의 보스 id(칠흑의 화신 칠흑 일식). */
+    onyx?: string;
+    cores?: number;
     extraRolls?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계: 1단계 체력). 없으면 현재 체력 그대로. */
     dotHpCap?: number;

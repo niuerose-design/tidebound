@@ -121,6 +121,11 @@ function progressDesc(sk: Skill) {
 
 /** 마법·복합 기술 마나 비용 배율(근거: scripts/check-attributes.mjs). */
 const MAGIC_MANA_COST_SCALE = 4;
+/** v3.296 아크메이지(불,독) 5차 두 기술(파멸의 낙인 220 · 만물의 끝 200, 배율 적용 뒤 880 · 800). 다른 5차 마법 · 복합 기술은 이 평균의 80%를 씁니다. */
+const APOSTLE_SKILLS = new Set(['doomMark', 'endOfAll']);
+export const TIER5_MAGIC_MANA = Math.round((220 + 200) / 2 * MAGIC_MANA_COST_SCALE * .8 / 10) * 10;
+/** 탱커 · 힐러 역할 5차(라라 · 메카닉 · 호영 · 비숍)는 긴 전투를 버텨야 해서 원래 마나를 씁니다(670이면 라라가 던전을 못 깸, check-tier5). */
+const TIER5_MANA_KEEP = new Set(['veinBurst', 'genesisRune', 'divineWard', 'oceanOfLife']);
 
 /** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
 export function awakenExpectedRolls(c: number) {
@@ -134,13 +139,15 @@ export function awakenSkill(sk: Skill) {
     if (sk.awaken || sk.type !== 'active') return;
     const A = SKILL_FORMULA.awaken, steps = sk.masteryMilestones?.length || PROGRESSION.skillMasteryMilestones.length;
     const c = Math.min(.95, sk.chance + steps * (sk.rankEffects?.chanceIncrease ?? 0));
-    const before = sk.cooldown + 1 / c, after = A.cooldown + awakenExpectedRolls(c), old = sk.multiplier;
+    const cd = sk.awakenCooldown ?? A.cooldown, before = sk.cooldown + 1 / c, after = cd + awakenExpectedRolls(c), old = sk.multiplier;
     sk.multiplier = Math.round(sk.multiplier * after / before * A.boost * 10) / 10;
     sk.desc = awakenDesc((sk.desc || '').replace(`× ${old} 피해`, `× ${sk.multiplier} 피해`));
-    sk.cooldown = A.cooldown;
+    sk.cooldown = cd;
     // 덜 자주 걸리는 만큼 거는 상태이상의 지속(패시브 보너스 포함)도 같은 비율로 늘려 유지율을 맞춥니다(예: 출혈 3+2턴 → 9턴).
     // v3.132 alsoEffect(포이즌 노바)는 적힌 지속(7턴 + 패시브)을 그대로 씁니다.
-    sk.awaken = { start: A.start, ...(sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined && !sk.alsoEffect ? { statusScale: Math.round(after / before * 100) / 100 } : {}) };
+    // v3.288 상태이상을 거는 각성기는 각성 관통(숙련 단계별 몬스터 각성 버팀 · 면역 무시)을 얻습니다.
+    if ((['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as string[]).includes(sk.effect || '')) sk.wardPierce ??= [...A.wardPierce];
+    sk.awaken = { start: sk.awakenCooldown ?? A.start, ...(sk.effect && STATUS_DEFAULT_TURNS[sk.effect] !== undefined && !sk.alsoEffect ? { statusScale: Math.round(after / before * 100) / 100 } : {}) };
 }
 
 export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number = () => 0) {
@@ -153,11 +160,12 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const magic = sk.damageType === 'magic' || sk.damageType === 'split' || sk.damageType === 'fixed' && sk.baseStat === 'magic';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
         sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
+        if (magic && tierOf(sk) >= 5 && !APOSTLE_SKILLS.has(sk.id) && !TIER5_MANA_KEEP.has(sk.id)) sk.manaCost = TIER5_MAGIC_MANA;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
             chanceIncrease: sk.id === 'hook' || sk.statusOnly ? .01 : magic ? .025 : .02,
             manaReduction: magic ? 1 : 0, cooldownReduction: 0 };
-        // v3.132 도트 퍼니셔는 5차지만 일반 액티브(대기 4)로 남습니다.
+        // v3.132 도트 퍼니셔는 5차지만 일반 액티브로 남습니다(v3.282 대기 4, 최대 중첩이면 초기화).
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
@@ -166,9 +174,10 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' }[sk.effect as 'stun'];
         if (sk.timeRewind) { sk.desc = '피해 없이 내 체력·마나를 가득 채우고 대기 중인 내 기술을 되돌립니다. 전투당 1회.'; continue; }
         if (sk.statusOnly) {
-            sk.desc = `피해 없이 ${statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 피해(방어 무시).` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 피해(방어 무시).` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 피해(방어 무시).` : ''}`;
+            sk.desc = `피해 없이 ${sk.alsoEffect ? '중독·화상(중첩)' : statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 피해(방어 무시).` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 피해(방어 무시).` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 피해(방어 무시).` : ''}`;
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·중독·감속 해제.';
+            if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
             sk.desc += progressDesc(sk);
             continue;
         }
@@ -182,9 +191,9 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         // v3.132 장착 효과가 있는 액티브(도트 퍼니셔)는 무엇이 오르는지 적습니다.
         if (sk.bonus) sk.desc += ` 장착하면 ${Object.keys(sk.bonus).map(k => STAT_LABELS[k as keyof typeof STAT_LABELS]).join('·')}이 오릅니다.`;
         if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
-        if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
+        if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴${sk.dotFinisher.fullReset ? '(대기 초기화)' : ''}, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
         if (sk.damageBonusCondition === 'statuses') sk.desc += ` 적에게 걸린 상태이상 1종마다 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
-        else if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
+        else if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
         if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
@@ -202,5 +211,5 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }
     // v3.86 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
-    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '');
+    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '') + (sk.wardPierce?.length && !(sk.desc || '').includes('각성 관통') ? ` 각성 관통(숙련 단계별 ${sk.wardPierce.map(p => `${Math.round(p * 100)}%`).join('/')}).` : '');
 }

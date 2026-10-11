@@ -1,37 +1,43 @@
 /** 적 등장·드롭·승리 보상. */
+import { NOVICE_MENU_LEVEL, noviceLife, noviceMarketLocked } from './guidance';
 import { rollAffixes, syncOrnateName } from '../data/gear';
 import { ODDS } from '../data/odds';
 import { vocationTargets, thresholdRank, abyssPearls, ABYSS_SP_MILESTONES, abyssFloorBonus } from '../data/long-term';
-import { jobMasteryTarget, extremeBroken } from './progression';
-import { killReward, encounterTier, dungeonKillReward, dungeonClearBase, dungeonRewardTier, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
-import { stats, dropRate, dungeonClearGold, goldMultiplier, expMultiplier } from './stats';
+import { jobMasteryTarget, extremeStage, extremeFinalMultiplier } from './progression';
+import { EXTREME_STAGES } from '../data/long-term';
+import { killReward, encounterTier, dungeonKillReward, dungeonLevelAt, xpWall, tierHealth, tierAttack } from './meta';
+import { stats, dropRate, goldMultiplier, expMultiplier } from './stats';
+import { supportMultiplier } from './support';
+import { recordExpIncome, recordMasteryIncome } from './income';
+import { rollBossLoot, syncAbyssCores } from './boss-loot';
+import { grantDungeonCoins, clearCoinBase, spendDailyBonus, dailyBonusLeft } from './dungeon-coins';
+import { DAILY_BONUS } from '../data/dungeon-shop';
 import { victoryMastery, researchMastery, masteryMultipliers } from './mastery';
 import { inventoryCap, researchRank, autoGrades, PRIMAL_DROP_PITY } from '../data/economy';
 import { rareSpawnBonus } from './book';
 import { VARIANTS, VARIANT_BOOK_MIN, variantById, variantChances, rollSwarmSize, rollHabitatSwarm } from '../data/variants';
-import { MIMIC, LETTER, letterRank, rollMimicMastery, mimicChance, specialLuck, specialOfflineScale } from '../data/mimic';
+import { MIMIC, LETTER, letterRank, rollMimicMastery, upgradeMimicTier, mimicChance, specialLuck, specialFind, specialOfflineScale } from '../data/mimic';
 import { ascended, ascensionMastery } from '../data/ascension';
-import { EXP_NURI, rollNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
+import { EXP_NURI, rollNuriTier, upgradeNuriTier, nuriChance, nuriEligible } from '../data/exp-nuri';
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
 import { KING, kingReady, isSpecialId, type KingKind } from '../data/king';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills, swarmMasteryKills } from '../data/rank';
-import { roughHeal } from './vows';
+import { roughHeal, lv1Active } from './vows';
 import { sproutHeal } from '../data/sprout';
-import { inRandomGame, spawnRandomGame, clearRandomWave } from './random-game';
 import type { State, Item, Stats, Enemy } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, dungeonOverlevel, DUNGEON_TUNING } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE } from '../data/balance';
 import { MONSTERS, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatMonster, tideLiftMonster, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, monsterById, stageById, dungeonById } from '../data/world';
 import { jobById } from '../data/classes';
-import { HACKER_ID } from '../data/hacker';
+import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { skillById } from '../data/skills';
 import { gearName } from '../data/maple-gear';
 import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
-import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems } from './equipment';
+import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems, inheritGear } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ONYX, onyxBossFor, onyxById, onyxChance, ownedOnyx, onyxSetBonus } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxById, onyxChance, onyxCollected, onyxSetBonus } from '../data/onyx';
 import { offlineTally } from './offline-tally';
-import { grantOnyx } from './onyx-grant';
+import { grantOnyxDrop, onyxDropName, onyxDropRank } from './onyx-grant';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -41,6 +47,8 @@ export function victoryHeal(s: State, a = stats(s)) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
+    // v3.210 LV1 모험가: 레벨이 오르지 않고 경험치도 쌓지 않습니다.
+    if (lv1Active(s)) { s.exp = 0; return; }
     while (s.exp >= xpNeeded(s.level, s.rebirths, xpWall(s)) && s.level < 100) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
@@ -50,15 +58,32 @@ export function gainLevels(s: State) {
         s.mana = grown.mana;
         s.hp = grown.hp;
         addLog(s, `레벨 ${s.level} 달성! 능력치가 상승했습니다.`);
+        if (s.level === NOVICE_MENU_LEVEL && noviceLife(s)) addLog(s, '새 메뉴가 열렸습니다 · 제단 · 환생 · 통계 · 길드 · 랭킹', 'system');
     }
+    spendAutoAttributes(s);
 }
-/** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 던전 랜덤게임으로 바뀜). 레벨은 호출한 쪽에서 올립니다. */
+/**
+ * v3.242 능력치 자동 배분(s.autoAttr): 남은 포인트를 지금 직접 투자한 비율대로 모두 나눕니다(나머지는 큰 몫부터 1씩).
+ * 아직 투자한 능력치가 없거나 해커(투자 불가)면 그대로 둡니다. 환생 직후에는 직전 생의 비율(weights)을 씁니다. 나눈 포인트 수를 돌려줍니다.
+ */
+export function spendAutoAttributes(s: State, weights: State['attributes'] = s.attributes) {
+    if (!s.autoAttr || s.statPoints < 1 || isHackerJob(s.job)) return 0;
+    const keys = Object.keys(s.attributes) as (keyof State['attributes'])[], total = keys.reduce((n, k) => n + (weights[k] || 0), 0);
+    if (total < 1) return 0;
+    const points = s.statPoints, shares = keys.map(k => ({ k, exact: points * (weights[k] || 0) / total })), add = Object.fromEntries(shares.map(x => [x.k, Math.floor(x.exact)])) as Record<string, number>;
+    let left = points - Object.values(add).reduce((n, x) => n + x, 0);
+    for (const x of [...shares].sort((p, q) => (q.exact % 1) - (p.exact % 1))) { if (left < 1) break; add[x.k]++; left--; }
+    for (const k of keys) s.attributes[k] += add[k];
+    s.statPoints = 0;
+    return points;
+}
+/** v27.86 옛 ‘잠든 힘’ 봉인이 남은 세이브: 쌓인 경험치를 그대로 지급하고 봉인을 지웁니다(서약은 v27.86에 없어짐). 레벨은 호출한 쪽에서 올립니다. */
 export function releaseLegacySeal(s: State) {
     const seal = s.vows?.seal;
     if (!seal) return 0;
     s.exp += seal.exp;
     delete s.vows!.seal; delete s.vows!.anchor;
-    addLog(s, `잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
+    addLog(s, `잠든 힘 서약이 없어져 봉인을 풀었습니다 · 쌓인 경험치 +${seal.exp} EXP`, 'reward');
     return seal.exp;
 }
 /** 처치 후 회복률. v27.8 사냥터는 기본 20%에서 사냥터 난이도 1마다 1%p씩 줄어(최저 5%) 깊은 조수일수록 버티기가 어렵습니다. 던전은 고정 8%. 연구 ‘처치 회복 강화 I’은 1단계마다 +1%p. */
@@ -81,14 +106,15 @@ export function rollRarity(rng: () => number, minRarity = 0, tier = 0) {
 /** v27.53 드롭 장비 레벨: 기준 레벨 + 해역 난이도(층) × 5, 단 캐릭터 레벨 + dropLevelOver까지(기준 레벨보다 낮아지지는 않음). */
 export const dropLevel = (s: Pick<State, 'level'>, base: number, tier: number) => Math.max(base, Math.min(base + tier * 5, s.level + BALANCE.dropLevelOver));
 /** v3.104 rate: 미리 계산한 드롭 확률(무리 드롭 판정 반복용, 없으면 지금 계산). */
-export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number) {
+export function drop(s: State, level: number, rng: () => number, guaranteed = false, rate?: number, fixedRarity?: number) {
     if (!guaranteed && rng() > (rate ?? dropRate(s)))
         return;
     // v27.53 일반 처치 드롭도 희귀 이상만(일반 등급은 상점 기본 장비로).
     // v27.76 사냥터·던전 난이도가 높을수록 상위 등급 가중치가 조금 오릅니다(보수적).
     // v3.59 태초 드롭 천장: 태초 없이 PRIMAL_DROP_PITY개째 드롭은 태초.
-    const pity = (s.primalDropPity || 0) + 1, rarity = pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s));
-    s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
+    // v3.201 fixedRarity(주화 상점 장비 상자)는 등급을 이미 정했으므로 태초 천장을 세지 않습니다.
+    const pity = (s.primalDropPity || 0) + 1, rarity = fixedRarity ?? (pity >= PRIMAL_DROP_PITY ? RARITIES.length - 1 : rollRarity(rng, 1, encounterTier(s)));
+    if (fixedRarity === undefined) s.primalDropPity = rarity >= RARITIES.length - 1 ? 0 : pity;
     const origin = s.dungeon?.id || s.stage;
     const slot = (['rod', 'coat', 'charm', 'cape'] as const)[Math.floor(rng() * 4)];
     const item: Item = { id: `loot-${s.turn}-${s.logId}-${Math.floor(rng() * 1e9)}`, slot, rarity, name: '', power: Math.max(2, Math.round((level + 2) * RARITIES[rarity].factor * (.8 + rng() * .4))), level };
@@ -99,6 +125,15 @@ export function drop(s: State, level: number, rng: () => number, guaranteed = fa
         item.style = rng() < .33 ? 'physical' : rng() < .5 ? 'magic' : 'balanced';
     item.name = gearName(slot, rarity, item.style);
     syncOrnateName(item);
+    // v3.217 계승 드롭: 고대 · 태초가 아주 낮은 확률로 원시 고대 · 계승 태초인 채로 나옵니다. 그 부위에 같은 종류가 이미 있으면 판정하지 않습니다.
+    // 계승 장비는 자동 정리 · 가방 가득 참 판매를 받지 않고 늘 가방에 들어갑니다.
+    const heir = rarity === 5 ? 'ancient' as const : rarity === 6 ? 'primal' as const : null;
+    if (heir && ODDS.drop.heir[heir] > 0 && !ownedItems(s).some(x => x?.heir === heir && x.slot === slot) && rng() < ODDS.drop.heir[heir]) {
+        s.inventory.push(item);
+        inheritGear(s, item, heir);
+        addLog(s, `${heir === 'ancient' ? '원시 고대' : '계승 태초'} 장비 발견! · ${item.name} · 위력 ${item.power} · 옵션 최고 수치 · 환생해도 남습니다`, 'reward');
+        return;
+    }
     // 자동 분해기: 유물·장비 도감에 없는 종류는 남깁니다.
     // v3.35 설정에서 고른 등급(여러 개)만 처리합니다. 칠흑·잠금 장비는 어떤 경우에도 처리하지 않습니다.
     const keep = item.locked || keepsAcrossLives(item) || !s.itemBook?.[itemKey(slot, rarity)];
@@ -172,7 +207,7 @@ export function stageEncounterExp(s: State, won = stats(s)) {
     if (!st?.monsters.length) return 0;
     const tier = encounterTier(s), each = st.monsters.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.monsters.length;
     const heads = st.habitat ? (1 - HABITAT.bigChance) * HABITAT.sizes[0] * swarmRewardMultiplier(HABITAT.sizes[0]) + HABITAT.bigChance * HABITAT.sizes[1] * swarmRewardMultiplier(HABITAT.sizes[1]) : 1;
-    const onyxSet = st.habitat ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    const onyxSet = st.habitat ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
     return each * expMultiplier(s, won) * onyxSet * heads;
 }
 /** v3.9 깊이 계수를 몬스터 체력·공격·마법과 보상 골드·경험치에 곱합니다(제자리 수정). */
@@ -202,8 +237,9 @@ export function specialChances(s: State) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
-    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * (s.event?.mimic ?? 1) * luck : 0;
-    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * (s.event?.nuri ?? 1) * luck : 0;
+    // v3.287 행운의 편지 · 이벤트(제단 축복 포함) · 직업 보너스는 곱하지 않고 더합니다(specialFind).
+    const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * specialFind(luck, s.event?.mimic ?? 1, jobById(s.job)?.mimicFind || 0) : 0;
+    const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * specialFind(luck, s.event?.nuri ?? 1, jobById(s.job)?.nuriFind || 0) : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
     const slimeOk = !dungeon && slimeEligible(s, asc ? Math.max(tier, ESSENCE_SLIME.minTier) : tier);
     const slimeP = slimeOk ? slimeChance(tier) * (s.away ? specialOfflineScale(s, ESSENCE_SLIME.offlineScale) : 1) * luck : 0;
@@ -225,8 +261,6 @@ export function takeWhistle(s: State): ForcedRare | undefined {
     const kind = s.whistle; delete s.whistle; return kind;
 }
 export function spawn(s: State, rng: () => number, force?: ForcedRare) {
-    // v27.86 랜덤게임: 해금한 사냥터의 몬스터가 웨이브마다 무작위로 나옵니다.
-    if (inRandomGame(s)) return spawnRandomGame(s, rng);
     const dungeon = dungeonById(s.dungeon?.id);
     const st = stageById(s.stage)!;
     const finalWave = !!dungeon && s.dungeon!.wave === dungeon.monsters.length - 1;
@@ -243,7 +277,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const onyxDef = !dungeon && st.habitat ? onyxBossFor(st.region) : undefined;
     let onyx = false;
     if (onyxDef && force === 'onyx') { s.onyxSeen ??= {}; onyx = true; s.onyxSeen[st.region] = 0; }
-    else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
+    else if (onyxDef && !force) { s.onyxSeen ??= {}; const seen = s.onyxSeen[st.region] || 0; onyx = rng() < onyxChance(tier, seen, jobById(s.job)?.onyxFind || 0); s.onyxSeen[st.region] = onyx ? 0 : seen + 1; offlineTally.onyxRolls++; }
     const rare = !!special || onyx, rareId = onyx ? onyxDef!.id : special?.id ?? '', rareDef = onyx ? { hp: onyxDef!.hpMul, attack: ONYX.attack } : special ?? { hp: 1, attack: 1 };
     const id = rare ? rareId : dungeon ? (finalWave && dungeon.bossMonster ? dungeon.bossMonster : dungeon.monsters[s.dungeon!.wave]) : (targetOk ? s.target! : weightedMonsterId(st.monsters, rng, rareSpawnBonus(s), tier));
     // v27.64 사냥터 몬스터는 난이도만큼 레벨이 올라갑니다(내 레벨까지, tideLiftMonster). 까미·누리는 올라간 가장 강한 몬스터의 몸집을 빌립니다.
@@ -255,7 +289,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const field = !dungeon && !rare ? stageField(s, st.id, f.id, tier).field : normalDungeon ? tideLiftMonster(f, tier, s.level) : f;
     const foe = dungeon?.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), s.dungeon!.depth || 1, { boss, wave: s.dungeon!.wave })
         : onyx ? onyxEnemyStats(f, tier)
-        : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: s.dungeon.wave } : {}) });
+        : scaledEnemyStats(field, { boss, tier, ...(s.dungeon ? { wave: boss ? BOSS_PRESSURE_WAVE : s.dungeon.wave } : {}) });
     const base = dungeon ? dungeonKillReward(field, dLevel, tier, boss, dungeon.id) : killReward(field, tier, boss);
     // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·랜덤게임·까미·누리는 1.
     applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));
@@ -286,7 +320,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + ONYX.turns } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!monsterById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + (jobById(s.job)?.onyxTurns ?? ONYX.turns) } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!monsterById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 /**
  * v3.99 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
@@ -300,16 +334,6 @@ export function enemyLabel(e: Pick<Enemy, 'id' | 'name' | 'swarm' | 'variant' | 
 const monsterLevelOf = (id: string) => monsterById(id)?.level || 1;
 export function reward(s: State, rng: () => number) {
     const e = s.enemy!;
-    // v27.86 랜덤게임: 처치 경험치·골드·드롭·숙련 없이 처치 수·도감만 세고, 판돈을 쌓아 다음 웨이브로 갑니다.
-    if (inRandomGame(s)) {
-        s.kills += 1;
-        s.book[e.id] = (s.book[e.id] || 0) + 1;
-        { const t = encounterTier(s); if (t > (s.bookTier?.[e.id] || 0)) (s.bookTier ??= {})[e.id] = t; }
-        { const max = stats(s).hp; s.hp = Math.min(max, s.hp + Math.floor(max * victoryHealRate(s))); }
-        s.enemy = null; s.effects = {}; s.playerStun = 0;
-        clearRandomWave(s);
-        return;
-    }
     // Use the loadout and growth level at the time of victory, before new mastery unlocks.
     // 무리 사냥은 전멸 시 N마리분을 지급합니다. 조건부 숙련 상한은 한 마리 기준으로 적용한 뒤 N배.
     const size = e.swarm || 1, vdef = variantById(e.variant), rewardMult = vdef?.reward || 1, expMult = vdef?.expMult || rewardMult, bookPer = vdef?.book || 1;
@@ -320,17 +344,19 @@ export function reward(s: State, rng: () => number) {
     // v3.48 무리 숙련은 마리 수 대신 싸운 턴 × 규모별 값(swarmMasteryKills, 마리 수 상한). 서식지가 숙련을 까미보다 몇 배 더 주던 문제.
     const swarmTurns = s.turn - (e.born ?? s.turn) + 1, masteryHeads = size > 1 ? swarmMasteryKills(size, swarmTurns) : 1;
     // v3.107 계급 특전 숙련 훈련은 배율 밖의 고정값(무리는 마리분만큼): 배율은 나머지에만 곱하고, 승천 배율 뒤에 더합니다.
-    const masteryReward = victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
+    // v3.201 던전(무릉도장 포함)은 처치마다 골드 · 경험치 · 숙련 · 장비를 주지 않습니다. 보상은 정복할 때 던전 주화로 한 번에(data/dungeon-shop).
+    const dungeonRun = !!s.dungeon;
+    const masteryReward = dungeonRun ? { amount: 0, drill: 0, base: 0, bonus: 0, source: '' } : victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
     const researched = researchMastery(s, Math.floor((masteryReward.amount - masteryReward.drill) * masteryHeads * focusMastery * eventMastery)), practice = researched.total + drillMastery;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
-    const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
     const won = stats(s);
-    const perMonster = Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
+    const perMonster = dungeonRun ? 0 : Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = dungeonRun ? 0 : Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
-    const rareFoe = isSpecialId(e.id) || !!e.onyx;
-    const goldenChance = won.goldenFind || 0, golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
+    const rareFoe = isSpecialId(e.id) || !!e.onyx || dungeonRun;
+    const goldenChance = (won.goldenFind || 0) * (1 + (jobById(s.job)?.variantRate || 0)), golden = goldenChance > 0 && !rareFoe && rng() < goldenChance;
     const gold = Math.floor(perMonster * size * big) + (golden ? perMonster * 9 : 0);
     if (golden) { s.goldenBook ??= {}; s.goldenBook[e.id] = (s.goldenBook[e.id] || 0) + 1; }
     // v27.79 계급장: 처치 수(무리는 마릿수)만큼 계급 경험치. ‘전과 기록’ 특전이 마리당 더 셉니다. 기록이 없던 세이브는 지금까지의 처치 수에서 시작합니다. 진급하면 알립니다.
@@ -339,13 +365,16 @@ export function reward(s: State, rng: () => number) {
     // v3.46 무리는 마리 수 대신 싸운 턴 × 규모별 턴당 값(swarmRankKills, 마리 수 상한). 소수점은 이월합니다.
     // v3.75 전공 옵션: 처치 수 1마리당 +1(전과 기록 배율 전).
     const valor = 1 + Math.floor(equippedAffixTotal(s, 'rankFlat'));
-    if (size > 1) { const raw = swarmRankKills(size, swarmTurns) * valor * (1 + rankPerkLevel(s, 'tally')) + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
+    // v3.219 작전참모 인사 기록(다른 분신): 계급 경험치 배율. 소수점은 무리와 같이 이월합니다.
+    const rankMul = supportMultiplier(s, 'rank');
+    if (size > 1 || rankMul > 1) { const raw = (size > 1 ? swarmRankKills(size, swarmTurns) : 1) * valor * (1 + rankPerkLevel(s, 'tally')) * rankMul + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
     else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));
     s.rank = rk;
-    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 빌드 화면의 계급에서 사용)`, 'reward'); }
+    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 치장 화면의 계급에서 사용)`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
-    if (e.id === MIMIC.id) { const t = rollMimicMastery(rng, s); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
+    // v3.221 황금 올가미 표식이 남은 까미는 그 확률로 로또가 한 단계 위로 굴러갑니다.
+    if (e.id === MIMIC.id) { const rolled = rollMimicMastery(rng, s), up = (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeMimicTier(rolled) !== rolled, t = up ? upgradeMimicTier(rolled) : rolled; if (up) addLog(s, `✦ 황금 올가미 · 숙련 로또 ${rolled.label} → ${t.label}`, 'reward'); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
     // v3.161 대왕 까미: ‘대’ × KING.rewardMul 확정(난수 없음).
     else if (e.id === KING.mimic.id) { mimicBonus = MIMIC.tiers[2].mastery * KING.rewardMul; addLog(s, `👑 대왕 까미 격파! 직업·장착 스킬 숙련 +${mimicBonus.toLocaleString()} (대 당첨 ×${KING.rewardMul} 확정)`, 'reward'); }
     // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련에 곱합니다(v3.107 계급 특전 숙련 훈련은 빼고 뒤에 더함). 다른 배율은 까미에 걸지 않습니다.
@@ -364,14 +393,15 @@ export function reward(s: State, rng: () => number) {
     const jobTargets = vocationTargets(jobMasteryTarget(jobById(s.job)!));
     const oldJobRank = thresholdRank(s.jobMastery[s.job] || 0, jobTargets);
     s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + practiceTotal;
+    recordMasteryIncome(s, practiceTotal);
     const newJobRank = thresholdRank(s.jobMastery[s.job], jobTargets);
     if (newJobRank > oldJobRank) addLog(s, `직업 단련 ${newJobRank}단계 달성 · 현재 직업의 체력·마나·양 공격·양 방어 +4%`, 'skill');
     for (const id of s.skills) {
         if (canUse(s, id)) {
-            // v3.74 극한돌파: 달성한 순간 한 번 알립니다(효과는 아직 없음, 운영자 문의).
-            const before = extremeBroken(s, id);
+            // v3.74 극한돌파 · v3.211 극한 단계: 단계가 오른 순간 한 번 알리고, 처음이면 전용 연출을 엽니다.
+            const before = extremeStage(s, id);
             s.skillPractice[id] = (s.skillPractice[id] || 0) + practiceTotal;
-            if (!before && extremeBroken(s, id)) addLog(s, `${skillById(id)!.name} 극한돌파 달성! 운영자에게 문의해 주세요.`, 'reward');
+            noteExtreme(s, id, before);
         }
     }
     s.book[e.id] = (s.book[e.id] || 0) + size * bookPer;
@@ -395,11 +425,15 @@ export function reward(s: State, rng: () => number) {
     if (e.boss) recordGoal(s, 'boss', undefined, 1, text => addLog(s, text, 'reward'));
     if (size > 1) recordGoal(s, 'swarm', undefined, 1, text => addLog(s, text, 'reward'));
     s.exp += exp;
+    recordExpIncome(s, exp);
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
     // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
     // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 90회분).
     if (e.id === EXP_NURI.id || e.id === KING.nuri.id) {
-        const king = e.id === KING.nuri.id, t = king ? { pct: EXP_NURI.tiers[2].pct * KING.rewardMul, label: '대왕' } : rollNuriTier(rng);
+        // v3.221 하얀 발자국 표식이 남은 누리는 그 확률로 로또가 한 단계 위로 굴러갑니다(대왕은 확정이라 그대로).
+        const king = e.id === KING.nuri.id, rolled = king ? undefined : rollNuriTier(rng), up = !!rolled && (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeNuriTier(rolled) !== rolled;
+        const t = king ? { pct: EXP_NURI.tiers[2].pct * KING.rewardMul, label: '대왕' } : up ? upgradeNuriTier(rolled!) : rolled!;
+        if (up) addLog(s, `✦ 하얀 발자국 · 경험치 로또 ${rolled!.label} → ${t.label}`, 'reward');
         const byLevel = s.level < 100 ? Math.floor(xpNeeded(s.level, s.rebirths, xpWall(s)) * t.pct) : 0;
         const times = Math.round(t.pct * EXP_NURI.encountersPerPct), byField = Math.floor(stageEncounterExp(s, won) * times), bonus = Math.max(1, byLevel, byField);
         s.exp += bonus;
@@ -413,37 +447,33 @@ export function reward(s: State, rng: () => number) {
         s.essence = (s.essence || 0) + got;
         addLog(s, king ? `👑 대왕 정수 슬라임 격파! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 정수의 슬라임 · ${t.label}당첨! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul})`, 'reward');
     }
-    addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
+    if (dungeonRun) addLog(s, `${enemyLabel(e)} 처치`, 'reward');
+    else addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
+    // v3.276 보스마다 주는 것이 장신구 또는 칠흑 보스코어(윌 · 저주받은 마도서)입니다. 천장(onyxMiss)은 보스별 그대로.
     if (e.onyx) {
-        const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
-        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
-        if (ownedOnyx(s).has(e.onyx)) {
+        const bossDef = onyxById(e.onyx)!, prize = onyxDropName(bossDef); s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
+        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng(), hit = dropRoll < ONYX.drop || miss + 1 >= ONYX.dropPity, rank = onyxDropRank(s, bossDef);
+        const level = stageById(s.stage)?.level || monsterLevelOf(e.id);
+        if (rank >= 0) {
             // v3.113 각성: 이미 가진 칠흑도 같은 드롭 확률 · 천장으로 다시 얻으면 각성 단계 +1(최대 5, 고유 옵션 +10%씩). 세계석은 전처럼 받습니다.
             s.pearls += ONYX.duplicatePearls;
-            const own = ownedItems(s).find(x => x?.onyx === e.onyx)!, rank = own.onyxRank || 0;
-            if (rank < ONYX.awakenMax && (dropRoll < ONYX.drop || miss + 1 >= ONYX.dropPity)) {
-                s.onyxMiss[e.onyx] = 0; own.onyxRank = rank + 1;
-                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name} 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}% · 세계석 +${ONYX.duplicatePearls}`, 'reward');
-            }
+            if (rank < ONYX.awakenMax && hit) { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파 · 세계석 +${ONYX.duplicatePearls}`); }
             else {
                 if (rank < ONYX.awakenMax) s.onyxMiss[e.onyx] = miss + 1;
-                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
+                addLog(s, `✦ ${bossDef.name} 격파 · ${prize}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
             }
         }
-        else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
-        else {
-            s.onyxMiss[e.onyx] = 0;
-            grantOnyx(s, e.onyx, stageById(s.stage)?.level || monsterLevelOf(e.id), rng, `${bossDef.name} 격파`);
-        }
+        else if (!hit) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · ${prize}을(를) 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
+        else { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파`); }
     }
     const monster = monsterById(e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
     const rolls = swarmDropRolls(size) * (size >= SWARM_BIG.size ? SWARM_BIG.drops : 1);
     // v3.104 드롭 확률은 드롭이 바꿀 수 있는 값(골드 자릿수 · 물건 도감 · 가방 · 정수)이 그대로면 재사용합니다.
     let rateKey = '', rate = 0;
-    for (let i = 0; i < rolls * (vdef?.drops || 1); i++) {
+    for (let i = 0; i < (dungeonRun ? 0 : rolls * (vdef?.drops || 1)); i++) {
         const key = dropRateKey(s);
         if (key !== rateKey) { rateKey = key; rate = dropRate(s); }
         drop(s, dropLevel(s, monster.level, encounterTier(s)), rng, false, rate);
@@ -468,17 +498,21 @@ export function reward(s: State, rng: () => number) {
         const d = dungeonById(s.dungeon!.id)!;
         s.dungeon.wave++;
         if (s.dungeon.wave >= d.monsters.length) {
-            // v27.30 권장 레벨보다 크게 높으면 클리어 골드와 반복 장비 확률이 줄어듭니다.
-            const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level), overlevel = dungeonOverlevel(s.level, dLevel);
-            const bonusGold = Math.floor(dungeonClearGold(s, dungeonClearBase({ level: dLevel }), dungeonRewardTier(tier, d.id)) * overlevel * dungeonDepth(d.id));
-            s.gold += bonusGold;
+            // v3.201 정복 보상은 던전 주화 한 번(처치 턴과 무관한 고정량, 던전 주화 보너스 적용). 클리어 골드는 없앴습니다.
+            const tier = encounterTier(s), dLevel = dungeonLevelAt(d, tier, s.level);
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
+            // v3.201 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 주화(던전 공용, 이월 없음). 무릉도장은 층 주화만.
+            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus) * (d.id === 'abyss' ? jobById(s.job)?.abyssCoinScale ?? 1 : 1));
+            // v3.202 보스 전리품은 하루 보너스 정복에서만 굴립니다(무릉도장은 보너스가 없어 제외).
+            if (bonus) rollBossLoot(s, d.id, rng);
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 const deeper = depth > s.abyssBest;
                 s.abyssBest = Math.max(s.abyssBest, depth);
                 recordAbyssDepth(s, depth, s.lastTick);
+                if (deeper) syncAbyssCores(s);
+                if (lv1Active(s) && depth > (s.lv1AbyssBest || 0)) { s.lv1AbyssBest = depth; addLog(s, `LV1 모험가 기록 · 무릉도장 ${depth}층`, 'reward'); }
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');
@@ -493,12 +527,13 @@ export function reward(s: State, rng: () => number) {
             }
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
+            if (noviceMarketLocked(s)) addLog(s, '새 메뉴가 열렸습니다 · 증권거래소(던전 주화로 거래)', 'system');
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
-            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다, 반복 정복은 낮은 확률.
-            if (first || (d.id === 'abyss' && depth % 5 === 0) || rng() < BALANCE.dungeonRepeatDrop * overlevel)
+            // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.201 반복 정복 확률 드롭은 없앴습니다(주화 상점 장비 상자로).
+            if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name} 정복! +${bonusGold} G${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            addLog(s, `${d.name} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat;
             s.dungeon = null;
             s.running = false;
@@ -506,4 +541,18 @@ export function reward(s: State, rng: () => number) {
             else endRun(s, `${d.name} 정복 · 1회 도전 완료로 멈춤`);
         }
     }
+}
+
+/**
+ * v3.211 극한 단계가 before에서 올랐으면 알리고, 극한돌파(1단계)에 닿으면 그 스킬의 전용 연출을 영구로 엽니다(extremeFx).
+ * v3.211 전에 이미 1억을 넘긴 스킬도 다음 처치 때 여기서 연출이 열립니다(단계가 그대로라 알림은 연출 해금 한 줄).
+ */
+export function noteExtreme(s: State, id: string, before: number) {
+    const now = extremeStage(s, id), name = skillById(id)?.name || id;
+    if (now >= 1 && !s.extremeFx?.[id]) {
+        (s.extremeFx ??= {})[id] = true;
+        addLog(s, `✦ ${name} 극한돌파! 전용 연출이 열렸습니다 · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
+        return;
+    }
+    if (now > before) addLog(s, `✦ ${name} 극한 ${now}단계 (숙련 ${EXTREME_STAGES[now - 1].toLocaleString()}) · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
 }

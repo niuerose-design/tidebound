@@ -2,13 +2,14 @@
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
+import { EXTREME_STAGES, EXTREME_FINAL_DAMAGE } from '@/game/data/long-term';
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Eye, EyeOff, GripVertical, Info, Pin, Search } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById, BASE_JOB } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { loadoutSkillAP, lineage, refinePractice, extremeBreakTarget, extremeBroken, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, skillExclusiveLabel, exclusiveAccess, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus } from '@/game/systems/progression';
+import { loadoutSkillAP, lineage, refinePractice, extremeBreakTarget, extremeStage, extremeFinalMultiplier, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, skillExclusiveLabel, exclusiveAccess, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus } from '@/game/systems/progression';
 import { Heading, Meter, SkillIcon, Fold } from './shared';
 import { hanjaReading } from '@/game/systems/skill-description';
 import { masteryConditionText } from '@/game/systems/mastery';
@@ -51,7 +52,7 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
     if (!sk.disguise) for (const [key, n] of Object.entries(growthNow)) passiveChips[key] = (passiveChips[key] || 0) + n;
     const extraNotes = [...skillExtraNotes(sk), ...(sk.type === 'passive' && !Object.keys(passiveChips).length && sk.desc && !skillExtraNotes(sk).length ? [sk.desc] : [])];
     const growth = detailed ? skillGrowthStages(sk) : [];
-    const extremeTarget = extremeBreakTarget(sk), refinePracticeNow = refinePractice(s, sk.id), extreme = extremeBroken(s, sk.id);
+    const extremeTarget = extremeBreakTarget(sk), refinePracticeNow = refinePractice(s, sk.id), extremeNow = extremeStage(s, sk.id), extremeNext = EXTREME_STAGES[extremeNow], extremeFx = !!s.extremeFx?.[sk.id];
     const lb = limitBreakOf(s, sk.id), lbOwned = limitBreakOwned(s, sk.id), lbNext = limitBreakNext(s, sk.id);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
     // 장착 버튼에 '왜 안 되는지'를 바로 적습니다: 사용 조건(계승·레벨·숙련) 또는 AP 부족량.
@@ -79,12 +80,15 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
         {!detailed && <div className="skill-compact-growth"><span>{acquired ? `성장 Lv.${level} / ${max}` : unlockText}</span><span>{nextMastery ? `숙련 ${practice.toLocaleString()} / ${nextMastery.toLocaleString()}` : '숙련 완료'}</span></div>}
         {!detailed && acquired && <Meter value={Math.min(practice, nextMastery || milestones[max - 1])} max={nextMastery || milestones[max - 1]}/>}
         {detailed && <>
-            {sk.condition && <div className="condition-label">{sk.condition === 'wounded' ? '내 체력 70% 이하에서 발동 판정' : '상대 체력 60% 이상에서 발동 판정'}</div>}
+            {sk.condition && <div className="condition-label">{sk.condition === 'wounded' ? '내 체력 70% 이하에서 발동 판정' : sk.condition === 'kkami' ? '숙련의 까미 · 대왕 까미에게만 발동' : sk.condition === 'nuri' ? '경험의 누리 · 대왕 누리에게만 발동' : sk.condition === 'afflicted' ? '내가 상태이상에 걸려 있을 때 발동 판정' : '상대 체력 60% 이상에서 발동 판정'}</div>}
             <div className="skill-stage-table-wrap" tabIndex={0} role="region" aria-label={`${sk.name} 단계별 실제 효과`}><table className="skill-stage-table skill-growth-table"><caption>기본 성장 효과 <small>필요 숙련은 누적 수치 · 기본 Lv.0부터 사용</small></caption><thead><tr><th>성장</th><th>필요 숙련</th><th>AP</th>{sk.type === 'active' && <><th>발동</th><th>마나</th><th>대기</th></>}<th>실제 효과</th></tr></thead><tbody>{growth.map(row => <tr key={row.level} className={level === row.level && acquired ? 'current' : ''}><th>Lv.{row.level}{row.broken ? <small>한계돌파 {row.broken}</small> : null}{level === row.level && acquired && <small>현재</small>}</th><td>{row.practice ? row.practice.toLocaleString() : '기본 해금'}</td><td className={(row.effective.cost || 0) < 0 ? 'ap-gain' : ''}>{row.effective.cost}</td>{sk.type === 'active' && <><td>{skillPercent(row.effective.chance)}</td><td>{row.effective.manaCost}</td><td>{row.effective.cooldown}턴</td></>}<td className="skill-stage-effects">{row.effects.map((text, i) => <span key={i}>{text}</span>)}</td></tr>)}</tbody></table></div>
             <p className="footnote">{sk.type === 'active' ? '피해식은 상대 방어·치명타·약화 적용 전입니다. 추가 공격은 각각 명중과 치명타를 판정합니다.' : '능력치 증가량은 직업·연구 배율 적용 전입니다. 조건부 숙련 보너스는 가장 높은 하나만 적용됩니다.'} {!sk.job ? '공용 기술은 계승 없이 사용할 수 있습니다.' : `무료 계승: 누적 숙련 ${milestones[0].toLocaleString()}. SP 계승은 숙련도를 올리지 않습니다.`} 숙련·SP 중 높은 성장 레벨만 적용하며, 다른 직업의 전직 선행조건에는 실전 숙련만 인정됩니다.</p>
         </>}
-        {/* v3.74 극한돌파: 한계돌파 3단계를 마친 뒤 옛 연마 30단계만큼 더 쌓으면 달성. 효과는 아직 없고 운영자에게 문의합니다. */}
-        {acquired && extremeTarget !== null && <details className="skill-specialization"><summary>극한돌파 · {extreme ? '달성' : lb >= PROGRESSION.limitBreak.max ? `숙련 ${refinePracticeNow.toLocaleString()} / ${extremeTarget.toLocaleString()}` : `한계돌파 ${PROGRESSION.limitBreak.max}단계 뒤에 열림`}</summary><p>극한돌파시 운영자에게 문의해주세요.</p>{lb >= PROGRESSION.limitBreak.max && !extreme && <Meter value={Math.min(refinePracticeNow, extremeTarget)} max={extremeTarget} label="극한돌파까지"/>}</details>}
+        {/* v3.74 극한돌파 · v3.211 극한 단계: 한계돌파 3단계 뒤 숙련 1억 · 2억 · 4억 · 7억 · 10억마다 그 스킬의 최종 피해 +2%. 처음 달성하면 전용 연출이 영구로 열립니다. */}
+        {acquired && extremeTarget !== null && <details className="skill-specialization"><summary>극한돌파 · {extremeNow ? `${extremeNow}단계 · 최종 피해 +${Math.round((extremeFinalMultiplier(extremeNow) - 1) * 100)}%` : lb >= PROGRESSION.limitBreak.max ? `숙련 ${refinePracticeNow.toLocaleString()} / ${extremeTarget.toLocaleString()}` : `한계돌파 ${PROGRESSION.limitBreak.max}단계 뒤에 열림`}{extremeFx ? ' · 전용 연출' : ''}</summary>
+            <p>숙련 {EXTREME_STAGES.map(n => `${n / 1e8}억`).join(' · ')}마다 이 스킬의 최종 피해가 +{Math.round(EXTREME_FINAL_DAMAGE * 100)}%씩(최대 +{Math.round(EXTREME_FINAL_DAMAGE * EXTREME_STAGES.length * 100)}%) 오릅니다. 처음 극한돌파하면 이 스킬의 전용 연출(極)이 열리고 승천해도 남습니다. 단계는 승천하면 승천 뒤 쌓은 숙련으로 다시 오릅니다.</p>
+            {lb >= PROGRESSION.limitBreak.max && extremeNext !== undefined && <Meter value={Math.min(refinePracticeNow, extremeNext)} max={extremeNext} label={`극한 ${extremeNow + 1}단계까지`}/>}
+        </details>}
         <div className="skill-actions skill-actions-v2">
             {sk.job && acquired && !isInherited && <ConfirmButton label="계승 · 1 SP" description={`${sk.name}을 다른 직업에서도 사용할 수 있게 합니다. 성장 레벨과 숙련도는 변하지 않습니다. 숙련도 ${milestones[0].toLocaleString()}을 쌓으면 SP 없이도 계승됩니다.`} disabled={busy || !canInheritSkill(s, sk.id) || s.sp < 1} onConfirm={() => send({ type: 'inheritSkill', id: sk.id })}/>}
             {acquired && mastery - lb >= max && lbNext.stage <= PROGRESSION.limitBreak.max && <ConfirmButton label={`한계돌파 ${lbNext.stage}단계 · SP ${lbNext.sp}`} description={lbNext.ok ? `${sk.name} 성장 Lv.${level} → Lv.${level + 1}. 발동 +${Math.round((PROGRESSION.masteryChance + PROGRESSION.limitBreak.chance) * 1000) / 10}%p, 배율·패시브 한 단계 더${lbNext.stage >= PROGRESSION.limitBreak.max ? ', 장착 AP -1' : ''}. 환생해도 유지됩니다.` : `조건: ${lbNext.reason}`} disabled={busy || !lbNext.ok} onConfirm={() => send({ type: 'limitBreak', id: sk.id })}/>}
@@ -119,6 +123,16 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
 
 /** v27.73 전 버전이 즐겨찾기를 두던 브라우저 저장소 키. 세이브에 즐겨찾기가 없을 때 한 번 옮기고 지웁니다. */
 const PIN_KEY = 'tidebound.skillPins';
+/** v3.295 편성 이름: 저장한 칸은 눌러서 이름을 바꿉니다(Enter · 칸 밖을 누르면 저장, Esc는 취소, 1~20자). */
+function PresetName({ id, name, disabled, send }: { id: string; name?: string; disabled: boolean; send: PanelProps['send'] }) {
+    const [edit, setEdit] = useState(false);
+    const label = name || `편성 ${id}`;
+    if (!edit) return name ? <button type="button" className="preset-name" disabled={disabled} title="눌러서 이름 바꾸기" onClick={() => setEdit(true)}>{label}</button> : <>{label}</>;
+    const done = (value: string) => { setEdit(false); const next = value.trim().slice(0, 20); if (next && next !== name) send({ type: 'renamePreset', id, value: next }); };
+    return <input className="preset-name-input" aria-label={`편성 ${id} 이름`} defaultValue={label} maxLength={20} autoFocus
+        onBlur={e => done(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEdit(false); }}/>;
+}
+
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
@@ -203,7 +217,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             const unlocked = researchRank(s, 'extraRoll'), level = extraRollLevel(s), need = SKILL_FORMULA.extraRoll.ap[0], power = Math.round(SKILL_FORMULA.extraRoll.power[0] * 100), short = need - (cap - used);
             const gate = researchById('extraRoll');
             return <div className={`loadout-extra ${level ? 'on' : ''}`}><div><strong>추가 판정 {level ? `${level}단계 · 켜짐` : unlocked ? '· 꺼짐' : '· 잠김'}</strong><small>{unlocked ? `액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 한 번 더 판정합니다. 성공하면 ${power}% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동은 묶음 최대 개수가 1 늘어납니다. 장착 AP ${need}.` : `세계석 연구 ‘${gate?.name}’에서 해금합니다${gate?.rebirth ? `(환생 ${gate.rebirth}회부터)` : ''}. 켜면 장착 AP ${need}를 씁니다.`}</small></div>{unlocked > 0 && <button className={level ? 'secondary small' : 'primary small'} disabled={busy || (!level && short > 0)} onClick={() => send({ type: 'extraRoll', value: String(level ? 0 : 1) })}>{level ? '끄기' : short > 0 ? `AP ${short} 부족` : `켜기 · AP ${need}`}</button>}</div>;
-        })()}<div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span>편성 {id}<small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></Fold>
+        })()}<div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span><PresetName id={id} name={s.presets[id]?.name} disabled={busy} send={send}/><small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></Fold>
         <section className="skill-finder" aria-label="스킬 찾기">
             <label className="job-search-box skill-search"><Search size={15}/><input type="search" value={query} placeholder="스킬 이름·효과·직업으로 검색 (예: 기절, 흡혈, 마법사)" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
             <div className="skill-finder-row">

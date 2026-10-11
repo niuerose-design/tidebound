@@ -3,6 +3,7 @@ import { SWARM_SIZES, SWARM_UNLOCK, FIELD_SWARM_MAX, stageById } from './world';
 import { rareSpawnBonus } from '../systems/book';
 import { stats } from '../systems/stats';
 import { ODDS } from './odds';
+import { jobById } from './classes';
 
 /** 변종: 같은 몬스터인데 특이한 개체. 사냥터에서 몬스터를 VARIANT_BOOK_MIN회 처치한 뒤부터 출현마다 판정합니다. 황금 개체는 처치 순간에 따로 판정(섀도어 계보 패시브의 ‘황금 개체 확률’). */
 export type VariantId = 'giant' | 'abyssal' | 'starlit' | 'swarm';
@@ -43,7 +44,8 @@ export const regionVariantScale = (stageId: string, id: VariantId) => ODDS.varia
 export const regionSignature = (region: string) => { const ids = REGION_SIGNATURE[region] || []; return VARIANTS.filter(v => ids.includes(v.id)); };
 /** 변종 확률 배율: 지역 테마(버섯숲 연못 +10%) × (1 + 변종 조우 확률 증가). 증가분은 섀도어 계보 패시브가 올립니다. 지역 변종 배율(REGION_VARIANTS)은 변종마다 따로 곱합니다. */
 function variantMultiplier(s: State, a = stats(s)) {
-    return (1 + rareSpawnBonus(s)) * (1 + (a.variantFind || 0));
+    // v3.230 변종 학자: 현재 직업의 변종 확률 가산.
+    return (1 + rareSpawnBonus(s)) * (1 + (a.variantFind || 0)) * (1 + (jobById(s.job)?.variantRate || 0));
 }
 /** 변종별 실제 확률(0~1). 합이 한 번 출현에 변종을 만날 확률입니다. */
 export function variantChances(s: State) {

@@ -1,38 +1,41 @@
 'use client';
-import { displayTitle } from '@/game/data/titles';
 import { TutorialCard } from './guidance-panels';
+import { OtherworldHud } from './otherworld-hud';
 import { tutorialActive } from '@/game/systems/guidance';
 import { AltarNotice } from './altar-notice';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { tipAt } from '@/game/data/tips';
 import { eventLabel } from '@/game/data/events';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { MonsterArt, SceneBackdrop } from './art';
+import { SceneBackdrop, backdropTheme } from './art';
 import { cachedStats, useReplayView, type FrameStore } from './use-game';
 import { LiveRatesCard } from './live-rates-card';
 import { EXP_NURI } from '@/game/data/exp-nuri';
 import { isSpecialId } from '@/game/data/king';
 import { WHISTLE, WHISTLE_TARGETS, whistleOk, whistleTarget } from '@/game/data/whistle';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { rebirthLevel, encounterTier } from '@/game/systems/meta';
-import { BookOpen, Check, ChevronRight, ScrollText, Coins, Compass, Fish, Pause, Play, RefreshCw, Sparkles, Swords, Target, Leaf, Gem, Megaphone } from 'lucide-react';
+import { rebirthLevel, encounterTier, tideLimit } from '@/game/systems/meta';
+import { BookOpen, Check, ChevronRight, ScrollText, Coins, Fish, Pause, Play, RefreshCw, Sparkles, Target, Leaf, Gem, Megaphone } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heading, Meter, SkillIcon, format, Num } from './shared';
+import { Heading, SkillIcon, format, Num } from './shared';
 import { STAGES, MONSTERS, swarmHpMultiplier, swarmAttackMultiplier, monsterById, stageById, dungeonById } from '@/game/data/world';
 import { variantById } from '@/game/data/variants';
 import { BALANCE } from '@/game/data/balance';
 import { statDisplay, percent } from '@/game/data/progression';
 import { skillById } from '@/game/data/skills';
-import { apCapacity, apUsed, effectiveSkill, skillMastery } from '@/game/systems/progression';
+import { jobById } from '@/game/data/classes';
+import { skillBrief } from '@/game/systems/skill-description';
+import { apCapacity, apUsed, effectiveSkill, maxSkillLevel, skillLevel, skillMastery } from '@/game/systems/progression';
 import { hitChance, normalizeStats } from '@/game/systems/stats';
 import { profile } from '@/game/data/encounters';
 import { bookRevealed } from '@/game/systems/book';
 import { BOOK_REVEAL } from '@/game/data/book-traits';
 import { useSkillFx } from './skill-fx-setting';
-import { CombatFxOverlay, CombatBarEffect, PlayerHitEffect, SceneFx, FoeCleave, BarCleave, useCombatFx } from './combat-fx';
-import { StatusBadges } from './combat-status';
+import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from './combat-fx';
+import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot, BossIntro, LevelUpFx } from './scene-stage';
 import type { State, Action, CombatStats } from '@/game/types';
+import type { CombatFx } from '@/game/systems/combat-feedback';
 import { TideSelector } from './tide-selector';
 import { SettingsDialog } from './settings-dialog';
 import { SlotChips } from './slot-chips';
@@ -73,6 +76,8 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     const playerStats = useMemo(() => cachedStats(base), [base]);
     // v3.19 알림·카드 켜기/끄기(설정 → 화면 알림). 꺼도 진행은 그대로입니다.
     const show = useNotices();
+    // v3.228 사냥터 난이도 카드에 넣는 집중 사냥 줄은 동기화 상태로만 다시 만들어, 재생 프레임마다 난이도 카드(memo)가 다시 그려지지 않게 합니다.
+    const targetStrip = useMemo(() => <TargetStrip base={base} busy={busy} send={send} inline/>, [base, busy, send]);
     return <>
     <BattleHeading base={base} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} busy={busy} send={send} setView={setView} onSwitchSlot={onSwitchSlot}/>
     <BattleNotices base={base} send={send} setView={setView}/>
@@ -83,23 +88,20 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     <div className="battle-console">
     <MobilePlayerStrip s={s} a={playerStats} setView={setView}/>
     {tutorialActive(base) && <div className="battle-top-tutorial"><TutorialCard s={base} send={send} busy={busy} setView={setView}/></div>}
-    <SessionMetrics base={base}/>
     {show('liveRates') && <LiveRatesCard s={base} compact/>}
-    <TideSelector s={base} send={send} busy={busy}/>
-    <TargetStrip base={base} busy={busy} send={send}/>
+    {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={targetStrip}/> : <TargetStrip base={base} busy={busy} send={send}/>}
     <BattleArena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
-    <BattleSkills base={base} setView={setView}/>
     </div>
     <BattleRail s={s} base={base} busy={busy} send={send} setView={setView}/>
     </div>
     </>;
 }
 
-/** 머리글과 도구(업데이트 내역 · 저장 상태 · 설정). 동기화 상태만 봅니다. */
+/** 도구 줄(업데이트 내역 · 저장 상태 · 설정). 동기화 상태만 봅니다. v3.218 제목 문구(오늘도, 더 깊은 곳으로.)는 없애고 도구만 얇은 한 줄로 둡니다. */
 const BattleHeading = memo(function BattleHeading({ base, saved, settings, setSettings, name, setName, busy, send, setView, onSwitchSlot }: {
     base: State; saved: boolean; settings: boolean; setSettings: (open: boolean) => void; name: string; setName: (value: string) => void; busy: boolean; send: Send; setView: SetView; onSwitchSlot?: (slot: number) => Promise<void>;
 }) {
-    return <Heading eyebrow="THE ENDLESS ADVENTURE" title="오늘도, 더 깊은 곳으로."><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
+    return <Heading eyebrow="THE ENDLESS ADVENTURE"><SessionMetrics base={base}/><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
 });
 
 /** v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */
@@ -110,8 +112,11 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     // v25.17 맨 위 한 줄: 부재중 정산 → 던전 진행 → 번갈아 나오는 안내.
     const [tip, setTip] = useState(0);
     useEffect(() => { const timer = window.setInterval(() => setTip(v => v + 1), 14000); return () => window.clearInterval(timer); }, []);
+    // v3.255 부재중 정산 알림은 12초 보여 준 뒤 스스로 닫습니다(확인 단추와 같은 처리). 내용은 획득 기록 · 통계에 남습니다.
+    const offlineKey = s.lastOffline ? `${s.lastOffline.seconds}:${s.lastOffline.kills}:${s.lastOffline.gold}` : '';
+    useEffect(() => { if (!offlineKey) return; const timer = window.setTimeout(() => send({ type: 'offlineDismiss' }), 12000); return () => window.clearTimeout(timer); }, [offlineKey, send]);
     return <NoticeStack>
-    {s.lastOffline && show('offline') && <div className="voyage-brief has-offline"><Leaf size={16}/><span>부재중 사냥 정산 · {Math.floor(s.lastOffline.seconds / 60)}분 동안 {s.lastOffline.kills}마리 처치 · +{format(s.lastOffline.gold)} G</span><button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button></div>}
+    {s.lastOffline && show('offline') && <div className="voyage-brief has-offline"><Leaf size={16}/><span>부재중 사냥 정산 · {Math.floor(s.lastOffline.seconds / 60)}분 동안 {s.lastOffline.kills}마리 처치 · +{format(s.lastOffline.gold)} G{s.lastOffline.rares ? [s.lastOffline.rares.mimic ? ` · 까미 ${s.lastOffline.rares.mimic}` : '', s.lastOffline.rares.nuri ? ` · 누리 ${s.lastOffline.rares.nuri}` : '', s.lastOffline.rares.slime ? ` · 슬라임 ${s.lastOffline.rares.slime}` : ''].join('') : ''}</span><button aria-label="부재중 정산 알림 닫기" className="voyage-brief-dismiss" onClick={() => send({ type: 'offlineDismiss' })}><Check size={14}/></button></div>}
     {banner && show('event') && <div className="event-banner" role="status"><Sparkles size={15}/><b>이벤트</b><span>{eventLabel(banner)}</span></div>}
     {isHackerJob(s.job) && show('hacker') && <div className="event-banner hack-banner" role="status"><Sparkles size={15}/><b>해커</b><span>{s.running ? '브루트포스 실행 중 · 사냥 대신 비트·권한 경험치를 쌓습니다.' : '해커는 사냥하지 않습니다. 시작하면 브루트포스가 돌아갑니다.'} 침투 작전·해킹은 ‘해킹’ 메뉴에서.</span></div>}
     {/* v3.18 해커의 방송 탈취: 서명이 고정된 문구를 이벤트 배너 자리에 띄웁니다. */}
@@ -122,24 +127,81 @@ const BattleNotices = memo(function BattleNotices({ base: s, send, setView }: { 
     </NoticeStack>;
 });
 
-/** 누적 처치 · 도감 · 보유 재화 한 줄. */
+/** 누적 처치 · 도감 · 보유 재화 한 줄. v3.260 맨 아래 카드 대신 위쪽 도구 줄 옆 작은 칩(정확한 값 · 설명은 마우스를 올리면). */
 const SessionMetrics = memo(function SessionMetrics({ base: s }: { base: State }) {
-    return <div className="session-metrics"><div><Fish/><span>누적 처치<strong><Num n={s.kills}/> <small>마리</small></strong></span></div><div><BookOpen/><span>발견한 몬스터<strong>{Object.keys(s.book).length} <small>/ {MONSTERS.length}종</small></strong></span></div><div className="session-currency gold"><Coins/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div><div className="session-currency pearl" title={`세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`}><Sparkles/><span>보유 세계석 <small className="metric-hint">?</small><strong><Num n={s.pearls}/> <small>개</small></strong></span></div><div className="session-currency essence" title="정수는 장비 분해 · 무리 전리품 · 높은 사냥터 난이도 등에서 모입니다. 옵션 재설정 · 재련, 저격 뽑기, 원시 각성에 씁니다. 환생해도 사라지지 않습니다."><Gem/><span>보유 정수 <small className="metric-hint">?</small><strong><Num n={s.essence || 0}/> <small>개</small></strong></span></div></div>;
+    const pearlHelp = `세계석은 환생(Lv.${rebirthLevel(s)}부터) 후 ‘환생 · 분신 → 세계석 연구’에서 영구 능력치·편의 연구를 사는 데 씁니다. 환생할 때 레벨·환생 횟수에 따라 받고, 별빛 변종·도감·업적 보상으로도 모입니다. 환생해도 사라지지 않습니다.`;
+    return <div className="heading-metrics" role="group" aria-label="누적 · 보유">
+        <span className="metric-chip" title={`누적 처치 ${format(s.kills)}마리`}><Fish size={13}/><Num n={s.kills}/></span>
+        <span className="metric-chip" title={`발견한 몬스터 ${Object.keys(s.book).length} / ${MONSTERS.length}종`}><BookOpen size={13}/>{Object.keys(s.book).length}<small>/{MONSTERS.length}</small></span>
+        <span className="metric-chip gold" title={`보유 골드 ${format(s.gold)} G`}><Coins size={13}/><Num n={s.gold}/></span>
+        <span className="metric-chip pearl" title={`보유 세계석 ${format(s.pearls)}개 · ${pearlHelp}`}><Sparkles size={13}/><Num n={s.pearls}/></span>
+        <span className="metric-chip essence" title={`보유 정수 ${format(s.essence || 0)}개 · 정수는 장비 분해 · 무리 전리품 · 높은 사냥터 난이도 등에서 모입니다. 옵션 재설정 · 재련, 저격 뽑기, 원시 각성에 씁니다. 환생해도 사라지지 않습니다.`}><Gem size={13}/><Num n={s.essence || 0}/></span>
+    </div>;
 });
 
-/** 집중 사냥 대상 고르기(사냥터의 몬스터 탭). */
-const TargetStrip = memo(function TargetStrip({ base: s, busy, send }: { base: State; busy: boolean; send: Send }) {
+/** 집중 사냥 대상 고르기(사냥터의 몬스터 탭). v3.218 사냥터 난이도 카드 안에 한 줄로 들어갑니다(inline). 난이도가 없는 첫 생에는 따로 한 줄. */
+const TargetStrip = memo(function TargetStrip({ base: s, busy, send, inline = false }: { base: State; busy: boolean; send: Send; inline?: boolean }) {
     const st = stageById(s.stage)!, tier = encounterTier(s);
-    return <div className="battle-target-strip"><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.monsters.map(id => { const f = monsterById(id), need = f?.minTier || 0, locked = need > tier; return <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon || locked} title={locked ? `사냥터 난이도 ${need}부터 나타나는 몬스터입니다. 지금 난이도 ${tier}.` : undefined}>{f?.name}{locked ? ` · 난이도 ${need}+` : ''}</TabsTrigger>; })}</TabsList></Tabs></div>;
+    return <div className={`battle-target-strip ${inline ? 'inline' : ''}`}><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.monsters.map(id => { const f = monsterById(id), need = f?.minTier || 0, locked = need > tier; return <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon || locked} title={locked ? `사냥터 난이도 ${need}부터 나타나는 몬스터입니다. 지금 난이도 ${tier}.` : undefined}>{f?.name}{locked ? ` · 난이도 ${need}+` : ''}</TabsTrigger>; })}</TabsList></Tabs></div>;
 });
 
-/** 장착한 액티브 스킬 줄(AP · 발동률 · 대기). 대기 턴은 동기화마다 갱신됩니다. */
-const BattleSkills = memo(function BattleSkills({ base: s, setView }: { base: State; setView: SetView }) {
+/**
+ * v3.252 전투 스킬 단축키 줄(아래 조작 줄 안): 장착한 액티브 스킬 아이콘에 대기 턴을 덮어 보여 주고, 그 스킬이 나가는 순간 아이콘이 반짝입니다.
+ * 아이콘 아래 짧은 이름, 발동률은 마우스를 올리면(title) 보이고, 누르면 스킬 편성 화면으로 갑니다. 예전 ‘전투 스킬’ 카드를 대신합니다.
+ */
+function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; setView: SetView }) {
     const activeIds = s.skills.filter(id => skillById(id)?.type === 'active');
-    return <section className="panel battle-skills"><div className="section-title"><h2>전투 스킬 <span className="micro">AP {apUsed(s)} / {apCapacity(s)} · 액티브 {activeIds.length}개</span></h2><button className="text-button" onClick={() => setView('skills')}>스킬 편성 <ChevronRight size={14}/></button></div><div className="battle-skill-row">{(activeIds.length ? activeIds : ['']).map(id => { const sk = skillById(id), effective = sk ? effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id)) : null; return <button key={id || 'empty'} className={`battle-skill ${sk ? '' : 'vacant'}`} onClick={() => setView('skills')}><div className="skill-symbol">{sk ? <SkillIcon id={sk.id}/> : <span>+</span>}</div><div><strong>{sk?.name || '빈 스킬 슬롯'}</strong><small>{sk ? (() => { const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0; return `${sk.awaken ? '각성 · ' : ''}${Math.round(effective!.chance * 100)}% 발동 · ${wait > 0 ? `대기 ${wait}턴` : '사용 준비'}`; })() : '스킬을 장착하세요'}</small></div></button>; })}</div></section>;
-});
+    const fired = (id: string) => effect.findLast(fx => fx.actor === 'player' && fx.skillId === id)?.id;
+    // v3.264 터치 화면: 칸을 길게 누르면(0.45초) 정보 창이 열리고, 짧게 누르면 전처럼 스킬 편성으로 갑니다. 열린 창은 다른 곳을 누르거나 4초 뒤 닫힙니다.
+    const [open, setOpen] = useState<string | null>(null), press = useRef<{ timer: number; held: boolean } | null>(null);
+    useEffect(() => {
+        if (!open) return;
+        const close = () => setOpen(null), timer = window.setTimeout(close, 4000);
+        document.addEventListener('pointerdown', close);
+        return () => { window.clearTimeout(timer); document.removeEventListener('pointerdown', close); };
+    }, [open]);
+    const hold = (id: string) => ({
+        onPointerDown: (e: React.PointerEvent) => { if (e.pointerType === 'mouse') return; e.stopPropagation(); const p = { timer: window.setTimeout(() => { p.held = true; setOpen(id); }, 450), held: false }; press.current = p; },
+        onPointerUp: () => { if (press.current) window.clearTimeout(press.current.timer); },
+        onPointerLeave: () => { if (press.current) window.clearTimeout(press.current.timer); },
+        onContextMenu: (e: React.MouseEvent) => { if (press.current) e.preventDefault(); },
+    });
+    const go = () => { if (press.current?.held) { press.current = null; return; } setView('skills'); };
+    return <div className="skill-hotbar" role="group" aria-label="전투 스킬">
+        {activeIds.map(id => {
+            const sk = skillById(id)!, effective = effectiveSkill(sk, s.learned[id] || 1, skillMastery(s, id));
+            const wait = sk.awaken && s.cooldowns[id] === undefined ? sk.awaken.start : s.cooldowns[id] || 0, hit = fired(id);
+            const tipId = `hotbar-tip-${id}`, state = wait > 0 ? `대기 ${wait}턴` : '사용 준비';
+            // v3.263 마우스를 올리거나 키보드로 고르면 위로 스킬 정보 창(발동률 · 재사용 대기 · 마나 · 효과 요약 · 지금 상태)이 뜹니다. 전에는 브라우저 기본 title 한 줄.
+            return <span key={id} className={`hotbar-cell ${open === id ? 'open' : ''}`}>
+                <button type="button" className={`hotbar-slot ${wait > 0 ? 'cooling' : 'ready'} ${sk.awaken ? 'awaken' : ''}`} aria-label={`${sk.name} ${state}`} aria-describedby={tipId} onClick={go} {...hold(id)}>
+                    <SkillIcon id={id} size={20}/><small className="hotbar-name">{sk.name}</small>
+                    {wait > 0 && <b className="hotbar-cd">{wait}</b>}
+                    {hit !== undefined && <i key={hit} className="hotbar-fire"/>}
+                </button>
+                <span className="hotbar-tip" role="tooltip" id={tipId}>
+                    <strong>{sk.name}{sk.awaken ? <em> · 각성</em> : null}</strong>
+                    <small>{jobById(sk.job)?.name || '공용'} · 성장 Lv.{skillLevel(sk, s.learned[id] || 1, skillMastery(s, id))} / {maxSkillLevel(sk)}</small>
+                    <span className="hotbar-tip-stats">
+                        <span>발동 <b>{Math.round(effective.chance * 100)}%</b></span>
+                        <span>대기 <b>{sk.awaken ? `시작 ${sk.awaken.start}턴` : `${effective.cooldown}턴`}</b></span>
+                        {(effective.manaCost || 0) > 0 && <span>마나 <b>{format(effective.manaCost!)}</b></span>}
+                    </span>
+                    <span className="hotbar-tip-brief">{skillBrief(effective)}</span>
+                    <span className={`hotbar-tip-state ${wait > 0 ? 'cooling' : 'ready'}`}>{state} · {open === id ? '짧게 누르면 스킬 편성' : '눌러서 스킬 편성'}</span>
+                </span>
+            </span>;
+        })}
+        {!activeIds.length && <button type="button" className="hotbar-slot vacant" onClick={() => setView('skills')} title="스킬을 장착하세요">+</button>}
+        <button type="button" className="hotbar-edit" onClick={() => setView('skills')} title="스킬 편성">AP {apUsed(s)}/{apCapacity(s)}<ChevronRight size={13}/></button>
+    </div>;
+}
 
-/** 상대 카드와 사냥터 장면. 스킬 연출 상태는 여기에만 있어 타격 연출이 바뀔 때 이 안만 다시 그립니다. */
+/**
+ * 사냥터 장면과 아래 몬스터 카드. 스킬 연출 상태는 여기에만 있어 타격 연출이 바뀔 때 이 안만 다시 그립니다.
+ * v3.247 장면에는 나(왼쪽 아래) · 몬스터(오른쪽) · 연출 · 전투 기록 · 전용 HUD만 두고, 사냥터 이름 · 단계 · 출현 문구와 조작 버튼은 아래 카드로 옮겼습니다.
+ * v3.250 아래 카드는 사냥터 이름과 조작만 남긴 얇은 줄. 몬스터 정보(성향 · 대응법 · 명중률 · 회피율)는 장면의 몬스터 이름을 눌러 봅니다.
+ */
 function BattleArena({ s, playerStats, busy, send, setView }: { s: State; playerStats: CombatStats; busy: boolean; send: Send; setView: SetView }) {
     const st = stageById(s.stage)!, d = dungeonById(s.dungeon?.id);
     const enemy = s.enemy;
@@ -148,9 +210,42 @@ function BattleArena({ s, playerStats, busy, send, setView }: { s: State; player
     // 회복 대기(필드 패배 후)·출정 준비(던전 입장 후) 남은 시간. 던전 화면의 준비 카운트다운과 같은 방식입니다.
     const recoverySeconds = Math.ceil(s.recovery * BALANCE.turnMs / 1000);
     const recoveryText = s.recovery > 0 ? d ? `출정 준비 · ${recoverySeconds}초 남음` : `회복 대기 · ${recoverySeconds}초 남음` : null;
+    const shown = enemy && !s.recovery ? enemy : null;
+    const idle = recoveryText ?? (shown ? null : s.running ? '다음 몬스터를 기다리는 중' : '자동 사냥이 멈춰 있습니다');
     return <>
-    <div className="battle-opponent-strip battle-fx-host"><CombatFxOverlay effect={combatFx} combo={fxCombo}/><div className="opponent-card player-opponent"><span className="eyebrow">MY CHARACTER</span><div className="combatant-name"><strong>{displayTitle(s) ? <small className="rebirth-title">{displayTitle(s)}</small> : null}{s.name}</strong><StatusBadges effects={s.effects} stun={s.playerStun} recent={combatFx} target="player"/></div><div className="player-hp-anchor"><Meter value={s.hp} max={playerStats.hp} label={`HP ${Math.ceil(s.hp)} / ${playerStats.hp}`}/><PlayerHitEffect effect={combatFx}/></div><small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)} · 실제 확률은 상대의 회피·명중과 속도 차이로 1~99.5% 범위에서 정해집니다.`}>속도 {playerStats.speed}{enemyStats ? ` · 명중률 ${percent(hitChance(playerStats, enemyStats), 0)} · 회피율 ${percent(1 - hitChance(enemyStats, playerStats), 0)}` : ' · 상대를 만나면 명중률·회피율 표시'}</small></div><div className="opponent-vs"><Swords size={17}/><strong>VS</strong></div><div className="opponent-card enemy-opponent"><span className="eyebrow">{enemy?.boss ? 'BOSS ENCOUNTER' : enemy?.variant ? 'RARE VARIANT' : 'CURRENT TARGET'}{enemy?.swarm ? ` · 무리 ×${enemy.swarm}` : ''}</span><div className="combatant-name">{enemy ? <strong>{enemy.variant && enemy.variant !== 'swarm' ? <small className={`variant-badge variant-${enemy.variant}`} title={variantById(enemy.variant)?.desc}>{variantById(enemy.variant)?.mark} {variantById(enemy.variant)?.name}</small> : enemy.swarm ? <small className="variant-badge variant-swarm" title={variantById('swarm')?.desc}>≋ 무리 ×{enemy.swarm}</small> : null}{enemy.name}</strong> : recoveryText ? <strong className="recovery-countdown" aria-live="polite">{recoveryText}</strong> : <strong>다음 몬스터를 기다리는 중</strong>}{enemy && <StatusBadges effects={enemy.effects} stun={enemy.stun} recent={combatFx} target="enemy"/>}</div><div className="player-hp-anchor"><Meter value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp)} / ${enemy.maxHp}` : 'READY'} color="enemy"/><BarCleave effect={combatFx} value={enemy?.hp || 0} max={enemy?.maxHp || 1} label={enemy ? `HP ${Math.ceil(enemy.hp).toLocaleString()} / ${enemy.maxHp.toLocaleString()}` : undefined}/><CombatBarEffect effect={combatFx} target="enemy"/></div><small>{enemy ? `${bookRevealed(s, enemy.id) ? profile(enemy.id).name : '미확인 개체'} · 속도 ${enemyStats?.speed || 0}${!s.dungeon && s.tide ? ` · 사냥터 난이도 ${s.tide} 적용` : ''}${enemy.swarm ? ` · 무리 체력 ×${swarmHpMultiplier(enemy.swarm)}${swarmAttackMultiplier(enemy.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(enemy.swarm)}` : ''}` : ''}` : st.description}</small><small className="enemy-hint" aria-hidden={!enemy}>{enemy ? bookRevealed(s, enemy.id) ? profile(enemy.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[enemy.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})` : ' '}</small></div></div>
-    <section className={`battle-scene ${s.running ? 'running' : ''}`}><SceneBackdrop/><div className="scene-shade"/>{enemy && !s.recovery && <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe ${isSpecialId(enemy.id) ? 'kkami' : ''}`}/>}<KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss}/><div className="scene-top"><span className="scene-label"><Compass size={14}/><span className="scene-label-text">{d ? 'DUNGEON EXPEDITION' : st.subtitle}</span></span><div className="scene-actions"><button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={17}/> : <Play size={17}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button><button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button></div></div><div className="scene-copy"><span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`}</span><h2>{d ? d.id === 'abyss' ? <>{d.name} <b className="abyss-floor">{s.dungeon!.depth || s.abyssBest + 1}층</b></> : d.name : st.name}</h2><p>{s.recovery ? d ? '출정을 준비하고 있습니다.' : '모험가가 체력을 회복하고 있습니다.' : enemy ? `${enemy.boss ? 'BOSS · ' : ''}${enemy.name}(이)가 나타났습니다.` : s.running ? '풀숲 너머에서 다음 몬스터를 기다립니다.' : st.description}</p></div><WhistleButton s={s} send={send} busy={busy}/></section>
+    {/* v3.259 내 HP가 30% 아래면 장면 가장자리가 붉게 맥박칩니다(danger). */}
+    <section className={`battle-scene ${s.running ? 'running' : ''} ${!s.recovery && s.hp < playerStats.hp * .3 ? 'danger' : ''}`}><SceneBackdrop theme={backdropTheme(d ? d.name : st.region, st.name)}/><div className="scene-shade"/>
+        <SceneFoe enemy={enemy} hidden={!!s.recovery} effect={combatFx} kkami={!!enemy && isSpecialId(enemy.id)}/>
+        <KkamiArrival s={s}/><KkamiKill s={s}/><FoeCleave effect={combatFx} enemy={enemy}/><SceneFx effect={combatFx} boss={!!enemy?.boss} pnl={s.marketPnl || 0}/>
+        <SceneCombatHud enemy={shown} effect={combatFx} combo={fxCombo} info={shown && <>
+            <strong>{shown.name}{shown.swarm ? ` · 무리 ×${shown.swarm}` : ''}</strong>
+            <span>{bookRevealed(s, shown.id) ? profile(shown.id).name : '미확인 개체'} · 속도 {enemyStats?.speed || 0}{!s.dungeon && s.tide ? ` · 사냥터 난이도 ${s.tide} 적용` : ''}</span>
+            {shown.variant && shown.variant !== 'swarm' && <span>{variantById(shown.variant)?.mark} {variantById(shown.variant)?.name} · {variantById(shown.variant)?.desc}</span>}
+            {shown.swarm ? <span>무리 체력 ×{swarmHpMultiplier(shown.swarm)}{swarmAttackMultiplier(shown.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(shown.swarm)}` : ''}</span> : null}
+            <small>{bookRevealed(s, shown.id) ? profile(shown.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[shown.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})`}</small>
+            {enemyStats && <small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)}`}>내 속도 {playerStats.speed} · 명중률 {percent(hitChance(playerStats, enemyStats), 0)} · 회피율 {percent(1 - hitChance(enemyStats, playerStats), 0)} (상대 회피 · 명중과 속도 차이로 정해짐)</small>}
+        </>}/>
+        <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
+        {idle && <span className={`scene-idle ${recoveryText ? 'recovery' : ''}`} aria-live="polite">{idle}</span>}
+        {/* v3.258 회복 대기 · 출정 준비 중(몬스터 없음)에는 지난 타격의 숫자 · 스킬 이름 · 투사체를 지웁니다. */}
+        {!s.recovery && <><CastFx effect={combatFx} boss={!!enemy?.boss}/><SceneDamage effect={combatFx}/><SkillReceipt effect={combatFx} boss={!!enemy?.boss}/></>}
+        <SceneLoot logs={s.logs}/><BossIntro enemy={shown}/><LevelUpFx level={s.level}/>
+        <SceneLog logs={s.logs} playerName={s.name}/>
+        <SceneMe s={s} stats={playerStats} effect={combatFx}/>
+    </section>
+    <div className="battle-dock">
+        <div className="battle-dock-info">
+            <span className="eyebrow">{d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${d.name} · ${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`}</span>
+            <strong>{d ? d.name : st.name}</strong>
+        </div>
+        <SkillHotbar s={s} effect={combatFx} setView={setView}/>
+        <div className="battle-dock-actions">
+            <button className={`scene-control ${s.running ? 'pause-button' : 'primary'}`} disabled={busy} onClick={() => send({ type: s.running ? 'pause' : 'start' })}>{s.running ? <Pause size={16}/> : <Play size={16}/>} {s.running ? '사냥 일시정지' : '자동 사냥 시작'}</button>
+            <button className="scene-link" onClick={() => setView(d ? 'dungeons' : 'stages')}>{d ? '던전 변경' : '사냥터 변경'} <ChevronRight size={15}/></button>
+            <WhistleButton s={s} send={send} busy={busy}/>
+        </div>
+        <OtherworldHud s={s} send={send} part="actions"/>
+    </div>
     </>;
 }
 
@@ -164,7 +259,7 @@ const WhistleButton = memo(function WhistleButton({ s, send, busy }: { s: State;
     return <Popover>
         <PopoverTrigger asChild>
             <button type="button" className={`scene-whistle ${pending ? 'pending' : ''}`} title={`호루라기: SP ${WHISTLE.sp}로 다음 사냥터 출현을 고른 특별 몬스터로 정합니다(하루 ${WHISTLE.perDay}번). 자세한 규칙은 도움말 → 사냥 규칙.`} aria-label="호루라기 메뉴 열기">
-                <Megaphone size={13}/> {pending ? `호루라기 · ${pending.name} 대기` : `호루라기 · SP ${WHISTLE.sp} 소모`}
+                <Megaphone size={13}/><span className="whistle-label">{pending ? `호루라기 · ${pending.name} 대기` : `호루라기 · SP ${WHISTLE.sp} 소모`}</span>
             </button>
         </PopoverTrigger>
         <PopoverContent className="status-pop game-tooltip whistle-pop" side="top" align="end">
@@ -190,7 +285,7 @@ function KkamiArrival({ s }: { s: State }) {
         return () => window.clearTimeout(timer);
     }, [key]);
     if (!show) return null;
-    return <div className="scene-fx-layer" aria-hidden="true"><div className={`scene-fx scene-fx-kkami${show === 'nuri' ? ' scene-fx-nuri' : ''}`}>
+    return <div className="scene-fx-layer kkami-layer" aria-hidden="true"><div className={`scene-fx scene-fx-kkami${show === 'nuri' ? ' scene-fx-nuri' : ''}`}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/>
         {['✦', '◉', '✦', '◉', '✦', '◉', '✦', '◉'].map((g, i) => <b key={i} className="scene-fx-kkami-coin" style={{ '--i': i } as React.CSSProperties}>{g}</b>)}
         <strong className="scene-fx-kkami-title">{show === 'nuri' ? '✦ 경험의 누리 등장!' : '✦ 숙련의 까미 등장!'}</strong>
@@ -214,7 +309,7 @@ function KkamiKill({ s }: { s: State }) {
         return () => window.clearTimeout(timer);
     }, [id, hit]);
     if (!show) return null;
-    return <div className="scene-fx-layer" aria-hidden="true"><div className={`scene-fx scene-fx-kkami scene-fx-kkami-kill${show.nuri ? ' scene-fx-nuri' : ''}`}>
+    return <div className="scene-fx-layer kkami-layer" aria-hidden="true"><div className={`scene-fx scene-fx-kkami scene-fx-kkami-kill${show.nuri ? ' scene-fx-nuri' : ''}`}>
         <i className="scene-fx-flash"/><i className="scene-fx-kkami-ring"/><i className="scene-fx-kkami-ring"/>
         {['✦', '◉', '✦', '◉', '✦', '◉', '✦', '◉'].map((g, i) => <b key={i} className="scene-fx-kkami-coin" style={{ '--i': i } as React.CSSProperties}>{g}</b>)}
         <strong className="scene-fx-kkami-title">{show.nuri ? '✦ 경험의 누리 처치!' : '✦ 숙련의 까미 처치!'}</strong>

@@ -21,6 +21,8 @@ const pct = (x: number) => `${Math.round(x * 100_000) / 1000}%`;
 export const UNLOCK_CONDITIONS: Record<string, string> = {
     undead: '100번 쓰러지기', clockmaker: '사냥터에서 100시간 보내기',
     journeyman: '직업 5개 끝까지 숙달', rebirthFisher: '5차 직업 3개 끝까지 숙달',
+    kkamiHunter: '숙련의 까미 100번 처치', nuriTracker: '경험의 누리 100번 처치', darkFollower: '지역 던전마다 100번 정복', onyxAvatar: '칠흑 보스 100번 처치',
+    abyssAscetic: '무릉도장 50층 정복', variantScholar: '변종 · 황금 개체 1,000마리 처치', altarPilgrim: '신에게 100번 도전', essenceDevourer: '정수 20,000개 보유', pearlMiner: '세계석 3,000개 보유',
     // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 
@@ -32,13 +34,14 @@ function oddsLeaks(): Leak[] {
         { id: 'drop:rarity', text: `장비 등급 분포: ${o.drop.rarity.map((w, i) => `${RARITIES[i].name} ${pct(w)}`).join(' · ')}.` },
         { id: 'drop:tide', text: `사냥터 난이도 1마다 희귀 이상 등급 가중치가 (1 + ${o.drop.tideRarityPerTier})^(등급−1)로 늘어납니다.` },
         { id: 'drop:essence', text: `정수는 처치마다 난이도 × ${pct(o.drop.essenceChancePerTier)} 확률로, 양은 1 + 난이도 ÷ ${o.drop.essenceEveryTiers}입니다.` },
-        { id: 'drop:dungeon', text: `던전을 반복 정복하면 ${pct(o.drop.dungeonRepeat)} 확률로 희귀 이상 장비가 확정입니다(레벨 초과 보정 적용).` },
+        { id: 'drop:dungeon', text: `던전 반복 정복의 확률 장비(예전 ${pct(o.drop.dungeonRepeat)})는 v3.201에 없어졌고, 던전 주화 상점의 희귀 이상 장비 상자가 대신합니다.` },
         { id: 'drop:golden', text: `황금 개체 기본 확률은 처치마다 ${pct(o.drop.goldenBase)}입니다.` },
         { id: 'mimic:chance', text: `숙련의 까미: 출현마다 ${pct(o.mimic.chance)} + 난이도 1당 ${pct(o.mimic.perTier)}p, 사냥터 순서마다 ×${o.mimic.stageStep}씩 더 곱합니다.` },
-        { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 대 ${pct(o.mimic.letterJackpot)}).` },
+        { id: 'mimic:tiers', text: `까미 당첨: 소 ${pct(o.mimic.tiers[0])} · 중 ${pct(o.mimic.tiers[1])} · 대 ${pct(o.mimic.tiers[2])}(행운의 편지 8단계부터 중 ${pct(o.mimic.letterMid)}).` },
         { id: 'nuri:chance', text: `경험의 누리: 출현마다 ${pct(o.nuri.chance)} + 난이도 1당 ${pct(o.nuri.perTier)}p.` },
         { id: 'nuri:tiers', text: `누리 당첨: 소 ${pct(o.nuri.tiers[0])} · 중 ${pct(o.nuri.tiers[1])} · 대 ${pct(o.nuri.tiers[2])}.` },
         { id: 'onyx:spawn', text: `칠흑의 보스: 무리 서식지 출현마다 ${pct(o.onyx.chance)} × (1 + 난이도 × ${o.onyx.perTier}), ${o.onyx.pity.toLocaleString()}번 못 보면 확정.` },
+        { id: 'bossLoot', text: `보스 코어: 하루 보너스 정복마다 ${pct(o.bossLoot.chance)}, ${o.bossLoot.pity}번째 연속 미획득은 확정.` },
         { id: 'onyx:drop', text: `칠흑 장신구: 격파마다 ${pct(o.onyx.drop)}, ${o.onyx.dropPity}번째 연속 미획득 격파는 확정.` },
         { id: 'variant:chance', text: `변종 기본 확률: ${VARIANTS.map(v => `${v.name} ${pct(o.variant.chance[v.id] ?? 0)}`).join(' · ')}.` },
         { id: 'variant:swarm', text: `무리 규모 가중치 ×5 : ×100 : ×500 = ${o.variant.swarmWeights.join(' : ')}, 무리 서식지의 ×${HABITAT.sizes[1]}은 ${pct(o.variant.habitatBig)}.` },

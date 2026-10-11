@@ -4,9 +4,9 @@ import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
 import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
-import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems } from './equipment';
-import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
-import { rollAffixes, refineOption, rollOption, rescaleAffix, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
+import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems, inheritGear } from './equipment';
+import { STARFORCE, starSuccess, starCatchSuccess, relicResetFor, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
+import { rollAffixes, refineOption, rollOption, affixDef, AFFIX_POOL, syncOrnateName, GEAR_RESET_PEARLS } from '../data/gear';
 import { monsterGoldAt, PRICE_LEVEL_CAP } from '../data/world';
 /** v27.30 감정 가격: 정비례 가격과 '그 레벨 몬스터 골드 × 60' 중 큰 값. v3.58 환생 배율(v3.68 10^(환생/60)과 1 + 환생 × 0.45 중 낮은 쪽)을 곱합니다. */
 const GAMBLE_MONSTERS = 60;
@@ -95,7 +95,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     const sf = s.starforce ??= { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
     sf.tries++; sf.gold += cost;
     // v3.8 스타캐치 성공은 성공률 +catchBonus(파괴 확률은 그대로, 실패 몫에서 뺌).
-    const chance = chanceTime(item), roll = rng(), p = Math.min(1, starSuccess(star) + (caught ? STARFORCE.catchBonus : 0)), d = starDestroy(star, safeguard);
+    const chance = chanceTime(item), roll = rng(), p = Math.min(1, caught ? starCatchSuccess(star) : starSuccess(star)), d = starDestroy(star, safeguard);
     // v3.20 업적용 흐름 기록. 연속 성공은 10성 이상 시도만 세고(그 아래는 거의 다 성공이라 건너뜀), 실패·파괴가 나면 끊깁니다.
     const succeeded = chance || roll < p, failed = () => { sf.streak = 0; sf.failStreak = (sf.failStreak || 0) + 1; sf.bestFailStreak = Math.max(sf.bestFailStreak || 0, sf.failStreak); };
     if (chance) sf.chance = (sf.chance || 0) + 1;
@@ -114,7 +114,7 @@ export function starForceAttempt(s: State, item: Item, wantSafeguard: boolean, r
     if (roll < p + d) {
         sf.destroy++;
         item.starFails = 0;
-        if (item.relic || item.heir || item.onyx) { item.enhance = STARFORCE.relicResetStar; return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${STARFORCE.relicResetStar}성으로 돌아갑니다 · -${cost} G` }; }
+        if (item.relic || item.heir || item.onyx) { item.enhance = relicResetFor(star); return { outcome: 'destroy', cost, message: `${item.name} 강화 실패 · 파괴! ${item.relic ? '유물' : item.onyx ? '칠흑 장신구' : '계승 장비'}라 ${item.enhance}성으로 돌아갑니다 · -${cost} G` }; }
         s.inventory = s.inventory.filter(x => x.id !== item.id);
         for (const slot of Object.keys(s.equipment)) if (s.equipment[slot]?.id === item.id) s.equipment[slot] = null;
         // v3.125 파괴된 태초도 계승 게이지를 채웁니다(분해와 같음).
@@ -298,7 +298,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (refund <= 0)
             throw Error('돌려받을 세계석이 없습니다.');
         const after = { ...s, permanent: { ...s.permanent, ...Object.fromEntries(Object.keys(ranks).map(k => [k, Math.min(ranks[k], s.researchGranted?.[k] || 0)])) } };
-        if (ranks.ap && apUsed(after) > apCapacity(after))
+        if ((ranks.ap || ranks.ap2) && apUsed(after) > apCapacity(after))
             throw Error(`재분배하면 장착 AP 한도(${apCapacity(after)})를 넘습니다. 스킬 장착을 ${apUsed(after) - apCapacity(after)} AP 줄인 뒤 다시 시도하세요.`);
         // v27.31 무료로 받은 단계는 남깁니다(반환 세계석에도 들어가지 않음).
         for (const k of Object.keys(ranks)) {
@@ -391,7 +391,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const cost = imprintCost(source, s);
         spend(cost);
         const before = lines[slot];
-        lines[slot] = imprintAffix(affix, source.rarity, relic.rarity);
+        lines[slot] = imprintAffix(affix, source.rarity, relic.rarity, source.level, relic.level);
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         const gauge = primalGaugeGain(s, [source]);
@@ -422,7 +422,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
             throw Error(`세계석이 부족합니다(필요 ${GEAR_RESET_PEARLS}).`);
         s.pearls -= GEAR_RESET_PEARLS;
         const fixed = (item.affixes || []).filter(x => item.onyx && x.rule), count = (item.affixes || []).length - fixed.length;
-        if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
+        if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level, item.rarity).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
         else if (item.affix) item.affix = rollAffix(item.rarity, rng);
         item.enhance = 0; item.starFails = 0; item.rerolls = 0; item.refines = 0;
         syncOrnateName(item); syncRelicPower(s);
@@ -449,12 +449,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`태초 계승 게이지가 부족합니다(${s.primalGauge || 0}/${PRIMAL_INHERIT.gauge}). 태초 장비를 분해 · 판매하거나 강화 중 파괴되면 찹니다.`);
             s.primalGauge = (s.primalGauge || 0) - PRIMAL_INHERIT.gauge;
         }
-        // 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).
-        const old = ownedItems(s).find(x => x && x !== item && x.heir === kind && x.slot === item.slot);
-        if (old) { delete old.heir; const was = old.power; old.power = Math.round((old.level + 2) * RARITIES[old.rarity].factor); if (old.affixes && was > 0) old.affixes = old.affixes.map(x => rescaleAffix(x, old.power / was, old.level, old.level)); }
-        item.heir = kind; item.locked = true;
-        if (item.affixes) item.affixes = item.affixes.map(x => refineOption(x, item.power, item.rarity, () => 1, item.level));
-        syncRelicPower(s);
+        const old = inheritGear(s, item, kind);
         const what = kind === 'ancient' ? `원시 각성 · 정수 -${awakenEssence(s.rebirths).toLocaleString()}` : `태초 계승 · 게이지 -${PRIMAL_INHERIT.gauge}`;
         return `${item.name} ${what} · 위력 ${item.power} · 옵션 최고 수치로 고정 · 환생해도 남습니다${old ? ` · 예전 ${old.name}은 이번 생 장비로 돌아갑니다` : ''}`;
     }

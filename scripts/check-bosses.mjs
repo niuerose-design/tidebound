@@ -28,7 +28,7 @@ const arg = (k, d) => process.argv.includes(k) ? process.argv[process.argv.index
 const ONLY = arg('--only'), SEEDS = Number(arg('--seeds', 2)), BORROW = !process.argv.includes('--own');
 const JOB_IDS = arg('--jobs', 'hero,grandMagus,abyssBastion,curseQueen,lifeOcean').split(',');
 const REBIRTHS = arg('--rebirths') ? arg('--rebirths').split(',').map(Number) : null;
-const MAX_TURNS = 400, WAVES = 5;
+const MAX_TURNS = 400;
 // 실험 플래그(게임 데이터는 그대로, 측정에만 적용): --hell-tier N · --nightmare-tier N(던전 난이도), --boss-hp f(일반 던전 보스 체력 배율),
 // --entry '{"caldera":1}'(입장 환생 바꿔 재기), --abyss '{"hp":60000,"attack":3}'(무릉 1층 기준), --onyx-hp '{"onyxDusk":800}'(칠흑 체력 배율 hpMul), --raid-hp '{"zakum":3e9}'(월드보스 체력).
 const J = (k, d) => arg(k) ? JSON.parse(arg(k)) : d;
@@ -57,21 +57,22 @@ const monsterById = id => MONSTERS.find(f => f.id === id);
 const out = { bodies: {}, dungeon: [], onyx: [], raid: [] };
 
 // ── 던전 ──────────────────────────────────────────────────────────────────────────────────────
-/** 한 몸으로 던전 한 번: 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
+/** 한 몸으로 던전 한 번: 지역 던전 2연전(v3.201) · 무릉도장 5연전, 체력 · 마나 · 대기 이어짐(check-tier5 규칙). 보스 판은 따로 턴을 셉니다. */
 function dungeonRun(s, st, d, tier, seed, depth = 1) {
     const rng = random(seed * 977 + d.id.length), cd = {}; let hp = st.hp, mana = st.mana, ok = true, w = 0, turns = 0, bossTurns = 0, bossHpLeft = 0;
     const level = d.id === 'abyss' ? d.level : d.level;
-    for (; w < WAVES && ok; w++) {
-        const last = w === WAVES - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterById(id);
+    const waves = d.monsters.length;
+    for (; w < waves && ok; w++) {
+        const last = w === waves - 1, id = last && d.bossMonster ? d.bossMonster : d.monsters[w], f0 = monsterById(id);
         const f = d.id === 'abyss' ? f0 : tideLiftMonster(f0, tier, s.level);
-        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: w });
+        const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: last ? 4 : w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
         const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
         ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns;
         if (last) { bossTurns = r.turns; bossHpLeft = Math.max(0, b.hp) / est.hp; }
     }
     void level;
-    return { cleared: ok ? 1 : (w - 1) / WAVES, turns, bossTurns: ok ? bossTurns : null, bossHpLeft, hpLeft: ok ? Math.max(0, hp) / st.hp : 0, died: ok ? 0 : 1 };
+    return { cleared: ok ? 1 : (w - 1) / waves, turns, bossTurns: ok ? bossTurns : null, bossHpLeft, hpLeft: ok ? Math.max(0, hp) / st.hp : 0, died: ok ? 0 : 1 };
 }
 function measureDungeons() {
     const rows = [];
@@ -154,6 +155,18 @@ if (ABYSS_CURVE) {
     for (const r of REBIRTHS || [5, 20, 50, 100]) for (const depth of [1, 5, 10, 20, 30, 50]) {
         const perJob = JOB_IDS.map(jobId => { const s = bodyFor(r, jobId), st = stats(s); const runs = Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)); return { cleared: avg(runs.map(x => x.cleared)), turns: avg(runs.map(x => x.turns)), hpLeft: avg(runs.map(x => x.hpLeft)) }; });
         console.log(`R${String(r).padEnd(3)} ${String(depth).padStart(2)}층  클리어 ${pct(avg(perJob.map(x => x.cleared)))} · 턴 ${avg(perJob.map(x => x.turns)).toFixed(0)} · 남은 체력 ${pct(avg(perJob.map(x => x.hpLeft)))} | ${perJob.map((x, i) => `${jobById(JOB_IDS[i]).name.replace(' (5차)', '')} ${pct(x.cleared)}`).join(' · ')}`);
+    }
+    process.exit(0);
+}
+// --abyss-max: 몸(환생)마다 직업별로 무릉도장을 어느 층까지 깨는지(시드 모두 클리어하는 최고 층, 체력 · 마나는 층마다 새로) 찾습니다. 무릉 코어 층 정하기용(v3.208).
+if (process.argv.includes('--abyss-max')) {
+    const d = DUNGEONS.find(x => x.id === 'abyss');
+    const ok = (s, st, depth) => Array.from({ length: SEEDS }, (_, k) => dungeonRun(s, st, d, 0, k + 1, depth)).every(x => x.cleared >= 1);
+    console.log('## 무릉도장 최고 층(직업별 · 시드 모두 클리어)');
+    for (const r of REBIRTHS || [3, 5, 10, 20, 30, 50, 70, 100]) {
+        const per = JOB_IDS.map(jobId => { const s = bodyFor(r, jobId), st = stats(s); let lo = 0, hi = 1; while (hi <= 2000 && ok(s, st, hi)) { lo = hi; hi *= 2; } while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (ok(s, st, mid)) lo = mid; else hi = mid; } return lo; });
+        const sorted = [...per].sort((a, b) => a - b);
+        console.log(`R${String(r).padEnd(4)} 중앙 ${sorted[sorted.length >> 1]}층 · 최저 ${sorted[0]} · 최고 ${sorted[sorted.length - 1]} | ${per.map((n, i) => `${jobById(JOB_IDS[i]).name.replace(' (5차)', '')} ${n}`).join(' · ')}`);
     }
     process.exit(0);
 }

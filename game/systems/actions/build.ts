@@ -5,6 +5,8 @@ import { unlockedTitles } from '../../data/titles';
 import { RANK_PERKS, rankState, rankPerkLevel, rankPointsFree } from '../../data/rank';
 import type { Attribute } from '../../types';
 import { jobById } from '../../data/classes';
+import { FUEL } from '../../data/otherworld';
+import { chargeFuel } from '../otherworld';
 import { skillById } from '../../data/skills';
 import { emptyAttributes } from '../../data/progression';
 import { SKILL_FORMULA } from '../../data/balance';
@@ -13,6 +15,7 @@ import { canUse, skillBlockReason, canChangeJob, trimLoadout, validLoadout, over
 import { restraintSlots } from '../vows';
 import type { ActionHandlers } from './types';
 import { addLog, endRun } from '../state';
+import { spendAutoAttributes } from '../encounter';
 
 /** v27.73 즐겨찾기·숨김 목록 상한(스킬 수보다 넉넉히). */
 const SKILL_MARK_MAX = 400;
@@ -20,6 +23,22 @@ const SKILL_MARK_MAX = 400;
 const skillIdList = (value: string) => [...new Set(value.split(',').map(x => x.trim()).filter(x => skillById(x)))].slice(0, SKILL_MARK_MAX);
 
 export const buildActions: ActionHandlers = {
+    /** v3.231 이계 연료 충전: value = 세계석 개수(상한까지만 씀). */
+    fuelCharge(s, { a }) {
+        if (!jobById(s.job)?.fuelJob) throw Error('이계 전투 직업일 때만 충전합니다.');
+        const n = Number(a.value);
+        if (!Number.isInteger(n) || n < 1) throw Error('충전할 세계석 수를 적으세요.');
+        const used = chargeFuel(s, n);
+        if (!used) throw Error((s.fuel || 0) >= FUEL.cap ? '연료가 가득 찼습니다.' : '세계석이 없습니다.');
+        addLog(s, `세계석 ${used.toLocaleString()}개를 연료로 충전했습니다(연료 ${(s.fuel || 0).toLocaleString()}).`, 'system');
+    },
+    /** v3.231 자동 충전: value = 남길 세계석 수, 빈 값이면 끔. */
+    fuelAuto(s, { a }) {
+        if (a.value === undefined || a.value === '') { delete s.fuelAuto; return; }
+        const keep = Number(a.value);
+        if (!Number.isInteger(keep) || keep < 0) throw Error('남길 세계석 수를 0 이상의 정수로 적으세요.');
+        s.fuelAuto = keep;
+    },
     job(s, { id, now }) {
         if (!canChangeJob(s, id))
             throw Error('레벨·능력치·선행 직업 숙련·숨은 조건을 확인하세요.');
@@ -47,6 +66,9 @@ export const buildActions: ActionHandlers = {
         // v3.26 해커 계열로 새로 전직하면 서버 채팅에 빨간 알림(누가 했는지는 밝히지 않음). /api/game이 저장 전에 읽고 지웁니다.
         if (isHackerJob(id) && s.job !== id) s.jobAnnounce = id;
         if (isHackerJob(id) && !wasHacker) (s.hacker ??= { bits: 0, exp: 0, grade: 1, tier: 0 }).savedSkills = [...s.skills];
+        // v3.231 이계 직업은 처음 들어갈 때 세계석을 냅니다(조건 판정은 canChangeJob이 이미 함).
+        const price = jobById(id)?.pearlCost;
+        if (price && !s.unlockedJobs.includes(id)) { s.pearls -= price; addLog(s, `세계석 ${price.toLocaleString()}개를 내고 ${jobById(id)!.name}의 문을 열었습니다.`, 'system'); }
         s.job = id;
         if (!s.unlockedJobs.includes(id))
             s.unlockedJobs.push(id);
@@ -180,11 +202,20 @@ export const buildActions: ActionHandlers = {
             throw Error('해커는 능력치에 투자할 수 없습니다. 포인트는 전직한 뒤 쓸 수 있습니다.');
         if (!['str', 'dex', 'int', 'vit', 'wis', 'luk'].includes(id))
             throw Error('알 수 없는 능력치입니다.');
+        // v3.292 찍기 단위(×1 · ×5 · ×10 · ×50 · ×100): 남은 포인트 안의 양의 정수면 받습니다(화면은 단위와 남은 포인트 중 작은 값을 보냄).
         const amount = a.value === 'max' ? s.statPoints : Number(a.value || '1');
-        if (!Number.isInteger(amount) || amount < 1 || (a.value !== 'max' && ![1, 5, 10].includes(amount)) || s.statPoints < amount)
+        if (!Number.isInteger(amount) || amount < 1 || s.statPoints < amount)
             throw Error('능력치 포인트가 부족합니다.');
         s.attributes[id as Attribute] += amount;
         s.statPoints -= amount;
+    },
+    /** v3.242 능력치 자동 배분 켜기 · 끄기(id 'on' · 'off'). 켜면 남은 포인트도 바로 지금 비율대로 나눕니다. */
+    autoAttr(s, { id }) {
+        if (id !== 'on' && id !== 'off') throw Error('자동 배분 설정을 확인하세요.');
+        s.autoAttr = id === 'on';
+        if (!s.autoAttr) return;
+        if (!Object.values(s.attributes).some(n => n > 0)) addLog(s, '능력치 자동 배분을 켰습니다. 먼저 원하는 능력치에 직접 투자하면 그 비율대로 나눕니다.', 'system');
+        else { const n = spendAutoAttributes(s); if (n) addLog(s, `능력치 자동 배분 · ${n}포인트를 지금 비율대로 나눴습니다.`, 'system'); }
     },
     resetAttributes(s) {
         if (s.running)
@@ -214,7 +245,16 @@ export const buildActions: ActionHandlers = {
     savePreset(s, { a, id }) {
         if (!['1', '2', '3'].includes(id))
             throw Error('저장 칸을 확인하세요.');
-        s.presets[id] = { name: (a.value || `편성 ${id}`).slice(0, 20), skills: [...s.skills] };
+        // v3.295 다시 저장해도 붙여 둔 이름은 그대로 둡니다(이름을 함께 보내면 그 이름).
+        s.presets[id] = { name: (a.value?.trim() || s.presets[id]?.name || `편성 ${id}`).slice(0, 20), skills: [...s.skills] };
+    },
+    /** v3.295 편성 이름 바꾸기(1~20자). 저장한 칸만 바꿀 수 있습니다. */
+    renamePreset(s, { a, id }) {
+        const preset = s.presets[id];
+        if (!preset) throw Error('저장한 편성만 이름을 바꿀 수 있습니다.');
+        const name = (a.value || '').trim().slice(0, 20);
+        if (!name) throw Error('편성 이름을 적으세요.');
+        preset.name = name;
     },
     loadPreset(s, { id }) {
         const preset = s.presets[id];

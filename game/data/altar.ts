@@ -3,10 +3,12 @@
  * - 바친 만큼 기여도가 오르고, 이번 주 기여 순위에 이름(또는 익명)이 올라갑니다.
  * - 바칠 때 고른 게이지(축복 셋, 신 소환 하나)가 차고, 가득 차면 서버 전체에 축복(일시 이벤트)이 열리거나 신이 깨어납니다.
  * - 신을 가장 먼저 쓰러뜨린 모험가가 신의 자리에 앉고, 그동안 다른 모험가가 바치는 재화의 일부(몫)를 거둘 수 있습니다.
- *   다음에 깨어나는 신은 그 자리의 주인을 본뜬 모습이라, 더 강한 모험가가 자리를 빼앗아 갑니다.
+  *   v3.276 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다. 자리는 임기가 끝나거나, 주인을 본뜬 신과 겨루는 탄핵으로 비웁니다.
  * 서버 부하: 게임 틱은 제단을 전혀 읽지 않습니다. 축복은 기존 서버 이벤트처럼 30초 캐시로만 읽고,
  * 제단 화면도 인스턴스마다 15초 캐시를 씁니다. 쓰기는 바치기·도전·거두기 버튼에서만 일어납니다.
  */
+import { jobById } from './classes';
+
 export const ALTAR = {
     /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
     goldPerPoint: 1000, pearlPoints: 500, essencePoints: 30,
@@ -64,9 +66,10 @@ export const effectiveBlessingLevel = (g: { until: number; level?: number; high_
 export const BLESSINGS: { id: BlessingId; name: string; cost: number; hours: number; levels: BlessingEffect[] }[] = [
     { id: 'gold', name: '풍요의 축복', cost: 12_000, hours: 12, levels: [{ gold: 2 }, { gold: 2.5 }, { gold: 3 }, { gold: 3.5 }, { gold: 4 }, { gold: 5 }] },
     { id: 'exp', name: '성장의 축복', cost: 15_000, hours: 12, levels: [{ exp: 1.5 }, { exp: 1.75 }, { exp: 2 }, { exp: 2.25 }, { exp: 2.5 }, { exp: 3 }] },
-    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 12, levels: [{ mimic: 3 }, { mimic: 4 }, { mimic: 5 }, { mimic: 6 }, { mimic: 7 }, { mimic: 8 }] },
+    { id: 'mimic', name: '까미의 축복', cost: 25_000, hours: 12, levels: [{ mimic: 2 }, { mimic: 2.5 }, { mimic: 3 }, { mimic: 3.5 }, { mimic: 4 }, { mimic: 5 }] },
+    // v3.217 까미·누리 축복 배율 하향(×3~×8 → ×2~×5): 3단계 상시 유지로 숙련·경험치 소모가 너무 빨랐습니다.
     // v27.70 누리의 축복: 경험의 누리 출현 배율. 레벨 경험치와 직결돼 까미와 같은 값입니다.
-    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 12, levels: [{ nuri: 3 }, { nuri: 4 }, { nuri: 5 }, { nuri: 6 }, { nuri: 7 }, { nuri: 8 }] },
+    { id: 'nuri', name: '누리의 축복', cost: 25_000, hours: 12, levels: [{ nuri: 2 }, { nuri: 2.5 }, { nuri: 3 }, { nuri: 3.5 }, { nuri: 4 }, { nuri: 5 }] },
 ];
 type Blessing = typeof BLESSINGS[number];
 /** 단계별 효과(1부터). */
@@ -188,3 +191,6 @@ export type AltarStatus = {
     throne: string;
     gauges: { id: AltarGaugeId; name: string; pct: number }[];
 };
+
+/** v3.230 신 도전 간격: 현재 직업의 altarCooldownScale(제단 순례자 0.5)을 곱합니다. 화면과 서버가 같은 값을 씁니다. */
+export const altarCooldownMs = (s: { job: string }) => ALTAR.challengeCooldownMs * (jobById(s.job)?.altarCooldownScale ?? 1);

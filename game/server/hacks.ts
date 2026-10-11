@@ -7,6 +7,7 @@
 import { randomBytes } from 'node:crypto';
 import { db } from './db';
 import type { State, Snapshot } from '../types';
+import { setMarketKey } from '../systems/market';
 import { setPuzzleKey, gainHacker, isHacker, seasonScore, programOn } from '../systems/hacker';
 import { addLog } from '../systems/state';
 import { HACKER, HACK_BITS, FIREWALL_ID } from '../data/hacker';
@@ -100,6 +101,8 @@ export async function ensurePuzzleKey(now: number) {
         if (!key) { key = randomBytes(24).toString('hex'); await database.setSetting('puzzleKey', key, now); key = await database.getSetting('puzzleKey') || key; }
     }
     setPuzzleKey(key);
+    // v3.213 증권거래소 시세 키도 같은 비밀에서 만듭니다(따로 저장하지 않음).
+    setMarketKey(`market:${key}`);
     keyReady = true;
 }
 
@@ -379,7 +382,7 @@ export function maskSnapshot<T extends Partial<Snapshot> & { name?: string }>(sn
     if (!show.has('job')) out.job = decoy.job || '';
     if (!show.has('level')) { out.level = decoy.level || 0; out.rebirths = 0; }
     if (!show.has('gear')) { out.stats = {}; out.power = 0; }
-    if (!show.has('skills')) { out.skills = []; out.skillRanks = {}; out.skillMastery = {}; out.skillPractice = {}; }
+    if (!show.has('skills')) { out.skills = []; out.skillRanks = {}; out.skillMastery = {}; out.skillPractice = {}; delete out.skillFinal; }
     if (!show.has('title')) out.title = undefined;
     if (!show.has('guild')) out.guild = '';
     delete out.privacy;

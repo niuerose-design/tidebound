@@ -161,8 +161,8 @@ test('v3.70 stat training I-III: opened by 1M training mastery, each step needs 
     const before = stats({ ...h, skills: [] }).attack;
     assert.equal(stats(h).attack, before, 'not inherited yet: no effect');
     h.skillPractice.strDrill1 = 10_000_000; const S1 = S.trainedAttributes(h).str, base = S.trainedAttributes({ ...h, skills: [] }).str;
-    assert.equal(S1 - base, 25, '+20 × (1 + 25% for the first mastery stage)');
-    assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [4, 6, 8], 'high AP cost'); assert.ok(stats(h).attack > before);
+    assert.equal(S1 - base, 50, 'v3.237 +40 × (1 + 25% for the first mastery stage)');
+    assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).cost), [3, 4, 5], 'v3.237 AP 3 · 4 · 5'); assert.deepEqual([1, 2, 3].map(n => SKILLS.find(sk => sk.id === `strDrill${n}`).attrBonus.str), [40, 100, 200], 'v3.237 base doubled'); assert.ok(stats(h).attack > before);
 });
 
 test('v3.80 job mastery targets follow skill milestones (40% of the last); jobs mastered under the old target stay mastered', async () => {
@@ -177,7 +177,7 @@ test('v3.80 job mastery targets follow skill milestones (40% of the last); jobs 
 });
 
 test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom ones within ±50%, constraint skills in tens of millions; old inheritance kept when the first stage went up', async () => {
-    const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js');
+    const Sk = await load('game/data/skills.js'), R = await load('game/data/roles.js'), C = await load('game/data/classes.js');
     const bad = [];
     for (const sk of SKILLS) {
         const j = job(sk.job); if (!j || j.tier < 1 || j.retired) continue;
@@ -185,7 +185,9 @@ test('v3.80 skill mastery standard: one curve per tier (×1.4 long-term), custom
         if (exempt) continue;
         // 제약형(최대 숙련에서 AP 0 이하 · 제약 직업): 마지막 단계가 천만 단위(AP 반환 5,000만 · 그 밖 1,000만).
         if (Sk.isConstraintSkill(sk)) { const want = Sk.CONSTRAINT_MASTERY_BY_SKILL[sk.id] ?? (Sk.costAtMastery(sk) < 0 ? 5e7 : 1e7); if (P.masteryMilestonesFor(sk).at(-1) !== want) bad.push(`${sk.id} constraint`); continue; }
-        const r = P.masteryMilestonesFor(sk).at(-1) / Sk.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1);
+        // v3.221 아제로스 계보는 메이플 월드 곡선의 AZEROTH_MASTERY_SCALE배.
+        const world = C.worldOf(C.LINEAGES.find(l => l.id === lineageOf(j))) === 'azeroth' ? C.AZEROTH_MASTERY_SCALE : 1;
+        const r = P.masteryMilestonesFor(sk).at(-1) / (Sk.SKILL_TIER_CURVE[Math.min(5, j.tier)].at(-1) * world);
         if (r < .5 || r > 1.5) bad.push(`${sk.id} ×${r.toFixed(2)}`);
     }
     assert.deepEqual(bad, []);
@@ -321,7 +323,7 @@ test('v3.143 Mechanic: every active is defense-scaled magic damage that charges;
     assert.equal(sk('genesisRune').chargeNeed, 5); assert.equal(sk('genesisRune').chargeBonus, .1);
     assert.equal(sk('broadside'), undefined, 'cannon shooter removed');
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, guardAffinity: 1 };
-    const fighter = (id, effects = {}, cooldowns = {}) => ({ name: 'A', stats: { ...base, magic: 300, defense: 200 }, hp: 1000, mana: 200, skills: [id], cooldowns, stun: 0, effects, ranks: { [id]: 1 }, mastery: {}, practice: {} });
+    const fighter = (id, effects = {}, cooldowns = {}) => ({ name: 'A', stats: { ...base, magic: 300, defense: 200, mana: 1000 }, hp: 1000, mana: 1000 /* v3.296 5차 마법 670 */, skills: [id], cooldowns, stun: 0, effects, ranks: { [id]: 1 }, mastery: {}, practice: {} });
     const target = (effects = {}) => ({ name: 'B', stats: { ...base }, hp: 1e6, skills: [], cooldowns: {}, stun: 0, effects });
     // 충전 기술이 명중하면 +1, 약화된 적이면 +2.
     const a1 = fighter('plateSurge'); strike(a1, target(), () => 0); assert.equal(a1.effects.charge, 1);
@@ -335,7 +337,7 @@ test('v3.143 Mechanic: every active is defense-scaled magic damage that charges;
     // 고정 피해: 적의 방어 · 마법 방어가 아무리 높아도 같은 피해, 로그 피해 유형은 fixed.
     const armored = target(); armored.stats = { ...base, defense: 5000, resist: 5000 }; const ga = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); const ea = []; strike(ga, armored, () => 0, ea);
     assert.equal(ea[1].damageType, 'fixed'); assert.equal(ea[1].total, d5, `fixed damage ignores defense: ${ea[1].total} vs ${d5}`);
-    const magicOnly = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); magicOnly.stats = { ...base, magic: 300, defense: 200, attack: 0, guardAffinity: 1 }; const em = []; strike(magicOnly, target(), () => 0, em); assert.equal(em[1].total, d5, 'base uses magic, not attack');
+    const magicOnly = fighter('genesisRune', { charge: 5 }, { genesisRune: 0 }); magicOnly.stats = { ...base, magic: 300, defense: 200, attack: 0, guardAffinity: 1, mana: 1000 }; const em = []; strike(magicOnly, target(), () => 0, em); assert.equal(em[1].total, d5, 'base uses magic, not attack');
 });
 
 test('v3.120 Arch Mage (Thunder, Cold): Extreme Magic magic steps 25 · 200 · 700 · 2000', () => {
@@ -401,16 +403,30 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     const nova = SKILLS.find(s => s.id === 'doomMark'), punisher = SKILLS.find(s => s.id === 'endOfAll');
     assert.ok(nova.awaken && !nova.awaken.statusScale, 'nova is the awakened skill with its written duration');
     assert.deepEqual([nova.effect, nova.alsoEffect, nova.statusTurns], ['poison', 'burn', 7]);
-    assert.equal(punisher.type, 'active'); assert.equal(punisher.awaken, undefined); assert.equal(punisher.cooldown, 0, 'no cooldown; AP cost is the price');
+    assert.equal(punisher.type, 'active'); assert.equal(punisher.awaken, undefined); assert.equal(punisher.cooldown, 4, 'v3.282 cooldown 4, reset at full stacks'); assert.equal(punisher.damageBonusCondition, undefined, 'v3.282 no afflicted-target bonus');
     assert.equal(punisher.bonus, undefined, 'no equip bonus');
     const base = { hp: 1e9, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 1000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: 1e9, mana: 1000, skills, cooldowns: Object.fromEntries(skills.map(id => [id, 0])), stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     // 포이즌 노바: 중독·화상을 함께, 지속 7턴 + 지속 턴 옵션.
     let b = mk([]); strike(mk(['doomMark'], { dotTurnsBonus: 2 }), b, () => 0);
     assert.deepEqual([b.effects.poison.turns, b.effects.burn.turns], [9, 9]);
-    // 포이즌 노바를 계보 밖에서 계승하면 발동률이 outsiderChance배(난수 .3: 계보 안 .5면 발동, 밖 .25면 실패).
-    const novaFires = job => { const a = { ...mk(['doomMark']), job }, ev = []; strike(a, mk([]), () => .3, ev); return ev.some(e => e.skillId === 'doomMark'); };
-    assert.equal(nova.outsiderChance, .5); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
+    // v3.282 포이즌 노바: 피해 없이 상태이상만, 발동률 100% · 각성 대기 5턴. 계보 밖에서 계승하면 발동률 25%(난수 .3: 계보 안 발동, 밖 실패).
+    assert.deepEqual([nova.statusOnly, nova.chance, nova.cooldown, nova.awaken.start], [true, 1, 5, 5]);
+    const novaFires = job => { const a = { ...mk(['doomMark']), job }, t = mk([]), ev = []; strike(a, t, () => .3, ev); const e = ev.find(x => x.skillId === 'doomMark'); if (e) assert.equal(e.total, 0, 'nova deals no direct damage'); return !!e; };
+    assert.equal(nova.outsiderChance, .25); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
+    // v3.288 각성 관통: 5차 각성기가 건 상태이상은 숙련 단계별 확률로 몬스터 각성(정화)을 버티고, 버티면 각성 면역도 걸리지 않습니다. 상태이상 면역도 그 확률로 무시합니다.
+    assert.deepEqual(nova.wardPierce, [0, .25, .5, .75, 1]);
+    for (const sk of SKILLS.filter(x => x.awaken && ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'].includes(x.effect))) assert.ok(sk.wardPierce?.length === 5, sk.id);
+    const novaThenWard = stage => {
+        const a = { ...mk(['doomMark']), job: 'apostle', mastery: { doomMark: stage } }, foe = { ...mk(['foeWard']), foe: true }; foe.cooldowns.foeWard = 0;
+        strike(a, foe, () => .5); assert.ok(foe.effects.poison && foe.effects.burn, 'nova landed');
+        strike(foe, a, () => 0); return foe.effects;
+    };
+    const none = novaThenWard(0); assert.ok(!none.poison && !none.burn && none.immune?.poison > 0, 'stage 0: cleansed and warded');
+    const full = novaThenWard(4); assert.ok(full.poison && full.burn, 'stage 4: survives the ward'); assert.ok(!full.immune?.poison && !full.immune?.burn && full.immune?.stun > 0, 'no ward immunity for what survived');
+    // 면역 무시: 숙련 4단계 노바는 중독 면역인 몬스터에게도 걸고, 결투 상대(foe가 아님)에게는 무시하지 않습니다.
+    const immuneHit = (stage, foe) => { const a = { ...mk(['doomMark']), job: 'apostle', mastery: { doomMark: stage } }, t = { ...mk([]), foe }; t.effects = { immune: { poison: 3, burn: 3 } }; strike(a, t, () => .5); return !!t.effects.poison; };
+    assert.equal(immuneHit(4, true), true); assert.equal(immuneHit(0, true), false); assert.equal(immuneHit(4, false), false, 'not in duels');
     // 도트 퍼니셔: 상태 없음 → 추가타·기절 없음 / 일부 → 추가타 일부 + 기절 1 / 둘 다 최대 → 추가타 최대 + 기절 2.
     const finish = effects => { const t = mk([]); t.effects = effects; const ev = []; strike(mk(['endOfAll']), t, () => 0, ev); const e = ev.find(x => x.skillId === 'endOfAll'); return [e.hits.filter(h => h.kind === 'follow').length, t.stun]; };
     const dot = (stacks) => ({ perStack: 1, stacks, turns: 5, hpRatio: 0 });
@@ -418,6 +434,10 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual(finish({ poison: dot(2) }), [2, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(2) }), [3, 1]);
     assert.deepEqual(finish({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), [punisher.dotFinisher.maxHits, 2]);
+    // v3.282 둘 다 최대 중첩이면 대기 초기화, 일부면 대기 4턴.
+    const wait = effects => { const a = mk(['endOfAll']), t = mk([]); t.effects = effects; strike(a, t, () => 0, []); return a.cooldowns.endOfAll; };
+    assert.equal(wait({ poison: dot(STATUS_TUNING.poisonMaxStacks), burn: dot(STATUS_TUNING.burnMaxStacks) }), 0);
+    assert.ok(wait({ poison: dot(2) }) > 0);
 });
 
 test('v3.138 retiring the Michael lineage: a saved character on a removed job falls back to fisher and its skill records are dropped', () => {
@@ -436,8 +456,9 @@ test('v3.144 Dark Knight: deaths and turns feed perCount passives; Darkness Aura
     assert.equal(progressCounts({ playMs: 2000 * 12345, deaths: 7, book: {}, attributes: {} }).turns, 12345);
     const s = newState(0); s.job = 'seaDragonGod'; s.level = 100; s.deaths = 40; s.playMs = 2000 * 25000; s.learned.dragonGodScale = 1;
     const g = passiveGrowthBonus(s, sk('dragonGodScale'));
-    assert.ok(Math.abs(g.attack - 80) < 1e-9 && Math.abs(g.hp - 150) < 1e-9, `growth ${JSON.stringify(g)}`);
-    s.deaths = 500; s.playMs = 2000 * 1e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 200) < 1e-9 && Math.abs(capped.hp - 600) < 1e-9, 'capped at 100 steps');
+    // v3.242 쓰러진 횟수 3회마다 +3 · 보낸 턴 3,000마다 +9, 상한 1,000번(3,000회 · 300만 턴에 참).
+    assert.ok(Math.abs(g.attack - 39) < 1e-9 && Math.abs(g.hp - 72) < 1e-9, `growth ${JSON.stringify(g)}`);
+    s.deaths = 5000; s.playMs = 2000 * 4e6; const capped = passiveGrowthBonus(s, sk('dragonGodScale')); assert.ok(Math.abs(capped.attack - 3000) < 1e-9 && Math.abs(capped.hp - 9000) < 1e-9, 'capped at 1,000 steps');
     assert.deepEqual(sk('dragonGodScale').lastStand, { charges: 1, heal: .25 });
     const base = { hp: 1e6, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const knight = { name: 'K', stats: { ...base, hp: 1000 }, hp: 50, mana: 200, skills: ['dragonGodScale'], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} };
@@ -522,11 +543,11 @@ test('v3.169 stat training passives: detail view shows the attribute gain per ma
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const P = await load('game/systems/progression.js'), D = await load('game/systems/skill-description.js');
     const sk = SKILLS.find(x => x.id === 'dexDrill1');
-    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [20, 25, 30, 40, 40], 'display value follows the combat formula, capped at ×2');
-    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 20, 'SP ranks do not raise it');
-    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +25')), 'effect line names the attribute');
-    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+20 → +25'), P.skillRankHint(sk, 1, 0));
+    assert.deepEqual([0, 1, 2, 4, 6].map(m => P.effectiveSkill(sk, 1, m).attrBonus.dex), [40, 50, 60, 80, 80], 'display value follows the combat formula, capped at ×2');
+    assert.equal(P.effectiveSkill(sk, 3, 0).attrBonus.dex, 40, 'SP ranks do not raise it');
+    assert.ok(D.skillEffectLines(P.effectiveSkill(sk, 1, 1), 1).some(line => line.startsWith('기민 +50')), 'effect line names the attribute');
+    assert.ok(P.skillRankHint(sk, 1, 0).includes('기민') && P.skillRankHint(sk, 1, 0).includes('+40 → +50'), P.skillRankHint(sk, 1, 0));
     assert.equal(P.skillRankHint(sk, 1, 4), '최대 강화 레벨입니다.');
-    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [20, 25, 30, 35, 40], 'stage table grows by mastery stage');
-    assert.equal(sk.attrBonus.dex, 20, 'the data itself is untouched');
+    assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [40, 50, 60, 70, 80], 'stage table grows by mastery stage');
+    assert.equal(sk.attrBonus.dex, 40, 'the data itself is untouched');
 });

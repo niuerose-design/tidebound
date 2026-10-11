@@ -1,28 +1,36 @@
 /** 턴 진행(온라인 tick·오프라인 advance). */
+import { regionCores } from '../data/boss-core';
 import { syncGoals, syncAchievements } from './progress';
 import { activeEvent, offlineEvent } from '../data/events';
 import { recordUnlocks } from '../secret/unlocks';
 import { syncVoyage } from './guidance';
-import { stats } from './stats';
+import { stats, wornOnyx } from './stats';
 import type { State } from '../types';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
 import { TIME_MACHINE_MASTERY } from '../data/expansion-v25';
 import { STAGES, dungeonClosed, stageClosed, closuresSnapshot, monsterById, stageById, dungeonById } from '../data/world';
+import { mineBonusOf } from './azeroth';
 import { actTurn, actsFirst, constraintFields, Fighter, type CombatEvent } from './combat';
 import { PROGRESSION } from '../data/progression';
 import { offlineCapSeconds } from '../data/economy';
-import { canUse, lazySkillMasteryRanks, extraRollLevel } from './progression';
+import { canUse, lazySkillMasteryRanks, extraRollLevel, extremeFinalTable, extremeFxTable } from './progression';
 import { addLog, endRun } from './state';
 import { spawn, takeWhistle, reward, releaseLegacySeal, gainLevels, enemyLabel } from './encounter';
-import { inRandomGame, loseRandomGame } from './random-game';
 import { deathRecoveryTurns, deathExpLoss } from '../data/sprout';
 import { profile } from '../data/encounters';
 import { bookEcology } from './book';
-import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
+import { KING } from '../data/king';
+import { MIMIC } from '../data/mimic';
+import { EXP_NURI } from '../data/exp-nuri';
+import { ESSENCE_SLIME } from '../data/essence-slime';
+import { OFFLINE_SAMPLE, canSampleOffline, markOffline, sampleStable, fuelCovers, extrapolateOffline, markOfflineRare, noteOfflineRare } from './offline-sample';
 import { breathReset } from './actions/lifecycle';
 import { isHacker, hackerTick } from './hacker';
 import { runAutomation } from './automation';
 import { recordIncome } from './income';
+import { autoFuel } from './otherworld';
+import { jobById } from '../data/classes';
+import { skillById } from '../data/skills';
 export function tick(s: State, rng = Math.random) {
     if (!s.running)
         return;
@@ -93,12 +101,15 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const player: Fighter = { name: s.name, job: s.job, stats: a, hp: s.hp, skills: s.skills.filter(id => canUse(s, id)), cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job) };
-    const enemy: Fighter = { foe: true, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
+    const usable = s.skills.filter(id => canUse(s, id)), skillFinal = extremeFinalTable(s, usable), extremeFx = extremeFxTable(s, usable);
+    // v3.231 이계 전투 직업: 연료 자동 충전 → 연료 · 탄창 · 트레이더 손익을 전투원에 싣습니다.
+    const ow = { ...otherworldFighter(s, usable), ...azerothFighter(s, usable) };
+    const player: Fighter = { name: s.name, job: s.job, cores: regionCores(s).length, onyx: wornOnyx(s), stats: a, hp: s.hp, skills: usable, cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(skillFinal ? { skillFinal } : {}), ...(extremeFx ? { extremeFx } : {}), ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job), ...ow };
+    const enemy: Fighter = { foe: true, foeId: e.id, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
     // v25 타임 리와인드: 쓸 때마다 현재 직업 숙련이 오릅니다.
-    const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; };
+    const log = (text: string, event: CombatEvent) => { addLog(s, text, 'battle', event); if (event?.restored && event.actor === s.name) s.jobMastery[s.job] = (s.jobMastery[s.job] || 0) + TIME_MACHINE_MASTERY; if (event?.multicast?.index === 0 && event.actor === s.name) chantRecord(s, event.multicast.count); if (event?.actor === s.name) azerothRecord(s, event); };
     actTurn(first, second, rng, log);
     if (first.hp > 0 && second.hp > 0)
         actTurn(second, first, rng, log);
@@ -107,6 +118,8 @@ function tickTurn(s: State, rng: () => number) {
     s.gold = Math.max(0, player.gold ?? s.gold);
     s.playerStun = player.stun;
     s.effects = player.effects || {};
+    if (player.fuel !== undefined) s.fuel = player.fuel;
+    if (player.essence !== undefined) { const spent = Math.max(0, (s.essence || 0) - player.essence); s.essence = player.essence; if (spent) s.essenceSpent = (s.essenceSpent || 0) + spent; }
     e.hp = enemy.hp;
     e.stun = enemy.stun;
     e.mana = enemy.mana;
@@ -139,8 +152,7 @@ function tickTurn(s: State, rng: () => number) {
         s.effects = {};
         s.playerStun = 0;
         addLog(s, `몬스터를 놓쳤습니다. ${Math.round(s.recovery * BALANCE.turnMs / 1000)}초 동안 회복합니다.${lost > 0 ? ` 경험치 -${lost.toLocaleString()}` : ''}`);
-        if (inRandomGame(s)) loseRandomGame(s);
-        else if (s.dungeon) {
+        if (s.dungeon) {
             const repeating = !!s.dungeon.repeat;
             endRun(s, `${dungeonById(s.dungeon!.id)?.name || '던전'} 도전 실패${repeating ? ' · 반복 중단 → 자동 사냥으로 전환' : ' · 멈춤'}`);
             s.dungeon = null;
@@ -179,6 +191,8 @@ export function advance(s: State, now: number, rng = Math.random) {
     const warmup = sampling ? OFFLINE_SAMPLE.warmup : 0, count = sampling ? warmup + OFFLINE_SAMPLE.turns : Math.min(budget, CATCH_UP_CHUNK);
     let truncated = count < budget;
     const before = { kills: s.kills, gold: s.gold, exp: s.exp };
+    // v3.289 부재중 정산 알림에 까미 · 누리 · 슬라임(대왕 포함) 처치 수를 함께 보여 줍니다(도감 처치 수 차이).
+    const rareBook = () => ({ mimic: (s.book[MIMIC.id] || 0) + (s.book[KING.mimic.id] || 0), nuri: (s.book[EXP_NURI.id] || 0) + (s.book[KING.nuri.id] || 0), slime: (s.book[ESSENCE_SLIME.id] || 0) + (s.book[KING.slime.id] || 0) }), rareBefore = rareBook();
     let mark: ReturnType<typeof markOffline> | null = null;
     if (offline) s.catchingUp = true;
     if (away) s.away = true;
@@ -189,7 +203,7 @@ export function advance(s: State, now: number, rng = Math.random) {
             tick(s, rng);
         }
         // 표본 뒤에도 같은 사냥 중이면 남은 턴을 환산하고, 아니면 전처럼 남은 턴을 이어 돌립니다(catchUpLeft).
-        if (mark && sampleStable(s, mark)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
+        if (mark && sampleStable(s, mark) && fuelCovers(s, mark, count - warmup, budget - count)) { extrapolateOffline(s, mark, count - warmup, budget - count, rng, () => tick(s, rng)); truncated = false; }
     }
     finally { delete s.catchingUp; delete s.away; }
     if (away) s.event = live;
@@ -199,5 +213,40 @@ export function advance(s: State, now: number, rng = Math.random) {
     if (offline && s.kills > before.kills) {
         const prev = continuing && s.lastOffline ? s.lastOffline : null;
         s.lastOffline = { seconds: prev ? prev.seconds : Math.min(cap, Math.floor(elapsed / 1000)), kills: (prev?.kills || 0) + s.kills - before.kills, gold: (prev?.gold || 0) + Math.max(0, s.gold - before.gold), exp: (prev?.exp || 0) + Math.max(0, s.exp - before.exp) };
+        const after = rareBook(), rares = { mimic: (prev?.rares?.mimic || 0) + after.mimic - rareBefore.mimic, nuri: (prev?.rares?.nuri || 0) + after.nuri - rareBefore.nuri, slime: (prev?.rares?.slime || 0) + after.slime - rareBefore.slime };
+        if (rares.mimic + rares.nuri + rares.slime > 0) s.lastOffline.rares = rares;
     }
+}
+
+/** v3.231 이계 전투원 필드: 연료(자동 충전 포함) · 탄창(직업 + 장착 패시브) · 재장전 생략 · 트레이더 손익. 이계 직업이 아니면 빈 객체. */
+/** v3.246 아제로스 정수 포식자 · 세계석 광부: 정수 소모 기술을 끼면 가진 정수를, 채굴 패시브를 끼면 채굴 확률 보너스를 전투에 넘깁니다. */
+function azerothFighter(s: State, usable: string[]): Partial<Fighter> {
+    const sks = usable.map(id => skillById(id)).filter(Boolean);
+    const out: Partial<Fighter> = {};
+    if (sks.some(sk => sk!.essenceCost)) out.essence = s.essence || 0;
+    const mine = mineBonusOf(s, sks);
+    if (mine) out.mineBonus = mine;
+    return out;
+}
+/** v3.246 포식 처치로 오른 기본 능력치(환생하면 초기화)와 채굴한 세계석을 세이브에 적습니다. */
+function azerothRecord(s: State, event: CombatEvent) {
+    if (event.devour) { s.devoured ??= {}; s.devoured[event.devour] = (s.devoured[event.devour] || 0) + 1; }
+    if (event.mined) { s.pearls += event.mined; s.pearlsMined = (s.pearlsMined || 0) + event.mined; }
+}
+/** v3.240 동시 시전 기록(업적): 4개 이상 묶음 횟수와 가장 큰 묶음. */
+function chantRecord(s: State, count: number) {
+    if (count >= 4) s.chantFull = (s.chantFull || 0) + 1;
+    if (count > (s.chantBest || 0)) s.chantBest = count;
+}
+function otherworldFighter(s: State, usable: string[]): Partial<Fighter> {
+    const j = jobById(s.job);
+    if (!j?.fuelJob && !j?.magazine && !j?.trader) return {};
+    if (j.fuelJob) autoFuel(s);
+    const passives = usable.map(id => skillById(id)).filter(sk => sk?.type === 'passive');
+    return {
+        ...(j.fuelJob ? { fuel: s.fuel || 0 } : {}),
+        ...(j.magazine ? { magazine: j.magazine + passives.reduce((n, sk) => n + (sk!.magazineBonus || 0), 0), reloadSkip: Math.max(0, ...passives.map(sk => sk!.reloadSkip || 0)) } : {}),
+        ...(j.magazine && passives.some(sk => sk!.overdrive) ? { overdrive: passives.find(sk => sk!.overdrive)!.overdrive } : {}),
+        ...(j.trader ? { pnl: s.marketPnl || 0 } : {}),
+    };
 }

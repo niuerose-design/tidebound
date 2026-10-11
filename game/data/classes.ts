@@ -10,7 +10,8 @@ import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
 import { MAPLE_JOB_FLAVOR, MAPLE_LINEAGE_SUMMARY } from './maple-flavor';
-import { SPECIAL_JOBS, RESTRAINT_LINEAGE } from './specials';
+import { SPECIAL_JOBS, RESTRAINT_LINEAGE, STAFF_LINEAGE } from './specials';
+import { OTHERWORLD_JOBS, OTHERWORLD_COMBAT_JOBS, HACKER_LINEAGE, AGENT_LINEAGE, TRADER_LINEAGE } from './otherworld';
 import { TRAINING_JOBS, RETIRED_TRAINING } from './training';
 import { STAT_TRAINING_JOBS } from './stat-training';
 /** 전직 전 기본 직업(무직) id. 세이브에 저장되는 값이라 바꾸지 않습니다. */
@@ -56,8 +57,36 @@ export type Job = {
     fullKit?: boolean;
     /** v3.200 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
     signatureFree?: boolean;
+    /** v3.221 이 직업이 현재 직업일 때 숙련의 까미 출현 확률 가산(0.5 = ×1.5). 까미 사냥꾼. */
+    mimicFind?: number;
+    /** v3.221 이 직업이 현재 직업일 때 경험의 누리 출현 확률 가산(0.5 = ×1.5). 누리 추적자. */
+    nuriFind?: number;
+    /** v3.221 이 직업이 현재 직업일 때 끼지 않은 지역 보스 코어의 공명 비율(기본 BOSS_CORE_RULES.resonance 10%). 어둠의 추종자 30%. */
+    coreResonance?: number;
+    /** v3.221 이 직업이 현재 직업일 때 칠흑 보스 출현 확률 가산(0.5 = ×1.5)과 머무는 턴(기본 ONYX.turns). 칠흑의 화신. */
+    onyxFind?: number;
+    onyxTurns?: number;
+    /** v3.231 이계: 전직 화면에서 이만큼 세계석을 내면 다른 조건 없이 해금(한 번, 환생 · 승천에도 남음). */
+    pearlCost?: number;
+    /** v3.231 이계 전투 직업: 이계 액티브(Skill.fuelCost)가 세계석 연료를 태우고, 연료가 0이면 절전 모드(data/otherworld.ts FUEL). */
+    fuelJob?: boolean;
+    /** v3.231 절전 모드 두 공격 배율(없으면 FUEL.powerSave). */
+    powerSave?: number;
+    /** v3.231 요원 계보: 탄창 크기. 액티브가 확률 · 대기 없이 장착 순서대로 한 발씩 나가고, 다 쏘면 재장전 1행동. */
+    magazine?: number;
+    /** v3.231 트레이더 계보: 증권거래소 평가 손익률이 두 공격 배율(s.marketPnl). marketFeeScale: 거래 수수료 배율. */
+    trader?: boolean;
+    marketFeeScale?: number;
+    /** v3.230 이 직업이 현재 직업일 때 무릉도장 층 주화 배율. 무릉 수행자 1.5. */
+    abyssCoinScale?: number;
+    /** v3.230 이 직업이 현재 직업일 때 변종 · 황금 개체 확률 가산(0.5 = ×1.5). 변종 학자. */
+    variantRate?: number;
+    /** v3.230 이 직업이 현재 직업일 때 신 도전 간격 배율. 제단 순례자 0.5. */
+    altarCooldownScale?: number;
     /** v3.200 계급장 조건: 이 계급(data/rank.ts RANKS id) 이상. 재입대한 적이 있으면 이미 넘은 것으로 봅니다. */
     requiresRank?: string;
+    /** v3.219 이 직업들 가운데 하나의 숙련이 n 이상(참모 계보 4차: 보급관 또는 군의관). */
+    requiresAnyJobMastery?: Record<string, number>;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
     /** v3.69 옛 독립 수련(data/training.ts): 새로 전직할 수 없고 화면에 보이지 않습니다. 숙달 기록은 숙달 수에 셉니다. */
@@ -173,11 +202,11 @@ JOBS.push(
     { id: 'driftwoodHermit', name: '유목 은둔자', title: '혼자서도 버티는 법', desc: '상위 전직 없이 체력과 저항을 차곡차곡 쌓는 독립 1차 직업입니다. 낮은 확률로 길게 기절시키는 통나무 밀치기를 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { hp: 30, defense: 3, resist: 3 }, tier: 1, level: 10, requires: { vit: 10, wis: 10 }, mastery: 0, role: '독립·생존', tree: 'defense', branchless: true },
     { id: 'relicScavenger', name: '난파선 수집가', title: '부서진 것에서 가치를 찾는다', desc: '상위 전직 없이 골드와 명중을 챙기는 독립 1차 직업입니다. 장비 파밍용 편성의 출발점입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { attack: 1, magic: 1 }, tier: 1, level: 10, requires: { dex: 10, luk: 12 }, mastery: 0, role: '변종·변종', tree: 'support' },
     { id: 'tideSurveyor', name: '해류 측량사', title: '더 나은 항로를 고르는 자', desc: '전투 보정은 거의 없지만 변종와 장비가 많은 항로를 읽는 독립 1차 직업입니다. 낮은 확률로 길게 약화시키는 지형 교란을 함께 익힙니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { dex: 12, luk: 12 }, mastery: 0, role: '독립·드롭', tree: 'magic', branchless: true },
-    { id: 'salvageMerchant', name: '인양 상인', title: '전리품을 항해 자금으로 바꾼다', desc: '전투력 대신 처치·던전 골드를 극대화하는 독립 1차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { luk: 14, dex: 10 }, mastery: 0, role: '독립·골드', tree: 'support', branchless: true },
-    { id: 'pearlBroker', name: '진주 중개인', title: '윤회의 값을 협상한다', desc: '몬스터 속삭임을 숙달한 뒤 환생 보상을 늘리는 경제형 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 25, luk: 25 }, mastery: 75, role: '환생·경제', tree: 'magic' },
+    { id: 'salvageMerchant', name: '인양 상인', title: '전리품을 항해 자금으로 바꾼다', desc: '전투력 대신 처치 골드를 극대화하는 독립 1차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 1, level: 10, requires: { luk: 14, dex: 10 }, mastery: 0, role: '독립·골드', tree: 'support', branchless: true },
+    { id: 'pearlBroker', name: '진주 중개인', title: '윤회의 값을 협상한다', desc: '드래곤 소울을 숙달한 뒤 경험치와 골드를 늘리는 성장형 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: 2, level: 25, parent: 'fishWhisperer', requires: { int: 25, luk: 25 }, mastery: 75, role: '성장·경제', tree: 'magic' },
     { id: 'rareTracker', name: '변종 추적자', title: '한 번뿐인 흔적을 놓치지 않는다', desc: '픽파킷을 완성한 2차 파밍 직업입니다. 메소 마스터리로 장비 드롭과 골드 보상을 늘립니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .01, tier: 2, level: 25, parent: 'relicScavenger', requires: { dex: 28, luk: 28 }, mastery: 75, role: '변종·황금 개체', tree: 'support' },
     { id: 'stormEel', lineage: 'krakenkin', name: '폭풍 곰치 혈족', title: '몬스터의 전류를 배운 자', desc: '여우령의 귀참으로 물어뜯는 물리 기술을 계승하는 몬스터 계열 2차 직업입니다. 감속과 속도 패시브로 선공을 잡습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .04, bonus: { attack: 24, hp: 20, resist: 1 }, tier: 2, level: 25, parent: 'tidalBrawler', requires: { str: 28, dex: 22 }, mastery: 75, role: '몬스터·물리 감속', tree: 'physical' },
-    { id: 'abyssArchivist', name: '진주 기록관', title: '다음 생의 장부를 보관한다', desc: '마법 잔해를 끝까지 숙련해 환생과 던전 경제를 함께 키우는 후반 비전투 직업입니다. 직업 자체는 약하지만, 드래곤 링크는 환생을 거듭할수록 어느 직업에서든 힘이 되는 패시브입니다.', attack: .9, magic: .95, hp: .98, defense: .95, resist: 1, crit: 0, bonus: { resist: 1 }, tier: 3, level: 40, parent: 'pearlBroker', requires: { int: 45, wis: 35, luk: 30 }, mastery: 150, role: '환생·기록', tree: 'magic', penalties: { attack: -8, magic: -6, accuracy: -.04 }, rebirth: 1 },
+    { id: 'abyssArchivist', name: '진주 기록관', title: '다음 생의 장부를 보관한다', desc: '마법 잔해를 끝까지 숙련해 던전 경제와 환생 비례 성장을 함께 키우는 후반 비전투 직업입니다. 직업 자체는 약하지만, 드래곤 링크는 환생을 거듭할수록 어느 직업에서든 힘이 되는 패시브입니다.', attack: .9, magic: .95, hp: .98, defense: .95, resist: 1, crit: 0, bonus: { resist: 1 }, tier: 3, level: 40, parent: 'pearlBroker', requires: { int: 45, wis: 35, luk: 30 }, mastery: 150, role: '환생·기록', tree: 'magic', penalties: { attack: -8, magic: -6, accuracy: -.04 }, rebirth: 1 },
 );
 
 // 한 직업의 기본 기술은 1~2개에 집중합니다. 성장 경로를 공유하더라도
@@ -341,7 +370,22 @@ export function upsertJobs(list: Job[]) {
 }
 
 /** 직업 계보. 계열(tree) 안에서 한 루트 직업과 그 후속 직업을 묶습니다. 계열마다 상위·하위가 없는 1차 직업은 '독립 수련'으로 모읍니다. */
-export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string };
+/**
+ * v3.220 세계: 계보 위의 한 단계 묶음. 전직 화면은 세계(책의 장)를 먼저 고르고, 그 세계의 계보만 보여 줍니다.
+ * world가 없는 계보는 메이플 월드입니다. 아제로스는 처치 기록으로 드러나는 히든 계보의 세계입니다.
+ */
+export type WorldId = 'maple' | 'azeroth' | 'otherworld';
+export const WORLDS: { id: WorldId; name: string; subtitle: string; description: string; accent: string }[] = [
+    { id: 'maple', name: '메이플 월드', subtitle: '모험이 시작된 세계', description: '지금까지의 모든 계열과 계보가 있는 세계입니다.', accent: '#e0a24f' },
+    { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥했거나 계급장을 단 모험가에게 길이 열리는 세계입니다. 히든 계보와 참모 계보가 있습니다.', accent: '#7f8fd8' },
+    // v3.231 제3장 이계: 세계석만 내면 들어오는 세계(Job.pearlCost). 기존과 다른 규칙으로 움직이는 계보들.
+    { id: 'otherworld', name: '이계', subtitle: '세계석이 여는 세계', description: '세계석을 내면 다른 조건 없이 들어오는 세계입니다. 이계의 직업은 기존과 전혀 다른 규칙으로 움직이고, 전투 직업은 세계석을 연료로 태웁니다. 해커 · 요원 · 트레이더 계보가 있습니다.', accent: '#3fc7c0' },
+];
+export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
+/** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
+export const AZEROTH_MASTERY_SCALE = 10;
+/** 계보가 속한 세계(없으면 메이플 월드). */
+export const worldOf = (l: Pick<Lineage, 'world'> | undefined): WorldId => l?.world ?? 'maple';
 // v3.69 계열마다 수련 직업 하나(data/training.ts). 사냥용이 아니라 계승 재료입니다.
 const independent = (tree: JobTreeId): Lineage => ({ id: `${tree}-independent`, name: '수련', tree, summary: '그 계열의 기초 패시브를 모은 수련 직업입니다. 직접 사냥하면 약하고, 기술은 다른 직업이 계승해서 씁니다.' });
 export const LINEAGES: Lineage[] = [
@@ -381,6 +425,10 @@ export const LINEAGES: Lineage[] = [
     { id: 'voyageScribe', name: '견습 기록사 계보', tree: 'support', summary: '경험치 보너스가 곧 피해가 되는(렐릭의 힘) 경험치 유틸 계보입니다.' },
     { id: 'bossNaturalist', name: '거수 생태학자 계보', tree: 'support', summary: '보스와 지정 몬스터의 숙련을 빠르게 쌓는 계보입니다.' },
     { id: 'bard', name: '방랑 음유시인 계보', tree: 'support', summary: '가속·경험치·보상으로 성장을 보조하는 계보입니다.' },
+    STAFF_LINEAGE,
+    HACKER_LINEAGE,
+    AGENT_LINEAGE,
+    TRADER_LINEAGE,
     independent('support'),
     RESTRAINT_LINEAGE,
     independent('mystery'),
@@ -422,5 +470,9 @@ export function jobById(id: string | undefined) {
 }
 // v3.65 공개 특수 직업(유리 대포 · v3.199 은월 3~5차, data/specials.ts).
 registerJobs(SPECIAL_JOBS, true);
+// v3.231 이계 직업(해커 계보, data/otherworld.ts). 비밀 표에 있던 때처럼 finishJobs로 숙달 목표를 차수 배율에 맞춥니다.
+registerJobs(OTHERWORLD_JOBS);
+// v3.231 이계 전투 직업(요원 · 트레이더). 숙달 목표는 적힌 값 그대로(아제로스처럼 직접 정함).
+registerJobs(OTHERWORLD_COMBAT_JOBS, true);
 // v3.70 능력치 수련 I~III(data/stat-training.ts, 완성된 모양).
 registerJobs(STAT_TRAINING_JOBS, true);

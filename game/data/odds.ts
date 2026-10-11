@@ -6,10 +6,10 @@
  * 확률 칸을 모듈을 불러올 때 계산해 두면(최상위 상수) 서버가 채우기 전 값(0)이 굳으므로, 늘 쓸 때 읽습니다.
  */
 export type Odds = {
-    /** 장비 드롭: 처치당 기본 확률 · 상한 · 던전 반복 정복 확정 장비 · 황금 개체 기본 · 등급 분포(일반~태초) · 사냥터 난이도 등급 가중(태초는 상한까지) · 정수 확률·양. */
-    drop: { chance: number; cap: number; dungeonRepeat: number; goldenBase: number; rarity: number[]; tideRarityPerTier: number; primalTierCap: number; essenceChancePerTier: number; essenceEveryTiers: number };
-    /** 숙련의 까미: 기본 · 난이도당 · 사냥터 순서당 배율 · 당첨 등급(소·중·대) · 행운의 편지 ‘대’ 당첨. */
-    mimic: { chance: number; perTier: number; stageStep: number; tiers: number[]; letterJackpot: number };
+    /** 장비 드롭: 처치당 기본 확률 · 상한 · 던전 반복 정복 확정 장비 · 황금 개체 기본 · 등급 분포(일반~태초) · 사냥터 난이도 등급 가중(태초는 상한까지) · 정수 확률·양 · v3.217 고대 · 태초 드롭이 원시 고대 · 계승 태초로 나올 확률. */
+    drop: { chance: number; cap: number; dungeonRepeat: number; goldenBase: number; rarity: number[]; tideRarityPerTier: number; primalTierCap: number; essenceChancePerTier: number; essenceEveryTiers: number; heir: { ancient: number; primal: number } };
+    /** 숙련의 까미: 기본 · 난이도당 · 사냥터 순서당 배율 · 당첨 등급(소·중·대) · 행운의 편지 8단계 ‘중’ 당첨. */
+    mimic: { chance: number; perTier: number; stageStep: number; tiers: number[]; letterMid: number };
     /** 경험의 누리: 기본 · 난이도당 · 당첨 등급(소·중·대). */
     nuri: { chance: number; perTier: number; tiers: number[] };
     /** v3.161 정수의 슬라임: 기본 · 난이도당 · 당첨 등급(소·중·대). */
@@ -26,10 +26,12 @@ export type Odds = {
     spawn: Record<string, number>;
     /** v3.75 장비 옵션: 태초 · 칠흑 전용 희귀 옵션의 뽑힐 가중치(일반 옵션 1) · 꽝 옵션이 한 줄에 끼어들 확률. */
     affix: { rare: number; junk: number };
+    /** v3.202 던전 보스 전리품: 하루 보너스 정복마다 확률 · 연속 미획득 천장. */
+    bossLoot: { chance: number; pity: number };
 };
 const empty = (): Odds => ({
-    drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, primalTierCap: 1, essenceChancePerTier: 0, essenceEveryTiers: 1 },
-    mimic: { chance: 0, perTier: 0, stageStep: 0, tiers: [0, 0, 0], letterJackpot: 0 },
+    drop: { chance: 0, cap: 0, dungeonRepeat: 0, goldenBase: 0, rarity: [0, 0, 0, 0, 0, 0, 0], tideRarityPerTier: 0, primalTierCap: 1, essenceChancePerTier: 0, essenceEveryTiers: 1, heir: { ancient: 0, primal: 0 } },
+    mimic: { chance: 0, perTier: 0, stageStep: 0, tiers: [0, 0, 0], letterMid: 0 },
     nuri: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
     slime: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
     king: { share: 0 },
@@ -38,6 +40,7 @@ const empty = (): Odds => ({
     appraisal: [0, 0, 0, 0, 0, 0],
     spawn: {},
     affix: { rare: 0, junk: 0 },
+    bossLoot: { chance: 0, pity: Infinity },
 });
 /** 지금 쓰는 값. 서버는 늘 진짜 값, 화면은 카탈로그로 받았을 때만. */
 export const ODDS: Odds = empty();

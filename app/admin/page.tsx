@@ -12,15 +12,20 @@ type EventList = { code: EventRow[]; extra: EventRow[]; banner: string; at: numb
 type ClosureRow = { id: string; name: string; closed: boolean; locked: boolean };
 type ClosureList = { stages: ClosureRow[]; dungeons: ClosureRow[] };
 /** v27.73 문 개방: ??? 직업 하나와 그 문 이름·힌트·운영자가 열어 둔 여부. */
-type Tab = 'life' | 'events' | 'closures' | 'stats' | 'news' | 'income';
+type Tab = 'life' | 'events' | 'closures' | 'stats' | 'news' | 'income' | 'market';
+/** v3.213 증권거래소 운영(server/market-config.ts adminMarket). */
+type MarketAdmin = { control: { closed: boolean; haltUntil: number; reason: string }; tick: number; stocks: { id: string; name: string; risk: string; base: number; price: number; change: number }[] };
 /** v3.58 사냥 골드 수입 통계(server/admin.ts adminIncome). */
-type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number };
-type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number }[] })[] };
+type IncomeRate = { perHour: number; hours: number; estimated: boolean; earned: number };
+type IncomeRow = { id: string; name: string; username: string; rebirths: number; ascension: number; level: number; place: string; tide: number; perHour: number; hours: number; estimated: boolean; gold: number; earned: number; running: boolean; updatedAt: number; exp?: IncomeRate; mastery?: IncomeRate };
+type IncomeData = { at: number; measured: number; recent: number; median: number; byRebirth: { label: string; count: number; median: number; max: number }[]; top: IncomeRow[]; picked: (IncomeRow & { log: { ago: number; gold: number; exp?: number; mastery?: number }[] })[] };
+/** v3.207 특정 모험가 수입 칸: 골드 · 경험치 · 숙련(시간별 막대 색). */
+const INCOME_KINDS = [['gold', '골드', '#e7be71'], ['exp', '경험치', '#8fd0ff'], ['mastery', '숙련', '#b99cff']] as const;
 /** 큰 골드: 1.2조 · 3.4억 · 5.6만. */
 const big = (v: number) => v >= 1e12 ? `${(v / 1e12).toFixed(2)}조` : v >= 1e8 ? `${(v / 1e8).toFixed(2)}억` : v >= 1e4 ? `${(v / 1e4).toFixed(1)}만` : String(Math.round(v));
 type NewsRow = { id: number; name: string; text: string; at: number; hacker: boolean };
 /** 운영 페이지 소식 테스트 종류(server/news.ts NEWS_SAMPLES와 같은 순서). */
-const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
+const NEWS_KINDS: [string, string][] = [['onyx', '칠흑 장신구'], ['ascend', '승천'], ['tier5', '5차 전직'], ['abyss', '무릉도장 50층'], ['star22', '22성 강화'], ['general', '진급(하사)'], ['onyxAwaken', '칠흑 각성'], ['core', '보스 코어'], ['coreAwaken', '코어 완전 각성'], ['hacker', '해커 전직(빨간 줄)'], ['god', '제단 · 신 깨어남'], ['raid', '제단 · 월드보스 출현']];
 const BLESS_NAMES: Record<string, string> = { gold: '풍요의 축복', exp: '성장의 축복', mimic: '까미의 축복', nuri: '누리의 축복' };
 type Count = { name: string; count: number };
 type Bucket = { label: string; count: number };
@@ -39,7 +44,8 @@ const HELP: Record<Tab, string> = {
     closures: '점검할 사냥터·던전의 입장을 막습니다. 안에 있던 모험가는 다음 동기화 때 보상 없이 나옵니다(사냥터는 더 앞의 열린 곳으로). 서버마다 최대 30초 걸립니다.',
     stats: '모든 세이브를 읽어 집계합니다(불러올 때만 계산). 활동은 마지막 저장 시각 기준입니다.',
     news: '기록판 ‘소식’ 탭에 실제와 같은 줄을 올려 봅니다. 모두에게 보이므로 기본으로 [테스트]를 붙입니다. 아래 ‘지우기’로 소식 · 전체 채팅 · 길드 채팅을 통째로 지울 수 있습니다(되돌릴 수 없음).',
-    income: '사냥으로 번 골드를 플레이 1시간 단위로 기록합니다. 시간당 골드는 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불은 빠집니다.',
+    market: '증권거래소 장 폐쇄(켜면 풀 때까지 매수 · 매도 막힘)와 서킷브레이커(정한 시간 동안만 막힘, 끝나면 저절로 재개)를 겁니다. 시세는 계산식이라 계속 흐르고, 막는 것은 거래입니다. 사유는 유저 화면에 그대로 보입니다. 다른 서버에는 최대 30초 뒤 반영됩니다.',
+    income: '사냥으로 번 골드 · 처치 경험치 · 현재 직업 숙련을 플레이 1시간 단위로 기록합니다. 시간당 값은 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불과 누리 보너스 경험치는 빠지고, 경험치 기록은 환생하면 새로 쌓입니다. 모험가를 검색하면 경험치·숙련도 함께 보입니다.',
 };
 const muted = { color: '#9bb3b0' } as const;
 const rowItem = { padding: '8px 10px', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', borderTop: '1px solid #263f42' } as const;
@@ -164,6 +170,14 @@ export default function AdminPage() {
         const d = await call({ action: 'setClosed', kind, id: row.id, closed: !row.closed });
         if (d) { setClosures(d); setDone(`${row.name}을(를) ${row.closed ? '열었습니다' : '닫았습니다'}. 모든 서버에 반영되기까지 최대 30초 걸립니다.`); }
     };
+    /** v3.213 증권거래소: 장 폐쇄 · 서킷브레이커 · 사유. */
+    const [market, setMarket] = useState<MarketAdmin | null>(null), [haltMin, setHaltMin] = useState('30'), [marketReason, setMarketReason] = useState('');
+    const loadMarket = async () => { const d = await call({ action: 'market' }); if (d) { setMarket(d); setMarketReason(d.control.reason || ''); } };
+    const setMarketControl = async (change: { closed?: boolean; haltMinutes?: number }, what: string) => {
+        if (!confirm(`${what}\n사유: ${marketReason.trim() || '(없음)'}\n모든 모험가에게 적용됩니다(다른 서버는 최대 30초 뒤).`)) return;
+        const d = await call({ action: 'setMarket', ...change, reason: marketReason });
+        if (d) { setMarket(d); setDone(`${what} 완료.`); }
+    };
     const loadIncome = async (query = incomeQuery) => { const d = await call({ action: 'income', query }); if (d) setIncome(d); };
     const loadNews = async () => { const d = await call({ action: 'news' }); if (d) setNews(d.rows); };
     // v3.190 소식 · 채팅 전체 지우기. 되돌릴 수 없으므로 확인창을 거칩니다.
@@ -174,8 +188,8 @@ export default function AdminPage() {
         if (d) { setNews(d.rows); setDone(`${what}을(를) 지웠습니다 · ${Number(d.removed).toLocaleString('ko-KR')}줄.`); }
     };
     const postNews = async (kind: string) => { const d = await call({ action: 'newsTest', kind, name: newsName, text: newsText, tag: newsTag }); if (d) { setNews(d.rows); setDone('소식 탭에 올렸습니다. 게임 화면의 기록판 → 소식에서 확인하세요.'); if (kind === 'custom') setNewsText(''); } };
-    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '골드 수입'], ['news', '소식 테스트']];
-    const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); };
+    const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '사냥 수입'], ['news', '소식 테스트'], ['market', '증권거래소']];
+    const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); if (id === 'market') void loadMarket(); };
     const closureList = (kind: keyof ClosureList, title: string, open: boolean) => closures && <Fold title={title} open={open} note={`${closures[kind].length}곳 · 막힘 ${closures[kind].filter(r => r.closed).length}`}>
         <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{closures[kind].map(r => <li key={r.id} style={rowItem}>
             <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={muted}> · 첫 사냥터(닫을 수 없음)</small> : null}</span>
@@ -198,6 +212,7 @@ export default function AdminPage() {
             {tab === 'stats' && reload(stats ? '새로고침' : '통계 불러오기', loadStats)}
             {tab === 'closures' && reload(closures ? '새로고침' : '목록 불러오기', loadClosures)}
             {tab === 'news' && reload(news ? '새로고침' : '최근 소식 불러오기', loadNews)}
+            {tab === 'market' && reload(market ? '새로고침' : '상태 불러오기', loadMarket)}
             {tab === 'income' && <form onSubmit={e => { e.preventDefault(); void loadIncome(); }} style={{ display: 'flex', gap: 8, flex: 1 }}>
                 <input value={incomeQuery} onChange={e => setIncomeQuery(e.target.value)} placeholder="모험가 이름·아이디 (비우면 전체)" style={{ ...field, flex: 1 }}/>
                 <button className="primary" disabled={busy || !key}>{income ? '새로고침' : '불러오기'}</button>
@@ -306,8 +321,15 @@ export default function AdminPage() {
                 </div>
             </Fold>
             {income.picked.map(p => <Fold key={p.id} title={p.name} note={`${p.username || '?'} · 환생 ${p.rebirths}${p.ascension ? ` · 승천 ${p.ascension}` : ''} · Lv.${p.level} · ${p.place} ${p.tide}${p.running ? '' : ' · 멈춤'}`}>
-                <p style={{ margin: '0 0 8px', fontSize: 13 }}>시간당 <b>{p.estimated ? '≈ ' : ''}{big(p.perHour)}</b> · 보유 {big(p.gold)} · 기록 뒤 합계 {big(p.earned)}</p>
-                {!p.log.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : (() => { const top = Math.max(1, ...p.log.map(x => x.gold)); return <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 80px', gap: 8, alignItems: 'center' }}><span style={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${Math.max(2, x.gold / top * 100)}%`, background: '#e7be71' }}/></span><b style={{ textAlign: 'right' }}>{big(x.gold)}</b></li>)}</ul>; })()}
+                <div style={{ ...grid(170), marginBottom: 10 }}>
+                    <Tile label="시간당 골드" value={`${p.estimated ? '≈ ' : ''}${big(p.perHour)}`} note={`보유 ${big(p.gold)} · 기록 뒤 합계 ${big(p.earned)}`}/>
+                    <Tile label="시간당 경험치" value={p.exp ? `${p.exp.estimated ? '≈ ' : ''}${big(p.exp.perHour)}` : '-'} note={p.exp ? `기록 뒤 합계 ${big(p.exp.earned)} · 이번 생 기준` : ''}/>
+                    <Tile label="시간당 숙련" value={p.mastery ? `${p.mastery.estimated ? '≈ ' : ''}${big(p.mastery.perHour)}` : '-'} note={p.mastery ? `기록 뒤 합계 ${big(p.mastery.earned)} · 현재 직업` : ''}/>
+                </div>
+                {!p.log.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : <div style={grid(260)}>{INCOME_KINDS.map(([k, label, color]) => { const top = Math.max(1, ...p.log.map(x => x[k] || 0)); return <div key={k}>
+                    <b style={{ fontSize: 13 }}>{label}</b>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '64px 1fr 72px', gap: 8, alignItems: 'center' }}><span style={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${(x[k] || 0) ? Math.max(2, (x[k] || 0) / top * 100) : 0}%`, background: color }}/></span><b style={{ textAlign: 'right' }}>{big(x[k] || 0)}</b></li>)}</ul>
+                </div>; })}</div>}
             </Fold>)}
             {incomeQuery.trim() && !income.picked.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>‘{incomeQuery}’에 맞는 모험가가 없습니다.</p>}
             <Fold title="시간당 골드 상위 30" note="최근 24시간 저장 · 줄을 누르면 시간별 기록">
@@ -337,6 +359,29 @@ export default function AdminPage() {
             </Fold>
             {news && <Fold title="최근 소식" note={`${news.length}줄`}>{!news.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4, fontSize: 13 }}>{[...news].reverse().map(r => <li key={r.id} style={{ color: r.hacker ? '#ff9a9a' : undefined }}><span style={muted}>{kstIso(r.at).slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></Fold>}
+        </>}
+
+        {tab === 'market' && market && <>
+            <Fold title="장 상태" note={market.control.closed ? '폐장' : market.control.haltUntil ? '서킷브레이커' : '정상 거래'}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>장 폐쇄</b> · {market.control.closed ? <b style={{ color: '#ff9a9a' }}>폐장 중(매수 · 매도 막힘)</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}</span>
+                        <button className={market.control.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => void setMarketControl({ closed: !market.control.closed }, market.control.closed ? '장을 다시 엽니다.' : '장을 닫습니다(풀 때까지 거래 막힘).')}>{market.control.closed ? '장 열기' : '장 닫기'}</button></li>
+                    <li style={{ ...rowItem, flexWrap: 'wrap' }}><span style={{ fontSize: 13 }}><b>서킷브레이커</b> · {market.control.haltUntil ? <b style={{ color: '#ffcf8a' }}>{kstIso(market.control.haltUntil).slice(5, 16).replace('T', ' ')}까지 거래 중단</b> : <span style={muted}>없음</span>}</span>
+                        <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                            {[10, 30, 60].map(m => <button key={m} className="secondary" disabled={busy} onClick={() => void setMarketControl({ haltMinutes: m }, `서킷브레이커 ${m}분을 겁니다.`)}>{m}분</button>)}
+                            <input value={haltMin} onChange={e => setHaltMin(e.target.value)} inputMode="numeric" aria-label="서킷브레이커 분" style={{ ...field, width: 70 }}/>
+                            <button className="secondary" disabled={busy || !(Number(haltMin) > 0)} onClick={() => void setMarketControl({ haltMinutes: Number(haltMin) }, `서킷브레이커 ${haltMin}분을 겁니다.`)}>분 걸기</button>
+                            {market.control.haltUntil > 0 && <button className="primary" disabled={busy} onClick={() => void setMarketControl({ haltMinutes: 0 }, '서킷브레이커를 풉니다.')}>해제</button>}
+                        </span></li>
+                    <li style={{ ...rowItem, flexWrap: 'wrap' }}><span style={{ fontSize: 13 }}><b>사유</b> <small style={muted}>(유저 화면에 보임 · 최대 100자 · 장 닫기 · 서킷브레이커와 함께 저장)</small></span>
+                        <span style={{ display: 'flex', gap: 6, flex: '1 1 280px' }}><input value={marketReason} maxLength={100} onChange={e => setMarketReason(e.target.value)} placeholder="예: 시세 점검" style={{ ...field, flex: 1 }}/>
+                            <button className="secondary" disabled={busy} onClick={() => void setMarketControl({}, '사유만 바꿉니다.')}>사유 저장</button></span></li>
+                </ul>
+            </Fold>
+            <Fold title="지금 시세" note={`${market.stocks.length}종목 · 24시간 등락`}>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{market.stocks.map(x => <li key={x.id} style={rowItem}><span style={{ fontSize: 13 }}><b>{x.name}</b> <small style={muted}>{x.risk} · 기준가 {format(x.base)}</small></span>
+                    <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{format(x.price)} <span style={{ color: x.change > 0 ? '#e8746b' : x.change < 0 ? '#6fa8e6' : undefined }}>{x.change > 0 ? '+' : ''}{(x.change * 100).toFixed(2)}%</span></span></li>)}</ul>
+            </Fold>
         </>}
 
         {tab === 'closures' && closures && <>

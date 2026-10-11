@@ -304,22 +304,6 @@
   font-weight:400
 }
 
-.app-footer {
-  padding:8px 32px 23px;
-  display:flex;
-  justify-content:space-between;
-  color:#668088;
-  font-size:10px;
-  letter-spacing:.4px;
-  gap:10px
-}
-
-.app-footer>span {
-  display:flex;
-  gap:7px;
-  align-items:center
-}
-
 .badge {
   display:inline-flex;
   align-items:center;

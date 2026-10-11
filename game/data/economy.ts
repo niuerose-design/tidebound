@@ -11,7 +11,6 @@ export const ECONOMY = { /** v27.93 강화 상한·성당 배율은 data/starfor
 export const PRIMAL_DROP_PITY = 3200;
 /** v3.58 감정 천장: 이 등급 이상이 마지막으로 나온 뒤 이 횟수째 감정은 그 등급 이상이 확정입니다(신화 150 · 고대 1,000 · 태초 3,000). 환생해도 남고 승천하면 초기화. */
 export const APPRAISAL_PITY = [{ rarity: 4, key: 'myth', count: 150 }, { rarity: 5, key: 'ancient', count: 1000 }, { rarity: 6, key: 'primal', count: 3000 }] as const;
-export type AppraisalPityKey = typeof APPRAISAL_PITY[number]['key'];
 /**
  * 감정 가격의 환생 배율(현재 환생 횟수 기준이라 승천하면 다시 낮아집니다).
  * v3.68 지수 10^(환생 / scale)과 직선 1 + 환생 × perRebirth 중 낮은 쪽: 지수만 쓰면 골드 수입을 크게 앞질러 후반 감정이 막힙니다.
@@ -68,24 +67,24 @@ export const RESEARCH: ResearchDef[] = [
     { id: 'recovery', name: '처치 회복 강화 I', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '회피 강화 I', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '흡혈 강화 I', desc: '흡혈 +0.5%p (연구분은 전체 상한 30% 밖에 더함)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },
-    { id: 'ap', name: '영혼 확장', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
+    { id: 'ap', name: '영혼 확장 I', desc: '스킬 장착 한도 AP +1', max: 12, base: 4, step: 3, tab: 'utility', group: 'basic', per: 1, unit: 'flat', label: '장착 AP' },
+    /** v3.214 영혼 확장 II: I(12단계, 환생 12회 무렵 다 찍음) 뒤의 장기 목표. 환생 20회부터, 12단계 합계 3,840 세계석(100 + 40/단계). */
+    { id: 'ap2', name: '영혼 확장 II', desc: '스킬 장착 한도 AP +1 (영혼 확장 I과 합산)', max: 12, base: 100, step: 40, tab: 'utility', group: 'basic', rebirth: 20, per: 1, unit: 'flat', label: '장착 AP' },
     { id: 'exp', name: '노련함', desc: '처치 경험치 +20%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', per: .2, unit: 'percent', label: '처치 경험치' },
     // v27.60 모험가의 유산: 시작 골드 +500 → 시작 레벨 +2. id는 그대로라 찍어 둔 단계가 이어집니다.
     { id: 'starting', name: '전생의 기억', desc: '환생 직후 시작 레벨 +2 (오른 레벨만큼 능력치 포인트도 받음)', max: 10, base: 3, step: 2, tab: 'utility', group: 'basic', per: 2, unit: 'flat', label: '시작 레벨', suffix: '레벨' },
     // v27.80 지겨운 환생: 환생 직후 잡일을 줄입니다. 숙달한 것만 복원하므로 숙련 복사 같은 우회가 없습니다.
     { id: 'habit', name: '지겨운 환생', desc: '1단계: 환생 직전 직업을 숙달했으면 환생 직후 자동 전직. 2단계: 장착 스킬 중 계승·숙달한 것은 그대로 장착. 3단계: 능력치 배분 비율을 유지해 시작 포인트를 자동 배분', max: 3, base: 6, step: 4, tab: 'utility', group: 'basic', rebirth: 2, per: 1, unit: 'flat', label: '환생 편의', suffix: '단계', levels: ['없음', '자동 전직', '자동 전직 · 스킬 편성 유지', '자동 전직 · 스킬 편성 유지 · 능력치 비율 유지'] },
     { id: 'offline', name: '긴 휴식', desc: '오프라인 정산 상한 +6시간', max: 3, base: 30, step: 30, tab: 'utility', group: 'basic', rebirth: 2, per: 6, unit: 'flat', label: '오프라인 정산 상한', suffix: '시간' },
-    { id: 'tailwindSail', name: '초심자 보너스', desc: '순풍 경험치 보너스 +10%p (기본 +50%, 합연산, 환생 뒤 요구 레벨까지)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
+    { id: 'tailwindSail', name: '초심자 보너스', desc: '순풍 경험치 보너스 +10%p (기본 +50%, 합연산, 환생 뒤 직전 생 최고 레벨까지)', max: 5, base: 8, step: 5, tab: 'utility', group: 'special', rebirth: 2, per: .1, unit: 'pp', label: '순풍 경험치 보너스' },
     { id: 'salvage', name: '청산', desc: '환생할 때 보관함과 착용 중인 일반 장비를 모두 판매(골드는 다음 생 시작 골드에 더함)하거나 분해(정수)합니다. 방식(판매/분해)은 환생 화면의 ‘받는 보상’ 줄이나 설정(톱니바퀴)에서 고르고, 효율은 1단계 40%부터 단계당 +15%', max: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 1, per: 15, unit: 'percent', label: '청산 효율', levels: ['정리 없음', '효율 40%', '효율 55%', '효율 70%', '효율 85%', '효율 100%'] },
     // v3.38 자동 분해기 + 자동 판매기 연구를 ‘자동 정리’ 하나로 합쳤습니다(id는 sortingNet). 두 장치는 그대로 따로 켜고 등급을 나눠 고릅니다(v3.35).
     { id: 'sortingNet', name: '자동 정리', desc: '자동 분해기(정수)와 자동 판매기(골드)를 함께 엽니다. 설정에서 장치마다 등급을 여러 개 고름(1단계 희귀~전설, 2단계 신화·고대까지). 같은 등급은 한 장치에만, 태초·칠흑·잠금·유물·도감 미등록 종류는 처리하지 않음', max: 2, base: 10, step: 10, tab: 'utility', group: 'special', rebirth: 2, per: 1, unit: 'flat', label: '자동 정리 등급', suffix: '단계', levels: ['자동 정리 없음', '희귀 ~ 전설', '신화 · 고대까지'] },
     // v27.60 병 속의 편지(오프라인 편지병) → 행운의 편지. id는 그대로라 찍어 둔 단계가 이어집니다.
-    { id: 'messageBottle', name: '행운의 편지', /** v3.56 ‘대’ 당첨 확률 수치는 서버 전용(비공개가 켜져 있으면 ‘확률 상승’). */ get desc() { return `숙련의 까미·경험의 누리 등장 확률 +15%. 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.5 → ×0.75, 8단계 까미 ‘대’ 당첨 ${oddsKnown() ? `${oddsPercent(ODDS.mimic.tiers[2], '')} → ${oddsPercent(ODDS.mimic.letterJackpot, '')}` : '확률 상승'}, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)`; }, max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
+    { id: 'messageBottle', name: '행운의 편지', /** v3.56 당첨 확률 수치는 서버 전용(비공개가 켜져 있으면 ‘확률 상승’). v3.287 8단계는 ‘중’ 당첨, 등장 보너스는 제단 축복 · 이벤트 · 직업과 더함. */ get desc() { return `숙련의 까미·경험의 누리 등장 확률 +15%(제단 축복 · 이벤트 · 직업 보너스와 곱하지 않고 더함). 6~10단계는 승천 후: 6단계 부재중 정산 중 확률 ×0.5 → ×0.75, 8단계 까미 ‘중’ 당첨 ${oddsKnown() ? `${oddsPercent(ODDS.mimic.tiers[1], '')} → ${oddsPercent(ODDS.mimic.letterMid, '')}` : '확률 상승'}, 10단계 편지 수신인(까미 당첨 숙련의 1%를 해금한 미숙달 직업 하나에 덤)`; }, max: 10, ascendAbove: 5, base: 6, step: 4, tab: 'utility', group: 'special', rebirth: 3, per: .15, unit: 'percent', label: '까미·누리 등장 확률' } /* 배율은 mimic.ts specialLuck */,
     /** v3.86 추가 판정(docs/combat-rework.md B): 해금 단계까지 스킬 편성에서 장착 AP를 내고 켭니다. 지금은 1단계까지(최대 4단계 = 액티브 5개 동시 판정 예정). */
     { id: 'extraRoll', name: '시스템 파괴 I', desc: '추가 판정 해금. 액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 발동 판정을 한 번 더 굴려, 성공하면 60% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동에서는 묶음 최대 개수가 1 늘어납니다. 스킬 편성에서 장착 AP 12를 내고 켭니다', max: 1, base: 1000, step: 1000, tab: 'utility', group: 'special', rebirth: 10, per: 1, unit: 'flat', label: '추가 판정', suffix: '단계', levels: ['잠김', '추가 판정 1단계(AP 12)'] },
     { id: 'limitBreak', name: '리미터 해제', desc: '스킬 한계돌파 해금. 연구 단계까지만 한계돌파할 수 있고, 이미 한 한계돌파도 연구 단계까지만 효과가 납니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'special', per: 1, unit: 'flat', label: '한계돌파 상한', suffix: '단계', levels: ['잠김 · 한계돌파 불가', '한계돌파 1단계까지', '한계돌파 2단계까지', '한계돌파 3단계까지'] },
-    /** v27.86 잠든 힘 → 랜덤게임(던전). id는 세이브 호환을 위해 그대로 둡니다. */
-    { id: 'vowAnchor', name: '랜덤게임', desc: '던전 ‘랜덤게임’ 입장 해금. 하루마다(그리고 환생하면) 연구 단계만큼 입장할 수 있고, 2·3단계는 판돈을 50%씩 키웁니다(×1 → ×1.5 → ×2). 쓰러지면 판돈은 모두 사라집니다', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '랜덤게임 단계', suffix: '단계', levels: ['잠김', '해금 · 생마다 1회 · 판돈 ×1', '생마다 2회 · 판돈 ×1.5', '생마다 3회 · 판돈 ×2'] },
     { id: 'vowBreath', name: '하드코어', desc: '서약 해금. 2·3단계는 환생 세계석 보너스 50%씩 강화 (+50% → +75% → +100%)', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 환생 세계석 +50%', '환생 세계석 +75%', '환생 세계석 +100%'] },
     { id: 'vowRough', name: '힘의 길', desc: '서약 해금(난이도 하한·장비 능력치 감소·회복 봉쇄 대신 골드·드롭 곱연산). 2·3단계는 보상을 50%씩 강화', max: 3, base: 10, step: 10, tab: 'utility', group: 'vow', rebirth: 5, per: 1, unit: 'flat', label: '서약 단계', suffix: '단계', levels: ['잠김', '해금 · 선택 단계당 드롭·골드 +50%', '선택 단계당 +75%', '선택 단계당 +100%'] },
     /** v27.86 절제: 장착 AP를 줄이는 서약. */
@@ -96,7 +95,9 @@ export const RESEARCH: ResearchDef[] = [
     /** v3.17 불굴의 의지: 쓰러진 뒤 회복 대기 -3턴/단계(기본 25턴, 최저 10턴). 환생 10회부터. */
     { id: 'revive', name: '불굴의 의지', desc: '쓰러진 뒤 회복 대기 -3턴(6초) (기본 25턴 = 50초, 최저 10턴)', max: 5, base: 4, step: 3, tab: 'utility', group: 'basic', rebirth: 10, per: 3, unit: 'flat', label: '회복 대기 단축', suffix: '턴' },
     { id: 'mastery', name: '끝없는 수련', desc: '스킬·직업 숙련 획득 +3%', max: 10, base: 3, step: 3, tab: 'utility', group: 'basic', rebirth: 5, per: .03, unit: 'percent', label: '숙련 획득' },
-    { id: 'gold', name: '황금 비', desc: '사냥터·던전 골드 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '사냥터·던전 골드' },
+    { id: 'gold', name: '황금 비', desc: '골드 획득 +10%(v3.201부터 던전은 골드 대신 주화를 줌)', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '골드 획득' },
+    /** v3.202 던전 탐험 I: 던전 주화 보너스 +10%/단계(하루 보너스 · 보너스 뒤 · 무릉도장 모두). */
+    { id: 'dungeon', name: '던전 탐험 I', desc: '던전 주화 +10%', max: 20, base: 3, step: 2, tab: 'gold', per: .1, unit: 'percent', label: '던전 주화' },
     { id: 'drop', name: '보물의 냄새', desc: '장비 드롭 확률 +10%', max: 10, base: 3, step: 3, tab: 'gold', per: .1, unit: 'percent', label: '장비 드롭 확률' },
     { id: 'enhance', name: '대장장이 고용', desc: '강화·옵션 재설정 골드 비용 -2%', max: 15, base: 3, step: 2, tab: 'gold', rebirth: 5, per: .02, unit: 'percent', label: '강화·재설정 비용', negative: true },
 ];

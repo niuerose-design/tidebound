@@ -13,14 +13,15 @@ import { inventoryCap } from '@/game/data/economy';
 import { RebirthHistory } from './rebirth-history';
 import { SLOTS } from '@/game/data/balance';
 import { researchRefund } from '@/game/systems/commerce';
-import { rebirthRewardParts, tailwindActive, tailwindExp, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
-import { stats, permanentExpBonus } from '@/game/systems/stats';
-import { apCapacity } from '@/game/systems/progression';
+import { rebirthRewardParts, tailwindActive, tailwindExp, tailwindLevel, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
+import { permanentExpBonus } from '@/game/systems/stats';
+import { apCapacity, researchAP } from '@/game/systems/progression';
 import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
-import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
+import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT, hasVows } from '@/game/systems/vows';
 import { BonusList } from './inventory-panel';
+import { SUPPORT_EFFECTS, supportText, supportOf, isStaff } from '@/game/systems/support';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo } from '@/game/data/account';
 import { ownedOnyx } from '@/game/data/onyx';
 import { useEffect, useState as useLocalState } from 'react';
@@ -80,7 +81,13 @@ export function AccountPanel({ s }: { s: State }) {
     const rows = accountBonusRows(s), slots = s.account?.slots || [], openSlots = Array.from({ length: SLOT_COUNT }, (_, i) => i + 1).filter(n => slotUnlocked(s.account, n)).length;
     return <section className="panel vow-panel account-panel">
         <div className="section-title"><h2>계정 보너스</h2><span>슬롯 {slots.length || 1}/{openSlots} 사용 중 · 모든 슬롯 합산</span></div>
-        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}</ul>
+        <ul className="account-rows">{rows.map(r => <li key={r.name}><div><strong>{r.name}</strong><small>{r.value}</small></div><b>{r.effect}</b><small>{r.next}</small></li>)}
+            {/* v3.219 참모 지원: 다른 분신이 주는 지원(받는 값)과, 참모 계보라면 내가 주는 지원. */}
+            {(() => { const got = SUPPORT_EFFECTS.filter(e => s.support?.[e]), mine = isStaff(s) ? supportOf(s) : {}, give = SUPPORT_EFFECTS.filter(e => mine[e]);
+                const text = (m: Partial<Record<(typeof SUPPORT_EFFECTS)[number], number>>, list: (typeof SUPPORT_EFFECTS)[number][]) => list.map(e => supportText(e, m[e] || 0)).join(' · ');
+                return <>{(got.length > 0 || isStaff(s)) && <li key="support-in"><div><strong>분신 지원(받음)</strong><small>참모 계보 분신</small></div><b>{got.length ? text(s.support!, got) : '없음'}</b><small>효과별 가장 높은 지원 하나 · 다른 분신에 반영까지 최대 10분</small></li>}
+                    {isStaff(s) && <li key="support-out"><div><strong>분신 지원(줌)</strong><small>이 캐릭터의 지원 스킬</small></div><b>{give.length ? text(mine, give) : '장착한 지원 스킬 없음'}</b><small>다른 분신에게만 · 자신은 지휘 체계로 강해짐</small></li>}</>; })()}
+        </ul>
     </section>;
 }
 /** v25.13 계정 공유 금고: 슬롯 사이에서 세계석·정수를 옮깁니다. 2번 슬롯이 열린 뒤에 보입니다. */
@@ -98,8 +105,8 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <div className="section-title"><h2>계정 금고</h2><span>어느 슬롯에서든 넣고 꺼냄 · 세계석 인출 주당 {VAULT_PEARL_OUT_WEEKLY}개 · 골드 불가</span></div>
         {error && <p className="login-error" role="alert">{error}</p>}
         <ul className="account-rows vault-rows">{row('pearls', '세계석', s.pearls, vault ? `이번 주 인출 가능 ${vault.pearlOutLeft}개` : undefined)}{row('essence', '정수', s.essence || 0)}</ul>
-        {/* v3.116 칠흑 장신구: 별 · 각성 그대로 옮김. 받는 분신이 같은 종을 가졌으면 각성 +1. 넣은 분신이 승천하면 사라짐. */}
-        <h3 className="vault-onyx-title">칠흑 장신구 <small>금고 {vault?.onyx.length ?? '…'}/{VAULT_ONYX_CAP} · 별 · 각성 그대로 · 같은 종을 가진 분신이 꺼내면 각성 +1 · 넣은 분신이 승천하면 금고에서도 사라짐</small></h3>
+        {/* v3.116 칠흑 장신구: 별 · 각성 그대로 옮김. 받는 분신이 같은 종을 가졌으면 각성 +1. v3.242 승천해도 남음. */}
+        <h3 className="vault-onyx-title">칠흑 장신구 <small>금고 {vault?.onyx.length ?? '…'}/{VAULT_ONYX_CAP} · 별 · 각성 그대로 · 같은 종을 가진 분신이 꺼내면 각성 +1</small></h3>
         <ul className="account-rows vault-rows">
             {s.inventory.filter(i => i.onyx).map(i => <li key={i.id}><div><strong>{i.name}{i.onyxRank ? ` +${i.onyxRank}` : ''}</strong><small>가방 · {starLabel(i.enhance || 0, true)} · Lv.{i.level}</small></div>
                 <div className="vault-row"><button className="secondary small" disabled={busy || !vault || vault.onyx.length >= VAULT_ONYX_CAP} onClick={() => act({ action: 'deposit', kind: 'onyx', id: i.id })}>넣기</button></div></li>)}
@@ -109,13 +116,24 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         </ul>
     </section>;
 }
+/** v3.210 LV1 모험가(테스트용): 생 도중 바로 걸고 언제든 포기. 다른 서약과 함께 걸 수 없고, 서약 중에는 환생할 수 없습니다. */
+function Lv1VowCard({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
+    const on = !!s.vows?.lv1, blocked = !on && hasVows(s.vows);
+    return <article className={`vow-card vow-lv1${on ? ' on' : ''}`}>
+        <h3>LV1 모험가 <small className="vow-test">테스트용</small></h3>
+        <p>지금 바로 걸면 레벨이 1로 고정됩니다(경험치 · 레벨로 받은 능력치 포인트 없음, 레벨 비례 수치도 Lv.1). 장비 · 연구 · 숙련 · 보스 코어는 그대로이고, 사냥터 · 던전 · 스킬의 레벨 제한은 무시합니다. 서약 중에는 환생 · 승천할 수 없고, 언제든 포기하면 원래 레벨로 돌아갑니다. 성장 보상은 없고 최고 무릉도장 층만 기록합니다.</p>
+        <small>최고 기록 · 무릉도장 {s.lv1AbyssBest || 0}층{on && s.vows?.lv1 ? ` · 포기하면 Lv.${s.vows.lv1.level}로` : ''}{blocked ? ' · 다른 서약이 걸린 생에는 걸 수 없음' : ''}</small>
+        {on ? <ConfirmButton label="LV1 모험가 포기" title="LV1 모험가 서약을 포기할까요?" description={`Lv.${s.vows!.lv1!.level}과 그때의 경험치 · 능력치 배분으로 돌아갑니다. 기록(무릉도장 ${s.lv1AbyssBest || 0}층)은 남습니다.`} disabled={busy} onConfirm={() => send({ type: 'lv1Vow', id: 'quit' })}/>
+            : <ConfirmButton label="지금 바로 걸기" title="LV1 모험가(테스트용)를 걸까요?" description="테스트용 서약입니다. 성장 보상은 없고 최고 무릉도장 층만 기록됩니다. 지금 레벨 · 경험치 · 능력치 배분은 보관되고 Lv.1이 됩니다. 서약 중에는 환생할 수 없고, 포기하면 보관한 상태로 돌아갑니다." disabled={busy || blocked || !!s.dungeon} onConfirm={() => send({ type: 'lv1Vow', id: 'start' })}/>}
+    </article>;
+}
 /** 환생 화면의 서약: 이번 생 서약, 다음 생 서약 예약. */
 function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
-    const unlocked = VOW_IDS.filter(id => vowUnlocked(s, id)), now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
-    if (!unlocked.length && !now) return null;
+    const now = s.vows, next = s.nextVows || {}, leveled = (id: VowId) => (LEVELED_VOWS as readonly string[]).includes(id);
     return <section className="panel vow-panel">
         <div className="section-title"><h2>서약</h2><span>제약을 걸고 고유 보상을 받습니다. 모든 서약은 다음 생에 걸리고(환생할 때 적용), 이번 생 도중에는 바꿀 수 없습니다. 세계석 연구 유틸 탭에서 해금합니다.</span></div>
         {now && VOW_IDS.some(id => now[id]) && <div className="vow-current"><strong>이번 생 서약</strong><span>{VOW_IDS.filter(id => now[id]).map(id => leveled(id) ? `${VOW_NAMES[id]} ${now[id]}단계` : VOW_NAMES[id]).join(' · ')}</span></div>}
+        <Lv1VowCard s={s} send={send} busy={busy}/>
         <div className="vow-grid">{VOW_IDS.map(id => {
             const open = vowUnlocked(s, id);
             return <article className={`vow-card ${open ? '' : 'locked'}`} key={id}>
@@ -131,20 +149,20 @@ function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy
 export function Rebirth({ s, send, busy }: PanelProps) {
     const [tab, setTab] = useState('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
-    const required = rebirthLevel(s), bonus = stats(s).rebirthBonus;
-    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }, bonus), permanentExp = 1 + permanentExpBonus(s);
+    const required = rebirthLevel(s);
+    const reward = rebirthReward({ ...s, level: Math.max(s.level, required) }), permanentExp = 1 + permanentExpBonus(s);
     const breathExtra = s.vows?.breath ? Math.floor(reward * breathBonus(s)) : 0;
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) };
-    const parts = rebirthRewardParts(projected, bonus), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
-    const lifeText = `순풍 · 다음 생 Lv.${rebirthLevel({ ...s, rebirths: s.rebirths + 1 })}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
+    const parts = rebirthRewardParts(projected), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
+    const lifeText = `순풍 · 다음 생 Lv.${Math.max(s.level, required)}(이번 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
     return <>
         <Heading eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
         <section className="panel port-resource-bar legacy-resource-bar">
             <div><RefreshCw size={22}/><span>누적 환생<strong>{format(s.rebirths)} <small>회</small></strong></span></div>
             <div><Sparkles size={22}/><span>보유 세계석<strong><Num n={s.pearls}/> <small>개</small></strong></span></div>
             <div><span>영구 경험치 배율<strong>×{permanentExp.toFixed(2)}</strong></span></div>
-            <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{s.permanent.ap || 0}</small></strong></span></div>
+            <div><span>현재 장착 AP<strong>{apCapacity(s)} <small>환생 +{rebirthAP(s)} · 연구 +{researchAP(s)}</small></strong></span></div>
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="prepare">환생 준비</TabsTrigger><TabsTrigger value="research">세계석 연구</TabsTrigger><TabsTrigger value="relics">환생 유물</TabsTrigger><TabsTrigger value="history">환생 기록</TabsTrigger></TabsList></Tabs>
         {tab === 'history' && <RebirthHistory s={s}/>}
@@ -154,14 +172,14 @@ export function Rebirth({ s, send, busy }: PanelProps) {
             {showAutomation(s) && <><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></>}
             <section className="panel rebirth-ready">
                 <div className="rebirth-ready-copy"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2>{s.rebirths >= ASCENSION.rebirthCap ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : s.level >= required ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><Meter value={Math.min(s.level, required)} max={required} label="레벨 조건"/>
-                    {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${required}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
+                    {s.rebirths > 0 && <p className="footnote">이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${tailwindLevel(s)}(직전 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</p>}</div>
                 <div className="rebirth-reward"><span>{s.level >= required ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong><Sparkles size={26}/>{format(reward + breathExtra)}</strong>
                     <ConfirmButton label="환생하기" title="다음 모험을 시작할까요?" description="오른쪽 아래 '초기화되는 것'이 처음 상태로 돌아가고, '유지되는 것'은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." disabled={busy || s.level < required || s.rebirths >= ASCENSION.rebirthCap} onConfirm={() => send({ type: 'rebirth' })}/>
                 </div>
             </section>
             <div className="rebirth-records rebirth-three">
                 <article className="panel ledger-gain"><h2>받는 보상</h2><ul>
-                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{parts.bonus ? ` · 연구·스킬 ${parts.bonus}` : ''}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
+                    <li><b>세계석 +{format(reward + breathExtra)}</b><small>레벨 {parts.level} · 환생 횟수 {parts.count}{breathExtra ? ` · 서약 +${breathExtra}` : ''}</small></li>
                     <li><b>환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어</b><small>현재 +{memoryNow}% → 환생 후 +{memoryNext}%</small></li>
                     <li><b>영구 경험치 획득</b><small>현재 ×{permanentExp.toFixed(2)} → 환생 후 ×{(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}</small></li>
                     <li><b>장착 AP {apGain ? '+1' : '+0'}</b><small>{apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`}</small></li>
@@ -169,7 +187,7 @@ export function Rebirth({ s, send, busy }: PanelProps) {
                     {salvage.rate > 0 && <li><b>청산 · 장비 {salvage.count}개 {salvage.mode === 'dismantle' ? `분해 → 정수 +${format(salvage.essence)}` : `판매 → 시작 골드 +${format(salvage.gold)} G`}</b><small>효율 {Math.round(salvage.rate * 100)}% · <button type="button" className="text-button inline" disabled={busy} onClick={() => send({ type: 'salvageMode', value: salvage.mode === 'dismantle' ? 'sell' : 'dismantle' })}>{salvage.mode === 'dismantle' ? '판매로 바꾸기' : '분해로 바꾸기'}</button></small></li>}
                     <li><b>사냥터 난이도 {tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택</b><small>다음 생 Lv.{startingLevel(s)}부터 시작{startingLevel(s) > 1 ? ` (전생의 기억 · 능력치 포인트 +${(startingLevel(s) - 1) * PROGRESSION.statPerLevel})` : ''}</small></li>
                 </ul></article>
-                <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>세계석 · 세계석 연구 · 몬스터와 장비 도감</li><li>스킬 해금·계승·성장·숙련 · 보유 SP · 장기 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드 이름·명예 기부 기록 · 던전 정복 기록 · 무릉도장 최고 층</li><li>랭킹 점수와 전적</li></ul></article>
+                <article className="panel ledger-kept"><h2>유지되는 것</h2><ul><li>세계석 · 세계석 연구 · 몬스터와 장비 도감</li><li>스킬 해금·계승·성장·숙련 · 보유 SP · 장기 목표</li><li>직업 해금과 숙련 기록</li><li>환생 유물 · 유물 강화·옵션·보관 위치</li><li>길드 소속 · 던전 정복 기록 · 무릉도장 최고 층</li><li>랭킹 점수와 전적</li></ul></article>
                 <article className="panel ledger-reset"><h2>초기화되는 것</h2><ul><li>레벨·경험치 → Lv.{startingLevel(s)} · 현재 직업 → 초보자</li><li>능력치 배분</li><li>일반 장비와 해당 장비의 강화·옵션</li><li>골드 → 시작 골드</li><li>사냥터와 사냥터 난이도 선택</li><li>진행 중 전투·던전</li></ul></article>
             </div>
             <details className="panel legacy-roadmap legacy-fold"><summary>환생 이후에 열리는 콘텐츠</summary><p><b>1회</b> 윤회의 일격 · 건 마스터리 · 엘리니아 · 잊힌 마법 사원(Lv.30) · 윤회의 무기</p><p><b>2회</b> 요정의 축복 · 영혼의 보물 사냥꾼의 감</p><p><b>3회</b> 시공의 파동 · 심연의 눈 · 무릉도장(Lv.40)</p><p><b>5회</b> 커닝시티 · 지하 배수로(Lv.55) · 칭호 ‘되돌아온 모험가’ · 연구 해금 마무리</p><p><b>8회</b> 엘나스 · 자쿰의 제단(Lv.60)</p><p><b>10·20·30·50회</b> 윤회 칭호 ‘윤회의 여행자’ · ‘운명을 거스른 자’ · ‘심연을 건넌 자’ · ‘영원의 모험가’</p><p>무릉도장은 5연전 정복마다 다음 깊이를 엽니다. 깊을수록 층당 세계석이 늘고, 10·25·50·100층 첫 돌파 시 SP 1.</p></details>

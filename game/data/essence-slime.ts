@@ -16,6 +16,8 @@ export const ESSENCE_SLIME = {
     minKills: 500,
     /** 사냥터 난이도 이 값 이상에서만 등장(확률은 그대로). 승천하면 난이도 조건이 사라집니다(까미 · 누리와 같음). */
     minTier: 10,
+    /** v3.290 확률의 난이도 몫은 이 난이도에서 멈춥니다(누리와 같음). 정수 묶음(slimeBundle)은 그대로 난이도를 따라 커집니다. */
+    tierCap: 40,
     /** 체력 · 공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. 말랑하지만 질깁니다. */
     hp: 2, attack: .5,
     /** 정수 묶음 = 1 + ⌊난이도 ÷ bundleTiers⌋ (난이도 100 → 11, 200 → 21). */
@@ -35,7 +37,7 @@ export function rollSlimeTier(rng: () => number) {
 }
 /** 그 난이도의 정수 묶음(보상 단위). */
 export const slimeBundle = (tier: number) => 1 + Math.floor(Math.max(0, tier) / ESSENCE_SLIME.bundleTiers);
-/** 등장 확률 = 기본 + 사냥터 난이도 × 단계당. */
-export const slimeChance = (tier: number) => ESSENCE_SLIME.chance + tier * ESSENCE_SLIME.chancePerTier;
+/** 등장 확률 = 기본 + 사냥터 난이도(v3.290 tierCap까지) × 단계당. */
+export const slimeChance = (tier: number) => ESSENCE_SLIME.chance + Math.max(0, Math.min(ESSENCE_SLIME.tierCap, tier)) * ESSENCE_SLIME.chancePerTier;
 /** 슬라임이 나올 수 있는지(사냥터 난이도 · 레벨 · 누적 처치). */
 export const slimeEligible = (s: { level: number; kills: number }, tier: number) => tier >= ESSENCE_SLIME.minTier && s.level >= ESSENCE_SLIME.minLevel && s.kills >= ESSENCE_SLIME.minKills;

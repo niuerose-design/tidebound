@@ -63,13 +63,14 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'plating', name: '철갑', stat: 'defense', kind: 'flat', base: .3, description: '물리 방어가 오릅니다.' },
     { id: 'ward', name: '정신', stat: 'resist', kind: 'flat', base: .3, description: '마법 방어가 오릅니다.' },
     { id: 'wellspring', name: '샘물', stat: 'mana', kind: 'flat', base: .2, retired: true, description: '최대 마나가 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
-    { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .012, retired: true, description: '턴당 마나 회복이 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
+    { id: 'current', name: '순환', stat: 'manaRegen', kind: 'flat', base: .036, retired: true, description: '턴당 마나 회복이 오릅니다. (v3.73 마력으로 통합, 새로 붙지 않음)' },
     { id: 'precise', name: '정밀', stat: 'accuracy', kind: 'percent', base: .03, retired: true, description: '명중이 오릅니다. (v3.72 감각으로 통합, 새로 붙지 않음)' },
     // v3.73 이중 옵션: 위력(물공+마공) · 수호(물방+마방)는 한쪽 옵션보다 각 수치가 낮은 대신 두 쪽을 함께 올립니다. 마력은 샘물+순환 통합.
     { id: 'force', name: '위력', stat: 'attack', kind: 'flat', base: .2, stat2: 'magic', base2: .2, rollBoth: true, description: '물리 공격과 마법 공격이 함께 오릅니다.' },
     { id: 'guardian', name: '수호', stat: 'defense', kind: 'flat', base: .2, stat2: 'resist', base2: .2, rollBoth: true, description: '물리 방어와 마법 방어가 함께 오릅니다.' },
     // v3.90 최대 마나 위력 ×0.225(생명 ×1.5의 15%: 체력 2,000 옵션이 뜨는 장비에서 마나 약 200~400).
-    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .225, stat2: 'manaRegen', base2: .012, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
+    // v3.297 턴당 마나 회복 ×3(.012 → .036): 태초 Lv.100 한 줄 +14 → +42. 마법 직업은 환생 64에서 회복 38~51/턴에 평균 마나 3~7%로 늘 모자랐습니다.
+    { id: 'flow', name: '마력', stat: 'mana', kind: 'flat', base: .225, stat2: 'manaRegen', base2: .036, rollBoth: true, description: '최대 마나와 턴당 마나 회복이 함께 오릅니다.' },
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 2 */ base: .05, description: '방어 관통이 오릅니다.' },
@@ -83,7 +84,7 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.72 룬은 마력 평타가 켜짐/꺼짐 판정이라 마법 직업에는 효과가 없고 물리 직업은 평타가 마력 평타로 바뀌어 손해였습니다. 새로 붙지 않습니다.
     { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, retired: true, description: '마법 직업의 마력 평타 확률이 오릅니다. (v3.72 새로 붙지 않음)' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },
-    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치·던전 골드가 늘어납니다.' },
+    { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해. v3.71 이득과 손해를 함께 ×1.5(맞는 빌드엔 확실한 이득, 안 맞으면 확실한 손해).
     { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.675, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
@@ -114,6 +115,8 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', kind: 'rule', base: .15, stat2: 'controlBonus', base2: 1, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +15%p, 내 기절·침묵·감속 지속 +1턴.' },
     { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', kind: 'rule', base: .1, stat2: 'arcaneRatioBonus', base2: .1, onlyOrigin: 'onyx', description: '칠흑. 마력 평타 확률 +10%p, 마력 평타 배율 +10%p.' },
     { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
+    // v3.276 고통의 근원(진 힐라): 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
+    { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', kind: 'rule', base: .05, stat2: 'executeBonus', base2: .05, uncapped: true, onlyOrigin: 'onyx', description: '칠흑. 흡혈 +5%p(장비 흡혈 상한 없음), 빈사 판정 기준 +5%p.' },
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
     { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강했습니다. v3.188 운영 결정으로 퇴역(retired): 새로 붙지 않고, 이미 붙은 줄은 그대로 작동합니다.
@@ -226,9 +229,15 @@ function pickAffix(pool: AffixDef[], origin: string | undefined, rng: () => numb
 export function rollOption(def: AffixDef, power: number, rarity: number, rng: () => number, level = 1, top = 1): ItemAffix {
     if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
     if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
-    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     // v3.125 top은 굴림 폭 배율(보통 1, 계승 · 칠흑 재련은 HEIR_ROLL_TOP): 최고가 0.6 + 0.8 × top배까지 늘어납니다. v3.131 100% 위는 heirRollQuality의 꼬리 분포.
-    const roll = (ROLL_MIN + heirRollQuality(rng(), top) * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
+    return optionAtQuality(def, power, rarity, level, heirRollQuality(rng(), top));
+}
+/** v3.201 정해진 수치 위치(0 = 최저, 1 = 보통 최고, 1.5 = 계승 최고)로 옵션을 만듭니다. 규칙 · 고정 옵션은 기본값 그대로. */
+export function optionAtQuality(def: AffixDef, power: number, rarity: number, level: number, quality: number): ItemAffix {
+    if (def.kind === 'rule') return { id: def.id, name: def.name, stat: def.stat, value: def.base, rule: true };
+    if (def.fixed) return { id: def.id, name: def.name, stat: def.stat, value: def.base };
+    // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
+    const roll = (ROLL_MIN + quality * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
     const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
@@ -268,9 +277,10 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
     return out;
 }
 /** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만, 규칙 옵션은 장비당 최대 1개. */
-export function rollAffixes(rarity: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1): ItemAffix[] {
+/** count: 옵션 줄 수(보통 등급 번호와 같음). v3.284 rarity: 수치 · 최소 등급 판정에 쓰는 등급(칠흑은 7줄이지만 태초 등급). */
+export function rollAffixes(count: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1, rarity = count): ItemAffix[] {
     const out = [...keep];
-    while (out.length < rarity) {
+    while (out.length < count) {
         const hasRule = out.some(a => a.rule);
         // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
         if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }

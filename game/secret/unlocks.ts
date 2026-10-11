@@ -11,6 +11,9 @@ import { HOUR } from '../data/time';
 import { masteredJobCount, jobMasteryTarget } from '../systems/progression';
 import { jobById } from '../data/classes';
 import { setUnlockSource } from '../data/unlock-info';
+import { DUNGEONS } from '../data/world';
+/** v3.230 변종(모든 종류) · 황금 개체 처치 합계. */
+const variantKills = (s: State) => Object.values(s.variantBook || {}).reduce((x, row) => x + Object.values(row || {}).reduce((y, n) => y + (n || 0), 0), 0) + Object.values(s.goldenBook || {}).reduce((x, n) => x + (n || 0), 0);
 
 
 const masteredTier5 = (s: State) => Object.entries(s.jobMastery || {}).filter(([id, n]) => { const j = jobById(id); return !!j && !j.retired && j.tier >= 5 && n >= jobMasteryTarget(j); }).length;
@@ -23,6 +26,18 @@ export const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'journeyman', test: s => masteredJobCount(s) >= 5 },
     // v3.200 궁극의 모험가: 5차 직업 3개 숙달.
     { job: 'rebirthFisher', test: s => masteredTier5(s) >= 3 },
+    // v3.220 아제로스 히든 계보: 까미 100 · 누리 100 · 지역 던전마다 정복 100(무릉도장 제외) · 칠흑 보스 처치 합계 100.
+    { job: 'kkamiHunter', test: s => (s.book?.masteryMimic || 0) >= 100 },
+    { job: 'nuriTracker', test: s => (s.book?.expNuri || 0) >= 100 },
+    { job: 'darkFollower', test: s => DUNGEONS.every(d => d.id === 'abyss' || (s.clears?.[d.id] || 0) >= 100) },
+    { job: 'onyxAvatar', test: s => Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0) >= 100 },
+    // v3.230 무릉도장 50층 · 변종 · 황금 개체 1,000마리 · 신 도전 100번.
+    { job: 'abyssAscetic', test: s => (s.abyssBest || 0) >= 50 },
+    { job: 'variantScholar', test: s => variantKills(s) >= 1000 },
+    { job: 'altarPilgrim', test: s => (s.altar?.tries || 0) >= 100 },
+    // v3.246 정수 20,000개 보유 · 세계석 3,000개 보유.
+    { job: 'essenceDevourer', test: s => (s.essence || 0) >= 20000 },
+    { job: 'pearlMiner', test: s => (s.pearls || 0) >= 3000 },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */
 export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);

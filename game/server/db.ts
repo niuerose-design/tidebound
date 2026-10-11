@@ -158,7 +158,8 @@ function applyDelta<T extends { week: string; catches: number; clears: number; b
     const base = same ? row : { ...row, catches: 0, clears: 0, bosses: 0, abyss: 0, donated: 0 };
     return { ...base, week, catches: base.catches + (d.catches || 0), clears: base.clears + (d.clears || 0), bosses: base.bosses + (d.bosses || 0), abyss: Math.max(base.abyss, d.abyss || 0), donated: base.donated + (d.donated || 0) };
 }
-const points = (r: { catches: number; clears: number; bosses: number; abyss: number; donated: number }) => r.catches + r.clears * 20 + r.bosses * 5 + r.abyss * 10 + Math.floor(r.donated / 1000);
+/** 주간 길드 점수(data/guild.ts guildPoints와 같은 식). v3.241 기부 삭제: donated · treasury 칼럼은 옛 기록으로만 남고 점수에 들지 않습니다. */
+const points = (r: { catches: number; clears: number; bosses: number; abyss: number }) => r.catches + r.clears * 20 + r.bosses * 5 + r.abyss * 10;
 export type SlotRow = { account_id: string; slot: number; summary: string; updated_at: number };
 
 // ---------- Neon Postgres (HTTP) ----------

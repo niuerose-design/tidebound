@@ -79,6 +79,8 @@ export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) *
  * 하나하나는 작지만 모을수록 보스전에서 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다(틱은 보정 전 위력 기준).
  */
 export const stackBossDamage = (a: number, b: number) => b >= 0 ? (1 + a) * (1 + b) - 1 : a + b;
+/** v3.201 던전 보스는 웨이브 수와 무관하게 마지막 단계 압박(BOSS_PRESSURE_WAVE)을 받습니다(지역 던전이 2연전으로 줄어도 보스 세기는 그대로). */
+export const BOSS_PRESSURE_WAVE = 4;
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
@@ -89,10 +91,10 @@ export function dungeonPressure(wave: number) {
  *   클리어 골드 = clearGoldMonsters마리분. 일반 웨이브는 몬스터 레벨을 권장 레벨 + expLevelOver까지만 셉니다.
  *   한 번 클리어(전투 5번)가 같은 레벨 사냥 전투 5번의 약 2~3배가 되도록 맞춘 값입니다(적이 단단해 시간은 더 듭니다).
  * - 무릉도장 층 배율은 경험치·골드 모두 rewardTierCap 단계에서 멈춥니다(세계석은 층 공식 그대로).
- * - 권장 레벨보다 overlevelGrace 넘게 높으면 overlevelStep레벨마다 클리어 골드·반복 장비 확률 −overlevelCut(최저 overlevelFloor).
+ * - v3.201 권장 레벨 초과 감액(클리어 골드·반복 장비 확률)은 없앴습니다. 헬부터는 몬스터 레벨이 내 레벨까지 올라 노말에서만 걸리던 이중 감액이었습니다.
  * - 던전 적 속도는 층 배율 1단계마다 +tierSpeed(연속 행동 남용 방지).
  */
-export const DUNGEON_TUNING = { bossExpMonsters: 6, bossGoldMonsters: 4, clearGoldMonsters: 6, expLevelOver: 2, rewardTierCap: 6, overlevelGrace: 10, overlevelStep: 5, overlevelCut: .1, overlevelFloor: .3, tierSpeed: .02 };
+export const DUNGEON_TUNING = { bossExpMonsters: 6, bossGoldMonsters: 4, clearGoldMonsters: 6, expLevelOver: 2, rewardTierCap: 6, tierSpeed: .02 };
 /**
  * v27.35 무릉도장 적: 층마다 가파르게 강해지는 별도 공식(보상은 rewardTierCap에서 멈춤).
  * 1층 일반 몬스터 체력 hp에서 층마다 ×hpGrowth, 공격은 기준 몬스터의 attack배에서 층마다 ×attackGrowth, 방어는 defense배에서 ×defenseGrowth.
@@ -107,10 +109,6 @@ export const ABYSS_TUNING = { hp: 30000, hpGrowth: 1.15, attack: 2, attackGrowth
 export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0, note: '' }, { id: 'hell', name: '헬', tier: 70, note: '환생 50 안팎의 몸에 맞춘 난이도입니다.' }, { id: 'nightmare', name: '나이트메어', tier: 260, note: '다른 직업 패시브까지 계승해 채운 몸을 위한 난이도입니다. 자기 계열만으로는 깨기 어렵습니다.' }] as const;
 export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
 export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
-export const dungeonOverlevel = (playerLevel: number, dungeonLevel: number) => {
-    const over = Math.max(0, playerLevel - dungeonLevel - DUNGEON_TUNING.overlevelGrace);
-    return Math.max(DUNGEON_TUNING.overlevelFloor, 1 - Math.ceil(over / DUNGEON_TUNING.overlevelStep) * DUNGEON_TUNING.overlevelCut);
-};
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
     /** v3.88 행운 비례 보정(팬텀 계열): 치명 피해 재적용을 없앤 대신 위력의 치명 피해 비례분(scalingRatio)에 곱합니다.
@@ -138,8 +136,10 @@ export const SKILL_FORMULA = {
     poisonRatio: .12, poisonHpRatio: .0015,
     /** v27.48 화상(중독과 출혈의 중간): 한 중첩의 틱 비율, 받는 직접 피해 증가(출혈의 절반). */
     burnRatio: .18, burnHpRatio: .0025, burnVulnerability: .06,
-    /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +1%(superCritPerHundred). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
-    critCap: 1, superCritPerHundred: .01, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
+    /** v3.298 몬스터가 거는 출혈 · 중독 · 화상: 틱(위력분 · 체력분) × foeDotScale, 처음 걸 때 첫 틱을 바로 주지 않습니다. 방어를 무시해 방어 1,000에서 기본 공격의 35~42배가 들어왔습니다. 대신 몬스터의 다른 피해 기술을 올렸습니다(encounters.ts). */
+    foeDotScale: .5,
+    /** v27.18 극 치명타: 치명타 확률 상한은 100%. 100%를 넘는 몫 100%p마다 극 치명타 확률 +5%(superCritPerHundred, v3.210 +1% → +5%). 극 치명타는 치명 피해에 superCritBonus를 더 곱합니다. */
+    critCap: 1, superCritPerHundred: .05, superCritBonus: 1.5, drainRatio: .25, extraAttackMultiplier: .65,
     // 올라운드 밸런스: 40 + 배분 포인트 합 × 0.8 + 가장 낮은 배분 포인트 × 12, 물리·마법 절반씩.
     // 편중 배분보다 균형 배분이 강하도록 check-all-rounder.mjs 결과로 맞춘 값입니다.
     harmonyBase: 40, harmonyPerPoint: .8, harmonyPerLowest: 12, splitPhysical: .5,
@@ -151,7 +151,8 @@ export const SKILL_FORMULA = {
     idleHealDamage: .6,
     // v22.2 흡혈 상한: 한 번의 행동(추가타 포함)으로 회복하는 흡혈량은 최대 체력 × 흡혈률 × 이 값까지입니다.
     // 심연은 적의 체력이 높고 공격이 약한 소모전이라, 준 피해 비례 흡혈 3%만으로 도달 층이 3배가 되었습니다.
-    lifestealHpCap: .025,
+    // v3.236 .025 → .1: 흡혈 10%에 최대 체력의 0.25%뿐이라 상한 없을 때의 약 45%만 들어왔습니다(자쿰 노멀). .1이면 약 87%.
+    lifestealHpCap: .1,
     // v21 방어 친화도: (직업 물리 방어 배율 − guardBase) ÷ guardSpan, guardFloor~1로 제한. 고정 보정 직업은 jobFactor로 환산한 배율을 씁니다.
     // 방어 비례 피해와 반격은 이 값만큼만 발휘되어 계승해도 수호 계열만큼 강하지 않습니다.
     guardBase: .95, guardSpan: .5, guardFloor: .2,
@@ -174,14 +175,16 @@ export const SKILL_FORMULA = {
     arcaneStrikeRatio: .7, arcaneStrikeChance: [0, 1, 1, 1, 1, 1],
     // v25.5 동시 시전(겹영창 계보): multicast 액티브는 첫 성공 뒤 나머지 multicast 액티브도 각자 발동률로 함께 나갑니다(한 행동, 최대 max개).
     // 함께 나간 종류 n마다 각 기술의 재사용 대기 +cooldownStep×(n−1), 마나 ×(1 + manaScale×(n−1)).
-    multicast: { max: 4, cooldownStep: 1, manaScale: .35 },
+    // v3.239 damagePerCast: 묶음 n개면 각 주문 피해 ×(1 + damagePerCast × (n−1)). 하위 영창도 묶음 수를 늘려 계보 주문으로 채우는 쪽이 이득이 되게.
+    multicast: { max: 4, cooldownStep: 1, manaScale: .35, damagePerCast: .15 },
     // v3.86 각성기(5차 이상 직업의 액티브): 행동마다가 아니라 턴마다(기본 행동 + 확정 추가 행동, 연속 행동은 제외) 따로 판정해 일반 액티브와 같은 턴에 함께 나갑니다.
     // 대기는 턴 단위이고 대기가 꽉 찬 채로 시작합니다(start, 데미지 없는 각성기는 0으로 둘 수 있음). 판정에 실패할 때마다 다음 판정 확률에 기본 발동률을 더합니다(27% → 54% → 81% → 100%).
     // 배율 = 옛 배율 × (새 주기 ÷ 옛 주기) × boost. 옛 주기는 행동 단위 '대기 + 1/발동률', 새 주기는 '대기 턴 + 기대 판정 수'(발동률은 숙련 완료 기준).
     // 대기 초기화 패시브(처치·치명타·연속 행동)는 각성기 대기를 0으로 만들지 않고 reset턴만 줄입니다.
     // 각성기로 상대를 쓰러뜨리면 대기를 kill턴으로 줄입니다.
     // perTurn: 한 턴에 나가는 각성기 수(나중에 승천 연구로 늘릴 자리, 전투원별 awakenPerTurn이 있으면 그 값).
-    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1 },
+    /** v3.288 wardPierce: 상태이상을 거는 각성기의 각성 관통 확률(기술 숙련 단계 0~4별, Skill.wardPierce). */
+    awaken: { tier: 5, cooldown: 10, start: 10, boost: 1, reset: 5, kill: 5, perTurn: 1, wardPierce: [0, .25, .5, .75, 1] as readonly number[] },
     // v3.86 추가 판정: 액티브가 발동한 행동에서 남은 액티브로 한 번 더 판정해 줄어든 위력으로 함께 씁니다. 단계마다 장착 AP · 위력(세계석 연구 ‘시스템 파괴 I’으로 해금).
     extraRoll: { ap: [12], power: [.6] },
     // v25.4 패시브는 최대 성장(마지막 숙련 단계)에 닿으면 장착 AP가 이만큼 줄어듭니다(0 아래로는 안 내려감). 노래와 단계별 AP가 정해진 대기만성형은 제외.
@@ -263,11 +266,18 @@ export const STATUS_GUIDE = [
  * 환생할수록 짧아지던 것(환생 55회 0.3시간): 20회 이후 회당 +latePerRebirth로 올리고, 환생 50회·100회에 벽(rebirthWalls, 그 회차부터 곱함)을 둡니다.
  * 목표(원킬 빌드, 최대 난이도): 환생 50회 약 4.5시간 → 99회 약 5시간, 100회부터 하루에 한 번(약 20시간). 50회 미만은 원킬 폭증 구간으로 둡니다.
  */
-export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, rebirthWalls: [[50, 8.9], [100, 35]] as [number, number][] };
+/**
+ * v3.291 환생 50회부터 벽을 필요 경험치로 세게(수입은 그대로): 측정(scripts/check-life-hours, 빌림 몸)에서 환생 50~99회 한 생이 무리 서식지 1.6시간 · 일반 사냥터 2.7~3.1시간,
+ * 그중 Lv.70~100은 수십 분이라 벽이 느껴지지 않았습니다. 50회부터 Lv.70 이후 레벨당 ×1.25(lateWallGrowth, Lv.100 약 ×1,000)와 환생 벽 50회 ×30 · 100회 ×120(전 ×8.9 · ×35).
+ * 적용 뒤 무리 서식지 기준: 환생 50회 15.8시간 · 60~99회 3.7~5.8시간 · 100회 23.6시간 · 120회 32.4시간(49회는 0.2시간 그대로).
+ */
+export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, lateWallGrowth: [[50, 1.25]] as [number, number][], rebirthWalls: [[50, 30], [100, 120]] as [number, number][] };
 /** 환생 벽 배율: 지난 벽 중 가장 큰 값(50회부터 ×8.9, 100회부터 ×35). */
 export const xpRebirthWall = (rebirths = 0) => XP_SCALING.rebirthWalls.reduce((m, [from, x]) => rebirths >= from ? x : m, 1);
 export const xpRebirthFactor = (rebirths = 0) => (XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom)) * xpRebirthWall(rebirths);
-export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? Math.pow(XP_SCALING.wallGrowth, level - XP_SCALING.wallLevel + 1) : 1;
+/** 통곡의 벽 배율(레벨당 복리): 환생 회차에 맞는 lateWallGrowth, 없으면 wallGrowth. */
+export const xpWallGrowth = (rebirths = 0) => XP_SCALING.lateWallGrowth.reduce((g, [from, x]) => rebirths >= from ? x : g, XP_SCALING.wallGrowth);
+export const xpWallFactor = (level: number, rebirths = 0) => level >= XP_SCALING.wallLevel ? Math.pow(xpWallGrowth(rebirths), level - XP_SCALING.wallLevel + 1) : 1;
 /**
  * v3.23 환생 목표 레벨 너머의 벽: 목표 레벨에서 다음 레벨로 갈 때부터 필요 경험치에 레벨마다 ×growth(기본 1.6)를 복리로 곱합니다.
  * 목표 50이면 50→51 ×1.6, 54→55 ×10.5, 59→60 ×110. 순풍(목표까지 경험치 +)으로 빠르게 복구하고, 목표를 넘기면 숨이 막히게.
@@ -276,7 +286,7 @@ export const xpWallFactor = (level: number) => level >= XP_SCALING.wallLevel ? M
 export const OVER_TARGET = { growth: 1.6 };
 export type XpTargetWall = { target: number; growth: number };
 export const overTargetFactor = (level: number, wall?: XpTargetWall) => wall && level >= wall.target ? Math.pow(wall.growth, level - wall.target + 1) : 1;
-export const xpNeeded = (level: number, rebirths = 0, wall?: XpTargetWall) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level) * overTargetFactor(level, wall));
+export const xpNeeded = (level: number, rebirths = 0, wall?: XpTargetWall) => Math.floor(BALANCE.xpBase * Math.pow(BALANCE.xpGrowth, Math.min(29, level - 1)) * (level > 30 ? Math.pow(level / 30, 2.3) : 1) * xpRebirthFactor(rebirths) * xpWallFactor(level, rebirths) * overTargetFactor(level, wall));
 // v22: 등급 번호 = 붙는 옵션 수(0~6). 0~3은 기존 등급과 같은 이름·배율입니다.
 export const RARITIES = [{ name: '일반', color: '#9dadaf', factor: 1 }, { name: '희귀', color: '#68b6ee', factor: 1.5 }, { name: '영웅', color: '#bf96ef', factor: 2.2 }, { name: '전설', color: '#e7be71', factor: 3.3 }, { name: '신화', color: '#f08a6c', factor: 3.9 }, { name: '고대', color: '#5fd0b5', factor: 4.5 }, { name: '태초', color: '#ff6fb5', factor: 5.2 }];
 export const SLOTS = { rod: '무기', coat: '방어구', charm: '장신구', cape: '망토' };

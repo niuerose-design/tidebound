@@ -1,11 +1,12 @@
-import { EXTREME_BREAK_PRACTICE } from '../data/long-term';
+import { EXTREME_BREAK_PRACTICE, EXTREME_STAGES, EXTREME_FINAL_DAMAGE } from '../data/long-term';
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
 import { accountAP } from '../data/account';
+import { supportAP } from './support';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById, lineageOf } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf, worldOf, LINEAGES } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -14,6 +15,8 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
+import { regionCores, regionCoreRanks, coreEntry } from '../data/boss-core';
+import { ONYX_CORE_ID } from '../data/onyx';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -21,16 +24,33 @@ export function initialProgress(level = 1) { return { attributes: emptyAttribute
 export function attributes(s: State) {
     const out = emptyAttributes();
     for (const key of Object.keys(out) as Attribute[])
-        out[key] = PROGRESSION.baseAttribute + (s.attributes?.[key] || 0);
+        out[key] = PROGRESSION.baseAttribute + (s.attributes?.[key] || 0) + (s.devoured?.[key] || 0);
     return out;
 }
 export function masteryMilestonesFor(sk?: Skill) { return sk?.masteryMilestones?.length ? sk.masteryMilestones : PROGRESSION.skillMasteryMilestones; }
 /** v3.74 극한돌파 목표 숙련: 모든 액티브 스킬이 같은 1억(EXTREME_BREAK_PRACTICE). 패시브는 극한돌파가 없습니다(null). */
 export function extremeBreakTarget(sk: Skill) { return sk.type === 'active' ? EXTREME_BREAK_PRACTICE : null; }
-/** v3.74 극한돌파 달성: 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마치고 숙련 1억을 넘었는지. 지금은 효과가 없습니다(운영자 문의). */
-export function extremeBroken(s: State, id: string) {
-    const sk = skillById(id), target = sk && extremeBreakTarget(sk);
-    return !!target && limitBreakOf(s, id) >= PROGRESSION.limitBreak.max && refinePractice(s, id) >= target;
+/** v3.211 극한 단계(0~5): 액티브 스킬이 한계돌파 3단계(연구 적용분)를 마친 뒤 숙련이 EXTREME_STAGES의 몇 칸을 넘었는지. */
+export function extremeStage(s: State, id: string) {
+    const sk = skillById(id);
+    if (!sk || !extremeBreakTarget(sk) || limitBreakOf(s, id) < PROGRESSION.limitBreak.max) return 0;
+    const practice = refinePractice(s, id);
+    return EXTREME_STAGES.filter(n => practice >= n).length;
+}
+/** v3.74 극한돌파 달성: 극한 단계 1 이상(숙련 1억). */
+export function extremeBroken(s: State, id: string) { return extremeStage(s, id) >= 1; }
+/** v3.211 극한 단계의 최종 피해 배율(1 + 단계 × 2%). */
+export const extremeFinalMultiplier = (stage: number) => 1 + stage * EXTREME_FINAL_DAMAGE;
+/** v3.211 장착한 스킬 가운데 극한 단계가 있는 것의 최종 피해 배율 표(전투원 skillFinal). 없으면 undefined. */
+export function extremeFinalTable(s: State, skills: string[]) {
+    const out: Record<string, number> = {};
+    for (const id of skills) { const n = extremeStage(s, id); if (n) out[id] = extremeFinalMultiplier(n); }
+    return Object.keys(out).length ? out : undefined;
+}
+/** v3.211 극한돌파 전용 연출이 열린 장착 스킬(전투원 extremeFx). 없으면 undefined. */
+export function extremeFxTable(s: State, skills: string[]) {
+    const out = skills.filter(id => s.extremeFx?.[id]);
+    return out.length ? out : undefined;
 }
 /**
  * v3.31 극한돌파(v3.74, 옛 연마)·한계 돌파에 쓰는 숙련. 승천하면 그때의 숙련을 기준점(refineBase)으로 두고, 그 위로 쌓인 숙련만 연마·한계 돌파에 셉니다.
@@ -74,12 +94,15 @@ export function apSources(s: State): { id: string; label: string; value: number 
     return [
         { id: 'base', label: '기본', value: PROGRESSION.baseAP },
         { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
-        { id: 'research', label: '세계석 연구 ‘영혼 확장’', value: s.permanent.ap || 0 },
+        { id: 'research', label: '세계석 연구 ‘영혼 확장 I · II’', value: researchAP(s) },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
         { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
+        { id: 'support', label: '분신 지원(작전참모)', value: supportAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
 }
+/** v3.214 세계석 연구 영혼 확장 I · II로 늘어난 장착 AP. */
+export const researchAP = (s: Pick<State, 'permanent'>) => (s.permanent?.ap || 0) + (s.permanent?.ap2 || 0);
 /** 장착 AP 한도(최소 1). */
 export function apCapacity(s: State) { return Math.max(1, apSources(s).reduce((a, x) => a + x.value, 0)); }
 /** v25.6 업적 보상으로 늘어난 장착 AP. achievements.ts와 순환 의존을 피하려 여기서 직접 셉니다. */
@@ -100,18 +123,25 @@ function borrowedDiscount(s: State, ids: string[]) {
     return n;
 }
 /** 스킬 하나의 장착 AP. v3.198 떠돌이의 요령이 들면 다른 계보 직업의 스킬은 discount만큼 싸집니다(최소 1, 1 이하는 그대로). */
-export function skillAP(s: State, id: string, discount = 0) {
+export function skillAP(s: State, id: string, discount = 0, supportCut = 0) {
     const sk = skillById(id);
     if (!sk) return 2;
-    const cost = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    const raw = effectiveSkill(sk, s.learned?.[id] || 1, skillMastery(s, id)).cost!;
+    // v3.225 군수사령관 경량 편제: 지원 스킬의 장착 AP -supportCut(최소 1).
+    const cost = supportCut > 0 && sk.support && raw > 1 ? Math.max(1, raw - supportCut) : raw;
     if (!(discount > 0 && cost > 1 && sk.job)) return cost;
     const owner = jobById(sk.job), job = jobById(s.job);
     return owner && job && lineageOf(owner) !== lineageOf(job) ? Math.max(1, cost - discount) : cost;
 }
+/** v3.225 경량 편제: 참모 계보가 장착한 supportCostCut 가운데 가장 큰 값(없으면 0). */
+function supportCostCut(s: State, ids: string[]) {
+    if (jobById(s.job)?.lineage !== 'staff') return 0;
+    return Math.max(0, ...ids.map(id => skillById(id)?.supportCostCut || 0));
+}
 /** 편성 ids에 넣었을 때 이 스킬의 장착 AP(화면 표시용, apUsed와 같은 값). */
-export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids)); }
+export function loadoutSkillAP(s: State, id: string, ids = s.skills) { return skillAP(s, id, borrowedDiscount(s, ids), supportCostCut(s, ids)); }
 /** 장착 AP 사용량: 스킬 AP 합 + v3.86 추가 판정 AP. */
-export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount), 0); }
+export function apUsed(s: State, ids = s.skills) { const discount = borrowedDiscount(s, ids), cut = supportCostCut(s, ids); return extraRollAP(s) + ids.reduce((sum, id) => sum + skillAP(s, id, discount, cut), 0); }
 /** v3.130 직업 객체별로 한 번만 만듭니다(능력치 계산이 장착 스킬마다 시그니처 · 노래 판정에 부르므로). 돌려준 배열은 읽기만 하세요. 비밀 직업 등록은 새 객체를 넣으므로 캐시가 어긋나지 않습니다. */
 const lineageCache = new WeakMap<Job, string[]>();
 export function lineage(job: string): string[] {
@@ -130,6 +160,19 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
     if (jobById(userJob)?.signatureFree) return 1;
     return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
 }
+/**
+ * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
+ * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
+ */
+export const CORE_PASSIVE = { base: .7, borrowed: .5, azerothBase: .4 } as const;
+export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
+    const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
+    // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.
+    const world = owner ? worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
+    if (world !== 'maple' && !home) return 0;
+    const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
+    return (base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps)) * (home ? 1 : CORE_PASSIVE.borrowed);
+}
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
     let n = 0;
@@ -141,15 +184,26 @@ function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {
  * v24.2 진행도 기록: 진행도 비례 패시브(perCount)와 피해(scaling)가 세는 값.
  * codex 발견한 몬스터 + 등록한 물건 · catch 누적 처치 · hunt 던전 클리어 + 보스 처치 · species 지정 몬스터 처치 · gold 보유 골드 자릿수 · rebirth 환생 · mastered 숙달한 직업 수 · v3.64 deaths 쓰러진 횟수.
  */
-export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs'>>) {
+/** v3.220 까미 · 누리 id(data/mimic.ts · data/exp-nuri.ts). 세이브에 저장되는 값이라 바뀌지 않습니다. */
+const MIMIC_ID = 'masteryMimic', NURI_ID = 'expNuri';
+export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | 'gold' | 'rebirths' | 'jobMastery' | 'variantBook' | 'goldenBook' | 'level' | 'attributes'> & Partial<Pick<State, 'deaths' | 'playMs' | 'onyxBook' | 'bossCores' | 'inventory' | 'equipment' | 'abyssBest' | 'altar' | 'essenceSpent' | 'pearlsMined'>>) {
     // v26.4 외길 패시브: 배분 능력치(기본 포함)도 기록처럼 셉니다.
     const attr = attributes(s as State);
     const book = s.book || {};
     let catches = 0, discovered = 0, bosses = 0;
     for (const f of MONSTERS) { const n = book[f.id] || 0; catches += n; if (n > 0) discovered++; if (f.boss) bosses += n; }
     const clears = Object.values(s.clears || {}).reduce((x, n) => x + (n || 0), 0);
+    // v3.220 아제로스 계보: 지역 던전 정복(무릉도장 제외)과 칠흑 보스 처치 합계.
+    const regionClears = Object.entries(s.clears || {}).reduce((x, [id, n]) => id === 'abyss' ? x : x + (n || 0), 0);
+    const onyx = Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0);
+    // v3.221 칠흑의 화신: 보유한 칠흑 장신구 종류 수와 각성 단계 합(종마다 가장 높은 각성 하나).
+    const grimoire = coreEntry(s.bossCores?.[ONYX_CORE_ID]);
+    const onyxItems = [...(s.inventory || []), ...Object.values(s.equipment || {})].filter(i => i?.onyx), onyx7 = new Set(onyxItems.map(i => i!.onyx!));
+    const onyxRanks = [...onyx7].reduce((n, id) => n + Math.min(5, Math.max(0, ...onyxItems.filter(i => i!.onyx === id).map(i => i!.onyxRank || 0))), 0)
+        // v3.276 칠흑 보스코어(저주받은 마도서)도 칠흑 1종 · 그 각성 단계로 셉니다.
+        + (grimoire ? Math.min(5, Math.max(0, grimoire.rank)) : 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s) };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s), onyxOwned: onyx7.size + (grimoire ? 1 : 0), onyxRanks, abyssBest: s.abyssBest || 0, altar: s.altar?.tries || 0, essenceSpent: s.essenceSpent || 0, pearlsMined: s.pearlsMined || 0 };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;
@@ -178,14 +232,14 @@ export function inherited(s: State, id: string) { const sk = skillById(id); retu
 /** v3.25 해커 스킬(신원 조작)은 해커 계열(화이트 해커 포함)이면 씁니다. */
 function classAccess(s: State, sk: Skill) { return exclusiveAccess(s, sk) && (!sk.job || s.job === sk.job || sk.job === HACKER_ID && isHackerJob(s.job) || inherited(s, sk.id)); }
 /** v3.187 계보 전용 기술(노래 등)은 그 계보 직업만 장착합니다. 계승해도 계보 밖에서는 못 씁니다. */
-export function exclusiveAccess(s: Pick<State, 'job'>, sk: Pick<Skill, 'exclusiveLineage'>) { return !sk.exclusiveLineage || lineage(s.job).includes(sk.exclusiveLineage); }
+export function exclusiveAccess(s: Pick<State, 'job'>, sk: Pick<Skill, 'exclusiveLineage' | 'exclusiveUltimate'>) { return !sk.exclusiveLineage || !!sk.exclusiveUltimate && !!jobById(s.job)?.signatureFree || lineage(s.job).includes(sk.exclusiveLineage); }
 /** 계보 전용 칩 · 안내 문구. 전용이 아니면 빈 문자열. 예: '엔젤릭버스터 계보 전용'. */
 export function skillExclusiveLabel(sk: Pick<Skill, 'exclusiveLineage'>) { return sk.exclusiveLineage ? `${MAPLE_LINEAGE_NAMES[sk.exclusiveLineage] ?? `${jobById(sk.exclusiveLineage)?.name ?? sk.exclusiveLineage} 계보`} 전용` : ''; }
 export function skillUnlockReady(s: State, sk: Skill) { return (!sk.unlockJobMastery || !!sk.job && (s.jobMastery[sk.job] || 0) >= sk.unlockJobMastery) && (!sk.unlockAfter || skillMastery(s, sk.unlockAfter.skill) >= sk.unlockAfter.level); }
 /** v25 숙련 Lv.1 전에는 효과를 감추는 기술인지. */
 export function skillVeiled(s: State, sk: Skill) { return !!sk.veiled && skillMastery(s, sk.id) < 1; }
 /** 계승한 스킬은 환생 뒤 레벨이 낮아도 쓸 수 있습니다(레벨 조건 면제). 환생 횟수·직업 숙련 해금 조건은 그대로입니다. */
-function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id)) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
+function canLearn(s: State, id: string) { const sk = skillById(id); return !!sk && (s.level >= sk.level || inherited(s, id) || !!s.vows?.lv1) && s.rebirths >= (sk.rebirth || 0) && skillUnlockReady(s, sk) && classAccess(s, sk); }
 /** 스킬을 장착할 수 없는 이유. 쓸 수 있으면 빈 문자열입니다. */
 export function skillBlockReason(s: State, id: string) {
     const sk = skillById(id);
@@ -332,6 +386,9 @@ export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.
 /** 전직 조건 목록. */
 export function jobRequirements(s: State, j: Job) {
     const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
+    // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
+    // v3.235 세계석 0(요원 · 트레이더 1차)은 조건 없이 바로 들어옵니다.
+    if (j.pearlCost !== undefined) return unlocked || !j.pearlCost ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
     if (j.rebirth)
@@ -353,6 +410,11 @@ export function jobRequirements(s: State, j: Job) {
         if (j.requiresRank) {
             const need = RANKS.findIndex(r => r.id === j.requiresRank), now = rankIndex(rankState(s).exp);
             list.push({ label: `계급장 ${RANKS[need]?.name ?? j.requiresRank} 이상`, met: reenlistCount(s) > 0 || now >= need, value: now, target: need });
+        }
+        // v3.219 둘 중 하나의 숙련(참모 계보 4차).
+        if (j.requiresAnyJobMastery) {
+            const opts = Object.entries(j.requiresAnyJobMastery), best = opts.reduce((m, [id, n]) => Math.max(m, Math.min(1, (s.jobMastery?.[id] || 0) / n)), 0);
+            list.push({ label: `${opts.map(([id]) => jobById(id)?.name || id).join(' 또는 ')} 숙련 ${opts[0][1].toLocaleString()}`, met: opts.some(([id, n]) => (s.jobMastery?.[id] || 0) >= n), value: best, target: 1 });
         }
         if (j.requiresMastered)
             list.push({ label: `숙달한 직업 ${j.requiresMastered}개`, met: masteredJobCount(s) >= j.requiresMastered, value: masteredJobCount(s), target: j.requiresMastered });

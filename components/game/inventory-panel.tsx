@@ -9,14 +9,18 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { CombatStats, Item, State, Stats } from '@/game/types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, HEIR_GROWTH, AWAKENING, PRIMAL_INHERIT, heirFactor, awakenEssence, researchRank } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS } from '@/game/data/progression';
+import { STAT_LABELS, byStatOrder, statDeltaDisplay, HIDDEN_STATS, RELIC_LINEAGE } from '@/game/data/progression';
+import { jobById, lineageOf } from '@/game/data/classes';
 import { itemStats, itemDescription, enhanceCost, permanentStarScale, imprintAffix, bulkItems, saleValue, dismantleEssence, primalGaugeOf, keepsAcrossLives, heirKind, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, levelUpTarget, levelUpCost } from '@/game/systems/equipment';
-import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS, HEIR_ROLL_TAIL, heirRollChanceAbove } from '@/game/data/gear';
+import { ORIGIN_THEMES, affixDef, affixQuality, ESSENCE_BY_RARITY, REROLL_STEP_PCT, REFINE_GROWTH, GEAR_RESET_PEARLS, HEIR_ROLL_TAIL, HEIR_ROLL_TOP, heirRollChanceAbove } from '@/game/data/gear';
 import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTime, starMultiplier, starLabel } from '@/game/data/starforce';
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
 import type { PanelProps } from './panel-props';
+import { CoreSlot } from './core-slot';
+/** v3.283 렐릭의 힘(경험치 보너스에서 계산)은 패스파인더 계보일 때만 비교에 보입니다. */
+const relicShown = (s: State) => { const j = jobById(s.job); return !!j && lineageOf(j) === RELIC_LINEAGE; };
 /** v3.93 교체 미리보기 캐시: 장비 · 가방 · 성장(레벨 · 직업 · 스킬 · 능력치 · 연구)이 같으면 지난 계산을 씁니다. 화면 하나만 쓰므로 한 칸이면 충분합니다. */
 let previewCache: { key: string; value: { current: CombatStats; currentPower: number; preview: Map<string, { after: Stats; gain: number }> } } | null = null;
 function gearPreview(s: State) {
@@ -41,7 +45,8 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v27.94 수치 재련: 옵션 종류는 그대로 두고 수치만 다시 굴립니다. v3.118 정수만, 이 장비를 재련할수록 ×REFINE_GROWTH 복리.
     const refine = refineCost(item, s), canRefine = (s.essence || 0) >= refine.essence;
     // v3.125 원시 고대 · 계승 태초 · 칠흑은 재련 상한이 150%라 수치 표시도 그 위까지 보입니다(refineTopOf).
-    const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, top); return q === null ? null : Math.round(q * 100); };
+    // v3.201 표시는 계승 최고(150%)까지: 주화 상점 수치 상품으로 일반 장비도 100%를 넘을 수 있습니다. 재련 상한(top)은 그대로.
+    const top = refineTopOf(item), quality = (x: NonNullable<Item['affixes']>[number]) => { const q = affixQuality(x, item.power, item.rarity, item.level, HEIR_ROLL_TOP); return q === null ? null : Math.round(q * 100); };
     return <div className="affix-explanation">
         <b>{item.relic ? `이식 옵션 ${item.affixes!.length}/${RELIC_GROWTH.imprintSlots}줄` : `추가 옵션 ${item.affixes!.length}개`}{item.origin && ORIGIN_THEMES[item.origin] ? ` · ${ORIGIN_THEMES[item.origin].name}에서 획득` : ''}</b>
         {item.affixes!.map((x, i) => <div key={x.id + i} className="gear-option-row">
@@ -82,7 +87,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
     const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key}>{STAT_LABELS[key as keyof Stats]} <b>{statDeltaDisplay(key, value as number)}</b></span>);
     const detail = (item: Item, equipped: boolean) => {
         const after = equipped ? current : preview.get(item.id)!.after;
-        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001));
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - current[k as keyof Stats]) > .001 && (k !== 'relicPower' || relicShown(s))));
         // v3.76 상세는 작업대 하나: 왼쪽 능력치 · 옵션(가방 장비는 교체 비교 · 판매/분해), 오른쪽 강화.
         return <div className="gear-detail"><ForgeBench s={s} send={send} busy={busy} item={item} extra={!equipped && <>
             <div className="equipment-comparison">
@@ -119,6 +124,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
         {worn ? <button type="button" className={`gear-slot-item${open === worn.id ? ' open' : ''}`} onClick={() => { const next = open === worn.id ? null : worn.id; setOpen(next); if (next && window.innerWidth <= 900) requestAnimationFrame(() => document.getElementById('gear-slot-open')?.scrollIntoView({ behavior: 'smooth', block: 'start' })); }} aria-expanded={open === worn.id}><strong><span className={worn.onyx ? 'onyx-name' : ''}>{worn.name}</span> <span className="gold-text">{starLabel(worn.enhance || 0, true)}</span></strong><small>{worn.onyx ? '칠흑' : RARITIES[worn.rarity].name} · 위력 {worn.power}</small><span className="gear-row-stats">{topStats(worn)}</span></button> : <p className="gear-slot-empty">비어 있음</p>}
         {up ? <div className="gear-slot-upgrade"><span><ArrowUpRight size={13}/>추천 <b>{up.name}</b> {gainBadge(preview.get(up.id)!.gain)}</span><button className="primary small" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</button></div> : <p className="gear-slot-upgrade muted">가방에 더 좋은 {SLOTS[id]} 없음</p>}
     </article>; })}</section>
+    <CoreSlot s={s} send={send} busy={busy}/>
     {(() => { const worn = SLOT_IDS.map(id => s.equipment[id]).find(w => w && w.id === open); return worn && <article id="gear-slot-open" className={`panel gear-slot-open${worn.onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': RARITIES[worn.rarity].color } as React.CSSProperties} aria-label={`${worn.name} 상세 · 강화`}>
         <ForgeHead item={worn} onClose={() => setOpen(null)}/>{detail(worn, true)}</article>; })()}
     {upgrades.length > 1 && <p className="gear-upgrade-all"><ArrowUpRight size={14}/>{upgrades.length}개 칸에 더 좋은 장비가 있습니다. 각 칸의 ‘바로 장착’으로 하나씩 바꾸세요.</p>}
@@ -159,17 +165,17 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
     // v3.82 미리보기: 이식한 유물을 그 부위에 장착했을 때 최종 능력치 · 전투력 변화(직업 · 연구 배율까지 반영).
     const preview = (() => {
         if (!picked) return null;
-        const next = [...lines]; next[slot] = imprintAffix(picked.affix, picked.item.rarity, item.rarity);
+        const next = [...lines]; next[slot] = imprintAffix(picked.affix, picked.item.rarity, item.rarity, picked.item.level, item.level);
         const withRelic = (affixes: Item['affixes']) => ({ ...s, equipment: { ...s.equipment, [item.slot]: { ...item, affixes } } });
         const before = stats(withRelic(lines)), after = stats(withRelic(next.filter(Boolean)));
-        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - before[k as keyof Stats]) > .001)).map(([k, n]) => [k, n - before[k as keyof Stats]] as const);
+        const delta = byStatOrder(Object.entries(after).filter(([k, n]) => Math.abs(n - before[k as keyof Stats]) > .001 && (k !== 'relicPower' || relicShown(s)))).map(([k, n]) => [k, n - before[k as keyof Stats]] as const);
         return { delta, gain: power(after) - power(before) };
     })();
     return <div className="relic-imprint">
         <b>옵션 이식 · 환생 {s.rebirths}회 위력 배율 ×{heirFactor('relic', s.rebirths).toFixed(2)}{item.relicLegacy ? ' · 다음 승천까지 예전 공식과 새 공식 중 높은 쪽' : ''}</b>
         <div className="relic-imprint-slots">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <div key={i} className="relic-imprint-slot"><label className={`altar-anon${slot === i ? ' on' : ''}`}><input type="radio" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>{lines[i] && <ConfirmButton label="지우기" title={`${lines[i].name} 이식 옵션을 지울까요?`} description="이 칸이 비고 옵션은 사라집니다(되돌릴 수 없음). 비용은 없고, 다시 이식할 수 있습니다." disabled={busy} onConfirm={() => send({ type: 'removeImprint', id: item.id, value: String(i) })}/>}</div>)}</div>
         {choices.length ? <>
-            <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(imprintAffix(c.affix, c.item.rarity, item.rarity))}</option>)}</select></label>
+            <label className="gear-select">소비할 장비·옵션<select value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(imprintAffix(c.affix, c.item.rarity, item.rarity, c.item.level, item.level))}</option>)}</select></label>
             <ConfirmButton label={`이식 · ${format(cost)} G`} title={`${picked!.affix.name} 옵션을 ${slot + 1}번 칸에 이식할까요?`} description={`${picked!.item.name}이(가) 사라지고 ${picked!.affix.name} 옵션이 유물에 남습니다.${lines[slot] ? ` ${lines[slot].name} 옵션을 덮어씁니다.` : ''} 골드 ${format(cost)} G를 사용합니다.`} disabled={busy || !!blocked} onConfirm={() => send({ type: 'imprintRelic', id: item.id, value: `${picked!.key}:${slot}` })}/>
             {picked && <div className="relic-imprint-preview">
                 <small>{affixDef(picked.affix.id)?.description}</small>
@@ -177,7 +183,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
             </div>}
             {blocked && <p className="footnote negative">{blocked}</p>}
         </> : <p className="footnote">같은 부위의 옵션 달린 장비(보호 제외)가 가방에 있어야 이식할 수 있습니다.</p>}
-        <p className="footnote">고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산해 새깁니다(목록의 수치가 새겨질 값). 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
+        <p className="footnote">고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산하고, 유물보다 레벨이 높은 장비의 줄은 유물 레벨에 맞춰 낮춰 새깁니다(목록의 수치가 새겨질 값, 유물 레벨을 올리면 함께 오름). 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
     </div>;
 }
 
@@ -268,7 +274,7 @@ export function EquipmentForge({ s, send, busy, item }: PanelProps & { item: Ite
             {canSafeguard(star) && <label className="altar-anon"><input type="checkbox" checked={safeguard} onChange={e => setSafeguard(e.target.checked)}/> 파괴 방지 (비용 ×{STARFORCE.safeguardCost})</label>}
             {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <button className="primary" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${format(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</button>}
             {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
-            <details className="forge-rules"><summary>강화 규칙</summary><p>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}성부터 +{STARFORCE.gainHigh * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. 파괴된 장비는 사라지고 유물은 {STARFORCE.relicResetStar}성으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다. 환생해도 남는 장비(유물 · 계승 · 칠흑)는 강화 비용이 환생 1회마다 +{Math.round(STARFORCE.permanentPerRebirth * 100)}%입니다{keepsAcrossLives(item) ? ` (지금 ×${permanentStarScale(item, s).toFixed(1)})` : ''}.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p></details>
+            <details className="forge-rules"><summary>강화 규칙</summary><p>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}~{STARFORCE.gainTopFrom}성 +{STARFORCE.gainHigh * 100}%/성, {STARFORCE.gainTopFrom + 1}성부터 +{STARFORCE.gainTop * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join('·')}성은 유지), 15성부터 파괴 확률이 붙습니다. {STARFORCE.gainTopFrom}성부터는 성공 3 · 2 · 1%의 극한 구간입니다(스타캐치는 성공률 ×{STARFORCE.catchTopScale}). 파괴된 장비는 사라지고 유물 · 계승 · 칠흑은 {STARFORCE.relicResetStar}성({STARFORCE.relicResetHighFrom}성 이상이면 {STARFORCE.relicResetHigh}성)으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다. 환생해도 남는 장비(유물 · 계승 · 칠흑)는 강화 비용이 환생 1회마다 +{Math.round(STARFORCE.permanentPerRebirth * 100)}%입니다{keepsAcrossLives(item) ? ` (지금 ×${permanentStarScale(item, s).toFixed(1)})` : ''}.{item.slot === 'charm' ? ' 치명타가 100%를 넘으면 그만큼 극 치명타 확률이 됩니다.' : ''}</p></details>
         </section>
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {/* v3.118 비용 초기화: 원시 고대 · 계승 태초 · 칠흑. 세계석으로 재련 · 재설정 횟수를 0으로, 대신 별 0 · 추가 옵션 새로 굴림. */}

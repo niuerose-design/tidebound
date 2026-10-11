@@ -1,5 +1,4 @@
 import type { State } from '../types';
-import { RANDOM_GAME, randomGameTier } from '../data/random-game';
 import { ECONOMY, researchRank } from '../data/economy';
 import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier, OVER_TARGET, type XpTargetWall } from '../data/balance';
 import { monsterExpAt, monsterGoldAt, tideLiftLevel } from '../data/world';
@@ -12,25 +11,34 @@ export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
 };
 /** v27.55 환생 이 횟수부터 사냥터·던전의 레벨 제한이 없습니다(환생 횟수 조건은 그대로). */
 export const LEVEL_GATE_FREE_REBIRTHS = 5;
-export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level;
+/** v3.210 LV1 모험가 서약 중에는 레벨 제한을 보지 않습니다. */
+export const levelGateOk = (s: Pick<State, 'level' | 'rebirths'> & Partial<Pick<State, 'vows'>>, level: number) => s.rebirths >= LEVEL_GATE_FREE_REBIRTHS || s.level >= level || !!s.vows?.lv1;
 /** v3.23 순풍 기본 경험치 보너스(+50%). 실제 값은 tailwindExp. */
 export const TAILWIND_EXP = .5;
 /** 순풍 경험치 보너스: +50% + 초심자 보너스 10%p/단계. 정수 연산 뒤 나눠 0단계는 정확히 0.5입니다. */
 export const tailwindExp = (s: Pick<State, 'permanent'>) => (TAILWIND_EXP * 10 + researchRank(s, 'tailwindSail')) / 10;
-/** v3.23 순풍은 조건 없이 환생 뒤 목표 레벨까지 켜지고, 다른 경험치 보너스와 더합니다. */
-export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'>) => (s.rebirths || 0) > 0 && s.level < rebirthLevel(s);
+/**
+ * v3.227 순풍이 끝나는 레벨: 직전 생의 최고 레벨(환생할 때의 레벨, 환생 기록의 마지막 항목).
+ * 기록이 없거나 직전 생 것이 아니면(옛 세이브) 직전 생의 환생 요구 레벨(그 생이 적어도 닿은 레벨)로 봅니다.
+ * 전에는 이번 생의 환생 요구 레벨까지라, 요구 레벨이 상한(Lv.100)에 닿은 뒤로는 매 생 Lv.100까지 켜져 있었습니다.
+ */
+export const tailwindLevel = (s: Pick<State, 'rebirths'> & Partial<Pick<State, 'rebirthLog'>>) => {
+    const last = s.rebirthLog?.at(-1);
+    return last && last.n === s.rebirths && last.level > 0 ? last.level : rebirthLevel({ rebirths: Math.max(0, (s.rebirths || 0) - 1) });
+};
+/** v3.23 순풍은 조건 없이 환생 뒤 켜지고, 다른 경험치 보너스와 더합니다. v3.227 직전 생 최고 레벨(tailwindLevel)까지. */
+export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'> & Partial<Pick<State, 'rebirthLog'>>) => (s.rebirths || 0) > 0 && s.level < tailwindLevel(s);
 /** v3.23 목표 레벨 너머 벽(OVER_TARGET). 배율은 고정입니다. */
 export const xpWall = (s: Pick<State, 'rebirths'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
-export const rebirthReward = (s: State, bonus = 0) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) + Math.max(0, Math.floor(bonus));
+export const rebirthReward = (s: Pick<State, 'level' | 'rebirths'>) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20)));
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
-export const rebirthRewardParts = (s: State, bonus = 0) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))), bonus: Math.max(0, Math.floor(bonus)) });
+export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
 /** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
 export const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
 /** 지금 전투의 난이도: 던전은 던전 난이도(무릉도장 층·모드·랜덤게임 웨이브), 사냥터는 사냥터 난이도. */
-/** v27.86 랜덤게임은 2 × 웨이브(randomGameTier). */
-export const encounterTier = (s: State) => s.dungeon ? (s.dungeon.id === RANDOM_GAME.id ? randomGameTier(s.dungeon.wave) : dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode)) : (s.tide || 0);
+export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode) : (s.tide || 0);
 /**
  * v27.68 일반 던전도 고른 난이도만큼 레벨이 올라갑니다(tideLiftLevel, v27.70부터 던전 난이도 기준). 보상·클리어 골드·과레벨 감쇠·클리어 드롭은 이 레벨 기준.
  * 고레벨일수록 던전이 상대적으로 약해지고 보상이 낮게 고정되던 것(환생 40회 기준 사냥터의 1/3~1/7)을 맞춥니다. 무릉도장은 자체 층 공식 그대로.

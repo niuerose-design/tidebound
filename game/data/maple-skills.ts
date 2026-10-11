@@ -131,7 +131,7 @@ export const MAPLE_SKILL_NAMES: Record<string, string> = {
     // ── 아크메이지(불,독) 계보 ──
     venomDart: '포이즌 브레스', toxinLore: '매직 마스터리', toxicFang: '파이어 애로우', lethalDose: '스펠 마스터리(불,독)',
     miasma: '포이즌 미스트', plagueVessel: '이그나이트', rotBloom: '미스트 이럽션', pestilence: '익스트림 매직(불,독)',
-    doomMark: '포이즌 노바', endOfAll: '도트 퍼니셔',
+    doomMark: '포이즌 노바', endOfAll: '도트 퍼니셔', plagueAscendant: '아케인 에임(불,독)',
 
     // ── 칼리 계보 · 부두 인형사 ──
     curseBolt: '보이드 러시', spiritWard: '헥스 가드', hexChain: '아츠: 크레센텀', malice: '헥스 마스터리',

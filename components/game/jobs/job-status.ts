@@ -1,6 +1,6 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
-import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, type Job, type JobTreeId, jobById } from '@/game/data/classes';
+import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, worldOf, type Job, type JobTreeId, type WorldId, jobById } from '@/game/data/classes';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
 import { secretJob } from '@/game/systems/reveal';
@@ -104,15 +104,23 @@ const monostatIds = new Set(MONOSTAT_LINEAGES.map(l => l.id));
 export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId);
 /** v3.168 직업이 든 계보의 계열. 계보가 직업과 다른 탭에 있을 수 있습니다(초보자 계보는 ??? 탭, 직업 tree는 복합). */
 export const lineageTreeOf = (j: Job) => LINEAGES.find(l => l.id === lineageOf(j))?.tree ?? j.tree;
+/** v3.220 직업 · 계보의 세계(책의 장). 계열 탭은 메이플 월드 안의 구분이고, 아제로스 계보는 계열 탭에 들어가지 않습니다. */
+export const jobWorld = (j: Job): WorldId => worldOf(LINEAGES.find(l => l.id === lineageOf(j)));
+const lineageWorld = (l: { id: string }) => worldOf(LINEAGES.find(x => x.id === l.id));
+/** 이 세계에서 보이는 계보(드러난 직업이 있는 것만). */
+export const worldLineages = (s: State, world: WorldId) => LINEAGES.filter(l => worldOf(l) === world && shownLineageJobs(s, l.id).length > 0);
+/** 이 세계에서 보이는 직업 수. */
+export const worldJobCount = (s: State, world: WorldId) => shownJobs(s).filter(j => jobWorld(j) === world).length;
 /** 계보가 이 탭에 들어가는지: ??? 탭은 드러난 히든 직업 기준, 외길 탭은 외길 계보, 나머지는 자기 계열(외길 제외)에서 보이는 직업이 있을 때. */
 export function lineageInTab(s: State, tab: JobTabId, l: { id: string; tree: string }) {
+    if (lineageWorld(l) !== 'maple') return false;
     if (tab === 'mystery') return inMysteryTab(s, l);
     if (tab === 'monostat') return monostatLineage(l.id) && shownLineageJobs(s, l.id).length > 0;
     return l.tree === tab && !monostatLineage(l.id) && shownLineageJobs(s, l.id).length > 0;
 }
 /** 탭 칩의 직업 수(보이는 직업만). ??? 탭은 다른 계열에 붙은 드러난 히든 직업도 셉니다. */
 export function tabJobCount(s: State, tab: JobTabId) {
-    const shown = shownJobs(s);
+    const shown = shownJobs(s).filter(j => jobWorld(j) === 'maple');
     if (tab === 'mystery') return shown.filter(j => lineageTreeOf(j) === 'mystery' || secretJob(j)).length;
     if (tab === 'monostat') return shown.filter(j => monostatLineage(lineageOf(j))).length;
     return shown.filter(j => lineageTreeOf(j) === tab && !monostatLineage(lineageOf(j))).length;
@@ -136,8 +144,11 @@ export function jobGoalOf(s: State) {
 }
 
 /** 빠른 찾기: 계열과 상관없이 모아 보는 직업 목록. 드러나지 않은 히든 직업은 뺍니다. */
-export type Finder = 'ready' | 'mastered' | 'near';
+export type Finder = 'starter' | 'ready' | 'mastered' | 'near';
+/** v3.242 처음 추천: 1차 직업이 70개가 넘어 첫 생에는 메이플 대표 계보(전사 둘 · 마법사 · 궁수 · 도적 · 해적)부터 보여 줍니다. */
+export const STARTER_JOBS = ['ronin', 'warden', 'tide', 'harpoon', 'relicScavenger', 'martialArtist'];
 export function finderJobs(s: State, kind: Finder, status: StatusReader = j => jobStatus(s, j)) {
+    if (kind === 'starter') return STARTER_JOBS.map(id => jobById(id)).filter((j): j is Job => !!j);
     const visible = shownJobs(s);
     // 숙달: 직업 숙련이 숙달 목표에 닿아 조건 없이 언제든 돌아갈 수 있는 직업(현재 직업 포함).
     if (kind === 'mastered') return JOBS.filter(j => jobMastered(s, j));

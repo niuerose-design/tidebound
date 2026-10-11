@@ -29,12 +29,12 @@ export const ascensionVow = (s: AscensionState) => 1 + Math.min(ASCENSION.vowCap
 export const ascensionEarlyExp = (s: AscensionState & { rebirths: number }) => ascended(s) && s.rebirths < ASCENSION.earlyExpUntil ? ASCENSION.earlyExp : 1;
 
 /**
- * 승천하면 자동으로 주는 세계석 연구(14.2). 순수 편의는 최대 단계, 콘텐츠를 여는 연구(서약 셋·랜덤게임)는 1단계.
+ * 승천하면 자동으로 주는 세계석 연구(14.2). 순수 편의는 최대 단계, 콘텐츠를 여는 연구(서약 셋)는 1단계.
  * 무료로 준 단계는 researchGranted에 적어 재분배 때 세계석으로 돌려주지 않습니다.
  */
 export const ASCENSION_RESEARCH: Record<string, number> = {
     habit: 3, offline: 3, salvage: 5, sortingNet: 2, autoStar: 1, autoClaim: 1, revive: 5,
-    vowAnchor: 1, vowBreath: 1, vowRough: 1, vowRestraint: 1,
+    vowBreath: 1, vowRough: 1, vowRestraint: 1,
 };
 /**
  * v3.40 승천 편의(14.3): 이 승천 횟수부터 열립니다. 전투력과 무관한 반복 조작 덜기입니다.

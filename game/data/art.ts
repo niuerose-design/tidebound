@@ -5,17 +5,19 @@
  */
 import { MONSTERS } from './world';
 
-import { MONSTER_ART, JOB_ART, ONYX_ART } from './art-manifest';
+import { MONSTER_ART, JOB_ART, ONYX_ART, STORY_ART } from './art-manifest';
 /** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
 export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/monsters/${id}.${MONSTER_ART[id]}` : null;
 export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
 /** v3.14 칠흑 장신구 그림(public/art/onyx/{보스id}.png|webp). 없으면 null(components/game/onyx-art의 SVG). */
 export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bossId}.${ONYX_ART[bossId]}` : null;
+/** v3.216 스토리 삽화(public/art/story/{chapter-N | 장면 id}.png|webp). 없으면 null. */
+export const storyArtSrc = (key: string) => STORY_ART[key] ? `/art/story/${key}.${STORY_ART[key]}` : null;
 /** v27.40 스킬 아이콘(원작 도트 아이콘을 그대로 쓰려고 PNG). 있는 파일 목록은 art-manifest.ts. */
 export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
 
 /** 실루엣 모양. 몬스터마다 하나를 고정해 두어 이미지가 없어도 책·장면에서 종류를 구분할 수 있게 합니다. */
-export type MonsterShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock';
+export type MonsterShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock' | 'swoo' | 'damien' | 'dusk' | 'dunkel' | 'will' | 'lucid' | 'hilla' | 'seren' | 'blackmage';
 /** v27.42 메이플 몬스터 모양으로 다시 짰습니다(maple-monsters.ts 이름 기준). */
 export const MONSTER_SHAPES: Record<string, MonsterShape> = {
     // 달팽이 · 버섯 · 슬라임
@@ -35,7 +37,7 @@ export const MONSTER_SHAPES: Record<string, MonsterShape> = {
     ttMonitor: 'eye', ttGuardian: 'statue', ttChimera: 'demon', ttDodo: 'bat', ttLyka: 'croc', arErdaSpirit: 'ghost', arMemoryGuard: 'statue', arMysticErda: 'bubble', arVanishSoul: 'ghost', arTrueErda: 'bubble',
     // 까미 · 보스
     masteryMimic: 'chest', expNuri: 'ghost', essenceSlime: 'slime', kingMimic: 'chest', kingNuri: 'ghost', kingSlime: 'slime',
-    onyxDusk: 'ghost', onyxDunkel: 'fighter', onyxWill: 'mage', onyxLucid: 'mage', onyxHilla: 'mage', onyxSeren: 'fighter', onyxBlackMage: 'mage',
+    onyxDusk: 'dusk', onyxDunkel: 'dunkel', onyxWill: 'will', onyxLucid: 'lucid', onyxHilla: 'hilla', onyxSwoo: 'swoo', onyxDamien: 'damien', onyxSeren: 'seren', onyxBlackMage: 'blackmage',
     grottoWarden: 'mushroom', kelpHydra: 'slime', anchorWraith: 'mushroom', magmaKraken: 'demon', templeOracle: 'mage', abyssSovereign: 'fighter', ventColossus: 'statue', starfallSeraph: 'clock',
 };
 export const monsterShape = (id: string): MonsterShape => MONSTER_SHAPES[id] ?? 'slime';

@@ -26,7 +26,7 @@ assert.equal((await call('/api/auth')).data.loggedIn, true);
 let { data } = await call('/api/game', { type: 'sync' }, { expect: 200 });
 assert.equal(data.state.version, 8); assert.equal(data.state.name, '테스터까미', 'v26.8 signup name applied to the first fisher');
 assert.equal(data.catalog?.secret, false, 'v3.43 catalog rides with the game response (secrecy off by default)'); assert.ok(Object.keys(data.catalog.unlocks || {}).length, 'v3.62 hidden unlock states come from the server');
-assert.equal(data.catalog.skills?.length, 28, 'v3.47 secret-job skills come through the catalog (all of them while secrecy is off; v3.199~3.200 35 → 28)');
+assert.equal(data.catalog.skills?.length, 43, 'v3.47 secret-job skills come through the catalog (all of them while secrecy is off; v3.199~3.200 35 → 28, v3.220 아제로스 +8 → 36, v3.230 +6 → 42, v3.231 해커 3개는 공개 이계 표로 → 39, v3.246 정수 포식자 · 세계석 광부 +4 → 43)');
 assert.ok(data.catalog.odds?.drop?.chance > 0, 'v3.52 drop odds come through the catalog while secrecy is off');
 assert.ok(Object.keys(data.catalog.stageAvg || {}).length > 10, 'v3.55 per-stage reward averages ride with the catalog');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));
@@ -107,4 +107,13 @@ await call('/api/auth', { action: 'slot', slot: 9 }, { expect: 400 });
 // 환생 1회를 흉내: 서버 저장 상태를 직접 바꿀 수 없으니 1번 캐릭터의 환생을 단축 치트 없이 확인하는 대신, 잠김 메시지가 조건을 알려주는지 봅니다.
 ({ data } = await call('/api/auth', { action: 'slot', slot: 2 }, { expect: 403 }));
 assert.match(data.error, /환생 1회/);
+// v3.213 증권거래소(공유 시장): 거래소를 볼 때(marketKnown)만 시세 조각이 오고, 가진 틱이면 다시 안 옵니다.
+({ data } = await call('/api/game', { type: 'sync' }, { expect: 200 }));
+assert.equal(data.market, undefined, 'not watching → no market feed');
+({ data } = await call('/api/game', { type: 'sync', marketKnown: '' }, { expect: 200 }));
+assert.equal(data.market.prices.length, 144); assert.equal(data.market.prices[0].length, 6);
+const tick = data.market.tick;
+({ data } = await call('/api/game', { type: 'sync', marketKnown: String(tick) }, { expect: 200 }));
+assert.ok(!data.market || data.market.from === tick + 1, 'up to date → nothing (or only the next tick)');
+await call('/api/game', { type: 'market', id: 'buy:lith', value: '1' }, { expect: 400 }); // 새 모험가는 주화 0
 console.log('e2e api checks passed');

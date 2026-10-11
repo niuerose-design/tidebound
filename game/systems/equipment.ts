@@ -1,10 +1,10 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rarityQuality, type ItemAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rollAffixes, rarityQuality, optionAtQuality, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { monsterGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
-import { onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
+import { ONYX, onyxAwaken, onyxScaledStat, isOnyxUnique, onyxPower } from '../data/onyx';
 
 /** 가방과 장착 칸의 장비를 한 목록으로(장착 칸의 빈자리는 null). */
 export const ownedItems = (s: Pick<State, 'inventory' | 'equipment'>): (Item | null)[] => [...s.inventory, ...Object.values(s.equipment)];
@@ -62,7 +62,8 @@ export function itemStats(item: Item): Partial<Stats> {
 }
 /** v27.93 스타포스 상한: 전설 이상 22성, 영웅 이하 15성. */
 /** v3.5 유물은 레벨이 별 상한을 정합니다: 12 + 레벨 ÷ 10(Lv.1 12성 · Lv.100 22성). 레벨 1인 유물에 22성을 싸게 박아 두는 것을 막습니다. */
-export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
+/** v3.241 25성 확장: 최고 레벨(Lv.100) 유물은 23~25성까지(레벨 상한식은 22성에서 끝나므로 Lv.100이면 상한 그대로). */
+export const enhanceMaxFor = (item: Pick<Item, 'rarity' | 'relic' | 'level'>) => item.relic ? Math.min(starMax(item.rarity), (item.level || 1) >= 100 ? starMax(item.rarity) : RELIC_GROWTH.starBase + Math.floor((item.level || 1) / 10)) : starMax(item.rarity);
 /** v25.7 판매가: 그 레벨 몬스터 골드 × 등급별 마리 수 + 강화에 쓴 골드의 30%. 분해(정수)와 판매(골드)가 실제 선택이 되도록 맞춘 식입니다. */
 const SALE_MONSTERS = [2, 6, 18, 50, 120, 300, 700], SALE_LEVEL_CAP = 65;
 /** v27.27 상점 구매품 되팔기 비율. */
@@ -111,6 +112,14 @@ export function tuneOnyx(item: Item) {
     if (!item.onyx) return;
     const next = onyxPower(item.level || 1), before = item.power;
     if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
+    // v3.284 칠흑은 무작위 옵션 ONYX.affixes(6)줄: 예전(5줄) 장신구는 빠진 줄을 최고 수치로 채웁니다. 장신구 id로 정해지는 난수라 몇 번 불러도 같습니다.
+    const extra = (item.affixes || []).filter(x => !x.rule).length;
+    if (item.affixes && extra < ONYX.affixes) {
+        let seed = [...item.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0;
+        const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296), had = item.affixes.length;
+        item.affixes = rollAffixes(had + ONYX.affixes - extra, item.power, item.origin, rng, item.affixes, item.slot, item.level || 1, item.rarity)
+            .map((x, i) => i < had ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
+    }
     if (item.onyxTuned) return;
     item.affixes = (item.affixes || []).map(x => x.rule ? x : refineOption(x, item.power, item.rarity, () => 1, item.level || 1));
     item.onyxTuned = true;
@@ -119,11 +128,33 @@ export function tuneOnyx(item: Item) {
  * v3.82 유물 옵션 이식: 고정 수치(공격 · 체력 · 방어 · 마나)의 이득 쪽은 장비 등급 감쇠를 받는데, 이식 줄은 유물(전설)의 감쇠 .85를 받아
  * 태초 · 고대에서 옮긴 이득이 원래보다 1.4~1.5배 커졌습니다. 이식할 때 '원래 장비 감쇠 ÷ 유물 감쇠'를 곱해 원래 장비에서와 같은 실효 수치로 맞춥니다.
  * 손해 쪽(음수)은 감쇠를 받지 않아 그대로입니다. srcRarity는 원래 장비 등급(맞춘 표시).
+ * v3.217 레벨 환산: 유물 레벨보다 높은 장비에서 옮긴 고정 수치 줄은 (유물 레벨 + 2) ÷ (원래 레벨 + 2)로 낮춰 새깁니다(손해 쪽도 같이).
+ * 레벨 올리기가 이식 줄도 (새 레벨 + 2) ÷ (옛 레벨 + 2)배 하므로, 전에는 낮은 레벨 유물에 Lv.100 줄을 옮긴 뒤 유물 레벨을 올리면 수치가 수십 배로 부풀었습니다.
  */
-export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number): ItemAffix {
+export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number, srcLevel?: number, relicLevel?: number): ItemAffix {
     const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
-    const fix = (stat: string | undefined, n: number | undefined) => stat && n && n > 0 && FLAT_GEAR_STATS.has(stat) ? Math.round(n * ratio) : n;
-    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2) } : {}), srcRarity }, srcRarity, relicRarity);
+    const def = affixDef(affix.id), lv = def?.kind === 'flat' && !def.fixed && !affix.rule && srcLevel && relicLevel ? Math.min(1, (relicLevel + 2) / (srcLevel + 2)) : 1;
+    // 등급 감쇠는 고정 수치 능력치의 이득 쪽만, 레벨 환산은 레벨 올리기(rescaleAffix)가 키우는 수치에 똑같이 겁니다.
+    const fix = (stat: string | undefined, n: number | undefined, levelled: boolean) => {
+        if (!stat || !n) return n;
+        const damp = n > 0 && FLAT_GEAR_STATS.has(stat) ? ratio : 1, scale = levelled ? lv : 1;
+        return damp === 1 && scale === 1 ? n : Math.round(n * damp * scale);
+    };
+    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity }, srcRarity, relicRarity);
+}
+/**
+ * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
+ * 레벨 환산이 없던 때 낮은 레벨 유물에 높은 레벨 줄을 옮기고 유물 레벨을 올려 부푼 줄을 불러올 때 이 값으로 줄입니다. 늘리지는 않습니다.
+ */
+export function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
+    const def = affixDef(x.id);
+    if (!def || x.rule || def.fixed || def.kind !== 'flat') return x;
+    const src = Math.min(RARITIES.length - 1, Math.max(0, x.srcRarity ?? RARITIES.length - 1)), level = relic.level || 1;
+    const top = imprintAffix(optionAtQuality(def, Math.round((level + 2) * RARITIES[src].factor * 1.2), src, level, HEIR_ROLL_TOP), src, relic.rarity);
+    const out = { ...x };
+    if (x.value > top.value) out.value = top.value;
+    if (x.value2 !== undefined && top.value2 !== undefined && x.value2 > 0 && top.value2 > 0 && x.value2 > top.value2) out.value2 = top.value2;
+    return out;
 }
 /**
  * v3.141 비율 옵션(초월 · 포식자 · 파멸 · 관통 · 잔혹 · 감각 …)도 이식할 때 유물 등급 품질로 맞춥니다: 태초(품질 2.2)에서 전설 유물(1.6)로 옮기면 ×0.73.
@@ -155,7 +186,22 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
         item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);
         // v3.141 원래 등급이 기록된 줄(v3.82~v3.139 이식)의 비율 옵션을 한 번 유물 품질로 맞춥니다.
         item.affixes = item.affixes.map(x => x.pctFixed || x.srcRarity === undefined ? x : scaleImprintPercent(x, x.srcRarity, item.rarity));
+        // v3.217 레벨 올리기로 부푼 고정 수치 줄을 지금 유물 레벨의 최대치로 줄입니다(넘는 줄만, 여러 번 불러도 같음).
+        item.affixes = item.affixes.map(x => capRelicImprint(x, item));
     }
+}
+/**
+ * v3.66 계승(원시 각성 · 태초 계승 · v3.217 계승 드롭): 옵션은 최고 굴림으로 고정, 환생해도 남고 위력이 환생마다 오릅니다.
+ * 부위마다 종류별 1개: 같은 부위의 예전 계승 장비는 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐). 돌아간 장비를 돌려줍니다.
+ * item은 가방이나 장착 칸에 있어야 위력이 맞춰집니다(syncRelicPower).
+ */
+export function inheritGear(s: Pick<State, 'inventory' | 'equipment' | 'rebirths'>, item: Item, kind: 'ancient' | 'primal') {
+    const old = ownedItems(s).find(x => x && x !== item && x.heir === kind && x.slot === item.slot) || undefined;
+    if (old) { delete old.heir; const was = old.power; old.power = Math.round((old.level + 2) * RARITIES[old.rarity].factor); if (old.affixes && was > 0) old.affixes = old.affixes.map(x => rescaleAffix(x, old.power / was, old.level, old.level)); }
+    item.heir = kind; item.locked = true;
+    if (item.affixes) item.affixes = item.affixes.map(x => refineOption(x, item.power, item.rarity, () => 1, item.level));
+    syncRelicPower(s);
+    return old;
 }
 /** v3.5 레벨 올리기 목표 레벨: 지금 레벨 + step, 내 레벨까지. 더 올릴 수 없으면 null. */
 export const levelUpTarget = (item: Pick<Item, 'level'>, s: Pick<State, 'level'>) => { const cur = item.level || 1, next = Math.min(cur + GEAR_LEVEL_UP.step, s.level); return next > cur ? next : null; };

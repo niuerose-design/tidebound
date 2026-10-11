@@ -96,7 +96,7 @@ test('Research v2: online ticks and one offline settlement give the same result 
 });
 
 // 세계석 연구 3단계: 특별 연구 5개
-import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState, randomGameRunsLeft } from './harness.mjs';
+import { reward, expMultiplier, metaMod, mimicChanceOf, migrateState } from './harness.mjs';
 const counting = (value = .99) => { const f = () => { f.calls++; return typeof value === 'function' ? value(f.calls) : value; }; f.calls = 0; return f; };
 
 test('Research v3: three special entries match the plan table and sit in the utility special group', () => {
@@ -112,7 +112,7 @@ test('Research v3.23: tailwind sail raises the additive bonus, the over-target w
     const s = newState(0); assert.equal(metaMod.tailwindExp(s), .5); close(metaMod.xpWall(s).growth, 1.6);
     s.permanent.tailwindSail = 3; close(metaMod.tailwindExp(s), .8);
     s.rebirths = 6; s.level = 67; act(s, { type: 'rebirth' }, 0); assert.ok(s.logs.some(l => l.text.includes('경험치 +80%')));
-    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.rebirthLevel(s) }), (1 + e + .8) / (1 + e));
+    const e = stats(s).expBonus; close(expMultiplier(s) / expMultiplier({ ...s, level: metaMod.tailwindLevel(s) }), (1 + e + .8) / (1 + e)); // v3.227 직전 생 최고 레벨(67)까지
 });
 
 test('Research v3: sorting net dismantles only known, low-rarity drops into essence while the setting is on', () => {
@@ -143,14 +143,18 @@ test('v27.60 lucky letter (messageBottle id): +15% mimic and nuri spawn chance p
     const roll = mimicChanceOf(MIMIC_DATA.minTier, 0) * 1.5; // 기본 확률 밖, 5단계(×1.75) 안
     const plain = make(0); spawn(plain, () => roll); assert.notEqual(plain.enemy.id, MIMIC_DATA.id);
     const lucky = make(5); spawn(lucky, () => roll); assert.equal(lucky.enemy.id, MIMIC_DATA.id);
+    // v3.287 편지 · 이벤트(제단 축복) 보너스는 곱하지 않고 더합니다: 5단계(+75%) + 축복 ×3(+200%) = ×3.75(전에는 ×5.25).
+    const both = make(5); both.event = { mimic: 3 }; const inBand = mimicChanceOf(MIMIC_DATA.minTier, 0) * 3.7, outBand = mimicChanceOf(MIMIC_DATA.minTier, 0) * 3.8;
+    spawn(both, () => inBand); assert.equal(both.enemy.id, MIMIC_DATA.id, 'inside 3.75x');
+    const over = make(5); over.event = { mimic: 3 }; spawn(over, () => outBand); assert.notEqual(over.enemy.id, MIMIC_DATA.id, 'not multiplied to 5.25x');
 });
 
 // 세계석 연구 4단계: 서약 3개
-import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, metaMod as meta, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
+import { spawn, vowsMod, tick, snapshot, goldMultiplier, dropRate, apCapacity, expMultiplier as expMul, SKILLS as ALL_SKILLS } from './harness.mjs';
 const vowReady = (research = {}, next = {}) => { const s = newState(0); s.rebirths = 5; s.level = 60; Object.assign(s.permanent, research); s.nextVows = next; return s; };
 
 test('v27.86 vows: research entries, reservation rules (breath on/off, rough·restraint 0~3) and cleanup on full reset', () => {
-    for (const id of ['vowAnchor', 'vowBreath', 'vowRough', 'vowRestraint']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
+    for (const id of ['vowBreath', 'vowRough', 'vowRestraint']) { const r = research(id); assert.deepEqual([r.max, r.base, r.step, r.rebirth, r.group], [3, 10, 10, 5, 'vow']); assert.equal(economy.researchSpent(id, 3), 60); }
     const s = newState(0); assert.throws(() => act(s, { type: 'nextVow', id: 'rough', value: '1' }, 0), /연구가 필요/);
     assert.throws(() => act(s, { type: 'nextVow', id: 'anchor', value: 'on' }, 0), /서약을 확인/, 'sleeping anchor is no longer a vow');
     s.permanent.vowRestraint = 1; s.permanent.vowRough = 1; act(s, { type: 'nextVow', id: 'restraint', value: '3' }, 0); act(s, { type: 'nextVow', id: 'rough', value: '2' }, 0);
@@ -166,29 +170,14 @@ test('v27.86 legacy sleeping-anchor saves: the seal is released (stored exp paid
     assert.equal(s.vows.seal, undefined); assert.equal(s.vows.anchor, undefined); assert.ok(s.level > 1 || s.exp >= 500); assert.ok(s.logs.some(l => l.text.includes('+500 EXP')));
 });
 
-test('v27.86 random game: research-gated entries per life, random monsters by wave, stake grows per wave, target or leave cashes out, a fall loses everything', () => {
-    const s = newState(0); s.rebirths = 6; s.level = 60; s.running = true;
-    assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame', value: 'until:3' }, 0), /랜덤게임/);
-    s.permanent.vowAnchor = 2;
-    act(s, { type: 'dungeon', id: 'randomGame', value: 'until:3' }, 0); assert.equal(s.dungeon.id, 'randomGame'); assert.equal(s.dungeon.until, 3); assert.equal(s.randomGameRuns, 1);
-    assert.equal(meta.encounterTier(s), 2, 'wave 1 = difficulty 2'); s.recovery = 0;
-    const p0 = s.pearls, e0 = s.essence || 0;
-    for (let w = 0; w < 3; w++) { spawn(s, () => .5); assert.equal(s.enemy.exp, 0); assert.equal(s.enemy.gold, 0); s.enemy.hp = 0; reward(s, () => .5); }
-    // 3웨이브 판돈: 정수 3+6+9 = 18, 연구 2단계 ×1.5 → 정수 27. 목표 도달로 받고 나와 자동 사냥으로.
-    assert.equal(s.dungeon, null); assert.equal((s.essence || 0) - e0, 27); assert.equal(s.pearls, p0); assert.equal(s.running, true);
-    act(s, { type: 'dungeon', id: 'randomGame' }, 0); assert.equal(s.dungeon.until, undefined); s.recovery = 0;
-    spawn(s, () => .1); s.enemy.hp = 0; reward(s, () => .5); assert.equal(s.dungeon.wave, 1);
-    // 쓰러지면 판돈 소멸.
-    const e1 = s.essence; s.hp = 1; s.enemy = { id: 'shark', name: 'shark', hp: 1e9, maxHp: 1e9, attack: 1e9, defense: 0, exp: 0, gold: 0, boss: false, stun: 0, skills: [], cooldowns: {}, effects: {}, mana: 0, combatStats: { hp: 1e9, attack: 1e9, defense: 0, crit: 0, accuracy: 5, speed: 999 } };
-    tick(s, () => .5); assert.equal(s.dungeon, null); assert.equal(s.essence, e1, 'stake lost on a fall');
-    assert.throws(() => act(s, { type: 'dungeon', id: 'randomGame' }, 0), /횟수/, 'rank 2 = two entries per life');
-    // v3.24 하루(한국 시간)가 지나면 다시 채워집니다.
-    const DAY = 86_400_000; assert.equal(randomGameRunsLeft(s, 0), 0); assert.equal(randomGameRunsLeft(s, DAY), 2);
-    act(s, { type: 'dungeon', id: 'randomGame' }, DAY); assert.equal(s.randomGameRuns, 1); act(s, { type: 'leaveDungeon' }, DAY);
-    // 나가기 = 받고 나가기.
-    const t = newState(0); t.rebirths = 6; t.level = 60; t.permanent.vowAnchor = 1; act(t, { type: 'dungeon', id: 'randomGame' }, 0); t.recovery = 0;
-    for (let w = 0; w < 10; w++) { spawn(t, () => .5); t.enemy.hp = 0; reward(t, () => .5); }
-    const tp = t.pearls; act(t, { type: 'leaveDungeon' }, 0); assert.equal(t.pearls, tp, 'v27.86 essence only'); assert.equal(t.essence, 165);
+test('v3.209 random game removed: research refunded (paid ranks only), records and a run in progress cleared', () => {
+    assert.equal(research('vowAnchor'), undefined);
+    const s = newState(0); s.permanent.vowAnchor = 3; s.researchGranted = { vowAnchor: 1 }; s.randomGameRuns = 2; s.randomGameDay = 'x'; s.randomGameStats = { best: 9, runs: 4, cashed: 2 };
+    s.dungeon = { id: 'randomGame', wave: 3 }; s.running = true; const p = s.pearls;
+    const m = migrateState(s);
+    assert.equal(m.pearls - p, 20 + 30, 'ranks 2 and 3 refunded, the free ascension rank is not');
+    assert.equal(m.permanent.vowAnchor, undefined); assert.equal(m.randomGameStats, undefined); assert.equal(m.randomGameRuns, undefined); assert.equal(m.dungeon, null);
+    assert.equal(migrateState(m).pearls, m.pearls, 'only once');
 });
 
 test('Vows · one breath: a fall soft-resets the life (online and offline); an unbroken life adds rebirth pearls', () => {
@@ -202,7 +191,7 @@ test('Vows · one breath: a fall soft-resets the life (online and offline); an u
     // 깊은 사냥터에서는 10분 안에 쓰러집니다(2시간을 돌리던 것을 줄임).
     advance(o, 10 * 60_000, seeded(9)); assert.equal(o.vows, undefined); assert.equal(o.stage, 'brook'); assert.ok(o.kills > 0 || o.deaths > 0);
     const plain = vowReady(), vowed = vowReady({ vowBreath: 3 }); vowed.vows = { breath: true }; const p0 = plain.pearls, v0 = vowed.pearls;
-    const base = rebirthReward(plain, stats(plain).rebirthBonus || 0);
+    const base = rebirthReward(plain);
     act(plain, { type: 'rebirth' }, 0); act(vowed, { type: 'rebirth' }, 0);
     // 둘 다 같은 업적 보상을 받으므로 차이가 하드코어 보너스(= 기본 세계석)입니다.
     assert.equal((vowed.pearls - v0) - (plain.pearls - p0), base, 'rank 3 doubles rebirth pearls');
@@ -289,9 +278,9 @@ test('v3.38 research cleanup refunds paid ranks once: dungeon vault, shop regula
     const s = newState(0); s.version = 8; s.pearls = 0;
     s.permanent.dungeon = 3; s.permanent.shop = 2; s.permanent.sortingNet = 2; s.permanent.autoVend = 1; s.autoVend = true;
     migrateState(s, 0);
-    // 던전의 금고 5+9+13 = 27, 상점 단골 3+5 = 8, 자동 판매기 1단계 10(자동 정리 2단계는 그대로) → 45
-    assert.equal(s.pearls, 45); assert.equal(s.permanent.sortingNet, 2); assert.equal('autoVend' in s.permanent, false); assert.equal('dungeon' in s.permanent, false); assert.equal('shop' in s.permanent, false);
-    assert.equal(s.autoVend, true, 'sell mode stays'); migrateState(s, 0); assert.equal(s.pearls, 45, 'once');
+    // 상점 단골 3+5 = 8, 자동 판매기 1단계 10(자동 정리 2단계는 그대로) → 18. v3.261 dungeon은 지금의 ‘던전 탐험 I’이라 그대로 둡니다.
+    assert.equal(s.pearls, 18); assert.equal(s.permanent.sortingNet, 2); assert.equal('autoVend' in s.permanent, false); assert.equal(s.permanent.dungeon, 3); assert.equal('shop' in s.permanent, false);
+    assert.equal(s.autoVend, true, 'sell mode stays'); migrateState(s, 0); assert.equal(s.pearls, 18, 'once');
     const v = newState(0); v.version = 8; v.pearls = 0; v.permanent.autoVend = 2; migrateState(v, 0); assert.equal(v.permanent.sortingNet, 2); assert.equal(v.pearls, 0, 'vend-only rank moves over, nothing to refund');
     const g = newState(0); g.version = 8; g.pearls = 0; g.permanent.sortingNet = 2; g.permanent.autoVend = 2; g.researchGranted = { sortingNet: 2, autoVend: 2, limitBreak: 0 }; migrateState(g, 0);
     assert.equal(g.pearls, 0, 'ascension-granted ranks are free'); assert.deepEqual(g.researchGranted, { sortingNet: 2, limitBreak: 0 });
@@ -388,6 +377,7 @@ test('v3.161 essence slime: shares the special roll right after the nuri band, p
     const make = (level = 80) => { const s = newState(0); s.level = level; s.kills = 5000; s.stage = 'brook'; s.tide = 10; s.running = true; s.skills = ['hook']; return s; };
     const c = Enc.specialChances(make());
     assert.ok(c.slimeP > 0 && Math.abs(c.slimeP - Sl.slimeChance(10)) < 1e-12, 'slime band = base + 10 × per tier');
+    assert.equal(Sl.slimeChance(200), Sl.slimeChance(40), 'v3.290 tier part stops at 40'); assert.ok(Sl.slimeBundle(200) > Sl.slimeBundle(40), 'the bundle still grows');
     assert.deepEqual(c.king, { mimic: 0, nuri: 0, slime: 0 }, 'no king before 30 small ones');
     assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP / 2, c), 'slime'); assert.equal(Enc.pickSpecial(c.mimicP + c.nuriP + c.slimeP * 1.01, c), undefined);
     const s = make(); Enc.spawn(s, () => c.mimicP + c.nuriP + c.slimeP / 2);
@@ -415,7 +405,7 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
     assert.equal(s.enemy.leavesAt, s.turn + K.KING.turns, 'leaves after 80 turns');
     assert.equal(Enc.enemyLabel(s.enemy), '[보스] 대왕 까미');
     s.enemy.hp = 0; Enc.reward(s, () => .99);
-    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 300,000 guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
+    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 대 × rewardMul guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
     // 대왕 누리 · 대왕 정수 슬라임 보상
     { const t = make(); Enc.spawn(t, () => 1, 'kingNuri'); assert.equal(t.enemy.id, K.KING.nuri.id); const before = t.exp; t.enemy.hp = 0; Enc.reward(t, () => .99);
         const byField = Math.floor(Enc.stageEncounterExp(t, stats(t)) * Math.round(N.EXP_NURI.tiers[2].pct * K.KING.rewardMul * N.EXP_NURI.encountersPerPct));
@@ -429,4 +419,12 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
     { const d = make(); d.dungeon = { id: 'grotto', wave: 0 }; assert.equal(Enc.specialChances(d).rolls, false); }
     { const w = make(); w.sp = 10; assert.throws(() => act(w, { type: 'whistle', id: 'kingMimic' }, 0), /정수의 슬라임 중에서/); }
     assert.deepEqual(K.SPECIAL_IDS, ['masteryMimic', 'expNuri', 'essenceSlime', 'kingMimic', 'kingNuri', 'kingSlime']);
+});
+
+test('v3.261 dungeon expedition research (id dungeon) is kept on load and never refunded (was a pearl duplication)', () => {
+    const s = newState(0); delete s.tutorial; s.rebirths = 10; s.pearls = 100;
+    for (let i = 0; i < 4; i++) act(s, { type: 'permanent', id: 'dungeon' }, 0);
+    assert.equal(s.pearls, 100 - (3 + 5 + 7 + 9)); assert.equal(s.permanent.dungeon, 4);
+    for (let i = 0; i < 3; i++) migrateState(s, 0);
+    assert.equal(s.permanent.dungeon, 4, 'rank survives every load'); assert.equal(s.pearls, 76, 'no refund on load');
 });

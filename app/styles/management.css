@@ -489,3 +489,166 @@
 
 /* v3.186 던전 난이도 안내(헬 · 나이트메어가 누구를 위한 난이도인지) */
 .dungeon-mode-note { display:block; font-size:12px; color:#98b1b1; margin-top:6px; line-height:1.6; }
+/* v3.204 던전 주화 상점 · 보스 코어 칸 */
+.dshop-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; margin:14px 0; }
+.dshop-card { padding:22px; display:flex; flex-direction:column; gap:12px; }
+.dshop-card .draw-cost { margin-top:auto; }
+.dshop-card .draw-actions { min-height:0; }
+.dshop-card h2 { font-size:18px; }
+.dshop-card .draw-desc { min-height:0; }
+.dshop-card .draw-controls { min-height:0; }
+.dshop-card .gamble-count-row { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+.core-slot { margin-bottom:14px; }
+.core-slot-body { display:grid; gap:4px; min-width:0; }
+.core-slot-body strong { font-size:15px; color:var(--rarity); }
+.core-slot-body small { font-size:12px; color:#8fa6a4; line-height:1.6; }
+.core-slot .gear-slot-upgrade select { min-height:30px; max-width:220px; }
+.dungeon-coin-link { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
+.dungeon-coin-link b { color:var(--gold); }
+@media(max-width:767px){ .dungeon-coin-link { padding:12px 14px; } .dungeon-coin-link button { flex:1 1 100%; } .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; } }
+/* v3.206 보스 코어 탭: 타일(고르기) · 상세 칸 · 상자 줄 */
+.core-tab { display:grid; gap:14px; margin-top:14px; }
+.core-tiles { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.core-tile { position:relative; display:grid; justify-items:center; gap:6px; padding:14px 6px 12px; border:1px solid var(--border); border-radius:10px; background:#11242a; color:#c5d8d2; cursor:pointer; min-width:0; }
+.core-tile svg { color:#8fb7a9; }
+.core-tile small { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.core-tile em { font-style:normal; font-size:11px; color:#6f8688; }
+.core-tile.locked { opacity:.5; }
+.core-tile.locked svg { color:#5a6f71; }
+.core-tile.worn svg { color:#d6b879; }
+.core-tile.on { border-color:#d6b879; background:#1a2f2f; box-shadow:0 0 0 1px #d6b87955 inset; }
+.core-tile.onyx { border-color:#3a2d52; background:linear-gradient(160deg,#17121d,#0e1518 70%); }
+.core-tile.onyx small { color:#d9ccf7; }
+.core-tile.onyx.on { border-color:#b48cff; box-shadow:0 0 0 1px #b48cff55 inset; }
+.core-slot .core-slot-body strong .onyx-art { vertical-align:middle; margin-right:6px; }
+.core-tile-badge { position:absolute; top:5px; right:6px; font-size:10px; color:#d6b879; font-weight:600; }
+.core-pips { display:inline-flex; gap:3px; }
+.core-pips i { width:7px; height:7px; border-radius:50%; background:#2a4045; display:block; }
+.core-pips i.on { background:#d6b879; }
+.core-detail { padding:22px; display:grid; gap:14px; border-top:2px solid #5a6f71; }
+.core-detail.worn { border-top-color:#d6b879; }
+.core-detail header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.core-detail h2 { font-size:20px; margin-top:4px; }
+.core-detail.locked h2 { color:#8fa6a4; }
+.core-detail header button { min-width:96px; }
+.core-effect { margin:0; font-size:14px; line-height:1.7; color:#c5d8d2; }
+.core-awaken { display:flex; align-items:center; gap:10px; font-size:13px; color:#9bb3b0; }
+.core-awaken small { color:#8fa6a4; }
+.core-lines { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+.core-line { display:grid; grid-template-columns:1fr auto; gap:2px 10px; text-align:left; padding:12px 14px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:#c5d8d2; cursor:pointer; }
+.core-line span { font-size:13px; color:#9bb3b0; }
+.core-line b { grid-row:span 2; align-self:center; font-size:20px; color:var(--gold); font-variant-numeric:tabular-nums; }
+.core-line small { font-size:12px; color:#7f9596; }
+.core-line.on { border-color:#8fb7a9; background:#14302f; }
+.core-forge { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
+.core-forge button { padding:10px 8px; font-size:13px; }
+.core-box { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; }
+.core-box p { margin:4px 0 0; font-size:13px; color:#a5b7b4; line-height:1.6; }
+.core-box button { flex-shrink:0; }
+@media(max-width:767px){ .core-tiles { grid-template-columns:repeat(5,minmax(0,1fr)); } .core-tile { padding:10px 2px 8px; } .core-tile small { font-size:11px; } .core-tile-badge { top:2px; right:3px; font-size:9px; } .core-detail { padding:18px; } .core-lines { grid-template-columns:minmax(0,1fr); } .core-box { flex-direction:column; align-items:stretch; } }
+/* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
+.mkt-up { color:#e8746b; }
+.mkt-down { color:#6fa8e6; }
+.mkt-open { padding:22px; display:grid; gap:12px; margin:14px 0; }
+.mkt-open button { justify-self:start; }
+.mkt-rules { margin:0; padding-left:18px; display:grid; gap:6px; color:#a8bdb6; font-size:13px; line-height:1.6; }
+.mkt-stop { display:flex; align-items:flex-start; gap:10px; padding:12px 18px; margin:14px 0; font-size:13px; line-height:1.6; color:#f3d2cd; border-color:#7a3b36; background:rgba(122,59,54,.18); }
+.mkt-stop svg { flex:none; color:#e8746b; margin-top:2px; }
+.mkt-stop b { color:#ffb4ab; margin-right:4px; }
+.mkt-rumor { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
+.mkt-rumor b { color:var(--gold); margin-right:4px; }
+.mkt-rumor small { margin-left:auto; color:var(--muted); }
+.mkt-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.mkt-price { display:grid; justify-items:end; gap:2px; }
+.mkt-price strong { font-size:20px; font-variant-numeric:tabular-nums; }
+.mkt-price small { font-size:12px; font-variant-numeric:tabular-nums; }
+.mkt-spark { width:100%; height:56px; display:block; color:var(--muted); }
+.mkt-spark-empty { display:grid; place-items:center; font-size:12px; border:1px dashed var(--border); border-radius:var(--radius-md); }
+.mkt-hold { font-size:13px; margin:0; font-variant-numeric:tabular-nums; }
+.mkt-qty { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.mkt-qty label { display:flex; align-items:center; gap:8px; font-size:13px; color:#a8bdb6; }
+.mkt-qty input { width:96px; min-height:32px; padding:4px 10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--background); color:var(--foreground); font-variant-numeric:tabular-nums; }
+.mkt-qty button { min-height:32px; }
+.mkt-journal { padding:18px 22px; margin:14px 0; display:grid; gap:10px; }
+.mkt-journal header { display:flex; justify-content:space-between; align-items:center; }
+.mkt-journal h3 { margin:0; font-size:15px; }
+.mkt-journal ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:13px; max-height:260px; overflow:auto; }
+.mkt-journal li span { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
+.mkt-journal p { margin:0; font-size:12px; }
+@media(max-width:767px){ .mkt-rumor { padding:12px 14px; } .mkt-rumor small { margin-left:0; flex-basis:100%; } .mkt-journal { padding:16px 14px; } }
+/* v3.215 스토리 탭(모험 일지): 진행 줄 · 장 제목 · 장면 카드 · 잠긴 장면 */
+.story-progress { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:14px 18px; margin:14px 0; font-size:14px; color:#a8bdb6; }
+.story-progress svg { color:var(--gold); flex:none; }
+.story-progress b { color:var(--foreground); font-size:16px; }
+.story-new { font-style:normal; color:var(--gold); margin-left:6px; }
+.story-bar { flex:1 1 160px; height:6px; border-radius:999px; background:var(--border); overflow:hidden; }
+.story-bar i { display:block; height:100%; background:var(--gold); border-radius:inherit; }
+.story-part { margin:26px 0 6px; }
+.story-part-title { display:flex; align-items:baseline; gap:10px; margin:0 0 4px; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:20px; letter-spacing:.02em; }
+.story-part-title span { color:var(--gold); }
+.story-part-title small { margin-left:auto; font-size:12px; color:var(--muted); font-weight:400; }
+.story-chapter { margin:14px 0 4px; }
+.story-chapter>summary { padding:8px 4px; border-radius:var(--radius-md); }
+.story-chapter>summary:hover { background:rgba(212,181,121,.06); }
+.story-chapter>summary h2 { font-size:16px; color:var(--gold); margin:0; }
+.story-chapter>summary .section-title { display:flex; align-items:baseline; gap:10px; }
+.story-chapter>summary .section-title>span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
+.story-list { display:grid; gap:10px; }
+.story-scene { padding:18px 22px; display:grid; gap:8px; }
+.story-scene-head { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
+.story-scene-head::-webkit-details-marker { display:none; }
+.story-scene-head h3 { flex:1; min-width:0; }
+.story-scene-chevron { flex:none; color:#8fa6a4; transition:transform .15s ease; }
+details.story-scene:not([open]) .story-scene-chevron { transform:rotate(-90deg); }
+details.story-scene { padding:14px 20px; }
+details.story-scene[open] { padding-bottom:18px; }
+details.story-scene:not([open]):hover { border-color:#3a5258; }
+.story-scene-body { display:grid; gap:8px; margin-top:10px; }
+.story-scene h3 { margin:0; font-size:16px; display:flex; align-items:center; gap:8px; }
+.story-scene time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.story-scene p { margin:0; font-size:14px; line-height:1.8; color:#cfdcd8; word-break:keep-all; }
+.story-badge { font-size:10px; letter-spacing:.08em; padding:2px 6px; border-radius:var(--radius-sm); background:var(--gold); color:#1a1408; }
+.story-locked { display:flex; align-items:center; gap:8px; padding:12px 18px; font-size:13px; color:var(--muted); border-style:dashed; }
+@media(max-width:767px){ .story-scene { padding:16px 14px; } .story-progress { padding:12px 14px; } }
+/* v3.216 스토리 삽화: 장 배너(가로 4:1, 그림 없으면 SVG 풍경) · 장면 그림(파일이 있을 때만, 16:9) */
+.story-banner { position:relative; margin:0 0 12px; aspect-ratio:4 / 1; max-height:230px; width:100%; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:#0b1418; }
+.story-banner svg, .story-banner img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.story-banner::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 55%, rgba(14,25,31,.55)); pointer-events:none; }
+.story-banner.dim { filter:grayscale(.75) brightness(.55); }
+@media(max-width:767px){ .story-scene-art { aspect-ratio:12 / 5; } }
+.story-scene-art { position:relative; margin:2px 0 4px; aspect-ratio:3 / 1; width:100%; max-width:720px; border-radius:var(--radius-md); overflow:hidden; background:#0b1418; }
+.story-scene-art svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.story-banner img, .story-scene-art img { opacity:0; transition:opacity .3s ease; }
+.story-banner img.ready, .story-scene-art img.ready { opacity:1; }
+.story-scene-art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+@media(max-width:767px){ .story-banner { aspect-ratio:3 / 1; } }
+
+/* v3.220 전직 화면 세계 목차(책). 왼쪽 표지 장 · 오른쪽 목차 장, 좁은 화면에서는 위아래로 쌓습니다. */
+.job-world-book { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:0; padding:0; overflow:hidden; border-radius:12px; background:linear-gradient(90deg,#1a2a2f 0%,#15232a 48%,#0d171b 50%,#15232a 52%,#1a2a2f 100%); box-shadow:0 10px 26px #0006, inset 0 0 0 1px #3a4f50; }
+.world-book-page { margin:0; padding:26px 24px; display:flex; flex-direction:column; gap:10px; min-width:0; }
+.world-book-cover { align-items:flex-start; justify-content:center; color:var(--gold); border-right:1px solid #0a1215; }
+.world-book-cover small { color:#8fab9f; letter-spacing:.12em; font-size:11px; }
+.world-book-cover h2 { margin:0; font-size:24px; color:#efe6cf; }
+.world-book-cover p { margin:0; font-size:13px; line-height:1.8; color:#a8bcb3; }
+.world-book-index { list-style:none; border-left:1px solid #2c3d41; }
+.world-chapter { width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; padding:12px 14px 12px 16px; border:1px solid #34494c; border-left:4px solid var(--world-color,#5a6b6e); border-radius:9px; background:#122126; color:#dfe7e3; }
+.world-chapter:not(.locked):hover { background:#18292e; border-color:var(--world-color); }
+.world-chapter.current { box-shadow:inset 0 0 0 1px var(--world-color); }
+.world-chapter-no { font-size:11px; letter-spacing:.08em; color:var(--world-color,#7f988f); }
+.world-chapter strong { font-size:16px; display:flex; align-items:center; gap:5px; }
+.world-chapter small { font-size:12px; color:#95aca5; }
+.world-chapter em { font-style:normal; font-size:12px; color:#b6e0cc; }
+.world-chapter.locked { opacity:.55; border-style:dashed; border-left-style:solid; cursor:not-allowed; }
+.job-world-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.job-world-name { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--world-color); }
+@media (max-width:767px) {
+    .job-world-book { grid-template-columns:1fr; background:#15232a; }
+    .world-book-cover { border-right:0; border-bottom:1px solid #0a1215; padding:20px 16px; }
+    .world-book-index { border-left:0; padding:16px; }
+}
+
+/* v3.276 물건도감 칠흑 카드의 천장 표시 */
+.onyx-pity { display:grid; gap:4px; margin:4px 0 8px; font-size:12px; color:#c9dbd2; }
+.onyx-pity b { color:#ffd76a; font-variant-numeric:tabular-nums; }
+.onyx-pity small { color:#8fa9a1; font-size:11px; }
+.onyx-pity.done { color:#ffd76a; }

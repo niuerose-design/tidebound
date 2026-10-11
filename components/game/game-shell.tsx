@@ -1,43 +1,65 @@
 'use client';
-import { MasteryBoard } from './mastery-board';
 import { useFxGlowClass } from './skill-fx-setting';
 import type { State } from '@/game/types';
-import { Skills } from './skills-panel';
-import { Classes } from './classes-panel';
-import { VoyageLog } from './guidance-panels';
+import { noviceMenuLocked, noviceMarketLocked } from '@/game/systems/guidance';
 import { useEffect, useState } from 'react';
-import { BarChart3, BookOpen, Check, ChevronRight, HelpCircle, Map, RefreshCw, ShoppingBag, Target, Trophy, Users, Zap, Swords, Leaf, Flame, Terminal } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { BarChart3, BookOpen, Check, ChevronRight, HelpCircle, Map, RefreshCw, ShoppingBag, Target, Trophy, Users, Zap, Swords, Leaf, Flame, Terminal, ChartCandlestick } from 'lucide-react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Toaster, toast } from 'sonner';
 import { useGame } from './use-game';
-import { Guild } from './guild-panel';
-import { SlotsPanel } from './slots-panel';
-import { Hacker } from './hacker-panel';
-import { Guide } from './guide-panel';
-import { UpdateLog } from './update-log-panel';
 import { LoginScreen } from './login-screen';
-import { Inventory } from './inventory-panel';
-import { Shop } from './shop-panel';
-import { Rebirth } from './rebirth-panel';
-import { Stages } from './stages-panel';
-import { Dungeons } from './dungeons-panel';
-import { Altar } from './altar-panel';
-import { Rankings } from './rankings-panel';
-import { Character } from './character-panel';
-import { Cosmetics } from './cosmetics-panel';
-import { Collection } from './collection-panel';
-import { Stats } from './stats-panel';
 import { SettingsDialog } from './settings-dialog';
 import { Navigation } from './navigation';
 import { ViewTabs } from './view-tabs';
-import { Crew } from './crew-panel';
 import { BattleView } from './battle-view';
 import { useFeedLiveRates } from './live-rates';
 import { useFeedBattleRecords } from './battle-records';
-import { BattleRecordsPanel } from './battle-records-panel';
 import { MobileTabBar } from './mobile-tab-bar';
 import { slotUnlocked } from '@/game/data/account';
 import { isHackerJob } from '@/game/data/hacker';
+/**
+ * v3.228 화면 코드 나누기: 첫 화면(자동 사냥)에 필요 없는 메뉴 화면은 처음 열 때 따로 받습니다(첫 로딩 · 모바일 파싱 시간 단축).
+ * 첫 동기화 뒤 브라우저가 한가할 때 미리 받아 두어(preloadPanels), 메뉴를 처음 열 때도 거의 기다리지 않습니다.
+ */
+const panelLoaders: (() => Promise<unknown>)[] = [];
+function lazyPanel<P>(load: () => Promise<React.ComponentType<P>>) {
+    panelLoaders.push(load);
+    return dynamic(load, { loading: () => <div className="panel-loading" aria-busy="true"/> });
+}
+let preloaded = false;
+function preloadPanels() {
+    if (preloaded) return;
+    preloaded = true;
+    // Safari에는 requestIdleCallback이 없어 잠깐 뒤로 미룹니다.
+    const idle = (fn: () => void) => typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
+    idle(() => { for (const load of panelLoaders) void load().catch(() => { preloaded = false; }); });
+}
+const MasteryBoard = lazyPanel(() => import('./mastery-board').then(m => m.MasteryBoard));
+const Skills = lazyPanel(() => import('./skills-panel').then(m => m.Skills));
+const Classes = lazyPanel(() => import('./classes-panel').then(m => m.Classes));
+const VoyageLog = lazyPanel(() => import('./guidance-panels').then(m => m.VoyageLog));
+const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
+const SlotsPanel = lazyPanel(() => import('./slots-panel').then(m => m.SlotsPanel));
+const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
+const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
+const UpdateLog = lazyPanel(() => import('./update-log-panel').then(m => m.UpdateLog));
+const Inventory = lazyPanel(() => import('./inventory-panel').then(m => m.Inventory));
+const Shop = lazyPanel(() => import('./shop-panel').then(m => m.Shop));
+const DungeonShop = lazyPanel(() => import('./dungeon-shop-panel').then(m => m.DungeonShop));
+const MarketPanel = lazyPanel(() => import('./market-panel').then(m => m.MarketPanel));
+const StoryPanel = lazyPanel(() => import('./story-panel').then(m => m.StoryPanel));
+const Rebirth = lazyPanel(() => import('./rebirth-panel').then(m => m.Rebirth));
+const Stages = lazyPanel(() => import('./stages-panel').then(m => m.Stages));
+const Dungeons = lazyPanel(() => import('./dungeons-panel').then(m => m.Dungeons));
+const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
+const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
+const Character = lazyPanel(() => import('./character-panel').then(m => m.Character));
+const Cosmetics = lazyPanel(() => import('./cosmetics-panel').then(m => m.Cosmetics));
+const Collection = lazyPanel(() => import('./collection-panel').then(m => m.Collection));
+const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
+const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
+const BattleRecordsPanel = lazyPanel(() => import('./battle-records-panel').then(m => m.BattleRecordsPanel));
 type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: number }>; unlock?: (s: State) => string | null; views?: string[]; /** v3.18 조건을 채우기 전에는 메뉴에서 아예 숨깁니다(해킹). */ hidden?: (s: State) => boolean };
 /** 합친 화면의 탭별 제목(상단 빵부스러기). 없으면 메뉴 이름을 씁니다. */
 const VIEW_TITLES: Record<string, string> = { hacker: '해킹', slots: '분신', stats: '통계', records: '전투 기록', shop: '상점', inventory: '장비 보관함', character: '능력치', cosmetics: '치장', stages: '사냥터', dungeons: '던전 탐험', altar: '제단', skills: '스킬', classes: '전직', mastery: '숙련 진행', book: '몬스터 도감', voyage: '목표 · 업적', help: '도움말', updates: '업데이트 내역' };
@@ -47,8 +69,9 @@ const VIEW_TITLES: Record<string, string> = { hacker: '해킹', slots: '분신',
  * 숨긴 화면에 머물러 있었다면 자동 사냥(해커는 브루트포스) 화면을 보여 줍니다. 한 화면이 여러 메뉴에 걸려 있으면 하나라도 보이면 열립니다.
  */
 const hackerOnly = (s: State) => isHackerJob(s.job);
+// v3.242 입문 메뉴: 첫 생에는 아직 쓸 수 없는 메뉴를 숨기고 Lv.10 · 첫 던전 정복에 엽니다(game/systems/guidance.ts).
 export const navHidden = (s: State | null | undefined, view: string) => { if (!s) return false; const owners = NAV.flatMap(g => g.items).filter(i => i.id === view || i.views?.includes(view)); return owners.length > 0 && owners.every(i => i.hidden?.(s)); };
-export const NAV: { label: string; items: NavItem[] }[] = [{ label: '모험', items: [{ id: 'battle', name: '자동 사냥', Icon: Swords }, { id: 'stages', name: '사냥터·던전', Icon: Map, views: ['stages', 'dungeons'], hidden: hackerOnly }, { id: 'altar', name: '제단', Icon: Flame, views: ['altar'] }, { id: 'hacker', name: '해킹', Icon: Terminal, views: ['hacker', 'crew'], hidden: (s: State) => !isHackerJob(s.job) && !s.hacker?.crew }] }, { label: '모험가', items: [{ id: 'character', name: '능력치 · 치장', Icon: Target, views: ['character', 'cosmetics'] }, { id: 'shop', name: '상점 · 장비 보관함', Icon: ShoppingBag, views: ['shop', 'inventory'], hidden: hackerOnly }, { id: 'skills', name: '스킬 · 전직', Icon: Zap, views: ['skills', 'classes', 'mastery'] }, { id: 'rebirth', name: '환생 · 분신', Icon: RefreshCw, views: ['rebirth', 'slots'], hidden: hackerOnly }, { id: 'slots', name: '분신', Icon: RefreshCw, views: ['slots'], hidden: (s: State) => !isHackerJob(s.job) }] }, { label: '기록과 명예', items: [{ id: 'book', name: '도감 · 업적', Icon: BookOpen, views: ['book', 'voyage'] }, { id: 'stats', name: '통계 · 기록', Icon: BarChart3, views: ['stats', 'records'] }, { id: 'guild', name: '길드', Icon: Users, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: hackerOnly }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10' }, { id: 'help', name: '도움말 · 업데이트', Icon: HelpCircle, views: ['help', 'updates'] }] }];
+export const NAV: { label: string; items: NavItem[] }[] = [{ label: '모험', items: [{ id: 'battle', name: '자동 사냥', Icon: Swords }, { id: 'stages', name: '사냥터·던전', Icon: Map, views: ['stages', 'dungeons'], hidden: hackerOnly }, { id: 'altar', name: '제단', Icon: Flame, views: ['altar'], hidden: noviceMenuLocked }, { id: 'hacker', name: '해킹', Icon: Terminal, views: ['hacker', 'crew'], hidden: (s: State) => !isHackerJob(s.job) && !s.hacker?.crew }] }, { label: '성장', items: [{ id: 'character', name: '능력치 · 치장', Icon: Target, views: ['character', 'cosmetics'] }, { id: 'shop', name: '상점 · 장비 보관함', Icon: ShoppingBag, views: ['shop', 'dungeonShop', 'inventory'], hidden: hackerOnly }, { id: 'market', name: '증권거래소', Icon: ChartCandlestick, views: ['market'], hidden: noviceMarketLocked }, { id: 'skills', name: '스킬 · 전직', Icon: Zap, views: ['skills', 'classes', 'mastery'] }, { id: 'rebirth', name: '환생 · 분신', Icon: RefreshCw, views: ['rebirth', 'slots'], hidden: (s: State) => hackerOnly(s) || noviceMenuLocked(s) }, { id: 'slots', name: '분신', Icon: RefreshCw, views: ['slots'], hidden: (s: State) => !isHackerJob(s.job) }] }, { label: '기록과 명예', items: [{ id: 'book', name: '도감 · 업적 · 스토리', Icon: BookOpen, views: ['book', 'voyage', 'story'] }, { id: 'stats', name: '통계 · 기록', Icon: BarChart3, views: ['stats', 'records'], hidden: noviceMenuLocked }, { id: 'guild', name: '길드', Icon: Users, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: (s: State) => hackerOnly(s) || noviceMenuLocked(s) }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: noviceMenuLocked }, { id: 'help', name: '도움말 · 업데이트', Icon: HelpCircle, views: ['help', 'updates'] }] }];
 
 export default function GameShell() {
     // v3.171 섬광이 꺼진 기기에서는 <html>에 fx-no-glow를 붙입니다(설정 창의 '섬광 효과').
@@ -76,8 +99,11 @@ export default function GameShell() {
         if (error && s)
             toast.error(error);
     }, [error, s]);
+    // v3.228 첫 상태를 받은 뒤 나머지 화면 코드를 한가할 때 미리 받습니다.
+    useEffect(() => { if (s) preloadPanels(); }, [s]);
     const props = s ? { s, send, busy } : null, onLogout = game.logout;
-    return <SidebarProvider style={{ '--sidebar-width': '232px' } as React.CSSProperties}>
+    // v3.218 사이드바 폭도 화면 배율(--sidebar-zoom, shell.css)을 따라 커집니다.
+    return <SidebarProvider style={{ '--sidebar-width': 'calc(232px * var(--sidebar-zoom, 1))' } as React.CSSProperties}>
     <Toaster theme="dark" position="top-center" mobileOffset={{ top: 64 }}/>
     <Navigation view={view} setView={setView} s={s} onLogout={onLogout}/>
     <div className="app-body">
@@ -91,13 +117,8 @@ export default function GameShell() {
         <button className="primary" onClick={() => send({ type: 'sync' })}>다시 연결</button></div> : <>
         <div className={`workspace ${view === 'battle' ? 'battle-workspace' : ''}`}>
         <main className="main-content">{error && <div className="error-box">{error}<button className="text-button" onClick={() => send({ type: 'sync' })}>다시 시도</button>
-            </div>}{(view === 'rebirth' || view === 'slots') && !(s && isHackerJob(s.job)) && <ViewTabs view={view} setView={setView} tabs={[['rebirth', '환생'], ['slots', slotsOpen ? '분신' : '분신 (환생 1회)']]}/>}{/* v3.51 상점과 장비 보관함은 사이드 메뉴 한 칸, 위쪽 탭으로 오갑니다. */}{(view === 'shop' || view === 'inventory') && <ViewTabs view={view} setView={setView} tabs={[['shop', '상점'], ['inventory', '장비 보관함']]}/>}{view === 'slots' && (slotsOpen ? <SlotsPanel {...props!} onSwitchSlot={game.switchSlot} vault={game.vault} vaultError={game.vaultError} loadVault={game.loadVault} vaultAct={game.vaultAct}/> : <section className="panel"><p className="tab-intro">분신(계정의 다른 모험가)은 첫 환생 뒤에 열립니다. 환생 탭에서 다음 모험을 준비하세요.</p></section>)}{(view === 'stats' || view === 'records') && <><ViewTabs view={view} setView={setView} tabs={[['stats', '통계'], ['records', '전투 기록']]}/>{view === 'stats' ? <Stats s={props!.s}/> : <BattleRecordsPanel playerName={props!.s.name}/>}</>}{(view === 'hacker' || view === 'crew') && <><ViewTabs view={view} setView={setView} tabs={[['hacker', '해킹'], ['crew', '조직']]}/>{view === 'hacker' ? <Hacker {...props!} setView={setView}/> : <Crew {...props!} info={game.crew} error={game.crewError} load={game.loadCrew} act={game.crewAct}/>}</>}{view === 'guild' && <Guild {...props!} info={game.guild} error={game.guildError} load={game.loadGuild} act={game.guildAct}/>}{(view === 'help' || view === 'updates') && <><ViewTabs view={view} setView={setView} tabs={[['help', '도움말'], ['updates', '업데이트 내역']]}/>{view === 'help' ? <Guide s={props?.s}/> : <UpdateLog/>}</>}{view === 'battle' && <BattleView {...props!} frames={game.frames} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onSwitchSlot={game.switchSlot}/>}{(view === 'character' || view === 'cosmetics') && <><ViewTabs view={view} setView={setView} tabs={[['character', '능력치'], ['cosmetics', '치장']]}/>{view === 'character' ? <Character {...props!}/> : <Cosmetics {...props!}/>}</>}{(view === 'stages' || view === 'dungeons' || view === 'altar') && <><ViewTabs view={view} setView={setView} tabs={[['stages', '사냥터'], ['dungeons', '던전 탐험'], ['altar', '제단']]}/>{view === 'stages' ? <Stages {...props!}/> : view === 'dungeons' ? <Dungeons {...props!}/> : <Altar {...props!} info={game.altar} error={game.altarError} load={game.loadAltar} act={game.altarAct} result={game.altarResult} clearResult={() => game.setAltarResult(null)}/>}</>}{view === 'shop' && <Shop {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{(view === 'skills' || view === 'classes' || view === 'mastery') && <><ViewTabs view={view} setView={setView} tabs={[['skills', '스킬'], ['classes', '전직'], ['mastery', '숙련 진행']]}/>{view === 'skills' ? <Skills {...props!}/> : view === 'classes' ? <Classes {...props!}/> : <MasteryBoard s={props!.s} setView={setView}/>}</>}{view === 'rebirth' && <Rebirth {...props!}/>}{(view === 'book' || view === 'voyage') && <><ViewTabs view={view} setView={setView} tabs={[['book', '몬스터 도감'], ['voyage', '목표 · 업적']]}/>{view === 'book' ? <Collection {...props!}/> : <VoyageLog {...props!}/>}</>}{view === 'ranking' && <Rankings {...props!} season={game.rankSeason} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} abyss={game.abyss} loadAbyss={game.loadAbyss} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
+            </div>}{(view === 'rebirth' || view === 'slots') && !(s && isHackerJob(s.job)) && <ViewTabs view={view} setView={setView} tabs={[['rebirth', '환생'], ['slots', slotsOpen ? '분신' : '분신 (환생 1회)']]}/>}{/* v3.51 상점과 장비 보관함은 사이드 메뉴 한 칸, 위쪽 탭으로 오갑니다. */}{(view === 'shop' || view === 'dungeonShop' || view === 'inventory') && <ViewTabs view={view} setView={setView} tabs={[['shop', '상점'], ['dungeonShop', '던전 주화 상점'], ['inventory', '장비 보관함']]}/>}{view === 'slots' && (slotsOpen ? <SlotsPanel {...props!} onSwitchSlot={game.switchSlot} vault={game.vault} vaultError={game.vaultError} loadVault={game.loadVault} vaultAct={game.vaultAct}/> : <section className="panel"><p className="tab-intro">분신(계정의 다른 모험가)은 첫 환생 뒤에 열립니다. 환생 탭에서 다음 모험을 준비하세요.</p></section>)}{(view === 'stats' || view === 'records') && <><ViewTabs view={view} setView={setView} tabs={[['stats', '통계'], ['records', '전투 기록']]}/>{view === 'stats' ? <Stats s={props!.s}/> : <BattleRecordsPanel playerName={props!.s.name}/>}</>}{(view === 'hacker' || view === 'crew') && <><ViewTabs view={view} setView={setView} tabs={[['hacker', '해킹'], ['crew', '조직']]}/>{view === 'hacker' ? <Hacker {...props!} setView={setView}/> : <Crew {...props!} info={game.crew} error={game.crewError} load={game.loadCrew} act={game.crewAct}/>}</>}{view === 'guild' && <Guild {...props!} info={game.guild} error={game.guildError} load={game.loadGuild} act={game.guildAct}/>}{(view === 'help' || view === 'updates') && <><ViewTabs view={view} setView={setView} tabs={[['help', '도움말'], ['updates', '업데이트 내역']]}/>{view === 'help' ? <Guide s={props?.s}/> : <UpdateLog/>}</>}{view === 'battle' && <BattleView {...props!} frames={game.frames} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} setView={setView} onSwitchSlot={game.switchSlot}/>}{(view === 'character' || view === 'cosmetics') && <><ViewTabs view={view} setView={setView} tabs={[['character', '능력치'], ['cosmetics', '치장']]}/>{view === 'character' ? <Character {...props!}/> : <Cosmetics {...props!}/>}</>}{(view === 'stages' || view === 'dungeons' || view === 'altar') && <><ViewTabs view={view} setView={setView} tabs={[['stages', '사냥터'], ['dungeons', '던전 탐험'], ['altar', '제단']]}/>{view === 'stages' ? <Stages {...props!}/> : view === 'dungeons' ? <Dungeons {...props!} setView={setView}/> : <Altar {...props!} info={game.altar} error={game.altarError} load={game.loadAltar} act={game.altarAct} result={game.altarResult} clearResult={() => game.setAltarResult(null)}/>}</>}{view === 'shop' && <Shop {...props!}/>}{view === 'dungeonShop' && <DungeonShop {...props!}/>}{view === 'market' && <MarketPanel {...props!}/>}{view === 'inventory' && <Inventory {...props!}/>}{(view === 'skills' || view === 'classes' || view === 'mastery') && <><ViewTabs view={view} setView={setView} tabs={[['skills', '스킬'], ['classes', '전직'], ['mastery', '숙련 진행']]}/>{view === 'skills' ? <Skills {...props!}/> : view === 'classes' ? <Classes {...props!}/> : <MasteryBoard s={props!.s} setView={setView}/>}</>}{view === 'rebirth' && <Rebirth {...props!}/>}{(view === 'book' || view === 'voyage' || view === 'story') && <><ViewTabs view={view} setView={setView} tabs={[['book', '몬스터 도감'], ['voyage', '목표 · 업적'], ['story', '스토리']]}/>{view === 'book' ? <Collection {...props!}/> : view === 'voyage' ? <VoyageLog {...props!}/> : <StoryPanel s={props!.s}/>}</>}{view === 'ranking' && <Rankings {...props!} season={game.rankSeason} rows={game.rows} rankError={game.rankError} loadRanking={game.loadRanking} abyss={game.abyss} loadAbyss={game.loadAbyss} register={game.register} result={game.duel} setResult={game.setDuel}/>}</main></div>
         <MobileTabBar view={view} setView={setView} hacker={!!s && isHackerJob(s.job)}/>
-        <footer className="app-footer">
-        <span>판게아 RPG</span>
-        <span>행동력 없는 끝없는 모험 <Leaf size={14}/>
-        </span>
-        </footer>
         </>}</div>
     </SidebarProvider>;
 }

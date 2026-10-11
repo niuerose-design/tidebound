@@ -50,3 +50,26 @@ export function useFxGlowClass() {
     const on = useFxGlow();
     useEffect(() => { document.documentElement.classList.toggle('fx-no-glow', !on); return () => { document.documentElement.classList.remove('fx-no-glow'); }; }, [on]);
 }
+
+/**
+ * v3.263 몬스터 쪽 보상 알림 켜기/끄기(이 기기에만 저장, 처음에는 켜짐). 켜져 있으면 처치 보상(경험치 · 골드 · 숙련 · 획득)이 몬스터 자리에 떠오르고,
+ * 캐릭터 옆 전투 기록에는 전투 줄만 남깁니다. 끄거나 움직임 줄이기가 켜져 있으면 보상 알림 대신 전투 기록에 보상 줄이 다시 나옵니다.
+ */
+const LOOT_KEY = 'tidebound.sceneLoot';
+const LOOT_EVENT = 'tidebound:sceneLoot';
+const REDUCED_QUERY = '(prefers-reduced-motion: reduce)';
+const lootSetting = () => { try { return localStorage.getItem(LOOT_KEY) !== 'off'; } catch { return true; } };
+const lootSnapshot = () => lootSetting() && !window.matchMedia?.(REDUCED_QUERY).matches;
+function subscribeLoot(fn: () => void) {
+    const media = window.matchMedia?.(REDUCED_QUERY);
+    window.addEventListener('storage', fn); window.addEventListener(LOOT_EVENT, fn); media?.addEventListener?.('change', fn);
+    return () => { window.removeEventListener('storage', fn); window.removeEventListener(LOOT_EVENT, fn); media?.removeEventListener?.('change', fn); };
+}
+/** 설정 화면용: 이 기기의 저장값(움직임 줄이기와 무관). */
+export function useSceneLootSetting() { return useSyncExternalStore(subscribeLoot, lootSetting, () => true); }
+/** 장면에 보상 알림이 실제로 뜨는지(설정이 켜져 있고 움직임 줄이기가 아님). */
+export function useSceneLoot() { return useSyncExternalStore(subscribeLoot, lootSnapshot, () => true); }
+export function setSceneLoot(on: boolean) {
+    try { localStorage.setItem(LOOT_KEY, on ? 'on' : 'off'); } catch { /* 저장소 없음: 이번 화면에서만 */ }
+    window.dispatchEvent(new Event(LOOT_EVENT));
+}

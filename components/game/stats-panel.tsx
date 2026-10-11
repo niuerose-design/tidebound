@@ -23,7 +23,6 @@ export function Stats({ s }: { s: State }) {
     const research = MONSTERS.reduce((a, f) => a + bookStage(s, f.id), 0);
     const variants = Object.values(s.variantBook || {}).reduce((a, row) => a + sum(row as Record<string, number>), 0);
     const clears = PLAIN_DUNGEONS.map(d => [d.name, s.clears?.[d.id] || 0] as const);
-    const rg = s.randomGameStats;
     const duels = s.wins + s.losses;
     return <>
         <Heading eyebrow="STATISTICS" title="통계" description="지금까지 쌓은 모험의 기록입니다."/>
@@ -45,8 +44,7 @@ export function Stats({ s }: { s: State }) {
         <Block title="던전" rows={[
             ['던전 정복 합계', `${format(clears.reduce((a, [, n]) => a + n, 0))}회`],
             ['무릉도장 최고 층', `${format(s.abyssBest || 0)}층`],
-            ['랜덤게임 최고 웨이브', rg ? `${format(rg.best)}웨이브` : '기록 없음'],
-            ['랜덤게임 입장 · 받고 나감', rg ? `${format(rg.runs)}회 · ${format(rg.cashed)}회` : '기록 없음'],
+            ['LV1 모험가 최고 무릉 층', s.lv1AbyssBest ? `${format(s.lv1AbyssBest)}층` : '기록 없음'],
             ...clears.map(([name, n]) => [name, `${format(n)}회`] as Row),
         ]}/>
         <Block title="도감 · 변종" rows={[

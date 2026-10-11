@@ -40,7 +40,7 @@ export async function setSecrecy(on: boolean, now: number) {
 /** v3.44 실루엣: 계보 안 자리(차수·상위·계보)와 힌트만 남기고 이름·설명·조건·능력치는 뺍니다. */
 export const veil = (j: Job): Job => ({ id: j.id, name: '???', title: '', desc: '', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, tier: j.tier, level: 1, mastery: 0, requires: {}, role: '', tree: j.tree,
     ...(j.parent ? { parent: j.parent } : {}), ...(j.lineage ? { lineage: j.lineage } : {}), hidden: true, ...(j.hint ? { hint: j.hint } : {}), masteryTarget: 1, masteryBoost: 0, veiled: true });
-const veilLineage = (l: Lineage): Lineage => ({ id: l.id, name: '???', tree: l.tree, summary: '아직 드러나지 않은 계보입니다.' });
+const veilLineage = (l: Lineage): Lineage => ({ id: l.id, name: '???', tree: l.tree, summary: '아직 드러나지 않은 계보입니다.', ...(l.world ? { world: l.world } : {}) });
 /**
  * 모험가마다 화면에 보낼 카탈로그. v3.62 숨은 조건 만족 여부(옛 문 상태) · 드러난 비밀 직업 · 비밀 직업(드러난 것만 전체, 나머지 실루엣)·계보.
  * v3.47 비밀 직업의 스킬: 드러난 직업 것과 내가 배운·장착한 것(실루엣 직업의 스킬은 보내지 않음).

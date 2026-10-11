@@ -1,5 +1,5 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAbyssBoard, syncAccount } from '@/game/server/store';
-import { guildInfo, createGuild, joinGuild, leaveGuild, kickMember, renameGuild, donate, claimGoal, syncGuild } from '@/game/server/guild';
+import { guildInfo, createGuild, joinGuild, leaveGuild, kickMember, renameGuild, claimGoal, syncGuild } from '@/game/server/guild';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 /** v25.11 공유 길드 정보: 내 길드(목표·길드원)와 이번 주 길드 기록판. */
@@ -10,7 +10,7 @@ export async function GET(req: Request) { try {
 catch (e) {
     return failure(e);
 } }
-/** { action: 'create' name | 'join' code | 'leave' | 'kick' target | 'rename' name | 'donate' amount | 'claim' goal }. 상태를 바꾸는 행동은 세이브 저장과 함께 처리합니다. */
+/** { action: 'create' name | 'join' code | 'leave' | 'kick' target | 'rename' name | 'claim' goal (v3.241 'donate' 삭제) }. 상태를 바꾸는 행동은 세이브 저장과 함께 처리합니다. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     const { account, slot, id } = await session(req), body = await readJson(req);
@@ -27,7 +27,6 @@ export async function POST(req: Request) { try {
             else if (action === 'join') await joinGuild(account, s, body.code, now);
             else if (action === 'leave') await leaveGuild(account, s);
             else if (action === 'rename') await renameGuild(account, s, body.name, now);
-            else if (action === 'donate') await donate(account, s, body.amount, now);
             else if (action === 'claim') result = await claimGoal(account, s, body.goal, now);
             else throw new ApiError('올바르지 않은 요청입니다.');
         }

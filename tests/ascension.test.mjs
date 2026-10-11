@@ -4,7 +4,7 @@ import { newState, act, advance, rebirthLevel, expMultiplier, JOBS, assert, test
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 const Asc = await L.load('data/ascension'), Mi = await L.load('data/mimic'), Lc = await L.load('systems/actions/lifecycle');
 const P = await L.load('systems/progression'), LT = await L.load('data/long-term'), V = await L.load('systems/vows'), Sp = await L.load('data/sprout');
-const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy'), RG = await L.load('systems/random-game');
+const E = await L.load('systems/encounter'), Ac = await L.load('data/account'), Ec = await L.load('data/economy');
 const W = await L.load('data/world'), AmMod = await L.load('systems/automation'), RpMod = await L.load('systems/research-plan');
 const { skillById } = await L.load('data/skills'), Ac2 = await L.load('data/achievements');
 const SKILL = id => skillById(id);
@@ -35,7 +35,8 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     s.skillPractice = { hook: hook + 50_000 }; s.learned = { hook: 4 }; s.skillSpent = { hook: 3 }; s.limitBreaks = { hook: 2 };
     s.achievements = { 'rebirths:1': 1, 'rebirths:3': 1 }; s.achievementClaims = { 'rebirths:1': true, 'rebirths:3': true };
     s.rank = { exp: 12345, perks: { drill: 2 } }; s.book = { slime: 50 }; s.abyssBest = 40; s.abyssMilestones = [10, 20]; s.kills = 777;
-    s.inventory = [{ id: 'x', name: 'x', slot: 'rod', rarity: 3, power: 10, level: 1, relic: 'memoryRod' }];
+    s.inventory = [{ id: 'x', name: 'x', slot: 'rod', rarity: 3, power: 10, level: 1, relic: 'memoryRod' }, { id: 'ox', name: 'ox', slot: 'charm', rarity: 6, power: 600, level: 90, onyx: 'onyxLucid', onyxRank: 2, enhance: 15 }];
+    s.equipment.charm = { id: 'oxw', name: 'oxw', slot: 'charm', rarity: 6, power: 600, level: 90, onyx: 'onyxDusk' };
     act(s, { type: 'ascend' }, 5000);
     assert.equal(s.ascension, 1); assert.equal(s.rebirths, 0); assert.equal(s.level, 1); assert.equal(s.job, 'fisher');
     assert.deepEqual(s.ascensionLog.map(x => [x.n, x.rebirths, x.abyssBest]), [[1, 100, 40]]);
@@ -44,8 +45,9 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
     assert.deepEqual(s.limitBreaks, {}, 'limit breaks reset'); assert.equal(s.refineBase.hook, hook + 50_000, 'refinement base moved');
     assert.equal(s.rank.exp, 12345); assert.ok(s.achievementClaims['rebirths:3'], 'achievements kept'); assert.equal(s.kills, 777, 'records kept');
     assert.deepEqual(s.book, {}, 'codex reset'); assert.equal(s.abyssBest, 0); assert.deepEqual(s.abyssMilestones, []); assert.equal(s.essence, 0); assert.equal(s.gold, 100, 'gold back to a new character'); assert.equal('skillSpecializations' in s, false, 'deleted content is not carried');
-    for (const key of ['vows', 'nextVows', 'variantBook', 'onyxBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
-    assert.equal(s.inventory.length, 0, 'relics reset too');
+    for (const key of ['vows', 'nextVows', 'variantBook', 'abyssWeek']) assert.equal(key in s, false, `${key} reset`);
+    assert.deepEqual(s.onyxBook, { onyxDusk: 1 }, 'v3.242 onyx kill record kept');
+    assert.deepEqual(s.inventory.map(i => i.id), ['ox'], 'relics reset, v3.242 onyx accessories kept'); assert.equal(s.equipment.charm?.id, 'oxw', 'worn onyx stays worn');
     // v3.154 승천 무료 지급 ‘자동 수령’이 승천 직후 새로 달성한 업적(승천 1회 등)의 보상까지 바로 받으므로, 받은 업적 합계(환급 1 + 3 + 자동 수령분)와 세계석이 같습니다.
     const refund = Lc.achievementRefund(s); assert.ok(refund.pearls >= 1 + 3); assert.equal(s.pearls, refund.pearls, 'achievement pearls refunded'); assert.ok(s.logs.some(l => l.text.includes('자동 수령 · 업적 보상')));
     assert.equal(s.permanent.attack || 0, 0, 'combat research reset'); assert.equal(s.permanent.messageBottle || 0, 0, 'lucky letter must be rebought');
@@ -56,6 +58,26 @@ test('v3.31 ascend: requirement steps, keeps mastery/achievements/rank/records, 
 });
 
 
+test('v3.211 extreme stages: 1억·2억·4억·7억·10억 → +2% final damage each on that skill; first break unlocks a permanent effect', async () => {
+    const C = await L.load('systems/combat');
+    assert.deepEqual(LT.EXTREME_STAGES, [1e8, 2e8, 4e8, 7e8, 1e9]); assert.equal(LT.EXTREME_FINAL_DAMAGE, .02);
+    const s = newState(0); s.learned.pierce = 1; s.permanent.limitBreak = 3; s.limitBreaks = { pierce: 3 };
+    for (const [practice, stage] of [[99_999_999, 0], [1e8, 1], [3e8, 2], [4e8, 3], [7e8, 4], [1e9, 5], [5e9, 5]]) { s.skillPractice.pierce = practice; assert.equal(P.extremeStage(s, 'pierce'), stage, String(practice)); }
+    s.limitBreaks.pierce = 2; assert.equal(P.extremeStage(s, 'pierce'), 0, 'needs all three limit breaks'); s.limitBreaks.pierce = 3;
+    assert.deepEqual(P.extremeFinalTable(s, ['pierce', 'hook']), { pierce: 1.1 }); assert.equal(P.extremeFinalTable(s, ['hook']), undefined);
+    // 전투: 그 스킬의 피해 숫자에 그대로 곱해지고(방어 경감이 곱셈), 연출이 열린 스킬이면 이벤트에 표시됩니다.
+    const base = { hp: 1e9, attack: 1e6, magic: 1e6, defense: 5e5, resist: 5e5, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1e6, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
+    const mk = extra => ({ name: 'A', stats: base, hp: 1e9, mana: 1e6, skills: ['pierce'], cooldowns: {}, stun: 0, effects: {}, ranks: { pierce: 1 }, mastery: {}, ...extra });
+    const foe = () => ({ name: 'F', foe: true, stats: base, hp: 1e9, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0 });
+    const e1 = [], e2 = []; C.strike(mk({}), foe(), () => 0, e1); C.strike(mk({ skillFinal: { pierce: 1.1 }, extremeFx: ['pierce'] }), foe(), () => 0, e2);
+    assert.equal(e1[0].skillId, 'pierce'); assert.ok(Math.abs(e2[0].hits[0].value / e1[0].hits[0].value - 1.1) < .01, 'main hit ×1.1 (rounding only)'); assert.equal(e2[0].extreme, true); assert.equal(e1[0].extreme, undefined);
+    // 첫 극한돌파: 연출 해금 기록 · 알림, 단계가 오르면 알림. 환생 · 승천해도 연출은 남습니다.
+    const t = newState(0); t.learned.pierce = 1; t.permanent.limitBreak = 3; t.limitBreaks = { pierce: 3 }; t.skillPractice.pierce = 1e8;
+    E.noteExtreme(t, 'pierce', 0); assert.deepEqual(t.extremeFx, { pierce: true }); assert.ok(t.logs.at(-1).text.includes('전용 연출'));
+    t.skillPractice.pierce = 2e8; E.noteExtreme(t, 'pierce', 1); assert.ok(t.logs.at(-1).text.includes('극한 2단계'));
+    const n = t.logs.length; E.noteExtreme(t, 'pierce', 2); assert.equal(t.logs.length, n, 'no repeat');
+    t.level = 60; act(t, { type: 'rebirth' }, 1000); assert.deepEqual(t.extremeFx, { pierce: true }, 'kept through rebirth');
+});
 test('v3.31 extreme-break and limit-break progress restart from the ascension base; growth levels stay', () => {
     const sk = skillById('hook'), last = P.masteryMilestonesFor(sk).at(-1);
     const s = { skillPractice: { hook: last + 40_000 }, refineBase: { hook: last + 40_000 } };
@@ -64,7 +86,7 @@ test('v3.31 extreme-break and limit-break progress restart from the ascension ba
     assert.equal(P.skillMasteryLevel(s.skillPractice.hook, P.masteryMilestonesFor(sk)), P.masteryMilestonesFor(sk).length, 'growth level kept');
 });
 
-test('v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; no effect yet, an honor achievement without reward', () => {
+test('v3.74 extreme break: active skills only, after all three limit breaks at 100M practice; an honor achievement without reward', () => {
     const sk = skillById('hook'), target = P.extremeBreakTarget(sk);
     assert.equal(target, 100_000_000, '1억 for every active skill'); assert.equal(P.extremeBreakTarget(skillById('pierce')), 100_000_000);
     assert.equal(P.extremeBreakTarget(skillById('axeArm')), null, 'passives have no extreme break');
@@ -73,20 +95,19 @@ test('v3.74 extreme break: active skills only, after all three limit breaks at 1
     s.limitBreaks.hook = 3; assert.equal(P.extremeBroken(s, 'hook'), true);
     s.skillPractice.hook = target - 1; assert.equal(P.extremeBroken(s, 'hook'), false);
     const { ACHIEVEMENTS } = Ac2, a = ACHIEVEMENTS.find(x => x.id === 'extremeBreak');
-    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('운영자에게 문의해주세요')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
+    assert.ok(a && a.honor && !Object.keys(a.reward).length && a.desc.includes('전용 연출')); s.skillPractice.hook = target; assert.equal(a.progress(s), 1);
     const j = JOBS.find(x => x.id === 'strTraining1');
     assert.ok(P.jobRequirements(newState(0), j).some(r => r.label.endsWith('숙련 1,000,000')), 'parent mastery shown as 1,000,000');
 });
 
-test('v3.31 ascended effects: no sprout, ×2 early exp, vow and random-game bonus ×1.2 per ascension, mastery ×(1+n)', () => {
+test('v3.31 ascended effects: no sprout, ×2 early exp, vow bonus ×1.2 per ascension, mastery ×(1+n)', () => {
     const fresh = newState(0), asc = { ...newState(0), ascension: 1 };
     assert.equal(Sp.sproutCount(fresh), 0); assert.equal(Sp.sproutCount(asc), Infinity);
     assert.ok(Math.abs(expMultiplier(asc) / expMultiplier(fresh) - Asc.ASCENSION.earlyExp / Sp.sproutExp(0)) < 1e-9, 'sprout ×3 replaced by ×2');
     asc.rebirths = 10; assert.equal(Asc.ascensionEarlyExp(asc), 1, 'early boost ends at 10 rebirths');
     assert.equal(Sp.deathRecoveryTurns(asc) > Sp.SPROUT.recoveryTurns, true, 'no sprout recovery help');
-    const vow = { permanent: { vowRough: 3, vowAnchor: 3 }, vows: { rough: 3 } };
+    const vow = { permanent: { vowRough: 3 }, vows: { rough: 3 } };
     assert.equal(V.roughReward(vow, 30), 4); assert.equal(V.roughReward({ ...vow, ascension: 5 }, 30), 7, '×4 → ×7 at five ascensions');
-    assert.equal(RG.randomGamePayout(vow), 2); assert.equal(RG.randomGamePayout({ ...vow, ascension: 5 }), 3);
     assert.equal(Asc.ascensionMastery({}), 1); assert.equal(Asc.ascensionMastery({ ascension: 2 }), 3); assert.equal(Asc.ascensionMastery({ ascension: 9 }), 6, 'capped at 5');
 });
 
@@ -100,17 +121,17 @@ test('v3.31 ascended hunters meet the mimic at difficulty 0 and its jackpot gets
     assert.ok((s.jobMastery[s.job] || 0) - before >= 2 * 1000, 'jackpot 1,000 × 2');
 });
 
-test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), jackpot 7.5%, letter recipient 1%', () => {
+test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189), middle prize 35% (v3.287), letter recipient 1%', () => {
     const s = newState(0); s.rebirths = 10; s.pearls = 1e6; s.permanent.messageBottle = 5;
     assert.throws(() => act(s, { type: 'permanent', id: 'messageBottle' }, 0), /승천한 뒤/);
     s.ascension = 1; act(s, { type: 'permanent', id: 'messageBottle' }, 0); assert.equal(s.permanent.messageBottle, 6);
     assert.equal(Ec.researchMaxFor({}, Ec.RESEARCH.find(r => r.id === 'messageBottle')), 5);
     assert.equal(Mi.MIMIC.offlineScale, .5, 'v3.189 base offline rate'); assert.equal(Mi.specialOfflineScale(s, .5), .75); assert.equal(Mi.specialOfflineScale({ permanent: { messageBottle: 5 } }, .5), .5);
     const tiers = Mi.mimicTiers({ permanent: { messageBottle: 8 } });
-    assert.equal(tiers[2].chance, .075); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
+    assert.equal(tiers[1].chance, .35, 'v3.287 rank 8 raises the middle prize'); assert.equal(tiers[2].chance, Mi.MIMIC.tiers[2].chance); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
     const r = newState(0); r.ascension = 1; r.permanent.messageBottle = 10; r.level = 20; r.kills = 500; r.stage = 'brook'; r.unlockedJobs = ['fisher', 'wanderer']; r.jobMastery = {};
     E.spawn(r, () => 0); r.enemy.hp = 0; E.reward(r, () => 0);
-    assert.equal(r.jobMastery.wanderer, Math.floor(1000 * 2 * .01), 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', 20], 'v3.40 recipient record for the mastery board');
+    const gift = Math.floor(Mi.MIMIC.tiers[0].mastery * 2 * .01); assert.equal(r.jobMastery.wanderer, gift, 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', gift], 'v3.40 recipient record for the mastery board');
 });
 
 test('v3.31 slot unlocks use lifetime rebirths so an ascension never closes a slot', () => {
@@ -300,6 +321,18 @@ test('v3.58 gold income is logged per play hour (24 buckets) and survives rebirt
     assert.ok((t.goldEarned || 0) >= t.gold - g0 && t.goldLog?.length >= 1, 'hunting ticks record income');
     t.level = 60; t.goldLog = [{ h: 0, g: 9 }]; act(t, { type: 'rebirth' }, 700_000); assert.deepEqual(t.goldLog, [{ h: 0, g: 9 }], 'kept through rebirth');
 });
+test('v3.207 exp · mastery income is logged per play hour for the admin page; mastery log survives rebirth', async () => {
+    const In = await L.load('systems/income');
+    const s = newState(0); s.playMs = 0;
+    In.recordMasteryIncome(s, 40); In.recordMasteryIncome(s, -5); In.recordExpIncome(s, 70);
+    assert.deepEqual(s.masteryLog, [{ h: 0, g: 40 }]); assert.equal(s.masteryEarned, 40); assert.equal(s.expEarned, 70);
+    s.playMs = 3600_000 * 1.5; In.recordMasteryIncome(s, 1);
+    assert.deepEqual(In.incomeRate(s, s.masteryLog), { perHour: 40, hours: 1, estimated: false });
+    const t = newState(0); act(t, { type: 'start' }, 0); advance(t, 600_000, () => .5);
+    assert.ok(t.masteryLog?.length >= 1 && t.masteryEarned > 0 && t.expEarned > 0, 'hunting ticks record exp and mastery');
+    t.level = 60; t.masteryLog = [{ h: 0, g: 9 }]; t.expEarned = 5; act(t, { type: 'rebirth' }, 700_000);
+    assert.deepEqual(t.masteryLog, [{ h: 0, g: 9 }], 'mastery log kept through rebirth'); assert.equal(t.expEarned, 5);
+});
 test('v3.58 appraisal: price × rebirth factor (v3.68 linear, v3.81 scale 30), pity at 150/1000/3000 kept through rebirth and reset by ascension', async () => {
     const Co = await L.load('systems/commerce'), Ec = await L.load('data/economy');
     const s = newState(0); s.level = 100; const base = Co.gambleCost(s);
@@ -469,10 +502,10 @@ test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, dis
 test('v3.77 onyx accessories carry max-rolled options (power still grows only by paid level-ups) and fall back to 12★ instead of breaking', async () => {
     const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment'), C = await L.load('systems/commerce'), SF = await L.load('data/starforce'), O = await L.load('data/onyx'), G = await L.load('data/gear');
     const s = newState(0); s.rebirths = 150; s.level = 100;
-    const it = O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
+    const it = O.onyxAccessory(O.ONYX_ITEMS[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
     s.inventory = [it]; M.migrateState(s, 0);
     assert.equal(Eq.heirKind(it), null); assert.equal(it.power, before, 'no free growth from rebirths'); assert.equal(it.power, Math.round(102 * O.ONYX.power));
-    assert.equal(it.onyxTuned, true); assert.ok(it.affixes[0].rule && it.affixes[0].value === O.ONYX_BOSSES[0].accessory.affix.value, 'unique rule kept');
+    assert.equal(it.onyxTuned, true); assert.ok(it.affixes[0].rule && it.affixes[0].value === O.ONYX_ITEMS[0].affix.value, 'unique rule kept');
     for (const x of it.affixes.filter(a => !a.rule)) { const q = G.affixQuality(x, it.power, it.rarity, 100); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
     const tuned = JSON.stringify(it.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(it.affixes), tuned, 'tuned once');
     it.enhance = 21; const r = C.starForceAttempt(s, it, false, () => SF.starSuccess(21) + 1e-9, () => {});
@@ -552,7 +585,7 @@ test('v3.114 rebirth 50 · 100 onyx milestones: random accessory once per charac
     Mig.migrateState(old, 0); assert.equal(onyx(old).length, got.length, 'idempotent');
     // 같은 종 두 번: 각성.
     const same = newState(0); same.rebirths = 100; G.grantOnyxMilestones(same, () => 0); assert.equal(onyx(same).length, 1); assert.equal(onyx(same)[0].onyx, O.ONYX_BOSSES[0].id); assert.equal(onyx(same)[0].onyxRank, 1);
-    // 승천: 칠흑은 사라지고(유물 · 칠흑과 같음) 이정표는 남아 다시 50회에 닿아도 주지 않음. 승천 기록은 이어 붙음.
+    // 승천: 이정표는 남아 다시 50회에 닿아도 주지 않음. 승천 기록은 이어 붙음.
     const a = newState(0); a.rebirths = 100; G.grantOnyxMilestones(a, () => .5); act(a, { type: 'ascend' }, 5000);
     assert.deepEqual(a.onyxMilestones, [50, 100]); a.rebirths = 49; a.level = 100; act(a, { type: 'rebirth' }, 6000); assert.equal(a.logs.filter(l => l.text.includes('달성 보상')).length, 0, 'not again after ascension');
     a.rebirths = 125; act(a, { type: 'ascend' }, 9000); assert.deepEqual(a.ascensionLog.map(x => [x.n, x.rebirths]), [[1, 100], [2, 125]], 'v3.114 earlier ascension records survive');
@@ -565,21 +598,21 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     const N = await L.load('systems/news'), G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
     const s = newState(0); N.collectNews(s, 0); s.rebirths = 50; G.grantOnyxMilestones(s, () => 0);
     const ev = N.collectNews(s, 0), line = ev.find(e => e.kind === 'onyx').text('영희');
-    assert.ok(line.startsWith(`영희가 환생 50회 달성 보상으로 칠흑 장신구 ‘${O.ONYX_BOSSES[0].accessory.name}’`) && line.endsWith('받았습니다.'), line);
+    assert.ok(line.startsWith(`영희가 환생 50회 달성 보상으로 칠흑 장신구 ‘${O.ONYX_ITEMS[0].name}’`) && line.endsWith('받았습니다.'), line);
     assert.equal(s.onyxGift, undefined, 'gift note cleared');
-    s.inventory.push(O.onyxAccessory(O.ONYX_BOSSES[1], 'hunt', 60));
+    s.inventory.push(O.onyxAccessory(O.ONYX_ITEMS[1], 'hunt', 60));
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
-test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension removes only that slot\'s deposits', async () => {
+test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.242)', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-vault-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     const V = await L.load('server/vault'), O = await L.load('data/onyx');
     try {
         const now = Date.now(), acc = 'acct_v';
         const a = newState(0), b = newState(0);
-        const dusk = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-a', 60); dusk.enhance = 17; dusk.onyxRank = 2; a.inventory.push(dusk);
-        const will = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxWill'), 'will-a', 60); a.equipment.charm = will;
+        const dusk = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk-a', 60); dusk.enhance = 17; dusk.onyxRank = 2; a.inventory.push(dusk);
+        const will = O.onyxAccessory(O.onyxItemById('onyxWill'), 'will-a', 60); a.equipment.charm = will;
         await assert.rejects(V.vaultMove(acc, a, 'deposit', 'onyx', 'will-a', now, 1), /착용 중/);
         const before = structuredClone(a), first = await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-a', now, 1); let info = first.info;
         first.apply(before); assert.ok(!before.inventory.some(i => i.id === 'dusk-a'), 'a save-conflict retry replays the bag change on the fresh save (no duplicate)');
@@ -589,16 +622,16 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
         const got = b.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(got && got.enhance === 17 && got.onyxRank === 2); assert.equal(info.onyx.length, 0);
         assert.equal(b.onyxGift?.onyxDusk, 0, 'no news for a vault withdrawal');
         // 같은 종을 가진 분신이 꺼내면 그 칠흑이 각성 +1.
-        const dusk2 = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-c', 60); a.inventory.push(dusk2);
+        const dusk2 = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk-c', 60); a.inventory.push(dusk2);
         info = (await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-c', now, 1)).info;
         await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2);
         assert.equal(b.inventory.filter(i => i.onyx === 'onyxDusk').length, 1); assert.equal(got.onyxRank, 3, 'awaken +1');
-        // 승천: 그 분신이 넣은 칠흑만 사라지고 다른 분신 몫은 남음(세계석 · 정수는 전처럼 비움).
-        const lucid = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxHilla'), 'h', 60);
+        // v3.242 승천: 칠흑은 승천해도 남으므로 금고의 칠흑도 모두 남음(세계석 · 정수는 전처럼 비움).
+        const lucid = O.onyxAccessory(O.onyxItemById('onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'h', 60);
         a.inventory.push(lucid); b.inventory.push(hilla); a.pearls = 50;
         await V.vaultMove(acc, a, 'deposit', 'onyx', 'l', now, 1); await V.vaultMove(acc, b, 'deposit', 'onyx', 'h', now, 2); await V.vaultMove(acc, a, 'deposit', 'pearls', 10, now, 1);
-        assert.equal(await V.vaultAfterAscend(acc, 1, now), 1);
-        info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx), ['onyxHilla']); assert.equal(info.pearls, 0);
+        await V.vaultAfterAscend(acc, now);
+        info = await V.vaultInfo(acc, now); assert.deepEqual(info.onyx.map(x => x.item.onyx).sort(), ['onyxHilla', 'onyxLucid']); assert.equal(info.pearls, 0);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
@@ -614,7 +647,7 @@ test('v3.118 gear cost reset: heir / onyx only, 999 pearls, rerolls · refines �
     assert.equal(s.pearls, 5000 - G.GEAR_RESET_PEARLS); assert.equal(heir.enhance, 0); assert.equal(heir.rerolls, 0); assert.equal(heir.refines, 0); assert.equal(heir.affixes.length, 6);
     for (const x of heir.affixes) { const q = G.affixQuality(x, heir.power, heir.rarity, heir.level); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
     assert.throws(() => act(s, { type: 'gearReset', id: 'h' }, 0), /초기화할 비용이 없/);
-    const onyx = O.onyxAccessory(O.ONYX_BOSSES[0], 'o', 100); onyx.affixes = G.rollAffixes(6, onyx.power, onyx.origin, local, onyx.affixes, 'charm', 100); onyx.rerolls = 2; onyx.enhance = 10; s.inventory.push(onyx);
+    const onyx = O.onyxAccessory(O.ONYX_ITEMS[0], 'o', 100); onyx.affixes = G.rollAffixes(6, onyx.power, onyx.origin, local, onyx.affixes, 'charm', 100); onyx.rerolls = 2; onyx.enhance = 10; s.inventory.push(onyx);
     const unique = onyx.affixes[0]; s.pearls = 10; assert.throws(() => act(s, { type: 'gearReset', id: 'o' }, 0), /세계석/); s.pearls = 2000;
     act(s, { type: 'gearReset', id: 'o' }, 0, local); assert.deepEqual(onyx.affixes[0], unique, 'unique kept'); assert.equal(onyx.affixes.length, 6); assert.equal(onyx.enhance, 0);
 });
@@ -624,7 +657,7 @@ test('v3.119 display bugs: 마력 option mana regen scales with power (and old t
     const flow = G.rollOption(G.affixDef('flow'), 300, 4, () => .5, 80);
     assert.ok(flow.value2 >= 1 && Number.isInteger(flow.value2), `mana regen scales with power: ${flow.value2}`);
     const s = newState(0); s.inventory.push({ id: 'f', slot: 'coat', rarity: 4, power: 300, level: 80, name: 'f', affixes: [{ ...flow, value2: .0108 }] });
-    Mig.fixFlowRegen(s); const fixed = s.inventory[0].affixes[0].value2; assert.equal(fixed, Math.round(flow.value * .012 / .225)); Mig.fixFlowRegen(s); assert.equal(s.inventory[0].affixes[0].value2, fixed, 'idempotent');
+    Mig.fixFlowRegen(s); const fixed = s.inventory[0].affixes[0].value2; assert.equal(fixed, Math.round(flow.value * G.affixDef('flow').base2 / G.affixDef('flow').base), 'v3.297 at the current regen rate'); Mig.fixFlowRegen(s); assert.equal(s.inventory[0].affixes[0].value2, fixed, 'idempotent');
     const t = newState(0); t.equipment.coat = { id: 'c', slot: 'coat', rarity: 5, power: 333, level: 80, name: 'c', affixes: [{ id: 'transcend', name: '초월', stat: 'allStats', value: .0173 }] };
     const a = St.stats(t); for (const k of ['hp', 'mana', 'attack', 'magic', 'defense', 'resist']) assert.ok(Number.isInteger(a[k]), `${k} ${a[k]}`);
 });
@@ -655,8 +688,8 @@ test('v3.125 primal gauge fills on every exit path, rare foes are never golden, 
     for (const kind of ['mimic', 'nuri']) { r.enemy = null; E.spawn(r, () => .5, kind); const id = r.enemy.id; r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(!r.goldenBook?.[id], `${kind} is never golden`); }
     // 칠흑 위력 계수 6.37: Lv.100 650. 옛 530 장신구는 불러올 때 위력과 고정 수치 옵션이 함께 맞춰지고, 레벨 올리기도 같은 식을 씁니다.
     const O = await L.load('data/onyx'), M = await L.load('systems/migrations');
-    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100).power, 650);
-    const old = O.onyxAccessory(O.ONYX_BOSSES[6], 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
+    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_ITEMS[0], 'ox', 100).power, 650);
+    const old = O.onyxAccessory(O.onyxItemById('onyxBlackMage'), 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
     const flatOld = old.affixes.find(x => !x.rule && G.affixDef(x.id)?.kind === 'flat'), flatBefore = flatOld?.value;
     const o = newState(0); o.level = 100; o.inventory = [old]; M.migrateState(o, 0);
     assert.equal(old.power, 650, 'old accessories are raised on load'); if (flatOld) assert.equal(old.affixes.find(x => x.id === flatOld.id).value, Math.round(flatBefore * 650 / 530), 'flat options follow the power');
@@ -738,4 +771,57 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
         const full = power(stats(s)); for (const slot of Object.keys(drop)) { const it = s.equipment[slot]; s.equipment[slot] = null; drop[slot] += (1 - power(stats(s)) / full) / N; s.equipment[slot] = it; }
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
+});
+test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
+    const s = newState(0); s.level = 100; s.gold = 1e15;
+    const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 1, power: 8, relic: 'soulCoat', locked: true, affixes: [] };
+    const wall = G.rollOption(G.affixDef('bulwark'), 530, 6, () => 1, 100), guard = G.rollOption(G.affixDef('guardian'), 530, 6, () => 1, 100);
+    s.inventory = [relic, { id: 'p', name: 'p', slot: 'coat', rarity: 6, level: 100, power: 530, affixes: [wall, guard] }];
+    act(s, { type: 'imprintRelic', id: 'r', value: 'p:0:0' }, 0);
+    const atOne = Eq.imprintAffix(wall, 6, 3), lv = 3 / 102;
+    assert.equal(relic.affixes[0].value, Math.round(wall.value * lv * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3]), 'scaled to Lv.1');
+    assert.equal(relic.affixes[0].value2, wall.value2, 'fixed speed penalty untouched');
+    // 유물을 Lv.100으로 올려도 같은 레벨에서 바로 옮긴 값을 넘지 않습니다.
+    Eq.applyLevelUp(relic, 100, s); assert.ok(Math.abs(relic.affixes[0].value - atOne.value) <= atOne.value * .05, `${relic.affixes[0].value} ≈ ${atOne.value}`);
+    // 같은 레벨 이하 장비의 줄은 레벨 환산을 받지 않습니다(v3.82 감쇠만).
+    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 100, 100), Eq.imprintAffix(guard, 6, 3), 'same level unchanged');
+    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 50, 100), Eq.imprintAffix(guard, 6, 3), 'lower level not raised');
+    // 예전에 부푼 줄(Lv.1에서 이식 → Lv.100으로 34배): 지금 유물 레벨의 최대치로 줄고, 정상 줄은 그대로, 두 번 불러도 같음.
+    const blown = { ...atOne, value: atOne.value * 34 }, fine = { ...Eq.imprintAffix(guard, 6, 3) };
+    const old = { ...relic, id: 'r2', level: 100, affixes: [blown, fine] };
+    const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
+    const cap = Math.round(G.optionAtQuality(G.affixDef('bulwark'), Math.round(102 * Bal.RARITIES[6].factor * 1.2), 6, 100, G.HEIR_ROLL_TOP).value * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3]);
+    assert.equal(old.affixes[0].value, cap, 'inflated line capped'); assert.ok(cap < blown.value / 10);
+    assert.deepEqual(old.affixes[1], fine, 'normal line untouched');
+    const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'idempotent');
+});
+test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot', async () => {
+    const Enc = await L.load('systems/encounter'), Od = await L.load('data/odds'), { SERVER_ODDS } = await L.load('secret/odds');
+    assert.ok(SERVER_ODDS.drop.heir.ancient > 0 && SERVER_ODDS.drop.heir.ancient <= .01 && SERVER_ODDS.drop.heir.primal > 0 && SERVER_ODDS.drop.heir.primal <= .02);
+    const s = newState(0); s.level = 100; s.rebirths = 10; s.permanent.inventory = 8; s.inventory = []; s.primalDropPity = Ec.PRIMAL_DROP_PITY - 1;
+    Enc.drop(s, 100, () => 0, true, undefined);
+    const got = s.inventory.at(-1); assert.equal(got.rarity, 6); assert.equal(got.heir, 'primal'); assert.ok(got.locked);
+    assert.equal(got.power, Ec.heirPower('primal', 10, got.level), 'heir power');
+    // 같은 부위에 이미 계승 태초가 있으면 일반 태초로 나옵니다.
+    Enc.drop(s, 100, () => 0, true, undefined, 6); const second = s.inventory.at(-1); assert.equal(second.slot, got.slot); assert.ok(!second.heir);
+    // 난수가 확률보다 크면 일반 고대.
+    Enc.drop(s, 100, () => .5, true, undefined, 5); assert.ok(!s.inventory.at(-1).heir);
+    Enc.drop(s, 100, () => 0, true, undefined, 5); assert.equal(s.inventory.at(-1).heir, 'ancient');
+    assert.ok(Od.ODDS.drop.heir.primal === SERVER_ODDS.drop.heir.primal);
+});
+
+test('v3.242 onboarding: novice menus open at Lv.10 / first clear, auto attribute split keeps the ratio across rebirth', async () => {
+    const G = await L.load('systems/guidance');
+    const s = newState(0);
+    assert.ok(G.noviceMenuLocked(s) && G.noviceMarketLocked(s), 'first life hides later menus');
+    s.level = 10; assert.ok(!G.noviceMenuLocked(s)); s.clears = { mushroom: 1 }; assert.ok(!G.noviceMarketLocked(s));
+    assert.ok(!G.noviceMenuLocked({ rebirths: 0, ascension: 1, level: 1 }), 'ascended players see every menu');
+    // 자동 배분: 지금 비율(근력 2 : 기민 1)대로 남은 포인트를 모두 나누고, 환생 직후에는 직전 생 비율을 씁니다.
+    const a = newState(0); a.statPoints = 9; a.attributes.str = 2; a.attributes.dex = 1;
+    act(a, { type: 'autoAttr', id: 'on' }, 0); assert.equal(a.statPoints, 0); assert.equal(a.attributes.str, 8); assert.equal(a.attributes.dex, 4);
+    a.exp = 1e9; E.gainLevels(a); assert.equal(a.statPoints, 0, 'level-up points split at once'); assert.ok(a.attributes.str > a.attributes.dex);
+    a.level = 100; a.rebirths = 0; act(a, { type: 'rebirth' }, 1000); assert.equal(a.rebirths, 1);
+    assert.equal(a.statPoints, 0); const sum = a.attributes.str + a.attributes.dex; assert.ok(sum === 0 || Math.abs(a.attributes.str / sum - 2 / 3) < .1, JSON.stringify(a.attributes));
+    act(a, { type: 'autoAttr', id: 'off' }, 0); assert.equal(a.autoAttr, false);
 });

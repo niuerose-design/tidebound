@@ -6,7 +6,7 @@
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
 
-export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
+export type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
 export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.
@@ -21,9 +21,20 @@ export const TITLES: TitleDef[] = [
     { id: 'deaths:100', name: '🩹 일곱 번 넘어진 자', desc: '쓰러짐 100회', group: '도전', achievement: 'deaths:100' },
     { id: 'reenlist:1', name: '🎖 다시 입대한 자', desc: '중장에서 재입대', group: '도전', achievement: 'reenlist:1' },
     { id: 'king:10', name: '👑 대왕 사냥꾼', desc: '대왕 까미 · 누리 · 정수 슬라임 합쳐 10마리 처치', group: '사냥', achievement: 'king:10' },
-    { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
-    { id: 'star:22', name: '★ 별을 다 채운 자', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
+    { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 7종 보유', group: '사냥', achievement: 'onyx:7' },
+    // v3.276 칠흑 9종(장신구 8 + 저주받은 마도서).
+    { id: 'onyx:9', name: '◆ 칠흑의 지배자', desc: '칠흑 9종 보유', group: '사냥', achievement: 'onyx:9' },
+    { id: 'star:22', name: '★ 스물두 별', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
+    { id: 'star:25', name: '★ 별을 다 채운 자', desc: '장비 하나를 25성까지 강화(v3.241)', group: '강화', achievement: 'star:25' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },
+    // v3.205 보스 코어 칭호(명예 업적).
+    { id: 'bossCore:1', name: '💠 코어의 계승자', desc: '보스 코어 첫 획득', group: '던전', achievement: 'bossCore:1' },
+    { id: 'bossCore:4', name: '🔷 네 보스의 기억', desc: '보스 코어 4종 보유', group: '던전', achievement: 'bossCore:4' },
+    { id: 'bossCore:7', name: '🌀 일곱 보스를 품은 자', desc: '보스 코어 7종 보유', group: '던전', achievement: 'bossCore:7' },
+    { id: 'abyssCore:3', name: '🥋 도장을 삼킨 자', desc: '무릉도장 코어 3종 획득', group: '던전', achievement: 'abyssCore:3' },
+    { id: 'bossCore:10', name: '🔟 열 보스의 계승자', desc: '보스 코어 10종 모두 보유', group: '던전', achievement: 'bossCore:10' },
+    { id: 'coreAwaken:1', name: '✨ 깨어난 코어', desc: '보스 코어 하나를 각성 5단계까지', group: '던전', achievement: 'coreAwaken:1' },
+    { id: 'coreAwaken:7', name: '👁 모든 보스를 깨운 자', desc: '보스 코어 7종 모두 각성 5단계', group: '던전', achievement: 'coreAwaken:7' },
     { id: 'abyss:25', name: '🥋 무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '🏯 무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
     { id: 'hacker:root', name: '💻 root', desc: '해킹 X 루트 권한', group: '도전', achievement: 'hacker:root' },

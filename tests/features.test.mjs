@@ -1,5 +1,5 @@
 // 도감·능력치 추적·항해 기록·회복·장기 목표·능력치 포인트
-import { newState, act, tick, victoryHeal, encounterSource, stats, migrateState, assert, rng, test } from './harness.mjs';
+import { newState, act, advance, tick, victoryHeal, encounterSource, stats, migrateState, assert, rng, test } from './harness.mjs';
 test('Codex: crossing several thresholds claims all pending ranks once; claim-all spans species',()=>{
  const s=newState(0),g=s.gold;s.book.minnow=10000;s.book.carp=500;act(s,{type:'claimAllBooks'},0);
  assert.equal(s.bookClaims.minnow,4);assert.equal(s.bookClaims.carp,undefined,'v27.81 ranks without SP have nothing to claim');assert.equal(s.sp,1);assert.equal(s.gold,g,'v27.81 no gold from the codex');
@@ -57,13 +57,110 @@ test('v3.38 place AP moves to region achievements once: old saves keep their AP;
 test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),C=await L.load('data/classes'),O=await L.load('data/onyx');
  const s=newState(0);assert.deepEqual(N.collectNews(s,0),[]);assert.ok(s.newsMark);assert.deepEqual(N.collectNews(s,0),[],'nothing new');
- const boss=O.ONYX_BOSSES[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id});
+ const boss=O.ONYX_ITEMS[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.name,onyx:boss.id});
  s.ascension=1;s.unlockedJobs.push(C.JOBS.find(j=>j.tier===5).id);s.abyssBest=104;s.inventory.push({id:'x',slot:'rod',rarity:1,power:1,level:1,name:'x',enhance:22});
  const g=R.RANKS.findIndex(r=>r.group==='장성');s.rank={exp:R.RANK_CUMULATIVE[g],perks:{}};
  const ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind).sort(),['abyss','ascend','general','onyx','star22','tier5']);
  assert.ok(ev.find(e=>e.kind==='abyss').text('철수').includes('무릉도장 100층'));assert.ok(ev.find(e=>e.kind==='onyx').text('영희').startsWith('영희가 칠흑 장신구'));
  s.abyssBest=150;assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');s.abyssBest=200;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again');
  s.abyssBest=0;assert.deepEqual(N.collectNews(s,86_400_000*5),[],'a lower best (after ascension) never announces');
+});
+test('v3.219 staff lineage: 보급관 enters by rank 하사 + 3 mastered jobs; support skills give other slots exp · gold · mastery (max per effect, capped), command boosts self',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank'),St=await L.load('systems/stats'),M=await L.load('systems/mastery');
+ const j=C.jobById('quartermaster');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg'&&!j.parent);
+ const s=newState(0);s.level=40;const req=()=>P.jobRequirements(s,j);
+ assert.ok(req().some(r=>r.label.includes('하사')&&!r.met));s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='ssg')],perks:{}};assert.ok(req().find(r=>r.label.includes('하사')).met);
+ assert.ok(req().some(r=>r.label.includes('숙달한 직업 3개')));
+ // 장착한 지원 스킬: 숙련 0단계 3% → 마지막 단계 8%, 참모 계보가 아니면 지원 없음.
+ s.job='quartermaster';s.unlockedJobs.push('quartermaster');for(const id of ['supplyConvoy','militaryProcurement','fieldManual','commandStructure'])s.learned[id]=1;
+ s.skills=['supplyConvoy','militaryProcurement','commandStructure'];
+ assert.deepEqual(Su.supportOf(s),{exp:.03,gold:.03});
+ s.skillPractice.supplyConvoy=2250000;assert.equal(Su.supportOf(s).exp,.08);s.skillPractice.supplyConvoy=225000;assert.equal(Su.supportOf(s).exp,.055); // v3.224 아제로스 규칙: 숙련 단계 ×10
+ assert.ok(Math.abs(Su.commandBonus(s)-.12)<1e-9,'two support skills x 6% (v3.228)');
+ const atk=St.stats(s).attack;s.skills=['commandStructure'];assert.ok(St.stats(s).attack<atk,'command raises own attack');
+ s.skills=['supplyConvoy'];s.job='fisher';assert.deepEqual(Su.supportOf(s),{},'other lineage gives nothing');assert.equal(Su.commandBonus(s),0);
+ // 합치기: 효과별 최고값, 상한 8%.
+ assert.deepEqual(Su.mergeSupport([{exp:.05,gold:.03},{exp:.07},undefined,{mastery:.5}]),{exp:.07,gold:.03,mastery:.1}); // 상한 8% × 지휘 계통 1.25
+ // 받는 쪽: 경험치 · 골드 · 숙련 배율에 곱하고, 결투 스냅샷 능력치는 그대로입니다.
+ const t=newState(0),e0=St.expMultiplier(t),g0=St.goldMultiplier(t),m0=M.masteryResearchHundredths(t),snap0=JSON.stringify(St.snapshot(t).stats);
+ t.support={exp:.05,gold:.04,mastery:.06};
+ assert.ok(Math.abs(St.expMultiplier(t)/e0-1.05)<1e-9);assert.ok(Math.abs(St.goldMultiplier(t)/g0-1.04)<1e-9);assert.equal(M.masteryResearchHundredths(t),Math.round(((1+m0/100)*1.06-1)*100));
+ assert.equal(JSON.stringify(St.snapshot(t).stats),snap0,'duel snapshot unaffected');
+ t.level=60;act(t,{type:'rebirth'},1000);assert.deepEqual(t.support,{exp:.05,gold:.04,mastery:.06},'kept through rebirth until the next sync');
+});
+test('v3.219 군의관: hp · mana · regen support (other slots only); duel snapshots drop support, altar (PvE) snapshots keep it',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),C=await L.load('data/classes');
+ const j=C.jobById('fieldMedic');assert.ok(j&&j.tier===3&&j.lineage==='staff'&&j.requiresRank==='ssg');
+ const s=newState(0);s.level=40;s.job='fieldMedic';s.unlockedJobs.push('fieldMedic');for(const id of ['bloodSupply','stimulantKit','fieldDressing','triage'])s.learned[id]=1;
+ s.skills=['bloodSupply','stimulantKit','fieldDressing','triage'];assert.deepEqual(Su.supportOf(s),{hp:.02,mana:.02,hpRegen:.05});assert.ok(Math.abs(Su.commandBonus(s)-.18)<1e-9,'three support skills x 6% (v3.228)');
+ s.skillPractice.bloodSupply=2250000;assert.equal(Su.supportOf(s).hp,.05);
+ assert.deepEqual(Su.mergeSupport([{hp:.2,hpRegen:.5}]),{hp:.0625,hpRegen:.1875},'capped per effect (× 1.25 headroom)');
+ const t=newState(0);t.level=30;t.hpRegen=0;const a0=St.stats(t);t.support={hp:.05,mana:.05,hpRegen:.15};const a1=St.stats(t);
+ assert.ok(a1.hp>a0.hp&&a1.mana>a0.mana,'hp and mana rise');assert.ok(Math.abs(a1.hp/a0.hp-1.05)<.01);
+ assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);assert.ok(St.snapshot(t).stats.hp>St.duelSnapshot(t).stats.hp,'PvE snapshot keeps support, duel drops it');
+});
+test('v3.219 작전참모 · 화력참모: rank 소위 + either 3rd-tier mastery; AP · boss · rank exp · penetration · crit damage support; duel trims support AP',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
+ for(const id of ['operationsOfficer','fireSupportOfficer']){const j=C.jobById(id);assert.ok(j&&j.tier===4&&j.requiresRank==='lt2');
+  const s=newState(0);s.level=55;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='lt2')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('보급관 또는 군의관'));
+  assert.ok(any()&&!any().met);s.jobMastery.fieldMedic=300;assert.ok(any().met,'either branch counts');}
+ const o=newState(0);o.level=55;o.job='operationsOfficer';o.unlockedJobs.push('operationsOfficer');for(const id of ['tacticalMap','operationPlan','personnelRecord'])o.learned[id]=1;o.skills=['tacticalMap','operationPlan','personnelRecord'];
+ assert.deepEqual(Su.supportOf(o),{ap:1,boss:.02,rank:.03});o.skillPractice.tacticalMap=1e7;assert.equal(Su.supportOf(o).ap,2);
+ const f=newState(0);f.level=55;f.job='fireSupportOfficer';f.unlockedJobs.push('fireSupportOfficer');for(const id of ['armorPiercingDoctrine','concentratedFire'])f.learned[id]=1;f.skills=['armorPiercingDoctrine','concentratedFire'];
+ assert.deepEqual(Su.supportOf(f),{penetration:.02,critDamage:.05});
+ // 받는 쪽: AP · 보스 · 관통 · 치명 피해, 결투 스냅샷에서는 빠집니다.
+ const t=newState(0);t.level=30;const cap0=P.apCapacity(t),a0=St.stats(t);t.support={ap:2,boss:.05,penetration:.05,critDamage:.15};const a1=St.stats(t);
+ assert.equal(P.apCapacity(t),cap0+2);assert.ok(a1.bossDamage>a0.bossDamage&&a1.penetration>a0.penetration);assert.ok(Math.abs(a1.critDamage-a0.critDamage-.15)<1e-9);
+ assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats);
+ // 지원 AP로만 들어가는 장착은 결투 스냅샷에서 빠집니다.
+ const d=newState(0);d.level=30;d.support={ap:2};const pool=Object.keys(d.learned).filter(id=>P.canUse(d,id));d.skills=[];for(const id of pool){if(P.validLoadout(d,[...d.skills,id]))d.skills.push(id);}
+ const bare=St.snapshot({...d,support:undefined,skills:d.skills}).skills;assert.ok(P.apUsed({...d,support:undefined},St.duelSnapshot(d).skills)<=P.apCapacity({...d,support:undefined}));assert.ok(St.duelSnapshot(d).skills.length<=bare.length);
+ // 계급 경험치 지원: 같은 난수로 사냥하면 계급 경험치가 더 쌓입니다.
+ const run=sup=>{const h=newState(0);if(sup)h.support={rank:.06};act(h,{type:'start'},0);advance(h,1_800_000,()=>.5);return h.rank?.exp||0;};
+ const base=run(false),boosted=run(true);assert.ok(boosted>base&&boosted<=Math.ceil(base*1.06)+1,`${base} → ${boosted}`);
+});
+test('v3.225 5th tier: 총사령관 amplifies its other support (not AP) and gives power; 군수사령관 gives AP up to 3 and cuts its own support AP',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Su=await L.load('systems/support'),St=await L.load('systems/stats'),P=await L.load('systems/progression'),C=await L.load('data/classes'),R=await L.load('data/rank');
+ for(const id of ['commanderInChief','logisticsCommander']){const j=C.jobById(id);assert.ok(j&&j.tier===5&&j.requiresRank==='col'&&j.rebirth===10&&j.lineage==='staff');
+  const s=newState(0);s.level=70;s.rebirths=10;s.rank={exp:R.RANK_CUMULATIVE[R.RANKS.findIndex(r=>r.id==='col')],perks:{}};const any=()=>P.jobRequirements(s,j).find(r=>r.label.includes('작전참모 또는 화력참모'));
+  assert.ok(any()&&!any().met);s.jobMastery.fireSupportOfficer=300;assert.ok(any().met);}
+ // 총사령관: 계승한 3·4차 지원 + 총동원령, 지휘 계통이 AP를 뺀 전부를 증폭.
+ const c=newState(0);c.level=70;c.job='commanderInChief';c.unlockedJobs.push('commanderInChief');
+ for(const id of ['supplyConvoy','tacticalMap','generalMobilization','chainOfCommand','marshalCommand'])c.learned[id]=1;c.skillInheritances={supplyConvoy:true,tacticalMap:true};
+ c.skills=['supplyConvoy','tacticalMap','generalMobilization','chainOfCommand','marshalCommand'];
+ const usable=c.skills.filter(id=>P.canUse(c,id));assert.ok(usable.includes('generalMobilization')&&usable.includes('chainOfCommand'));
+ assert.equal(Su.supportAmp(c),1.1);c.skillPractice.chainOfCommand=1e9;assert.equal(Su.supportAmp(c),1.25);
+ let out=Su.supportOf(c);assert.equal(out.power,.025,'2% x 1.25');assert.equal(out.exp,.0375,'3% x 1.25');assert.equal(out.ap,1,'AP is never amplified');
+ c.skillPractice.generalMobilization=1e9;c.skillPractice.supplyConvoy=1e9;out=Su.supportOf(c);assert.equal(out.power,.05);assert.equal(out.exp,.1);
+ assert.ok(Math.abs(Su.commandBonus(c)-.28)<1e-9,'four support skills (amp counts) x 7% (v3.228)');
+ const t=newState(0);t.level=30;const a0=St.stats(t);t.support={power:.05};const a1=St.stats(t);assert.ok(Math.abs(a1.attack/a0.attack-1.05)<.01&&a1.hp>a0.hp);
+ assert.deepEqual(St.duelSnapshot(t).stats,St.snapshot({...t,support:undefined}).stats,'duel drops power');
+ // 군수사령관: 전군 편제 AP +2 → +3(상한 3, 작전참모 2보다 큼), 경량 편제로 자기 지원 스킬 AP -1.
+ const g=newState(0);g.level=70;g.job='logisticsCommander';g.unlockedJobs.push('logisticsCommander');for(const id of ['forceRestructure','lightEstablishment','supplyConvoy'])g.learned[id]=1;g.skillInheritances={supplyConvoy:true};
+ assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy']),2);assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy','lightEstablishment']),1,'cut to the floor of 1');
+ assert.equal(P.loadoutSkillAP(g,'forceRestructure',['forceRestructure','lightEstablishment']),3,'4 - 1');
+ g.skills=['forceRestructure'];assert.equal(Su.supportOf(g).ap,2);g.skillPractice.forceRestructure=1e9;assert.equal(Su.supportOf(g).ap,3);
+ assert.deepEqual(Su.mergeSupport([{ap:2},{ap:3},{ap:9}]),{ap:3});t.support={ap:3};const cap0=P.apCapacity({...t,support:undefined});assert.equal(P.apCapacity(t),cap0+3);
+ g.job='fisher';assert.equal(P.loadoutSkillAP(g,'supplyConvoy',['supplyConvoy','lightEstablishment']),2,'cut only while the current job is staff');
+});
+test('v3.212 boss core news: a new core and a full awakening (rank 5) announce once a day; saves marked before v3.212 stay quiet',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),B=await L.load('data/boss-core');
+ const s=newState(0);s.bossCores={grotto:{rank:0,attrs:[]}};N.collectNews(s,0);delete s.newsMark.cores;delete s.newsMark.coreFull;
+ s.bossCores.cemetery={rank:5,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'old mark: only fills in the cores');assert.deepEqual(s.newsMark.cores.sort(),['cemetery','grotto']);
+ s.bossCores.temple={rank:0,attrs:[]};let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['core']);
+ assert.equal(ev[0].text('영희'),`영희가 보스 코어 ‘${B.BOSS_CORES.temple.name}’를 얻었습니다. (보유 3/${Object.keys(B.BOSS_CORES).length}종)`);
+ s.bossCores.grotto.rank=4;assert.deepEqual(N.collectNews(s,0),[],'awaken below max is quiet');
+ s.bossCores.grotto.rank=5;ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['coreAwaken']);assert.ok(ev[0].text('철수').endsWith('완전 각성(5단계)했습니다.'));
+ s.bossCores.caldera={rank:0,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');
+ s.bossCores.starSanctum=3;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again (old number entry too)');
+});
+test('v3.212 onyx awakening news: every awakening announces (no daily cap); vault merges and old marks stay quiet',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),O=await L.load('data/onyx');
+ const boss=O.ONYX_ITEMS[0],s=newState(0),item={id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.name,onyx:boss.id};s.inventory.push(item);N.collectNews(s,0);
+ item.onyxRank=1;let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['onyxAwaken']);assert.equal(ev[0].text('영희'),`영희가 칠흑 장신구 ‘${boss.name}’${/[가-힣]/.test(boss.name.at(-1))&&(boss.name.at(-1).charCodeAt(0)-0xac00)%28?'을':'를'} 각성 1단계로 올렸습니다.`);
+ item.onyxRank=2;assert.equal(N.collectNews(s,0).length,1,'same day again');
+ item.onyxRank=3;s.onyxGift={[boss.id]:0};assert.deepEqual(N.collectNews(s,0),[],'vault merge is quiet');
+ delete s.newsMark.onyxRanks;item.onyxRank=4;assert.deepEqual(N.collectNews(s,0),[],'old mark only fills in');
 });
 test('v3.190 rank news: 하사 and 소위 and every rank after 소위 announce, other ranks stay quiet, no once-a-day cap, skipped ranks still count',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),T=await L.load('data/titles');
@@ -116,4 +213,56 @@ test('v26.8 registerItemAll registers one weakest unlocked item per missing slot
     act(s, { type: 'registerItemAll' }, 0);
     assert.deepEqual(Object.keys(s.itemBook).sort(), ['charm:0', 'rod:0']); assert.deepEqual(s.inventory.map(x => x.id).sort(), ['c1', 'm2', 'r0a'], 'weakest rod consumed, locked/relic kept');
     assert.throws(() => act(s, { type: 'registerItemAll' }, 0), /미등록 장비가 가방에 없습니다/);
+});
+test('v3.228 core passive: 4th-tier flat and 5th-tier scale grow 70% → 100% with mastery, half on another lineage, full in the same lineage',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),St=await L.load('systems/stats'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
+ const sage=C.jobById('sage'),magus=C.jobById('grandMagus');assert.equal(sage.magic,1.06);assert.equal(magus.magic,1.09);assert.equal(sage.masteryBoost,.1);
+ const w=Sk.skillById('sageWisdom'),d=Sk.skillById('magusDomain');assert.deepEqual(w.core.flat,{magic:250,hp:300});assert.deepEqual(d.core.scale,{magic:.35,hp:.22});
+ assert.equal(P.coreScale(d,'grandMagus',0),.7);assert.equal(P.coreScale(d,'grandMagus',4),1);assert.equal(P.coreScale(d,'grandMagus',9),1,'limit break does not go over 100%');
+ assert.equal(P.coreScale(w,'grandMagus',4),1,'same lineage keeps it whole');assert.equal(P.coreScale(d,'hero',4),.5,'another lineage gets half');
+ const body=(job,ids,practice)=>{const s=newState(0);s.level=100;s.job=job;s.unlockedJobs.push(job);for(const id of ids){s.learned[id]=1;s.skillPractice[id]=practice;}s.skillInheritances=Object.fromEntries(ids.map(id=>[id,true]));s.skills=ids;return St.stats(s);};
+ const core=d.core;delete d.core;const hero0=body('hero',['magusDomain'],1e9),mage0=body('grandMagus',['magusDomain'],0);d.core=core;const hero1=body('hero',['magusDomain'],1e9),mage1=body('grandMagus',['magusDomain'],0);
+ assert.ok(Math.abs(hero1.magic/hero0.magic-1.175)<.01&&Math.abs(hero1.hp/hero0.hp-1.11)<.01,`${hero0.magic} → ${hero1.magic}`);assert.ok(Math.abs(mage1.magic/mage0.magic-1.245)<.01,'stage 0 = 70% of 35%');
+ const flat0=body('sage',[],0),flat1=body('sage',['sageWisdom'],1e9);assert.ok(flat1.magic>=flat0.magic+250+45&&flat1.hp>=flat0.hp+300,'flat core lands before the multipliers');
+});
+test('v3.228 core rework: 4th tier adds +15% main attack on top of the flat; Azeroth jobs keep small multipliers and a lineage-only core growing from 40%',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),Sk=await L.load('data/skills'),C=await L.load('data/classes');
+ assert.deepEqual(Sk.skillById('sageWisdom').core,{flat:{magic:250,hp:300},scale:{magic:.15,hp:.05}});
+ const cap={3:1,4:1.06,5:1.09};
+ for(const j of C.JOBS){if(C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))!=='azeroth')continue;
+  assert.equal(j.masteryBoost,.1,j.id);for(const k of ['attack','magic','hp','defense','resist'])assert.ok(j[k]<=cap[j.tier]+1e-9,`${j.id} ${k} ${j[k]}`);}
+ const ledger=Sk.skillById('kkamiLedger');assert.deepEqual(ledger.core,{scale:{attack:.1}});
+ assert.equal(P.coreScale(ledger,'kkamiHunter',0),.4);assert.equal(P.coreScale(ledger,'kkamiHunter',4),1);assert.equal(P.coreScale(ledger,'hero',4),0,'Azeroth core is lineage-only');
+ assert.equal(Sk.skillById('marshalCommand').commandPer,.07);assert.equal(Sk.skillById('warRoom').commandPer,.06);
+});
+test('v3.282 core rework covers every Maple 4th/5th job: none keeps an old main multiplier because it has no passive (Arch Mage F/P was missed)',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/classes');await L.load('data/skills');
+ const cut={4:1.06,5:1.09};
+ for(const j of C.JOBS){if((j.tier!==4&&j.tier!==5)||j.retired||j.constraint||C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(j)))==='azeroth')continue;
+  assert.ok(Math.max(j.attack,j.magic)<=cut[j.tier]+1e-9,`${j.id} attack ${j.attack} magic ${j.magic}`);}
+ const a=C.JOBS.find(j=>j.id==='apostle');assert.deepEqual([a.magic,a.hp,a.masteryBoost],[1.09,1,.1]);
+});
+
+test('v3.292 stat step: any whole amount up to the remaining points (×1 · ×5 · ×10 · ×50 · ×100 or the rest), never more', async () => {
+    const s = newState(0); s.statPoints = 120;
+    act(s, { type: 'attribute', id: 'str', value: '100' }, 0); assert.equal(s.attributes.str, 100); assert.equal(s.statPoints, 20);
+    act(s, { type: 'attribute', id: 'dex', value: '7' }, 0); assert.equal(s.attributes.dex, 7); assert.equal(s.statPoints, 13);
+    assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '50' }, 0), /부족/);
+    assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '0' }, 0)); assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '1.5' }, 0));
+    act(s, { type: 'attribute', id: 'luk', value: 'max' }, 0); assert.equal(s.attributes.luk, 13); assert.equal(s.statPoints, 0);
+});
+test('v3.295 skill presets keep a custom name (rename, re-save keeps it); rebirth no longer forces 달팽이 세마리 back into the loadout', () => {
+ const s=newState(0);act(s,{type:'savePreset',id:'1'},0);assert.equal(s.presets['1'].name,'편성 1');
+ act(s,{type:'renamePreset',id:'1',value:'  보스용 편성  '},0);assert.equal(s.presets['1'].name,'보스용 편성');
+ act(s,{type:'savePreset',id:'1'},0);assert.equal(s.presets['1'].name,'보스용 편성','re-saving keeps the name');
+ assert.throws(()=>act(s,{type:'renamePreset',id:'2',value:'x'},0),/저장한 편성/);assert.throws(()=>act(s,{type:'renamePreset',id:'1',value:'   '},0),/이름/);
+ act(s,{type:'renamePreset',id:'1',value:'가'.repeat(30)},0);assert.equal(s.presets['1'].name.length,20);
+ const r=newState(0);r.level=60;r.skills=[];act(r,{type:'rebirth'},1000);assert.ok(!r.skills.includes('hook'),'hook not forced: '+r.skills.join(','));
+ const k=newState(0);k.level=60;k.skills=['hook'];act(k,{type:'rebirth'},1000);assert.ok(k.skills.includes('hook'),'kept when it was equipped');
+});
+test('v3.297 마력 line regen ×3: new rolls use base2 .036; existing flow/current lines are rescaled once by migration', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Gr=await L.load('data/gear');assert.equal(Gr.affixDef('flow').base2,.036);
+ const s=newState(0);delete s.manaRegenRescaled;s.inventory=[{id:'x',name:'x',slot:'rod',rarity:5,power:400,level:100,affixes:[{id:'flow',name:'마력',stat:'mana',value:200,stat2:'manaRegen',value2:10},{id:'current',name:'순환',stat:'manaRegen',value:4}]}];
+ migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30);assert.equal(s.inventory[0].affixes[0].value,200,'max mana unchanged');assert.equal(s.inventory[0].affixes[1].value,12);
+ migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30,'once');assert.equal(newState(0).manaRegenRescaled,true,'fresh saves skip it');
 });

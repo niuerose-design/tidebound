@@ -2,7 +2,8 @@ import { tuneActiveSkills, awakenSkill } from './skill-balance';
 import { MAPLE_SKILL_NAMES } from './maple-skills';
 import type { Skill } from '../types';
 import { SKILL_FORMULA } from './balance';
-import { JOBS, lineageOf, type Job } from './classes';
+import { JOBS, LINEAGES, lineageOf, worldOf, AZEROTH_MASTERY_SCALE, type Job } from './classes';
+import { applyCoreRework } from './core-passive';
 import { subRoleOf } from './roles';
 import { PROGRESSION } from './progression';
 import { EXPANSION_SKILLS } from './expansion';
@@ -14,6 +15,7 @@ import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
 import { SPECIAL_SKILLS } from './specials';
+import { OTHERWORLD_SKILLS, OTHERWORLD_COMBAT_SKILLS } from './otherworld';
 import { STAT_TRAINING_SKILLS } from './stat-training';
 import { trainingSkillOwner, scaleTrainingBonus, TRAINING_PASSIVE, TRAINING_DESC, TRAINING_SKILLS } from './training';
 export const SKILLS: Skill[] = [
@@ -38,7 +40,7 @@ for (const sk of SKILLS)
 SKILLS.push({ id: 'swarmSense', name: '무리 감지', desc: '변종 조우 확률 +50%, 명중 +2%p. 시프 패시브(Lv.30).', type: 'passive', level: 30, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { accuracy: .02, variantFind: .5 } });
 SKILLS.push({ id: 'firstAid', name: '응급처치', desc: '행동할 때마다 체력을 조금 회복합니다. SP 없이 Lv.2에 자동 습득하는 공용 패시브입니다.', type: 'passive', level: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 2, freeCommon: true, bonus: { hpRegen: 3 } });
 SKILLS.push({ id: 'insight', name: '조류 통찰', desc: '마법 공격이 오릅니다.', type: 'passive', level: 5, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { magic: 30 } }, { id: 'flow', name: '마나 순환', desc: '최대 마나와 턴당 마나 회복이 오릅니다.', type: 'passive', level: 8, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { mana: 40, manaRegen: 2 } }, { id: 'precision', name: '수면 읽기', desc: '명중 +12%p, 회피 +4%p.', type: 'passive', level: 10, chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { accuracy: .12, evasion: .04 } }, { id: 'whaleStrike', name: '거경 관통', desc: '물리 공격 450% 피해. 체력 60% 이상인 적에게만 시도.', type: 'active', level: 25, job: 'whaler', chance: .4, cooldown: 5, multiplier: 4.5, condition: 'healthyTarget', cost: 6, manaCost: 14 }, { id: 'barb', name: '미늘의 지배', desc: '방어 관통 +10%p, 치명 피해 +8%p.', type: 'passive', level: 25, job: 'whaler', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { penetration: .1, critDamage: .08 } }, { id: 'razor', name: '갈래바람', desc: '물리 공격 260% 피해 + 공격력 30% 출혈, 3턴.', type: 'active', level: 25, job: 'corsair', chance: .45, cooldown: 3, multiplier: 2.6, effect: 'bleed', cost: 5, manaCost: 9 }, { id: 'drift', name: '유령 발걸음', desc: '회피 +9%p, 속도 +10.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'corsair', cost: 3, bonus: { evasion: .09, speed: 10 } }, { id: 'maelstrom', name: '대소용돌이', desc: '마법 공격 360% 피해, 적의 공격을 3턴간 25% 약화.', type: 'active', level: 25, job: 'tempest', chance: .35, cooldown: 4, multiplier: 3.6, effect: 'weaken', cost: 6, manaCost: 18 }, { id: 'abyssMind', name: '폭풍의 정신', desc: '마법 공격 +30, 치명 피해 +10%p.', type: 'passive', level: 25, job: 'tempest', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { magic: 30, critDamage: .1 } }, { id: 'pearlPrayer', name: '진주의 기도', desc: '체력 22% 회복, 마법 공격 230% 피해. 체력 70% 이하에서만 시도.', type: 'active', level: 25, chance: .65, cooldown: 3, multiplier: 2.3, effect: 'heal', condition: 'wounded', job: 'oracle', cost: 5, manaCost: 12 }, { id: 'soulTide', name: '영혼의 조수', desc: '흡혈 +8%p, 마법 방어 +20.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'oracle', cost: 3, bonus: { lifesteal: .08, resist: 20 } }, { id: 'crush', name: '해저 분쇄', desc: '물리 공격 200% + 물리 방어 150% 피해, 1턴 기절.', type: 'active', level: 25, job: 'bulwark', chance: .35, cooldown: 4, multiplier: 2, effect: 'stun', cost: 5, manaCost: 10 }, { id: 'ironWill', name: '부동의 산호', desc: '물리 방어 +40, 마법 방어 +25, 방어 비례 반격.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'bulwark', cost: 3, bonus: { defense: 40, resist: 25, thorns: .3 , swarmFind: 0.5} }, { id: 'oath', name: '성해의 빛살', desc: '마법 공격 계수로 물리 피해 300%, 피해의 25% 회복.', type: 'active', level: 25, job: 'paladin', chance: .4, cooldown: 4, multiplier: 3, effect: 'drain', cost: 5, manaCost: 12, damageType: 'physical', scaling: 'swap' }, { id: 'balance', name: '두 바다의 서약', desc: '마법 공격 +40.', type: 'passive', level: 25, chance: 0, cooldown: 0, multiplier: 0, job: 'paladin', cost: 3, bonus: { magic: 40 } });
-SKILLS.push({ id: 'goldMemory', name: '황금의 기억', desc: '처치·던전 골드 +15%, 명중 +5%p.', type: 'passive', level: 5, rebirth: 1, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { goldBonus: .15, accuracy: .05 } }, { id: 'soulShell', name: '영혼의 비늘', desc: '회피 +8%p, 마법 방어 +30, 최대 체력 +150.', type: 'passive', level: 20, rebirth: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { evasion: .08, resist: 30, hp: 150 } });
+SKILLS.push({ id: 'goldMemory', name: '황금의 기억', desc: '처치 골드 +15%, 명중 +5%p.', type: 'passive', level: 5, rebirth: 1, chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { goldBonus: .15, accuracy: .05 } }, { id: 'soulShell', name: '영혼의 비늘', desc: '회피 +8%p, 마법 방어 +30, 최대 체력 +150.', type: 'passive', level: 20, rebirth: 2, chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { evasion: .08, resist: 30, hp: 150 } });
 SKILLS.push({ id: 'vitalSurge', name: '생명 쇄도', desc: '물리 피해. 여섯 능력치가 고를수록 세집니다.', type: 'active', level: 25, job: 'chimera', chance: .35, cooldown: 4, multiplier: 2.2, cost: 5, manaCost: 10, balanceBonus: .3 }, { id: 'adaptiveCore', name: '적응하는 심장', desc: '최대 체력 +120, 최대 마나 +20, 명중 +5%p, 회피 +4%p.', type: 'passive', level: 25, job: 'chimera', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { hp: 120, mana: 20, accuracy: .05, evasion: .04 } }, );
 
 // 신규 직업 스킬은 모두 데이터로 선언합니다. 한 직업에 1개만 주거나 패시브 2개만 주는 것도 허용합니다.
@@ -86,12 +88,12 @@ SKILLS.push(
 SKILLS.push(
     { id: 'twinHook', name: '쌍갈고리', desc: '물리 공격 135% 피해 후 1회의 추가타(기본 위력의 58%).', type: 'active', level: 14, chance: .3, cooldown: 4, multiplier: 1.35, extraAttacks: 1, extraAttackMultiplier: .58, cost: 4, manaCost: 5 },
     { id: 'chartedCurrents', name: '해류 측량', desc: '장비 드롭 확률 +30%, 골드 획득 +4%. 전투력 대신 더 좋은 항로를 찾습니다.', type: 'passive', level: 10, job: 'tideSurveyor', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { dropBonus: .03, goldBonus: .04 } },
-    { id: 'pearlLedger', name: '진주 장부', desc: '환생 시 세계석 +1. 숙련할수록 장착 AP가 3 → 0으로 줄고 세계석 +2·골드 보너스가 붙습니다.', type: 'passive', level: 25, job: 'pearlBroker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { rebirthBonus: 1 }, levelEffects: [{ cost: 3, bonus: { rebirthBonus: 1 } }, { cost: 3, bonus: { rebirthBonus: 1, goldBonus: .04 } }, { cost: 2, bonus: { rebirthBonus: 1, goldBonus: .08 } }, { cost: 1, bonus: { rebirthBonus: 2, goldBonus: .1 } }, { cost: 0, bonus: { rebirthBonus: 2, goldBonus: .12, dungeonGoldBonus: .1 } }] },
-    { id: 'salvageContract', name: '인양 계약', desc: '골드 획득 +10%, 던전 클리어 골드 +8%.', type: 'passive', level: 10, job: 'salvageMerchant', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { goldBonus: .1, dungeonGoldBonus: .08 } },
-    { id: 'rareSense', name: '전리품 감지', desc: '장비 드롭 확률 +50%, 처치·던전 골드 +4%. 몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.', type: 'passive', level: 25, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { dropBonus: .05, goldBonus: .04 } },
-    { id: 'memoryOfTides', name: '윤회의 조류 기록', desc: '환생 시 세계석 +1, 던전 클리어 골드 +10%. 환생할 때마다 두 공격 +5·최대 체력 +18·두 방어 +1(최대 12회). 지난 생의 기록이 다음 생의 힘이 됩니다.', type: 'passive', level: 40, job: 'abyssArchivist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { rebirthBonus: 1, dungeonGoldBonus: .1 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 5, magic: 5, hp: 18, defense: 1, resist: 1 }, cap: 12 }] },
-    { id: 'electricBite', name: '전기 이빨', desc: '물리 공격 피해, 3턴 감속. 동굴 수호자의 기술을 물어뜯는 기술로 계승합니다.', type: 'active', level: 25, job: 'stormEel', chance: .28, cooldown: 4, multiplier: 1.75, effect: 'slow', damageType: 'physical', statusTurns: 3, cost: 4, manaCost: 9 },
-    { id: 'tentacleBarrage', name: '크라켄의 촉수 난무', desc: '물리 공격 150% 피해 후 추가타 1회. 보스의 기술을 배웁니다.', type: 'active', level: 40, rebirth: 1, job: 'krakenkin', chance: .26, cooldown: 6, multiplier: 1.5, extraAttacks: 1, extraAttackMultiplier: .5, cost: 6, manaCost: 8 },
+    { id: 'pearlLedger', name: '진주 장부', desc: '획득 경험치가 오릅니다. 숙련할수록 장착 AP가 3 → 0으로 줄고 경험치 · 골드 보너스가 커집니다.', type: 'passive', level: 25, job: 'pearlBroker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { expBonus: .06 }, levelEffects: [{ cost: 3, bonus: { expBonus: .06 } }, { cost: 3, bonus: { expBonus: .08, goldBonus: .04 } }, { cost: 2, bonus: { expBonus: .1, goldBonus: .08 } }, { cost: 1, bonus: { expBonus: .12, goldBonus: .1 } }, { cost: 0, bonus: { expBonus: .15, goldBonus: .12, dungeonGoldBonus: .1 } }] },
+    { id: 'salvageContract', name: '인양 계약', desc: '골드 획득 +10%, 던전 주화 +8%.', type: 'passive', level: 10, job: 'salvageMerchant', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { goldBonus: .1, dungeonGoldBonus: .08 } },
+    { id: 'rareSense', name: '전리품 감지', desc: '장비 드롭 확률 +50%, 처치 골드 +4%. 몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.', type: 'passive', level: 25, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { dropBonus: .05, goldBonus: .04 } },
+    { id: 'memoryOfTides', name: '윤회의 조류 기록', desc: '마법 공격 +40, 던전 주화 +10%. 환생할 때마다 두 공격 +5·최대 체력 +18·두 방어 +1(최대 12회). 지난 생의 기록이 다음 생의 힘이 됩니다.', type: 'passive', level: 40, job: 'abyssArchivist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { magic: 40, dungeonGoldBonus: .1 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 5, magic: 5, hp: 18, defense: 1, resist: 1 }, cap: 12 }] },
+    { id: 'electricBite', name: '귀참', desc: '물리 공격 피해, 3턴 감속. 동굴 수호자의 기술을 물어뜯는 기술로 계승합니다.', type: 'active', level: 25, job: 'stormEel', chance: .28, cooldown: 4, multiplier: 1.75, effect: 'slow', damageType: 'physical', statusTurns: 3, cost: 4, manaCost: 9 },
+    { id: 'tentacleBarrage', name: '폭류권', desc: '물리 공격 150% 피해 후 추가타 1회. 보스의 기술을 배웁니다.', type: 'active', level: 40, rebirth: 1, job: 'krakenkin', chance: .26, cooldown: 6, multiplier: 1.5, extraAttacks: 1, extraAttackMultiplier: .5, cost: 6, manaCost: 8 },
 );
 
 // 공용 스킬은 시작 무기인 hook 하나만 남깁니다. 나머지 기술은
@@ -240,6 +242,11 @@ export function skillMasteryScale(sk: Pick<Skill, 'job'>) {
 }
 // v3.65 공개 특수 직업의 스킬(data/specials.ts, 완성된 모양).
 registerSkills(SPECIAL_SKILLS);
+// v3.231 이계 스킬(해커 계보).
+registerSkills(OTHERWORLD_SKILLS);
+registerSkills(OTHERWORLD_COMBAT_SKILLS);
+// v3.231 이계 5차 대표기 셋은 각성기(턴마다 따로 판정, 탄창 순서와 별개).
+for (const id of ['deadEye', 'tacticalNuke', 'blackSwan']) { const sk = OTHERWORLD_COMBAT_SKILLS.find(x => x.id === id); if (sk) awakenSkill(sk); }
 // v3.199 공개 특수 직업의 5차 액티브(은월 (5차) 파쇄 연권)도 각성기로(비밀 표는 secret/register.ts에서 같은 일을 함).
 for (const sk of SPECIAL_SKILLS) if (sk.type === 'active' && !sk.awaken && (JOBS.find(j => j.id === sk.job)?.tier ?? 0) >= SKILL_FORMULA.awaken.tier) awakenSkill(sk);
 // v3.69 옛 독립 수련의 스킬은 id 그대로 새 수련 직업이 가집니다(data/training.ts). v3.170 새 수련 패시브는 처음부터 수련 직업 소유입니다.
@@ -349,3 +356,13 @@ export function alignJobMastery(jobs: Job[]) {
     }
 }
 alignJobMastery(JOBS);
+// v3.224 공개 아제로스 계보(참모 계보)도 아제로스 규칙: 숙련 기준을 맞춘 뒤 직업 숙달 목표 · 그 직업 스킬의 숙련 단계를 AZEROTH_MASTERY_SCALE배로.
+// 비밀 아제로스 계보는 서버가 game/secret/register.ts에서 같은 일을 합니다.
+for (const job of JOBS) {
+    if (worldOf(LINEAGES.find(l => l.id === lineageOf(job))) !== 'azeroth') continue;
+    job.masteryTarget = (job.masteryTarget || 0) * AZEROTH_MASTERY_SCALE;
+    // 제약형(최대 숙련에서 AP 0 이하, 지휘 체계 계열)은 이미 천만 단위라 그대로 둡니다.
+    for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones && !isConstraintSkill(sk)) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
+}
+// v3.228 메이플 월드 4 · 5차 핵심 패시브 개편(data/core-passive.ts). 비밀 직업은 서버가 secret/register.ts에서 같은 일을 합니다.
+applyCoreRework(JOBS, SKILLS);

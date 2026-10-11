@@ -117,7 +117,8 @@ test('v25.3 passive-route returns: the archivist passive scales with rebirths an
     const gain = (r, k) => stats({ ...s, rebirths: r })[k] - stats({ ...s, rebirths: r, skills: [] })[k];
     assert.ok(gain(5, 'attack') - gain(0, 'attack') >= 25 && gain(5, 'attack') - gain(0, 'attack') <= 30, `+5 per rebirth before job scaling (${gain(5, 'attack') - gain(0, 'attack')})`);
     assert.ok(gain(12, 'hp') - gain(0, 'hp') >= 12 * 18); assert.equal(SKILLS.find(x => x.id === 'memoryOfTides').perCount[0].cap, 12, 'rebirth scaling caps at 12');
-    assert.equal(stats({ ...s, rebirths: 3 }).rebirthBonus, 1);
+    // v3.244 환생 세계석 보너스를 빼고 마법 공격 +40.
+    assert.equal('rebirthBonus' in stats({ ...s, rebirths: 3 }), false);
     // 떠돌이 모험가: v3.199 숙달 직업 5개(전에는 3개)에서 숨은 조건이 열리고, 패시브는 숙달 직업 수에 비례합니다.
     const j = newState(0); j.level = 10; j.attributes = { str: 10, int: 10, vit: 10, dex: 0, wis: 0, luk: 0 };
     assert.equal(canChangeJob(j, 'journeyman'), false);
@@ -140,7 +141,8 @@ test('v25.4 passive mastery returns: AP -1 at max growth, late-bloomer waypoint 
     for (const id of ['axeArm', 'innerBreath', 'lullaby', 'driftwoodGuard']) { const m = maxSkillLevel(sk(id)); assert.equal(effectiveSkill(sk(id), 1, m).cost, (sk(id).cost ?? 2) - 1, id); assert.equal(effectiveSkill(sk(id), 1, m - 1).cost, sk(id).cost ?? 2, `${id} before max`); }
     assert.equal(effectiveSkill(sk('glyphNothing'), 1, 4).cost, 0, 'floor at 0'); assert.equal(effectiveSkill(sk('glyphCut'), 1, 4).cost, 1, 'actives unchanged');
     for (const [id, last] of [['titanFieldNotes', 0], ['pearlLedger', 0], ['chronicleStudy', -1], ['serpentFolklore', 0], ['abyssObservation', -1]]) { const m = maxSkillLevel(sk(id)); assert.equal(sk(id).levelEffects.length, m + 1, id); assert.equal(effectiveSkill(sk(id), 1, m).cost, last, id); assert.ok(effectiveSkill(sk(id), 1, 0).cost >= 3, `${id} starts expensive`); }
-    assert.equal(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.rebirthBonus, 2);
+    // v3.244 마법 잔해: 환생 세계석 대신 경험치(최대 단계 +15%, 숙련 배율 별도).
+    assert.ok(effectiveSkill(sk('pearlLedger'), 1, 4).bonus.expBonus > effectiveSkill(sk('pearlLedger'), 1, 0).bonus.expBonus);
     // 떠돌이 계보: 숙달 직업 수 관문과 숙달 비례 피해.
     const s = newState(0); s.level = 40; s.attributes = { str: 30, int: 30, vit: 30, dex: 0, wis: 0, luk: 0 }; s.jobMastery.journeyman = jobMasteryTarget(JOBS.find(x => x.id === 'journeyman')); s.unlockedJobs.push('journeyman');
     // v3.199 만능 모험가는 숙달 12개(전에는 8개), 백수는 20개(전에는 15개).
@@ -301,10 +303,10 @@ test('v27.79 account bonuses are low multiplicative factors (AP unchanged); slot
 test('v25.7 enhance caps: legend+ to 22★, others stop at 15★; sale value follows the monster gold curve and refunds 30% of enhancement', async () => {
     const { enhanceMaxFor, saleValue, enhanceCost } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('systems/equipment');
     const { monsterGoldAt } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/world');
-    assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 22); assert.equal(enhanceMaxFor({ rarity: 6 }), 22);
+    assert.equal(enhanceMaxFor({ rarity: 2 }), 15); assert.equal(enhanceMaxFor({ rarity: 3 }), 25, 'v3.241 25성'); assert.equal(enhanceMaxFor({ rarity: 6 }), 25);
     const s = newState(0); s.gold = 1e9; const hero = { id: 'h', name: 'h', slot: 'coat', rarity: 2, power: 60, level: 30, enhance: 15 }, legend = { id: 'l', name: 'l', slot: 'coat', rarity: 3, power: 90, level: 30, enhance: 20 }; s.inventory = [hero, legend];
     const win = () => 0;
-    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); act(s, { type: 'enhance', id: 'l' }, 0, win); act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 22); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
+    assert.throws(() => act(s, { type: 'enhance', id: 'h' }, 0, win), /최대 강화/); for (let i = 0; i < 5; i++) act(s, { type: 'enhance', id: 'l' }, 0, win); assert.equal(legend.enhance, 25); assert.throws(() => act(s, { type: 'enhance', id: 'l' }, 0, win), /최대 강화/);
     assert.equal(saleValue({ rarity: 3, level: 30, power: 90 }), monsterGoldAt(30) * 50); assert.equal(saleValue({ rarity: 0, level: 1, power: 2 }), 14);
     let spent = 0; for (let e = 0; e < legend.enhance; e++) spent += enhanceCost({ ...legend, enhance: e }); assert.equal(saleValue(legend), Math.floor(monsterGoldAt(30) * 50 + spent * .3), 'enhancement refund 30%');
     assert.ok(saleValue({ rarity: 3, level: 60, power: 200 }) > saleValue({ rarity: 3, level: 30, power: 90 }) * 10, 'late-game sale keeps pace with exponential gold');
@@ -366,8 +368,8 @@ test('v25.11 guild goals scale with members, points formula, weekly stats accumu
     const mods = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { makeGuildGoals, guildPoints, guildGoalProgress, normalizeGuildCode } = await mods.load('data/guild'); const { recordGoal, recordAbyssDepth, guildStatsFor } = await mods.load('systems/progress');
     assert.equal(makeGuildGoals(1)[0].target, 1200, 'solo guild counts as 3 members'); assert.equal(makeGuildGoals(10)[0].target, 4000); assert.equal(makeGuildGoals(20)[1].target, 240); assert.equal(makeGuildGoals(5)[3].target, 20);
-    assert.equal(guildPoints({ catches: 100, clears: 2, bosses: 4, abyss: 3, donated: 2500 }), 100 + 40 + 20 + 30 + 2);
-    assert.equal(guildGoalProgress(makeGuildGoals(3)[0], { catches: 99999, clears: 0, bosses: 0, abyss: 0, donated: 0 }), 1200, 'progress caps at target');
+    assert.equal(guildPoints({ catches: 100, clears: 2, bosses: 4, abyss: 3 }), 100 + 40 + 20 + 30, 'v3.241 기부 점수 없음');
+    assert.equal(guildGoalProgress(makeGuildGoals(3)[0], { catches: 99999, clears: 0, bosses: 0, abyss: 0 }), 1200, 'progress caps at target');
     assert.equal(normalizeGuildCode(' k7pq-2m '), 'K7PQ2M');
     const s = newState(0); const mon = Date.UTC(2026, 9, 1, 3); s.lastTick = mon;
     recordGoal(s, 'catch', undefined, 5, () => {}); recordGoal(s, 'boss', undefined, 1, () => {}); recordGoal(s, 'dungeon', 'grotto', 1, () => {}); recordAbyssDepth(s, 7, mon);
@@ -492,7 +494,7 @@ test('v27.32 swarm cap setting lowers rolled swarm sizes (off = plain monster) a
     assert.throws(() => act(s, { type: 'swarmCap', value: '50' }, 0), /무리 최대 규모/);
 });
 
-test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, overlevel cuts clear gold, stage enemies capped', async () => {
+test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is normalized, no overlevel cut (v3.201), stage enemies capped', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const W = await L.load('data/world'), B = await L.load('data/balance'), M = await L.load('systems/meta'), C = await L.load('systems/commerce'), Eq = await L.load('systems/equipment'), E = await L.load('data/encounters');
     for (const lv of [1, 10, 25, 40]) assert.equal(W.monsterGoldAt(lv), Math.round(7 * Math.pow(1.12, lv - 1)), `Lv.${lv} unchanged`);
@@ -505,7 +507,8 @@ test('v27.34–35 gold curve slows after Lv.40, prices follow it, dungeon exp is
     assert.equal(M.dungeonExp(boss, abyss.level, 0, true), Math.round(W.monsterExpAt(abyss.level) * B.DUNGEON_TUNING.bossExpMonsters));
     assert.equal(M.dungeonExp(boss, abyss.level, 80, true), M.dungeonExp(boss, abyss.level, B.DUNGEON_TUNING.rewardTierCap, true), 'abyss depth stops raising exp');
     assert.ok(M.dungeonExp(boss, abyss.level, 80, true) < M.killReward(boss, 80, true).exp / 10, 'far below the old uncapped boss exp');
-    assert.equal(B.dungeonOverlevel(18, 8), 1); assert.equal(B.dungeonOverlevel(30, 8), .7); assert.equal(B.dungeonOverlevel(100, 8), B.DUNGEON_TUNING.overlevelFloor);
+    // v3.201 레벨 초과 감액(v27.30) 삭제: 권장 레벨보다 높아도 클리어 골드·반복 장비 확률이 그대로입니다.
+    assert.equal(B.dungeonOverlevel, undefined); assert.equal(B.DUNGEON_TUNING.overlevelFloor, undefined);
     const reef = W.STAGES.find(st => st.id === 'reef'), storm = W.MONSTERS.find(f => f.id === 'stormBarracuda');
     assert.equal(W.stageStatMonster(storm, reef.level).level, reef.level + W.STAGE_ENEMY_LEVEL_OVER); assert.ok(W.stageStatMonster(storm, reef.level).hp < storm.hp);
     const monster = W.MONSTERS.find(f => f.id === abyss.monsters[0]);
@@ -686,7 +689,10 @@ test('v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black 
     const B = await L.load('data/balance');
     assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 14 / 4) < .01, 'v27.77 rebirth 10 = (4+10)/4'); assert.ok(B.xpRebirthFactor(60) < B.xpRebirthFactor(100) && B.xpRebirthFactor(150) < B.xpRebirthFactor(200), 'keeps growing past the level cap');
     // v3.21 환생 50회·100회 벽, 20회 이후 회당 +0.5.
-    assert.equal(B.xpRebirthFactor(49), 4 + 20 + .5 * 29); assert.equal(B.xpRebirthFactor(50), (4 + 20 + .5 * 30) * 8.9); assert.equal(B.xpRebirthFactor(100), (4 + 20 + .5 * 80) * 35);
+    assert.equal(B.xpRebirthFactor(49), 4 + 20 + .5 * 29); assert.equal(B.xpRebirthFactor(50), (4 + 20 + .5 * 30) * B.xpRebirthWall(50)); assert.equal(B.xpRebirthFactor(100), (4 + 20 + .5 * 80) * B.xpRebirthWall(100));
+    // v3.291 벽 배율 상향(필요 경험치로 벽): 50회 ×30 · 100회 ×120, 50회부터 Lv.70 이후 레벨당 ×1.25.
+    assert.deepEqual(B.XP_SCALING.rebirthWalls, [[50, 30], [100, 120]]); assert.equal(B.xpWallGrowth(49), 1.1); assert.equal(B.xpWallGrowth(50), 1.25);
+    assert.ok(Math.abs(B.xpNeeded(80, 50) / B.xpNeeded(79, 50) - 1.25 * Math.pow(80 / 79, 2.3)) < .01, 'R50+: Lv.70+ ×1.25 per level');
     assert.ok(B.xpNeeded(69) / B.xpNeeded(68) < 1.1 && B.xpNeeded(80) / B.xpNeeded(69) > 3 && B.xpNeeded(100) / B.xpNeeded(69) > 30, 'v27.77 wall after Lv.70 (1.10/level up to Lv.100)');
     const D = await L.load('systems/duel'), Alt = D;
     const base = { ...D.abyssBossSnapshot(50), name: '검은 마법사' }, god = Alt.divineFirstGod(base);
@@ -911,7 +917,7 @@ test('v27.70 nuri blessing: an altar gauge that multiplies the exp nuri spawn ch
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await L.load('data/altar'), ev = await L.load('data/events'), Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
     const b = A.BLESSINGS.find(x => x.id === 'nuri');
-    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 3 && A.blessingEffect(b, 3).nuri === 5 && /누리 출현 ×3/.test(A.blessingDesc(b, 1)));
+    assert.ok(b && A.GAUGE_IDS.includes('nuri') && A.blessingEffect(b, 1).nuri === 2 && A.blessingEffect(b, 3).nuri === 3 && /누리 출현 ×2/.test(A.blessingDesc(b, 1)));
     const now = Date.now();
     ev.setAltarEvents([{ id: 'altar-nuri', name: '', from: '2026-01-01T00:00:00+09:00', until: new Date(now + 3600_000).toISOString(), nuri: 3 }]);
     try {
@@ -1143,10 +1149,10 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
 test('v27.93 star force: per-star odds, drops from 10 (15/20 safe), destruction from 15 (relics reset to 12), chance time, safeguard, cost growth after 12', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const SF = await L.load('data/starforce'), { enhanceCost, itemStats } = await L.load('systems/equipment');
-    assert.equal(SF.starSuccess(0), .95); assert.equal(SF.starSuccess(15), .3); assert.equal(SF.starMax(3), 22); assert.equal(SF.starMax(2), 15);
+    assert.equal(SF.starSuccess(0), .95); assert.equal(SF.starSuccess(15), .3); assert.equal(SF.starMax(3), 25); assert.equal(SF.starSuccess(22), .03); assert.equal(SF.starSuccess(24), .01); assert.ok(!SF.starDrops(22) && SF.starDrops(23)); assert.equal(SF.starDestroy(22, true), 0, 'v3.241 22성 파괴 방지'); assert.equal(SF.starDestroy(24), .396); assert.equal(SF.relicResetFor(23), 20); assert.equal(SF.relicResetFor(21), 12); assert.ok(Math.abs(SF.starCatchSuccess(22) - .0315) < 1e-9 && Math.abs(SF.starCatchSuccess(15) - .4) < 1e-9); assert.equal(SF.starMax(2), 15);
     assert.ok(!SF.starDrops(9) && SF.starDrops(10) && !SF.starDrops(15) && SF.starDrops(16) && !SF.starDrops(20) && SF.starDrops(21));
     assert.equal(SF.starDestroy(14), 0); assert.equal(SF.starDestroy(15), .021); assert.equal(SF.starDestroy(15, true), 0); assert.equal(SF.starDestroy(20, true), .07, 'safeguard only at 15·16');
-    assert.ok(Math.abs(SF.starMultiplier(12) - 2.2) < 1e-9 && Math.abs(SF.starMultiplier(15) - 2.5) < 1e-9 && Math.abs(SF.starMultiplier(22) - 3.55) < 1e-9);
+    assert.ok(Math.abs(SF.starMultiplier(12) - 2.2) < 1e-9 && Math.abs(SF.starMultiplier(15) - 2.5) < 1e-9 && Math.abs(SF.starMultiplier(22) - 3.55) < 1e-9 && Math.abs(SF.starMultiplier(25) - 4.15) < 1e-9);
     const base = { id: 'x', name: 'x', slot: 'coat', rarity: 3, power: 100, level: 30 };
     assert.ok(Math.abs(enhanceCost({ ...base, enhance: 13 }) - enhanceCost({ ...base, enhance: 12 }) * SF.STARFORCE.growth) <= 1); assert.ok(enhanceCost({ ...base, enhance: 21 }) > enhanceCost({ ...base, enhance: 12 }) * 7);
     assert.ok(itemStats({ ...base, enhance: 22 }).hp > itemStats({ ...base, enhance: 12 }).hp * 1.5);
@@ -1247,7 +1253,7 @@ test('v3.5 gear level-up: +10 up to player level, power/flat affixes scale, star
     assert.equal(relic.power, Eco.heirPower('relic', 10, 11)); assert.ok(enhanceCost({ ...relic, enhance: 5 }, s) > cheap, 'relic star cost rises with its level');
     for (let i = 0; i < 8; i++) act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 91); assert.equal(enhanceMaxFor(relic), 21);
     // v3.13 Lv.91 → Lv.100(내 레벨까지), 별 상한 22. 전에는 Lv.101을 요구해 영원히 막혔습니다.
-    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 22); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
+    act(s, { type: 'levelUp', id: relic.id }, 0); assert.equal(relic.level, 100); assert.equal(enhanceMaxFor(relic), 25, 'v3.241 Lv.100 유물 25성'); assert.throws(() => act(s, { type: 'levelUp', id: relic.id }, 0), /내 레벨/, 'already at my level');
 });
 
 test('v3.6 star force records: tries/success/fail/destroy/gold persist through rebirth and feed the 강화 achievements and star titles', async () => {
@@ -1319,10 +1325,10 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
     const top = W.MONSTERS.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.monsterExpAt(top.level), 'monster rows use the curve');
 });
 
-test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
+test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 300-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
-    assert.equal(O.ONYX_BOSSES.length, 7); assert.ok(O.onyxBossFor('리스항구') && !O.onyxBossFor('아쿠아로드'));
+    assert.equal(O.ONYX_BOSSES.length, 9, 'v3.278 스우 · 데미안'); assert.ok(O.onyxBossFor('리스항구') && O.onyxBossFor('아쿠아로드')?.id === 'onyxSwoo' && !O.onyxBossFor('루디브리엄'));
     assert.equal(O.onyxChance(0, 0), .003); assert.ok(Math.abs(O.onyxChance(50, 0) - .006) < 1e-9); assert.equal(O.onyxChance(0, O.ONYX.pity), 1, 'pity guarantees');
     for (const b of O.ONYX_BOSSES) assert.ok(W.MONSTERS.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
     // 서식지에서만 나옵니다. 첫 난수(까미·누리 없음 → 칠흑 판정)가 0이면 출현.
@@ -1332,7 +1338,7 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     const miss = newState(0); miss.level = 60; miss.rebirths = 10; miss.stage = 'lithSwarm'; Enc.spawn(miss, () => .5); assert.ok(!miss.enemy.onyx); assert.equal(miss.onyxSeen['리스항구'], 1, 'pity counter grows');
     // 처치: 장신구 1개(태초, 고유 옵션 + 5줄), 두 번째는 세계석.
     const E = await L.load('data/encounters');
-    const skillSets = O.ONYX_BOSSES.map(b => E.profile(b.id).skills.join(',')); assert.equal(new Set(skillSets).size, 7, 'each onyx boss has its own skill set');
+    const skillSets = O.ONYX_BOSSES.map(b => E.profile(b.id).skills.join(',')); assert.equal(new Set(skillSets).size, O.ONYX_BOSSES.length, 'each onyx boss has its own skill set');
     for (const b of O.ONYX_BOSSES) { const own = E.profile(b.id).skills.filter(id => id.startsWith('onyx')); assert.equal(own.length, 1, b.id); assert.ok(E.ENEMY_SKILLS.some(sk => sk.id === own[0]), own[0]); assert.ok(s.enemy.onyx !== b.id || s.enemy.skills.includes(own[0]) && s.enemy.skills.includes('foeWard')); }
     // 드랍 0.3%: 미획득이면 연속 횟수만 오르고 400번째 격파는 확정.
     s.enemy.hp = 0; const pearls = s.pearls; Enc.reward(s, () => .5); assert.ok(!s.inventory.some(i => i.onyx), 'roll .5 misses the 0.3% drop'); assert.equal(s.onyxMiss.onyxDusk, 1); assert.equal(s.onyxBook.onyxDusk, 1); assert.ok(s.logs.some(l => l.text.includes('남기지 않았습니다')));
@@ -1340,7 +1346,7 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.ok(s.inventory.some(i => i.onyx), `${O.ONYX.dropPity}th kill is guaranteed`); assert.equal(s.onyxMiss.onyxDusk, 0); assert.equal(s.onyxBook.onyxDusk, 5);
     const s2 = newState(0); s2.level = 60; s2.rebirths = 10; s2.kills = 5000; s2.stage = 'lithSwarm'; s2.tide = 0; Enc.spawn(s2, () => 0); s2.enemy.hp = 0; Enc.reward(s2, () => .001); assert.ok(s2.inventory.some(i => i.onyx), 'roll .001 drops'); assert.equal(s2.itemBook['onyx:onyxDusk'], true, 'v3.14 auto-registered in the item codex');
     const Mig = await L.load('systems/migrations'); const s3 = newState(0); s3.inventory.push({ ...s2.inventory.find(i => i.onyx), id: 'mig' }); Mig.registerOnyxCodex(s3); assert.equal(s3.itemBook['onyx:onyxDusk'], true, 'existing owners get the codex entry');
-    const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 6 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
+    const acc = s.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(acc && acc.slot === 'charm' && acc.rarity === 6 && acc.locked && acc.affixes.length === 7 && acc.affixes[0].rule && acc.affixes[0].stat === 'thorns', JSON.stringify(acc));
     assert.equal(s.pearls, pearls);
     Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .5); assert.equal(s.inventory.filter(i => i.onyx).length, 1, 'one per boss'); assert.equal(s.pearls, pearls + O.ONYX.duplicatePearls);
     // 떠남: leavesAt 이후 턴에 사라집니다.
@@ -1351,6 +1357,62 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     assert.ok(Math.abs(stats(s).allStats - (.03 + .05 * O.ONYX.resonance)) < 1e-9 && stats(s).attack > before, '7 pieces: all stats +3% (v3.113 plus the unworn Black Mage badge resonance)');
     assert.throws(() => act(s, { type: 'sell', id: acc.id }, 0), /칠흑/); assert.throws(() => act(s, { type: 'reforge', id: acc.id, value: '0' }, 0), /고유 옵션/);
     s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 1 }, 'miss counter kept (v3.113 a missed awakening roll counts too)');
+});
+
+test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고통의 근원, old 마크 · 안대 stay, nine-piece set', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), BC = await L.load('data/boss-core'), Enc = await L.load('systems/encounter'), DC = await L.load('systems/dungeon-coins'), G = await L.load('systems/onyx-grant');
+    assert.equal(O.ONYX_TOTAL, 9); assert.equal(O.ONYX_ITEMS.length, 8); assert.ok(BC.BOSS_CORES[O.ONYX_CORE_ID]?.onyx === 'onyxWill');
+    assert.ok(!BC.REGION_CORE_IDS.includes(O.ONYX_CORE_ID) && !BC.ABYSS_CORE_IDS.includes(O.ONYX_CORE_ID), 'the grimoire is not in chests or Mu Lung');
+    const hunt = (stage, roll) => { const s = newState(0); s.level = 90; s.rebirths = 10; s.kills = 5000; s.stage = stage; s.tide = 0; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => roll); return s; };
+    // 윌: 같은 확률 · 천장으로 보스코어(장신구 아님). 처음 얻으면 비어 있던 코어 칸에 낍니다.
+    const w = hunt('perionSwarm', .5); assert.equal(w.onyxMiss.onyxWill, 1); assert.equal(w.bossCores?.[O.ONYX_CORE_ID], undefined); assert.ok(w.logs.some(l => l.text.includes('저주받은 마도서을(를) 남기지')));
+    w.onyxMiss.onyxWill = O.ONYX.dropPity - 1; Enc.spawn(w, () => 0); w.enemy.hp = 0; Enc.reward(w, () => .99);
+    assert.equal(BC.coreEntry(w.bossCores[O.ONYX_CORE_ID]).rank, 0, 'pity guarantees the grimoire'); assert.ok(!w.inventory.some(i => i.onyx), 'no accessory from Will'); assert.equal(w.coreSlot, O.ONYX_CORE_ID); assert.equal(O.onyxCollected(w), 1);
+    const pearls = w.pearls; Enc.spawn(w, () => 0); w.enemy.hp = 0; Enc.reward(w, () => .001); assert.equal(BC.coreEntry(w.bossCores[O.ONYX_CORE_ID]).rank, 1, 'a repeat drop awakens the core'); assert.equal(w.pearls, pearls + O.ONYX.duplicatePearls);
+    assert.ok(Math.abs(stats(w).statusResist - stats({ ...w, bossCores: {} }).statusResist - .1 * 1.1) < 1e-9, 'worn grimoire: status resist +10%p × awaken 1');
+    // 진 힐라: 고통의 근원(흡혈 · 처형). 이미 가진 안대는 그대로 남고 각성되지 않습니다.
+    const h = newState(0); h.level = 90; h.rebirths = 10; h.kills = 5000; h.stage = 'kerningSwarm'; h.tide = 0;
+    const patch = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'patch', 60); patch.onyxRank = 2; h.inventory.push(patch); h.onyxBook = { onyxHilla: 3 };
+    Enc.spawn(h, () => 0); assert.equal(h.enemy.onyx, 'onyxHilla'); h.enemy.hp = 0; Enc.reward(h, () => .001);
+    const pain = h.inventory.find(i => i.onyx === 'onyxPain'); assert.ok(pain && pain.affixes[0].id === 'onyxSoul' && pain.affixes[0].stat === 'lifesteal' && pain.affixes[0].stat2 === 'executeBonus');
+    assert.equal(patch.onyxRank, 2, 'the old eye patch keeps its awakening'); assert.equal(O.onyxCollected(h), 2);
+    // 상점 · 환생 이정표: 지금 주는 보스가 없는 장신구(마크 · 안대)는 팔지 않고, 고통의 근원은 진 힐라 처치로 열립니다.
+    // v3.278 마크 · 안대는 스우 · 데미안이 줍니다. 상점은 그 보스를 처치해야 열립니다.
+    assert.match(DC.onyxOffer(h, 'onyxHilla').reason, /처치해야/); assert.match(DC.onyxOffer(h, 'onyxWill').reason, /처치해야/); assert.equal(DC.onyxOffer(h, 'onyxPain').kind, 'awaken');
+    assert.equal(O.ONYX_DROP_ITEMS.length, O.ONYX_ITEMS.length, 'every accessory has a boss again'); assert.equal(O.onyxItemById('onyxWill').boss, 'onyxSwoo'); assert.equal(O.onyxItemById('onyxHilla').boss, 'onyxDamien');
+    const m = newState(0); m.rebirths = 100; G.grantOnyxMilestones(m, () => .99); assert.ok(m.inventory.filter(i => i.onyx).every(i => O.onyxItemById(i.onyx).boss), 'milestones only give obtainable accessories');
+    // 고통의 근원 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
+    const ls = newState(0); ls.level = 60; ls.equipment.charm = O.onyxAccessory(O.onyxItemById('onyxPain'), 'p', 60); assert.ok(stats(ls).lifesteal >= .05 - 1e-9 && stats(ls).executeBonus >= .05 - 1e-9);
+    // v3.278 스우(아쿠아로드) · 데미안(리프레): 마크 · 안대를 다시 줍니다. 이미 가진 안대는 데미안 격파로 각성합니다.
+    const d = newState(0); d.level = 90; d.rebirths = 10; d.kills = 5000; d.stage = 'leafreSwarm'; d.tide = 0;
+    const old = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'old', 60); old.onyxRank = 1; d.inventory.push(old);
+    Enc.spawn(d, () => 0); assert.equal(d.enemy.onyx, 'onyxDamien'); d.enemy.hp = 0; Enc.reward(d, () => .001); assert.equal(old.onyxRank, 2, 'Damien awakens the old eye patch');
+    const sw = hunt('aquaSwarm', .001); assert.equal(sw.onyxBook.onyxSwoo, 1); assert.ok(sw.inventory.some(i => i.onyx === 'onyxWill'), 'Swoo drops the control mark');
+    // v3.279 마도서도 던전 주화 상점에서 칠흑 장신구와 같은 가격 · 하루 횟수로 제작 · 각성합니다(윌 처치로 열림).
+    const DS = await L.load('data/dungeon-shop'); const shop = newState(0); shop.dungeonCoins = 100000;
+    assert.match(DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).reason, /처치해야/); shop.onyxBook = { onyxWill: 1 };
+    assert.deepEqual([DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).kind, DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).price], ['craft', DS.DUNGEON_SHOP.onyxCraft]);
+    act(shop, { type: 'dungeonShop', id: 'onyx:' + O.ONYX_CORE_ID }, 0); assert.equal(BC.coreEntry(shop.bossCores[O.ONYX_CORE_ID]).rank, 0); assert.equal(shop.dungeonCoins, 100000 - DS.DUNGEON_SHOP.onyxCraft);
+    assert.match(DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).reason, /하루/, 'shares the daily onyx limit'); assert.equal(DC.onyxOffer(shop, O.ONYX_CORE_ID).price, DS.DUNGEON_SHOP.onyxAwaken);
+    // 9종: 장신구 8 + 마도서. 9종 세트는 보스 피해 +10%가 더 붙습니다.
+    const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
+    assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
+    assert.equal(O.onyxCollected(all), 9); assert.ok(Math.abs(O.onyxSetBonus(9).bossDamage - b8 - .1) < 1e-9);
+});
+
+test('v3.284 onyx accessories carry 7 lines (unique + 6 random); old 6-line ones fill the missing line at its best roll, the same on every load', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), G = await L.load('systems/onyx-grant'), Eq = await L.load('systems/equipment'), Gear = await L.load('data/gear');
+    assert.equal(O.ONYX.affixes, 6);
+    const s = newState(0); s.level = 60; G.grantOnyx(s, 'onyxDusk', 5, () => .4, 'test'); const got = s.inventory.find(i => i.onyx);
+    assert.equal(got.affixes.length, 7); assert.equal(got.affixes.filter(a => a.rule).length, 1); assert.equal(got.affixes[0].id, 'onyxThorns');
+    const old = { ...got, id: 'old-dusk', affixes: got.affixes.slice(0, 6).map(a => ({ ...a })) }, copy = JSON.parse(JSON.stringify(old));
+    Eq.tuneOnyx(old); Eq.tuneOnyx(copy); assert.equal(old.affixes.length, 7, 'filled to 7'); assert.deepEqual(old.affixes, copy.affixes, 'deterministic');
+    assert.deepEqual(old.affixes.slice(0, 6), got.affixes.slice(0, 6), 'existing lines untouched');
+    const added = old.affixes[6]; assert.ok(!added.rule && !old.affixes.slice(0, 6).some(a => a.id === added.id), 'a new non-rule line');
+    assert.equal(Gear.refineOption(added, old.power, old.rarity, () => 1, old.level).value, added.value, 'best roll');
+    Eq.tuneOnyx(old); assert.equal(old.affixes.length, 7, 'stays 7');
 });
 
 test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart', async () => {
@@ -1382,7 +1444,7 @@ test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/m
 test('v3.30 recent kill: mastery on the kill line (mimic jackpot included), nuri exp folded in, no double count on EXP lines', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('systems/live-rates');
-    assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘이 랜덤게임으로 바뀌어 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');
+    assert.equal(R.gainsOf({ id: 1, type: 'reward', text: '잠든 힘 서약이 없어져 봉인을 풀었습니다 · 쌓인 경험치 +500 EXP' }, '나').exp, 500, 'not counted twice');
     assert.equal(R.gainsOf({ id: 2, type: 'reward', text: '✦ 경험의 누리 · 대박당첨! 경험치 +1,500 (Lv.50 필요량의 3%)' }, '나').exp, 1500);
     assert.equal(R.recentKill([], '나'), null);
     const logs = [
@@ -1421,9 +1483,9 @@ test('v3.15 altar: offering to a world-boss gauge no longer throws (503) and log
     assert.ok(s.logs.at(-1).text.includes(D.gaugeName(raid.id)), s.logs.at(-1).text); assert.equal(s.gold, 1e6 - 100000);
     A.applyOffering(s, { gold: 1000, pearls: 0, essence: 0 }, 1, 'god', false); assert.ok(s.logs.at(-1).text.includes('신 소환'));
 });
-test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-piece reward', async () => {
+test('v3.15 onyx achievements: one per piece (SP/AP alternating) and big 7- and 9-piece rewards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const { ACHIEVEMENTS } = await L.load('data/achievements');
-    const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
+    const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7, 8, 9], 'v3.276 nine onyx (8 accessories + grimoire)');
     for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
     const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.pearls >= 50, 'completion reward is strong');
 });
@@ -1492,6 +1554,18 @@ test('v3.104 offline extrapolation math: gains grow by remaining/turns; one-time
     O.extrapolateOffline(s, m, 900, 1800, () => { rngCalls.n++; return .99; }, () => { throw Error('no rare fights expected'); });
     assert.equal(s.kills, kills + 100, 'normal kills ×2'); assert.equal(s.jobMastery[job], mastery + 300 + 10_000 + 600, 'rare mastery not multiplied');
     assert.equal(s.pearls, pearls + 12, '(10 − 4 one-time) × 2, rare pearls not multiplied'); assert.equal(rngCalls.n, 0, 'no rare rolls tallied → no rolls');
+});
+test('v3.289 offline rare batch: 까미 · 누리 · 슬라임 fought back to back in the extrapolated part collapse into one log line (rewards unchanged)', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const O = await L.load('systems/offline-sample'), R = await L.load('systems/offline-tally'), Enc = await L.load('systems/encounter'), { MIMIC } = await L.load('data/mimic');
+    const s = newState(0); s.level = 30; s.rebirths = 12; s.kills = 500; s.stage = 'brook'; s.tide = 10; s.running = true;
+    const m = O.markOffline(s), job = s.job, mastery = s.jobMastery[job] || 0, book = s.book[MIMIC.id] || 0;
+    R.resetOfflineTally(); R.offlineTally.specialRolls = 3;
+    // 판정 3번 모두 까미(난수 0), 전투는 한 턴에 잡습니다.
+    O.extrapolateOffline(s, m, 100, 100, () => 0, () => { if (s.enemy) { s.enemy.hp = 0; Enc.reward(s, () => .99); s.enemy = null; } });
+    assert.equal((s.book[MIMIC.id] || 0) - book, 3, 'three kkami killed'); assert.ok(s.jobMastery[job] - mastery >= 3 * MIMIC.tiers[0].mastery, 'their mastery is paid');
+    const lines = s.logs.filter(l => l.text.includes('숙련의 까미'));
+    assert.equal(lines.length, 1, lines.map(l => l.text).join(' / ')); assert.match(lines[0].text, /부재중 특별 몬스터 · 숙련의 까미 3마리 처치 · 숙련 \+/);
+    R.resetOfflineTally();
 });
 test('v3.17 tutorial rewards: a step completed by its condition pays once; silent back-fill for veteran saves pays nothing', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const G = await L.load('systems/guidance');
@@ -1617,6 +1691,8 @@ test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of th
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
     const s = newState(0); s.level = 120; s.rebirths = 60; s.kills = 5000; s.stage = 'brook'; s.tide = 30; s.running = true;
     const pm = Mi.mimicChance(30, 0); Enc.spawn(s, () => pm + N.nuriChance(30) / 2); assert.equal(s.enemy.id, N.EXP_NURI.id);
+    // v3.290 누리 · 슬라임 확률의 난이도 몫은 40에서 멈춥니다.
+    assert.equal(N.nuriChance(200), N.nuriChance(40)); assert.ok(N.nuriChance(40) > N.nuriChance(39));
     s.enemy.hp = 0; const per = Enc.stageEncounterExp(s), e0 = s.exp, base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
     assert.ok(per > 0); Enc.reward(s, () => .99);
     assert.equal(s.exp - e0, base + Math.floor(per * 30), 'Lv.100+: big win = 30 encounters of this stage');
@@ -1629,7 +1705,7 @@ test('v3.113 onyx awakening and resonance: a repeat drop raises the owned access
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), O = await L.load('data/onyx'), Eq = await L.load('systems/equipment');
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0;
-    const acc = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk', 60); s.inventory.push(acc);
+    const acc = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk', 60); s.inventory.push(acc);
     const thorns = () => Eq.itemStats(acc).thorns;
     const base = thorns(); assert.ok(Math.abs(base - .1) < 1e-9, 'unique thorns .1');
     // 공명: 착용하지 않은 더스크 → 가시 .1 × 10%.
@@ -1643,7 +1719,7 @@ test('v3.113 onyx awakening and resonance: a repeat drop raises the owned access
     s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.equal(acc.onyxRank, 2, 'pity applies to awakening');
     acc.onyxRank = O.ONYX.awakenMax; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .001); assert.equal(acc.onyxRank, O.ONYX.awakenMax, 'capped'); assert.ok(s.logs.some(l => l.text.includes('각성 완료')));
     // 제어 연장(턴)은 각성 · 공명을 받지 않습니다.
-    const will = O.onyxAccessory(O.ONYX_BOSSES.find(b => b.id === 'onyxWill'), 'will', 60); will.onyxRank = 5;
+    const will = O.onyxAccessory(O.onyxItemById('onyxWill'), 'will', 60); will.onyxRank = 5;
     assert.equal(Eq.itemStats(will).controlBonus, 1); assert.equal(O.onyxResonance({ inventory: [will], equipment: {} }).controlBonus, undefined);
 });
 
