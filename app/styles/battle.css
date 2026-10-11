@@ -2433,3 +2433,46 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @container (max-width:560px){
   .battle-scene .ult-title,.battle-scene .scene-fx-title,.battle-scene .pun-title,.battle-scene .scene-fx-tier5 .scene-fx-title,.battle-scene .ow-title,.battle-scene .azu-title,.battle-scene .xen-title,.battle-scene .mech-title{top:11%;font-size:18px;letter-spacing:.08em}
 }
+
+/* v3.272 갈래별 타격 자국(.cast-mark): 둥근 섬광 위에 갈래 모양을 하나 더 그립니다. 닿는 순간(--fx-delay)에 0.45초. */
+.cast-mark{left:var(--foe-x);top:var(--foe-y);width:0;height:0;opacity:0;animation:castMark .5s ease-out var(--fx-delay) forwards}
+.cast-mark b{position:absolute;display:block}
+@keyframes castMark{0%{opacity:0}8%{opacity:1}70%{opacity:1}100%{opacity:0}}
+/* 베기: X 검흔 두 줄 */
+.m-slash b{left:-58px;top:-2px;width:116px;height:4px;border-radius:2px;background:linear-gradient(90deg,transparent,#fff,var(--fx),transparent);box-shadow:0 0 10px var(--fx);transform-origin:50% 50%;animation:markSlash .3s cubic-bezier(.2,.8,.3,1) var(--fx-delay) both}
+.m-slash b:nth-child(1){rotate:-35deg}.m-slash b:nth-child(2){rotate:35deg;animation-delay:calc(var(--fx-delay) + 60ms)}.m-slash b:nth-child(3){display:none}
+@keyframes markSlash{from{scale:0 1}to{scale:1 1}}
+/* 관통: 창끝처럼 뾰족한 섬광이 몸을 꿰뚫고 뒤로 빠짐 */
+.m-pierce b{left:-70px;top:-3px;width:140px;height:6px;clip-path:polygon(0 50%,85% 0,100% 50%,85% 100%);background:linear-gradient(90deg,transparent,var(--fx) 40%,#fff);filter:drop-shadow(0 0 6px var(--fx));animation:markPierce .35s ease-out var(--fx-delay) both}
+.m-pierce b:nth-child(2){top:-14px;width:90px;left:-30px;opacity:.6;animation-delay:calc(var(--fx-delay) + 40ms)}.m-pierce b:nth-child(3){top:9px;width:80px;left:-20px;opacity:.5;animation-delay:calc(var(--fx-delay) + 70ms)}
+@keyframes markPierce{from{translate:-40px 0;scale:.3 1}to{translate:30px 0;scale:1 1}}
+/* 불: 위로 솟는 불꽃 세 갈래 */
+.m-fire b{left:-12px;top:-10px;width:24px;height:44px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;background:radial-gradient(ellipse at 50% 80%,#fff 0 12%,#ffd36b 28%,#ff6a2a 55%,transparent 72%);mix-blend-mode:screen;transform-origin:50% 100%;animation:markFlame .5s ease-out var(--fx-delay) both}
+.m-fire b:nth-child(1){translate:-20px 6px;rotate:-18deg}.m-fire b:nth-child(3){translate:20px 6px;rotate:18deg}.m-fire b:nth-child(2){scale:1.3}
+@keyframes markFlame{0%{scale:.3 .2;opacity:0}30%{opacity:1}100%{scale:1 1.4;opacity:0;translate:0 -18px}}
+/* 얼음: 결정 파편이 바깥으로 튐 */
+.m-frost b{left:-5px;top:-14px;width:10px;height:28px;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:linear-gradient(#fff,#a8e4ff);filter:drop-shadow(0 0 6px #7fd4ff);animation:markShard .45s ease-out var(--fx-delay) both}
+.m-frost b:nth-child(1){--a:-60deg}.m-frost b:nth-child(2){--a:20deg}.m-frost b:nth-child(3){--a:150deg}
+@keyframes markShard{0%{rotate:var(--a);translate:0 0;opacity:0}20%{opacity:1}100%{rotate:var(--a);translate:calc(cos(var(--a)) * 46px) calc(sin(var(--a)) * 46px);opacity:0}}
+/* 번개: 위에서 떨어지는 지그재그 낙뢰 */
+.m-bolt b:nth-child(1){left:-14px;top:-150px;width:28px;height:150px;clip-path:polygon(40% 0,70% 0,52% 40%,78% 40%,30% 100%,44% 55%,20% 55%);background:linear-gradient(#fff,#ffe38b);filter:drop-shadow(0 0 10px #ffe38b);transform-origin:50% 0;animation:markBolt .3s ease-out var(--fx-delay) both}
+.m-bolt b:nth-child(2),.m-bolt b:nth-child(3){display:none}
+@keyframes markBolt{0%{scale:1 0;opacity:0}40%{scale:1 1;opacity:1}100%{opacity:0}}
+/* 대지 · 충격: 땅에 금이 가고 먼지 */
+.m-crack b:nth-child(1){left:-60px;top:calc(var(--foe-size,120px) * .5 - 4px);width:120px;height:10px;clip-path:polygon(0 50%,20% 20%,35% 70%,50% 10%,65% 80%,80% 25%,100% 50%,80% 60%,65% 100%,50% 40%,35% 95%,20% 55%);background:#e0b98a;filter:drop-shadow(0 0 4px #ffcf8a);animation:markSlash .3s ease-out var(--fx-delay) both}
+.m-crack b:nth-child(2){left:-70px;top:calc(var(--foe-size,120px) * .5 - 26px);width:140px;height:34px;border-radius:50%;background:radial-gradient(closest-side,#c9b77a88,transparent);filter:blur(3px);animation:azuDust .8s ease-out var(--fx-delay) both}
+.m-crack b:nth-child(3){display:none}
+/* 물기: 발톱 자국 세 줄 */
+.m-claw b{left:-30px;top:-36px;width:6px;height:72px;border-radius:3px;background:linear-gradient(transparent,#fff,var(--fx),transparent);box-shadow:0 0 8px var(--fx);rotate:24deg;transform-origin:50% 0;animation:markSlash .25s ease-out var(--fx-delay) both;scale:1 0}
+.m-claw b:nth-child(2){left:-8px;animation-delay:calc(var(--fx-delay) + 40ms)}.m-claw b:nth-child(3){left:14px;animation-delay:calc(var(--fx-delay) + 80ms)}
+.m-claw b{animation-name:markClaw}
+@keyframes markClaw{from{scale:1 0}to{scale:1 1}}
+/* 물결: 물보라 호 */
+.m-splash b{left:-50px;top:-30px;width:100px;height:60px;border-radius:50%;border:4px solid transparent;border-top-color:#bdf4ff;filter:drop-shadow(0 0 6px #8ce4ed);animation:markSplash .5s ease-out var(--fx-delay) both}
+.m-splash b:nth-child(2){animation-delay:calc(var(--fx-delay) + 70ms);scale:.7}.m-splash b:nth-child(3){display:none}
+@keyframes markSplash{0%{scale:.3;opacity:0;translate:0 10px}30%{opacity:1}100%{scale:1.4;opacity:0;translate:0 -12px}}
+/* 저주 · 독 · 먹물 · 뼈: 검은 고리가 조여듦 */
+.m-dark b:nth-child(1){left:-55px;top:-55px;width:110px;height:110px;border-radius:50%;border:5px solid var(--fx);box-shadow:inset 0 0 18px #000,0 0 14px var(--fx);background:radial-gradient(circle,#000a,transparent 70%);animation:markDark .5s ease-in var(--fx-delay) both}
+.m-dark b:nth-child(2),.m-dark b:nth-child(3){display:none}
+@keyframes markDark{0%{scale:1.6;opacity:0}40%{opacity:1}100%{scale:.4;opacity:0}}
+@media(prefers-reduced-motion:reduce){.cast-mark{display:none}}
