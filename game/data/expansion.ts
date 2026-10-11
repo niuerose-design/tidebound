@@ -7,7 +7,7 @@ import type { Skill } from '../types';
  * 설계 원칙
  * - 1차에 가까울수록 단순한 능력치 패시브(공격·방어·체력 등)를 주고, 강함보다 조합 재료가 되도록 합니다.
  * - 2~3차는 기술의 다양성(연타·기절·중독·반격·복합 피해·처형)에 초점을 둡니다.
- * - 강함의 밸런스는 계열별 최상위(5차: 용사·플레임위자드 (5차)·천검·미하일 (5차)·아크메이지(불,독) (5차))끼리 맞춥니다.
+ * - 강함의 밸런스는 계열별 최상위(5차: 용사·플레임위자드 (5차)·천검·아크메이지(불,독) (5차))끼리 맞춥니다.
  *
  * 액티브 기술의 발동률·배율·재사용 대기·마나는 여기 선언한 값이 그대로 밸런스 표(skill-balance.ts)에 들어갑니다.
  * 물리 액티브는 기본 발동률 30% 이하(최대 숙련 38% 이하), 마법·복합 액티브는 45% 이상이며 마나를 씁니다.
@@ -69,7 +69,7 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'legendBard', name: '전설의 가객', title: '노래가 전설이 된다', desc: '가속 서사시와 경험치·드롭·명중·회피 패시브로 성장을 돕는 유틸리티 3차 직업입니다.', ...neutral, expBonus: .08, bonus: { magic: 37, hp: 30 }, tier: 3, level: 40, parent: 'minstrel', requires: { luk: 40, wis: 35 }, mastery: 150, requiresSkillMastery: { discord: 3 }, role: '성장 보조', tree: 'support', masteryTarget: 9000, masteryBoost: .28 },
 
     // ── 능력치 패시브 직업 (독립 1차) ───────────────────────────
-    // 전투 보정은 없고 단순한 능력치 패시브 하나만 익힙니다. 올라운더가 여러 직업의 패시브를 빌려 오는 재료입니다.
+    // 전투 보정은 없고 단순한 능력치 패시브 하나만 익힙니다. 다른 직업이 계승해 쓰는 재료입니다.
     { id: 'woodcutter', name: '나무꾼', title: '도끼질로 다진 팔', desc: '물리 공격 패시브 하나를 익히는 독립 1차 직업입니다.', ...neutral, tier: 1, level: 10, requires: { str: 12 }, mastery: 0, role: '능력치·물리 공격', tree: 'physical', branchless: true, masteryTarget: 500, masteryBoost: .08 },
     { id: 'sapper', name: '공병', title: '성벽의 틈을 찾는다', desc: '방어 관통 패시브 하나를 익히는 독립 1차 직업입니다.', ...neutral, tier: 1, level: 10, requires: { str: 10, dex: 10 }, mastery: 0, role: '능력치·관통', tree: 'physical', branchless: true, masteryTarget: 500, masteryBoost: .08 },
     { id: 'hunter', name: '사냥꾼', title: '숨소리까지 읽는 눈', desc: '치명타·명중 패시브 하나를 익히는 독립 1차 직업입니다.', ...neutral, tier: 1, level: 10, requires: { dex: 12 }, mastery: 0, role: '능력치·치명·명중', tree: 'physical', branchless: true, masteryTarget: 500, masteryBoost: .08 },

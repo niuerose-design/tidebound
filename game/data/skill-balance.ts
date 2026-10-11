@@ -46,7 +46,6 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     thornCounter: { chance: .26, multiplier: 1.8, scaling: 'defense', scalingRatio: 1.2 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
     redWake: { chance: .26, multiplier: 1.9, balanceBonus: .4 },
-    // 올라운더: check-all-rounder.mjs 검증값
     twinHook: { chance: .24, multiplier: 1.15, extraAttackMultiplier: .5 },
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },

@@ -24,7 +24,7 @@ export const GEAR_RARITY_SCALE = [1, 1, 1, .85, .74, .62, .56];
 const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', 'mana']);
 /**
  * v3.129 부위별 고정 수치 배수(위력 × 별 × 등급 감쇠에 곱함).
- * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.129, scripts/check-gear-ladder.mjs가 검사).
+ * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눕니다. 지금 부위 비중은 무기 42 · 방어구 35 · 장신구 24 · 망토 26%(stats.ts POWER_WEIGHT, scripts/check-gear-ladder.mjs가 검사).
  * 마나는 무기 .5 · 방어구 .5 · 장신구 .5 · 망토 .3(합 1.8)으로 나눕니다: 마나 비례 기술(천둥 성가 · 결정 파편 · 창세의 빛)과 마법 직업에 무기 · 장신구도 보탬이 되게. 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
  */
 /**

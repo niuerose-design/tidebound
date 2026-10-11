@@ -1,6 +1,6 @@
 /**
  * v3.61 직업 역할(docs/concept.md 11장): 딜러 · 탱커 · 버퍼와 세부 역할. 역할은 직업마다 달고(계보 기본값 + 직업별 덮어쓰기),
- * 측정 도구(scripts/check-roles.mjs)와 화면 역할 표시가 씁니다. 게임 판정에는 쓰지 않습니다.
+ * 측정 도구(scripts/check-roles.mjs · tests/roles.test.mjs)와 skills.ts의 유틸리티 역할 숙련 보정이 씁니다. 전투 판정에는 쓰지 않습니다.
  * 비밀 직업(game/secret/jobs.ts)은 직업 데이터에 subRole을 직접 적습니다(계보 id만 여기 있음).
  */
 import type { Job } from './classes';

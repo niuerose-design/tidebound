@@ -1,7 +1,6 @@
 /**
  * v3.69 독립 수련 통합(docs/concept.md 11.8 A안): 계열별 독립 1차 직업 27개를 ‘수련’ 직업 6개로 접습니다.
- * - 수련 직업은 사냥용이 아니라 계승·숙달 재료입니다. 수련 직업으로 직접 사냥하면 크게 약하고(공격 ×0.4 · 체력 ×0.5) 처치 보상도 줄어듭니다(경험치·골드 ×0.5, rewardScale).
- *   이 보정은 기획안의 초안 값이며 수치 패치(5단계)에서 다듬습니다. 다른 직업이 패시브를 계승해 쓸 때는 보정이 없습니다.
+ * - 수련 직업은 사냥용이 아니라 계승·숙달 재료입니다. 수련 직업으로 직접 사냥하면 크게 약하고(공격 · 마법 ×0.35 · 체력 ×0.4) 처치 보상도 줄어듭니다(경험치·골드 ×0.35, TRAINING_PENALTY). 다른 직업이 패시브를 계승해 쓸 때는 보정이 없습니다.
  * - 옛 수련 직업의 스킬은 id 그대로 새 수련 직업이 가집니다(skills.ts가 owner를 바꿈). 습득·숙련·계승 기록은 그대로 남습니다.
  * - v3.80 숙달 목표는 다른 직업처럼 패시브 마지막 숙련 단계의 40%입니다(data/skills.ts alignJobMastery).
  * - 옛 수련 직업 27개는 retired: 새로 전직할 수 없고 화면에 보이지 않으며, 숙달 수에도 세지 않습니다(숙달할 직업 수가 21개 줄어든 기준, 기존 세이브도 같음).
@@ -41,7 +40,7 @@ export function trainingRestraint(j: { subRole?: string; tree: JobTreeId; tier: 
 }
 /** 수련 직업 설명 끝에 붙는 제약 문구. */
 export const restraintText = (j: Parameters<typeof trainingRestraint>[0]) => { const r = trainingRestraint(j); return r ? `수련 제약: 이 직업으로 있는 동안 ${r.label} −${Math.round(r.amount * 100)}%.` : ''; };
-/** 수련 직업 보정(초안). */
+/** 수련 직업 보정(공격 · 마법 · 체력 · 처치 보상 배율). */
 export const TRAINING_PENALTY = { attack: .35, magic: .35, hp: .4, reward: .35 };
 /** 수련 패시브: 효과 배율(3차 패시브 수준)과 숙련 단계(3차 직업 스킬과 같음). oldFirst는 예전 계승 기준(옛 세이브 보존용). */
 export const TRAINING_PASSIVE = { scale: 1.5, milestones: [4500, 22500, 84000, 225000], oldFirst: 250 };

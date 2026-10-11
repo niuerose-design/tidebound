@@ -22,7 +22,7 @@ pnpm dev               # http://localhost:5173
 1. Vercel에서 이 GitHub 저장소를 Import합니다. 프레임워크는 Next.js로 자동 인식됩니다.
 2. 프로젝트의 Storage에서 **Neon Postgres**를 추가해 연결합니다. `DATABASE_URL`(또는 `POSTGRES_URL`)이 자동으로 설정됩니다.
 3. 환경 변수 `ENABLE_EXPERIMENTAL_COREPACK=1`을 추가해 package.json의 pnpm 버전을 쓰게 합니다.
-4. 배포하면 첫 요청 때 필요한 테이블(players · rankings · accounts · sessions)을 자동으로 만듭니다.
+4. 배포하면 첫 요청 때 필요한 테이블을 자동으로 만듭니다.
 5. `vercel.json`에서 `main` 브랜치만 자동 배포하도록 막아 두었습니다. 작업 브랜치의 미리보기 배포가 필요하면 `"**": false` 줄을 지우면 됩니다.
 
 로그인은 아이디(영문 소문자·숫자·밑줄 3~20자)와 비밀번호(8자 이상)입니다. 비밀번호는 PBKDF2-SHA256으로 해시해 저장하고, 세션은 30일 HttpOnly 쿠키입니다.
@@ -45,12 +45,12 @@ pnpm dev               # http://localhost:5173
 
 | 경로 | 내용 |
 | --- | --- |
-| `app/` | 페이지, 게임·랭킹·결투 API. 스타일은 `app/styles/*.css`를 `globals.css`가 순서대로 불러옵니다 |
+| `app/` | 페이지와 API(게임 · 계정 · 랭킹 · 결투 · 길드 · 제단 · 채팅 · 운영). 스타일은 `app/styles/*.css`를 `globals.css`가 순서대로 불러옵니다 |
 | `components/game/` | 화면별 컴포넌트(`*-panel.tsx`), 전투 화면(`battle-*.tsx`), 공용(`shared.tsx`, `confirm-button.tsx`, `panel-props.ts`) |
 | `components/ui/` | 실제로 쓰는 shadcn 부품만(대화창·팝오버·진행 막대·사이드바·표·탭·툴팁과 그 의존 부품). 새 부품은 `components.json` 설정으로 추가합니다 |
 | `game/data/` | 몬스터·사냥터·직업·스킬·경제·밸런스 |
 | `game/systems/` | 전투·성장·환생·장비·길드 로직. `engine.ts`는 진입점(act), 턴 진행은 `turn.ts`, 적 등장·보상은 `encounter.ts`, 던전 반복은 `dungeon-run.ts` |
-| `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) |
+| `game/systems/actions/` | 행동 처리기: 항해(voyage) · 빌드(build) · 도감(collection) · 장비(items) · 환생(lifecycle) · 던전 상점(dungeon-shop) · 해커(hacker) |
 | `game/server/` | 사용자 식별, 서버 저장, 동시 요청 처리 |
 | `public/` | 배경 이미지와 아이콘 |
 | `tests/`, `scripts/` | 테스트, 점검 · 운영 도구. 공용 로더는 `scripts/lib/game-modules.mjs`, 시뮬레이션 도우미는 `scripts/lib/sim.mjs`, 기준 몸은 `scripts/lib/reference-body.mjs`, 점검용 몸의 세계석 연구 단계는 `scripts/lib/research-budget.mjs`(그 환생까지 벌 수 있는 세계석으로 산 단계) |

@@ -18,7 +18,6 @@ test('v3.86 every tier-5+ active is an awakening skill with a 10-turn cooldown t
     for (const id of ['deadEye', 'tacticalNuke', 'blackSwan']) assert.ok(SKILLS.find(x => x.id === id).awaken, id);
     const awakened = SKILLS.filter(sk => sk.type === 'active' && tier(sk.job) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher && sk.job !== 'chronarch' && (!fuelJob(sk.job) || ['deadEye', 'tacticalNuke', 'blackSwan'].includes(sk.id)));
     for (const id of ['frozenTime', 'precede', 'rewind']) assert.ok(!SKILLS.find(x => x.id === id).awaken, `${id} stays a per-action active`);
-    // v3.135 나이트워커 · v3.138 미하일 계보 폐지로 5차 각성기 수가 줄었습니다(34 → 32).
     assert.ok(awakened.length >= 32, `${awakened.length}`);
     // 5차 액티브가 둘인 팬텀은 둘 다 각성기(조커 · 파이널 컷).
     for (const id of ['jackpotStrike', 'allOrNothing']) assert.ok(SKILLS.find(x => x.id === id).awaken, id);

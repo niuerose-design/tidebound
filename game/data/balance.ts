@@ -64,7 +64,6 @@ export function bossLevelScale(level: number) {
     const growth = Math.min(1, Math.max(0, level - 14) / 24);
     return { hp: 2.1 + (MONSTER_TUNING.bossMultiplier - 2.1) * growth, attack: 1.2 + .25 * growth, magic: 1.08 + .17 * growth };
 }
-/** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
 /**
  * v3.84 방어 관통 개편(docs/concept.md 11.9): 출처끼리 곱연산(남은 방어의 x%를 무시)으로 합치고 60% 상한을 없앴습니다. 스킬 보너스까지 합친 상한은 85%(cap):
  * 100%면 방어가 0이 되어 아무리 단단한 보스도 그대로 뚫리므로, 방어 15,000도 2.2%만 들어가게 남깁니다. 능력치 관통만으로는 풀세팅 약 75%라 성장 구간에서는 막히지 않습니다.
@@ -81,6 +80,7 @@ export const stackPenetration = (a: number, b: number) => b >= 0 ? 1 - (1 - a) *
 export const stackBossDamage = (a: number, b: number) => b >= 0 ? (1 + a) * (1 + b) - 1 : a + b;
 /** v3.201 던전 보스는 웨이브 수와 무관하게 마지막 단계 압박(BOSS_PRESSURE_WAVE)을 받습니다(지역 던전이 2연전으로 줄어도 보스 세기는 그대로). */
 export const BOSS_PRESSURE_WAVE = 4;
+/** v27.30 던전 적 압박: 같은 레벨 사냥터보다 단단하게(체력 1.3~1.62배, 공격 1.12~1.32배, 방어 1.08~1.24배). */
 export function dungeonPressure(wave: number) {
     const index = Math.max(0, Math.min(4, wave));
     return { hp: 1.3 + index * .08, attack: 1.12 + index * .05, defense: 1.08 + index * .04 };
@@ -258,27 +258,13 @@ export const STATUS_GUIDE = [
     { id: 'haste', name: '가속', kind: '속도 증가', description: `속도가 ${Math.round(STATUS_TUNING.hasteMultiplier * 100)}% 높아져 선공·명중 보정·연속 행동에 유리해집니다.`, detail: '상대보다 빨라지면 연속 행동 확률이 올라갑니다. 선공은 다음 턴부터, 연속 행동 확률은 다음 판정부터 반영됩니다.' },
 ] as const;
 /**
- * v27.54 필요 경험치 보정.
- * - 환생 비례: 환생 1회마다 +perRebirth(20회까지), 이후 √(초과 횟수) × perRebirth. 환생 경험치 보너스(회당 +25%)가 요구치를 크게 앞질러 환생이 점점 빨라지던 것을 늦춥니다.
- * - 통곡의 벽: wallLevel부터 레벨마다 ×wallGrowth 복리(v27.77 1.10: Lv.80 약 ×2.9, Lv.100 약 ×19).
- */
-/**
- * v27.77 한 생의 필요 경험치 배율. 목표: 첫 생 약 20시간, 환생 1~10회 6~8시간, 그 뒤 천천히 늘어 환생 100회 12~13시간(강한 유저가 난이도 0에서 시간당 1,200마리 기준).
- * base(첫 생 ×4) + 환생 1회당 +1(20회까지) + 그 뒤 1회당 +0.1 — 요구 레벨이 Lv.100에서 멈춘 뒤에도 계속 늘어납니다.
- * 통곡의 벽(Lv.70부터 레벨당 ×wallGrowth)은 1.10입니다(지수 복리: Lv.100 약 ×19. 1.25면 Lv.100까지 수백 시간).
- */
-/**
- * v3.21 환생 20회 이후 필요 경험치가 거의 오르지 않아(회당 +0.1), 난이도 상한을 따라 마리당 경험치가 커지는 원킬 빌드의 한 생이
- * 환생할수록 짧아지던 것(환생 55회 0.3시간): 20회 이후 회당 +latePerRebirth로 올리고, 환생 50회·100회에 벽(rebirthWalls, 그 회차부터 곱함)을 둡니다.
- * 목표(원킬 빌드, 최대 난이도): 환생 50회 약 4.5시간 → 99회 약 5시간, 100회부터 하루에 한 번(약 20시간). 50회 미만은 원킬 폭증 구간으로 둡니다.
- */
-/**
- * v3.291 환생 50회부터 벽을 필요 경험치로 세게(수입은 그대로): 측정(scripts/check-life-hours, 빌림 몸)에서 환생 50~99회 한 생이 무리 서식지 1.6시간 · 일반 사냥터 2.7~3.1시간,
- * 그중 Lv.70~100은 수십 분이라 벽이 느껴지지 않았습니다. 50회부터 Lv.70 이후 레벨당 ×1.25(lateWallGrowth, Lv.100 약 ×1,000)와 환생 벽 50회 ×30 · 100회 ×120(전 ×8.9 · ×35).
- * 적용 뒤 무리 서식지 기준: 환생 50회 15.8시간 · 60~99회 3.7~5.8시간 · 100회 23.6시간 · 120회 32.4시간(49회는 0.2시간 그대로).
+ * 한 생의 필요 경험치 배율(XP_SCALING). 목표: 첫 생 약 20시간, 환생 1~10회 6~8시간, 50~99회 4~6시간, 100회부터 하루에 한 번(약 20시간).
+ * - 환생 비례: base(첫 생 ×4) + 환생 1회당 +perRebirth(lateFrom 20회까지) + 그 뒤 1회당 +latePerRebirth(v3.21 .1 → .5: 원킬 빌드의 한 생이 환생할수록 짧아지던 것을 막음).
+ * - 통곡의 벽: wallLevel(70)부터 레벨마다 ×wallGrowth(1.10, Lv.100 약 ×19) 복리. 환생 50회부터는 ×lateWallGrowth(1.25, Lv.100 약 ×1,000).
+ * - 환생 벽: rebirthWalls의 회차부터 그 배율을 곱합니다(50회 ×30 · 100회 ×120). v3.291 측정(scripts/check-life-hours, 무리 서식지): 환생 50회 15.8시간 · 60~99회 3.7~5.8시간 · 100회 23.6시간.
  */
 export const XP_SCALING = { base: 4, perRebirth: 1, lateFrom: 20, latePerRebirth: .5, wallLevel: 70, wallGrowth: 1.1, lateWallGrowth: [[50, 1.25]] as [number, number][], rebirthWalls: [[50, 30], [100, 120]] as [number, number][] };
-/** 환생 벽 배율: 지난 벽 중 가장 큰 값(50회부터 ×8.9, 100회부터 ×35). */
+/** 환생 벽 배율: 지난 벽 중 가장 큰 값(50회부터 ×30, 100회부터 ×120). */
 export const xpRebirthWall = (rebirths = 0) => XP_SCALING.rebirthWalls.reduce((m, [from, x]) => rebirths >= from ? x : m, 1);
 export const xpRebirthFactor = (rebirths = 0) => (XP_SCALING.base + XP_SCALING.perRebirth * Math.min(XP_SCALING.lateFrom, rebirths) + XP_SCALING.latePerRebirth * Math.max(0, rebirths - XP_SCALING.lateFrom)) * xpRebirthWall(rebirths);
 /** 통곡의 벽 배율(레벨당 복리): 환생 회차에 맞는 lateWallGrowth, 없으면 wallGrowth. */

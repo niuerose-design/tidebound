@@ -87,7 +87,7 @@ export function jobRevealed(s: State, j: Job) {
 /** v3.63 히든 직업은 드러나기 전에는 어디에도 보이지 않습니다(실루엣 없음). 화면에 보이는 직업과 계보별로 보이는 직업. */
 export const shownJobs = (s: State) => JOBS.filter(j => jobRevealed(s, j));
 export const shownLineageJobs = (s: State, lineageId: string) => lineageJobs(lineageId).filter(j => jobRevealed(s, j));
-/** v3.63 ??? 탭: ??? 계열 계보와, 드러난 히든 직업이 있는 다른 계열의 계보(예: 시공의 위자드가 드러나면 그 계보). */
+/** v3.63 ??? 탭: ??? 계열 계보와, 드러난 히든 직업이 있는 다른 계열의 계보. */
 export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
     const jobs = shownLineageJobs(s, l.id);
     return l.tree === 'mystery' ? jobs.length > 0 : jobs.some(secretJob);

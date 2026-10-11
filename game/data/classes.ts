@@ -1,7 +1,7 @@
 import type { Attribute, Stats } from '../types';
 import { PROGRESSION } from './progression';
 import { EXPANSION_JOBS } from './expansion';
-import { LINEAGE_JOBS, NEW_LINEAGES, LINEAGE_HINTS } from './expansion-lineages';
+import { LINEAGE_JOBS, NEW_LINEAGES } from './expansion-lineages';
 import { V24_JOBS, V24_HINTS } from './expansion-v24';
 import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework';
 import { V25_JOBS, V25_HINTS } from './expansion-v25';
@@ -89,7 +89,7 @@ export type Job = {
     requiresAnyJobMastery?: Record<string, number>;
     /** 회복 직업. 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않고, v3.54부터 넘친 회복량 × overhealDamage를 적에게 피해로 줍니다. */
     healer?: boolean;
-    /** v3.69 옛 독립 수련(data/training.ts): 새로 전직할 수 없고 화면에 보이지 않습니다. 숙달 기록은 숙달 수에 셉니다. */
+    /** v3.69 옛 독립 수련(data/training.ts): 새로 전직할 수 없고 화면에 보이지 않으며, 숙달 수에도 세지 않습니다(progression.ts masteredJobCount). */
     retired?: boolean;
     /** v3.69 이 직업으로 사냥할 때 처치 경험치·골드 배율(수련 직업 0.5). */
     rewardScale?: number;
@@ -101,7 +101,7 @@ export type Job = {
     lineage?: string;
     /** 직업 성격 태그. 없으면 role을 '·'로 나눈 값(jobTags). */
     tags?: string[];
-    /** 미발견 히든·문 직업의 실루엣 카드에 보이는 한 줄 힌트. */
+    /** 미발견 히든 직업의 실루엣 카드에 보이는 한 줄 힌트. */
     hint?: string;
     /** v3.44 카탈로그 실루엣: 이름·조건·능력치를 뺀 비밀 직업(화면 전용, 서버 표에는 없음). */
     veiled?: boolean;
@@ -249,7 +249,7 @@ JOBS.push(...(LINEAGE_JOBS as Job[]));
 // v24 계보 완성: 3차(일부 2·4차)에서 끝나던 계보를 5차까지 잇습니다. 자세한 설계는 expansion-v24.ts.
 JOBS.push(...(V24_JOBS as Job[]));
 
-// v24.2 ??? 문 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
+// v24.2 ??? 직업과 보조 계열 소개 갱신. 자세한 설계는 support-rework.ts.
 JOBS.push(...(SUPPORT_JOBS as Job[]));
 // v25 ??? 특수 직업: 제로 (1차)·제로 (5차, v3.199 4차 → 5차)·玄. 자세한 설계는 expansion-v25.ts.
 JOBS.push(...(V25_JOBS as Job[]));
@@ -259,10 +259,10 @@ JOBS.push(...(DEFENSE_JOBS as Job[]));
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
 JOBS.push(...(MONOSTAT_JOBS as Job[]));
-// v3.69 계열별 수련 직업 6개(data/training.ts). 옛 독립 수련 27개는 retired(새 전직 불가 · 화면에서 숨김 · 숙달 기록은 셈).
+// v3.69 계열별 수련 직업 6개(data/training.ts). 옛 독립 수련 27개는 retired(새 전직 불가 · 화면에서 숨김 · 숙달 수에서 제외).
 JOBS.push(...(TRAINING_JOBS as Job[]));
 for (const job of JOBS) if (RETIRED_TRAINING.includes(job.id)) job.retired = true;
-// v3.18 해커 계열과 v3.44부터 모든 히든·??? 문 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
+// v3.18 해커 계열과 v3.44부터 모든 히든·??? 직업은 서버 전용 game/secret/jobs.ts에 있습니다(docs/concept.md 10장).
 // 서버는 game/secret/register.ts로, 화면은 카탈로그(catalog.ts)로 registerJobs를 거쳐 이 표에 더합니다.
 
 // v21 회복 직업: 체력이 충분할 때 쓴 회복 기술도 피해가 줄지 않습니다. v3.54 넘친 회복은 적에게 피해로 돌아갑니다(SKILL_FORMULA.overhealDamage).
@@ -336,7 +336,7 @@ function finishJobs(list: Job[]) {
         const parent = job.tier >= 5 && job.parent ? JOBS.find(j => j.id === job.parent) : undefined;
         if (parent) job.mastery = Math.max(job.mastery || 0, parent.masteryTarget!);
     }
-    for (const job of list) job.hint ??= JOB_HINTS[job.id] ?? LINEAGE_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
+    for (const job of list) job.hint ??= JOB_HINTS[job.id] ?? V24_HINTS[job.id] ?? SUPPORT_HINTS[job.id] ?? V25_HINTS[job.id] ?? DEFENSE_HINTS[job.id];
     // v27.36 메이플 직업 이름: maple-names.ts 한곳에서 덮어씁니다(id는 그대로).
     const names = mapleJobNames(list);
     for (const job of list) job.name = names[job.id] ?? job.name;

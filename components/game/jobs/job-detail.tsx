@@ -22,7 +22,7 @@ type Tab = 'overview' | 'requirements' | 'skills' | 'mastery';
 /** 3단계 상세 패널. 데스크톱은 오른쪽 패널, 모바일은 아래에서 올라오는 창(onClose로 닫기). */
 export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, compareFull }: PanelProps & { j: Job; onClose?: () => void; onCompare?: (id: string) => void; compared?: boolean; compareFull?: boolean }) {
     const [tab, setTab] = useState<Tab>('overview');
-    // 미발견 히든·문 직업: 이름·조건을 숨기고 차수 자리와 힌트 한 줄만 보여줍니다.
+    // 미발견 히든 직업: 이름·조건을 숨기고 차수 자리와 힌트 한 줄만 보여줍니다.
     if (!jobRevealed(s, j)) return <article className="panel job-inspector job-sheet job-silhouette" aria-label="미발견 직업">
         {onClose && <button type="button" className="job-sheet-close" aria-label="닫기" onClick={onClose}><X size={18}/></button>}
         <h2 className="job-column-title"><span>③</span> 직업 상세</h2>

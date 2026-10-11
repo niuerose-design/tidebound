@@ -22,9 +22,8 @@ export const SKILL_FX: Record<string, SkillFx> = {
     tsunamiRush: 'wave', tidalCollapse: 'wave', voidTorrent: 'wave',
     // 마력탄: 마법 기본 갈래
     pureBolt: 'arcane', manaBolt: 'arcane',
-    // 부식·모사·맨손
+    // 부식·모사
     saltCatalyst: 'venom', borrowedTentacles: 'bite',
-    // 제로 (1차)·제로 (5차): 시간 갈래
     // 매지션(불,독)·부식 연성: 독 갈래
     toxicFang: 'fire', venomDart: 'venom', doomMark: 'venom', miasma: 'venom', rotBloom: 'venom', corrosiveBloom: 'venom', transmute: 'venom', grandTransmutation: 'venom',
     // 팬텀 (1차): 먹물 갈래

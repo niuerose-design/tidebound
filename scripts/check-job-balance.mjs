@@ -1,7 +1,7 @@
 // 직업 간 밸런스 점검: 모든 직업을 차수별 같은 레벨·같은 능력치 총량으로 세우고, 그 레벨의 낚시터 어종과 1:1로 싸워
 // 처치 턴·승률·남은 체력을 비교합니다. 같은 차수 중앙값에서 크게 벗어난 직업을 표시합니다.
 // 끝에는 선행→상위 직업을 상위 직업 레벨에서 나란히 세워 역전(상위가 더 약함)을 표시합니다.
-// --skill-mastered: 모든 스킬을 숙련 마지막 단계까지 올린 상태(장기 연마 제외)로 비교합니다. 숙련으로 페널티를 되찾는 직업 점검용.
+// --skill-mastered: 모든 스킬을 숙련 마지막 단계까지 올린 상태(극한돌파 제외)로 비교합니다. 숙련으로 페널티를 되찾는 직업 점검용.
 // 사용: node scripts/check-job-balance.mjs [--mastered] [--skill-mastered] [--json out.json]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
