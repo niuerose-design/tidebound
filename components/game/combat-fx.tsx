@@ -20,7 +20,9 @@ const FX_HOLD_MS = 1500;
 const SCENE_HOLD_MS = 2700;
 /** v3.248 3초짜리 전용 연출(전탄발사)은 조금 더 붙잡아 둡니다. */
 const LONG_SCENE = new Set(['genesisRune']), LONG_HOLD_MS = 3300;
-const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && (ultimateOf(fx.skillId) || AZ_ULT[sceneOf(fx) ?? ''])) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
+/** v3.293 처치 마무리 연출은 혼 · 룬 고리 · ‘능력치 +1’이 2.2초에 떠서 3.8초에 끝나므로 그만큼 붙잡아 둡니다(전에는 1.5초에 지워져 보이지 않았음). */
+const DEVOUR_HOLD_MS = 4000;
+const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_SCENE.has(fx.skillId) ? LONG_HOLD_MS : fx.actor === 'player' && fx.devour ? DEVOUR_HOLD_MS : fx.actor === 'player' && (fx.essence || fx.mineSwing) ? SCENE_HOLD_MS : fx.finale || fx.extreme || fx.skillId === 'endOfAll' || (fx.actor === 'player' && (ultimateOf(fx.skillId) || AZ_ULT[sceneOf(fx) ?? ''])) || (fx.actor === 'enemy' && !!fx.skillId && !!FOE_FX[fx.skillId]) ? SCENE_HOLD_MS : FX_HOLD_MS;
 /** ‘×N 연속’ 카운터: 몇 번째 연속인지와 누가 연속으로 행동했는지. */
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
