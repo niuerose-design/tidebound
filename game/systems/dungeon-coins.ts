@@ -5,7 +5,8 @@ import { ODDS } from '../data/odds';
 import { dayKey } from '../data/time';
 import { dungeonModeTier, type DungeonMode } from '../data/balance';
 import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
-import { ONYX, onyxItemById } from '../data/onyx';
+import { ONYX, ONYX_CORE_ID, onyxItemById } from '../data/onyx';
+import { BOSS_CORES, coreEntry } from '../data/boss-core';
 import { dungeonGoldMultiplier } from './stats';
 import { bestHourly } from './income';
 
@@ -61,7 +62,10 @@ export function rollGearBoxRarity(rng: () => number) {
  * v3.276 장신구 id로 고르고, 지금 그 장신구를 주는 칠흑 보스를 한 번 이상 처치해야 열립니다(주는 보스가 없는 장신구는 팔지 않음).
  */
 export function onyxOffer(s: State, itemId: string, now?: number) {
-    const def = onyxItemById(itemId), own = allItems(s).find(x => x.onyx === itemId), rank = own?.onyxRank || 0;
+    // v3.279 칠흑 보스코어(저주받은 마도서)도 칠흑 장신구와 같은 가격 · 하루 횟수로 제작 · 각성합니다(윌 처치로 열림).
+    const core = itemId === ONYX_CORE_ID ? coreEntry(s.bossCores?.[itemId]) : undefined;
+    const def = itemId === ONYX_CORE_ID ? { boss: BOSS_CORES[itemId].onyx } : onyxItemById(itemId), own = itemId === ONYX_CORE_ID ? core : allItems(s).find(x => x.onyx === itemId);
+    const rank = itemId === ONYX_CORE_ID ? core?.rank || 0 : (own as Item | undefined)?.onyxRank || 0;
     const kind = own ? 'awaken' as const : 'craft' as const, price = own ? DUNGEON_SHOP.onyxAwaken : DUNGEON_SHOP.onyxCraft;
     const reason = !def ? '없는 칠흑 장신구입니다.'
         : !def.boss ? '지금은 얻을 수 없는 칠흑 장신구입니다.'

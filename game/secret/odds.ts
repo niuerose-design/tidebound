@@ -61,7 +61,7 @@ export const SERVER_ODDS: Odds = {
     },
     /** v3.161 대왕 시리즈: 작은 녀석 30마리 뒤, 그 특별 몬스터 출현 50번 중 1번. */
     king: { share: .02 },
-    /** v3.12 칠흑의 보스: 무리 서식지 출현마다 chance × (1 + 난이도 × perTier), pity번 못 보면 확정. 장신구 drop, dropPity번째 연속 미획득 격파는 확정. v3.279 드롭 천장 400 → 300(칠흑 9종). */
+    /** v3.12 칠흑의 보스: 무리 서식지 출현마다 chance × (1 + 난이도 × perTier), pity번 못 보면 확정. 장신구 drop, dropPity번째 연속 미획득 격파는 확정. v3.281 드롭 천장 400 → 300(칠흑 9종). */
     onyx: { chance: .003, perTier: 1 / 50, pity: 2000, drop: .003, dropPity: 300 },
     variant: {
         /** 변종별 처치당 기본 확률. */

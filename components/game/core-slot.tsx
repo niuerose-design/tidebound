@@ -4,6 +4,8 @@ import { Hexagon } from 'lucide-react';
 import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { format } from './shared';
+import { OnyxArt } from './onyx-art';
+import { ONYX_TOTAL, onyxCollected } from '@/game/data/onyx';
 import type { PanelProps } from './panel-props';
 
 const CORE_COLOR = '#d6b879';
@@ -19,14 +21,16 @@ export function coreAttrText(s: PanelProps['s'], id: string, worn = s.coreSlot =
 /** 착용 장비 칸과 같은 모양의 보스 코어 칸 한 줄: 낀 코어, 바꾸기, 해제. */
 export function CoreSlot({ s, send, busy }: Pick<PanelProps, 's' | 'send' | 'busy'>) {
     const owned = ownedCores(s), id = s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : '', core = id ? BOSS_CORES[id] : undefined, e = coreEntry(s.bossCores?.[id]);
-    return <article className="panel gear-slot core-slot" style={{ '--rarity': core ? CORE_COLOR : '#5a6f71' } as React.CSSProperties} aria-label="보스 코어 칸">
+    // v3.279 칠흑 보스코어(저주받은 마도서)는 칠흑 장신구와 같은 테두리 · 이름 색으로 구분합니다.
+    const onyx = !!core?.onyx;
+    return <article className={`panel gear-slot core-slot${onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': core ? CORE_COLOR : '#5a6f71' } as React.CSSProperties} aria-label="보스 코어 칸">
         <div className="gear-slot-head"><Hexagon size={18}/><span>보스 코어 · 보유 {owned.length}/{Object.keys(BOSS_CORES).length}종</span>{core && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'equipCore', id: '' })}>해제</button>}</div>
         {core && e ? <div className="core-slot-body">
-            <strong>{core.name} <span className="gold-text">각성 {e.rank}/{BOSS_CORE_RULES.awakenMax}</span></strong>
-            <small>{core.desc}</small>
+            <strong>{onyx ? <OnyxArt id={id} size={22}/> : null}<span className={onyx ? 'onyx-name' : ''}>{core.name}</span> <span className="gold-text">각성 {e.rank}/{BOSS_CORE_RULES.awakenMax}</span></strong>
+            <small>{onyx ? `칠흑 보스코어 · ${core.boss} 격파 보상 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종 · ` : ''}{core.desc}</small>
             <small>{coreAttrText(s, id, true)}</small>
-        </div> : <p className="gear-slot-empty">{owned.length ? '비어 있음 · 아래 칸에서 낄 코어를 고르세요' : '보스 코어가 없습니다. 지역 던전 보너스 정복이나 던전 주화 상점 상자로 얻습니다.'}</p>}
+        </div> : <p className="gear-slot-empty">{owned.length ? '비어 있음 · 아래 칸에서 낄 코어를 고르세요' : '보스 코어가 없습니다. 지역 던전 보너스 정복이나 던전 주화 상점 상자로 얻고, 칠흑 보스 윌은 칠흑 보스코어를 줍니다.'}</p>}
         {owned.length > 0 && <div className="gear-slot-upgrade"><span>칸에 낀 코어 100% · 나머지는 공명 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외)</span>
-            <select aria-label="보스 코어 바꾸기" value={id} disabled={busy} onChange={ev => send({ type: 'equipCore', id: ev.target.value })}><option value="">비우기</option>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].name}</option>)}</select></div>}
+            <select aria-label="보스 코어 바꾸기" value={id} disabled={busy} onChange={ev => send({ type: 'equipCore', id: ev.target.value })}><option value="">비우기</option>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].onyx ? `◆ ${BOSS_CORES[c].name}(칠흑)` : BOSS_CORES[c].name}</option>)}</select></div>}
     </article>;
 }
