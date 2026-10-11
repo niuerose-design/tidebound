@@ -1,5 +1,5 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAccount } from '@/game/server/store';
-import { altarInfo, parseOffering, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach, makeRaid, raidLog } from '@/game/server/altar';
+import { altarInfo, parseOffering, assertCanFeedGod, applyOffering, commitOffering, makeChallenge, makeHarvest, makeImpeach, makeRaid, raidLog } from '@/game/server/altar';
 import { hackerCombatBlock } from '@/game/systems/hacker';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -25,6 +25,7 @@ export async function POST(req: Request) { try {
     let result: unknown = null;
     if (action === 'offer') {
         const { o, gauge, points, anonymous } = parseOffering(account, body, now);
+        await assertCanFeedGod(id, gauge);
         const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); applyOffering(s, o, points, gauge, anonymous); });
         await commitOffering(account, id, payload.state.name, o, points, gauge, anonymous, now);
         return Response.json({ state: payload.state, result: { points }, info: await altarInfo(id, payload.state, Date.now()) }, { headers });

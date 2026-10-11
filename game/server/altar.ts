@@ -266,6 +266,12 @@ export function parseOffering(account: string, body: Record<string, unknown>, no
     if (!allow(`altar:${account}`, 1, ALTAR.offerCooldownMs, now)) throw new ApiError('잠시 뒤에 다시 바치세요.', 429);
     return { o, gauge, points, anonymous: body.anonymous === true };
 }
+/** v3.276 신의 자리에 앉은 모험가는 신 소환 게이지에 바칠 수 없습니다(자기 복제 신을 스스로 깨워 자리를 지키는 것을 막음). */
+export async function assertCanFeedGod(id: string, gauge: AltarGaugeId) {
+    if (gauge !== 'god') return;
+    const a = await db().getAltar();
+    if (a?.throne && a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 신 소환 게이지에 바칠 수 없습니다.');
+}
 /** 세이브에서 재화를 뺍니다. 저장 충돌로 다시 돌면 새로 읽은 세이브에 다시 적용됩니다. */
 export function applyOffering(s: State, o: Offering, points: number, gauge: AltarGaugeId, anonymous: boolean) {
     if (s.gold < o.gold) throw new ApiError('골드가 부족합니다.');

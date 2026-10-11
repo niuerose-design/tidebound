@@ -642,3 +642,9 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
     .world-book-cover { border-right:0; border-bottom:1px solid #0a1215; padding:20px 16px; }
     .world-book-index { border-left:0; padding:16px; }
 }
+
+/* v3.276 물건도감 칠흑 카드의 천장 표시 */
+.onyx-pity { display:grid; gap:4px; margin:4px 0 8px; font-size:12px; color:#c9dbd2; }
+.onyx-pity b { color:#ffd76a; font-variant-numeric:tabular-nums; }
+.onyx-pity small { color:#8fa9a1; font-size:11px; }
+.onyx-pity.done { color:#ffd76a; }
