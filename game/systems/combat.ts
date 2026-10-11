@@ -296,7 +296,9 @@ export function withCoreBuff(sk: Skill, n: number): Skill {
     const stats = Object.fromEntries(Object.entries(cb.stats).map(([k, v]) => [k, (v as number) * n])) as Partial<Stats>;
     return { ...sk, selfBuff: { id: cb.id, name: cb.name, turns, damageMultiplier: 1 + cb.damage * n, ...(n ? { stats } : {}) }, ...(ward ? { wardTurns: ward } : {}), ...(steps.some(x => x.extraTurn) ? { extraTurn: true } : {}) };
 }
-/** v3.288 각성 관통: 이 기술의 숙련 단계(한계 돌파 포함, 표 끝에서 멈춤)에 맞는 정화 버팀 확률. */
+type PierceKey = keyof NonNullable<StatusEffects['pierce']>;
+const PIERCE_LABEL: Record<PierceKey, string> = { bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', slow: '감속' };
+/** v3.288 각성 관통: 이 기술의 숙련 단계(한계 돌파 포함, 표 끝에서 멈춤)에 맞는 확률(정화 버팀 · 면역 무시). */
 const wardPierceOf = (a: Fighter, sk: Skill) => sk.wardPierce?.length ? sk.wardPierce[Math.min(sk.wardPierce.length - 1, a.mastery?.[sk.id] || 0)] : 0;
 function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
     return base.outsiderChance !== undefined && signatureScale(base, a.job) < 1 ? { ...sk, chance: sk.chance * base.outsiderChance } : sk;
@@ -572,16 +574,20 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.155 자기 버프 연장(카데나 메일스트롬): 살아 있는 버프를 모두 N턴 늘립니다.
         if (chosen.extendBuffs) { const live = buffsOf(a.effects); if (live.length) { for (const [, bf] of live) bf.turns += chosen.extendBuffs; notes.push(`자기 버프 ${live.length}개 +${chosen.extendBuffs}턴`); } }
         if (chosen.selfBuff) { grantBuff(a.effects, chosen.selfBuff); notes.push(`${chosen.selfBuff.name ?? chosen.selfBuff.id} ${chosen.selfBuff.turns}턴`); ev.statuses.push({ id: chosen.selfBuff.id, turns: chosen.selfBuff.turns, onSelf: true }); }
-        // v3.288 각성 관통(포이즌 노바): pierce가 붙은 중독 · 화상은 그 확률로 정화를 버티고, 버틴 상태이상에는 아래 면역도 걸리지 않습니다(pierce가 없으면 난수를 쓰지 않음).
-        const kept = new Set<'poison' | 'burn'>();
+        // v3.288 각성 관통: pierce가 남은 상태이상(5차 각성기가 건 것)은 그 확률로 정화를 버티고, 버틴 상태이상에는 아래 면역도 걸리지 않습니다(pierce가 없으면 난수를 쓰지 않음).
+        const kept = new Set<PierceKey>();
+        const survives = (key: PierceKey) => { const fx = a.effects!, p = fx.pierce?.[key] || 0; if (p > 0 && rng() < p) { kept.add(key); return true; } if (fx.pierce) delete fx.pierce[key]; return false; };
         if (chosen.cleanseSelf) {
-            for (const key of ['poison', 'burn'] as const) { const p = a.effects[key]?.pierce || 0; if (p > 0 && rng() < p) kept.add(key); else delete a.effects[key]; }
-            delete a.effects.dot; delete a.effects.slow; notes.push(kept.size ? `정화 · ${[...kept].map(k => k === 'poison' ? '중독' : '화상').join('·')} 버팀` : '정화'); ev.cleansed = true;
+            if (a.effects.dot && !survives('bleed')) delete a.effects.dot;
+            if (a.effects.poison && !survives('poison')) delete a.effects.poison;
+            if (a.effects.burn && !survives('burn')) delete a.effects.burn;
+            if (a.effects.slow && !survives('slow')) delete a.effects.slow;
+            notes.push(kept.size ? `정화 · ${[...kept].map(k => PIERCE_LABEL[k]).join('·')} 버팀` : '정화'); ev.cleansed = true;
         }
         if (chosen.wardTurns) {
-            delete a.effects.weaken;
+            if (a.effects.weaken && !survives('weaken')) delete a.effects.weaken;
             const immune = (a.effects.immune ??= {});
-            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as const) if (!kept.has(key as 'poison')) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
+            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as const) if (!kept.has(key as PierceKey)) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
             notes.push(`상태이상 면역 ${chosen.wardTurns}턴`);
         }
         if (chosen.effect === 'heal') {
@@ -820,14 +826,19 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const onset: { name: string; value: number }[] = [];
     // v3.86 각성기가 거는 상태이상은 지속(패시브 보너스 포함)에 awaken.statusScale을 곱합니다.
     const lasting = (turns: number) => forced?.kind === 'awaken' && chosen?.awaken?.statusScale ? Math.round(turns * chosen.awaken.statusScale) : turns;
-    if (landed && src && effect === 'stun' && isImmune(b, 'stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
+    // v3.288 각성 관통: 5차 각성기(wardPierce)는 숙련 단계 확률로 상태이상 면역을 무시하고, 건 상태이상에 정화 버팀 확률(pierce)을 남깁니다. 없는 기술은 난수를 쓰지 않습니다.
+    // 결투(플레이어 대 플레이어)에는 쓰지 않습니다: 몬스터(foe)에게 걸 때만.
+    const pierceP = src && b.foe ? wardPierceOf(a, src) : 0;
+    const immuneTo = (key: ImmuneStatus) => { if (!isImmune(b, key)) return false; if (pierceP > 0 && rng() < pierceP) { notes.push('면역 관통'); return false; } return true; };
+    const markPierce = (key: PierceKey, active: boolean) => { const fx = b.effects!; if (pierceP > 0) (fx.pierce ??= {})[key] = Math.max(pierceP, active ? fx.pierce?.[key] || 0 : 0); else if (!active && fx.pierce) delete fx.pierce[key]; };
+    if (landed && src && effect === 'stun' && immuneTo('stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && src && effect === 'stun') {
         const turns = lasting((src!.statusTurns ?? 1) + sa.stunBonus);
         b.stun = Math.max(b.stun, turns);
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
-    if (landed && chosen && effect === 'bleed' && isImmune(b, 'bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
+    if (landed && chosen && effect === 'bleed' && immuneTo('bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
     else if (landed && chosen && effect === 'bleed') {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus);
         const name = chosen.dotName || '출혈';
@@ -839,6 +850,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.54 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(지속은 그대로, 전투당 한 번). 원킬·짧은 전투에서도 지속 피해가 몫을 합니다.
         // (지속을 1턴 줄이면 다시 걸기 전에 끝나 면역이 생겨 긴 전투 피해가 줄었고, 매번 주면 출혈만 긴 전투에서 크게 늘었습니다.)
         if (opens(b, 'bleed')) onset.push({ name, value: tick + hpPart(dotHp(b), hpRatio, 0) });
+        markPierce('bleed', !!current);
         b.effects.dot = { damage: Math.max(tick, current?.hpRatio === undefined ? 0 : current.damage), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), turns: Math.max(turns, current?.turns || 0), name };
         notes.push(`${name} ${turns}턴`);
         ev.statuses.push({ id: 'bleed', turns });
@@ -846,7 +858,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v27.17 중독: 출혈과 별개의 중첩형 지속 피해. 걸릴 때마다 한 중첩, 지속 갱신, 중첩당 피해는 더 강한 쪽.
     // v3.132 alsoEffect: 같은 공격으로 두 번째 중첩형 지속 피해(중독·화상)를 함께 겁니다.
     const also = resisted ? undefined : chosen?.alsoEffect;
-    if (landed && chosen && (effect === 'poison' || also === 'poison') && isImmune(b, 'poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
+    if (landed && chosen && (effect === 'poison' || also === 'poison') && immuneTo('poison')) { notes.push('중독 면역'); ev.immune = 'poison'; }
     else if (landed && chosen && (effect === 'poison' || also === 'poison')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.poisonTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.poisonRatio) * (1 + (sa.dotBonus || 0) + (sa.poisonBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
@@ -855,13 +867,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.54 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
         if (first) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
-        const pierce = Math.max(wardPierceOf(a, chosen), current?.pierce || 0);
-        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), ...(pierce > 0 ? { pierce } : {}) };
+        markPierce('poison', !!current);
+        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
     }
     // v27.48 화상: 걸릴 때마다 한 중첩(최대 burnMaxStacks), 지속 갱신, 중첩당 피해는 더 강한 쪽.
-    if (landed && chosen && (effect === 'burn' || also === 'burn') && isImmune(b, 'burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
+    if (landed && chosen && (effect === 'burn' || also === 'burn') && immuneTo('burn')) { notes.push('화상 면역'); ev.immune = 'burn'; }
     else if (landed && chosen && (effect === 'burn' || also === 'burn')) {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.burnTurns) + sa.dotTurnsBonus);
         const perStack = Math.max(1, Math.floor(base * (chosen.dotRatio ?? SKILL_FORMULA.burnRatio) * (1 + (sa.dotBonus || 0) + (sa.burnBonus || 0)) * (weakened ? SKILL_FORMULA.weakenedDamage : 1)));
@@ -870,8 +882,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.54 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
         if (first) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
-        const pierce = Math.max(wardPierceOf(a, chosen), current?.pierce || 0);
-        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), ...(pierce > 0 ? { pierce } : {}) };
+        markPierce('burn', !!current);
+        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
     }
@@ -886,29 +898,31 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         const value = Math.min(b.hp, Math.floor(overheal * SKILL_FORMULA.overhealDamage));
         if (value > 0) { b.hp -= value; ev.holy = value; notes.push(`넘친 회복 → 피해 ${value}`); if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood; }
     }
-    if (landed && src && effect === 'weaken' && isImmune(b, 'weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
+    if (landed && src && effect === 'weaken' && immuneTo('weaken')) { notes.push('약화 면역'); ev.immune = 'weaken'; }
     else if (landed && src && effect === 'weaken') {
         const turns = lasting(src!.statusTurns ?? STATUS_TUNING.weakenTurns);
+        markPierce('weaken', !!b.effects.weaken);
         extendStatus(b.effects, 'weaken', turns);
         notes.push(`공격 약화 ${turns}턴`);
         ev.statuses.push({ id: 'weaken', turns });
     }
-    if (landed && src && effect === 'silence' && isImmune(b, 'silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
+    if (landed && src && effect === 'silence' && immuneTo('silence')) { notes.push('침묵 면역'); ev.immune = 'silence'; }
     else if (landed && src && effect === 'silence') {
         const turns = lasting((src!.statusTurns ?? STATUS_TUNING.silenceTurns) + sa.controlBonus);
         extendStatus(b.effects, 'silence', turns);
         notes.push(`침묵 ${turns}턴`);
         ev.statuses.push({ id: 'silence', turns });
     }
-    if (landed && src && effect === 'slow' && isImmune(b, 'slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
+    if (landed && src && effect === 'slow' && immuneTo('slow')) { notes.push('감속 면역'); ev.immune = 'slow'; }
     else if (landed && src && effect === 'slow') {
         const turns = lasting((src!.statusTurns ?? STATUS_TUNING.slowTurns) + sa.controlBonus);
+        markPierce('slow', !!b.effects.slow);
         extendStatus(b.effects, 'slow', turns);
         notes.push(`감속 ${turns}턴`);
         ev.statuses.push({ id: 'slow', turns });
     }
     // v3.151 부식: 물리 · 마법 방어와 속도를 깎는 최상급 디버프(일리움). 기본 공격 상태이상(패시브)으로도 걸립니다.
-    if (landed && src && effect === 'corrode' && isImmune(b, 'corrode')) { notes.push('부식 면역'); ev.immune = 'corrode'; }
+    if (landed && src && effect === 'corrode' && immuneTo('corrode')) { notes.push('부식 면역'); ev.immune = 'corrode'; }
     else if (landed && src && effect === 'corrode') {
         const turns = lasting((src.statusTurns ?? STATUS_TUNING.corrodeTurns) + sa.controlBonus);
         extendStatus(b.effects, 'corrode', turns);

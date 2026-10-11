@@ -111,9 +111,9 @@ export type StatusEffects = {
         perStack?: number;
     };
     /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = (perStack + 체력 비례분) × stacks. v3.54 체력 비례분 = 틱 때 현재 체력 × hpRatio(옛 세이브는 고정값 hpTick). */
-    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; /** v3.288 몬스터 각성(정화)을 버틸 확률(포이즌 노바 숙련 단계). 버티면 그 상태이상에는 각성 면역도 걸리지 않습니다. */ pierce?: number };
+    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
     /** v27.48 화상: 중독처럼 쌓이지만(최대 STATUS_TUNING.burnMaxStacks) 출혈처럼 받는 직접 피해를 키웁니다(burnVulnerability). */
-    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; /** v3.288 몬스터 각성(정화)을 버틸 확률. */ pierce?: number };
+    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
     weaken?: number;
     silence?: number;
     slow?: number;
@@ -125,6 +125,8 @@ export type StatusEffects = {
     buffs?: Record<string, { turns: number; name?: string; stats?: Partial<Stats>; speedMultiplier?: number; /** v3.158 내 직접 피해 배율(접신). */ damageMultiplier?: number }>;
     /** 상태이상이 풀린 뒤 같은 상태이상에 걸리지 않는 남은 턴(자기 행동마다 1씩 줄어듭니다). */
     immune?: Partial<Record<'stun' | 'bleed' | 'poison' | 'burn' | 'weaken' | 'silence' | 'slow' | 'corrode', number>>;
+    /** v3.288 각성 관통: 5차 각성기가 건 상태이상이 몬스터 각성(정화)을 버틸 확률(그 기술의 숙련 단계). 상태이상이 처음 걸릴 때 각성 관통이 없는 기술이면 지웁니다. */
+    pierce?: Partial<Record<'bleed' | 'poison' | 'burn' | 'weaken' | 'slow', number>>;
     /** v25 일곱 글자: 이번 전투에 새긴 인. */
     seals?: string[];
     /** v25 타임 리와인드를 이번 전투에 썼는지. */
@@ -396,7 +398,7 @@ export type Skill = {
     disguise?: string;
     /** v3.132 계보 밖 직업이 계승해 쓰면 발동률에 곱하는 값(5차 전용 기술, signatureScale과 함께). */
     outsiderChance?: number;
-    /** v3.288 각성 관통: 이 기술이 건 중독 · 화상이 몬스터 각성(정화)을 버틸 확률, 기술 숙련 단계(0부터)별. 버티면 각성 면역도 걸리지 않습니다(포이즌 노바). */
+    /** v3.288 각성 관통: 기술 숙련 단계(0부터)별 확률. 이 기술이 건 상태이상이 그 확률로 몬스터 각성(정화)을 버티고(버티면 각성 면역도 걸리지 않음), 상태이상 면역도 그 확률로 무시합니다(5차 각성기). */
     wardPierce?: number[];
     /** v3.282 각성기의 대기(턴)와 첫 대기. 없으면 SKILL_FORMULA.awaken.cooldown · start(포이즌 노바 5턴). */
     awakenCooldown?: number;

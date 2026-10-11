@@ -158,8 +158,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'pestilence', name: '만연', desc: '지속 피해와 체력이 오릅니다.', level: 55, job: 'plagueLord', cost: 3, bonus: { dotBonus: .15, hp: 250 }, masteryMilestones: M4 },
     // v3.132 포이즌 노바(각성기): 중독과 화상을 함께 7턴(+지속 턴 옵션) 겁니다. 각성 지속 배율 없이 적힌 턴 그대로.
     // v3.282 피해 없이 상태이상만 겁니다(statusOnly). 발동률 100%, 각성 대기 5턴, 계보 밖에서 계승하면 발동률 25%(outsiderChance). 마나 ×10.
-    // v3.288 각성 관통(wardPierce): 숙련 단계 0~4마다 노바의 중독 · 화상이 몬스터 각성을 버틸 확률 0 · 25 · 50 · 75 · 100%.
-    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 5, awakenCooldown: 5, multiplier: 1, statusOnly: true, wardPierce: [0, .25, .5, .75, 1], cost: 6, manaCost: 220, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .25, masteryMilestones: M5 },
+    { ...A, ...magic, id: 'doomMark', name: '파멸의 낙인', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 5, awakenCooldown: 5, multiplier: 1, statusOnly: true, cost: 6, manaCost: 220, effect: 'poison', alsoEffect: 'burn', dotRatio: .2, statusTurns: 7, outsiderChance: .25, masteryMilestones: M5 },
     // v3.132 도트 퍼니셔: 일반 액티브. 적의 중독·화상 중첩만큼 추가타, 둘 다 최대 중첩이면 기절 2턴 · 일부면 1턴 · 없으면 피해만.
     // v3.282 배율 2.4 → 4, 상태이상 적 추가 피해(+50%) 삭제, 마나 ×10, 대기 4턴. 둘 다 최대 중첩인 적에게 쓰면 대기가 바로 초기화됩니다(fullReset). v3.283 발동률 100%.
     { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: 1, cooldown: 4, multiplier: 4, cost: 6, manaCost: 200, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1, fullReset: true }, masteryMilestones: M5 },

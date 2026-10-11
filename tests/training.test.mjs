@@ -414,8 +414,9 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual([nova.statusOnly, nova.chance, nova.cooldown, nova.awaken.start], [true, 1, 5, 5]);
     const novaFires = job => { const a = { ...mk(['doomMark']), job }, t = mk([]), ev = []; strike(a, t, () => .3, ev); const e = ev.find(x => x.skillId === 'doomMark'); if (e) assert.equal(e.total, 0, 'nova deals no direct damage'); return !!e; };
     assert.equal(nova.outsiderChance, .25); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
-    // v3.288 각성 관통: 노바가 건 중독 · 화상은 숙련 단계별 확률로 몬스터 각성(정화)을 버티고, 버티면 각성 면역도 걸리지 않습니다.
+    // v3.288 각성 관통: 5차 각성기가 건 상태이상은 숙련 단계별 확률로 몬스터 각성(정화)을 버티고, 버티면 각성 면역도 걸리지 않습니다. 상태이상 면역도 그 확률로 무시합니다.
     assert.deepEqual(nova.wardPierce, [0, .25, .5, .75, 1]);
+    for (const sk of SKILLS.filter(x => x.awaken && ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'].includes(x.effect))) assert.ok(sk.wardPierce?.length === 5, sk.id);
     const novaThenWard = stage => {
         const a = { ...mk(['doomMark']), job: 'apostle', mastery: { doomMark: stage } }, foe = { ...mk(['foeWard']), foe: true }; foe.cooldowns.foeWard = 0;
         strike(a, foe, () => .5); assert.ok(foe.effects.poison && foe.effects.burn, 'nova landed');
@@ -423,6 +424,9 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     };
     const none = novaThenWard(0); assert.ok(!none.poison && !none.burn && none.immune?.poison > 0, 'stage 0: cleansed and warded');
     const full = novaThenWard(4); assert.ok(full.poison && full.burn, 'stage 4: survives the ward'); assert.ok(!full.immune?.poison && !full.immune?.burn && full.immune?.stun > 0, 'no ward immunity for what survived');
+    // 면역 무시: 숙련 4단계 노바는 중독 면역인 몬스터에게도 걸고, 결투 상대(foe가 아님)에게는 무시하지 않습니다.
+    const immuneHit = (stage, foe) => { const a = { ...mk(['doomMark']), job: 'apostle', mastery: { doomMark: stage } }, t = { ...mk([]), foe }; t.effects = { immune: { poison: 3, burn: 3 } }; strike(a, t, () => .5); return !!t.effects.poison; };
+    assert.equal(immuneHit(4, true), true); assert.equal(immuneHit(0, true), false); assert.equal(immuneHit(4, false), false, 'not in duels');
     // 도트 퍼니셔: 상태 없음 → 추가타·기절 없음 / 일부 → 추가타 일부 + 기절 1 / 둘 다 최대 → 추가타 최대 + 기절 2.
     const finish = effects => { const t = mk([]); t.effects = effects; const ev = []; strike(mk(['endOfAll']), t, () => 0, ev); const e = ev.find(x => x.skillId === 'endOfAll'); return [e.hits.filter(h => h.kind === 'follow').length, t.stun]; };
     const dot = (stacks) => ({ perStack: 1, stacks, turns: 5, hpRatio: 0 });
