@@ -1359,6 +1359,26 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 1 }, 'miss counter kept (v3.113 a missed awakening roll counts too)');
 });
 
+test('v3.299 research 칠흑 추적: pearls 300 · 500 · 1,000 from rebirth 30, onyx spawn pity 2,000 → 500 · 400 · 300 in live hunting', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), Ec = await L.load('data/economy'), Enc = await L.load('systems/encounter');
+    const r = Ec.researchById('onyxTrack');
+    assert.ok(r && r.max === 3 && r.rebirth === 30 && r.tab === 'utility' && r.group === 'special');
+    assert.deepEqual([0, 1, 2].map(k => Ec.researchCost('onyxTrack', k)), [300, 500, 1000]); assert.equal(Ec.researchSpent('onyxTrack', 3), 1800);
+    assert.deepEqual([0, 1, 2, 3].map(k => O.onyxSpawnPity({ permanent: { onyxTrack: k } })), [O.ONYX.pity, 500, 400, 300]);
+    assert.equal(O.onyxChance(0, 299, 0, 300), .003); assert.equal(O.onyxChance(0, 300, 0, 300), 1, 'tracked pity guarantees');
+    assert.ok(r.desc.includes('500 · 400 · 300') && r.levels[3].includes('300'), 'numbers shown when odds are public');
+    // 구매: 환생 30부터, 세계석 300.
+    const s = newState(0); s.level = 60; s.rebirths = 29; s.pearls = 5000;
+    assert.throws(() => act(s, { type: 'permanent', id: 'onyxTrack' }, 0), /환생/);
+    s.rebirths = 30; act(s, { type: 'permanent', id: 'onyxTrack' }, 0); assert.equal(s.permanent.onyxTrack, 1); assert.equal(s.pearls, 4700);
+    // 출현: 3단계면 못 본 출현 300번째에 확정(난수가 커도), 연구 없으면 아직 판정.
+    s.permanent.onyxTrack = 3; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0; s.onyxSeen = { '리스항구': 300 };
+    Enc.spawn(s, () => .99); assert.equal(s.enemy.onyx, 'onyxDusk'); assert.equal(s.onyxSeen['리스항구'], 0);
+    const plain = newState(0); plain.level = 60; plain.rebirths = 30; plain.kills = 5000; plain.stage = 'lithSwarm'; plain.tide = 0; plain.onyxSeen = { '리스항구': 300 };
+    Enc.spawn(plain, () => .99); assert.ok(!plain.enemy.onyx); assert.equal(plain.onyxSeen['리스항구'], 301, 'without research the default pity applies');
+});
+
 test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고통의 근원, old 마크 · 안대 stay, nine-piece set', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), BC = await L.load('data/boss-core'), Enc = await L.load('systems/encounter'), DC = await L.load('systems/dungeon-coins'), G = await L.load('systems/onyx-grant');

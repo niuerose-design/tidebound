@@ -17,7 +17,7 @@ export type Odds = {
     /** v3.161 대왕 시리즈: 그 특별 몬스터 출현 중 대왕으로 바뀌는 몫. */
     king: { share: number };
     /** 칠흑의 보스: 출현 기본 · 난이도당 배율 · 출현 천장 · 장신구 드롭 · 드롭 천장. */
-    onyx: { chance: number; perTier: number; pity: number; drop: number; dropPity: number };
+    onyx: { chance: number; perTier: number; pity: number; drop: number; dropPity: number; /** v3.299 연구 ‘칠흑 추적’ 단계별 출현 천장(1단계부터). */ trackPity: number[] };
     /** 변종: 종류별 처치당 기본 확률 · 지역 배율 · 무리 규모(×5·×100·×500) 가중치 · 무리 서식지 ×500 확률. */
     variant: { chance: Record<string, number>; region: Record<string, Record<string, number>>; swarmWeights: number[]; habitatBig: number };
     /** 상점 감정 등급 확률(APPRAISAL 순서: 희귀 · 영웅 · 전설 · 신화 · 고대 · 태초). */
@@ -35,7 +35,7 @@ const empty = (): Odds => ({
     nuri: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
     slime: { chance: 0, perTier: 0, tiers: [0, 0, 0] },
     king: { share: 0 },
-    onyx: { chance: 0, perTier: 0, pity: Infinity, drop: 0, dropPity: Infinity },
+    onyx: { chance: 0, perTier: 0, pity: Infinity, drop: 0, dropPity: Infinity, trackPity: [] },
     variant: { chance: {}, region: {}, swarmWeights: [0, 0, 0], habitatBig: 0 },
     appraisal: [0, 0, 0, 0, 0, 0],
     spawn: {},
