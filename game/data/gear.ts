@@ -276,9 +276,10 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
     return out;
 }
 /** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만, 규칙 옵션은 장비당 최대 1개. */
-export function rollAffixes(rarity: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1): ItemAffix[] {
+/** count: 옵션 줄 수(보통 등급 번호와 같음). v3.284 rarity: 수치 · 최소 등급 판정에 쓰는 등급(칠흑은 7줄이지만 태초 등급). */
+export function rollAffixes(count: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1, rarity = count): ItemAffix[] {
     const out = [...keep];
-    while (out.length < rarity) {
+    while (out.length < count) {
         const hasRule = out.some(a => a.rule);
         // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
         if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }
