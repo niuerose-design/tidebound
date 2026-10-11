@@ -105,6 +105,9 @@ const FRAMES: Record<string, { k: Keyframe[]; ms: number }> = {
     hit: { k: [{ filter: 'brightness(2.6)', transform: 'translateX(0)' }, { filter: 'brightness(1.4)', transform: 'translateX(9px)', offset: .4 }, { filter: 'none', transform: 'translateX(0)' }], ms: 300 },
     crit: { k: [{ filter: 'brightness(3.4) saturate(0)', transform: 'translateX(0) scale(1)' }, { filter: 'brightness(1.6)', transform: 'translateX(18px) scale(1.05,.95)', offset: .3 }, { filter: 'none', transform: 'translateX(0) scale(1)' }], ms: 420 },
     cast: { k: [{ transform: 'translate(0,0) scale(1)' }, { transform: 'translate(10px,-6px) scale(1.06)', offset: .4 }, { transform: 'translate(0,0) scale(1)' }], ms: 450 },
+    // v3.272 내 캐릭터 판 피격: 좌우로 흔들리며 붉게 번쩍(치명타는 더 세게).
+    hurt: { k: [{ transform: 'translateX(0)', boxShadow: '0 0 0 0 #ff4d4d00' }, { transform: 'translateX(-6px)', boxShadow: '0 0 0 2px #ff4d4dcc, 0 0 18px #ff4d4d88', offset: .2 }, { transform: 'translateX(5px)', offset: .45 }, { transform: 'translateX(-2px)', offset: .7 }, { transform: 'translateX(0)', boxShadow: '0 0 0 0 #ff4d4d00' }], ms: 380 },
+    hurtCrit: { k: [{ transform: 'translateX(0) scale(1)', boxShadow: '0 0 0 0 #ff4d4d00', background: '#06100fcc' }, { transform: 'translateX(-10px) scale(1.03)', boxShadow: '0 0 0 3px #ff4d4d, 0 0 26px #ff4d4daa', background: '#3a0b0bdd', offset: .18 }, { transform: 'translateX(8px)', offset: .42 }, { transform: 'translateX(-4px)', offset: .68 }, { transform: 'translateX(0) scale(1)', boxShadow: '0 0 0 0 #ff4d4d00', background: '#06100fcc' }], ms: 520 },
     recoil: { k: [{ transform: 'translateX(0)', filter: 'none' }, { transform: 'translateX(-8px)', filter: 'brightness(1.8) drop-shadow(0 0 6px #f55)', offset: .3 }, { transform: 'translateX(0)', filter: 'none' }], ms: 360 },
 };
 /** 새 연출이 들어올 때마다 그 타격 박자(fx.delay)에 맞춰 요소를 한 번 흔듭니다(Web Animations, 다시 그리지 않음). */
@@ -126,6 +129,7 @@ function usePulse(effect: CombatFx[], pick: (fx: CombatFx) => keyof typeof FRAME
 }
 const landed = (fx: CombatFx) => fx.hits.some(h => !h.miss);
 const foePick = (fx: CombatFx) => fx.target === 'enemy' && landed(fx) ? (fx.critical ? 'crit' : 'hit') : null;
+const platePick = (fx: CombatFx) => fx.target === 'player' && fx.actor === 'enemy' && landed(fx) ? (fx.critical ? 'hurtCrit' : 'hurt') : null;
 const mePick = (fx: CombatFx) => fx.actor === 'player' && !fx.basic && !(fx.kind === 'stun' && !fx.hits.length) ? 'cast' : fx.target === 'player' && fx.actor === 'enemy' && landed(fx) ? 'recoil' : null;
 
 /** 오른쪽 몬스터: 맞으면 번쩍이며 밀리고, 사라지는(처치 · 교체) 순간에는 찌그러지며 흐려지는 잔상을 잠깐 남깁니다. */
@@ -159,10 +163,10 @@ export function MyHero({ s, job }: { s: Pick<State, 'job' | 'skills'>; job: Job 
     return <HeroFigure kind={kind} job={job} weapon={weapon} tree={look.hero === 'auto' ? (weapon && job ? job.tree : undefined) : HERO_TREE[look.hero]}/>;
 }
 export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; effect: CombatFx[] }) {
-    const ref = usePulse(effect, mePick), job = jobById(s.job), title = displayTitle(s);
+    const ref = usePulse(effect, mePick), plate = usePulse(effect, platePick), job = jobById(s.job), title = displayTitle(s);
     return <div className="scene-me">
         <div ref={ref} className="scene-hero"><MyHero s={s} job={job}/></div>
-        <div className="scene-me-plate">
+        <div ref={plate} className="scene-me-plate">
             <div className="scene-me-name"><b>{title ? <small>{title}</small> : null}{s.name}</b><StatusBadges effects={s.effects} stun={s.playerStun} recent={effect} target="player"/></div>
             <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}</small>
             <div className="player-hp-anchor"><Meter value={s.hp} max={stats.hp} label="HP"/></div>
@@ -269,6 +273,8 @@ const CAST_SHAPE: Record<string, 'blade' | 'orb' | 'bolt' | 'aura'> = {
     pierce: 'bolt', slash: 'blade', quake: 'blade', bite: 'blade', bone: 'blade', impact: 'blade', lightning: 'bolt',
     heal: 'aura', ward: 'aura', song: 'aura', gold: 'aura',
 };
+/** v3.272 갈래별 타격 자국(닿는 순간 몬스터 위): 베기 X 검흔, 관통 창끝 섬광, 불 화염, 얼음 파편, 번개 낙뢰, 대지 균열, 물기 발톱, 물결 물보라, 저주 · 독 · 먹물 검은 고리. */
+const MARK: Partial<Record<string, string>> = { slash: 'slash', pierce: 'pierce', fire: 'fire', frost: 'frost', lightning: 'bolt', quake: 'crack', impact: 'crack', bite: 'claw', wave: 'splash', curse: 'dark', venom: 'dark', ink: 'dark', bone: 'dark' };
 /**
  * v3.249 2단계 공용 연출: 스킬을 쓰면 왼쪽 아래 내 캐릭터가 빛나고(시전), 갈래별 투사체(검기 · 마력 구체 · 번개 화살)가 몬스터로 날아가 맞는 순간 터집니다.
  * 기본 공격은 몬스터 위 짧은 베기, 몬스터에게 맞으면 내 캐릭터 위에 붉은 할퀴기. 전용 연출(이계 · 아제로스 · 제논 · 각성기 등)이 있는 스킬은 시전 빛만 더합니다.
@@ -286,7 +292,7 @@ export function CastFx({ effect, boss = false }: { effect: CombatFx[]; boss?: bo
         const own = hasSceneTitle(fx, boss), shape = fx.target === 'player' ? 'aura' : CAST_SHAPE[fx.variant] ?? 'orb', big = (fx.tier || 0) >= 4;
         return <div key={fx.id} className={`cast-fx cast-skill cast-${shape} ${big ? 'big' : ''} ${fx.critical ? 'critical' : ''}`} style={style}>
             <i className="cast-glow"/>
-            {!own && shape !== 'aura' && <><i className="cast-shot"/>{fx.hits.length > 1 && <i className="cast-shot late"/>}<i className="cast-burst"/>{landed && <i className="cast-ring"/>}</>}
+            {!own && shape !== 'aura' && <><i className="cast-shot"/>{fx.hits.length > 1 && <i className="cast-shot late"/>}<i className="cast-burst"/>{landed && <i className="cast-ring"/>}{landed && MARK[fx.variant] && <i className={`cast-mark m-${MARK[fx.variant]}`}><b/><b/><b/></i>}</>}
             {shape === 'aura' && <i className="cast-aura"/>}
         </div>;
     })}</div>;
