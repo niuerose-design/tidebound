@@ -6,6 +6,7 @@
  *   &execute=1(처형 연계) &charge=<중첩>(전탄발사) &reload=1 &overdrive=1(요원) &essence=<정수>&devour=<능력치>(포식) &mined=<세계석>(채굴) &pnl=<손익 -0.35~0.35>(트레이더) &crit=0
  *   &actor=foe: 보스 몬스터가 쓰는 스킬(FOE_FX)로 띄움.
  *   v3.269 &scene=<장면 이름>&title=<제목>: 전용 장면(Skill.scene)만 시험 스킬로 띄움(비밀 스킬은 화면 코드에 없으므로 이 방법으로 봄).
+ *   v3.285 화면 코드에 없는 스킬 id(비밀 5차의 궁극기 장면)도 &skill=<id>&title=<제목>으로 장면만 띄웁니다.
  * 운영 빌드(production)에서는 404입니다. 연출 제작 · 녹화용이라 게임 규칙 · 저장과는 무관합니다.
  */
 import { Suspense, useEffect, useMemo, useState } from 'react';
@@ -34,6 +35,8 @@ function FxLabInner() {
     const asFoe = params.get('actor') === 'foe', boss = asFoe || params.get('boss') === '1', crit = params.get('crit') !== '0';
     const scene = params.get('scene');
     if (scene && !skillById(`labScene-${scene}`)) registerSkills([{ id: `labScene-${scene}`, name: params.get('title') || scene, desc: '', type: 'active', level: 1, chance: 1, cooldown: 1, multiplier: 1, damageType: params.get('magic') === '1' ? 'magic' : 'physical', extraAttacks: num('extra'), scene }]);
+    // v3.285 비밀 5차(타임 디스토션 · 인피니트 등)는 화면 코드에 스킬 정의가 없지만 장면(ULTIMATES)은 스킬 id로 찾습니다. 모르는 id면 그 id로 시험 스킬을 만들어 장면만 띄웁니다(이름은 &title, 없으면 id).
+    if (!scene && !asFoe && !skillById(skillId)) registerSkills([{ id: skillId, name: params.get('title') || skillId, desc: '', type: 'active', level: 1, chance: 1, cooldown: 1, multiplier: 1, damageType: params.get('magic') === '1' ? 'magic' : 'physical', extraAttacks: num('extra') }]);
     const sk = (scene ? skillById(`labScene-${scene}`) : asFoe ? enemySkillById(skillId) : undefined) ?? skillById(skillId), foeId = params.get('foe') || MONSTERS[0].id, execute = params.get('execute') === '1';
     const job = sk ? jobById(sk.job) : undefined, hero = (params.get('hero') || (job?.fuelJob ? job.trader ? 'trader' : 'agent' : sk?.essenceCost ? 'devour' : sk?.mineChance ? 'miner' : 'warrior')) as HeroKindId;
     const [seq, setSeq] = useState(0);
