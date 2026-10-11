@@ -57,7 +57,7 @@ export function activeEvent(now: number, events: ServerEvent[] = currentEvents()
     // 겹치면 배율은 곱하고, 이름은 이어 붙이고, 종료는 가장 이른 것으로 둡니다.
     return {
         id: live.map(e => e.id).join('+'), name: [...new Set(live.map(e => e.name).filter(Boolean))].join(' · '), until: Math.min(...live.map(e => Date.parse(e.until))),
-        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), /* v3.287 까미 · 누리 출현은 겹치면 보너스(배율 − 1)를 더합니다(서버 이벤트 + 제단 축복). */ mimic: 1 + live.reduce((m, e) => m + (e.mimic ?? 1) - 1, 0), nuri: 1 + live.reduce((m, e) => m + (e.nuri ?? 1) - 1, 0), ...banner,
+        exp: live.reduce((m, e) => m * (e.exp ?? 1), 1), gold: live.reduce((m, e) => m * (e.gold ?? 1), 1), drop: live.reduce((m, e) => m * (e.drop ?? 1), 1), mastery: live.reduce((m, e) => m * (e.mastery ?? 1), 1), /* v3.291 까미 · 누리 출현은 겹치면 보너스(배율 − 1)를 더합니다(서버 이벤트 + 제단 축복). */ mimic: 1 + live.reduce((m, e) => m + (e.mimic ?? 1) - 1, 0), nuri: 1 + live.reduce((m, e) => m + (e.nuri ?? 1) - 1, 0), ...banner,
     };
 }
 /** 이벤트 배너 문구: 배율과 종료일. */

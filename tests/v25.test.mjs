@@ -1683,7 +1683,7 @@ test('v3.107 rank perk drill is a flat add outside every mastery multiplier (foc
     assert.equal(s.jobMastery[s.job] - mid, 100 * 2 + 100 * 3, '×100 swarm over 10 turns: 100 heads × (1 × 2) + 100 heads × 3');
 });
 
-test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of the current stage when that beats the level %, and appears from Lv.100 on', async () => {
+test('v3.112 exp nuri for strong hunters: pays 5/10/15 (v3.291, was 10/20/30) average encounters of the current stage when that beats the level %, and appears from Lv.100 on', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), Mi = await L.load('data/mimic'), N = await L.load('data/exp-nuri');
     const s = newState(0); s.level = 120; s.rebirths = 60; s.kills = 5000; s.stage = 'brook'; s.tide = 30; s.running = true;
@@ -1692,10 +1692,10 @@ test('v3.112 exp nuri for strong hunters: pays 10/20/30 average encounters of th
     assert.equal(N.nuriChance(200), N.nuriChance(40)); assert.ok(N.nuriChance(40) > N.nuriChance(39));
     s.enemy.hp = 0; const per = Enc.stageEncounterExp(s), e0 = s.exp, base = Math.floor(s.enemy.exp * (await L.load('systems/stats')).expMultiplier(s));
     assert.ok(per > 0); Enc.reward(s, () => .99);
-    assert.equal(s.exp - e0, base + Math.floor(per * 30), 'Lv.100+: big win = 30 encounters of this stage');
-    assert.ok(s.logs.some(l => l.text.includes('이 사냥터 출현 30회분')));
+    assert.equal(s.exp - e0, base + Math.floor(per * 15), 'Lv.100+: big win = 15 encounters of this stage');
+    assert.ok(s.logs.some(l => l.text.includes('이 사냥터 출현 15회분')));
     const at = stage => { const x = newState(0); x.level = 120; x.rebirths = 60; x.stage = stage; x.tide = 30; return Enc.stageEncounterExp(x); };
-    assert.ok(at('lithSwarm') > 50 * at('brook'), 'habitat encounters count the whole swarm (×100 / ×500)');
+    assert.ok(at('lithSwarm') > 25 * at('brook'), 'habitat encounters count the whole swarm (×100 / ×500, v3.291 × expScale .5)');
 });
 
 test('v3.113 onyx awakening and resonance: a repeat drop raises the owned accessory (max 5, unique option +10% each), unworn accessories lend 10% of their unique option', async () => {

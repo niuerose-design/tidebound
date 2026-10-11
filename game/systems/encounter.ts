@@ -208,7 +208,7 @@ export function stageEncounterExp(s: State, won = stats(s)) {
     const tier = encounterTier(s), each = st.monsters.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.monsters.length;
     const heads = st.habitat ? (1 - HABITAT.bigChance) * HABITAT.sizes[0] * swarmRewardMultiplier(HABITAT.sizes[0]) + HABITAT.bigChance * HABITAT.sizes[1] * swarmRewardMultiplier(HABITAT.sizes[1]) : 1;
     const onyxSet = st.habitat ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
-    return each * expMultiplier(s, won) * onyxSet * heads;
+    return each * expMultiplier(s, won) * onyxSet * heads * (st.habitat ? HABITAT.expScale : 1);
 }
 /** v3.9 깊이 계수를 몬스터 체력·공격·마법과 보상 골드·경험치에 곱합니다(제자리 수정). */
 function applyDepth(foe: Stats, base: { exp: number; gold: number }, k: number) {
@@ -237,7 +237,7 @@ export function specialChances(s: State) {
     // v27.60 행운의 편지(세계석 연구): 까미·누리 등장 확률 +15%/단계.
     const luck = specialLuck(s);
     const place = st.habitat ? Math.max(...STAGES.filter(x => !x.habitat && x.region === st.region).map(x => STAGES.indexOf(x))) : STAGES.indexOf(st);
-    // v3.287 행운의 편지 · 이벤트(제단 축복 포함) · 직업 보너스는 곱하지 않고 더합니다(specialFind).
+    // v3.291 행운의 편지 · 이벤트(제단 축복 포함) · 직업 보너스는 곱하지 않고 더합니다(specialFind).
     const mimicP = mimicOk ? mimicChance(tier, place) * (s.away ? specialOfflineScale(s, MIMIC.offlineScale) : 1) * specialFind(luck, s.event?.mimic ?? 1, jobById(s.job)?.mimicFind || 0) : 0;
     const nuriP = nuriOk ? nuriChance(tier) * (s.away ? specialOfflineScale(s, EXP_NURI.offlineScale) : 1) * specialFind(luck, s.event?.nuri ?? 1, jobById(s.job)?.nuriFind || 0) : 0;
     // v3.161 정수의 슬라임: 누리 구간 바로 뒤. 대왕 몫은 각 구간의 앞쪽 share(작은 녀석을 KING.minBookKills마리 잡은 뒤부터).
@@ -352,7 +352,7 @@ export function reward(s: State, rng: () => number) {
     const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
     const won = stats(s);
-    const perMonster = dungeonRun ? 0 : Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = dungeonRun ? 0 : Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
+    const perMonster = dungeonRun ? 0 : Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = dungeonRun ? 0 : Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big * (size > 1 && isHabitat(s.stage) ? HABITAT.expScale : 1));
     // 황금 개체: 섀도어 계보 패시브의 ‘황금 개체 확률’로 한 마리가 황금이 되어 그 한 마리 골드가 10배. 확률 0이면 난수를 쓰지 않습니다.
     // v3.125 희귀 몬스터(숙련의 까미 · 경험의 누리 · 칠흑의 보스, v3.161 정수의 슬라임 · 대왕)는 출현 변종과 같이 황금 개체도 되지 않습니다(난수를 쓰지 않음).
     const rareFoe = isSpecialId(e.id) || !!e.onyx || dungeonRun;
@@ -427,8 +427,8 @@ export function reward(s: State, rng: () => number) {
     s.exp += exp;
     recordExpIncome(s, exp);
     // v27.58 경험의 누리: 지금 레벨 필요 경험치의 1~3%. 배율과 무관하게 바로 더합니다.
-    // v3.112 이 사냥터 평균 출현 경험치 ×(1% 당 10회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
-    // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 90회분).
+    // v3.112 이 사냥터 평균 출현 경험치 ×(v3.291 1% 당 5회분)과 비교해 큰 쪽을 줍니다(고수는 레벨 %가 너무 작아 무리 한 번보다 못했음). Lv.100부터는 출현 몫만.
+    // v3.161 대왕 누리: ‘대’ × KING.rewardMul 확정(레벨 9% 또는 출현 45회분, v3.291 전에는 90회분).
     if (e.id === EXP_NURI.id || e.id === KING.nuri.id) {
         // v3.221 하얀 발자국 표식이 남은 누리는 그 확률로 로또가 한 단계 위로 굴러갑니다(대왕은 확정이라 그대로).
         const king = e.id === KING.nuri.id, rolled = king ? undefined : rollNuriTier(rng), up = !!rolled && (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeNuriTier(rolled) !== rolled;
