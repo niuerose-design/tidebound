@@ -39,9 +39,12 @@ export function nextGod(a: Pick<AltarRow, 'throne_snapshot' | 'throne_name'>): S
     return { ...holder, name: `신이 된 ${a.throne_name}`, rating: 1000 };
 }
 
-/** 살아 있는 신이 없고 신 소환 게이지가 찼으면 깨웁니다. 소환이 다른 요청에 밀리면 게이지를 돌려놓습니다. */
+/**
+ * 살아 있는 신이 없고 신 소환 게이지가 찼으면 깨웁니다. 소환이 다른 요청에 밀리면 게이지를 돌려놓습니다.
+ * v3.276 신의 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다(자리는 임기 만료 · 탄핵으로 비어야 다시 소환).
+ */
 async function trySummon(a: AltarRow, godPoints: number, now: number) {
-    if (godAlive(a, now) || godPoints < ALTAR.godCost) return false;
+    if (a.throne || godAlive(a, now) || godPoints < ALTAR.godCost) return false;
     const database = db();
     if (!await database.spendAltarGauge('god', ALTAR.godCost)) return false;
     const god = nextGod(a);
@@ -266,11 +269,11 @@ export function parseOffering(account: string, body: Record<string, unknown>, no
     if (!allow(`altar:${account}`, 1, ALTAR.offerCooldownMs, now)) throw new ApiError('잠시 뒤에 다시 바치세요.', 429);
     return { o, gauge, points, anonymous: body.anonymous === true };
 }
-/** v3.276 신의 자리에 앉은 모험가는 신 소환 게이지에 바칠 수 없습니다(자기 복제 신을 스스로 깨워 자리를 지키는 것을 막음). */
-export async function assertCanFeedGod(id: string, gauge: AltarGaugeId) {
+/** v3.276 신의 자리에 주인이 있는 동안에는 신이 깨어나지 않으므로 신 소환 게이지에도 바칠 수 없습니다. */
+export async function assertCanFeedGod(gauge: AltarGaugeId) {
     if (gauge !== 'god') return;
     const a = await db().getAltar();
-    if (a?.throne && a.throne === id) throw new ApiError('신의 자리에 앉아 있는 동안에는 신 소환 게이지에 바칠 수 없습니다.');
+    if (a?.throne) throw new ApiError('신의 자리에 주인이 있는 동안에는 신이 깨어나지 않아 신 소환 게이지에 바칠 수 없습니다.');
 }
 /** 세이브에서 재화를 뺍니다. 저장 충돌로 다시 돌면 새로 읽은 세이브에 다시 적용됩니다. */
 export function applyOffering(s: State, o: Offering, points: number, gauge: AltarGaugeId, anonymous: boolean) {

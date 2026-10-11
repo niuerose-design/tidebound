@@ -25,7 +25,7 @@ export async function POST(req: Request) { try {
     let result: unknown = null;
     if (action === 'offer') {
         const { o, gauge, points, anonymous } = parseOffering(account, body, now);
-        await assertCanFeedGod(id, gauge);
+        await assertCanFeedGod(gauge);
         const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); applyOffering(s, o, points, gauge, anonymous); });
         await commitOffering(account, id, payload.state.name, o, points, gauge, anonymous, now);
         return Response.json({ state: payload.state, result: { points }, info: await altarInfo(id, payload.state, Date.now()) }, { headers });
