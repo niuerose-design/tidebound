@@ -4,13 +4,15 @@ const EQ=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load
 test('v21 tank counter and defense-scaled damage follow the job defense multiplier',()=>{
  const base={hp:1e6,attack:100,magic:0,defense:100,resist:0,crit:0,accuracy:5,evasion:0,speed:10,mana:100,manaRegen:0,penetration:0,lifesteal:0,critDamage:1.5};
  const fighter=(extra={},skills=[])=>({name:'A',stats:{...base,...extra},hp:1e6,mana:100,skills,cooldowns:{},stun:0,effects:{},ranks:Object.fromEntries(skills.map(id=>[id,1])),mastery:{},practice:{}});
- // 반격: 맞은 쪽 물리 방어 × thorns를 공격자의 물리 방어로 경감해 돌려줍니다.
+ // 반격: 맞은 쪽 수호력(v3.301: (방어 + 마방) × (0.5 + 0.5 × 작은 쪽 ÷ 큰 쪽)) × thorns를 공격자의 방어로 경감해 돌려줍니다. 방어 100 · 마방 0 → 수호력 50.
  const attacker=fighter({defense:0}),tank=fighter({thorns:.5});const ev=[];strike(attacker,tank,()=>0,ev);
- assert.equal(1e6-attacker.hp,50);assert.equal(ev[0].reflected,50);assert.match(ev[0]&&strike(fighter({defense:0}),fighter({thorns:.5}),()=>0),/반격 50/);
+ assert.equal(1e6-attacker.hp,25);assert.equal(ev[0].reflected,25);assert.match(ev[0]&&strike(fighter({defense:0}),fighter({thorns:.5}),()=>0),/반격 25/);
+ // 방어 · 마방을 고르게(100 · 100) 맞추면 수호력 200 → 반격 100.
+ { const at=fighter({defense:0}),even=fighter({thorns:.5,resist:100});strike(at,even,()=>0);assert.equal(1e6-at.hp,100); }
  const noThorns=fighter({defense:0});strike(noThorns,fighter(),()=>0);assert.equal(noThorns.hp,1e6);
- // 방어 비례 기술은 방어 친화도만큼만 더해집니다.
+ // 방어 비례 기술은 수호력(v3.301)을 방어 친화도만큼만 더합니다.
  const hit=(affinity)=>{const b=fighter({defense:0});strike(fighter({guardAffinity:affinity},['citadelCrash']),b,()=>0);return 1e6-b.hp;};
- assert.ok(hit(1)>hit(.2));const sk=SKILLS.find(x=>x.id==='citadelCrash');assert.equal(hit(1),Math.round((100+100*sk.scalingRatio)*sk.multiplier));
+ assert.ok(hit(1)>hit(.2));const sk=SKILLS.find(x=>x.id==='citadelCrash');assert.equal(hit(1),Math.round((100+50*sk.scalingRatio)*sk.multiplier),'v3.301 수호력(방어 100 · 마방 0 → 50) × 비율');
  // 직업 방어 배율 → 방어 친화도 → 최종 반격 수치
  const s=newState(0);s.level=40;s.skillInheritances.reefFortress=true;s.learned.reefFortress=1;s.skills=['reefFortress'];
  s.job='brineThorn';const tankThorns=stats(s).thorns;s.job='krakenSlayer';const dealerThorns=stats(s).thorns;

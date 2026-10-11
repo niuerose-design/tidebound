@@ -62,7 +62,8 @@ for (const star of [0, 22]) { const t = r => tier[`${r}:${star}`]; assert.ok(t(3
 // v3.134 전투력 가중(공격 .65 · 버티는 힘 .35)으로 바꾼 뒤 유물(환생 200)은 신화의 0.996배(×7.42 vs ×7.45). 장비는 그대로이고 잣대만 바뀐 것이라 아래쪽을 신화의 0.95배로 둡니다.
 assert.ok(heir.relic[2] >= myth * .95 && heir.relic[2] < t22(5), `유물(환생 200) ×${heir.relic[2].toFixed(2)}이 신화(×${myth.toFixed(2)}) 0.95배·고대(×${t22(5).toFixed(2)}) 사이 밖`);
 assert.ok(heir.ancient[2] / myth >= 1.55 && heir.ancient[2] / myth <= 1.9, `원시 고대(환생 200) 신화의 ${(heir.ancient[2] / myth).toFixed(2)}배`);
-assert.ok(heir.primal[2] / myth >= 2.25 && heir.primal[2] / myth <= 2.75, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
+// v3.302 장비 → 스킬 · 능력치 비중 이동(장비 몫 자체가 줄어 등급 간 배율도 조금 좁아짐, ×2.25 → ×2.23)으로 아래쪽을 2.2로 둡니다.
+assert.ok(heir.primal[2] / myth >= 2.2 && heir.primal[2] / myth <= 2.75, `계승 태초(환생 200) 신화의 ${(heir.primal[2] / myth).toFixed(2)}배`);
 for (const k of ['relic', 'ancient', 'primal']) assert.ok(heir[k][0] < heir[k][1] && heir[k][1] < heir[k][2], `${k} 환생 성장`);
 for (const sl of SLOTS) assert.ok(slotDrop[sl] >= .2 && slotDrop[sl] <= .6, `부위 ${sl}을 빼면 전투력 ${(slotDrop[sl] * 100).toFixed(0)}% 감소: 20~60% 밖(한 부위 쏠림)`);
 console.log(`신화 대비(환생 200): 유물 ×${(heir.relic[2] / myth).toFixed(2)} · 원시 고대 ×${(heir.ancient[2] / myth).toFixed(2)} · 계승 태초 ×${(heir.primal[2] / myth).toFixed(2)}`);
