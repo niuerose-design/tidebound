@@ -336,7 +336,7 @@ export function makeChallenge(id: string) {
             const me = snapshot(s), result = duel(me, god, true, Math.random, ALTAR.godMaxTurns);
             const claimed = result.winner === 'player' && await db().claimAltarThrone(a.gen, id, s.name, JSON.stringify(me), now);
             outcome = { result, claimed, gen: a.gen, god: god.name, dealt: Math.max(0, Math.min(1, 1 - result.opponentHp / Math.max(1, god.stats.hp))) };
-            if (claimed) { invalidateAltar(); await announce(`${josa(s.name, '이가')} ${josa(god.name, '을를')} 쓰러뜨리고 신의 자리에 앉았습니다!`, now); }
+            if (claimed) { invalidateAltar(); await announce(`${josa(s.name, '이가')} ${josa(god.name, '을를')} 쓰러뜨리고 신의 자리에 앉았습니다! 자리에 주인이 있는 동안에는 신이 깨어나지 않습니다(임기 ${Math.round(ALTAR.throneTermMs / 3600_000)}시간 · 탄핵 가능).`, now); }
         }
         const { result, claimed, god, dealt } = outcome;
         s.altar = { ...s.altar, challengeAt: now, tries: (s.altar?.tries || 0) + 1, wins: (s.altar?.wins || 0) + (result.winner === 'player' ? 1 : 0), best: Math.max(s.altar?.best || 0, dealt) };

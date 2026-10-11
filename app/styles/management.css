@@ -517,6 +517,10 @@
 .core-tile.locked svg { color:#5a6f71; }
 .core-tile.worn svg { color:#d6b879; }
 .core-tile.on { border-color:#d6b879; background:#1a2f2f; box-shadow:0 0 0 1px #d6b87955 inset; }
+.core-tile.onyx { border-color:#3a2d52; background:linear-gradient(160deg,#17121d,#0e1518 70%); }
+.core-tile.onyx small { color:#d9ccf7; }
+.core-tile.onyx.on { border-color:#b48cff; box-shadow:0 0 0 1px #b48cff55 inset; }
+.core-slot .core-slot-body strong .onyx-art { vertical-align:middle; margin-right:6px; }
 .core-tile-badge { position:absolute; top:5px; right:6px; font-size:10px; color:#d6b879; font-weight:600; }
 .core-pips { display:inline-flex; gap:3px; }
 .core-pips i { width:7px; height:7px; border-radius:50%; background:#2a4045; display:block; }

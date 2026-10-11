@@ -8,6 +8,7 @@ import { dailyBonusLeft, boughtToday, growthOffer, onyxOffer, hunterBlock, allIt
 import { coreForgeCost } from '@/game/systems/boss-loot';
 import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
 import { ONYX, ONYX_DROP_ITEMS, onyxById } from '@/game/data/onyx';
+import { OnyxArt } from './onyx-art';
 import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { Heading, format, useNow } from './shared';
@@ -84,11 +85,11 @@ function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'b
     const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
     const pips = (rank: number) => <span className="core-pips" aria-label={`각성 ${rank}/${BOSS_CORE_RULES.awakenMax}`}>{Array.from({ length: BOSS_CORE_RULES.awakenMax }, (_, i) => <i key={i} className={i < rank ? 'on' : ''}/>)}</span>;
     return <section aria-label="보스 코어" className="core-tab">
-        <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
-            <Hexagon size={22}/><small>{BOSS_CORES[x].floors ? `무릉 ${BOSS_CORES[x].floors![0]}층` : BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
+        <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}${BOSS_CORES[x].onyx ? ' onyx' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
+            {BOSS_CORES[x].onyx ? <OnyxArt id={x} size={24}/> : <Hexagon size={22}/>}<small>{BOSS_CORES[x].floors ? `무릉 ${BOSS_CORES[x].floors![0]}층` : BOSS_CORES[x].onyx ? `칠흑 · ${BOSS_CORES[x].boss}` : BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
         </button>; })}</div>
-        <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}`}>
-            <header><div><span className="eyebrow">{c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.name}</h2></div>
+        <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}${c.onyx ? ' onyx-frame' : ''}`}>
+            <header><div><span className="eyebrow">{c.onyx ? `칠흑 보스코어 · ${c.boss} 격파` : c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.onyx ? <span className="onyx-name">{c.name}</span> : c.name}</h2></div>
                 {e && <button type="button" className={worn ? 'secondary' : 'primary'} disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '해제' : '장착'}</button>}</header>
             <p className="core-effect">{c.desc}</p>
             {e ? <>
