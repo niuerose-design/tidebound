@@ -1322,7 +1322,7 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
     const top = W.MONSTERS.find(f => f.id === 'arTrueErda'); assert.equal(top.exp, W.monsterExpAt(top.level), 'monster rows use the curve');
 });
 
-test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 400-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
+test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 300-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
     assert.equal(O.ONYX_BOSSES.length, 9, 'v3.278 스우 · 데미안'); assert.ok(O.onyxBossFor('리스항구') && O.onyxBossFor('아쿠아로드')?.id === 'onyxSwoo' && !O.onyxBossFor('루디브리엄'));
