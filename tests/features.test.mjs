@@ -260,3 +260,9 @@ test('v3.295 skill presets keep a custom name (rename, re-save keeps it); rebirt
  const r=newState(0);r.level=60;r.skills=[];act(r,{type:'rebirth'},1000);assert.ok(!r.skills.includes('hook'),'hook not forced: '+r.skills.join(','));
  const k=newState(0);k.level=60;k.skills=['hook'];act(k,{type:'rebirth'},1000);assert.ok(k.skills.includes('hook'),'kept when it was equipped');
 });
+test('v3.297 마력 line regen ×3: new rolls use base2 .036; existing flow/current lines are rescaled once by migration', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Gr=await L.load('data/gear');assert.equal(Gr.affixDef('flow').base2,.036);
+ const s=newState(0);delete s.manaRegenRescaled;s.inventory=[{id:'x',name:'x',slot:'rod',rarity:5,power:400,level:100,affixes:[{id:'flow',name:'마력',stat:'mana',value:200,stat2:'manaRegen',value2:10},{id:'current',name:'순환',stat:'manaRegen',value:4}]}];
+ migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30);assert.equal(s.inventory[0].affixes[0].value,200,'max mana unchanged');assert.equal(s.inventory[0].affixes[1].value,12);
+ migrateState(s,0);assert.equal(s.inventory[0].affixes[0].value2,30,'once');assert.equal(newState(0).manaRegenRescaled,true,'fresh saves skip it');
+});

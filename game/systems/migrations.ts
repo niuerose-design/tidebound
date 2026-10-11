@@ -376,6 +376,14 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.60 뒤 정리: 쓰지 않던 옛 값(무리 규모 선택 swarm, 생 보너스 lifeBonus, 애드가드 공개 항목 privacy)을 지웁니다.
     for (const key of ['swarm', 'lifeBonus', 'privacy']) if (key in s) delete (s as Record<string, unknown>)[key];
     // v3.66 유물 위력 공식 변경: 이미 가진 유물은 다음 승천까지 예전 공식과 새 공식 중 높은 쪽을 씁니다(약해지지 않게).
+    // v3.297 마력(flow) · 순환(current) 줄의 턴당 마나 회복 ×3: 이미 붙은 줄도 같은 비율로 올립니다(가방 · 장착, 이식한 유물 줄 포함, 한 번만).
+    if (!s.manaRegenRescaled) {
+        for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) for (const a of item?.affixes || []) {
+            if (a.id === 'flow' && a.stat2 === 'manaRegen' && a.value2) a.value2 *= 3;
+            else if (a.id === 'current' && a.stat === 'manaRegen') a.value *= 3;
+        }
+        s.manaRegenRescaled = true;
+    }
     if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
     const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;
