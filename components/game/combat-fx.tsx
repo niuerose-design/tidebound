@@ -24,7 +24,7 @@ const holdFor = (fx: CombatFx) => fx.actor === 'player' && !!fx.skillId && LONG_
 export type CombatCombo = { count: number; actor: 'player' | 'enemy' };
 /**
  * 새 전투 로그의 연출. 재생 버퍼가 타격마다 로그를 한 줄씩 드러내므로 박자마다 이어 붙이고, 각 묶음은 제 시간이 지나면 지웁니다.
- * 한꺼번에 많이 들어오면(밀린 턴 건너뛰기) 최근 6개만 보여 주고 잘린 타격 수를 combo로 알립니다.
+ * 한꺼번에 많이 들어오면(밀린 턴 건너뛰기) 최근 6개만 보여 줍니다(v3.275부터 잘린 수는 띄우지 않음).
  * 연속 행동이 있으면 combo는 그 묶음에서 가장 긴 연속 번호와 그 행동의 주인입니다(‘×N 연속’을 행동한 쪽 카드에 띄움).
  */
 export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
@@ -43,7 +43,8 @@ export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
         if (!enabled) { lastId.current = latest; return; }
         const batch = combatFxBatch(logs, lastId.current, playerName), cut = combatFxSkipped(logs, lastId.current, playerName);
         const longest = batch.reduce<CombatFx | null>((best, fx) => (fx.chain || 0) > (best?.chain || 0) ? fx : best, null);
-        const next: CombatCombo | null = longest && (longest.chain || 0) > 1 ? { count: longest.chain!, actor: longest.actor } : cut ? { count: cut, actor: batch.at(-1)!.actor } : null;
+        // v3.275 배지는 실제 연속 행동(×2 이상)만. 밀린 기록을 따라잡느라 건너뛴 연출 수는 내부 사정이라 띄우지 않습니다(전에는 ‘내 연속 행동 ×1’처럼 떠 헷갈림).
+        const next: CombatCombo | null = longest && (longest.chain || 0) > 1 ? { count: longest.chain!, actor: longest.actor } : null;
         lastId.current = latest;
         if (!batch.length) return;
         const ids = new Set(batch.map(fx => fx.id));
