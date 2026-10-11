@@ -46,7 +46,8 @@ export type ResearchDef = {
 export const RESEARCH_TABS: { id: ResearchTab; name: string }[] = [{ id: 'combat', name: '훈련' }, { id: 'utility', name: '유틸' }, { id: 'gold', name: '골드' }];
 export const RESEARCH_GROUPS: Record<ResearchGroup, string> = { attack: '공격', defense: '생존', basic: '기본', special: '특별', vow: '서약' };
 /** v3.90 연구 ‘샘의 기억’ 단계당 최대 마나 배율(깊은 숨결의 최대 체력과 같은 +8%). */
-export const MANA_RESEARCH_PER = .08;
+/** v3.303 장비의 체력 · 방어 · 마방 · 마나 몫을 줄인 만큼 연구가 채웁니다: 마나 · 체력 .08 → .1, 물리 · 마법 방어 .03 → .04. */
+export const MANA_RESEARCH_PER = .1, HP_RESEARCH_PER = .1, GUARD_RESEARCH_PER = .04;
 /**
  * v3.150 훈련 탭(전 전투 탭)의 능력치 연구 13개는 '○○ 강화 I'로 통일(세계석 연구 테마 · docs/research-review.md 4절 · 권고 6).
  * 흡혈 강화는 연구분을 30% 상한 밖에 둡니다(권고 4 · 5).
@@ -58,14 +59,14 @@ export const RESEARCH: ResearchDef[] = [
     // ranks are deliberately expensive so pearls remain a meaningful choice.
     { id: 'attack', name: '물리력 강화 I', desc: '물리 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '물리 공격' },
     { id: 'magicAttack', name: '마법력 강화 I', desc: '마법 공격 +5%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: .05, unit: 'percent', label: '마법 공격' },
-    { id: 'mana', name: '마나 강화 I', desc: '최대 마나 +8%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
+    { id: 'mana', name: '마나 강화 I', desc: '최대 마나 +10%', max: 200, base: 2, step: 2, tab: 'combat', group: 'attack', per: MANA_RESEARCH_PER, unit: 'percent', label: '최대 마나' },
     { id: 'crit', name: '치명타 강화 I', desc: '치명 확률 +0.5%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .005, unit: 'pp', label: '치명 확률' },
     { id: 'manaRegen', name: '마나 회복 강화 I', desc: '턴당 마나 회복 +5%', max: 10, base: 3, step: 3, tab: 'combat', group: 'attack', rebirth: 2, per: .05, unit: 'percent', label: '턴당 마나 회복' },
     { id: 'critDamage', name: '치명 피해 강화 I', desc: '치명 피해 +2%p', max: 25, base: 2, step: 2, tab: 'combat', group: 'attack', rebirth: 5, per: .02, unit: 'pp', label: '치명 피해' },
     { id: 'penetration', name: '관통 강화 I', desc: '방어 관통 +3% (다른 관통과 곱연산)', max: 15, base: 5, step: 4, tab: 'combat', group: 'attack', rebirth: 5, per: .03, unit: 'pp', label: '방어 관통' },
-    { id: 'hp', name: '체력 강화 I', desc: '최대 체력 +8%', max: 200, base: 1, step: 1, tab: 'combat', group: 'defense', per: .08, unit: 'percent', label: '최대 체력' },
-    { id: 'guard', name: '물리 방어 강화 I', desc: '물리 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '물리 방어' },
-    { id: 'magicGuard', name: '마법 방어 강화 I', desc: '마법 방어 +3%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: .03, unit: 'percent', label: '마법 방어' },
+    { id: 'hp', name: '체력 강화 I', desc: '최대 체력 +10%', max: 200, base: 1, step: 1, tab: 'combat', group: 'defense', per: HP_RESEARCH_PER, unit: 'percent', label: '최대 체력' },
+    { id: 'guard', name: '물리 방어 강화 I', desc: '물리 방어 +4%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: GUARD_RESEARCH_PER, unit: 'percent', label: '물리 방어' },
+    { id: 'magicGuard', name: '마법 방어 강화 I', desc: '마법 방어 +4%', max: 100, base: 3, step: 3, tab: 'combat', group: 'defense', per: GUARD_RESEARCH_PER, unit: 'percent', label: '마법 방어' },
     { id: 'recovery', name: '처치 회복 강화 I', desc: '처치 후 회복 +1%p (필드·던전)', max: 10, base: 3, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .01, unit: 'pp', label: '처치 후 회복' },
     { id: 'evasion', name: '회피 강화 I', desc: '회피 +0.6%p', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 2, per: .006, unit: 'pp', label: '회피' },
     { id: 'lifesteal', name: '흡혈 강화 I', desc: '흡혈 +0.5%p (연구분은 전체 상한 30% 밖에 더함)', max: 20, base: 4, step: 3, tab: 'combat', group: 'defense', rebirth: 5, per: .005, unit: 'pp', label: '흡혈' },

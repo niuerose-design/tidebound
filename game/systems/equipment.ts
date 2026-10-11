@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rollAffixes, rarityQuality, optionAtQuality, type ItemAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rollAffixes, rarityQuality, optionAtQuality, GEAR_GUARD_SHARE, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { monsterGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -25,12 +25,16 @@ const FLAT_GEAR_STATS = new Set(['attack', 'magic', 'hp', 'defense', 'resist', '
  * 체력 · 방어 · 마방을 방어구 · 망토 · 장신구에 나눠 부위를 빼면 무기 35 · 방어구 48 · 장신구 32 · 망토 35%가 줄도록 맞췄습니다(docs/gear-endgame.md v3.129, scripts/check-gear-ladder.mjs가 검사).
  * 마나는 무기 .5 · 방어구 .5 · 장신구 .5 · 망토 .3(합 1.8)으로 나눕니다: 마나 비례 기술(천둥 성가 · 결정 파편 · 창세의 빛)과 마법 직업에 무기 · 장신구도 보탬이 되게. 무기 공격(물리 1.4 · 마법 .4 등)은 아래 그대로입니다.
  */
-/** v3.302 장비 → 스킬 · 능력치 비중 이동: 체력 · 방어 · 마방 기본 수치 ×0.9(부위 비율은 그대로). 이 표는 계산식이라 이미 가진 장비에도 바로 적용됩니다. */
+/**
+ * v3.302 장비 → 스킬 · 능력치 비중 이동: 체력 · 방어 · 마방 기본 수치 ×0.9(부위 비율은 그대로).
+ * v3.303 체력 · 방어 · 마방 · 마나는 한 번 더 ×0.6(GEAR_GUARD_SHARE). 그 몫은 세계석 연구 · 핵심 패시브가 채웁니다. 이 표는 계산식이라 이미 가진 장비에도 바로 적용됩니다.
+ */
+const guardShare = (t: Partial<Record<'hp' | 'mana' | 'defense' | 'resist', number>>) => Object.fromEntries(Object.entries(t).map(([k, v]) => [k, Math.round(v! * GEAR_GUARD_SHARE * 1e4) / 1e4]));
 export const SLOT_GEAR: Record<string, Partial<Record<'hp' | 'mana' | 'defense' | 'resist', number>>> = {
-    rod: { mana: .5 },
-    coat: { hp: 3.15, mana: .5, defense: .54, resist: .27 },
-    cape: { hp: 2.25, mana: .3 },
-    charm: { hp: 1.8, mana: .5, defense: .36, resist: .18 },
+    rod: guardShare({ mana: .5 }),
+    coat: guardShare({ hp: 3.15, mana: .5, defense: .54, resist: .27 }),
+    cape: guardShare({ hp: 2.25, mana: .3 }),
+    charm: guardShare({ hp: 1.8, mana: .5, defense: .36, resist: .18 }),
 };
 /** 모든 장비 표기와 실제 적용은 같은 함수 사용. 옵션은 강화 배율과 독립. */
 export function itemStats(item: Item): Partial<Stats> {

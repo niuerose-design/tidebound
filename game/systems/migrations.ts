@@ -9,7 +9,9 @@ import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
 import { syncAbyssCores } from './boss-loot';
-import { affixDef } from '../data/gear';
+import { affixDef, GEAR_GUARD_SHARE } from '../data/gear';
+/** v3.303 체력 · 방어 · 마방 · 마나 몫이 첫째 수치(value)인 옵션 · 둘째 수치(value2)인 옵션. */
+const GUARD_FIRST = new Set(['vigor', 'plating', 'ward', 'guardian', 'flow', 'wellspring', 'bulwark']), GUARD_SECOND = new Set(['guardian', 'berserk', 'glassCannon', 'bloodPact']);
 import { SAVE_VERSION, PENETRATION } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
@@ -391,6 +393,14 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
             else if (a.id === 'current' && a.stat === 'manaRegen') a.value *= 3;
         }
         s.manaRegenRescaled = true;
+    }
+    // v3.303 체력 · 방어 · 마방 · 마나 옵션 ×0.6(GEAR_GUARD_SHARE): 이미 붙은 줄도 새 굴림과 같이(가방 · 장착, 이식한 유물 줄 포함, 한 번만). 양날 옵션은 손해 쪽만. 대신 세계석 연구 · 핵심 패시브가 오릅니다.
+    if (!s.guardAffixRescaled) {
+        for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) for (const a of item?.affixes || []) {
+            if (GUARD_FIRST.has(a.id)) a.value *= GEAR_GUARD_SHARE;
+            if (GUARD_SECOND.has(a.id) && a.value2) a.value2 *= GEAR_GUARD_SHARE;
+        }
+        s.guardAffixRescaled = true;
     }
     if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.

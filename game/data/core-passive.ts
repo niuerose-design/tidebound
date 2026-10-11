@@ -13,8 +13,15 @@ export const CORE_REWORK = {
     main: { 4: .06, 5: .09 } as Record<number, number>,
     masteryBoost: .1,
     flat: { attack: 421, magic: 421, hp: 1422 },
-    /** v3.302 장비 → 스킬 비중 이동으로 상한 상향(공격 .35 → .45, 체력 .22 → .32). 숙련 0단계는 70%, 마지막 단계 100%. */
-    cap: { attack: .45, magic: .45, hp: .32 },
+    /** v3.302 장비 → 스킬 비중 이동으로 상한 상향(공격 .35 → .45, 체력 .22 → .32 · v3.303 .38). 숙련 0단계는 상한의 55%, 마지막 단계 100%. */
+    cap: { attack: .45, magic: .45, hp: .38 },
+    /**
+     * v3.303 장비의 체력 · 방어 · 마방 · 마나 몫을 줄인 만큼 핵심 패시브가 이 배율을 더 줍니다(옛 배율에서 나온 체력 몫에 더함, 4차는 절반).
+     * 방어 계열(tree 'defense')은 방어 · 마방을 크게, 그 밖의 직업은 방어 · 마방을 작게 주고 마나를 더 줍니다.
+     */
+    guard: { hp: .2, defense: .08, resist: .08, mana: .5 },
+    guardTank: { hp: .2, defense: .25, resist: .25, mana: .4 },
+    guard4Share: .5,
     /** 4차 핵심의 작은 배율(주 공격). */
     scale4: .15,
     scale4Hp: .05,
@@ -57,6 +64,8 @@ export function applyCoreRework(jobs: Job[], skills: Skill[], lineages: Lineage[
             else { const n = Number(Math.min(before / after - 1, CORE_REWORK.cap[k]).toFixed(2)); if (n > 0) (core.scale ??= {})[k] = n; }
         }
         Object.assign(job, next, { masteryBoost: CORE_REWORK.masteryBoost });
-        if (core.flat || core.scale) sk.core = core;
+        const scale = core.scale ??= {}, guard = job.tree === 'defense' ? CORE_REWORK.guardTank : CORE_REWORK.guard, share = job.tier === 5 ? 1 : CORE_REWORK.guard4Share;
+        for (const k of Object.keys(guard) as (keyof typeof guard)[]) scale[k] = Number(((scale[k] || 0) + guard[k] * share).toFixed(3));
+        sk.core = core;
     }
 }

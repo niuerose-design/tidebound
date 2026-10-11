@@ -295,7 +295,7 @@ export type Skill = {
      * v3.228 핵심 패시브: 직업 보정을 한 자리 %로 줄인 몫을 메웁니다. flat은 고정 수치(4차, 다른 고정 수치처럼 배율 전에 더함), scale은 배율(5차, ×(1 + 값)).
      * 적힌 값은 숙련 마지막 단계 기준이고 0단계는 70%(coreScale). 다른 계보 직업에서 쓰면 절반입니다.
      */
-    core?: { flat?: Partial<Record<'attack' | 'magic' | 'hp', number>>; scale?: Partial<Record<'attack' | 'magic' | 'hp', number>> };
+    core?: { flat?: Partial<Record<'attack' | 'magic' | 'hp', number>>; scale?: Partial<Record<'attack' | 'magic' | 'hp' | 'defense' | 'resist' | 'mana', number>> };
     /** v24.2 진행도 비례 패시브: 기록 per마다 bonus를 더합니다(최대 cap번). */
     perCount?: { source: CountSource; per: number; bonus: Partial<Stats>; cap: number }[];
     /** v3.231 이계 액티브: 쓸 때 태우는 세계석 연료(이계 전투 직업만 씀, data/otherworld.ts FUEL). */
@@ -772,6 +772,8 @@ export type State = {
     relicRule?: boolean;
     /** v3.297 이미 붙은 마력 · 순환 줄의 턴당 마나 회복을 ×3으로 바꿨는지(한 번만). */
     manaRegenRescaled?: boolean;
+    /** v3.303 이미 붙은 체력 · 방어 · 마방 · 마나 옵션을 ×0.6으로 맞췄는지(한 번만). */
+    guardAffixRescaled?: boolean;
     /** v3.302 이미 붙은 주 능력치 · 방어 옵션(맹공 · 신비 · 위력 · 생명 · 철갑 · 정신 · 수호)을 −10%로 맞췄는지(한 번만). */
     mainAffixRescaled?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
