@@ -123,6 +123,16 @@ function skillDamageKind(sk: Skill): SkillDamage[] {
 
 /** v27.73 전 버전이 즐겨찾기를 두던 브라우저 저장소 키. 세이브에 즐겨찾기가 없을 때 한 번 옮기고 지웁니다. */
 const PIN_KEY = 'tidebound.skillPins';
+/** v3.295 편성 이름: 저장한 칸은 눌러서 이름을 바꿉니다(Enter · 칸 밖을 누르면 저장, Esc는 취소, 1~20자). */
+function PresetName({ id, name, disabled, send }: { id: string; name?: string; disabled: boolean; send: PanelProps['send'] }) {
+    const [edit, setEdit] = useState(false);
+    const label = name || `편성 ${id}`;
+    if (!edit) return name ? <button type="button" className="preset-name" disabled={disabled} title="눌러서 이름 바꾸기" onClick={() => setEdit(true)}>{label}</button> : <>{label}</>;
+    const done = (value: string) => { setEdit(false); const next = value.trim().slice(0, 20); if (next && next !== name) send({ type: 'renamePreset', id, value: next }); };
+    return <input className="preset-name-input" aria-label={`편성 ${id} 이름`} defaultValue={label} maxLength={20} autoFocus
+        onBlur={e => done(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEdit(false); }}/>;
+}
+
 export function Skills({ s, send, busy }: PanelProps) {
     const [scope, setScope] = useState('current'), [filter, setFilter] = useState('all'), [view, setView] = useState('simple');
     const [query, setQuery] = useState(''), [kind, setKind] = useState<SkillKind>('all'), [damage, setDamage] = useState<SkillDamage>('all'), [sort, setSort] = useState<SkillSort>('default');
@@ -207,7 +217,7 @@ export function Skills({ s, send, busy }: PanelProps) {
             const unlocked = researchRank(s, 'extraRoll'), level = extraRollLevel(s), need = SKILL_FORMULA.extraRoll.ap[0], power = Math.round(SKILL_FORMULA.extraRoll.power[0] * 100), short = need - (cap - used);
             const gate = researchById('extraRoll');
             return <div className={`loadout-extra ${level ? 'on' : ''}`}><div><strong>추가 판정 {level ? `${level}단계 · 켜짐` : unlocked ? '· 꺼짐' : '· 잠김'}</strong><small>{unlocked ? `액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 한 번 더 판정합니다. 성공하면 ${power}% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동은 묶음 최대 개수가 1 늘어납니다. 장착 AP ${need}.` : `세계석 연구 ‘${gate?.name}’에서 해금합니다${gate?.rebirth ? `(환생 ${gate.rebirth}회부터)` : ''}. 켜면 장착 AP ${need}를 씁니다.`}</small></div>{unlocked > 0 && <button className={level ? 'secondary small' : 'primary small'} disabled={busy || (!level && short > 0)} onClick={() => send({ type: 'extraRoll', value: String(level ? 0 : 1) })}>{level ? '끄기' : short > 0 ? `AP ${short} 부족` : `켜기 · AP ${need}`}</button>}</div>;
-        })()}<div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span>편성 {id}<small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></Fold>
+        })()}<div className="preset-row">{['1', '2', '3'].map(id => <div key={id}><span><PresetName id={id} name={s.presets[id]?.name} disabled={busy} send={send}/><small>{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</small></span><button className="text-button" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</button><button className="text-button" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</button></div>)}</div></Fold>
         <section className="skill-finder" aria-label="스킬 찾기">
             <label className="job-search-box skill-search"><Search size={15}/><input type="search" value={query} placeholder="스킬 이름·효과·직업으로 검색 (예: 기절, 흡혈, 마법사)" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
             <div className="skill-finder-row">

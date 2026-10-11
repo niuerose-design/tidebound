@@ -75,6 +75,8 @@ export function rebirthNow(s: State, now: number) {
     // v27.80 지겨운 환생: 직전 직업·스킬·능력치 비율을 기억했다가 숙달한 것만 복원합니다.
     const habit = researchRank(s, 'habit'), prevJob = jobById(s.job), prevMastered = !!prevJob && jobMastered(s, prevJob), prevSkills = [...s.skills], prevAttr = { ...s.attributes };
     startLife(s, now, { pearls: s.pearls + pearls, rebirths: s.rebirths + 1 });
+    // v3.295 새 생의 기본 편성(달팽이 세마리)은 직전 생에 끼고 있던 경우에만 남깁니다(환생마다 다시 빼야 했음).
+    if (!prevSkills.includes('hook')) s.skills = s.skills.filter(id => id !== 'hook');
     // v3.114 환생 50 · 100회 이정표 칠흑(캐릭터 평생 한 번씩).
     grantOnyxMilestones(s);
     s.rebirthLog = [...(s.rebirthLog || []), record].slice(-REBIRTH_LOG_KEEP);

@@ -251,3 +251,12 @@ test('v3.292 stat step: any whole amount up to the remaining points (×1 · ×5 
     assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '0' }, 0)); assert.throws(() => act(s, { type: 'attribute', id: 'dex', value: '1.5' }, 0));
     act(s, { type: 'attribute', id: 'luk', value: 'max' }, 0); assert.equal(s.attributes.luk, 13); assert.equal(s.statPoints, 0);
 });
+test('v3.295 skill presets keep a custom name (rename, re-save keeps it); rebirth no longer forces 달팽이 세마리 back into the loadout', () => {
+ const s=newState(0);act(s,{type:'savePreset',id:'1'},0);assert.equal(s.presets['1'].name,'편성 1');
+ act(s,{type:'renamePreset',id:'1',value:'  보스용 편성  '},0);assert.equal(s.presets['1'].name,'보스용 편성');
+ act(s,{type:'savePreset',id:'1'},0);assert.equal(s.presets['1'].name,'보스용 편성','re-saving keeps the name');
+ assert.throws(()=>act(s,{type:'renamePreset',id:'2',value:'x'},0),/저장한 편성/);assert.throws(()=>act(s,{type:'renamePreset',id:'1',value:'   '},0),/이름/);
+ act(s,{type:'renamePreset',id:'1',value:'가'.repeat(30)},0);assert.equal(s.presets['1'].name.length,20);
+ const r=newState(0);r.level=60;r.skills=[];act(r,{type:'rebirth'},1000);assert.ok(!r.skills.includes('hook'),'hook not forced: '+r.skills.join(','));
+ const k=newState(0);k.level=60;k.skills=['hook'];act(k,{type:'rebirth'},1000);assert.ok(k.skills.includes('hook'),'kept when it was equipped');
+});
