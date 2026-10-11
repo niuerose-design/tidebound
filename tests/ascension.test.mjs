@@ -131,7 +131,7 @@ test('v3.31 lucky letter: ranks 6–10 need an ascension; offline ×0.75 (v3.189
     assert.equal(tiers[2].chance, .075); assert.ok(Math.abs(tiers.reduce((a, t) => a + t.chance, 0) - 1) < 1e-12);
     const r = newState(0); r.ascension = 1; r.permanent.messageBottle = 10; r.level = 20; r.kills = 500; r.stage = 'brook'; r.unlockedJobs = ['fisher', 'wanderer']; r.jobMastery = {};
     E.spawn(r, () => 0); r.enemy.hp = 0; E.reward(r, () => 0);
-    assert.equal(r.jobMastery.wanderer, Math.floor(1000 * 2 * .01), 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', 20], 'v3.40 recipient record for the mastery board');
+    const gift = Math.floor(Mi.MIMIC.tiers[0].mastery * 2 * .01); assert.equal(r.jobMastery.wanderer, gift, 'recipient gets 1% of the multiplied jackpot'); assert.deepEqual(r.letterLog?.[0] && [r.letterLog[0].job, r.letterLog[0].gift], ['wanderer', gift], 'v3.40 recipient record for the mastery board');
 });
 
 test('v3.31 slot unlocks use lifetime rebirths so an ascension never closes a slot', () => {

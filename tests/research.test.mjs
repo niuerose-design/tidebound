@@ -400,7 +400,7 @@ test('v3.161 kings: after 30 small ones a share of that special becomes the king
     assert.equal(s.enemy.leavesAt, s.turn + K.KING.turns, 'leaves after 80 turns');
     assert.equal(Enc.enemyLabel(s.enemy), '[보스] 대왕 까미');
     s.enemy.hp = 0; Enc.reward(s, () => .99);
-    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 300,000 guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
+    assert.ok(s.jobMastery.fisher >= Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul && s.jobMastery.fisher < Mi.MIMIC.tiers[2].mastery * K.KING.rewardMul * 1.01, 'mastery 대 × rewardMul guaranteed (+ the kill itself): ' + s.jobMastery.fisher); assert.equal(s.book.kingMimic, 1); assert.ok(s.logs.some(l => l.text.includes('대왕 까미 격파')));
     // 대왕 누리 · 대왕 정수 슬라임 보상
     { const t = make(); Enc.spawn(t, () => 1, 'kingNuri'); assert.equal(t.enemy.id, K.KING.nuri.id); const before = t.exp; t.enemy.hp = 0; Enc.reward(t, () => .99);
         const byField = Math.floor(Enc.stageEncounterExp(t, stats(t)) * Math.round(N.EXP_NURI.tiers[2].pct * K.KING.rewardMul * N.EXP_NURI.encountersPerPct));

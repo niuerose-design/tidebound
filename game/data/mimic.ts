@@ -23,11 +23,13 @@ export const MIMIC = {
     minTier: 5,
     /** 체력·공격 배율: 그 사냥터에서 가장 강한 몬스터 기준. */
     hp: 2.5, attack: .6,
-    /** 숙련 로또: 앞에서부터 확률을 더해 판정합니다. v3.52 당첨 확률은 서버 전용(odds). */
+    /** 숙련 로또: 앞에서부터 확률을 더해 판정합니다. v3.52 당첨 확률은 서버 전용(odds).
+     * v3.286 소 1,000 → 3,000 · 대 100,000 → 40,000(대왕 = 대 × KING.rewardMul이라 300,000 → 120,000). 숙련의 약 98%가 까미이고 그 78%가 대 · 대왕 당첨이라
+     * 같은 몸도 운에 따라 시간당 숙련이 수십 배 갈렸습니다. 기대값 까미 8,200 → 6,600, 대왕 포함 까미 자리당 약 14,000 → 8,900(약 −37%). */
     tiers: [
-        { mastery: 1000, get chance() { return ODDS.mimic.tiers[0]; }, label: '소' },
+        { mastery: 3000, get chance() { return ODDS.mimic.tiers[0]; }, label: '소' },
         { mastery: 10000, get chance() { return ODDS.mimic.tiers[1]; }, label: '중' },
-        { mastery: 100000, get chance() { return ODDS.mimic.tiers[2]; }, label: '대' },
+        { mastery: 40000, get chance() { return ODDS.mimic.tiers[2]; }, label: '대' },
     ],
 } as const;
 /** v3.221 까미 사냥꾼의 황금 올가미가 노리는 몬스터: 숙련의 까미와 대왕 까미(data/king.ts KING.mimic.id). */
