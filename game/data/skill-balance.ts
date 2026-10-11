@@ -126,6 +126,8 @@ const APOSTLE_SKILLS = new Set(['doomMark', 'endOfAll']);
 export const TIER5_MAGIC_MANA = Math.round((220 + 200) / 2 * MAGIC_MANA_COST_SCALE * .8 / 10) * 10;
 /** 탱커 · 힐러 역할 5차(라라 · 메카닉 · 호영 · 비숍)는 긴 전투를 버텨야 해서 원래 마나를 씁니다(670이면 라라가 던전을 못 깸, check-tier5). */
 const TIER5_MANA_KEEP = new Set(['veinBurst', 'genesisRune', 'divineWard', 'oceanOfLife']);
+/** v3.304 회복 액티브(각성기 제외) 마나 배율: 힐러는 회복기 4~5개를 같이 돌려 긴 전투(무리 · 던전)에서 마나가 말라 마력 평타만 남았음(비숍 무리 ×100 마나 4~13%). 0.6이면 95% 이상 유지(check-tier5). */
+const HEAL_MANA_SCALE = .6;
 
 /** v3.86 실패할 때마다 기본 발동률을 더하는 판정(c → 2c → 3c …, 최대 100%)의 기대 판정 수. */
 export function awakenExpectedRolls(c: number) {
@@ -160,6 +162,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         const magic = sk.damageType === 'magic' || sk.damageType === 'split' || sk.damageType === 'fixed' && sk.baseStat === 'magic';
         // 물리 기술은 마나를 쓰지 않고, 마법·복합 기술은 정신(마나 회복)에 투자해야 꾸준히 쓸 수 있도록 비용을 높입니다.
         sk.manaCost = magic ? Math.round((sk.manaCost || 0) * MAGIC_MANA_COST_SCALE) : 0;
+        if (magic && sk.effect === 'heal' && tierOf(sk) < SKILL_FORMULA.awaken.tier) sk.manaCost = Math.round(sk.manaCost * HEAL_MANA_SCALE);
         if (magic && tierOf(sk) >= 5 && !APOSTLE_SKILLS.has(sk.id) && !TIER5_MANA_KEEP.has(sk.id)) sk.manaCost = TIER5_MAGIC_MANA;
         // At maximum mastery physical procs stay <= 38%; spells remain paid.
         sk.rankEffects = { ...sk.rankEffects, multiplierScale: sk.id === 'hook' ? .03 : .05,
