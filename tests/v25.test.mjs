@@ -1386,6 +1386,12 @@ test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고
     const old = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'old', 60); old.onyxRank = 1; d.inventory.push(old);
     Enc.spawn(d, () => 0); assert.equal(d.enemy.onyx, 'onyxDamien'); d.enemy.hp = 0; Enc.reward(d, () => .001); assert.equal(old.onyxRank, 2, 'Damien awakens the old eye patch');
     const sw = hunt('aquaSwarm', .001); assert.equal(sw.onyxBook.onyxSwoo, 1); assert.ok(sw.inventory.some(i => i.onyx === 'onyxWill'), 'Swoo drops the control mark');
+    // v3.279 마도서도 던전 주화 상점에서 칠흑 장신구와 같은 가격 · 하루 횟수로 제작 · 각성합니다(윌 처치로 열림).
+    const DS = await L.load('data/dungeon-shop'); const shop = newState(0); shop.dungeonCoins = 100000;
+    assert.match(DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).reason, /처치해야/); shop.onyxBook = { onyxWill: 1 };
+    assert.deepEqual([DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).kind, DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).price], ['craft', DS.DUNGEON_SHOP.onyxCraft]);
+    act(shop, { type: 'dungeonShop', id: 'onyx:' + O.ONYX_CORE_ID }, 0); assert.equal(BC.coreEntry(shop.bossCores[O.ONYX_CORE_ID]).rank, 0); assert.equal(shop.dungeonCoins, 100000 - DS.DUNGEON_SHOP.onyxCraft);
+    assert.match(DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).reason, /하루/, 'shares the daily onyx limit'); assert.equal(DC.onyxOffer(shop, O.ONYX_CORE_ID).price, DS.DUNGEON_SHOP.onyxAwaken);
     // 9종: 장신구 8 + 마도서. 9종 세트는 보스 피해 +10%가 더 붙습니다.
     const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
     assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
