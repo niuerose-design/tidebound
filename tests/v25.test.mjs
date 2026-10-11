@@ -689,7 +689,10 @@ test('v27.54 xp needed grows with rebirths and walls off after Lv.70; the Black 
     const B = await L.load('data/balance');
     assert.equal(B.xpNeeded(50, 0), B.xpNeeded(50)); assert.ok(Math.abs(B.xpNeeded(50, 10) / B.xpNeeded(50, 0) - 14 / 4) < .01, 'v27.77 rebirth 10 = (4+10)/4'); assert.ok(B.xpRebirthFactor(60) < B.xpRebirthFactor(100) && B.xpRebirthFactor(150) < B.xpRebirthFactor(200), 'keeps growing past the level cap');
     // v3.21 환생 50회·100회 벽, 20회 이후 회당 +0.5.
-    assert.equal(B.xpRebirthFactor(49), 4 + 20 + .5 * 29); assert.equal(B.xpRebirthFactor(50), (4 + 20 + .5 * 30) * 8.9); assert.equal(B.xpRebirthFactor(100), (4 + 20 + .5 * 80) * 35);
+    assert.equal(B.xpRebirthFactor(49), 4 + 20 + .5 * 29); assert.equal(B.xpRebirthFactor(50), (4 + 20 + .5 * 30) * B.xpRebirthWall(50)); assert.equal(B.xpRebirthFactor(100), (4 + 20 + .5 * 80) * B.xpRebirthWall(100));
+    // v3.291 벽 배율 상향(필요 경험치로 벽): 50회 ×30 · 100회 ×120, 50회부터 Lv.70 이후 레벨당 ×1.25.
+    assert.deepEqual(B.XP_SCALING.rebirthWalls, [[50, 30], [100, 120]]); assert.equal(B.xpWallGrowth(49), 1.1); assert.equal(B.xpWallGrowth(50), 1.25);
+    assert.ok(Math.abs(B.xpNeeded(80, 50) / B.xpNeeded(79, 50) - 1.25 * Math.pow(80 / 79, 2.3)) < .01, 'R50+: Lv.70+ ×1.25 per level');
     assert.ok(B.xpNeeded(69) / B.xpNeeded(68) < 1.1 && B.xpNeeded(80) / B.xpNeeded(69) > 3 && B.xpNeeded(100) / B.xpNeeded(69) > 30, 'v27.77 wall after Lv.70 (1.10/level up to Lv.100)');
     const D = await L.load('systems/duel'), Alt = D;
     const base = { ...D.abyssBossSnapshot(50), name: '검은 마법사' }, god = Alt.divineFirstGod(base);
