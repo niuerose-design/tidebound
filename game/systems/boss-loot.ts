@@ -30,7 +30,8 @@ export function forgeCore(s: State, id: string, line: number, kind: CoreForge, r
 }
 
 /** 보스 코어 하나를 줍니다(새로 얻거나 각성). 받은 뒤 각성 단계, 코어가 없는 던전이면 undefined. */
-export function grantBossCore(s: State, dungeonId: string, rng: () => number = Math.random): number | undefined {
+export function grantBossCore(s: State, dungeonId: string, rng: () => number = Math.random, source?: string): number | undefined {
+    const from = source ? `${source} · ` : '';
     const core = BOSS_CORES[dungeonId];
     if (!core) return undefined;
     const cores = (s.bossCores ??= {}), had = coreEntry(cores[dungeonId]);
@@ -39,15 +40,15 @@ export function grantBossCore(s: State, dungeonId: string, rng: () => number = M
         cores[dungeonId] = { rank: 0, attrs };
         if (!s.coreSlot) s.coreSlot = dungeonId;
         const names = attrs.map(attrName).join(' · ');
-        addLog(s, `✦ 보스 코어 획득! ${core.name} · ${core.desc} 기본 능력치: ${names} (보유 ${ownedCores(s).length}/${Object.keys(BOSS_CORES).length}종${s.coreSlot === dungeonId ? ' · 보스 코어 칸에 장착' : ''})`, 'reward');
+        addLog(s, `✦ ${from}보스 코어 획득! ${core.name} · ${core.desc} 기본 능력치: ${names} (보유 ${ownedCores(s).length}/${Object.keys(BOSS_CORES).length}종${s.coreSlot === dungeonId ? ' · 보스 코어 칸에 장착' : ''})`, 'reward');
         return 0;
     }
     if (had.rank < BOSS_CORE_RULES.awakenMax) {
         cores[dungeonId] = { ...had, rank: had.rank + 1 };
-        addLog(s, `✦ 보스 코어 · ${core.name} 각성 ${had.rank + 1}/${BOSS_CORE_RULES.awakenMax}! 효과 · 기본 능력치 +${Math.round((had.rank + 1) * BOSS_CORE_RULES.awakenStep * 100)}%(턴 연장 제외)`, 'reward');
+        addLog(s, `✦ ${from}보스 코어 · ${core.name} 각성 ${had.rank + 1}/${BOSS_CORE_RULES.awakenMax}! 효과 · 기본 능력치 +${Math.round((had.rank + 1) * BOSS_CORE_RULES.awakenStep * 100)}%(턴 연장 제외)`, 'reward');
         return had.rank + 1;
     }
-    s.pearls += BOSS_CORE_RULES.duplicatePearls; addLog(s, `✦ 보스 코어 · ${core.name}은(는) 각성까지 마쳐 세계석 +${BOSS_CORE_RULES.duplicatePearls}`, 'reward');
+    s.pearls += BOSS_CORE_RULES.duplicatePearls; addLog(s, `✦ ${from}보스 코어 · ${core.name}은(는) 각성까지 마쳐 세계석 +${BOSS_CORE_RULES.duplicatePearls}`, 'reward');
     return had.rank;
 }
 /** 보너스 정복 한 번에 보스 코어를 굴립니다. 받았으면 각성 단계. */

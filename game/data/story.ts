@@ -7,7 +7,7 @@ import type { State } from '../types';
 import { STAGES } from './world';
 import { jobById } from './classes';
 import { isHackerJob } from './hacker';
-import { ONYX_BOSSES, ownedOnyx } from './onyx';
+import { ONYX_TOTAL, onyxCollected } from './onyx';
 import { BOSS_CORES, coreEntry } from './boss-core';
 import { RANKS, rankIndex, rankState } from './rank';
 
@@ -222,8 +222,8 @@ export const STORY: StoryScene[] = [
     ] },
 
     // ── 2부 · 제6장 · 판게아 너머 ────────────────────────
-    { id: 'onyxAll', chapter: 5, title: '일곱 개의 칠흑', hint: '칠흑 장신구 7종을 모두 모은다', when: s => { const own = ownedOnyx(s); return ONYX_BOSSES.every(b => own.has(b.id)); }, lines: [
-        '일곱 번째 칠흑 장신구가 손에 들어왔다. 나란히 놓자 장신구들이 서로를 끌어당겼다.',
+    { id: 'onyxAll', chapter: 5, title: '아홉 개의 칠흑', hint: '칠흑 9종(장신구 8 · 저주받은 마도서)을 모두 모은다', when: s => onyxCollected(s) >= ONYX_TOTAL, lines: [
+        '아홉 번째 칠흑이 손에 들어왔다. 장신구와 마도서를 나란히 놓자 서로를 끌어당겼다.',
         '하나로 맞물린 칠흑은 열쇠 모양이었다. 검은 마법사가 세계를 묶을 때 쓴 바로 그 열쇠.',
         '열쇠는 문을 잠그는 데도, 여는 데도 쓰인다.',
     ] },

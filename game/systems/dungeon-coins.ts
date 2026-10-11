@@ -5,7 +5,7 @@ import { ODDS } from '../data/odds';
 import { dayKey } from '../data/time';
 import { dungeonModeTier, type DungeonMode } from '../data/balance';
 import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
-import { ONYX, onyxById } from '../data/onyx';
+import { ONYX, onyxItemById } from '../data/onyx';
 import { dungeonGoldMultiplier } from './stats';
 import { bestHourly } from './income';
 
@@ -56,12 +56,16 @@ export function rollGearBoxRarity(rng: () => number) {
     for (let i = 0; i < w.length; i++) { roll -= w[i]; if (roll < 0) return i; }
     return w.length - 1;
 }
-/** 칠흑 장신구 상품: 가진 종이면 각성, 없으면 제작. 못 사는 이유가 있으면 reason. v3.201 제작 · 각성 합쳐 하루 1회. */
-export function onyxOffer(s: State, bossId: string, now?: number) {
-    const own = allItems(s).find(x => x.onyx === bossId), rank = own?.onyxRank || 0;
+/**
+ * 칠흑 장신구 상품: 가진 종이면 각성, 없으면 제작. 못 사는 이유가 있으면 reason. v3.201 제작 · 각성 합쳐 하루 1회.
+ * v3.276 장신구 id로 고르고, 지금 그 장신구를 주는 칠흑 보스를 한 번 이상 처치해야 열립니다(주는 보스가 없는 장신구는 팔지 않음).
+ */
+export function onyxOffer(s: State, itemId: string, now?: number) {
+    const def = onyxItemById(itemId), own = allItems(s).find(x => x.onyx === itemId), rank = own?.onyxRank || 0;
     const kind = own ? 'awaken' as const : 'craft' as const, price = own ? DUNGEON_SHOP.onyxAwaken : DUNGEON_SHOP.onyxCraft;
-    const reason = !onyxById(bossId) ? '없는 칠흑 보스입니다.'
-        : !(s.onyxBook?.[bossId]) ? '그 칠흑 보스를 한 번 이상 처치해야 열립니다.'
+    const reason = !def ? '없는 칠흑 장신구입니다.'
+        : !def.boss ? '지금은 얻을 수 없는 칠흑 장신구입니다.'
+        : !(s.onyxBook?.[def.boss]) ? '그 칠흑 보스를 한 번 이상 처치해야 열립니다.'
         : own && rank >= ONYX.awakenMax ? '각성을 모두 마쳤습니다.'
         : now !== undefined && onyxBoughtToday(s, now) >= DUNGEON_SHOP_DAILY.onyxPerDay ? `칠흑 상품은 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번까지입니다(한국 시간 자정에 초기화).` : undefined;
     return { kind, price, rank, reason };

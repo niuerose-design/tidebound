@@ -57,7 +57,7 @@ test('v3.38 place AP moves to region achievements once: old saves keep their AP;
 test('v3.39 news: first look only marks, then onyx/ascension/tier-5/abyss 50s/22-star/general rank make one line each, once a day per kind',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),R=await L.load('data/rank'),C=await L.load('data/classes'),O=await L.load('data/onyx');
  const s=newState(0);assert.deepEqual(N.collectNews(s,0),[]);assert.ok(s.newsMark);assert.deepEqual(N.collectNews(s,0),[],'nothing new');
- const boss=O.ONYX_BOSSES[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id});
+ const boss=O.ONYX_ITEMS[0];s.inventory.push({id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.name,onyx:boss.id});
  s.ascension=1;s.unlockedJobs.push(C.JOBS.find(j=>j.tier===5).id);s.abyssBest=104;s.inventory.push({id:'x',slot:'rod',rarity:1,power:1,level:1,name:'x',enhance:22});
  const g=R.RANKS.findIndex(r=>r.group==='장성');s.rank={exp:R.RANK_CUMULATIVE[g],perks:{}};
  const ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind).sort(),['abyss','ascend','general','onyx','star22','tier5']);
@@ -156,8 +156,8 @@ test('v3.212 boss core news: a new core and a full awakening (rank 5) announce o
 });
 test('v3.212 onyx awakening news: every awakening announces (no daily cap); vault merges and old marks stay quiet',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),N=await L.load('systems/news'),O=await L.load('data/onyx');
- const boss=O.ONYX_BOSSES[0],s=newState(0),item={id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.accessory.name,onyx:boss.id};s.inventory.push(item);N.collectNews(s,0);
- item.onyxRank=1;let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['onyxAwaken']);assert.equal(ev[0].text('영희'),`영희가 칠흑 장신구 ‘${boss.accessory.name}’${/[가-힣]/.test(boss.accessory.name.at(-1))&&(boss.accessory.name.at(-1).charCodeAt(0)-0xac00)%28?'을':'를'} 각성 1단계로 올렸습니다.`);
+ const boss=O.ONYX_ITEMS[0],s=newState(0),item={id:'o',slot:'charm',rarity:6,power:1,level:1,name:boss.name,onyx:boss.id};s.inventory.push(item);N.collectNews(s,0);
+ item.onyxRank=1;let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['onyxAwaken']);assert.equal(ev[0].text('영희'),`영희가 칠흑 장신구 ‘${boss.name}’${/[가-힣]/.test(boss.name.at(-1))&&(boss.name.at(-1).charCodeAt(0)-0xac00)%28?'을':'를'} 각성 1단계로 올렸습니다.`);
  item.onyxRank=2;assert.equal(N.collectNews(s,0).length,1,'same day again');
  item.onyxRank=3;s.onyxGift={[boss.id]:0};assert.deepEqual(N.collectNews(s,0),[],'vault merge is quiet');
  delete s.newsMark.onyxRanks;item.onyxRank=4;assert.deepEqual(N.collectNews(s,0),[],'old mark only fills in');

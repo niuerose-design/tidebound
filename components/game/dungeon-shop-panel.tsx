@@ -7,7 +7,7 @@ import { dungeonGoldMultiplier } from '@/game/systems/stats';
 import { dailyBonusLeft, boughtToday, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { coreForgeCost } from '@/game/systems/boss-loot';
 import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
-import { ONYX, ONYX_BOSSES } from '@/game/data/onyx';
+import { ONYX, ONYX_DROP_ITEMS, onyxById } from '@/game/data/onyx';
 import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { Heading, format, useNow } from './shared';
@@ -59,13 +59,13 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
     </>;
 }
 
-/** 칠흑 장신구: 보스를 골라 카드 한 장에서 제작 · 각성(7종을 카드로 늘어놓으면 모바일에서 너무 깁니다). */
+/** 칠흑 장신구: 보스를 골라 카드 한 장에서 제작 · 각성(v3.276 지금 보스가 주는 장신구만, 여러 종을 카드로 늘어놓으면 모바일에서 너무 깁니다). */
 function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy; now: number }) {
-    const [pick, setPick] = useState(''), b = ONYX_BOSSES.find(x => x.id === pick) || ONYX_BOSSES.find(x => !onyxOffer(s, x.id, now).reason) || ONYX_BOSSES[0];
+    const list = ONYX_DROP_ITEMS, [pick, setPick] = useState(''), b = list.find(x => x.id === pick) || list.find(x => !onyxOffer(s, x.id, now).reason) || list[0];
     const o = onyxOffer(s, b.id, now);
-    return <Good eyebrow="칠흑 장신구" title={b.accessory.name}
-        desc={`${b.accessory.desc} ${o.kind === 'awaken' ? `가진 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
-        controls={<label>칠흑 보스<select value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{ONYX_BOSSES.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{x.name} · {x.accessory.name}{r.kind === 'awaken' ? ` (각성 ${r.rank}/${ONYX.awakenMax})` : s.onyxBook?.[x.id] ? '' : ' (잠김)'}</option>; })}</select></label>}
+    return <Good eyebrow="칠흑 장신구" title={b.name}
+        desc={`${b.desc} ${o.kind === 'awaken' ? `가진 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
+        controls={<label>칠흑 보스<select value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{list.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{onyxById(x.boss!)?.name} · {x.name}{r.kind === 'awaken' ? ` (각성 ${r.rank}/${ONYX.awakenMax})` : s.onyxBook?.[x.boss!] ? '' : ' (잠김)'}</option>; })}</select></label>}
         cost={o.reason || `${format(o.price)} 주화`}>
         <button className="secondary" disabled={busy || !!o.reason || (s.dungeonCoins || 0) < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button>
     </Good>;

@@ -502,10 +502,10 @@ test('v3.75 rare primal/onyx options (drill/valor fixed +1, apex super crit, dis
 test('v3.77 onyx accessories carry max-rolled options (power still grows only by paid level-ups) and fall back to 12★ instead of breaking', async () => {
     const M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment'), C = await L.load('systems/commerce'), SF = await L.load('data/starforce'), O = await L.load('data/onyx'), G = await L.load('data/gear');
     const s = newState(0); s.rebirths = 150; s.level = 100;
-    const it = O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
+    const it = O.onyxAccessory(O.ONYX_ITEMS[0], 'ox', 100); it.affixes = G.rollAffixes(6, it.power, it.origin, () => .3, it.affixes, 'charm', 100); const before = it.power;
     s.inventory = [it]; M.migrateState(s, 0);
     assert.equal(Eq.heirKind(it), null); assert.equal(it.power, before, 'no free growth from rebirths'); assert.equal(it.power, Math.round(102 * O.ONYX.power));
-    assert.equal(it.onyxTuned, true); assert.ok(it.affixes[0].rule && it.affixes[0].value === O.ONYX_BOSSES[0].accessory.affix.value, 'unique rule kept');
+    assert.equal(it.onyxTuned, true); assert.ok(it.affixes[0].rule && it.affixes[0].value === O.ONYX_ITEMS[0].affix.value, 'unique rule kept');
     for (const x of it.affixes.filter(a => !a.rule)) { const q = G.affixQuality(x, it.power, it.rarity, 100); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
     const tuned = JSON.stringify(it.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(it.affixes), tuned, 'tuned once');
     it.enhance = 21; const r = C.starForceAttempt(s, it, false, () => SF.starSuccess(21) + 1e-9, () => {});
@@ -598,9 +598,9 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     const N = await L.load('systems/news'), G = await L.load('systems/onyx-grant'), O = await L.load('data/onyx');
     const s = newState(0); N.collectNews(s, 0); s.rebirths = 50; G.grantOnyxMilestones(s, () => 0);
     const ev = N.collectNews(s, 0), line = ev.find(e => e.kind === 'onyx').text('영희');
-    assert.ok(line.startsWith(`영희가 환생 50회 달성 보상으로 칠흑 장신구 ‘${O.ONYX_BOSSES[0].accessory.name}’`) && line.endsWith('받았습니다.'), line);
+    assert.ok(line.startsWith(`영희가 환생 50회 달성 보상으로 칠흑 장신구 ‘${O.ONYX_ITEMS[0].name}’`) && line.endsWith('받았습니다.'), line);
     assert.equal(s.onyxGift, undefined, 'gift note cleared');
-    s.inventory.push(O.onyxAccessory(O.ONYX_BOSSES[1], 'hunt', 60));
+    s.inventory.push(O.onyxAccessory(O.ONYX_ITEMS[1], 'hunt', 60));
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
@@ -611,8 +611,8 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
     try {
         const now = Date.now(), acc = 'acct_v';
         const a = newState(0), b = newState(0);
-        const dusk = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-a', 60); dusk.enhance = 17; dusk.onyxRank = 2; a.inventory.push(dusk);
-        const will = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxWill'), 'will-a', 60); a.equipment.charm = will;
+        const dusk = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk-a', 60); dusk.enhance = 17; dusk.onyxRank = 2; a.inventory.push(dusk);
+        const will = O.onyxAccessory(O.onyxItemById('onyxWill'), 'will-a', 60); a.equipment.charm = will;
         await assert.rejects(V.vaultMove(acc, a, 'deposit', 'onyx', 'will-a', now, 1), /착용 중/);
         const before = structuredClone(a), first = await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-a', now, 1); let info = first.info;
         first.apply(before); assert.ok(!before.inventory.some(i => i.id === 'dusk-a'), 'a save-conflict retry replays the bag change on the fresh save (no duplicate)');
@@ -622,12 +622,12 @@ test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, w
         const got = b.inventory.find(i => i.onyx === 'onyxDusk'); assert.ok(got && got.enhance === 17 && got.onyxRank === 2); assert.equal(info.onyx.length, 0);
         assert.equal(b.onyxGift?.onyxDusk, 0, 'no news for a vault withdrawal');
         // 같은 종을 가진 분신이 꺼내면 그 칠흑이 각성 +1.
-        const dusk2 = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk-c', 60); a.inventory.push(dusk2);
+        const dusk2 = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk-c', 60); a.inventory.push(dusk2);
         info = (await V.vaultMove(acc, a, 'deposit', 'onyx', 'dusk-c', now, 1)).info;
         await V.vaultMove(acc, b, 'withdraw', 'onyx', info.onyx[0].id, now, 2);
         assert.equal(b.inventory.filter(i => i.onyx === 'onyxDusk').length, 1); assert.equal(got.onyxRank, 3, 'awaken +1');
         // v3.242 승천: 칠흑은 승천해도 남으므로 금고의 칠흑도 모두 남음(세계석 · 정수는 전처럼 비움).
-        const lucid = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.ONYX_BOSSES.find(x => x.id === 'onyxHilla'), 'h', 60);
+        const lucid = O.onyxAccessory(O.onyxItemById('onyxLucid'), 'l', 60), hilla = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'h', 60);
         a.inventory.push(lucid); b.inventory.push(hilla); a.pearls = 50;
         await V.vaultMove(acc, a, 'deposit', 'onyx', 'l', now, 1); await V.vaultMove(acc, b, 'deposit', 'onyx', 'h', now, 2); await V.vaultMove(acc, a, 'deposit', 'pearls', 10, now, 1);
         await V.vaultAfterAscend(acc, now);
@@ -647,7 +647,7 @@ test('v3.118 gear cost reset: heir / onyx only, 999 pearls, rerolls · refines �
     assert.equal(s.pearls, 5000 - G.GEAR_RESET_PEARLS); assert.equal(heir.enhance, 0); assert.equal(heir.rerolls, 0); assert.equal(heir.refines, 0); assert.equal(heir.affixes.length, 6);
     for (const x of heir.affixes) { const q = G.affixQuality(x, heir.power, heir.rarity, heir.level); assert.ok(q === null || q > .99, `${x.id} max roll ${q}`); }
     assert.throws(() => act(s, { type: 'gearReset', id: 'h' }, 0), /초기화할 비용이 없/);
-    const onyx = O.onyxAccessory(O.ONYX_BOSSES[0], 'o', 100); onyx.affixes = G.rollAffixes(6, onyx.power, onyx.origin, local, onyx.affixes, 'charm', 100); onyx.rerolls = 2; onyx.enhance = 10; s.inventory.push(onyx);
+    const onyx = O.onyxAccessory(O.ONYX_ITEMS[0], 'o', 100); onyx.affixes = G.rollAffixes(6, onyx.power, onyx.origin, local, onyx.affixes, 'charm', 100); onyx.rerolls = 2; onyx.enhance = 10; s.inventory.push(onyx);
     const unique = onyx.affixes[0]; s.pearls = 10; assert.throws(() => act(s, { type: 'gearReset', id: 'o' }, 0), /세계석/); s.pearls = 2000;
     act(s, { type: 'gearReset', id: 'o' }, 0, local); assert.deepEqual(onyx.affixes[0], unique, 'unique kept'); assert.equal(onyx.affixes.length, 6); assert.equal(onyx.enhance, 0);
 });
@@ -688,8 +688,8 @@ test('v3.125 primal gauge fills on every exit path, rare foes are never golden, 
     for (const kind of ['mimic', 'nuri']) { r.enemy = null; E.spawn(r, () => .5, kind); const id = r.enemy.id; r.enemy.hp = 0; E.reward(r, () => 0); assert.ok(!r.goldenBook?.[id], `${kind} is never golden`); }
     // 칠흑 위력 계수 6.37: Lv.100 650. 옛 530 장신구는 불러올 때 위력과 고정 수치 옵션이 함께 맞춰지고, 레벨 올리기도 같은 식을 씁니다.
     const O = await L.load('data/onyx'), M = await L.load('systems/migrations');
-    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_BOSSES[0], 'ox', 100).power, 650);
-    const old = O.onyxAccessory(O.ONYX_BOSSES[6], 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
+    assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_ITEMS[0], 'ox', 100).power, 650);
+    const old = O.onyxAccessory(O.onyxItemById('onyxBlackMage'), 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
     const flatOld = old.affixes.find(x => !x.rule && G.affixDef(x.id)?.kind === 'flat'), flatBefore = flatOld?.value;
     const o = newState(0); o.level = 100; o.inventory = [old]; M.migrateState(o, 0);
     assert.equal(old.power, 650, 'old accessories are raised on load'); if (flatOld) assert.equal(old.affixes.find(x => x.id === flatOld.id).value, Math.round(flatBefore * 650 / 530), 'flat options follow the power');

@@ -35,9 +35,9 @@ import { PROGRESSION } from '../data/progression';
 import { canUse, grantJobSkills, itemKey, jobMastered } from './progression';
 import { dismantleInto, primalGaugeGain, primalGaugeNote, saleValue, keepsAcrossLives, equippedAffixTotal, ownedItems, inheritGear } from './equipment';
 import { scaledEnemyStats, abyssEnemyStats, foeSkills } from '../data/encounters';
-import { ONYX, onyxBossFor, onyxById, onyxChance, ownedOnyx, onyxSetBonus } from '../data/onyx';
+import { ONYX, onyxBossFor, onyxById, onyxChance, onyxCollected, onyxSetBonus } from '../data/onyx';
 import { offlineTally } from './offline-tally';
-import { grantOnyx } from './onyx-grant';
+import { grantOnyxDrop, onyxDropName, onyxDropRank } from './onyx-grant';
 import { recordGoal, recordAbyssDepth } from './progress';
 import { addLog, endRun } from './state';
 import { continueRepeat } from './dungeon-run';
@@ -207,7 +207,7 @@ export function stageEncounterExp(s: State, won = stats(s)) {
     if (!st?.monsters.length) return 0;
     const tier = encounterTier(s), each = st.monsters.reduce((sum, id) => sum + stageField(s, st.id, id, tier).exp, 0) / st.monsters.length;
     const heads = st.habitat ? (1 - HABITAT.bigChance) * HABITAT.sizes[0] * swarmRewardMultiplier(HABITAT.sizes[0]) + HABITAT.bigChance * HABITAT.sizes[1] * swarmRewardMultiplier(HABITAT.sizes[1]) : 1;
-    const onyxSet = st.habitat ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    const onyxSet = st.habitat ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
     return each * expMultiplier(s, won) * onyxSet * heads;
 }
 /** v3.9 깊이 계수를 몬스터 체력·공격·마법과 보상 골드·경험치에 곱합니다(제자리 수정). */
@@ -348,7 +348,7 @@ export function reward(s: State, rng: () => number) {
     const masteryReward = dungeonRun ? { amount: 0, drill: 0, base: 0, bonus: 0, source: '' } : victoryMastery(s, e), drillMastery = masteryReward.drill * masteryHeads;
     const researched = researchMastery(s, Math.floor((masteryReward.amount - masteryReward.drill) * masteryHeads * focusMastery * eventMastery)), practice = researched.total + drillMastery;
     // v3.12 칠흑 세트 4종: 무리 서식지 골드·경험치 +15%.
-    const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(ownedOnyx(s).size).habitatReward : 1;
+    const onyxSet = isHabitat(s.stage) && !s.dungeon ? 1 + onyxSetBonus(onyxCollected(s)).habitatReward : 1;
     // v3.104 골드 · 경험치 배율과 황금 개체 확률은 같은 상태의 능력치 한 번으로 계산합니다(사이에 상태가 바뀌지 않음).
     const won = stats(s);
     const perMonster = dungeonRun ? 0 : Math.floor(e.gold * goldMultiplier(s, won) * rewardMult * onyxSet), exp = dungeonRun ? 0 : Math.floor(Math.floor(e.exp * expMultiplier(s, won) * expMult * onyxSet) * size * big);
@@ -450,27 +450,22 @@ export function reward(s: State, rng: () => number) {
     else addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
     if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
+    // v3.276 보스마다 주는 것이 장신구 또는 칠흑 보스코어(윌 · 저주받은 마도서)입니다. 천장(onyxMiss)은 보스별 그대로.
     if (e.onyx) {
-        const bossDef = onyxById(e.onyx)!; s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
-        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng();
-        if (ownedOnyx(s).has(e.onyx)) {
+        const bossDef = onyxById(e.onyx)!, prize = onyxDropName(bossDef); s.onyxBook ??= {}; s.onyxBook[e.onyx] = (s.onyxBook[e.onyx] || 0) + 1; s.onyxMiss ??= {};
+        const miss = s.onyxMiss[e.onyx] || 0, dropRoll = rng(), hit = dropRoll < ONYX.drop || miss + 1 >= ONYX.dropPity, rank = onyxDropRank(s, bossDef);
+        const level = stageById(s.stage)?.level || monsterLevelOf(e.id);
+        if (rank >= 0) {
             // v3.113 각성: 이미 가진 칠흑도 같은 드롭 확률 · 천장으로 다시 얻으면 각성 단계 +1(최대 5, 고유 옵션 +10%씩). 세계석은 전처럼 받습니다.
             s.pearls += ONYX.duplicatePearls;
-            const own = ownedItems(s).find(x => x?.onyx === e.onyx)!, rank = own.onyxRank || 0;
-            if (rank < ONYX.awakenMax && (dropRoll < ONYX.drop || miss + 1 >= ONYX.dropPity)) {
-                s.onyxMiss[e.onyx] = 0; own.onyxRank = rank + 1;
-                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name} 각성 ${own.onyxRank}/${ONYX.awakenMax}! 고유 옵션 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}% · 세계석 +${ONYX.duplicatePearls}`, 'reward');
-            }
+            if (rank < ONYX.awakenMax && hit) { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파 · 세계석 +${ONYX.duplicatePearls}`); }
             else {
                 if (rank < ONYX.awakenMax) s.onyxMiss[e.onyx] = miss + 1;
-                addLog(s, `✦ ${bossDef.name} 격파 · ${bossDef.accessory.name}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
+                addLog(s, `✦ ${bossDef.name} 격파 · ${prize}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
             }
         }
-        else if (dropRoll >= ONYX.drop && miss + 1 < ONYX.dropPity) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · 장신구를 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
-        else {
-            s.onyxMiss[e.onyx] = 0;
-            grantOnyx(s, e.onyx, stageById(s.stage)?.level || monsterLevelOf(e.id), rng, `${bossDef.name} 격파`);
-        }
+        else if (!hit) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · ${prize}을(를) 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
+        else { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파`); }
     }
     const monster = monsterById(e.id)!;
     // v3.42 무리는 마리 수 N 대신 √N번만 드롭을 판정하고(×500은 2배), 덜 굴린 판정은 기대 장비 수만큼 정수로 바꿉니다.
