@@ -4,7 +4,7 @@ import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
 const { STORY, STORY_CHAPTERS, STORY_PARTS } = await load('data/story');
 const { syncStory } = await load('systems/story');
-const { ONYX_BOSSES } = await load('data/onyx');
+const { ONYX_BOSSES, ONYX_ITEMS } = await load('data/onyx');
 
 test('v3.215 story table: unique ids, valid chapters, 2~6 lines, every chapter has scenes', () => {
     assert.equal(new Set(STORY.map(x => x.id)).size, STORY.length);
@@ -41,16 +41,19 @@ test('v3.215 story: an old save opens everything it already passed in one summar
     assert.equal(s.story.ascend, 7000, 'first ascension scene opens right after ascending');
 });
 
-test('v3.216 story part 2: no ascension gate except the finale, onyx = all 7 accessories owned, Mu Lung 50 · 100', () => {
+test('v3.216 story part 2: no ascension gate except the finale, onyx = all 9 (8 accessories + grimoire core) owned, Mu Lung 50 · 100', () => {
     const s = newState(0); s.kills = 1; s.wins = 1; s.guildMember = { id: 'g1' }; s.market = { holdings: {} }; s.abyssBest = 100;
     s.bossCores = { grotto: 5 }; s.onyxBook = Object.fromEntries(ONYX_BOSSES.map(b => [b.id, 1]));
     act(s, { type: 'sync' }, 9000);
     for (const id of ['core', 'coreFull', 'abyss50', 'abyss100', 'duel', 'guild', 'market', 'onyx']) assert.ok(s.story[id], id);
     for (const id of ['onyxAll', 'general', 'clone', 'ascend']) assert.equal(s.story[id], undefined, `${id} still locked (killing every onyx boss is not collecting the accessories)`);
-    for (const b of ONYX_BOSSES) s.inventory.push({ id: `o-${b.id}`, name: b.id, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: b.id });
+    for (const d of ONYX_ITEMS) s.inventory.push({ id: `o-${d.id}`, name: d.id, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id });
+    act(s, { type: 'sync' }, 9200);
+    assert.equal(s.story.onyxAll, undefined, 'eight accessories without the grimoire core are not all nine');
+    s.bossCores.onyxGrimoire = { rank: 0, attrs: [] };
     s.account = { slot: 2, slots: [] };
     act(s, { type: 'sync' }, 9500);
-    assert.ok(s.story.onyxAll, 'all 7 onyx accessories owned'); assert.ok(s.story.clone, 'second adventurer slot');
+    assert.ok(s.story.onyxAll, 'all 9 onyx owned'); assert.ok(s.story.clone, 'second adventurer slot');
     const ascensionGated = STORY.filter(x => x.when({ ...newState(0), ascension: 1 }) && !x.when(newState(0)));
     assert.deepEqual(ascensionGated.map(x => x.id).filter(id => !['awake', 'shell', 'henesys', 'perion', 'ellinia', 'kerning', 'rebirth1', 'rebirth5', 'rebirth10', 'rebirth50'].includes(id)), ['ascend'], 'only the finale needs an ascension');
     assert.equal(STORY.at(-1).id, 'ascend', 'the ascension scene is last');

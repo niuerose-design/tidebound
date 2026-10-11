@@ -9,8 +9,10 @@ import { ESSENCE_SLIME } from './essence-slime';
 import { KING_IDS } from './king';
 import { stats } from '../systems/stats';
 import { DUNGEON_MODES, type DungeonMode } from './balance';
-import { ownedOnyx } from './onyx';
-import { BOSS_CORE_RULES, ABYSS_CORE_IDS, ownedCores, coreEntry } from './boss-core';
+import { onyxCollected } from './onyx';
+import { BOSS_CORES, BOSS_CORE_RULES, ABYSS_CORE_IDS, ownedCores, coreEntry } from './boss-core';
+/** v3.276 던전 보스 코어(지역 · 무릉도장): 칠흑 보스코어는 칠흑 업적에서 셉니다. */
+const dungeonCores = (s: State) => ownedCores(s).filter(id => !BOSS_CORES[id].onyx);
 import { RANKS, RANK_CUMULATIVE, RANK_TOTAL_POINTS, rankState, rankPointsSpent } from './rank';
 
 /**
@@ -39,7 +41,8 @@ const tideBest = (s: State) => Math.max(0, ...Object.values(s.tideBest || {}));
 const playHours = (s: State) => Math.floor((s.playMs || 0) / 3_600_000);
 const sum = (r?: Record<string, number>) => Object.values(r || {}).reduce((a, b) => a + (b || 0), 0);
 const goldens = (s: State) => sum(s.goldenBook);
-const onyxOwned = (s: State) => ownedOnyx(s).size;
+/** v3.276 칠흑 수집 수(장신구 + 저주받은 마도서). */
+const onyxOwned = (s: State) => onyxCollected(s);
 /** v3.6 스타포스 누적 기록과 보유 장비(가방·착용) 중 가장 높은 별. */
 const sf = (s: State) => s.starforce || { tries: 0, success: 0, fail: 0, destroy: 0, gold: 0 };
 const bestStar = (s: State) => Math.max(0, ...[...(s.inventory || []), ...Object.values(s.equipment || {})].map(i => i?.enhance || 0));
@@ -117,8 +120,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('starHigh', '강화', n => `고성 강화 ${n.toLocaleString()}회 성공`, n => `15성 이상에서 스타포스 강화에 ${n.toLocaleString()}번 성공합니다.`, [10, 50, 200], s => sf(s).high || 0, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20 }][i]),
     ...series('star', '강화', n => `${n}성 달성`, n => `장비 하나를 ${n}성까지 강화합니다(가방·착용 장비 기준).`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15 }][i]),
     // v3.12 칠흑 장신구 수집(보유 수, 환생 유지).
-    // v3.15 칠흑은 한 종마다 업적(SP·AP 번갈아), 7종 완성은 큰 보상.
-    ...series('onyx', '사냥', n => `칠흑 장신구 ${n}종`, n => `무리 서식지의 칠흑 보스를 쓰러뜨려 칠흑 장신구 ${n}종을 보유합니다.`, [1, 2, 3, 4, 5, 6, 7], onyxOwned, i => [{ pearls: 3, sp: 1 }, { pearls: 5, ap: 1 }, { pearls: 8, sp: 1 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }, { pearls: 20, ap: 1 }, { pearls: 50, sp: 2, ap: 2 }][i]),
+    // v3.15 칠흑은 한 종마다 업적(SP·AP 번갈아), 7종 완성은 큰 보상. v3.276 마도서 포함 9종까지(9종 완성도 큰 보상).
+    ...series('onyx', '사냥', n => `칠흑 ${n}종`, n => `무리 서식지의 칠흑 보스를 쓰러뜨려 칠흑 장신구 · 칠흑 보스코어를 합쳐 ${n}종 보유합니다.`, [1, 2, 3, 4, 5, 6, 7, 8, 9], onyxOwned, i => [{ pearls: 3, sp: 1 }, { pearls: 5, ap: 1 }, { pearls: 8, sp: 1 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }, { pearls: 20, ap: 1 }, { pearls: 50, sp: 2, ap: 2 }, { pearls: 30, sp: 1 }, { pearls: 80, sp: 2, ap: 2 }][i]),
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8 }][i]),
     ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
     ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
@@ -138,11 +141,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v3.38 던전 첫 정복 SP 업적.
     ...PLAIN_FIRST_CLEAR.map(([id, sp]) => ({ id: `firstClear:${id}`, group: '던전' as const, title: `${DUNGEON_NAME(id)} 첫 정복`, desc: `${DUNGEON_NAME(id)}을(를) 처음 정복합니다.`, reward: { sp }, progress: (s: State) => (s.clears?.[id] || 0) > 0 ? 1 : 0, target: 1 })),
     // v3.205 보스 코어 명예 업적(보상 없음 · 칭호만). 보유 종 수, 각성을 끝까지 마친 코어 수.
-    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `던전 보스 코어 ${n}종을 보유합니다.`, [1, 4, 7], s => ownedCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `던전 보스 코어 ${n}종을 보유합니다.`, [1, 4, 7], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
     // v3.208 무릉도장 코어 3종 · 전체 10종 보유(명예).
     ...series('abyssCore', '던전', n => `무릉 코어 ${n}종`, n => `무릉도장 코어 ${n}종을 모두 얻습니다.`, [3], s => ABYSS_CORE_IDS.filter(id => s.bossCores?.[id] !== undefined).length, () => ({})).map(a => ({ ...a, honor: true })),
-    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `보스 코어 ${n}종(지역 던전 · 무릉도장)을 모두 보유합니다.`, [10], s => ownedCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
-    ...series('coreAwaken', '던전', n => `완전 각성 코어 ${n}종`, n => `보스 코어 ${n}종을 각성 ${BOSS_CORE_RULES.awakenMax}단계까지 올립니다.`, [1, 7], s => ownedCores(s).filter(id => coreEntry(s.bossCores![id])!.rank >= BOSS_CORE_RULES.awakenMax).length, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `보스 코어 ${n}종(지역 던전 · 무릉도장)을 모두 보유합니다.`, [10], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('coreAwaken', '던전', n => `완전 각성 코어 ${n}종`, n => `보스 코어 ${n}종을 각성 ${BOSS_CORE_RULES.awakenMax}단계까지 올립니다.`, [1, 7], s => dungeonCores(s).filter(id => coreEntry(s.bossCores![id])!.rank >= BOSS_CORE_RULES.awakenMax).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, PLAIN_DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
     ...series('dungeonsHundred', '던전', n => `던전 ${n}곳 100회 정복`, n => `서로 다른 던전 ${n}곳을 각각 100번 이상 정복합니다.`, [1, PLAIN_DUNGEONS.length], dungeonsAt(100), i => [{ pearls: 5 }, { pearls: 20, ap: 1, sp: 1 }][i]),
     ...series('gold', '도전', n => `보유 골드 ${n.toLocaleString()}`, n => `골드를 ${n.toLocaleString()} 이상 모읍니다.`, [1e6, 1e8, 1e10], s => s.gold || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),

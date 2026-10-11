@@ -9,7 +9,7 @@ import type { Attribute, CombatStats, State } from '../types';
 
 export const BOSS_CORE_RULES = { awakenMax: 5, awakenStep: .1, duplicatePearls: 5, resonance: .1 };
 type CoreStat = keyof CombatStats;
-export type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.208 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[] };
+export type BossCore = { name: string; boss: string; desc: string; bonus: Partial<Record<CoreStat, number>>; /** v3.208 무릉도장 코어: 이 층들을 처음 돌파하면 [얻기, 각성 1~5]. 없으면 지역 던전 코어(보너스 정복 · 상자). */ floors?: number[]; /** v3.276 칠흑 보스코어: 이 칠흑 보스 격파로만 얻고 각성합니다(칠흑 드롭 확률 · 천장, 상자 · 보너스 정복 없음). */ onyx?: string };
 /** 정수 턴 효과: 각성 배율 · 공명을 받지 않습니다. */
 export const CORE_TURN_STATS = new Set<CoreStat>(['stunBonus', 'controlBonus', 'dotTurnsBonus']);
 /** 던전 id → 보스 코어. 모두 보스 · 사냥감 피해 +5%에 그 보스의 기술을 이어받는 효과가 붙습니다. */
@@ -26,6 +26,8 @@ export const BOSS_CORES: Record<string, BossCore> = {
     abyssTrainee: { name: '수련생의 띠 코어', boss: '무릉 수련생', desc: '보스 · 사냥감 피해 +5%, 명중 +10%.', bonus: { bossDamage: .05, accuracy: .1 }, floors: [25, 28, 31, 34, 37, 40] },
     abyssMaster: { name: '사범의 권법 코어', boss: '무릉 사범', desc: '보스 · 사냥감 피해 +5%, 치명 피해 +15%p.', bonus: { bossDamage: .05, critDamage: .15 }, floors: [40, 42, 44, 46, 48, 50] },
     abyssMugong: { name: '무공의 일격 코어', boss: '무공', desc: '보스 · 사냥감 피해 +8%, 방어 관통 +15%p(관통 상한 안).', bonus: { bossDamage: .08, penetration: .15 }, floors: [50, 51, 52, 53, 54, 55] },
+    // v3.276 칠흑 보스코어(기획: 윌 격파 보상). 칠흑 수집 9종에 들어갑니다(data/onyx ONYX_CORE_ID).
+    onyxGrimoire: { name: '저주받은 마도서', boss: '윌', desc: '보스 · 사냥감 피해 +5%, 상태이상 저항 +10%p, 내 기절 · 침묵 · 감속 지속 +1턴.', bonus: { bossDamage: .05, statusResist: .1, controlBonus: 1 }, onyx: 'onyxWill' },
 };
 /**
  * v3.202 기본 능력치: 코어마다 받을 때 6종 중 count종을 무작위로 고르고, 각 배율 f(min~max)를 굴립니다.
@@ -70,17 +72,17 @@ export function coreAttributes(s: Pick<State, 'bossCores' | 'coreSlot' | 'level'
     return out;
 }
 export const coreAwaken = (rank: number) => 1 + Math.min(BOSS_CORE_RULES.awakenMax, Math.max(0, rank)) * BOSS_CORE_RULES.awakenStep;
-/** v3.208 지역 던전 코어(보너스 정복 · 랜덤 상자에서 나옴)와 무릉도장 코어(층으로만). */
-export const REGION_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !BOSS_CORES[id].floors);
+/** v3.208 지역 던전 코어(보너스 정복 · 랜덤 상자에서 나옴)와 무릉도장 코어(층으로만). v3.276 칠흑 보스코어는 어느 쪽도 아닙니다. */
+export const REGION_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !BOSS_CORES[id].floors && !BOSS_CORES[id].onyx);
 export const ABYSS_CORE_IDS = Object.keys(BOSS_CORES).filter(id => !!BOSS_CORES[id].floors);
 /** 최고 층 기준으로 이 무릉 코어가 가져야 할 각성 단계(-1이면 아직 못 얻음). */
 export const abyssCoreRank = (id: string, best: number) => (BOSS_CORES[id].floors || []).filter(f => best >= f).length - 1;
 export const ownedCores = (s: Pick<State, 'bossCores'>) => Object.keys(s.bossCores || {}).filter(id => BOSS_CORES[id]);
 /** v3.221 보유한 지역 보스 코어(무릉도장 코어 제외): 수와 각성 단계 합. 어둠의 추종자가 씁니다. */
-export const regionCores = (s: Partial<Pick<State, 'bossCores'>>) => ownedCores({ bossCores: s.bossCores }).filter(id => !BOSS_CORES[id].floors);
+export const regionCores = (s: Partial<Pick<State, 'bossCores'>>) => ownedCores({ bossCores: s.bossCores }).filter(id => REGION_CORE_IDS.includes(id));
 export const regionCoreRanks = (s: Partial<Pick<State, 'bossCores'>>) => regionCores(s).reduce((n, id) => n + Math.min(BOSS_CORE_RULES.awakenMax, Math.max(0, coreEntry(s.bossCores![id])!.rank)), 0);
-/** v3.221 끼지 않은 코어의 공명 비율: 지역 코어는 직업 특성(어둠의 추종자 30%)을 따르고, 무릉도장 코어는 기본 10%. */
-const resonanceOf = (id: string, regionResonance: number) => BOSS_CORES[id].floors ? BOSS_CORE_RULES.resonance : regionResonance;
+/** v3.221 끼지 않은 코어의 공명 비율: 지역 코어는 직업 특성(어둠의 추종자 30%)을 따르고, 무릉도장 · 칠흑 코어는 기본 10%. */
+const resonanceOf = (id: string, regionResonance: number) => BOSS_CORES[id].floors || BOSS_CORES[id].onyx ? BOSS_CORE_RULES.resonance : regionResonance;
 /** 보스 코어 칸 · 공명을 합친 능력치(합연산). */
 export function coreStats(s: Pick<State, 'bossCores' | 'coreSlot'>, regionResonance: number = BOSS_CORE_RULES.resonance) {
     const out: Partial<Record<CoreStat, number>> = {}, put = (k: CoreStat, v: number) => { out[k] = (out[k] || 0) + v; };

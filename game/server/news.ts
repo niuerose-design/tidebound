@@ -8,7 +8,7 @@ import { ALTAR_NEWS } from './altar';
 import { ApiError } from './store';
 import type { State } from '../types';
 import { NEWS_TEXT, NEWS_ABYSS_STEP, NEWS_RANK_FIRST, type NewsEvent } from '../systems/news';
-import { ONYX_BOSSES } from '../data/onyx';
+import { ONYX_ITEMS } from '../data/onyx';
 import { BOSS_CORES } from '../data/boss-core';
 import { JOBS } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
@@ -39,13 +39,13 @@ export async function postNewsSample(kind: string, opts: { name?: string; text?:
     const name = String(opts.name || '테스트 모험가').slice(0, 20), tag = opts.tag === false ? '' : '[테스트] ';
     const job = JOBS.find(j => j.tier === 5 && !isHackerJob(j.id)), raid = RAIDS[0];
     const line: Record<NewsSampleId, () => { text: string; from: string; label: string }> = {
-        onyx: () => ({ text: NEWS_TEXT.onyx(name, ONYX_BOSSES[0].accessory.name), from: 'system-news', label: '소식' }),
+        onyx: () => ({ text: NEWS_TEXT.onyx(name, ONYX_ITEMS[0].name), from: 'system-news', label: '소식' }),
         ascend: () => ({ text: NEWS_TEXT.ascend(name, 1), from: 'system-news', label: '소식' }),
         tier5: () => ({ text: NEWS_TEXT.tier5(name, job?.name || '5차 직업'), from: 'system-news', label: '소식' }),
         abyss: () => ({ text: NEWS_TEXT.abyss(name, NEWS_ABYSS_STEP), from: 'system-news', label: '소식' }),
         star22: () => ({ text: NEWS_TEXT.star22(name), from: 'system-news', label: '소식' }),
         general: () => ({ text: NEWS_TEXT.general(name, RANKS.find(r => r.id === NEWS_RANK_FIRST)!.name), from: 'system-news', label: '소식' }),
-        onyxAwaken: () => ({ text: NEWS_TEXT.onyxAwaken(name, ONYX_BOSSES[0].accessory.name, 1), from: 'system-news', label: '소식' }),
+        onyxAwaken: () => ({ text: NEWS_TEXT.onyxAwaken(name, ONYX_ITEMS[0].name, 1), from: 'system-news', label: '소식' }),
         core: () => ({ text: NEWS_TEXT.core(name, BOSS_CORES.grotto.name, 1), from: 'system-news', label: '소식' }),
         coreAwaken: () => ({ text: NEWS_TEXT.coreAwaken(name, BOSS_CORES.grotto.name), from: 'system-news', label: '소식' }),
         hacker: () => ({ text: hackerJobNews('whiteHacker'), from: 'system-hacker', label: '시스템' }),

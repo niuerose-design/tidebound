@@ -21,7 +21,9 @@ export const TITLES: TitleDef[] = [
     { id: 'deaths:100', name: '🩹 일곱 번 넘어진 자', desc: '쓰러짐 100회', group: '도전', achievement: 'deaths:100' },
     { id: 'reenlist:1', name: '🎖 다시 입대한 자', desc: '중장에서 재입대', group: '도전', achievement: 'reenlist:1' },
     { id: 'king:10', name: '👑 대왕 사냥꾼', desc: '대왕 까미 · 누리 · 정수 슬라임 합쳐 10마리 처치', group: '사냥', achievement: 'king:10' },
-    { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 장신구 7종 보유', group: '사냥', achievement: 'onyx:7' },
+    { id: 'onyx:7', name: '◆ 칠흑보다 어두운 자', desc: '칠흑 7종 보유', group: '사냥', achievement: 'onyx:7' },
+    // v3.276 칠흑 9종(장신구 8 + 저주받은 마도서).
+    { id: 'onyx:9', name: '◆ 칠흑의 지배자', desc: '칠흑 9종 보유', group: '사냥', achievement: 'onyx:9' },
     { id: 'star:22', name: '★ 스물두 별', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
     { id: 'star:25', name: '★ 별을 다 채운 자', desc: '장비 하나를 25성까지 강화(v3.241)', group: '강화', achievement: 'star:25' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },

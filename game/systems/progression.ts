@@ -15,7 +15,8 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
-import { regionCores, regionCoreRanks } from '../data/boss-core';
+import { regionCores, regionCoreRanks, coreEntry } from '../data/boss-core';
+import { ONYX_CORE_ID } from '../data/onyx';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 export const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
 export const plainCodexBook = () => Object.fromEntries(PLAIN_CODEX_SLOTS.map(slot => [`${slot}:0`, true]));
@@ -196,10 +197,13 @@ export function progressCounts(s: Pick<State, 'book' | 'itemBook' | 'clears' | '
     const regionClears = Object.entries(s.clears || {}).reduce((x, [id, n]) => id === 'abyss' ? x : x + (n || 0), 0);
     const onyx = Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0);
     // v3.221 칠흑의 화신: 보유한 칠흑 장신구 종류 수와 각성 단계 합(종마다 가장 높은 각성 하나).
+    const grimoire = coreEntry(s.bossCores?.[ONYX_CORE_ID]);
     const onyxItems = [...(s.inventory || []), ...Object.values(s.equipment || {})].filter(i => i?.onyx), onyx7 = new Set(onyxItems.map(i => i!.onyx!));
-    const onyxRanks = [...onyx7].reduce((n, id) => n + Math.min(5, Math.max(0, ...onyxItems.filter(i => i!.onyx === id).map(i => i!.onyxRank || 0))), 0);
+    const onyxRanks = [...onyx7].reduce((n, id) => n + Math.min(5, Math.max(0, ...onyxItems.filter(i => i!.onyx === id).map(i => i!.onyxRank || 0))), 0)
+        // v3.276 칠흑 보스코어(저주받은 마도서)도 칠흑 1종 · 그 각성 단계로 셉니다.
+        + (grimoire ? Math.min(5, Math.max(0, grimoire.rank)) : 0);
     const species = SKILL_FORMULA.designatedSpecies.reduce((x, id) => x + (book[id] || 0), 0);
-    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s), onyxOwned: onyx7.size, onyxRanks, abyssBest: s.abyssBest || 0, altar: s.altar?.tries || 0, essenceSpent: s.essenceSpent || 0, pearlsMined: s.pearlsMined || 0 };
+    return { codex: discovered + Object.keys(s.itemBook || {}).length, catch: catches, hunt: clears + bosses, species, gold: Math.floor(Math.log10(1 + Math.max(0, s.gold || 0))), rebirth: s.rebirths || 0, variant: variantCatches(s), deaths: s.deaths || 0, turns: Math.floor((s.playMs || 0) / BALANCE.turnMs), str: attr.str, dex: attr.dex, int: attr.int, vit: attr.vit, wis: attr.wis, luk: attr.luk, mastered: masteredJobCount(s), kkami: book[MIMIC_ID] || 0, nuri: book[NURI_ID] || 0, dungeonBoss: regionClears, onyx, cores: regionCores(s).length, coreRanks: regionCoreRanks(s), onyxOwned: onyx7.size + (grimoire ? 1 : 0), onyxRanks, abyssBest: s.abyssBest || 0, altar: s.altar?.tries || 0, essenceSpent: s.essenceSpent || 0, pearlsMined: s.pearlsMined || 0 };
 }
 export function jobMasteryTarget(jobOrId: Job | string) {
     const job = typeof jobOrId === 'string' ? jobById(jobOrId) : jobOrId;

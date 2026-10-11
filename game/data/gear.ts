@@ -114,6 +114,8 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', kind: 'rule', base: .15, stat2: 'controlBonus', base2: 1, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +15%p, 내 기절·침묵·감속 지속 +1턴.' },
     { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', kind: 'rule', base: .1, stat2: 'arcaneRatioBonus', base2: .1, onlyOrigin: 'onyx', description: '칠흑. 마력 평타 확률 +10%p, 마력 평타 배율 +10%p.' },
     { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
+    // v3.276 고통의 근원(진 힐라): 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
+    { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', kind: 'rule', base: .05, stat2: 'executeBonus', base2: .05, uncapped: true, onlyOrigin: 'onyx', description: '칠흑. 흡혈 +5%p(장비 흡혈 상한 없음), 빈사 판정 기준 +5%p.' },
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
     { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강했습니다. v3.188 운영 결정으로 퇴역(retired): 새로 붙지 않고, 이미 붙은 줄은 그대로 작동합니다.

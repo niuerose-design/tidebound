@@ -21,11 +21,11 @@ const scan = (folder, valid) => {
     for (const f of readdirSync(folder).sort()) { const m = f.match(/^(.+)\.(png|webp)$/); if (m && valid.has(m[1]) && out[m[1]] !== 'png') out[m[1]] = m[2]; }
     return out;
 };
-const { ONYX_BOSSES } = await load('game/data/onyx.js');
+const { ONYX_ITEMS } = await load('game/data/onyx.js');
 // v3.216 스토리 삽화(public/art/story): 장 배너는 chapter-{0~5}, 장면은 장면 id.
 const { STORY, STORY_CHAPTERS } = await load('game/data/story.js');
 const storyArt = scan('public/art/story', new Set([...STORY.map(x => x.id), ...STORY_CHAPTERS.map((_, i) => `chapter-${i}`)]));
-const monsterArt = scan('public/art/monsters', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set(ONYX_BOSSES.map(b => b.id)));
+const monsterArt = scan('public/art/monsters', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set([...ONYX_ITEMS.map(d => d.id), 'onyxGrimoire']));
 writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,monsters,jobs,onyx,story} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
 /** 아이콘 이미지가 있는 스킬 id. 없는 스킬은 기본 아이콘을 씁니다(없는 파일을 요청하지 않음). */
 export const SKILL_ART: ReadonlySet<string> = new Set<string>(${JSON.stringify(have)});

@@ -5,6 +5,7 @@ import { onyxArtSrc } from '@/game/data/art';
  * v3.12 칠흑 장신구 그림(64×64 SVG). 원작 장신구의 생김새를 본떠 직접 그린 실루엣·채색이며 원본 이미지는 쓰지 않습니다.
  * 거대한 공포(검붉은 결정과 눈) · 커맨더 포스 이어링(가시 달린 검은 귀걸이) · 루즈 컨트롤 머신 마크(톱니 메달) ·
  * 몽환의 벨트(초승달 버클) · 마력이 깃든 안대(붉은 띠의 안대) · 미트라의 분노(황금 불꽃 태양) · 창세의 뱃지(흰 날개 달린 검은 뱃지).
+ * v3.276 고통의 근원(붉은 맥이 뛰는 검은 결정) · 저주받은 마도서(거미줄이 덮인 보랏빛 책, 칠흑 보스코어).
  */
 const ART: Record<string, ReactNode> = {
     onyxDusk: <>
@@ -57,6 +58,23 @@ const ART: Record<string, ReactNode> = {
             <path d="M12 14l12 4 1 6-6 1zM52 14l-12 4-1 6 6 1zM12 54l12-4 1-6-6-1zM52 54l-12-4-1-6 6-1z"/>
         </g>
         <path d="M20 22c6-4 10-4 12-10 2 6 6 6 12 10" fill="none" stroke="#fff0a0" strokeWidth="1.5"/>
+    </>,
+    onyxPain: <>
+        <path d="M32 4l16 18-6 30-10 8-10-8-6-30z" fill="#1a0a14" stroke="#7a1a3a" strokeWidth="2"/>
+        <path d="M32 4l16 18-16 8-16-8z" fill="#3a0f24"/>
+        <path d="M32 18c-2 8-8 10-6 18s8 6 6 16M32 18c2 8 8 10 6 18s-8 6-6 16" fill="none" stroke="#e0234a" strokeWidth="1.6" strokeLinecap="round"/>
+        <circle cx="32" cy="34" r="5" fill="#ff3a5c"/>
+        <circle cx="32" cy="34" r="2" fill="#ffd6de"/>
+        <path d="M14 26l-6 2M50 26l6 2M22 54l-4 6M42 54l4 6" stroke="#b8325a" strokeWidth="2" strokeLinecap="round"/>
+    </>,
+    onyxGrimoire: <>
+        <path d="M10 12h40a4 4 0 0 1 4 4v38a4 4 0 0 1-4 4H10z" fill="#1c1430" stroke="#6b52b8" strokeWidth="2"/>
+        <path d="M10 12v46h-2a2 2 0 0 1-2-2V14a2 2 0 0 1 2-2z" fill="#3b2a6e"/>
+        <circle cx="32" cy="35" r="11" fill="#120d22" stroke="#a991ff" strokeWidth="1.5"/>
+        <path d="M32 24v22M21 35h22M24 27l16 16M40 27L24 43" stroke="#8c7bd6" strokeWidth="1"/>
+        <circle cx="32" cy="35" r="6" fill="none" stroke="#8c7bd6" strokeWidth="1"/>
+        <circle cx="32" cy="35" r="2.5" fill="#d8ccff"/>
+        <path d="M14 16l8 6M50 16l-8 6M14 54l8-6M50 54l-8-6" stroke="#c7b8ff" strokeWidth="1" opacity=".7"/>
     </>,
     onyxBlackMage: <>
         <path d="M30 6a4 4 0 1 1 4 0v6h-4z" fill="#d6d9e0" stroke="#5a5f6a" strokeWidth="1.5"/>

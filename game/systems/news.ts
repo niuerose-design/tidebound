@@ -4,7 +4,7 @@
  * 같은 모험가의 같은 종류 소식은 하루(한국 시간)에 한 번만 냅니다(진급은 예외). v3.212 보스 코어 새로 얻음 · 완전 각성, 칠흑 각성(매번)도 알립니다. 해커 전직·제단(신·월드보스) 소식은 서버가 따로 올립니다.
  */
 import type { State } from '../types';
-import { ownedOnyx, onyxById } from '../data/onyx';
+import { ownedOnyx, onyxItemById } from '../data/onyx';
 import { RANKS, rankIndex, rankState } from '../data/rank';
 import { jobById } from '../data/classes';
 import { isHackerJob } from '../data/hacker';
@@ -52,7 +52,7 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     s.newsMark = next; delete s.onyxGift;
     if (!prev) return [];
     const found: NewsEvent[] = [];
-    for (const id of next.onyx.filter(x => !prev.onyx.includes(x) && gift[x] !== 0)) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
+    for (const id of next.onyx.filter(x => !prev.onyx.includes(x) && gift[x] !== 0)) { const name = onyxItemById(id)?.name || id; found.push({ kind: 'onyx', text: n => NEWS_TEXT.onyx(n, name, gift[id]) }); }
     if (next.ascension > prev.ascension) found.push({ kind: 'ascend', text: n => NEWS_TEXT.ascend(n, next.ascension) });
     for (const id of next.tier5.filter(x => !prev.tier5.includes(x))) { const job = jobById(id)!; found.push({ kind: 'tier5', text: n => NEWS_TEXT.tier5(n, job.name) }); }
     if (next.abyss > prev.abyss) found.push({ kind: 'abyss', text: n => NEWS_TEXT.abyss(n, next.abyss * NEWS_ABYSS_STEP) });
@@ -64,7 +64,7 @@ export function collectNews(s: State, now: number): NewsEvent[] {
     // v3.212 보스 코어: 표시가 없던 세이브(v3.212 전)는 지금 가진 코어를 알리지 않습니다. 같은 날 두 번째부터는 하루 한 번 제한으로 빠집니다.
     if (prev.cores) for (const id of (next.cores || []).filter(x => !prev.cores!.includes(x))) { const name = BOSS_CORES[id].name, owned = next.cores!.length; found.push({ kind: 'core', text: n => NEWS_TEXT.core(n, name, owned) }); }
     // v3.212 칠흑 각성: 칠흑은 드물어 각성할 때마다 알립니다(하루 한 번 제한 없음). 표시가 없던 세이브와 금고에서 꺼내 합친 각성(onyxGift 0)은 알리지 않습니다.
-    if (prev.onyxRanks) for (const [id, rank] of Object.entries(next.onyxRanks || {})) if (rank > (prev.onyxRanks[id] || 0) && prev.onyx.includes(id) && gift[id] !== 0) { const name = onyxById(id)?.accessory.name || id; found.push({ kind: 'onyxAwaken', text: n => NEWS_TEXT.onyxAwaken(n, name, rank) }); }
+    if (prev.onyxRanks) for (const [id, rank] of Object.entries(next.onyxRanks || {})) if (rank > (prev.onyxRanks[id] || 0) && prev.onyx.includes(id) && gift[id] !== 0) { const name = onyxItemById(id)?.name || id; found.push({ kind: 'onyxAwaken', text: n => NEWS_TEXT.onyxAwaken(n, name, rank) }); }
     if (prev.coreFull) for (const id of (next.coreFull || []).filter(x => !prev.coreFull!.includes(x))) { const name = BOSS_CORES[id].name; found.push({ kind: 'coreAwaken', text: n => NEWS_TEXT.coreAwaken(n, name) }); }
     const today = dayKey(now), out: NewsEvent[] = [];
     // v3.190 진급은 계급이 한 방향으로만 오르므로 하루 한 번 제한을 두지 않습니다(같은 날 두 번 진급해도 둘 다 알림). v3.212 칠흑 각성도 같습니다.

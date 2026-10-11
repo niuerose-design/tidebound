@@ -3,7 +3,7 @@ import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, HUNTER_AFFIX } from '../../data/dunge
 import { affixDef, rollOption, syncOrnateName } from '../../data/gear';
 import { inventoryCap } from '../../data/economy';
 import { STAGES } from '../../data/world';
-import { onyxById } from '../../data/onyx';
+import { onyxItemById } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
 import { grantBossCore, coreForgeBlock, coreForgeCost, forgeCore, type CoreForge } from '../boss-loot';
 import { drop, dropLevel, gainLevels } from '../encounter';
@@ -27,13 +27,13 @@ export const dungeonShopActions: ActionHandlers = {
     /** id: 'onyx:<보스 id>' · 'gearBox' · 'hunter'(value '장비 id|옵션 칸'). */
     dungeonShop(s, { a, id, rng, now }) {
         if (id.startsWith('onyx:')) {
-            const bossId = id.slice(5), offer = onyxOffer(s, bossId, now);
+            const itemId = id.slice(5), offer = onyxOffer(s, itemId, now);
             if (offer.reason) throw Error(offer.reason);
             if (offer.kind === 'craft') room(s);
             pay(s, offer.price);
             countBought(s, 'onyx', now);
-            const habitat = STAGES.find(st => st.habitat && st.region === onyxById(bossId)!.region)?.level || 1;
-            grantOnyx(s, bossId, habitat, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`);
+            const habitat = STAGES.find(st => st.habitat && st.region === onyxItemById(itemId)!.region)?.level || 1;
+            grantOnyx(s, itemId, habitat, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`);
             return;
         }
         if (id === 'coreBox') {

@@ -1356,6 +1356,36 @@ test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0
     s.level = Meta.rebirthLevel(s); act(s, { type: 'rebirth' }, 0); assert.equal(s.inventory.filter(i => i.onyx).length, 7, 'accessories survive rebirth'); assert.equal(s.onyxBook.onyxDusk, 6); assert.deepEqual(s.onyxMiss, { onyxDusk: 1 }, 'miss counter kept (v3.113 a missed awakening roll counts too)');
 });
 
+test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고통의 근원, old 마크 · 안대 stay, nine-piece set', async () => {
+    const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const O = await L.load('data/onyx'), BC = await L.load('data/boss-core'), Enc = await L.load('systems/encounter'), DC = await L.load('systems/dungeon-coins'), G = await L.load('systems/onyx-grant');
+    assert.equal(O.ONYX_TOTAL, 9); assert.equal(O.ONYX_ITEMS.length, 8); assert.ok(BC.BOSS_CORES[O.ONYX_CORE_ID]?.onyx === 'onyxWill');
+    assert.ok(!BC.REGION_CORE_IDS.includes(O.ONYX_CORE_ID) && !BC.ABYSS_CORE_IDS.includes(O.ONYX_CORE_ID), 'the grimoire is not in chests or Mu Lung');
+    const hunt = (stage, roll) => { const s = newState(0); s.level = 90; s.rebirths = 10; s.kills = 5000; s.stage = stage; s.tide = 0; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => roll); return s; };
+    // 윌: 같은 확률 · 천장으로 보스코어(장신구 아님). 처음 얻으면 비어 있던 코어 칸에 낍니다.
+    const w = hunt('perionSwarm', .5); assert.equal(w.onyxMiss.onyxWill, 1); assert.equal(w.bossCores?.[O.ONYX_CORE_ID], undefined); assert.ok(w.logs.some(l => l.text.includes('저주받은 마도서을(를) 남기지')));
+    w.onyxMiss.onyxWill = O.ONYX.dropPity - 1; Enc.spawn(w, () => 0); w.enemy.hp = 0; Enc.reward(w, () => .99);
+    assert.equal(BC.coreEntry(w.bossCores[O.ONYX_CORE_ID]).rank, 0, 'pity guarantees the grimoire'); assert.ok(!w.inventory.some(i => i.onyx), 'no accessory from Will'); assert.equal(w.coreSlot, O.ONYX_CORE_ID); assert.equal(O.onyxCollected(w), 1);
+    const pearls = w.pearls; Enc.spawn(w, () => 0); w.enemy.hp = 0; Enc.reward(w, () => .001); assert.equal(BC.coreEntry(w.bossCores[O.ONYX_CORE_ID]).rank, 1, 'a repeat drop awakens the core'); assert.equal(w.pearls, pearls + O.ONYX.duplicatePearls);
+    assert.ok(Math.abs(stats(w).statusResist - stats({ ...w, bossCores: {} }).statusResist - .1 * 1.1) < 1e-9, 'worn grimoire: status resist +10%p × awaken 1');
+    // 진 힐라: 고통의 근원(흡혈 · 처형). 이미 가진 안대는 그대로 남고 각성되지 않습니다.
+    const h = newState(0); h.level = 90; h.rebirths = 10; h.kills = 5000; h.stage = 'kerningSwarm'; h.tide = 0;
+    const patch = O.onyxAccessory(O.onyxItemById('onyxHilla'), 'patch', 60); patch.onyxRank = 2; h.inventory.push(patch); h.onyxBook = { onyxHilla: 3 };
+    Enc.spawn(h, () => 0); assert.equal(h.enemy.onyx, 'onyxHilla'); h.enemy.hp = 0; Enc.reward(h, () => .001);
+    const pain = h.inventory.find(i => i.onyx === 'onyxPain'); assert.ok(pain && pain.affixes[0].id === 'onyxSoul' && pain.affixes[0].stat === 'lifesteal' && pain.affixes[0].stat2 === 'executeBonus');
+    assert.equal(patch.onyxRank, 2, 'the old eye patch keeps its awakening'); assert.equal(O.onyxCollected(h), 2);
+    // 상점 · 환생 이정표: 지금 주는 보스가 없는 장신구(마크 · 안대)는 팔지 않고, 고통의 근원은 진 힐라 처치로 열립니다.
+    assert.match(DC.onyxOffer(h, 'onyxHilla').reason, /얻을 수 없는/); assert.match(DC.onyxOffer(h, 'onyxWill').reason, /얻을 수 없는/); assert.equal(DC.onyxOffer(h, 'onyxPain').kind, 'awaken');
+    assert.ok(O.ONYX_DROP_ITEMS.every(i => i.boss) && !O.ONYX_DROP_ITEMS.some(i => i.id === 'onyxWill' || i.id === 'onyxHilla'));
+    const m = newState(0); m.rebirths = 100; G.grantOnyxMilestones(m, () => .99); assert.ok(m.inventory.filter(i => i.onyx).every(i => O.onyxItemById(i.onyx).boss), 'milestones only give obtainable accessories');
+    // 고통의 근원 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
+    const ls = newState(0); ls.level = 60; ls.equipment.charm = O.onyxAccessory(O.onyxItemById('onyxPain'), 'p', 60); assert.ok(stats(ls).lifesteal >= .05 - 1e-9 && stats(ls).executeBonus >= .05 - 1e-9);
+    // 9종: 장신구 8 + 마도서. 9종 세트는 보스 피해 +10%가 더 붙습니다.
+    const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
+    assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
+    assert.equal(O.onyxCollected(all), 9); assert.ok(Math.abs(O.onyxSetBonus(9).bossDamage - b8 - .1) < 1e-9);
+});
+
 test('v3.13 live rates: client-side window from logs and kill deltas (exp/gold/mastery/dps per hour), min time, gap and rebirth restart', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const R = await L.load('systems/live-rates');
@@ -1424,9 +1454,9 @@ test('v3.15 altar: offering to a world-boss gauge no longer throws (503) and log
     assert.ok(s.logs.at(-1).text.includes(D.gaugeName(raid.id)), s.logs.at(-1).text); assert.equal(s.gold, 1e6 - 100000);
     A.applyOffering(s, { gold: 1000, pearls: 0, essence: 0 }, 1, 'god', false); assert.ok(s.logs.at(-1).text.includes('신 소환'));
 });
-test('v3.15 onyx achievements: one per piece (SP/AP alternating) and a big 7-piece reward', async () => {
+test('v3.15 onyx achievements: one per piece (SP/AP alternating) and big 7- and 9-piece rewards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame(); const { ACHIEVEMENTS } = await L.load('data/achievements');
-    const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7]);
+    const steps = ACHIEVEMENTS.filter(a => a.id.startsWith('onyx:')); assert.deepEqual(steps.map(a => a.target), [1, 2, 3, 4, 5, 6, 7, 8, 9], 'v3.276 nine onyx (8 accessories + grimoire)');
     for (const a of steps) assert.ok((a.reward.sp || 0) + (a.reward.ap || 0) >= 1, `${a.id} grants SP or AP`);
     const last = steps.at(-1); assert.ok(last.reward.sp >= 2 && last.reward.ap >= 2 && last.reward.pearls >= 50, 'completion reward is strong');
 });
@@ -1632,7 +1662,7 @@ test('v3.113 onyx awakening and resonance: a repeat drop raises the owned access
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const Enc = await L.load('systems/encounter'), O = await L.load('data/onyx'), Eq = await L.load('systems/equipment');
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 0;
-    const acc = O.onyxAccessory(O.ONYX_BOSSES[0], 'dusk', 60); s.inventory.push(acc);
+    const acc = O.onyxAccessory(O.ONYX_ITEMS[0], 'dusk', 60); s.inventory.push(acc);
     const thorns = () => Eq.itemStats(acc).thorns;
     const base = thorns(); assert.ok(Math.abs(base - .1) < 1e-9, 'unique thorns .1');
     // 공명: 착용하지 않은 더스크 → 가시 .1 × 10%.
@@ -1646,7 +1676,7 @@ test('v3.113 onyx awakening and resonance: a repeat drop raises the owned access
     s.onyxMiss.onyxDusk = O.ONYX.dropPity - 1; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .99); assert.equal(acc.onyxRank, 2, 'pity applies to awakening');
     acc.onyxRank = O.ONYX.awakenMax; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => .001); assert.equal(acc.onyxRank, O.ONYX.awakenMax, 'capped'); assert.ok(s.logs.some(l => l.text.includes('각성 완료')));
     // 제어 연장(턴)은 각성 · 공명을 받지 않습니다.
-    const will = O.onyxAccessory(O.ONYX_BOSSES.find(b => b.id === 'onyxWill'), 'will', 60); will.onyxRank = 5;
+    const will = O.onyxAccessory(O.onyxItemById('onyxWill'), 'will', 60); will.onyxRank = 5;
     assert.equal(Eq.itemStats(will).controlBonus, 1); assert.equal(O.onyxResonance({ inventory: [will], equipment: {} }).controlBonus, undefined);
 });
 

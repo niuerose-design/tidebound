@@ -19,7 +19,9 @@ import { completedStages, itemKey } from '@/game/systems/progression';
 import { BookResearch, RegionProgress, RegionResearchLine, pendingBookCount } from './book-research';
 import { stats, goldMultiplier, expMultiplier, hitChance, dropRate } from '@/game/systems/stats';
 import { ENEMY_SKILLS, profile, scaledEnemyStats, abyssEnemyStats } from '@/game/data/encounters';
-import { ONYX, ONYX_BOSSES, ONYX_SET, ownedOnyx, onyxCodexKey } from '@/game/data/onyx';
+import { ONYX, ONYX_BOSSES, ONYX_ITEMS, ONYX_SET, ONYX_TOTAL, ONYX_CORE_ID, onyxCollected, onyxCodexKey, onyxById } from '@/game/data/onyx';
+import { BOSS_CORES, BOSS_CORE_RULES, coreEntry } from '@/game/data/boss-core';
+import { onyxDropName, onyxDropRank } from '@/game/systems/onyx-grant';
 import { OnyxArt } from './onyx-art';
 import { affixDef } from '@/game/data/gear';
 import { abyssReference, stageField } from '@/game/systems/encounter';
@@ -164,16 +166,18 @@ export function Collection({ s, send, busy }: PanelProps) {
             </article>;
         })}</div>
         </details><details className="book-section book-region boss-book-section onyx-book-section">
-        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>칠흑의 보스</h2><span>{ONYX_BOSSES.filter(b => ownedOnyx(s).has(b.id)).length} / {ONYX_BOSSES.length} 장신구 보유</span></summary>
-        {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}, 같은 확률로 각성 +1 · 최대 {ONYX.awakenMax}단계 · 고유 옵션 단계당 +{Math.round(ONYX.awakenStep * 100)}%). 착용하지 않은 칠흑도 고유 옵션의 {Math.round(ONYX.resonance * 100)}%를 공명으로 줍니다. 환생 50 · 100회에 닿으면 무작위 칠흑을 하나씩 받습니다(캐릭터마다 한 번). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
-        : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}, 같은 확률 · 천장으로 각성 +1 · 최대 {ONYX.awakenMax}단계 · 고유 옵션 단계당 +{Math.round(ONYX.awakenStep * 100)}%). 착용하지 않은 칠흑도 고유 옵션의 {Math.round(ONYX.resonance * 100)}%를 공명으로 줍니다(제어 연장 제외). 환생 50 · 100회에 닿으면 무작위 칠흑을 하나씩 받습니다(캐릭터마다 한 번, 승천 뒤 다시 받지 않음, 가진 종이면 각성). 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
-        <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={ownedOnyx(s).size >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{ownedOnyx(s).size >= b.count ? ' ✓' : ''}</li>)}</ul>
-        <div className="book-grid">{ONYX_BOSSES.map(b => { const f = monsterById(b.id)!, n = s.onyxBook?.[b.id] || 0, got = ownedOnyx(s).has(b.id), def = affixDef(b.accessory.affix.id), own = got ? [...s.inventory, ...Object.values(s.equipment)].find(x => x?.onyx === b.id) : undefined, worn = !!own && Object.values(s.equipment).some(x => x?.id === own.id);
+        <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>칠흑의 보스</h2><span>{onyxCollected(s)} / {ONYX_TOTAL} 칠흑 보유</span></summary>
+        {secret ? <p className="footnote">무리 서식지에서 드물게 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 낮은 확률로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고(오래 못 얻으면 반드시 받음), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}, 같은 확률로 각성 +1 · 최대 {ONYX.awakenMax}단계 · 고유 옵션 단계당 +{Math.round(ONYX.awakenStep * 100)}%). 착용하지 않은 칠흑도 고유 옵션의 {Math.round(ONYX.resonance * 100)}%를 공명으로 줍니다. 환생 50 · 100회에 닿으면 무작위 칠흑을 하나씩 받습니다(캐릭터마다 한 번). 윌은 장신구 대신 칠흑 보스코어 ‘저주받은 마도서’(보스 코어 칸 · 같은 확률 · 천장 · 각성)를 줍니다. 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>
+        : <p className="footnote">무리 서식지에서만 출현마다 {Math.round(ONYX.chance * 1000) / 10}%(난이도 50마다 +100%, {ONYX.pity.toLocaleString()}회 못 보면 확정)로 나타나는 지역 보스입니다. 집중 사냥 대상이 될 수 없고 {ONYX.turns}턴 안에 못 잡으면 떠납니다. 처치하면 {Math.round(ONYX.drop * 1000) / 10}%로 그 보스의 칠흑 장신구(태초 · 고유 옵션 1줄 + 최고 굴림 무작위 {ONYX.affixes}줄 · 위력은 골드로 레벨을 올려 키움 · 강화 파괴 시 {STARFORCE.relicResetStar}성으로)를 받고({ONYX.dropPity}번째 연속 미획득 격파는 확정), 장신구는 환생해도 남습니다(종당 1개, 이미 있으면 세계석 +{ONYX.duplicatePearls}, 같은 확률 · 천장으로 각성 +1 · 최대 {ONYX.awakenMax}단계 · 고유 옵션 단계당 +{Math.round(ONYX.awakenStep * 100)}%). 착용하지 않은 칠흑도 고유 옵션의 {Math.round(ONYX.resonance * 100)}%를 공명으로 줍니다(제어 연장 제외). 환생 50 · 100회에 닿으면 무작위 칠흑을 하나씩 받습니다(캐릭터마다 한 번, 승천 뒤 다시 받지 않음, 가진 종이면 각성). 윌은 장신구 대신 칠흑 보스코어 ‘저주받은 마도서’(보스 코어 칸 · 같은 확률 · 천장 · 각성)를 줍니다. 보스마다 쓰는 기술이 다르니 도감 성향을 확인하세요.</p>}
+        <ul className="bonus-rows">{ONYX_SET.map(b => <li key={b.count} className={onyxCollected(s) >= b.count ? 'done' : ''}><b>{b.count}종 보유</b> · <span>{b.label}</span>{onyxCollected(s) >= b.count ? ' ✓' : ''}</li>)}</ul>
+        <div className="book-grid">{ONYX_BOSSES.map(b => { const f = monsterById(b.id)!, n = s.onyxBook?.[b.id] || 0, rank = onyxDropRank(s, b), got = rank >= 0, core = 'core' in b.drop ? BOSS_CORES[b.drop.core] : undefined, charm = 'charm' in b.drop ? ONYX_ITEMS.find(x => x.id === (b.drop as { charm: string }).charm) : undefined;
+            const desc = core ? core.desc : charm ? affixDef(charm.affix.id)?.description || charm.desc : '', artId = core ? ONYX_CORE_ID : charm?.id || b.id;
+            const own = charm && got ? ownedItems(s).find(x => x?.onyx === charm.id) : undefined, worn = core ? s.coreSlot === ONYX_CORE_ID : !!own && Object.values(s.equipment).some(x => x?.id === own.id);
             return <article className={`panel book-card boss-book-card ${!n ? 'undiscovered' : ''}`} key={b.id}>
-                <div className="book-icon onyx-book-icon"><MonsterArt id={b.id} size={48} boss/><OnyxArt id={b.id} size={44} className={got ? 'owned' : ''}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
+                <div className="book-icon onyx-book-icon"><MonsterArt id={b.id} size={48} boss/><OnyxArt id={artId} size={44} className={got ? 'owned' : ''}/><span>{n ? `${n}회 격파` : '미발견'}</span></div>
                 <h3>{b.name} <small className="monster-rarity legendary">{b.region} 서식지</small></h3>
                 <p>{f.lore}</p>
-                <div className="monster-trait"><strong>{got ? '✓ ' : ''}{b.accessory.name}{own ? ` · 각성 ${own.onyxRank || 0}/${ONYX.awakenMax}` : ''}</strong><span>{def?.description || b.accessory.desc}</span>{own && <small>{worn ? '착용 중(고유 옵션 전부)' : `공명 중(고유 옵션 ${Math.round(ONYX.resonance * 100)}%)`}{own.onyxRank ? ` · 각성 +${Math.round(own.onyxRank * ONYX.awakenStep * 100)}%` : ''}</small>}</div>
+                <div className="monster-trait"><strong>{got ? '✓ ' : ''}{onyxDropName(b)}{core ? ' (칠흑 보스코어)' : ''}{got ? ` · 각성 ${rank}/${ONYX.awakenMax}` : ''}</strong><span>{desc}</span>{got && <small>{worn ? (core ? '보스 코어 칸에 장착(효과 전부)' : '착용 중(고유 옵션 전부)') : `공명 중(${core ? '효과' : '고유 옵션'} ${Math.round((core ? BOSS_CORE_RULES.resonance : ONYX.resonance) * 100)}%)`}{rank ? ` · 각성 +${Math.round(rank * ONYX.awakenStep * 100)}%` : ''}</small>}</div>
             </article>; })}</div>
         </details></TabsContent>
     <TabsContent value="items">
@@ -198,7 +202,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     </AlertDialog>
     </div>
     <details className="book-section item-book-section" open>
-    <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>장비 종류</h2><span>{itemFilter === 'all' ? `${registeredCount} / ${Object.keys(SLOTS).length * RARITIES.length + ONYX_BOSSES.length}종 등록` : itemFilter === 'onyx' ? `칠흑 ${ONYX_BOSSES.filter(b => s.itemBook[onyxCodexKey(b.id)]).length} / ${ONYX_BOSSES.length}` : `${RARITIES[itemFilter].name} ${Object.keys(SLOTS).filter(slot => s.itemBook[itemKey(slot, itemFilter)]).length} / ${Object.keys(SLOTS).length}`}</span></summary>
+    <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>장비 종류</h2><span>{itemFilter === 'all' ? `${registeredCount} / ${Object.keys(SLOTS).length * RARITIES.length + ONYX_ITEMS.length}종 등록` : itemFilter === 'onyx' ? `칠흑 ${ONYX_ITEMS.filter(d => s.itemBook[onyxCodexKey(d.id)]).length} / ${ONYX_ITEMS.length}` : `${RARITIES[itemFilter].name} ${Object.keys(SLOTS).filter(slot => s.itemBook[itemKey(slot, itemFilter)]).length} / ${Object.keys(SLOTS).length}`}</span></summary>
     <div className="item-filter" role="tablist" aria-label="등급별 보기">
         <button type="button" role="tab" aria-selected={itemFilter === 'all'} className={itemFilter === 'all' ? 'primary small' : 'secondary small'} onClick={() => setItemFilter('all')}>전체</button>
         {RARITIES.map((r, i) => <button type="button" role="tab" key={r.name} aria-selected={itemFilter === i} className={itemFilter === i ? 'primary small' : 'secondary small'} style={{ '--rarity': r.color } as React.CSSProperties} onClick={() => setItemFilter(i)}><i className="item-filter-dot"/>{r.name}</button>)}
@@ -233,15 +237,23 @@ export function Collection({ s, send, busy }: PanelProps) {
             </AlertDialogContent>
             </AlertDialog>
             </article>;
-        }))}{(itemFilter === 'all' || itemFilter === 'onyx') && ONYX_BOSSES.map(b => { const registered = !!s.itemBook[onyxCodexKey(b.id)], top = RARITIES[RARITIES.length - 1];
-            return <article className={`panel item-card onyx-item-card onyx-frame ${registered ? '' : 'unregistered'}`} style={{ '--rarity': top.color } as React.CSSProperties} key={b.id}>
+        }))}{(itemFilter === 'all' || itemFilter === 'onyx') && ONYX_ITEMS.map(d => { const registered = !!s.itemBook[onyxCodexKey(d.id)], top = RARITIES[RARITIES.length - 1], boss = d.boss ? onyxById(d.boss) : undefined, own = ownedItems(s).find(x => x?.onyx === d.id);
+            return <article className={`panel item-card onyx-item-card onyx-frame ${registered ? '' : 'unregistered'}`} style={{ '--rarity': top.color } as React.CSSProperties} key={d.id}>
             <div className="item-top"><span>칠흑 · {top.name}급</span><small>{registered ? '등록 완료' : '미획득'}</small></div>
-            <div className="item-icon"><OnyxArt id={b.id} size={36}/></div>
-            <h3><span className="onyx-name">{b.accessory.name}</span></h3>
-            <p>{b.name} 격파 보상 · {secret ? `장비 드롭 보너스 +${perEntryBonus}%` : `장비 드롭 확률 +${percent(perEntryDrop, 4)}p`}</p>
-            <OnyxPity s={s} bossId={b.id} owned={ownedOnyx(s).has(b.id)}/>
+            <div className="item-icon"><OnyxArt id={d.id} size={36}/></div>
+            <h3><span className="onyx-name">{d.name}</span></h3>
+            <p>{boss ? `${boss.name} 격파 보상` : '지금은 떨어뜨리는 칠흑 보스가 없습니다'} · {secret ? `장비 드롭 보너스 +${perEntryBonus}%` : `장비 드롭 확률 +${percent(perEntryDrop, 4)}p`}</p>
+            {boss ? <OnyxPity s={s} bossId={boss.id} rank={own ? own.onyxRank || 0 : -1}/> : own && <p className="onyx-pity">각성 {own.onyxRank || 0}/{ONYX.awakenMax} · 가진 장신구는 그대로 씁니다</p>}
             <button className="secondary" disabled>{registered ? '영구 보너스 적용 중' : '얻으면 자동 등록(소모 없음)'}</button>
-            </article>; })}</div>
+            </article>; })}{(itemFilter === 'all' || itemFilter === 'onyx') && (() => { const core = BOSS_CORES[ONYX_CORE_ID], boss = ONYX_BOSSES.find(b => 'core' in b.drop)!, e = coreEntry(s.bossCores?.[ONYX_CORE_ID]), top = RARITIES[RARITIES.length - 1];
+            return <article className={`panel item-card onyx-item-card onyx-frame ${e ? '' : 'unregistered'}`} style={{ '--rarity': top.color } as React.CSSProperties} key={ONYX_CORE_ID}>
+            <div className="item-top"><span>칠흑 · 보스 코어</span><small>{e ? '보유' : '미획득'}</small></div>
+            <div className="item-icon"><OnyxArt id={ONYX_CORE_ID} size={36}/></div>
+            <h3><span className="onyx-name">{core.name}</span></h3>
+            <p>{boss.name} 격파 보상 · {core.desc}</p>
+            <OnyxPity s={s} bossId={boss.id} rank={e ? Math.min(BOSS_CORE_RULES.awakenMax, e.rank) : -1}/>
+            <button className="secondary" disabled>{e ? (s.coreSlot === ONYX_CORE_ID ? '보스 코어 칸에 장착 중' : '보스 코어 칸에서 장착') : '얻으면 보스 코어 칸에 들어갑니다'}</button>
+            </article>; })()}</div>
     </details>
     </TabsContent>
     <TabsContent value="bonus">
@@ -295,8 +307,8 @@ export function Collection({ s, send, busy }: PanelProps) {
  * v3.276 칠흑 장신구 천장: 이 보스를 연속으로 못 얻은 격파 수 / 천장(그 번째 격파는 확정). 이미 가진 장신구는 같은 천장으로 각성 단계가 오릅니다.
  * 천장 수가 비공개(확률 비공개 모드)면 연속 미획득 횟수만 보여 줍니다.
  */
-function OnyxPity({ s, bossId, owned }: { s: State; bossId: string; owned: boolean }) {
-    const miss = s.onyxMiss?.[bossId] || 0, pity = ONYX.dropPity, rank = ownedItems(s).find(x => x?.onyx === bossId)?.onyxRank || 0;
+function OnyxPity({ s, bossId, rank }: { s: State; bossId: string; rank: number }) {
+    const miss = s.onyxMiss?.[bossId] || 0, pity = ONYX.dropPity, owned = rank >= 0;
     if (owned && rank >= ONYX.awakenMax) return <p className="onyx-pity done">각성 완료 {ONYX.awakenMax}/{ONYX.awakenMax}</p>;
     const label = owned ? `각성 ${rank}/${ONYX.awakenMax} · 다음 각성 천장` : '획득 천장';
     if (!Number.isFinite(pity)) return <p className="onyx-pity">{label} · 연속 미획득 {miss.toLocaleString()}회</p>;
