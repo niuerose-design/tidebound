@@ -729,9 +729,9 @@ test('v3.129 slot redistribution: coat / cape / charm share hp and both defenses
     assert.equal(rod.attack, 140); assert.equal(Math.round(rod.mana), 30, 'weapon gives mana'); assert.equal(rod.hp, undefined, 'weapon gives no hp');
     // v3.129 기본 방어 · 마방 레벨당 값은 그대로(3 + 1 · 3 + .7), 지능 → 마방 .25만 추가(v3.136 체질 → 마방 .4는 제거). 방어 · 마방은 탱커 계보 패시브로 채우는 것이 의도.
     const { stats } = await L.load('systems/stats'), { BALANCE } = await L.load('data/balance'), { ATTRIBUTE_EFFECTS } = await L.load('data/progression');
-    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, .6, 'v3.302 .25 → .3 → v3.303 .6');
+    assert.deepEqual([BALANCE.baseDefense, BALANCE.defensePerLevel, BALANCE.baseResist, BALANCE.resistPerLevel], [3, 1, 3, .7]); assert.equal(ATTRIBUTE_EFFECTS.vit.resist, undefined); assert.equal(ATTRIBUTE_EFFECTS.int.resist, undefined, 'v3.303 resist comes only from wis');
     const b = newState(0); b.level = 100; b.attributes = { str: 0, dex: 0, int: 0, vit: 0, wis: 0, luk: 0 }; b.statPoints = 0; const r0 = stats(b).resist; b.attributes.vit = 100; const r1 = stats(b).resist; b.attributes.vit = 0; b.attributes.int = 100; const r2 = stats(b).resist;
-    assert.ok(r1 === r0 && r2 > r0, 'v3.136 only int raises resist; vit no longer does');
+    assert.ok(r1 === r0 && r2 === r0, 'v3.303 neither vit nor int raises resist (wis only)');
     assert.equal(Math.round(coat.hp + cape.hp + charm.hp), 432, 'four-slot hp total (800 before v3.302 ×0.9 · v3.303 ×0.6)');
 });
 test('v3.131 heir refine above 100% is a thin tail (15%, steeper upward) and refine essence grows ×1.1 with a rebirth factor', async () => {

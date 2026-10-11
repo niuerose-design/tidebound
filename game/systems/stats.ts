@@ -101,9 +101,9 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
     set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
     set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic);
-    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense); add('defense', 'attributes', v.str * E.str.defense);
-    // v3.129 마방도 체질 · 지능에서 조금 받습니다(방어가 체질 · 근력에서 받는 것과 대칭). 정신 없는 물리 빌드의 마방이 0에 가깝던 것.
-    set('resist', 'base', BALANCE.baseResist + (s.level - 1) * BALANCE.resistPerLevel); add('resist', 'attributes', v.wis * E.wis.resist); add('resist', 'attributes', v.int * E.int.resist);
+    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense);
+    // v3.303 방어는 체질, 마방은 지혜에서만 받습니다(v3.129의 근력 → 방어 · 지능 → 마방 삭제).
+    set('resist', 'base', BALANCE.baseResist + (s.level - 1) * BALANCE.resistPerLevel); add('resist', 'attributes', v.wis * E.wis.resist);
     set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
     set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
     set('goldenFind', 'base', BALANCE.goldenBase);
