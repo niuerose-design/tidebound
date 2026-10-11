@@ -21,6 +21,26 @@ const RAW: TrainingJob[] = [
     { id: 'trainingHybrid', name: '복합 수련', title: '두 손을 함께 쓰는 법', desc: '복합 계열의 기초 패시브 넷(물리·마법 공격 · 체력/마나 · 명중/속도 · 두 회복)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'hybrid', requires: { str: 8, int: 8 } },
     { id: 'trainingSupport', name: '보조 수련', title: '발걸음과 지도', desc: '보조 계열의 기초 패시브 넷(드롭/골드 · 회피/속도 · 경험치 · 명중/치명)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'support', requires: { dex: 10 } },
 ];
+/**
+ * v3.300 수련 직업 제약: 수련 직업으로 있는 동안만(패시브를 계승해 쓰는 다른 직업은 없음). 계열마다 하나, 수련(1차) → 능력치 수련 I · II · III으로 갈수록 셉니다.
+ * 막기(물리 · 마법)는 70 · 80 · 90 · 100%, 나머지는 60 · 70 · 80 · 90%.
+ */
+export const TRAINING_RESTRAINT: Record<Exclude<JobTreeId, 'mystery'>, { steps: number[]; label: string }> = {
+    physical: { steps: [.7, .8, .9, 1], label: '마법 공격(마법 피해 · 복합 피해의 마법 몫)' },
+    magic: { steps: [.7, .8, .9, 1], label: '물리 공격(물리 피해)' },
+    defense: { steps: [.6, .7, .8, .9], label: '물리 방어 · 마법 방어' },
+    status: { steps: [.6, .7, .8, .9], label: '지속 피해(출혈 · 중독 · 화상)' },
+    hybrid: { steps: [.6, .7, .8, .9], label: '물리 공격 · 마법 공격' },
+    support: { steps: [.6, .7, .8, .9], label: '경험치 · 골드 · 장비 획득' },
+};
+/** 수련 직업(subRole 'training')의 제약: 계열과 줄이는 비율(0~1). 수련 직업이 아니면 undefined. */
+export function trainingRestraint(j: { subRole?: string; tree: JobTreeId; tier: number } | undefined) {
+    if (!j || j.subRole !== 'training' || j.tree === 'mystery') return undefined;
+    const r = TRAINING_RESTRAINT[j.tree];
+    return { tree: j.tree, amount: r.steps[Math.min(r.steps.length, Math.max(1, j.tier)) - 1], label: r.label };
+}
+/** 수련 직업 설명 끝에 붙는 제약 문구. */
+export const restraintText = (j: Parameters<typeof trainingRestraint>[0]) => { const r = trainingRestraint(j); return r ? `수련 제약: 이 직업으로 있는 동안 ${r.label} −${Math.round(r.amount * 100)}%.` : ''; };
 /** 수련 직업 보정(초안). */
 export const TRAINING_PENALTY = { attack: .35, magic: .35, hp: .4, reward: .35 };
 /** 수련 패시브: 효과 배율(3차 패시브 수준)과 숙련 단계(3차 직업 스킬과 같음). oldFirst는 예전 계승 기준(옛 세이브 보존용). */
@@ -45,7 +65,7 @@ export const TRAINING_SKILLS: Skill[] = [
 const UNSCALED = new Set(['swarmFind', 'dotTurnsBonus']);
 export const scaleTrainingBonus = (bonus: Record<string, number>) => Object.fromEntries(Object.entries(bonus).map(([k, v]) => [k, UNSCALED.has(k) ? v : Number.isInteger(v) ? Math.round(v * TRAINING_PASSIVE.scale) : Math.round(v * TRAINING_PASSIVE.scale * 1000) / 1000]));
 export const TRAINING_JOBS = RAW.map(j => ({
-    ...j, attack: TRAINING_PENALTY.attack, magic: TRAINING_PENALTY.magic, hp: TRAINING_PENALTY.hp, defense: 1, resist: 1, crit: 0,
+    ...j, desc: `${j.desc} ${restraintText({ subRole: 'training', tree: j.tree, tier: 1 })}`, attack: TRAINING_PENALTY.attack, magic: TRAINING_PENALTY.magic, hp: TRAINING_PENALTY.hp, defense: 1, resist: 1, crit: 0,
     tier: 1, level: 10, mastery: 0, role: '수련·계승 재료', lineage: `${j.tree}-independent`, branchless: true, fullKit: true, subRole: 'training' as const, rewardScale: TRAINING_PENALTY.reward,
 }));
 /** 새 수련 직업 → 합쳐지는 옛 수련 직업(11.8-1). 지도 제작자는 둘로 나뉩니다(교란 → 마법, 측량 → 보조). */

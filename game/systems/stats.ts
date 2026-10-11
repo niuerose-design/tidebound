@@ -15,6 +15,7 @@ import { sproutExp, sproutCount } from '../data/sprout';
 import { ascensionEarlyExp } from '../data/ascension';
 import { skillById } from '../data/skills';
 import { STAT_TRAINING_GROWTH } from '../data/stat-training';
+import { trainingRestraint } from '../data/training';
 import { regionThemes } from './book';
 import { achievementTotals } from '../data/achievements';
 import { accountExpGold, accountPower, accountCrit } from '../data/account';
@@ -25,7 +26,7 @@ import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jo
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
-export function normalizeStats(a: Stats): CombatStats { return { expBonus: 0, goldBonus: 0, dropBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, combatScale: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
+export function normalizeStats(a: Stats): CombatStats { return { dotScale: 1, expBonus: 0, goldBonus: 0, dropBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, harmony: 0, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, combatScale: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, catchPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
 export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'support', 'equipment', 'limit'] as const;
 export type StatSource = typeof STAT_SOURCES[number];
@@ -113,7 +114,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
     add('hpRegen', 'attributes', v.vit * E.vit.hpRegen);
     set('harmony', 'attributes', harmonyPower(s));
-    set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') }));
+    set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') * (trainingRestraint(j)?.tree === 'magic' ? 0 : 1) }));
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     // v3.202 세계석 연구 ‘던전 탐험 I’: 던전 주화 +10%/단계.
@@ -219,6 +220,12 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     if (powerSaving(s)) for (const k of ['attack', 'magic'] as const) mul(k, [['job', j.powerSave ?? FUEL.powerSave]]);
     mul('defense', [['job', mult(j.defense)], ['achievement', 1 + feats.defense]]);
     mul('resist', [['job', mult(j.resist)], ['achievement', 1 + feats.resist]]);
+    // v3.300 수련 제약(수련 직업으로 있는 동안만): 물리 수련 마법 공격 · 마법 수련 물리 공격 · 방어 수련 두 방어 · 복합 수련 두 공격을 줄이고, 상태이상 수련은 지속 피해 배율(dotScale)을 낮춥니다. 보조 수련은 보상(jobReward · dropRate).
+    const restraint = trainingRestraint(j), keep = 1 - (restraint?.amount ?? 0);
+    if (restraint?.tree === 'physical' || restraint?.tree === 'hybrid') mul('magic', [['job', keep]]);
+    if (restraint?.tree === 'magic' || restraint?.tree === 'hybrid') mul('attack', [['job', keep]]);
+    if (restraint?.tree === 'defense') { mul('defense', [['job', keep]]); mul('resist', [['job', keep]]); }
+    if (restraint?.tree === 'status') set('dotScale', 'job', keep);
     const dedication = thresholdRank(s.jobMastery?.[s.job] || 0, vocationTargets(jobMasteryTarget(j)));
     const memory = rebirthMemory(s.rebirths) * (1 + dedication * .04);
     for (const key of ['hp', 'attack', 'magic', 'defense', 'resist'] as const) mul(key, [['rebirth', memory]]);
@@ -235,6 +242,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // 올라운드 밸런스: 공격력과 같은 연구·환생·직업 배율을 받고, 서로 다른 직업의 능력치 패시브를 빌려 올수록 강해집니다.
     mul('harmony', [['job', mult((j.attack + j.magic) / 2) * SKILL_FORMULA.harmonyScale], ['research', 1 + (s.permanent.attack || 0) * .05], ['rebirth', memory],
         ['skills', 1 + Math.min(SKILL_FORMULA.harmonyJobCap, passiveJobs.size) * SKILL_FORMULA.harmonyPerJob]]);
+    if (restraint?.tree === 'hybrid') mul('harmony', [['job', keep]]);
     // 반격은 방어 친화도만큼만 발휘됩니다.
     mul('thorns', [['job', a.guardAffinity]]);
     mul('defense', [['research', 1 + (s.permanent.guard || 0) * .03]]);
@@ -274,7 +282,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
 export function dropRate(s: State, a = stats(s)) {
     const bonus = a.dropBonus || 0;
     // v27.86 힘의 길 보상은 드롭 상한 뒤에 곱합니다(난이도 하한 미만이면 ×1).
-    return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * (s.event?.drop || 1)) * roughReward(s, encounterTier(s));
+    return Math.min(BALANCE.dropChanceCap, BALANCE.dropChance * (1 + bonus / BALANCE.dropBonusScale) * (s.event?.drop || 1)) * roughReward(s, encounterTier(s)) * supportRestraint(s);
 }
 /**
  * v3.66 전투력: 실제 전투식에 맞춘 공격 기대값과 버티는 힘의 기하평균. 예전 식(공격·체력·방어를 단순 합산)은 치명타 피해·극 치명타·관통·연속 행동이 빠지고
@@ -341,7 +349,9 @@ export const focusGold = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vow
 export const focusExp = (s: Pick<State, 'vows' | 'stage' | 'dungeon'>) => s.vows?.focus?.kind === 'gold' ? .75 : s.vows?.focus?.kind === 'stage' && !s.dungeon && s.stage === s.vows.focus.id ? 1.5 : 1;
 // v27.79 계정(분신) 보너스는 곱연산 배율입니다(accountExpGold ≤ ×1.3).
 /** v3.69 수련 직업으로 사냥할 때의 처치 보상 배율(data/training.ts). */
-const jobReward = (s: State) => jobById(s.job)?.rewardScale ?? 1;
+const jobReward = (s: State) => (jobById(s.job)?.rewardScale ?? 1) * supportRestraint(s);
+/** v3.300 보조 수련 제약: 경험치 · 골드 · 장비 획득 배율. */
+const supportRestraint = (s: State) => { const r = trainingRestraint(jobById(s.job)); return r?.tree === 'support' ? 1 - r.amount : 1; };
 /** 골드 배율. 힘의 길 서약은 처치 골드를 함께 올립니다(서약이 없거나 난이도 하한 미만이면 ×1). */
 export const goldMultiplier = (s: State, a = stats(s)) => (1 + a.goldBonus) * jobReward(s) * accountExpGold(s) * supportMultiplier(s, 'gold') * roughReward(s, encounterTier(s)) * focusGold(s) * (s.event?.gold || 1);
 // v3.23 순풍은 다른 경험치 보너스와 더합니다.

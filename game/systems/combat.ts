@@ -838,8 +838,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         notes.push(turns > 1 ? `기절 ${turns}턴` : '기절');
         ev.statuses.push({ id: 'stun', turns });
     }
-    // v3.298 몬스터가 거는 지속 피해는 틱 × foeDotScale, 첫 틱 즉시 없음.
-    const foeDot = a.foe ? SKILL_FORMULA.foeDotScale : 1;
+    // v3.298 몬스터가 거는 지속 피해는 틱 × foeDotScale, 첫 틱 즉시 없음. v3.300 상태이상 수련 제약(dotScale)도 여기서 곱합니다.
+    const foeDot = (a.foe ? SKILL_FORMULA.foeDotScale : 1) * (sa.dotScale ?? 1);
     if (landed && chosen && effect === 'bleed' && immuneTo('bleed')) { notes.push('출혈 면역'); ev.immune = 'bleed'; }
     else if (landed && chosen && effect === 'bleed') {
         const turns = lasting((chosen.statusTurns ?? STATUS_TUNING.bleedTurns) + sa.dotTurnsBonus);
