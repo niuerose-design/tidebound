@@ -414,6 +414,15 @@ test('v3.132 Arch Mage (Fire, Poison) remake: magic lineage, Poison Nova poisons
     assert.deepEqual([nova.statusOnly, nova.chance, nova.cooldown, nova.awaken.start], [true, 1, 5, 5]);
     const novaFires = job => { const a = { ...mk(['doomMark']), job }, t = mk([]), ev = []; strike(a, t, () => .3, ev); const e = ev.find(x => x.skillId === 'doomMark'); if (e) assert.equal(e.total, 0, 'nova deals no direct damage'); return !!e; };
     assert.equal(nova.outsiderChance, .25); assert.equal(novaFires('apostle'), true); assert.equal(novaFires('hero'), false);
+    // v3.288 각성 관통: 노바가 건 중독 · 화상은 숙련 단계별 확률로 몬스터 각성(정화)을 버티고, 버티면 각성 면역도 걸리지 않습니다.
+    assert.deepEqual(nova.wardPierce, [0, .25, .5, .75, 1]);
+    const novaThenWard = stage => {
+        const a = { ...mk(['doomMark']), job: 'apostle', mastery: { doomMark: stage } }, foe = { ...mk(['foeWard']), foe: true }; foe.cooldowns.foeWard = 0;
+        strike(a, foe, () => .5); assert.ok(foe.effects.poison && foe.effects.burn, 'nova landed');
+        strike(foe, a, () => 0); return foe.effects;
+    };
+    const none = novaThenWard(0); assert.ok(!none.poison && !none.burn && none.immune?.poison > 0, 'stage 0: cleansed and warded');
+    const full = novaThenWard(4); assert.ok(full.poison && full.burn, 'stage 4: survives the ward'); assert.ok(!full.immune?.poison && !full.immune?.burn && full.immune?.stun > 0, 'no ward immunity for what survived');
     // 도트 퍼니셔: 상태 없음 → 추가타·기절 없음 / 일부 → 추가타 일부 + 기절 1 / 둘 다 최대 → 추가타 최대 + 기절 2.
     const finish = effects => { const t = mk([]); t.effects = effects; const ev = []; strike(mk(['endOfAll']), t, () => 0, ev); const e = ev.find(x => x.skillId === 'endOfAll'); return [e.hits.filter(h => h.kind === 'follow').length, t.stun]; };
     const dot = (stacks) => ({ perStack: 1, stacks, turns: 5, hpRatio: 0 });

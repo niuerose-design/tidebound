@@ -170,6 +170,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·중독·감속 해제.';
             if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
+            if (sk.wardPierce?.length) sk.desc += ` 각성 관통: 숙련 단계별 ${sk.wardPierce.map(p => `${Math.round(p * 100)}%`).join('/')}로 몬스터 각성(정화)을 버팀.`;
             sk.desc += progressDesc(sk);
             continue;
         }

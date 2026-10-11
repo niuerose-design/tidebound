@@ -296,6 +296,8 @@ export function withCoreBuff(sk: Skill, n: number): Skill {
     const stats = Object.fromEntries(Object.entries(cb.stats).map(([k, v]) => [k, (v as number) * n])) as Partial<Stats>;
     return { ...sk, selfBuff: { id: cb.id, name: cb.name, turns, damageMultiplier: 1 + cb.damage * n, ...(n ? { stats } : {}) }, ...(ward ? { wardTurns: ward } : {}), ...(steps.some(x => x.extraTurn) ? { extraTurn: true } : {}) };
 }
+/** v3.288 각성 관통: 이 기술의 숙련 단계(한계 돌파 포함, 표 끝에서 멈춤)에 맞는 정화 버팀 확률. */
+const wardPierceOf = (a: Fighter, sk: Skill) => sk.wardPierce?.length ? sk.wardPierce[Math.min(sk.wardPierce.length - 1, a.mastery?.[sk.id] || 0)] : 0;
 function outsider(base: Skill, a: Fighter, sk: Skill): Skill {
     return base.outsiderChance !== undefined && signatureScale(base, a.job) < 1 ? { ...sk, chance: sk.chance * base.outsiderChance } : sk;
 }
@@ -570,11 +572,16 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.155 자기 버프 연장(카데나 메일스트롬): 살아 있는 버프를 모두 N턴 늘립니다.
         if (chosen.extendBuffs) { const live = buffsOf(a.effects); if (live.length) { for (const [, bf] of live) bf.turns += chosen.extendBuffs; notes.push(`자기 버프 ${live.length}개 +${chosen.extendBuffs}턴`); } }
         if (chosen.selfBuff) { grantBuff(a.effects, chosen.selfBuff); notes.push(`${chosen.selfBuff.name ?? chosen.selfBuff.id} ${chosen.selfBuff.turns}턴`); ev.statuses.push({ id: chosen.selfBuff.id, turns: chosen.selfBuff.turns, onSelf: true }); }
-        if (chosen.cleanseSelf) { delete a.effects.dot; delete a.effects.poison; delete a.effects.burn; delete a.effects.slow; notes.push('정화'); ev.cleansed = true; }
+        // v3.288 각성 관통(포이즌 노바): pierce가 붙은 중독 · 화상은 그 확률로 정화를 버티고, 버틴 상태이상에는 아래 면역도 걸리지 않습니다(pierce가 없으면 난수를 쓰지 않음).
+        const kept = new Set<'poison' | 'burn'>();
+        if (chosen.cleanseSelf) {
+            for (const key of ['poison', 'burn'] as const) { const p = a.effects[key]?.pierce || 0; if (p > 0 && rng() < p) kept.add(key); else delete a.effects[key]; }
+            delete a.effects.dot; delete a.effects.slow; notes.push(kept.size ? `정화 · ${[...kept].map(k => k === 'poison' ? '중독' : '화상').join('·')} 버팀` : '정화'); ev.cleansed = true;
+        }
         if (chosen.wardTurns) {
             delete a.effects.weaken;
             const immune = (a.effects.immune ??= {});
-            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as const) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
+            for (const key of ['stun', 'bleed', 'poison', 'burn', 'weaken', 'silence', 'slow', 'corrode'] as const) if (!kept.has(key as 'poison')) immune[key] = Math.max(immune[key] || 0, chosen.wardTurns);
             notes.push(`상태이상 면역 ${chosen.wardTurns}턴`);
         }
         if (chosen.effect === 'heal') {
@@ -848,7 +855,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.54 처음 걸면 poisonFirstStacks중첩으로 시작합니다. 전투에서 처음 걸 때 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'poison'), stacks = Math.min(STATUS_TUNING.poisonMaxStacks + sa.poisonStackBonus, current ? current.stacks + 1 : first ? STATUS_TUNING.poisonFirstStacks : 1);
         if (first) onset.push({ name: '중독', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
-        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
+        const pierce = Math.max(wardPierceOf(a, chosen), current?.pierce || 0);
+        b.effects.poison = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), ...(pierce > 0 ? { pierce } : {}) };
         notes.push(`중독 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'poison', turns });
     }
@@ -862,7 +870,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         // v3.54 전투에서 처음 걸면 burnFirstStacks중첩으로 시작하고 첫 틱을 바로 한 번 더 줍니다(전투당 한 번).
         const first = opens(b, 'burn'), stacks = Math.min(STATUS_TUNING.burnMaxStacks, current ? current.stacks + 1 : first ? STATUS_TUNING.burnFirstStacks : 1);
         if (first) onset.push({ name: '화상', value: (perStack + hpPart(dotHp(b), hpRatio, 0)) * stacks });
-        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0) };
+        const pierce = Math.max(wardPierceOf(a, chosen), current?.pierce || 0);
+        b.effects.burn = { perStack: Math.max(perStack, current?.perStack || 0), stacks, turns: Math.max(turns, current?.turns || 0), hpRatio: Math.max(hpRatio, current?.hpRatio || 0), ...(pierce > 0 ? { pierce } : {}) };
         notes.push(`화상 ${stacks}중첩 ${turns}턴`);
         ev.statuses.push({ id: 'burn', turns });
     }

@@ -111,9 +111,9 @@ export type StatusEffects = {
         perStack?: number;
     };
     /** v27.17 중독: 출혈과 별개 상태이상. 걸릴 때마다 한 중첩씩 쌓이고(상한 STATUS_TUNING.poisonMaxStacks + 포화) 지속이 갱신됩니다. 틱 피해 = (perStack + 체력 비례분) × stacks. v3.54 체력 비례분 = 틱 때 현재 체력 × hpRatio(옛 세이브는 고정값 hpTick). */
-    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
+    poison?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; /** v3.288 몬스터 각성(정화)을 버틸 확률(포이즌 노바 숙련 단계). 버티면 그 상태이상에는 각성 면역도 걸리지 않습니다. */ pierce?: number };
     /** v27.48 화상: 중독처럼 쌓이지만(최대 STATUS_TUNING.burnMaxStacks) 출혈처럼 받는 직접 피해를 키웁니다(burnVulnerability). */
-    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number };
+    burn?: { perStack: number; stacks: number; turns: number; hpTick?: number; hpRatio?: number; /** v3.288 몬스터 각성(정화)을 버틸 확률. */ pierce?: number };
     weaken?: number;
     silence?: number;
     slow?: number;
@@ -396,6 +396,8 @@ export type Skill = {
     disguise?: string;
     /** v3.132 계보 밖 직업이 계승해 쓰면 발동률에 곱하는 값(5차 전용 기술, signatureScale과 함께). */
     outsiderChance?: number;
+    /** v3.288 각성 관통: 이 기술이 건 중독 · 화상이 몬스터 각성(정화)을 버틸 확률, 기술 숙련 단계(0부터)별. 버티면 각성 면역도 걸리지 않습니다(포이즌 노바). */
+    wardPierce?: number[];
     /** v3.282 각성기의 대기(턴)와 첫 대기. 없으면 SKILL_FORMULA.awaken.cooldown · start(포이즌 노바 5턴). */
     awakenCooldown?: number;
     /** v3.132 도트 퍼니셔: 적의 중독·화상 중첩에 비례한 추가타(최대 maxHits회, 위력 hitMultiplier). 둘 다 최대 중첩이면 기절 fullStun턴, 일부면 partStun턴, 없으면 추가타·기절 없음. */
