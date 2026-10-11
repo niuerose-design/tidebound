@@ -163,7 +163,8 @@ export const EXPANSION_SKILLS: Skill[] = [
     // v3.282 배율 2.4 → 4, 상태이상 적 추가 피해(+50%) 삭제, 마나 ×10, 대기 4턴. 둘 다 최대 중첩인 적에게 쓰면 대기가 바로 초기화됩니다(fullReset).
     { ...A, ...magic, id: 'endOfAll', name: '만물의 끝', desc: '', level: 70, job: 'apostle', chance: .5, cooldown: 4, multiplier: 4, cost: 6, manaCost: 200, dotFinisher: { maxHits: 4, hitMultiplier: .7, fullStun: 2, partStun: 1, fullReset: true }, masteryMilestones: M5 },
     // v3.282 핵심 패시브(아케인 에임(불,독)): 이 패시브가 있어야 5차 핵심 개편(data/core-passive)이 적용됩니다(직업 마법 ×1.55 → ×1.09 + 핵심 몫).
-    { ...P, id: 'plagueAscendant', name: '파멸의 조준', desc: '마법 공격 · 지속 피해 · 방어 관통이 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { magic: 150, dotBonus: .2, penetration: .05 }, masteryMilestones: M5 },
+    // v3.283 포이즌 노바 · 도트 퍼니셔 마나 ×10에 맞춰 최대 마나 · 마나 회복을 더합니다(아델 '루인'과 같은 크기).
+    { ...P, id: 'plagueAscendant', name: '파멸의 조준', desc: '마법 공격 · 최대 마나 · 마나 회복 · 지속 피해 · 방어 관통이 오릅니다.', level: 70, job: 'apostle', cost: 3, bonus: { magic: 150, mana: 1000, manaRegen: 30, dotBonus: .2, penetration: .05 }, masteryMilestones: M5 },
     // 저주의 길
     { ...A, ...magic, id: 'curseBolt', name: '저주탄', desc: '', level: 10, job: 'shaman', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 9, effect: 'weaken' },
     { ...P, id: 'spiritWard', name: '정령의 가호', desc: '마법 방어·최대 마나와 마력 평타 계수가 오릅니다.', level: 10, job: 'shaman', cost: 2, bonus: { resist: 14, mana: 15, arcaneRatioBonus: .5 } },
