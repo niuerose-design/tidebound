@@ -7,7 +7,8 @@ import { dungeonGoldMultiplier } from '@/game/systems/stats';
 import { dailyBonusLeft, boughtToday, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { coreForgeCost } from '@/game/systems/boss-loot';
 import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, DAILY_BONUS, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood } from '@/game/data/dungeon-shop';
-import { ONYX, ONYX_DROP_ITEMS, onyxById } from '@/game/data/onyx';
+import { ONYX, ONYX_DROP_ITEMS, ONYX_CORE_ID, onyxById } from '@/game/data/onyx';
+import { OnyxArt } from './onyx-art';
 import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { ATTRIBUTES } from '@/game/data/progression';
 import { Heading, format, useNow } from './shared';
@@ -61,10 +62,11 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
 
 /** 칠흑 장신구: 보스를 골라 카드 한 장에서 제작 · 각성(v3.276 지금 보스가 주는 장신구만, 여러 종을 카드로 늘어놓으면 모바일에서 너무 깁니다). */
 function OnyxGood({ s, busy, buy, now }: Pick<PanelProps, 's' | 'busy'> & { buy: Buy; now: number }) {
-    const list = ONYX_DROP_ITEMS, [pick, setPick] = useState(''), b = list.find(x => x.id === pick) || list.find(x => !onyxOffer(s, x.id, now).reason) || list[0];
+    // v3.279 칠흑 보스코어(저주받은 마도서)도 같은 카드에서 같은 가격으로 고릅니다.
+    const list = [...ONYX_DROP_ITEMS, { id: ONYX_CORE_ID, name: BOSS_CORES[ONYX_CORE_ID].name, desc: `칠흑 보스코어(보스 코어 칸). ${BOSS_CORES[ONYX_CORE_ID].desc}`, boss: BOSS_CORES[ONYX_CORE_ID].onyx }], [pick, setPick] = useState(''), b = list.find(x => x.id === pick) || list.find(x => !onyxOffer(s, x.id, now).reason) || list[0];
     const o = onyxOffer(s, b.id, now);
-    return <Good eyebrow="칠흑 장신구" title={b.name}
-        desc={`${b.desc} ${o.kind === 'awaken' ? `가진 장신구를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '장신구를 바로 만듭니다.'} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
+    return <Good eyebrow={b.id === ONYX_CORE_ID ? "칠흑 보스코어" : "칠흑 장신구"} title={b.name}
+        desc={`${b.desc} ${o.kind === 'awaken' ? `가진 ${b.id === ONYX_CORE_ID ? '마도서' : '장신구'}를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : `${b.id === ONYX_CORE_ID ? '마도서' : '장신구'}를 바로 만듭니다.`} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
         controls={<label>칠흑 보스<select value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{list.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{onyxById(x.boss!)?.name} · {x.name}{r.kind === 'awaken' ? ` (각성 ${r.rank}/${ONYX.awakenMax})` : s.onyxBook?.[x.boss!] ? '' : ' (잠김)'}</option>; })}</select></label>}
         cost={o.reason || `${format(o.price)} 주화`}>
         <button className="secondary" disabled={busy || !!o.reason || (s.dungeonCoins || 0) < o.price} onClick={() => buy(`onyx:${b.id}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)}</button>
@@ -84,11 +86,11 @@ function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'b
     const forge = (mode: 'reroll' | 'refine') => send({ type: 'coreForge', id, value: `${mode}|${index}` });
     const pips = (rank: number) => <span className="core-pips" aria-label={`각성 ${rank}/${BOSS_CORE_RULES.awakenMax}`}>{Array.from({ length: BOSS_CORE_RULES.awakenMax }, (_, i) => <i key={i} className={i < rank ? 'on' : ''}/>)}</span>;
     return <section aria-label="보스 코어" className="core-tab">
-        <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
-            <Hexagon size={22}/><small>{BOSS_CORES[x].floors ? `무릉 ${BOSS_CORES[x].floors![0]}층` : BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
+        <div className="core-tiles" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]); return <button key={x} type="button" role="tab" aria-selected={x === id} className={`core-tile${x === id ? ' on' : ''}${xe ? '' : ' locked'}${s.coreSlot === x ? ' worn' : ''}${BOSS_CORES[x].onyx ? ' onyx' : ''}`} onClick={() => { setPick(x); setLine(0); }}>
+            {BOSS_CORES[x].onyx ? <OnyxArt id={x} size={24}/> : <Hexagon size={22}/>}<small>{BOSS_CORES[x].floors ? `무릉 ${BOSS_CORES[x].floors![0]}층` : BOSS_CORES[x].onyx ? `칠흑 · ${BOSS_CORES[x].boss}` : BOSS_CORES[x].boss}</small>{xe ? pips(xe.rank) : <em>미획득</em>}{s.coreSlot === x && <b className="core-tile-badge">장착</b>}
         </button>; })}</div>
-        <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}`}>
-            <header><div><span className="eyebrow">{c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.name}</h2></div>
+        <article className={`panel core-detail${worn ? ' worn' : ''}${e ? '' : ' locked'}${c.onyx ? ' onyx-frame' : ''}`}>
+            <header><div><span className="eyebrow">{c.onyx ? `칠흑 보스코어 · ${c.boss} 격파` : c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2>{c.onyx ? <span className="onyx-name">{c.name}</span> : c.name}</h2></div>
                 {e && <button type="button" className={worn ? 'secondary' : 'primary'} disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '해제' : '장착'}</button>}</header>
             <p className="core-effect">{c.desc}</p>
             {e ? <>
@@ -103,13 +105,16 @@ function CoreTab({ s, send, busy, buy, now }: Pick<PanelProps, 's' | 'send' | 'b
                     {e.forges ? <button className="secondary" disabled={busy || s.pearls < CORE_FORGE.resetPearls} onClick={() => send({ type: 'coreForgeReset', id })}>비용 초기화 · 세계석 {CORE_FORGE.resetPearls}</button> : null}
                 </div>
                 <small className="muted">고른 줄을 재설정(종류 · 배율 레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max}) 또는 재련(배율만)합니다. 낮아질 수도 있습니다. 정수는 기본 {CORE_FORGE.base}, 손볼 때마다 ×{CORE_FORGE.growth}{e.forges ? `(지금 ${e.forges}회)` : ''} · 주화 재설정은 비용을 올리지 않습니다.</small>
-            </> : <p className="muted">{c.floors ? `무릉도장 ${c.floors[0]}층을 처음 돌파하면 얻습니다(지금 최고 ${s.abyssBest}층). 랜덤 상자에서는 나오지 않습니다.` : '지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다.'} 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
+            </> : <p className="muted">{c.floors ? `무릉도장 ${c.floors[0]}층을 처음 돌파하면 얻습니다(지금 최고 ${s.abyssBest}층). 랜덤 상자에서는 나오지 않습니다.` : c.onyx ? `칠흑 보스 ${c.boss}을(를) 쓰러뜨리면 칠흑 장신구와 같은 확률 · 천장(${ONYX.dropPity}번째 연속 미획득 격파는 확정)으로 얻고, 다시 얻으면 각성합니다. 아래에서 칠흑 장신구와 같은 주화로 제작할 수도 있습니다. 지역 던전 보너스 정복 · 랜덤 상자에서는 나오지 않습니다.` : '지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다.'} 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
             {c.floors && <p className="muted core-floors">무릉도장 층: 획득 {c.floors[0]}층 · 각성 {c.floors.slice(1).join(' · ')}층(최고 기록 기준){e && e.rank < BOSS_CORE_RULES.awakenMax ? ` · 다음 각성 ${c.floors[e.rank + 1]}층` : ''}</p>}
         </article>
-        <div className="panel core-box">
+        {c.onyx ? (() => { const o = onyxOffer(s, ONYX_CORE_ID, now); return <div className="panel core-box onyx-frame">
+            <div><span className="eyebrow">칠흑 보스코어 · {o.kind === 'awaken' ? '각성' : '제작'}</span><p>칠흑 장신구와 같은 가격 · 같은 하루 횟수(칠흑 상품 합쳐 하루 {DUNGEON_SHOP_DAILY.onyxPerDay}번)입니다. {o.kind === 'awaken' ? `가진 마도서를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : '마도서를 바로 만듭니다.'}{o.reason ? ` · ${o.reason}` : ''}</p></div>
+            <button className="secondary" disabled={busy || !!o.reason || coins < o.price} onClick={() => buy(`onyx:${ONYX_CORE_ID}`)}>{o.kind === 'awaken' ? '각성' : '제작'} · {format(o.price)} 주화</button>
+        </div>; })() : <div className="panel core-box">
             <div><span className="eyebrow">랜덤 보스 코어 상자</span><p>지역 던전 코어 7종 중 하나(무릉도장 코어는 층으로만). 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
             <button className="secondary" disabled={busy || !boxLeft || coins < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {format(DUNGEON_SHOP.coreBox)} 주화</button>
-        </div>
+        </div>}
     </section>;
 }
 

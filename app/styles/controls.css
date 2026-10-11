@@ -130,6 +130,7 @@
 .altar-anon{display:flex;align-items:center;gap:7px;font-size:13px;color:#b4ccc6}
 .altar-god-card{display:flex;flex-direction:column;gap:4px;background:#0f2227;border-radius:7px;padding:14px}.altar-god-card strong{font-size:18px;color:var(--gold)}.altar-god-card span{font-size:13px}.altar-god-card small{font-size:12px;color:var(--muted)}
 .altar-tithe{font-size:14px;color:#d6dfd7}
+.altar-throne-note{display:flex;gap:10px;align-items:flex-start;margin:0 0 10px;padding:10px 12px;border:1px solid rgba(232,193,92,.45);border-radius:7px;background:rgba(232,193,92,.08);color:var(--gold)}.altar-throne-note>div{display:flex;flex-direction:column;gap:4px;min-width:0}.altar-throne-note strong{font-size:14px}.altar-throne-note span{font-size:12.5px;color:#d6dfd7}.altar-throne-note button{align-self:flex-start}
 .altar-result{border:1px solid var(--border);border-radius:7px;padding:12px;font-size:13px;display:flex;flex-direction:column;gap:6px}.altar-result.win{border-color:#496250;background:#1c3229}.altar-result.lose{background:#2a1c1f;border-color:#5a3a3f}.altar-result ol{max-height:220px;overflow:auto;margin:6px 0 0;padding-left:18px;font-size:12px;color:#a9bfbf}
 /* v3.84 월드보스 피해 순위의 최근 도전 기록 */
 .altar-raid-log{display:flex;flex-direction:column;gap:6px;padding:6px 0;font-size:12px;white-space:normal}.altar-raid-log ol{max-height:240px;overflow:auto;margin:6px 0 0;padding-left:18px;color:#a9bfbf;word-break:break-word}.altar-raid-log .secondary{align-self:flex-start}

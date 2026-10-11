@@ -3,7 +3,7 @@ import { DUNGEON_SHOP, DUNGEON_SHOP_DAILY, HUNTER_AFFIX } from '../../data/dunge
 import { affixDef, rollOption, syncOrnateName } from '../../data/gear';
 import { inventoryCap } from '../../data/economy';
 import { STAGES } from '../../data/world';
-import { onyxItemById } from '../../data/onyx';
+import { onyxItemById, ONYX_CORE_ID } from '../../data/onyx';
 import { grantOnyx } from '../onyx-grant';
 import { grantBossCore, coreForgeBlock, coreForgeCost, forgeCore, type CoreForge } from '../boss-loot';
 import { drop, dropLevel, gainLevels } from '../encounter';
@@ -29,9 +29,11 @@ export const dungeonShopActions: ActionHandlers = {
         if (id.startsWith('onyx:')) {
             const itemId = id.slice(5), offer = onyxOffer(s, itemId, now);
             if (offer.reason) throw Error(offer.reason);
-            if (offer.kind === 'craft') room(s);
+            if (offer.kind === 'craft' && itemId !== ONYX_CORE_ID) room(s);
             pay(s, offer.price);
             countBought(s, 'onyx', now);
+            // v3.279 칠흑 보스코어(저주받은 마도서)는 보스 코어로 받습니다(칠흑 장신구와 같은 가격 · 하루 횟수).
+            if (itemId === ONYX_CORE_ID) { grantBossCore(s, itemId, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`); return; }
             const habitat = STAGES.find(st => st.habitat && st.region === onyxItemById(itemId)!.region)?.level || 1;
             grantOnyx(s, itemId, habitat, rng, `던전 주화 상점 · 주화 -${offer.price.toLocaleString()}`);
             return;

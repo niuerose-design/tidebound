@@ -106,6 +106,10 @@ const ULTIMATES: Record<string, { kind: string; title?: string; glyphs: string[]
     doomMark: { kind: 'nova', title: '포이즌 노바', glyphs: ['●', '✹', '◌', '▴', '●', '✹', '◌', '▴'] },
     redApocalypse: { kind: 'blood', title: '디멘션 소드', glyphs: ['▾', '●', '▾', '●', '▾', '●', '▾', '●'] },
     worldTentacle: { kind: 'tentacle', glyphs: ['◣', '◥', '◣', '◥', '◣', '◥', '◣', '◥'] },
+    // v3.280 나이트로드 쿼드러플 스로우: 내 손에서 거대한 표창 넷이 돌며 날아가 몬스터에 박힙니다(전에는 공용 각성 빛).
+    heavenlyDice: { kind: 'shuriken', title: '쿼드러플 스로우', glyphs: ['✦', '✧', '✦', '✧', '✦', '✧', '✦', '✧'] },
+    // v3.280 팬텀 파이널 컷: 몬스터 앞에 거대한 카드가 서고, 대각선 일섬에 두 쪽으로 갈라집니다.
+    allOrNothing: { kind: 'cardcut', title: '파이널 컷', glyphs: ['♠', '♦', '♣', '♥', '♠', '♦', '♣', '♥'] },
     jackpotStrike: { kind: 'jackpot', title: '조커', glyphs: ['◉', '✦', '◉', '✦', '◉', '✦', '◉', '✦'] },
     frozenTime: { kind: 'time', glyphs: ['◴', '◷', '◶', '◵', '◴', '◷', '◶', '◵'] },
     // v3.173 5차 전용 연출 1: 키네시스 싸이킥 토네이도. 보랏빛 염력 소용돌이가 솟고, 파편이 나선으로 끌려 올라갑니다.
@@ -361,7 +365,9 @@ const OW_IMPACT: Record<string, number> = { grenadeLauncher: 520 };
  */
 export const CAST_TRAVEL_MS = 280;
 const castTravels = (fx: CombatFx) => fx.actor === 'player' && fx.target === 'enemy' && !fx.basic && fx.hits.length > 0 && fx.status !== '행동 불가' && !hasSceneTitle(fx, false);
-export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId && OW_IMPACT[fx.skillId] ? OW_IMPACT[fx.skillId] : castTravels(fx) ? CAST_TRAVEL_MS : 0);
+/** v3.280 5차 궁극기 · 각성기 장면(ULTIMATES · 각성 빛)은 공용 섬광(sceneFinaleFlash 42% × 2.4초)이 터질 때 맞습니다. 전에는 피해 숫자가 장면보다 먼저 떴습니다. */
+const ULT_IMPACT_MS = 1000;
+export const sceneImpactMs = (fx: CombatFx) => AZ_ULT[sceneOf(fx) ?? '']?.impact ?? (fx.actor === 'player' && !fx.reload && fx.skillId && OW_IMPACT[fx.skillId] ? OW_IMPACT[fx.skillId] : fx.actor === 'player' && !fx.finale && !owScene(fx) && fx.skillId !== 'aberrantSurge' && fx.skillId !== 'genesisRune' && fx.skillId !== 'endOfAll' && ultimateOf(fx.skillId) ? ULT_IMPACT_MS : castTravels(fx) ? CAST_TRAVEL_MS : 0);
 function AzerothUltFx({ fx, boss }: { fx: CombatFx; boss: boolean }) {
     const k = sceneOf(fx)!, ult = AZ_ULT[k], d = fx.delay, i = (n: number, extra: Record<string, string | number> = {}) => fxStyle(d, { '--i': n, ...extra }), hits = Math.max(1, fx.hits.filter(h => !h.miss).length);
     return <div className={`scene-fx ow-fx az-ult az-${k} ${boss ? 'ow-boss' : ''} ${fx.critical ? 'critical' : ''}`} style={fxStyle(d, { '--hits': hits, '--impact': `${ult.impact}ms` })}>
