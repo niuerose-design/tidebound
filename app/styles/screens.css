@@ -459,3 +459,19 @@
   .ranking-panel td[data-label] { display:inline-block; width:auto; margin-right:12px }
   .ranking-actions { margin-top:6px }
 }
+/* v3.305 새 버전 안내: 서버 버전이 이 화면의 코드 버전과 다를 때. */
+.update-banner {
+  background:#233a33;
+  border:1px solid #4f8f78;
+  padding:12px 15px;
+  border-radius:6px;
+  margin-bottom:18px;
+  color:#cdeee0;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.update-banner b { color:#9be7c4; }
