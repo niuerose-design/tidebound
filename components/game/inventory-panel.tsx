@@ -17,18 +17,28 @@ import { STARFORCE, starSuccess, starDrops, starDestroy, canSafeguard, chanceTim
 import { stats, power } from '@/game/systems/stats';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 const PAGE = 12;
+const SLOT_IDS = Object.keys(SLOTS) as Item['slot'][];
 import type { PanelProps } from './panel-props';
 import { CoreSlot } from './core-slot';
 /** v3.283 렐릭의 힘(경험치 보너스에서 계산)은 패스파인더 계보일 때만 비교에 보입니다. */
 const relicShown = (s: State) => { const j = jobById(s.job); return !!j && lineageOf(j) === RELIC_LINEAGE; };
-/** v3.93 교체 미리보기 캐시: 장비 · 가방 · 성장(레벨 · 직업 · 스킬 · 능력치 · 연구)이 같으면 지난 계산을 씁니다. 화면 하나만 쓰므로 한 칸이면 충분합니다. */
+/**
+ * v3.93 교체 미리보기 캐시: 화면 하나만 쓰므로 한 칸이면 충분합니다.
+ * v3.305 키는 지금 최종 능력치(stats 결과)와 가방 · 장착 장비의 내용 전체입니다. 전에는 장비의 id · 별 · 옵션 개수만 봐서 낀 장비의 옵션을 다시 굴리거나
+ * 연마 · 레벨 업한 뒤에도 옛 비교가 남아, 가방 장비가 실제보다 좋게(낀 장비가 나쁘게) 보였습니다. 숙련 · 코어 · 지원처럼 능력치를 바꾸는 모든 것도 함께 잡힙니다.
+ */
 let previewCache: { key: string; value: { current: CombatStats; currentPower: number; preview: Map<string, { after: Stats; gain: number }> } } | null = null;
 function gearPreview(s: State) {
-    const gear = (i: Item | null | undefined) => i ? `${i.id}:${i.enhance || 0}:${i.affixes?.length || 0}` : '-';
-    const key = [s.name, s.level, s.job, s.rebirths, s.skills.join(','), JSON.stringify(s.learned), JSON.stringify(s.attributes), JSON.stringify(s.permanent), SLOT_IDS.map(id => gear(s.equipment[id])).join(','), s.inventory.map(gear).join(',')].join('|');
+    const current = stats(s);
+    const key = JSON.stringify([current, s.inventory, SLOT_IDS.map(id => s.equipment[id] ?? null)]);
     if (previewCache?.key === key) return previewCache.value;
-    const current = stats(s), currentPower = power(current), preview = new Map<string, { after: Stats; gain: number }>();
-    for (const item of s.inventory) { const after = stats({ ...s, equipment: { ...s.equipment, [item.slot]: item } }); preview.set(item.id, { after, gain: power(after) - currentPower }); }
+    const currentPower = power(current), preview = new Map<string, { after: Stats; gain: number }>();
+    // v3.305 실제 교체처럼 낀 장비는 가방으로 옮겨 놓고 잽니다(칠흑 공명 · 세트는 가방의 장신구도 세므로).
+    for (const item of s.inventory) {
+        const worn = s.equipment[item.slot];
+        const after = stats({ ...s, equipment: { ...s.equipment, [item.slot]: item }, inventory: [...s.inventory.filter(i => i.id !== item.id), ...(worn ? [worn] : [])] });
+        preview.set(item.id, { after, gain: power(after) - currentPower });
+    }
     previewCache = { key, value: { current, currentPower, preview } };
     return previewCache.value;
 }
@@ -62,7 +72,6 @@ function GearOptions({ s, send, busy, item }: PanelProps & { item: Item }) {
 
 type SortKey = 'power' | 'rarity' | 'level' | 'recent' | 'name';
 const SORTS: Record<SortKey, string> = { power: '위력 높은 순', rarity: '등급 높은 순', level: '획득 레벨 순', recent: '최근 획득 순', name: '이름 순' };
-const SLOT_IDS = Object.keys(SLOTS) as Item['slot'][];
 const STAT_PREVIEW = 3;
 
 /** v25.3 장비 보관함: 착용 칸 요약 + 교체 추천, 검색·정렬·등급·상향 필터, 한 줄 목록 → 펼쳐서 상세·강화. 전투력은 능력치 화면의 종합 전투력과 같은 식입니다. */
