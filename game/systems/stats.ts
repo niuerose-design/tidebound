@@ -144,15 +144,16 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     for (const key in gear) {
         const n = gear[key as keyof CombatStats]!, own = free[key as keyof CombatStats] || 0;
         // v27.86 힘의 길: 장비 능력치 ×(1 − 30·50·70%).
-        // v3.151 마력 평타 계수(룬 핵 · 몽환의 마력)는 장비 몫만 규칙 상한(.3)까지 셉니다. 전에는 아래 RULE_CAPS 전체 상한이 스킬 몫(라이트 오브 레프 등)까지 깎아 일리움 패시브가 무의미했음.
-        add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? (key === 'arcaneRatioBonus' ? RULE_CAPS.arcaneRatioBonus! : Infinity)) + own) * roughGear(s));
+        // v3.151 마력 평타 계수(룬 핵 · 몽환의 마력)는 장비 몫만 규칙 상한(.3)까지 셉니다. 전에는 RULE_CAPS 전체 상한이 스킬 몫(라이트 오브 레프 등)까지 깎아 일리움 패시브가 무의미했음.
+        // v3.307 규칙 옵션 상한(RULE_CAPS)은 모두 장비 몫에만: 추가타 위력 · 회복량 · 빈사 기준 · 지속 턴 · 중독 중첩의 스킬 패시브 · 보스 코어 몫은 상한 위로 온전히 더해집니다(전에는 합계에 걸어 메아리 3줄이면 끝없는 연타 · 자쿰 코어가 버려졌음).
+        add(key as keyof CombatStats, 'equipment', (Math.min(n - own, GEAR_CAPS[key as keyof typeof GEAR_CAPS] ?? RULE_CAPS[key as keyof typeof RULE_CAPS] ?? Infinity) + own) * roughGear(s));
     }
     // v3.12 칠흑 세트(보유 수 기준, 영구).
     // v3.38 칠흑 세트는 장비 출처로 표시합니다.
     { const b = onyxSetBonus(onyxCollected(s)); if (b.bossDamage) add('bossDamage', 'equipment', b.bossDamage); if (b.statusResist) add('statusResist', 'equipment', b.statusResist); if (b.allStats) add('allStats', 'equipment', b.allStats); }
     // v3.113 칠흑 공명: 착용하지 않은 칠흑 장신구의 고유 옵션 × 10%(각성 포함).
     { const res = onyxResonance(s); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
-    // v3.202 보스 코어(칸 · 공명). 장비 규칙 상한(RULE_CAPS) 밖이라 장비의 기절 · 침묵 +1과 따로 더해집니다.
+    // v3.202 보스 코어(칸 · 공명). 장비 규칙 상한(RULE_CAPS, 장비 몫만) 밖이라 장비의 기절 · 침묵 +1과 따로 더해집니다.
     { const res = coreStats(s, coreResonanceOf(s)); for (const key in res) add(key as keyof CombatStats, 'equipment', res[key as keyof typeof res] as number); }
     // v3.228 핵심 패시브 배율(5차): 합쳐서 아래 직업 배율 뒤에 한 번 곱합니다.
     // v3.303 방어 · 마방 · 최대 마나도 핵심 패시브 배율을 받습니다(연구 배율과 같은 자리에서 곱함).
@@ -241,10 +242,8 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     const limit = (k: keyof CombatStats, n: number) => { const before = a[k]; a[k] = n; rec(k, 'limit', n - before); };
     for (const k of ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'speed', 'hpRegen'] as (keyof CombatStats)[])
         limit(k, Math.max(k === 'hp' || k === 'speed' ? 1 : 0, Math.floor(a[k])));
-    // 장비 규칙 옵션은 같은 규칙끼리 상한까지만 합산합니다.
     // v3.153 렐릭의 힘(패스파인더): 경험치 보너스 중 환생 · 연구 몫을 뺀 나머지(스킬 · 장비 · 직업 · 도감). 고른 유틸 세팅이 그대로 피해 기준값이 됩니다.
     set('relicPower', 'skills', Math.max(0, a.expBonus - rebirthExperience(s.rebirths) - (s.permanent.exp || 0) * .2));
-    for (const [key, cap] of Object.entries(RULE_CAPS)) if (key !== 'arcaneRatioBonus') limit(key as keyof CombatStats, Math.min(cap!, a[key as keyof CombatStats] || 0));
     // v27.18 치명타 100%를 넘은 몫 100%p마다 극 치명타 확률 +5%(v3.210, 전에는 +1%).
     // v3.75 장비 극치명 옵션의 극 치명타 확률은 상한을 넘은 치명타 몫에 더합니다.
     a.superCrit = Math.min(1, (a.superCrit || 0) + Math.max(0, a.crit - SKILL_FORMULA.critCap) * SKILL_FORMULA.superCritPerHundred); rec('superCrit', 'limit', a.superCrit);
