@@ -230,6 +230,17 @@
     .skill-growth-table th,.skill-growth-table td { padding:10px; font-size:12px; }
     .skill-grid-detailed .skill-actions { flex-wrap:wrap; }
     .skill-grid-detailed .skill-actions>button { flex:1 1 100px; }
+    /* v3.308 자세히 보기 성장 표: 좁은 화면에서는 가로로 잘리지 않게 레벨별 카드로 쌓습니다(머리글 숨기고 칸마다 data-label 표기). */
+    .skill-card .skill-stage-table-wrap { overflow:visible; }
+    .skill-growth-table, .skill-growth-table tbody, .skill-growth-table caption { display:block; width:100%; }
+    .skill-growth-table thead { display:none; }
+    .skill-growth-table tr { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:12px 10px; border-bottom:1px solid #31494a; }
+    .skill-growth-table tr.current { border-radius:6px; }
+    .skill-growth-table th, .skill-growth-table td { display:block; padding:0; border:0; white-space:normal; text-align:left; font-size:13px; }
+    .skill-growth-table tbody th { flex:1 1 100%; display:flex; align-items:baseline; gap:8px; font-size:14px; }
+    .skill-growth-table th>small { display:inline; font-size:11px; }
+    .skill-growth-table td[data-label]::before { content:attr(data-label); margin-right:5px; color:#8fad9d; font-size:11px; }
+    .skill-growth-table .skill-stage-effects { flex:1 1 100%; min-width:0; margin-top:2px; line-height:1.7; }
 }
 
 /* 스킬 극한돌파 접기 상자. */
