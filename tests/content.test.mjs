@@ -474,3 +474,14 @@ test('v3.227 tailwind lasts until the previous life\'s top level (rebirth log), 
  const old=newState(0);old.rebirths=8;old.rebirthLog=[{n:5,at:0,realMs:0,playMs:0,level:99,pearls:0}];
  assert.equal(meta.tailwindLevel(old),meta.rebirthLevel({rebirths:7}));
 });
+
+test('v3.307 rule-option caps bind the gear share only: boss cores and skill passives add above the cap (follow-up power)',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),BL=await L.load('systems/boss-loot');
+ const slots=['rod','coat','charm','cape'],echo=i=>({id:'e'+i,slot:slots[i],rarity:3,power:10,level:10,affixes:[{id:'echoing',name:'메아리',stat:'followUpBonus',value:.1,rule:true}]});
+ const s=newState(0);s.level=100;s.rebirths=10;for(let i=0;i<4;i++)s.equipment[slots[i]]=echo(i);
+ assert.ok(Math.abs(stats(s).followUpBonus-.3)<1e-9,`four echoing lines cap at +30%p (${stats(s).followUpBonus})`);
+ BL.grantBossCore(s,'ventCathedral');act(s,{type:'equipCore',id:'ventCathedral'},0);
+ assert.ok(Math.abs(stats(s).followUpBonus-.4)<1e-9,`Zakum core +10%p adds above the gear cap (${stats(s).followUpBonus})`);
+ s.job='oceanFist';s.unlockedJobs.push('oceanFist');s.learned.endlessCombo=1;s.skills=['endlessCombo'];
+ assert.ok(Math.abs(stats(s).followUpBonus-.5)<1e-9,`Endless Combo passive adds above the gear cap (${stats(s).followUpBonus})`);
+});
