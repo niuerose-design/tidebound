@@ -1,6 +1,7 @@
 import type { State } from '@/game/types';
 import { traderPnl } from '@/game/systems/market';
 import { jobById } from '@/game/data/classes';
+import { GAME_BUILD } from '@/game/data/update-log';
 import { session, checkOrigin, mutate, failure, actionBody, ApiError, syncAbyssBoard, syncAccount, syncDuelSeason, afterAscend } from '@/game/server/store';
 import { syncGuild } from '@/game/server/guild';
 import { syncAltarStatus } from '@/game/server/altar';
@@ -39,7 +40,7 @@ export async function POST(req: Request) { try {
         // v3.213 증권거래소(공유 시장): 화면이 거래소를 보고 있을 때만(marketKnown) 가진 틱 뒤의 시세를 얹습니다. 시세는 인스턴스 메모리에서 나눠 쓰고, 새 틱이 없으면 아무것도 붙이지 않습니다.
         const marketKnown = (a as { marketKnown?: unknown }).marketKnown, market = marketKnown !== undefined ? marketFeed(marketKnown, Date.now()) : null;
         const extra = { ...(catalog ? { catalog } : {}), ...(market ? { market } : {}), ...(marketKnown !== undefined ? { marketStatus: marketStatus(Date.now()) } : {}) };
-        return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta, ...extra } : { ...out, ...extra }, { headers: { 'Cache-Control': 'no-store' } });
+        return Response.json(trimmed ? { ...out, state: { ...out.state, logs: trimmed.logs }, logDelta: trimmed.delta, ...extra } : { ...out, ...extra }, { headers: { 'Cache-Control': 'no-store', 'X-Game-Build': GAME_BUILD } });
     }
     catch (e) {
         if (e instanceof ApiError)
