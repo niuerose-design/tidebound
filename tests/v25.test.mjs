@@ -882,9 +882,9 @@ test('v27.70 dungeon modes: normal/hell/nightmare tiers, entry value parsing, re
     const B = await L.load('data/balance'), M = await L.load('systems/meta'), DR = await L.load('systems/dungeon-run');
     assert.deepEqual(B.DUNGEON_MODES.map(m => [m.id, m.tier]), [['normal', 0], ['hell', 70], ['nightmare', 260]], 'v3.186 hell 70 · nightmare 260');
     const s = newState(0); s.rebirths = 10; s.level = 60; s.tide = 30;
-    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'hell@fail'), { mode: 'hell', repeat: { left: null } });
-    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'fail'), { mode: 'normal', repeat: { left: null } });
-    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'nightmare@once'), { mode: 'nightmare', repeat: undefined });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'hell@fail'), { mode: 'hell', stage: 1, repeat: { left: null } }); // v3.310 stage
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'fail'), { mode: 'normal', stage: 1, repeat: { left: null } });
+    assert.deepEqual(DR.parseDungeonValue(s, 'caldera', 'nightmare@once'), { mode: 'nightmare', stage: 1, repeat: undefined });
     assert.equal(DR.parseDungeonValue(s, 'abyss', 'hell@deeper:3').mode, 'normal', 'Mu Lung has no modes');
     assert.throws(() => DR.parseDungeonValue(s, 'caldera', 'ultra@fail'), /난이도/);
     act(s, { type: 'dungeon', id: 'caldera', value: 'nightmare@5' }, 0);

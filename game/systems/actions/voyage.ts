@@ -57,7 +57,7 @@ export const voyageActions: ActionHandlers = {
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);
         { const down = hackDownOf('dungeon', d.id, now); if (down) throw Error(`${d.name}은(는) ${down.by}의 해킹으로 서버가 다운되어 ${Math.ceil((down.until - now) / 60000)}분 동안 입장할 수 없습니다.`); }
-        { const { mode, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode); }
+        { const { mode, stage, repeat } = parseDungeonValue(s, d.id, a.value); enterDungeon(s, d.id, repeat, mode, stage); }
         s.running = true;
         s.lastTick = now;
     },

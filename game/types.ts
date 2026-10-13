@@ -455,6 +455,8 @@ export type Enemy = {
     born?: number;
     /** v25.19 변종 종류(무리·거대·심연 변이·별빛). 없으면 보통 개체. */
     variant?: 'giant' | 'abyssal' | 'starlit' | 'swarm';
+    /** v3.310 지속 피해 체력 비례분의 기준 체력 상한(나이트메어 단계: 1단계 체력). */
+    dotHpCap?: number;
     combatStats?: Stats;
     effects?: StatusEffects;
     cooldowns?: Record<string, number>;
@@ -823,9 +825,11 @@ export type State = {
         wave: number;
         depth?: number;
         /** 반복 도전. left: 남은 추가 도전 횟수(null=실패할 때까지), until: 무릉도장 목표 깊이. */
-        repeat?: { left: number | null; until?: number };
+        repeat?: { left: number | null; until?: number; /** v3.310 나이트메어 단계 오르기: 정복할 때마다 다음 단계로(최고 단계 · 실패까지). */ climb?: boolean };
         /** v27.70 일반 던전 난이도(DUNGEON_MODES). 없으면 노말. 무릉도장은 쓰지 않습니다. */
         mode?: import('./data/balance').DungeonMode;
+        /** v3.310 나이트메어 단계(1~DUNGEON_STAGE.max). 없으면 1. */
+        stage?: number;
     };
     /** v3.18 해커: 비트·권한 등급·해킹 단계·침투 작전 진행. 환생해도 남습니다. */
     hacker?: HackerState;
@@ -851,6 +855,8 @@ export type State = {
     clears: Record<string, number>;
     /** v27.81 헬·나이트메어 난이도 정복 횟수(난이도 → 던전 id → 횟수). 노말은 clears만 셉니다. 업적에 씁니다. */
     modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
+    /** v3.310 던전별 나이트메어 최고 정복 단계(던전 id → 단계). 다음 단계 입장 조건 · 업적 · 칭호에 씁니다. */
+    nightmareBest?: Record<string, number>;
     logs: Log[];
     logId: number;
     lastDuel: number;

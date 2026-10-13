@@ -52,6 +52,9 @@ const bestEnhance = (s: State) => Math.max(0, ...Object.values(s.equipment || {}
 /** v27.81 헬·나이트메어 정복 기록(encounter가 modeClears에 쌓음). */
 const modeClears = (mode: DungeonMode) => (s: State) => sum(s.modeClears?.[mode]);
 const modeDungeons = (mode: DungeonMode) => (s: State) => Object.values(s.modeClears?.[mode] || {}).filter(n => (n || 0) > 0).length;
+/** v3.310 나이트메어 단계 기록: 어느 던전이든 최고 단계, 지역 던전 모두의 최저 단계(‘7곳 모두 n단계’). */
+const nightmareStageBest = (s: State) => Math.max(0, ...Object.values(s.nightmareBest || {}));
+const nightmareStageAll = (s: State) => Math.min(...PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').map(d => s.nightmareBest?.[d.id] || 0));
 const MODE_DUNGEONS = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').length;
 const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.name;
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
@@ -96,6 +99,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('nightmare', '던전', n => `${modeName('nightmare')} 정복 ${n}회`, n => `던전을 ${modeName('nightmare')} 난이도로 ${n}회 정복합니다.`, [1, 10, 100], modeClears('nightmare'), i => [{ pearls: 5 }, { pearls: 12 }, { pearls: 25, ap: 1, sp: 1 }][i]),
     ...series('hellAll', '던전', n => `${modeName('hell')} 던전 ${n}곳`, n => `서로 다른 던전 ${n}곳을 ${modeName('hell')} 난이도로 정복합니다.`, [3, MODE_DUNGEONS], modeDungeons('hell'), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
     ...series('nightmareAll', '던전', n => `${modeName('nightmare')} 던전 ${n}곳`, n => `서로 다른 던전 ${n}곳을 ${modeName('nightmare')} 난이도로 정복합니다.`, [3, MODE_DUNGEONS], modeDungeons('nightmare'), i => [{ pearls: 8 }, { pearls: 20, ap: 1 }][i]),
+    // v3.310 나이트메어 단계(명예 · 보상 없음): 한 곳 3 · 5 · 10단계, 지역 던전 모두 5 · 10단계(칭호).
+    ...series('nightmareStage', '던전', n => `${modeName('nightmare')} ${n}단계 정복`, n => `지역 던전 하나를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [3, 5, 10], nightmareStageBest, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('nightmareStageAll', '던전', n => `${modeName('nightmare')} ${n}단계 · ${MODE_DUNGEONS}곳`, n => `지역 던전 ${MODE_DUNGEONS}곳 모두를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [5, 10], nightmareStageAll, () => ({})).map(a => ({ ...a, honor: true })),
     ...rankAchievements,
     ...series('rankPoints', '계급', n => `진급 포인트 ${n}P 사용`, n => `특전에 진급 포인트를 ${n}P 쓰고 있습니다(초기화해도 달성 기록은 남음).`, [5, 20, RANK_TOTAL_POINTS], rankPointsSpent, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20, sp: 1 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, ap: 1, sp: 2 }][i]),

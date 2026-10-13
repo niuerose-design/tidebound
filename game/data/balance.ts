@@ -109,6 +109,13 @@ export const ABYSS_TUNING = { hp: 30000, hpGrowth: 1.15, attack: 2, attackGrowth
 export const DUNGEON_MODES = [{ id: 'normal', name: '노말', tier: 0, note: '' }, { id: 'hell', name: '헬', tier: 70, note: '환생 50 안팎의 몸에 맞춘 난이도입니다.' }, { id: 'nightmare', name: '나이트메어', tier: 260, note: '다른 직업 패시브까지 계승해 채운 몸을 위한 난이도입니다. 자기 계열만으로는 깨기 어렵습니다.' }] as const;
 export type DungeonMode = typeof DUNGEON_MODES[number]['id'];
 export const dungeonModeTier = (mode?: string) => DUNGEON_MODES.find(m => m.id === mode)?.tier ?? 0;
+/**
+ * v3.310 나이트메어 단계(docs/endgame-challenge-plan.md PR B): k단계 = 체력 ×hp^(k−1) · 공격 ×attack^(k−1)(월드보스 소환 단계와 같은 식), 지속 피해의 체력 비례분은 1단계 체력 기준(dotHpCap).
+ * (k−1)단계를 정복해야 k단계가 열립니다. 하루 보너스 주화 +coinsPerStage/단계, 보스 코어 드롭률 ×(1 + lootPerStage × (k−1)), 세계석은 주지 않습니다.
+ * 측정(check-bosses --nm-stage, 빌림 몸): 환생 30은 3~4단계, 50은 6~7단계, 100은 9~10단계에서 막힙니다. 자기 계열 몸은 1단계부터 못 깹니다(빌림 전용).
+ */
+export const DUNGEON_STAGE = { hp: 1.5, attack: 1.15, max: 10, coinsPerStage: 10, lootPerStage: .1 } as const;
+export const dungeonStageMultiplier = (stage = 1) => { const k = Math.max(0, Math.min(DUNGEON_STAGE.max, Math.floor(stage || 1)) - 1); return { hp: Math.pow(DUNGEON_STAGE.hp, k), attack: Math.pow(DUNGEON_STAGE.attack, k) }; };
 // 스킬 공식의 기본값. 전투 계산(combat.ts)과 스킬 설명(skill-description.ts)이 같은 값을 씁니다.
 export const SKILL_FORMULA = {
     /** v3.88 행운 비례 보정(팬텀 계열): 치명 피해 재적용을 없앤 대신 위력의 치명 피해 비례분(scalingRatio)에 곱합니다.

@@ -37,6 +37,9 @@ export const TITLES: TitleDef[] = [
     { id: 'coreAwaken:7', name: '👁 모든 보스를 깨운 자', desc: '보스 코어 7종 모두 각성 5단계', group: '던전', achievement: 'coreAwaken:7' },
     { id: 'abyss:25', name: '🥋 무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '🏯 무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
+    // v3.310 나이트메어 단계(지역 던전 7곳 모두).
+    { id: 'nightmareStageAll:5', name: '🌑 악몽을 건넌 자', desc: '지역 던전 7곳 모두 나이트메어 5단계', group: '던전', achievement: 'nightmareStageAll:5' },
+    { id: 'nightmareStageAll:10', name: '🌑 악몽의 끝', desc: '지역 던전 7곳 모두 나이트메어 10단계', group: '던전', achievement: 'nightmareStageAll:10' },
     { id: 'hacker:root', name: '💻 root', desc: '해킹 X 루트 권한', group: '도전', achievement: 'hacker:root' },
     // v3.38 명예 업적(지역 연구 N곳 완성) 칭호.
     ...([[2, '첫 지도를 넘긴 자'], [3, '세 번째 발자국'], [5, '다섯 지역의 탐구자'], [6, '여섯 번째 지도'], [7, '일곱 갈래 길의 기록자'], [8, '여덟 지역의 박물학자'], [9, '아홉 번째 도감'], [10, '열 곳의 증인'], [11, '빅토리아 너머로'], [12, '세계를 걷는 자'], [13, '마지막 한 곳 앞에서']] as const).map(([n, name]) => ({ id: `regions:${n}`, name: `📖 ${name}`, desc: `사냥터 ${n}곳 도감 완성`, group: '모험' as const, achievement: `regions:${n}` })),

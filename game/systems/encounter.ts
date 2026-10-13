@@ -25,7 +25,7 @@ import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKil
 import { roughHeal, lv1Active } from './vows';
 import { sproutHeal } from '../data/sprout';
 import type { State, Item, Stats, Enemy } from '../types';
-import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE } from '../data/balance';
+import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE, DUNGEON_STAGE, dungeonStageMultiplier } from '../data/balance';
 import { MONSTERS, STAGES, HABITAT, isHabitat, swarmHpMultiplier, swarmAttackMultiplier, swarmDropRolls, swarmRewardMultiplier, SWARM_BIG, SWARM_ESSENCE_PER_ITEM, stageStatMonster, tideLiftMonster, expLevelScale, stageRewardNorm, stageDepth, dungeonDepth, monsterById, stageById, dungeonById } from '../data/world';
 import { jobById } from '../data/classes';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
@@ -293,6 +293,9 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
     const base = dungeon ? dungeonKillReward(field, dLevel, tier, boss, dungeon.id) : killReward(field, tier, boss);
     // v3.9 깊이 계수(뒤 사냥터·던전일수록 조금 더 어렵고 더 줌). 무릉도장·까미·누리는 1.
     applyDepth(foe, base, dungeon ? dungeonDepth(dungeon.id) : stageDepth(st.id));
+    // v3.310 나이트메어 단계: 체력 · 공격 배율(DUNGEON_STAGE). 지속 피해의 체력 비례분은 1단계 체력 기준(dotHpCap).
+    const nmStage = normalDungeon && s.dungeon!.mode === 'nightmare' ? s.dungeon!.stage || 1 : 1, stageHpBase = nmStage > 1 ? foe.hp : undefined;
+    if (nmStage > 1) { const m = dungeonStageMultiplier(nmStage); foe.hp = Math.round(foe.hp * m.hp); foe.attack = Math.round(foe.attack * m.attack); foe.magic = Math.round((foe.magic || 0) * m.attack); }
     const gold = base.gold;
     // v27.66 레벨 차 경험치 보정(EXP_LEVEL_GAP). 던전은 보상에 쓰는 몬스터 레벨(권장 + expLevelOver, 보스는 권장 레벨), 사냥터는 실제 몬스터 레벨 기준.
     const rewardLevel = dungeon ? (boss ? dLevel : Math.min(field.level, dLevel + DUNGEON_TUNING.expLevelOver)) : field.level;
@@ -320,7 +323,7 @@ export function spawn(s: State, rng: () => number, force?: ForcedRare) {
         foe.magic = Math.round((foe.magic || 0) * vdef.attack);
         if (vdef.speed) foe.speed = Math.round((foe.speed || 1) * vdef.speed);
     }
-    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(onyx ? { onyx: rareId, leavesAt: s.turn + (jobById(s.job)?.onyxTurns ?? ONYX.turns) } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!monsterById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
+    s.enemy = { id: f.id, name: boss ? dungeon!.boss : f.name, hp: foe.hp, maxHp: foe.hp, attack: foe.attack, defense: foe.defense, exp, gold, boss: boss || onyx || king, ...(stageHpBase !== undefined ? { dotHpCap: stageHpBase } : {}), ...(onyx ? { onyx: rareId, leavesAt: s.turn + (jobById(s.job)?.onyxTurns ?? ONYX.turns) } : king ? { leavesAt: s.turn + KING.turns } : {}), stun: 0, combatStats: foe, skills: foeSkills(f.id, field.level, boss || !!monsterById(f.id)?.boss), cooldowns: {}, effects: {}, mana: 100, ...(swarm > 1 ? { swarm, born: s.turn } : {}), ...(variant ? { variant } : {}) };
 }
 /**
  * v3.99 전투 · 처치 로그에 쓰는 적 이름. 무리는 ‘스포아 ×100’, 변종은 ‘◆ 거대 개체 스포아’,
@@ -503,9 +506,11 @@ export function reward(s: State, rng: () => number) {
             const first = !s.clears[d.id];
             const depth = s.dungeon.depth || 1;
             // v3.201 지역 던전은 하루 처음 DAILY_BONUS.clears회가 보너스 주화(던전 공용, 이월 없음). 무릉도장은 층 주화만.
-            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus) * (d.id === 'abyss' ? jobById(s.job)?.abyssCoinScale ?? 1 : 1));
+            // v3.310 나이트메어 단계: 보너스 주화 +coinsPerStage/단계, 보스 코어 드롭률 ×(1 + lootPerStage × (단계 − 1)).
+            const nmStage = s.dungeon.mode === 'nightmare' && d.id !== 'abyss' ? s.dungeon.stage || 1 : 1;
+            const bonus = spendDailyBonus(s, d.id, s.lastTick), coins = grantDungeonCoins(s, clearCoinBase(d.id, s.dungeon.mode, depth, bonus, nmStage) * (d.id === 'abyss' ? jobById(s.job)?.abyssCoinScale ?? 1 : 1));
             // v3.202 보스 전리품은 하루 보너스 정복에서만 굴립니다(무릉도장은 보너스가 없어 제외).
-            if (bonus) rollBossLoot(s, d.id, rng);
+            if (bonus) rollBossLoot(s, d.id, rng, 1 + DUNGEON_STAGE.lootPerStage * (nmStage - 1));
             recordGoal(s, 'dungeon', d.id, 1, text => addLog(s, text, 'reward'));
             if (d.id === 'abyss') {
                 const deeper = depth > s.abyssBest;
@@ -530,14 +535,15 @@ export function reward(s: State, rng: () => number) {
             if (noviceMarketLocked(s)) addLog(s, '새 메뉴가 열렸습니다 · 증권거래소(던전 주화로 거래)', 'system');
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
+            if (nmStage >= 1 && s.dungeon.mode === 'nightmare' && d.id !== 'abyss' && nmStage > (s.nightmareBest?.[d.id] || 0)) { (s.nightmareBest ??= {})[d.id] = nmStage; addLog(s, `${d.name} 나이트메어 ${nmStage}단계 첫 정복${nmStage < DUNGEON_STAGE.max ? ` · ${nmStage + 1}단계가 열립니다` : ' · 최고 단계'}`, 'reward'); }
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.201 반복 정복 확률 드롭은 없앴습니다(주화 상점 장비 상자로).
             if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
-            const repeat = s.dungeon.repeat;
+            addLog(s, `${d.name}${nmStage > 1 ? ` 나이트메어 ${nmStage}단계` : ''} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            const repeat = s.dungeon.repeat, mode = s.dungeon.mode;
             s.dungeon = null;
             s.running = false;
-            if (repeat) continueRepeat(s, d.id, repeat);
+            if (repeat) continueRepeat(s, d.id, repeat, mode, nmStage);
             else endRun(s, `${d.name} 정복 · 1회 도전 완료로 멈춤`);
         }
     }
