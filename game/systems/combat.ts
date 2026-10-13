@@ -843,8 +843,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.288 각성 관통: 5차 각성기(wardPierce)는 숙련 단계 확률로 상태이상 면역을 무시하고, 건 상태이상에 정화 버팀 확률(pierce)을 남깁니다. 없는 기술은 난수를 쓰지 않습니다.
     // 결투(플레이어 대 플레이어)에는 쓰지 않습니다: 몬스터(foe)에게 걸 때만.
     const pierceP = src && b.foe ? wardPierceOf(a, src) : 0;
-    // v3.311 피해 유형 면역: 물리 면역은 출혈, 마법 면역은 중독 · 화상도 막습니다(면역 관통도 안 됨).
-    const immuneTo = (key: ImmuneStatus) => { if (b.immune === 'physical' ? key === 'bleed' : b.immune === 'magic' ? key === 'poison' || key === 'burn' : false) return true; if (!isImmune(b, key)) return false; if (pierceP > 0 && rng() < pierceP) { notes.push('면역 관통'); return false; } return true; };
+    // v3.315 피해 유형 면역: 면역 유형의 공격(immuneHit)이 거는 출혈 · 중독 · 화상도 걸리지 않습니다(지속 피해는 고정 피해라 이름이 아니라 거는 공격의 유형으로 가름 · 면역 관통도 안 됨). 복합 피해 공격은 절반이 들어가므로 그대로 겁니다.
+    const immuneTo = (key: ImmuneStatus) => { if (immuneHit && (key === 'bleed' || key === 'poison' || key === 'burn')) return true; if (!isImmune(b, key)) return false; if (pierceP > 0 && rng() < pierceP) { notes.push('면역 관통'); return false; } return true; };
     const markPierce = (key: PierceKey, active: boolean) => { const fx = b.effects!; if (pierceP > 0) (fx.pierce ??= {})[key] = Math.max(pierceP, active ? fx.pierce?.[key] || 0 : 0); else if (!active && fx.pierce) delete fx.pierce[key]; };
     if (landed && src && effect === 'stun' && immuneTo('stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && src && effect === 'stun') {

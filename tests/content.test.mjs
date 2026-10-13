@@ -537,3 +537,26 @@ test('v3.314 fourth Mu Lung core at floors 70-100, floor 150 achievement, 150/20
     assert.equal(ach('abyssCore:4').progress(s), 4);
     assert.ok(['abyss:150', 'abyss:200', 'abyssCore:4'].every(id => TITLES.some(t => t.id === id && t.achievement === id)));
 });
+
+test('v3.316 core passive transcendence: stages at last milestone x2/x4, own lineage only, +10% core scale per stage; honor achievements', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const P = await load('systems/progression'), { SKILLS } = await load('data/skills'), { jobById, lineageOf } = await load('data/classes'), { ACHIEVEMENTS } = await load('data/achievements'), { TITLES } = await load('data/titles');
+    const core = SKILLS.find(sk => sk.core?.scale?.attack && jobById(sk.job)?.tier === 5 && sk.job === 'hero'); assert.ok(core, 'hero has a 5th-tier core passive');
+    const last = P.masteryMilestonesFor(core).at(-1);
+    assert.deepEqual(P.coreTranscendTargets(core), [last * 2, last * 4]); assert.deepEqual(P.coreTranscendTargets(SKILLS.find(sk => sk.id === 'hook')), [], 'not a core passive');
+    assert.equal(P.coreTranscendStages(core, last), 0); assert.equal(P.coreTranscendStages(core, last * 2), 1); assert.equal(P.coreTranscendStages(core, last * 4), 2);
+    const home = P.coreScale(core, 'hero', 4), borrowed = P.coreScale(core, 'grandMagus', 4);
+    assert.equal(home, 1); assert.equal(borrowed, .5);
+    assert.ok(Math.abs(P.coreScale(core, 'hero', 4, 1) - 1.1) < 1e-9 && Math.abs(P.coreScale(core, 'hero', 4, 2) - 1.2) < 1e-9, 'own lineage: ×1.1 per stage');
+    assert.equal(P.coreScale(core, 'grandMagus', 4, 2), .5, 'another lineage: no transcendence');
+    assert.ok(lineageOf(jobById('hero')) !== lineageOf(jobById('grandMagus')));
+    // 능력치: 숙련 ×2에 닿으면 자기 계보 몸의 공격이 핵심 배율 ×1.1만큼 커집니다.
+    const s = newState(0); s.job = 'hero'; s.level = 200; s.rebirths = 30; s.skills = [core.id]; s.learned[core.id] = 1; s.skillPractice = { [core.id]: last };
+    const a0 = stats(s).attack; s.skillPractice[core.id] = last * 2; const a1 = stats(s).attack;
+    const c = core.core.scale.attack, want = (1 + c * 1.1) / (1 + c);
+    assert.ok(Math.abs(a1 / a0 - want) < .01, `${a0} → ${a1} (${(a1 / a0).toFixed(4)} vs ${want.toFixed(4)})`);
+    assert.equal(P.coreTranscendOf(s, core.id), 1);
+    const ach = id => ACHIEVEMENTS.find(a => a.id === id);
+    assert.ok(ach('coreTranscend:1')?.honor && ach('coreTranscend2:5')?.honor && ach('extremeStage:5')?.honor); assert.equal(ach('coreTranscend:1').progress(s), 1); assert.equal(ach('coreTranscend2:1').progress(s), 0);
+    assert.ok(['coreTranscend:1', 'coreTranscend2:5', 'extremeStage:5'].every(id => TITLES.some(t => t.id === id && t.achievement === id)));
+});
