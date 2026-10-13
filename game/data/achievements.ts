@@ -56,6 +56,8 @@ const modeDungeons = (mode: DungeonMode) => (s: State) => Object.values(s.modeCl
 const nightmareStageBest = (s: State) => Math.max(0, ...Object.values(s.nightmareBest || {}));
 const nightmareStageAll = (s: State) => Math.min(...PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').map(d => s.nightmareBest?.[d.id] || 0));
 const MODE_DUNGEONS = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').length;
+/** v3.311 월드보스별 참여해 격파한 최고 소환 단계. */
+const raidBest = (id: string) => (s: State) => s.raidBest?.[id] || 0;
 const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.name;
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
 const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
@@ -102,6 +104,10 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v3.310 나이트메어 단계(명예 · 보상 없음): 한 곳 3 · 5 · 10단계, 지역 던전 모두 5 · 10단계(칭호).
     ...series('nightmareStage', '던전', n => `${modeName('nightmare')} ${n}단계 정복`, n => `지역 던전 하나를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [3, 5, 10], nightmareStageBest, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('nightmareStageAll', '던전', n => `${modeName('nightmare')} ${n}단계 · ${MODE_DUNGEONS}곳`, n => `지역 던전 ${MODE_DUNGEONS}곳 모두를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [5, 10], nightmareStageAll, () => ({})).map(a => ({ ...a, honor: true })),
+    // v3.311 월드보스 소환 단계 격파 참여(명예 · 보상 없음, docs/endgame-challenge-plan.md PR C). 핑크빈은 1단계부터.
+    ...honor(series('raidZakum', '도전', n => `자쿰 ${n}단계 격파`, n => `${n}단계 자쿰 격파에 참여합니다(한 번이라도 때린 뒤 격파).`, [5, 10], raidBest('zakum'), () => ({}))),
+    ...honor(series('raidHorntail', '도전', n => `혼테일 ${n}단계 격파`, n => `${n}단계 혼테일 격파에 참여합니다.`, [3, 5, 10], raidBest('horntail'), () => ({}))),
+    ...honor(series('raidPinkBean', '도전', n => n === 1 ? '핑크빈 격파' : `핑크빈 ${n}단계 격파`, n => n === 1 ? '핑크빈 격파에 참여합니다.' : `${n}단계 핑크빈 격파에 참여합니다.`, [1, 3, 5, 10], raidBest('pinkBean'), () => ({}))),
     ...rankAchievements,
     ...series('rankPoints', '계급', n => `진급 포인트 ${n}P 사용`, n => `특전에 진급 포인트를 ${n}P 쓰고 있습니다(초기화해도 달성 기록은 남음).`, [5, 20, RANK_TOTAL_POINTS], rankPointsSpent, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20, sp: 1 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, ap: 1, sp: 2 }][i]),
