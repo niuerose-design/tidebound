@@ -3,7 +3,7 @@ import type { Item, State } from '../types';
 import { DUNGEON_COINS, DUNGEON_SHOP, DAILY_BONUS, DUNGEON_SHOP_DAILY, GEAR_BOX, GROWTH_GOODS, GROWTH_MAX_REBIRTHS, type GrowthGood, HUNTER_AFFIX, QUALITY_GOODS, abyssCoins, type QualityGood } from '../data/dungeon-shop';
 import { ODDS } from '../data/odds';
 import { dayKey } from '../data/time';
-import { dungeonModeTier, type DungeonMode } from '../data/balance';
+import { dungeonModeTier, DUNGEON_STAGE, type DungeonMode } from '../data/balance';
 import { affixDef, affixQuality, HEIR_ROLL_TOP, optionAtQuality } from '../data/gear';
 import { ONYX, ONYX_CORE_ID, onyxItemById } from '../data/onyx';
 import { BOSS_CORES, coreEntry } from '../data/boss-core';
@@ -12,7 +12,8 @@ import { bestHourly } from './income';
 
 const modeOf = (mode: DungeonMode | undefined): DungeonMode => mode && dungeonModeTier(mode) ? mode : 'normal';
 /** 이 정복 한 번의 기본 주화(주화 보너스 전). 무릉도장은 층, 지역 던전은 난이도와 하루 보너스 여부(bonus)로 정합니다. */
-export const clearCoinBase = (dungeonId: string, mode: DungeonMode | undefined, depth = 1, bonus = false) => dungeonId === 'abyss' ? abyssCoins(depth) : (bonus ? DAILY_BONUS.coins : DUNGEON_COINS)[modeOf(mode)];
+/** v3.310 나이트메어 k단계: 하루 보너스 주화 + coinsPerStage × (k − 1), 보너스 뒤 주화 × k. */
+export const clearCoinBase = (dungeonId: string, mode: DungeonMode | undefined, depth = 1, bonus = false, stage = 1) => dungeonId === 'abyss' ? abyssCoins(depth) : modeOf(mode) === 'nightmare' ? (bonus ? DAILY_BONUS.coins.nightmare + DUNGEON_STAGE.coinsPerStage * (Math.max(1, stage) - 1) : DUNGEON_COINS.nightmare * Math.max(1, stage)) : (bonus ? DAILY_BONUS.coins : DUNGEON_COINS)[modeOf(mode)];
 /** v3.201 오늘 남은 하루 보너스 정복 수(지역 던전 공용, 이월 없음). */
 export const dailyBonusLeft = (s: Pick<State, 'dungeonBonus'>, now: number) => s.dungeonBonus?.day === dayKey(now) ? Math.max(0, DAILY_BONUS.clears - s.dungeonBonus.used) : DAILY_BONUS.clears;
 /** v3.201 지역 던전 정복 한 번에 하루 보너스를 씁니다. 남아 있었으면 true. 무릉도장은 쓰지 않습니다. */

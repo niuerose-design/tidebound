@@ -52,10 +52,11 @@ export function grantBossCore(s: State, dungeonId: string, rng: () => number = M
     return had.rank;
 }
 /** 보너스 정복 한 번에 보스 코어를 굴립니다. 받았으면 각성 단계. */
-export function rollBossLoot(s: State, dungeonId: string, rng: () => number): number | undefined {
+/** v3.310 chanceScale: 나이트메어 단계의 드롭률 배율(천장은 그대로). */
+export function rollBossLoot(s: State, dungeonId: string, rng: () => number, chanceScale = 1): number | undefined {
     if (!BOSS_CORES[dungeonId]) return undefined;
     const miss = s.bossLootMiss || 0;
-    if (rng() >= ODDS.bossLoot.chance && miss + 1 < ODDS.bossLoot.pity) { s.bossLootMiss = miss + 1; return undefined; }
+    if (rng() >= ODDS.bossLoot.chance * chanceScale && miss + 1 < ODDS.bossLoot.pity) { s.bossLootMiss = miss + 1; return undefined; }
     s.bossLootMiss = 0;
     return grantBossCore(s, dungeonId, rng);
 }

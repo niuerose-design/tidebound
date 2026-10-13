@@ -5,7 +5,8 @@
 //   칠흑   그 지역 무리 서식지의 적정 환생 몸으로 80턴 안에 잡는지: 승률 · 처치 턴 · 사망.
 //          칠흑의 몸 = 서식지 최강 몬스터(난이도만큼 레벨 상승) × 체력 100 · 공격 3(encounter.ts 그대로).
 //   월드보스 발록(환생 0급 · 목표 10번) · 자쿰(50급 · 100번) · 혼테일(100급 · 550번, concept 11.9 v3.83 결정): 한 도전(80턴) 피해 · 처치까지 도전 횟수.
-// 사용: node scripts/check-bosses.mjs [--only dungeon|onyx|raid] [--jobs hero,grandMagus,abyssBastion,curseQueen,lifeOcean] [--seeds 2] [--rebirths 0,5,10,...] [--own] [--json out.json]
+// v3.310 --nm-stage k: 나이트메어 k단계(체력 ×1.5^(k−1) · 공격 ×1.15^(k−1), 지속 피해는 1단계 체력 기준)로 잽니다.
+// 사용: node scripts/check-bosses.mjs [--only dungeon|onyx|raid] [--nm-stage 3] [--jobs hero,grandMagus,abyssBastion,curseQueen,lifeOcean] [--seeds 2] [--rebirths 0,5,10,...] [--own] [--json out.json]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { referenceBodies } from './lib/reference-body.mjs';
@@ -16,7 +17,7 @@ const { strike, fighterSpeed } = await load('systems/combat');
 const { jobById } = await load('data/classes');
 const { MONSTERS, STAGES, DUNGEONS, STAGE_FIT, tideLiftMonster } = await load('data/world');
 const { scaledEnemyStats, abyssEnemyStats, profile, foeSkills } = await load('data/encounters');
-const { dungeonModeTier, ABYSS_TUNING } = await load('data/balance');
+const { dungeonModeTier, ABYSS_TUNING, dungeonStageMultiplier } = await load('data/balance');
 const { ONYX, onyxBossFor } = await load('data/onyx');
 const { RAIDS, RAID } = await load('data/altar');
 const { skillMasteryRanks } = await load('systems/progression');
@@ -66,7 +67,11 @@ function dungeonRun(s, st, d, tier, seed, depth = 1) {
         const f = d.id === 'abyss' ? f0 : tideLiftMonster(f0, tier, s.level);
         const est = d.id === 'abyss' ? abyssEnemyStats(f, abyssReference(), depth, { boss: last, wave: w }) : scaledEnemyStats(f, { boss: last, tier, wave: last ? 4 : w });
         if (last && d.id !== 'abyss' && BOSS_HP !== 1) est.hp = Math.round(est.hp * BOSS_HP);
-        const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last }), r = fight(a, b, rng);
+        let dotCap;
+        if (tier === NIGHTMARE_TIER && d.id !== 'abyss' && NM_STAGE > 1) { dotCap = est.hp; const m = dungeonStageMultiplier(NM_STAGE); est.hp = Math.round(est.hp * m.hp); est.attack = Math.round(est.attack * m.attack); if (est.magic) est.magic = Math.round(est.magic * m.attack); }
+        const a = player(s, st, hp, mana, cd), b = foeOf({ ...f, level: f.level }, est, { boss: last });
+        if (dotCap) b.dotHpCap = dotCap;
+        const r = fight(a, b, rng);
         ok = r.won; hp = a.hp; mana = a.mana; turns += r.turns;
         if (last) { bossTurns = r.turns; bossHpLeft = Math.max(0, b.hp) / est.hp; }
     }
@@ -124,6 +129,7 @@ function measureOnyx() {
 // 처치까지 횟수는 '한 몸이 혼자 다 깎을 때'의 셈. --raid-stage 1,3,5 로 단계별 측정(지속 피해는 1단계 체력 기준 dotHpCap 포함).
 const RAID_TARGET = { balrog: { rebirth: 0, kills: 10 }, zakum: { rebirth: 50, kills: 1 }, horntail: { rebirth: 100, kills: 10 } };
 const RAID_STAGES = (arg('--raid-stage') || '1').split(',').map(Number);
+const NM_STAGE = Number(arg('--nm-stage', 1));
 function measureRaids() {
     const rows = [];
     for (const raid0 of RAIDS) {
@@ -170,7 +176,7 @@ if (process.argv.includes('--abyss-max')) {
     process.exit(0);
 }
 if (process.argv.includes('--body')) for (const r of REBIRTHS || [0, 5, 10, 20, 50, 100]) for (const jobId of JOB_IDS) console.log(r, jobId, JSON.stringify(bodyReport(bodyFor(r, jobId))));
-if (want('dungeon')) { console.log('## 던전 (노말 5연전 · 입장 환생 몸, 헬 R50, 나이트메어 R100)'); measureDungeons(); }
+if (want('dungeon')) { console.log(`## 던전 (노말 · 입장 환생 몸, 헬 R50, 나이트메어 R100${NM_STAGE > 1 ? ` · 나이트메어 ${NM_STAGE}단계` : ''})`); measureDungeons(); }
 if (want('onyx')) { console.log('## 칠흑 (서식지 적정 환생 몸 · 80턴)'); measureOnyx(); }
 if (want('raid')) { console.log('## 월드보스 (한 도전 80턴)'); measureRaids(); }
 for (const [k, s] of bodies) out.bodies[k] = bodyReport(s);

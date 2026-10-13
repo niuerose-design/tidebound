@@ -485,3 +485,25 @@ test('v3.307 rule-option caps bind the gear share only: boss cores and skill pas
  s.job='oceanFist';s.unlockedJobs.push('oceanFist');s.learned.endlessCombo=1;s.skills=['endlessCombo'];
  assert.ok(Math.abs(stats(s).followUpBonus-.5)<1e-9,`Endless Combo passive adds above the gear cap (${stats(s).followUpBonus})`);
 });
+
+test('v3.310 nightmare stages: value parsing and gating, hp/attack scaling with dotHpCap, coins, best-stage record, climb repeat',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),DR=await L.load('systems/dungeon-run'),B=await L.load('data/balance'),DC=await L.load('systems/dungeon-coins'),W=await L.load('data/world');
+ const s=newState(0);s.level=100;s.rebirths=50;
+ assert.deepEqual(DR.parseDungeonValue(s,'grotto','nightmare@once'),{mode:'nightmare',stage:1,repeat:undefined});
+ assert.throws(()=>DR.parseDungeonValue(s,'grotto','nightmare:2@once'),/1단계를 먼저/);
+ assert.throws(()=>DR.parseDungeonValue(s,'grotto','hell:2@once'),/단계를 확인/);
+ assert.throws(()=>DR.parseDungeonValue(s,'grotto','hell@climb'),/나이트메어에서만/);
+ s.nightmareBest={grotto:4};assert.deepEqual(DR.parseDungeonValue(s,'grotto','nightmare:5@climb'),{mode:'nightmare',stage:5,repeat:{left:null,climb:true}});assert.throws(()=>DR.parseDungeonValue(s,'grotto','nightmare:6@once'),/5단계를 먼저/);
+ assert.equal(DR.nightmareStageCap({nightmareBest:{grotto:10}},'grotto'),B.DUNGEON_STAGE.max);
+ assert.equal(DC.clearCoinBase('grotto','nightmare',1,true,1),60);assert.equal(DC.clearCoinBase('grotto','nightmare',1,true,10),150);assert.equal(DC.clearCoinBase('grotto','nightmare',1,false,4),12);assert.equal(DC.clearCoinBase('grotto','hell',1,true,5),40,'hell has no stages');
+ const m=B.dungeonStageMultiplier(3);assert.ok(Math.abs(m.hp-2.25)<1e-9&&Math.abs(m.attack-1.3225)<1e-9);assert.deepEqual(B.dungeonStageMultiplier(1),{hp:1,attack:1});
+ // 적 생성: 같은 웨이브의 1단계와 3단계를 견줍니다(지속 피해 기준 체력은 1단계 체력).
+ const spawnAt=stage=>{const t=newState(0);t.level=100;t.rebirths=50;t.nightmareBest={grotto:9};act(t,{type:'dungeon',id:'grotto',value:`nightmare:${stage}@once`},0);t.recovery=0;spawn(t,()=>0);return t.enemy;};
+ const e1=spawnAt(1),e3=spawnAt(3);assert.equal(e3.maxHp,Math.round(e1.maxHp*2.25));assert.equal(e3.attack,Math.round(e1.attack*1.3225));assert.equal(e3.dotHpCap,e1.maxHp);assert.equal(e1.dotHpCap,undefined);
+ // 정복 기록: 3단계를 깨면 최고 단계 3, 나이트메어 정복 수 +1.
+ const c=newState(0);c.level=100;c.rebirths=50;c.running=true;c.dungeon={id:'grotto',wave:W.DUNGEONS.find(d=>d.id==='grotto').monsters.length-1,mode:'nightmare',stage:3};c.clears.grotto=1;c.nightmareBest={grotto:2};c.enemy={id:'minnow',name:'t',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:true,stun:0};let g=0;while(c.enemy&&g++<50)tick(c,()=>0);
+ assert.equal(c.nightmareBest.grotto,3);assert.equal(c.modeClears.nightmare.grotto,1);assert.equal(c.dungeon,null);
+ // 단계 오르기: 정복한 단계 + 1로 다시 입장, 최고 단계를 깨면 멈춥니다.
+ const u=newState(0);u.level=100;u.rebirths=50;u.nightmareBest={grotto:2};DR.continueRepeat(u,'grotto',{left:null,climb:true},'nightmare',2);assert.equal(u.dungeon.stage,3);assert.equal(u.dungeon.mode,'nightmare');assert.deepEqual(u.dungeon.repeat,{left:null,climb:true});
+ u.dungeon=null;u.nightmareBest={grotto:B.DUNGEON_STAGE.max};DR.continueRepeat(u,'grotto',{left:null,climb:true},'nightmare',B.DUNGEON_STAGE.max);assert.equal(u.dungeon,null,'stops at the top stage');
+});
