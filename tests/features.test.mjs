@@ -311,5 +311,8 @@ test('v3.321 borrowed 4th/5th passives: every value (bonus, per-count, core) at 
  assert.equal(P.signatureScale(t4,t4.job),1,'own job keeps it whole');assert.equal(P.signatureScale(t4,other),.5,'4th passive borrowed at 50% (was 100%)');
  const t5=Sk.skillById('heroSoul');assert.equal(P.signatureScale(t5,'apostle'),.5,'5th passive borrowed at 50% (was 70%)');assert.equal(P.signatureScale(t5,'rebirthFisher'),1,'ultimate adventurer exempt');
  assert.equal(P.signatureScale(Sk.skillById('braveSlash'),'apostle'),B.SKILL_FORMULA.signatureScale,'5th actives still ×.7');
- const lines=D.skillEffectLines(Sk.skillById('magusDomain'));assert.ok(lines.some(l=>l.includes('모든 수치(핵심 패시브 포함)가 50%')),'description says the whole passive');
+ const lines=D.skillEffectLines(Sk.skillById('magusDomain'));assert.ok(lines.some(l=>l.includes('핵심 패시브를 포함한 모든 수치가 50%')),'description says the whole passive');
+ assert.deepEqual(D.skillExtraNotes(Sk.skillById('magusDomain')).filter(l=>l.includes('계승')),[D.inheritText(Sk.skillById('magusDomain'))],'v3.322 compact card uses the same single inherit line');
+ assert.ok(!D.skillExtraNotes(Sk.skillById('magusDomain')).some(l=>l.startsWith('핵심 패시브')&&l.includes('계승')),'core line no longer carries its own inherit note');
+ assert.equal(D.inheritText(Sk.skillById('doomMark')),'','status-only 5th skill has no damage-ratio line');
 });
