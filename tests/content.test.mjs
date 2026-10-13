@@ -507,3 +507,19 @@ test('v3.310 nightmare stages: value parsing and gating, hp/attack scaling with 
  const u=newState(0);u.level=100;u.rebirths=50;u.nightmareBest={grotto:2};DR.continueRepeat(u,'grotto',{left:null,climb:true},'nightmare',2);assert.equal(u.dungeon.stage,3);assert.equal(u.dungeon.mode,'nightmare');assert.deepEqual(u.dungeon.repeat,{left:null,climb:true});
  u.dungeon=null;u.nightmareBest={grotto:B.DUNGEON_STAGE.max};DR.continueRepeat(u,'grotto',{left:null,climb:true},'nightmare',B.DUNGEON_STAGE.max);assert.equal(u.dungeon,null,'stops at the top stage');
 });
+
+test('v3.313 tide challenge bonus: nightmare stages (max +50) and Mu Lung floors (max +20) lift the hunting-ground tide cap above rebirths', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { tideLimit, tideChallengeBonus, TIDE_CHALLENGE } = await load('systems/meta'), { ECONOMY } = await load('data/economy'), { PLAIN_DUNGEONS } = await load('data/world');
+    const ids = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').map(d => d.id); assert.equal(ids.length, 7);
+    assert.deepEqual(tideChallengeBonus({}), { nightmare: 0, abyss: 0, total: 0 }); assert.equal(tideLimit({ rebirths: 30 }), 30, 'no records: rebirths as before');
+    const three = Object.fromEntries(ids.map(id => [id, 3]));
+    assert.deepEqual(tideChallengeBonus({ nightmareBest: three, abyssBest: 45 }), { nightmare: 15, abyss: 9, total: 24 }); assert.equal(tideLimit({ rebirths: 30, nightmareBest: three, abyssBest: 45 }), 54);
+    const ten = Object.fromEntries(ids.map(id => [id, 10]));
+    assert.deepEqual(tideChallengeBonus({ nightmareBest: { ...ten, abyss: 99 }, abyssBest: 300 }), { nightmare: TIDE_CHALLENGE.nightmareMax, abyss: TIDE_CHALLENGE.abyssMax, total: 70 }, 'capped; abyss key and floors above 100 ignored');
+    assert.equal(tideLimit({ rebirths: 150, nightmareBest: ten, abyssBest: 100 }), ECONOMY.tideCap, 'never above the global cap');
+    assert.deepEqual(tideChallengeBonus({ nightmareBest: { [ids[0]]: 1 } }).nightmare, 0, 'one stage in one dungeon rounds down to 0');
+    // 입장 검사: 상한까지는 허용, 그 위는 거절.
+    const s = newState(0); s.rebirths = 2; s.nightmareBest = three; s.abyssBest = 45;
+    act(s, { type: 'tide', id: '26' }, 1_000); assert.equal(s.tide, 26); assert.throws(() => act(s, { type: 'tide', id: '27' }, 2_000), /난이도 조건/);
+});

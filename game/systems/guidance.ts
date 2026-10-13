@@ -22,7 +22,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     { id: 'altar', title: '제단에 공물', hint: '‘제단’에 골드·세계석·정수를 바치면 모두가 함께 쓰는 축복(골드 · 경험치 · 까미 · 누리 출현) 게이지가 차고, 신 소환 게이지가 차면 신이 깨어나 도전할 수 있습니다. 골드 1,000부터 바칠 수 있습니다.', view: 'altar', done: s => (s.altar?.offers || 0) > 0 || s.rebirths > 0, earned: s => (s.altar?.offers || 0) > 0, reward: { pearls: 2 } },
     { id: 'research', title: '세계석 연구', hint: '던전·목표로 모은 세계석을 ‘환생 · 분신’의 연구 탭에 쓰면 환생해도 남는 영구 능력이 됩니다. 재분배는 무료입니다.', view: 'rebirth', done: s => Object.values(s.permanent || {}).some(n => n > 0) || s.rebirths > 0, earned: s => Object.values(s.permanent || {}).some(n => n > 0), reward: { pearls: 2 } },
     { id: 'rebirth', title: '환생', hint: '요구 레벨(처음 Lv.30)에 닿으면 환생으로 세계석과 영구 보너스를 얻고 1레벨부터 더 빠르게 다시 모험합니다. 도감·연구·업적·유물 장비는 남습니다.', view: 'rebirth', done: s => s.rebirths > 0, reward: { pearls: 3, sp: 1 } },
-    { id: 'tide', title: '사냥터 난이도', hint: '환생 1회부터 자동 사냥 화면의 ‘난이도’를 올릴 수 있습니다(환생 횟수만큼). 몬스터가 강해지는 대신 보상·숙련이 오르고, 난이도 5부터 숙련의 까미, 10부터 경험의 누리가 나타납니다. 한 단계만 올려 보세요.', view: 'battle', done: s => (s.tide || 0) > 0, reward: { pearls: 2 } },
+    { id: 'tide', title: '사냥터 난이도', hint: '환생 1회부터 자동 사냥 화면의 ‘난이도’를 올릴 수 있습니다(환생 횟수만큼, 나이트메어 단계 · 무릉도장 층 기록으로 더). 몬스터가 강해지는 대신 보상·숙련이 오르고, 난이도 5부터 숙련의 까미, 10부터 경험의 누리가 나타납니다. 한 단계만 올려 보세요.', view: 'battle', done: s => (s.tide || 0) > 0, reward: { pearls: 2 } },
 ];
 /**
  * v3.242 입문 메뉴: 첫 생(환생 0회 · 승천 전)에는 처음부터 쓸 수 없는 메뉴를 숨겨 두고 하나씩 엽니다.
