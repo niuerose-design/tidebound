@@ -3,7 +3,7 @@ import { useSkillFx, setSkillFx, useFxGlow, setFxGlow, useSceneLootSetting, setS
 import { useNotices, setNotice, NOTICE_KINDS } from './notice-settings';
 import { useStarSetting, setStarSetting } from './star-catch-setting';
 import { Settings } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import type { State, Action } from '@/game/types';
 import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '@/game/data/economy';
 import { RARITIES } from '@/game/data/balance';
@@ -78,6 +78,11 @@ export function SettingsDialog({ open, onOpenChange, s, busy, send, name, setNam
                     </li>; })}</ul>
                 {slotError && <p className="login-error" role="alert">{slotError}</p>}
             </div>}
+            {/* v3.319 설정은 누르는 즉시 적용 · 저장됩니다. 휴대폰에서 위쪽 X에 손이 닿지 않아 닫지 못한다는 피드백으로 아래에도 닫기 버튼. */}
+            <DialogFooter>
+                <small className="footnote">설정은 바꾸는 즉시 적용되고 저장됩니다.</small>
+                <DialogClose asChild><button type="button" className="secondary">닫기</button></DialogClose>
+            </DialogFooter>
         </DialogContent>
     </Dialog>;
 }
