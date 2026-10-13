@@ -549,3 +549,11 @@ test('v3.169 stat training passives: detail view shows the attribute gain per ma
     assert.deepEqual(D.skillGrowthStages(sk).slice(0, 5).map(r => r.effective.attrBonus.dex), [40, 50, 60, 70, 80], 'stage table grows by mastery stage');
     assert.equal(sk.attrBonus.dex, 40, 'the data itself is untouched');
 });
+
+test('v3.318 every per-count passive names its source (no "undefined 500마다"): public and secret skills', async () => {
+    const { SKILLS } = await load('game/data/skills.js'), { SECRET_SKILLS } = await load('game/secret/skills.js'), D = await load('game/systems/skill-description.js');
+    const withCounts = [...SKILLS, ...SECRET_SKILLS].filter(sk => sk.perCount?.length);
+    assert.ok(withCounts.some(sk => sk.id === 'hungryMaw'));
+    for (const sk of withCounts) for (const text of [...D.skillExtraNotes(sk), D.skillBrief(sk), ...D.skillEffectLines(sk)]) assert.ok(!/undefined/.test(text), `${sk.id}: ${text}`);
+    assert.ok(D.skillExtraNotes(SECRET_SKILLS.find(sk => sk.id === 'hungryMaw')).some(t => t.startsWith('먹은 정수 500마다')));
+});
