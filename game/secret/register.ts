@@ -4,7 +4,7 @@
  */
 // v3.49 서버 전용 표식: 화면(클라이언트) 번들이 이 파일을 가져가면 빌드가 실패합니다(docs/concept.md 10.2-1).
 import 'server-only';
-import { registerJobs, registerLineages, jobById, lineageOf, worldOf, AZEROTH_MASTERY_SCALE } from '../data/classes';
+import { registerJobs, registerLineages, jobById, lineageOf, worldOf, AZEROTH_MASTERY_SCALE, ULTIMATE_MASTERY_SCALE } from '../data/classes';
 import { registerSkills, alignJobMastery, normalizeSkillMastery, scaleUtilityGain, skillById, SKILLS } from '../data/skills';
 import { SECRET_JOBS, SECRET_LINEAGES } from './jobs';
 import { SECRET_SKILLS } from './skills';
@@ -29,6 +29,11 @@ for (const raw of SECRET_JOBS) {
     if (worldOf(SECRET_LINEAGES.find(l => l.id === lineageOf(job))) !== 'azeroth') continue;
     job.masteryTarget = (job.masteryTarget || 0) * AZEROTH_MASTERY_SCALE;
     for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
+}
+// v3.309 궁극의 모험가: 숙달 목표와 궁극의 유산 숙련 단계를 ULTIMATE_MASTERY_SCALE배로(숙달 1,500만 · 궁극의 유산 M4 3,750만). 조건(5차 10개 숙달 · 핵심 5개 완성 · 환생 30 · 원사 · 나이트메어 7곳)과 함께 '5차를 다 돌아 본 뒤의 긴 목표'로.
+{
+    const job = jobById('rebirthFisher');
+    if (job) { job.masteryTarget = (job.masteryTarget || 0) * ULTIMATE_MASTERY_SCALE; for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * ULTIMATE_MASTERY_SCALE); }
 }
 // v3.228 비밀 메이플 월드 4 · 5차도 핵심 패시브 개편(data/core-passive.ts, 아제로스 계보 제외).
 applyCoreRework(SECRET_JOBS.map(j => jobById(j.id)!).filter(Boolean), SKILLS, SECRET_LINEAGES);
