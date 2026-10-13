@@ -1094,7 +1094,7 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
     const A = await L.load('data/altar'), Du = await L.load('systems/duel');
     assert.equal(A.RAIDS.length, 4); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']); assert.equal(A.GAUGE_IDS.length, 9);
     assert.ok(A.RAIDS[0].stats.hp < A.RAIDS[1].stats.hp && A.RAIDS[1].stats.hp < A.RAIDS[2].stats.hp && A.RAIDS[0].cost < A.RAIDS[1].cost && A.RAIDS[1].cost < A.RAIDS[2].cost);
-    assert.equal(A.gaugeCost('zakum'), 4000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
+    assert.equal(A.gaugeCost('zakum'), 40000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
     const full = Du.raidBossSnapshot(A.RAIDS[0]), partial = Du.raidBossSnapshot(A.RAIDS[0], 1234);
     assert.equal(full.stats.hp, A.RAIDS[0].stats.hp); assert.equal(partial.stats.hp, 1234); assert.ok(full.skills.includes('foeWard'));
     // 서버 흐름(파일 DB): 소환 → 두 모험가가 때림 → 마지막 일격 → 참여 보상.

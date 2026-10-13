@@ -17,7 +17,7 @@ import { addLog } from '../systems/state';
 import { snapshot, power } from '../systems/stats';
 import { duel, abyssBossSnapshot, divineFirstGod, raidBossSnapshot, raidBreakdown } from '../systems/duel';
 import { jobById } from '../data/classes';
-import { josa, ALTAR, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, RAID_STAGE, raidStageStats, nextRaidStage, raidImmunity, raidReward, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
+import { josa, ALTAR, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs, effectiveBlessingLevel, blessingDesc, GAUGE_IDS, gaugeCost, gaugeName, offeringPoints, tithe, RAID, RAIDS, RAID_STAGE, raidStageStats, nextRaidStage, raidImmunity, raidReward, raidRespawnMs, gaugeTakesGold, type RaidHitSummary, raidById, isRaidGauge, type AltarGaugeId, type AltarInfo, type AltarRaidInfo, type AltarStatus, type Offering } from '../data/altar';
 
 type Shared = { at: number; week: string; altar: AltarRow; gauges: Record<string, { points: number; until: number; level: number; high_until: number }>; board: AltarOfferRow[]; allTime: AltarTotalRow[]; raids: Record<string, AltarRaidRow>;
     /** v3.91 모든 모험가의 누적 기여(내 누적 기여 · 순위를 요청마다 전체 합산하지 않고 이 캐시에서 셉니다). totals는 많은 순. */ totals: Map<string, number>; sortedTotals: number[] };
@@ -52,9 +52,9 @@ async function trySummon(a: AltarRow, godPoints: number, now: number) {
     await announce(ALTAR_NEWS.godAwake(god.name), now);
     return true;
 }
-/** v3.22 월드보스는 보스마다 따로: 그 보스가 살아 있지 않고(격파 뒤에는 RAID.respawnMs가 지나야) 그 소환 게이지가 찼으면 나타납니다. 여러 보스가 동시에 있을 수 있습니다. */
+/** v3.22 월드보스는 보스마다 따로: 그 보스가 살아 있지 않고(격파 뒤에는 raidRespawnMs가 지나야) 그 소환 게이지가 찼으면 나타납니다. 여러 보스가 동시에 있을 수 있습니다. */
 export const raidAlive = (r: AltarRaidRow | undefined, now: number) => !!r && r.state === 'alive' && r.until >= now;
-const raidWaiting = (r: AltarRaidRow | undefined, now: number) => !!r && r.state === 'slain' && now - r.slain_at < RAID.respawnMs;
+const raidWaiting = (r: AltarRaidRow | undefined, now: number) => !!r && r.state === 'slain' && now - r.slain_at < raidRespawnMs(raidById(r.id) ?? RAID);
 async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record<string, { points: number }>, now: number) {
     const database = db();
     for (const raid of RAIDS) {
@@ -64,7 +64,7 @@ async function trySummonRaid(raids: Record<string, AltarRaidRow>, gauges: Record
         if (!await database.spendAltarGauge(raid.id, raid.cost)) continue;
         // v3.191 소환 단계: 같은 날 격파된 뒤의 소환은 한 단계 위(체력 ×RAID_STAGE.hp …), 하루가 지나면 1단계.
         const { stage, dayStart } = nextRaidStage(r, now);
-        const gen = await database.summonAltarRaid(raid.id, raidStageStats(raid, stage).hp, now + raid.lifetimeHours * 3600_000, now, RAID.respawnMs, stage, dayStart);
+        const gen = await database.summonAltarRaid(raid.id, raidStageStats(raid, stage).hp, now + raid.lifetimeHours * 3600_000, now, raidRespawnMs(raid), stage, dayStart);
         if (!gen) { await database.addAltarGauge(raid.id, raid.cost); continue; }
         await announce(ALTAR_NEWS.raidAppear(raid.name, raid.lifetimeHours, stage, raidImmunity(raid, gen)), now);
         return true;
@@ -173,7 +173,7 @@ export async function altarInfo(id: string, s: Pick<State, 'altar'> | null, now:
         week: sh.week,
         gauges: GAUGE_IDS.map(g => {
             const b = BLESSINGS.find(x => x.id === g), level = liveLevel(sh.gauges[g], now);
-            if (isRaidGauge(g)) { const raid = raidById(g)!, waiting = raidWaiting(sh.raids[g], now); return { id: g, name: gaugeName(g), desc: `가득 차면 ${raid.name}(Lv.${raid.level})이 ${raid.lifetimeHours}시간 나타납니다`, points: sh.gauges[g]?.points || 0, cost: raid.cost, until: 0, level: 0, next: raidAlive(sh.raids[g], now) ? '이 보스가 떠나거나 쓰러진 뒤에 다시 소환됩니다' : waiting ? `격파 뒤 대기 중 · ${Math.ceil((RAID.respawnMs - (now - sh.raids[g]!.slain_at)) / 60000)}분 뒤 소환 가능` : '가득 차면 바로 나타납니다' }; }
+            if (isRaidGauge(g)) { const raid = raidById(g)!, waiting = raidWaiting(sh.raids[g], now); return { id: g, name: gaugeName(g), desc: `가득 차면 ${raid.name}(Lv.${raid.level})이 ${raid.lifetimeHours}시간 나타납니다`, points: sh.gauges[g]?.points || 0, cost: raid.cost, until: 0, level: 0, next: raidAlive(sh.raids[g], now) ? '이 보스가 떠나거나 쓰러진 뒤에 다시 소환됩니다' : waiting ? `격파 뒤 대기 중 · ${Math.ceil((raidRespawnMs(raid) - (now - sh.raids[g]!.slain_at)) / 60000)}분 뒤 소환 가능` : '가득 차면 바로 나타납니다' }; }
             const mins = (lv: number) => { const m = blessingLevelMs(b!.hours, lv) / 60_000; return m >= 60 ? `${m / 60}시간` : `${m}분`; };
             const next = !b ? '가득 차면 신이 깨어납니다' : !level ? `채우면 1단계로 열림 · ${blessingDesc(b, 1)} · ${b.hours}시간` : level < BLESSING_MAX_LEVEL ? `채우면 ${level + 1}단계 · ${blessingDesc(b, level + 1)} · ${level + 1 > BLESSING_HIGH_FROM ? `${mins(level + 1)} 유지 뒤 3단계로 12시간` : `지금부터 ${b.hours}시간 유지`}` : `최고 단계 · 채우면 ${mins(level)} 다시 유지`;
             return { id: g, name: b ? b.name : '신 소환', desc: b ? blessingDesc(b, level || 1) : '가득 차면 신이 깨어납니다', points: sh.gauges[g]?.points || 0, cost: gaugeCost(g, level, level > 0), until: sh.gauges[g]?.until || 0, level, next };
@@ -265,6 +265,8 @@ export function parseOffering(account: string, body: Record<string, unknown>, no
     const o: Offering = { gold: count(body.gold, ALTAR.maxGold), pearls: count(body.pearls, ALTAR.maxPearls), essence: count(body.essence, ALTAR.maxEssence) };
     const gauge = String(body.gauge || '') as AltarGaugeId;
     if (!GAUGE_IDS.includes(gauge)) throw new ApiError('어느 게이지에 바칠지 고르세요.');
+    // v3.312 소환 게이지(신 · 월드보스)에는 골드를 받지 않습니다.
+    if (o.gold > 0 && !gaugeTakesGold(gauge)) throw new ApiError('신 · 월드보스 소환 게이지에는 골드를 바칠 수 없습니다. 세계석 · 정수만 받습니다.');
     const points = offeringPoints(o);
     if (points < ALTAR.minPoints) throw new ApiError(`기여도가 1 이상이 되도록 바치세요(골드 ${ALTAR.goldPerPoint.toLocaleString()} = 1).`);
     if (!allow(`altar:${account}`, 1, ALTAR.offerCooldownMs, now)) throw new ApiError('잠시 뒤에 다시 바치세요.', 429);

@@ -8,7 +8,7 @@ import { DAILY_BONUS } from '@/game/data/dungeon-shop';
 import { useState } from 'react';
 import { Lock, Swords } from 'lucide-react';
 import { MonsterArt, SceneBackdrop, backdropTheme } from './art';
-import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, DUNGEON_STAGE, type DungeonMode } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, DUNGEON_MODES, type DungeonMode } from '@/game/data/balance';
 import { nightmareStageCap } from '@/game/systems/dungeon-run';
 import { PLAIN_DUNGEONS, closedIn, CLOSED_NOTE, monsterById, dungeonById } from '@/game/data/world';
 import { Heading, format, useNow } from './shared';
@@ -59,10 +59,10 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
     </section>}
     {activeDungeon && <AutoRunStatus s={s}/>}
     {/* v3.204 던전 주화 상점은 상점 메뉴의 탭으로 옮겼습니다. 여기는 보유 주화와 바로 가기만. */}
-    <section className="panel dungeon-coin-link"><span>던전 주화 <b>{format(s.dungeonCoins || 0)}</b> · 오늘 보너스 정복 {bonusLeft}/{DAILY_BONUS.clears}회 남음</span>{setView && <button className="secondary small" onClick={() => setView('dungeonShop')}>던전 주화 상점</button>}</section>
+    <section className="panel dungeon-coin-link"><span>던전 주화 <b>{format(s.dungeonCoins || 0)}</b> · 오늘 보너스 정복 {bonusLeft}/{DAILY_BONUS.clears}회 남음</span>{setView && <span className="dungeon-links"><button className="secondary small" onClick={() => setView('dungeonShop')}>던전 주화 상점</button><button className="text-button" onClick={() => setView('help')}>난이도 도움말</button></span>}</section>
     <div className="stage-grid dungeon-grid">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
             const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
-            const mode = modeChoice[d.id] || 'normal', modeDef = DUNGEON_MODES.find(m => m.id === mode)!;
+            const mode = modeChoice[d.id] || 'normal';
             const stageCap = nightmareStageCap(s, d.id), bestStage = s.nightmareBest?.[d.id] || 0, stage = mode === 'nightmare' && d.id !== 'abyss' ? Math.max(1, Math.min(stageChoice[d.id] || stageCap, stageCap)) : 1;
             const research = FIRST_CLEAR_SP[d.id], claimed = !!s.achievementClaims?.[`firstClear:${d.id}`], active = s.dungeon?.id === d.id;
             return <article className={`stage-card dungeon-stage-card ${active ? 'selected' : ''} ${locked ? 'locked' : ''}`} key={d.id}>
@@ -78,8 +78,9 @@ export function Dungeons({ s, send, busy, setView }: PanelProps) {
             <div className="stage-footer dungeon-actions">
                 <span>Lv. {d.level}+{d.rebirth ? ` · 환생 ${d.rebirth}회` : ''}</span>
                 {d.id !== 'abyss' && <select aria-label={`${d.name} 난이도`} value={mode} disabled={busy || locked || !!s.dungeon} onChange={e => setModeChoice({ ...modeChoice, [d.id]: e.target.value as DungeonMode })}>{DUNGEON_MODES.map(m => <option key={m.id} value={m.id} title={m.note || undefined}>{m.name}</option>)}</select>}
-                {d.id !== 'abyss' && mode === 'nightmare' && <select aria-label={`${d.name} 단계`} value={stage} disabled={busy || locked || !!s.dungeon} onChange={e => setStageChoice({ ...stageChoice, [d.id]: Number(e.target.value) })}>{Array.from({ length: stageCap }, (_, i) => i + 1).map(k => <option key={k} value={k}>{k}단계{k > bestStage ? ' · 도전' : ''}</option>)}</select>}
-                {d.id !== 'abyss' && modeDef.note && <small className="dungeon-mode-note">{modeDef.note}{mode === 'nightmare' ? ` 최고 ${bestStage}단계 정복. 단계마다 체력 ×${DUNGEON_STAGE.hp} · 공격 ×${DUNGEON_STAGE.attack}, 보너스 주화 +${DUNGEON_STAGE.coinsPerStage} · 보스 코어 확률 +${Math.round(DUNGEON_STAGE.lootPerStage * 100)}%.` : ''}</small>}
+                {d.id !== 'abyss' && mode === 'nightmare' && <select aria-label={`${d.name} 단계`} value={stage} title="단계마다 체력 · 공격이 오릅니다. 자세한 규칙은 도움말 › 사냥 · 던전 · 생존" disabled={busy || locked || !!s.dungeon} onChange={e => setStageChoice({ ...stageChoice, [d.id]: Number(e.target.value) })}>{Array.from({ length: stageCap }, (_, i) => i + 1).map(k => <option key={k} value={k}>{k}단계{k > bestStage ? ' · 도전' : ''}</option>)}</select>}
+                {/* v3.312 난이도 · 나이트메어 단계 설명은 도움말(사냥 · 던전 · 생존)로 옮겼습니다. 화면에는 최고 정복 단계만 짧게. */}
+                {d.id !== 'abyss' && mode === 'nightmare' && bestStage > 0 && <small className="dungeon-mode-note">최고 {bestStage}단계 정복</small>}
                 <select aria-label={`${d.name} 반복 설정`} value={repeatChoice[d.id] || 'once'} disabled={busy || locked || !!s.dungeon} onChange={e => setRepeatChoice({ ...repeatChoice, [d.id]: e.target.value })}>
                     <option value="once">1회</option>
                     {d.id === 'abyss' ? [5, 10, 25].map(n => <option key={n} value={`deeper:${n}`}>{s.abyssBest + n}층까지</option>) : [5, 10, DAILY_BONUS.clears].map(n => <option key={n} value={String(n)}>{n}회{n === DAILY_BONUS.clears ? ' · 오늘 보너스' : ''}</option>)}
