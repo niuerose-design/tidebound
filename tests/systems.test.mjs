@@ -20,14 +20,21 @@ test('Bulk sale respects exact rarity, locks and relics',()=>{const s=newState(0
 test('Rebirth unlocks, research and relic persistence',()=>{const s=newState(0);s.pearls=100;s.level=30;assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));act(s,{type:'rebirth'},0);assert.equal(apCapacity(s),7);assert.equal(rebirthLevel(s),35);/* v27.89 환생 1회 새싹의 축복 ×2.8 */assert.ok(Math.abs(expMultiplier({...s,level:rebirthLevel(s)})-1.25*2.8)<1e-9);/* v3.23 순풍은 합연산: 1 + .25 + .5 */assert.ok(Math.abs(expMultiplier(s)-1.75*2.8)<1e-9);act(s,{type:'permanent',id:'ap'},0);assert.equal(apCapacity(s),8);act(s,{type:'buyRelic',id:'memoryRod'},0);const relic=s.inventory[0];act(s,{type:'equip',id:relic.id},0);s.gold=10000;act(s,{type:'enhance',id:relic.id},0,()=>0);s.permanent.starting=2;s.level=35;act(s,{type:'rebirth'},0);assert.equal(s.equipment.rod.relic,'memoryRod');assert.equal(s.equipment.rod.enhance,1);assert.equal(s.gold,100);assert.equal(s.level,5,'v27.60 legacy rank 2 starts at Lv.5');assert.equal(s.statPoints,newState(0).statPoints+20,'4 levels of stat points');assert.equal(apCapacity(s),9);assert.throws(()=>act(s,{type:'buyRelic',id:'memoryRod'},0));s.level=100;s.rebirths=100;assert.equal(rebirthLevel(s),100);s.rebirths=46;assert.equal(rebirthLevel(s),100);s.rebirths=40;assert.equal(rebirthLevel(s),94);assert.ok(xpNeeded(60)<xpNeeded(30)*5);});
 test('Rebirth skills still require their job; temple relic and research caps work',async()=>{
  const s=newState(0);s.level=30;s.sp=100;s.pearls=1000;assert.throws(()=>act(s,{type:'learn',id:'ultimateLegacy'},0));s.rebirths=1;assert.throws(()=>act(s,{type:'learn',id:'ultimateLegacy'},0));
- /* v3.200 윤회의 나그네 → 히든 5차 궁극의 모험가: 숨은 조건(5차 직업 3개 숙달) + Lv.70 · 환생 10 · 계급장 하사 이상. */
+ /* v3.200 윤회의 나그네 → 히든 5차 궁극의 모험가. v3.309 조건 상향: 숨은 조건(5차 직업 10개 숙달 · 5차 핵심 패시브 5개 숙련 완료 · 지역 던전 7곳 나이트메어 정복) + Lv.70 · 환생 30 · 계급장 원사 이상. 숙달 목표 1,500만 · 궁극의 유산 M4 3,750만. */
  s.attributes.str=20;s.attributes.wis=20;assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0));
- const {JOBS:J,jobMasteryTarget:T}=await import('./harness.mjs'),{RANKS,RANK_CUMULATIVE}=await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/rank');
- s.level=70;s.rebirths=10;s.rank={exp:RANK_CUMULATIVE[RANKS.findIndex(r=>r.id==='ssg')],perks:{}};for(const j of J.filter(x=>x.tier===5&&!x.hidden&&!x.retired).slice(0,2))s.jobMastery[j.id]=T(j);
- assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'two mastered 5th jobs are not enough');
- const third=J.find(x=>x.tier===5&&!x.hidden&&!x.retired&&!(x.id in s.jobMastery));s.jobMastery[third.id]=T(third);
- s.rank={exp:RANK_CUMULATIVE[RANKS.findIndex(r=>r.id==='ssg')]-1,perks:{}};assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'below 하사');
- s.rank={exp:0,perks:{},reenlist:1};act(s,{type:'job',id:'rebirthFisher'},0);assert.equal(s.job,'rebirthFisher','a re-enlisted veteran has passed 하사');assert.equal(s.learned.ultimateLegacy,1);assert.equal(s.sp,100);
+ const {JOBS:J,jobMasteryTarget:T}=await import('./harness.mjs'),L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),{RANKS,RANK_CUMULATIVE}=await L.load('data/rank'),{SKILLS:SK}=await L.load('data/skills'),{masteryMilestonesFor:MF}=await L.load('systems/progression'),{DUNGEONS:DG}=await L.load('data/world');
+ assert.equal(T(J.find(x=>x.id==='rebirthFisher')),15e6);assert.deepEqual(MF(SK.find(x=>x.id==='ultimateLegacy')),[1e6,4.5e6,15e6,37.5e6]);
+ s.level=70;s.rebirths=30;s.rank={exp:RANK_CUMULATIVE[RANKS.findIndex(r=>r.id==='msg')],perks:{}};
+ const five=J.filter(x=>x.tier===5&&!x.hidden&&!x.retired);for(const j of five.slice(0,9))s.jobMastery[j.id]=T(j);
+ const cores=SK.filter(sk=>sk.core&&sk.type==='passive'&&(J.find(x=>x.id===sk.job)?.tier??0)>=5).slice(0,5);for(const sk of cores)s.skillPractice[sk.id]=MF(sk).at(-1);
+ const plain=DG.filter(d=>d.id!=='abyss');s.modeClears={nightmare:Object.fromEntries(plain.map(d=>[d.id,1]))};
+ assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'nine mastered 5th jobs are not enough');
+ const tenth=five.find(x=>!(x.id in s.jobMastery));s.jobMastery[tenth.id]=T(tenth);
+ delete s.skillPractice[cores[4].id];assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'four completed core passives are not enough');s.skillPractice[cores[4].id]=MF(cores[4]).at(-1);
+ s.modeClears.nightmare[plain[0].id]=0;assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'all seven nightmare clears are needed');s.modeClears.nightmare[plain[0].id]=1;
+ s.rebirths=29;assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'rebirth 30');s.rebirths=30;
+ s.rank={exp:RANK_CUMULATIVE[RANKS.findIndex(r=>r.id==='msg')]-1,perks:{}};assert.throws(()=>act(s,{type:'job',id:'rebirthFisher'},0),'below 원사');
+ s.rank={exp:0,perks:{},reenlist:1};act(s,{type:'job',id:'rebirthFisher'},0);assert.equal(s.job,'rebirthFisher','a re-enlisted veteran has passed 원사');assert.equal(s.learned.ultimateLegacy,1);assert.equal(s.sp,100);
  s.clears.temple=1;act(s,{type:'sync'},0);const pearls=s.pearls;act(s,{type:'buyRelic',id:'memoryRod'},0);assert.equal(s.pearls,pearls);s.permanent.ap=12;assert.throws(()=>act(s,{type:'permanent',id:'ap'},0));assert.equal(s.pearls,pearls);
 });
 test('Gold and experience multipliers match actual combat payouts',()=>{const s=newState(0);s.rebirths=2;s.permanent.gold=2;s.permanent.exp=1;s.level=20;s.running=true;s.enemy={id:'minnow',name:'target',hp:1,maxHp:1,attack:0,defense:0,exp:10,gold:100,boss:false,stun:0};const gold=s.gold,exp=s.exp,mult=goldMultiplier(s);tick(s,()=>.5);assert.equal(s.gold-gold,Math.floor(100*mult));assert.equal(s.exp-exp,Math.floor(10*2.2*2.6),'v27.89 환생 2회 새싹의 축복 ×2.6 · v3.23 순풍 +.5 합연산');assert.ok(s.logs.some(l=>l.text.includes(`+${Math.floor(100*mult)} G`)));});

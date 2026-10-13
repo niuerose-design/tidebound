@@ -383,6 +383,8 @@ export const WORLDS: { id: WorldId; name: string; subtitle: string; description:
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
 export const AZEROTH_MASTERY_SCALE = 10;
+/** v3.309 궁극의 모험가(초보자 계보 히든 5차)의 숙달 목표 · 궁극의 유산 숙련 단계 배율: 5차를 다 돌아 본 사람의 긴 목표라 아제로스처럼 메이플 5차의 10배. */
+export const ULTIMATE_MASTERY_SCALE = 10;
 /** 계보가 속한 세계(없으면 메이플 월드). */
 export const worldOf = (l: Pick<Lineage, 'world'> | undefined): WorldId => l?.world ?? 'maple';
 // v3.69 계열마다 수련 직업 하나(data/training.ts). 사냥용이 아니라 계승 재료입니다.
