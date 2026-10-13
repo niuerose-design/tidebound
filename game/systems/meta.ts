@@ -1,7 +1,7 @@
 import type { State } from '../types';
 import { ECONOMY, researchRank } from '../data/economy';
-import { MONSTER_TUNING, DUNGEON_TUNING, dungeonModeTier, OVER_TARGET, type XpTargetWall } from '../data/balance';
-import { monsterExpAt, monsterGoldAt, tideLiftLevel } from '../data/world';
+import { MONSTER_TUNING, DUNGEON_TUNING, DUNGEON_STAGE, dungeonModeTier, OVER_TARGET, type XpTargetWall } from '../data/balance';
+import { monsterExpAt, monsterGoldAt, tideLiftLevel, PLAIN_DUNGEONS } from '../data/world';
 /** 환생 요구 레벨: 30에서 환생마다 +5(Lv.60까지), 그 뒤로는 환생마다 +1(v27.77 최대 Lv.100, 환생 46회에 도달). */
 export const rebirthLevel = (s: Pick<State, 'rebirths'>) => {
     const early = 30 + s.rebirths * ECONOMY.rebirthLevelStep;
@@ -34,8 +34,21 @@ export const rebirthReward = (s: Pick<State, 'level' | 'rebirths'>) => Math.floo
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
 export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
-export const tideLimit = (s: State) => Math.min(ECONOMY.tideCap, s.rebirths);
-/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 50 · 나이트메어 200). */
+/**
+ * v3.313 도전 보너스(docs/endgame-challenge-plan.md PR D): 사냥터 난이도 상한 = 환생 + 도전 보너스(최대 ECONOMY.tideCap).
+ * 나이트메어 최고 단계 합(지역 던전 7곳 × 10단계 = 70)에 비례해 최대 +nightmareMax, 무릉도장 최고 층 × abyssPerFloor(100층 = +abyssMax).
+ * 환생 = 난이도였던 규칙을 '도전 기록으로 더 올릴 수 있다'로 넓힙니다(환생 30 · 나이트메어 3단계 · 무릉 45층 = +15 + 9 → 54).
+ */
+export const TIDE_CHALLENGE = { nightmareMax: 50, abyssMax: 20, abyssPerFloor: .2 } as const;
+export function tideChallengeBonus(s: Pick<State, 'nightmareBest' | 'abyssBest'>) {
+    const dungeons = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss');
+    const sum = dungeons.reduce((n, d) => n + Math.min(DUNGEON_STAGE.max, s.nightmareBest?.[d.id] || 0), 0);
+    const nightmare = Math.min(TIDE_CHALLENGE.nightmareMax, Math.floor(sum * TIDE_CHALLENGE.nightmareMax / (dungeons.length * DUNGEON_STAGE.max)));
+    const abyss = Math.min(TIDE_CHALLENGE.abyssMax, Math.floor((s.abyssBest || 0) * TIDE_CHALLENGE.abyssPerFloor));
+    return { nightmare, abyss, total: nightmare + abyss };
+}
+export const tideLimit = (s: Pick<State, 'rebirths' | 'nightmareBest' | 'abyssBest'>) => Math.min(ECONOMY.tideCap, (s.rebirths || 0) + tideChallengeBonus(s).total);
+/** 던전 전투 난이도 단계. 무릉도장은 깊이 + 2, v27.70 일반 던전은 입장 때 고른 난이도(노말 0 · 헬 70 · 나이트메어 260, DUNGEON_MODES). */
 const dungeonTier = (id: string, abyssDepth: number, mode?: string) => id === 'abyss' ? abyssDepth + 2 : dungeonModeTier(mode);
 /** 지금 전투의 난이도: 던전은 던전 난이도(무릉도장 층·모드), 사냥터는 사냥터 난이도. */
 export const encounterTier = (s: State) => s.dungeon ? dungeonTier(s.dungeon.id, s.dungeon.depth || 1, s.dungeon.mode) : (s.tide || 0);
