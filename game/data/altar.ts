@@ -92,6 +92,8 @@ export type RaidDef = {
     reward: { pearls: number; sp: number }; slayer: { pearls: number; sp: number };
     /** v3.311 석상의 가호: 소환 세대가 홀수면 물리, 짝수면 마법 피해 면역(raidImmunity). */
     statueWard?: boolean;
+    /** v3.312 격파 뒤 다음 소환까지 대기(없으면 RAID.respawnMs). 발록 5분 · 자쿰 10분. */
+    respawnMs?: number;
     /** v3.311 지속 피해 체력 비례분의 기준 체력(Snapshot.dotHpCap). 없으면 1단계 체력. 핑크빈은 혼테일 1단계 체력으로 묶어 체력 비례 지속 피해가 체력 ×10을 그대로 따라가지 않게 합니다. */
     dotHpCap?: number;
 };
@@ -103,7 +105,7 @@ export function raidReward(raid: Pick<RaidDef, 'reward' | 'slayer'>, stage: numb
     const k = Math.max(0, Math.min(RAID_STAGE.max, Math.floor(stage || 1)) - 1);
     return { pearls: raid.reward.pearls + k * RAID_STAGE_REWARD.pearlsPerStage + (slayer ? raid.slayer.pearls : 0), sp: raid.reward.sp + (slayer ? raid.slayer.sp + (k + 1 >= RAID_STAGE_REWARD.slayerSpFrom ? 1 : 0) : 0) };
 }
-/** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기(v3.311 2시간 → 1시간). */
+/** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기(v3.311 2시간 → 1시간, v3.312 보스별 RaidDef.respawnMs가 우선 — raidRespawnMs). */
 export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
 /**
  * v3.191 소환 단계(docs/boss-plan.md §8.3). 센 모험가가 잡는 것은 의도이지만, 같은 날 다시 소환될 때마다 단계가 올라 센 모험가 기준으로도 점점 잡기 힘들어지고,
@@ -130,25 +132,31 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
- * v3.311 소환 비용 −25%(2,000 · 5,000 · 12,000 → 1,500 · 4,000 · 9,000) · 혼테일 24 → 12시간. 핑크빈(빌림 몸 실측, 1단계, 면역이 아닌 유형의 직업): R100 30~100번 · R50 45~150번(칼리 20번) · R30 60~600번(물리 몸은 사망 50%). 면역 없이 평균은 R100 47 · R50 66 · R30 166번.
+ * v3.311 소환 비용 −25%(2,000 · 5,000 · 12,000 → 1,500 · 4,000 · 9,000) · 혼테일 24 → 12시간. v3.312 소환 게이지가 골드를 받지 않게 되면서 비용 ×10(15,000 · 40,000 · 90,000 · 200,000, 세계석 1 = 500 · 정수 1 = 30 기여도). 핑크빈(빌림 몸 실측, 1단계, 면역이 아닌 유형의 직업): R100 30~100번 · R50 45~150번(칼리 20번) · R30 60~600번(물리 몸은 사망 50%). 면역 없이 평균은 R100 47 · R50 66 · R30 166번.
  */
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 1_500, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 15_000, lifetimeHours: 6, respawnMs: 5 * 60_000, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
         reward: { pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
-    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 4_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 40_000, lifetimeHours: 12, respawnMs: 10 * 60_000, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
         reward: { pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
-    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 9_000, lifetimeHours: 12, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 90_000, lifetimeHours: 12, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
     // v3.311 핑크빈: 시간의 신전. 석상의 가호(세대마다 물리/마법 면역) · 관통 0.7(기술 관통과 합쳐 상한 0.85) · 석상의 심판(버팀 무시).
-    { id: 'pinkBean', name: '핑크빈', monster: 'pinkBean', level: 180, cost: 20_000, lifetimeHours: 24, stats: { hp: 10_000_000_000, attack: 150_000, magic: 150_000, defense: 2_500, resist: 2_500, speed: 60, crit: .16, accuracy: 1.1, penetration: .7, evasion: .12 },
+    { id: 'pinkBean', name: '핑크빈', monster: 'pinkBean', level: 180, cost: 200_000, lifetimeHours: 24, stats: { hp: 10_000_000_000, attack: 150_000, magic: 150_000, defense: 2_500, resist: 2_500, speed: 60, crit: .16, accuracy: 1.1, penetration: .7, evasion: .12 },
         reward: { pearls: 30, sp: 3 }, slayer: { pearls: 30, sp: 2 }, statueWard: true, dotHpCap: 2_000_000_000 },
 ];
+/** v3.312 격파 뒤 다음 소환까지 대기: 보스별 값이 있으면 그것, 없으면 RAID.respawnMs. */
+export const raidRespawnMs = (raid: Pick<RaidDef, 'respawnMs'>) => raid.respawnMs ?? RAID.respawnMs;
+/** 대기 시간 표기(분 단위면 분, 아니면 시간). */
+export const respawnLabel = (ms: number) => ms < 3600_000 ? `${Math.round(ms / 60_000)}분` : `${ms / 3600_000}시간`;
 let raidIndex: Map<string, (typeof RAIDS)[number]> | undefined;
 export const raidById = (id: string | undefined) => id === undefined ? undefined : (raidIndex ??= new Map(RAIDS.map(r => [r.id, r]))).get(id);
 export const isRaidGauge = (id: string): id is RaidId => !!raidById(id);
 /** 소환 게이지(신 + 월드보스 넷)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];
+/** v3.312 소환 게이지(신 · 월드보스)에는 골드를 바칠 수 없습니다(세계석 · 정수만). 축복 게이지는 골드 그대로. */
+export const gaugeTakesGold = (id: AltarGaugeId) => !SUMMON_GAUGE_IDS.includes(id);
 /** v3.16 단계 점핑: 지금 live 단계(0 = 닫힘)에서 target 단계까지 한 번에 가는 총 기여도(단계마다 그때의 비용을 더함). */
 export const blessingJumpCost = (id: BlessingId, live: number, target: number) => { let sum = 0; for (let lv = live; lv < Math.min(target, BLESSING_MAX_LEVEL); lv++) sum += gaugeCost(id, lv, lv > 0); return target <= live ? gaugeCost(id, live, live > 0) : sum; };
 export const gaugeCost = (id: AltarGaugeId, level = 0, active = false) => id === 'god' ? ALTAR.godCost : isRaidGauge(id) ? raidById(id)!.cost : blessingCost(BLESSINGS.find(b => b.id === id)!, level, active);

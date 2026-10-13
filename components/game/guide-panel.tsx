@@ -6,7 +6,7 @@ import { ASCENSION } from '@/game/data/ascension';
 import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets, TrendingUp } from 'lucide-react';
 import { MARKET, MARKET_TICK_MS, STOCKS } from '@/game/data/market';
 import type { ReactNode } from 'react';
-import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES, XP_SCALING } from '@/game/data/balance';
+import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES, DUNGEON_STAGE, XP_SCALING } from '@/game/data/balance';
 import { ATTRIBUTES, PROGRESSION, percent } from '@/game/data/progression';
 import { ECONOMY, RESEARCH_RESET, RELIC_GROWTH, HEIR_GROWTH, PRIMAL_INHERIT, APPRAISAL_PITY, offlineCapSeconds, inventoryCap } from '@/game/data/economy';
 import { STARFORCE } from '@/game/data/starforce';
@@ -18,7 +18,7 @@ import { ONYX } from '@/game/data/onyx';
 import { VARIANTS, VARIANT_BOOK_MIN } from '@/game/data/variants';
 import { ABYSS_SP_MILESTONES } from '@/game/data/long-term';
 import { RANKS, RANK_PERKS, RANK_TOTAL_POINTS } from '@/game/data/rank';
-import { ALTAR, BLESSINGS, RAID, RAIDS } from '@/game/data/altar';
+import { ALTAR, BLESSINGS, RAID, RAIDS, raidRespawnMs, respawnLabel } from '@/game/data/altar';
 import { MIMIC } from '@/game/data/mimic';
 import { EXP_NURI } from '@/game/data/exp-nuri';
 import { ESSENCE_SLIME } from '@/game/data/essence-slime';
@@ -177,6 +177,11 @@ export function Guide({ s }: { s?: State }) {
                     effect={`던전에서는 처치마다 골드 · 경험치 · 숙련 · 장비가 나오지 않고, 정복하면 던전 주화를 받습니다. 지역 던전은 하루(한국 시간 자정) 처음 ${DAILY_BONUS.clears}번의 정복이 보너스(노말 ${DAILY_BONUS.coins.normal} · 헬 ${DAILY_BONUS.coins.hell} · 나이트메어 ${DAILY_BONUS.coins.nightmare}, 던전 공용 · 이월 없음)이고 그 뒤는 ${DUNGEON_COINS.normal} · ${DUNGEON_COINS.hell} · ${DUNGEON_COINS.nightmare}입니다. 무릉도장은 1 + 10층마다 1(보너스 없음). 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나오고, 오래 못 받으면 확정입니다. 보스 코어 칸에 하나를 끼면 효과 100%, 나머지 코어는 10%(턴 연장 제외)이고, 다시 얻으면 각성합니다. 환생 · 승천해도 남습니다. 주화는 던전 화면의 주화 상점에서 칠흑 장신구 · 장비 상자 · 포식자 각인으로 바꿉니다. 정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
                     condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                     limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
+                {/* v3.312 던전 화면에 있던 난이도 · 나이트메어 단계 설명을 여기로 옮겼습니다. */}
+                <Rule icon={<Flame size={19}/>} title="던전 난이도 · 나이트메어 단계"
+                    effect={`지역 던전은 노말 · 헬 · 나이트메어 중 고릅니다. 헬: ${DUNGEON_MODES[1].note} 나이트메어: ${DUNGEON_MODES[2].note} 나이트메어는 1~${DUNGEON_STAGE.max}단계가 있고, 단계마다 몬스터 체력 ×${DUNGEON_STAGE.hp} · 공격 ×${DUNGEON_STAGE.attack}(월드보스 소환 단계와 같은 식). 지속 피해의 체력 비례분은 1단계 체력 기준입니다.`}
+                    condition={`(k−1)단계를 정복해야 k단계가 열립니다. 던전마다 최고 정복 단계를 기록하고, 반복 설정 ‘단계 오르기 · 실패까지’를 고르면 정복할 때마다 한 단계씩 올라갑니다. 명예 업적 ‘나이트메어 3 · 5 · 10단계’, 지역 던전 모두 5 · 10단계 칭호.`}
+                    limit={`보상: 하루 보너스 주화 +${DUNGEON_STAGE.coinsPerStage} × (단계 − 1), 보너스 뒤 주화 3 × 단계, 보스 코어 드롭률 × (1 + ${DUNGEON_STAGE.lootPerStage} × (단계 − 1)). 세계석은 주지 않습니다. 무릉도장에는 단계가 없습니다.`}/>
                 <Rule icon={<TrendingUp size={19}/>} title="주화 증권거래소"
                     effect={`왼쪽 메뉴의 증권거래소에서 던전 주화로 가상 종목 ${STOCKS.length}개를 사고팝니다. 시세는 모든 모험가가 같고 ${MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다. 시황 소문은 다음 시세의 방향을 자주 맞히지만 틀릴 때도 있습니다.`}
                     condition={`매수 · 매도마다 수수료 ${MARKET.fee * 100}%(최소 1주화), 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다.`}
@@ -198,7 +203,7 @@ export function Guide({ s }: { s?: State }) {
                     condition={`도전 간격 ${ALTAR.challengeCooldownMs / 60_000}분. 신 카드에 최대 체력과 공격이 보이니 결투 전투력과 비교해 보세요. 신이 없을 때는 자리 주인을 ‘탄핵’할 수 있습니다: 주인이 신을 격파하던 당시의 능력치·스킬 그대로와 겨뤄 이기면 자리가 빕니다.`}
                     limit={`임기는 ${ALTAR.throneTermMs / 86_400_000}일. 자리가 비면 다음 신은 다시 ${ALTAR.firstGod.name}이고, 앉으려면 그 신을 쓰러뜨려야 합니다.`}/>
                 <Rule icon={<Swords size={19}/>} title="월드보스"
-                    effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 나타납니다(${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')}, 격파 뒤 ${RAID.respawnMs / 3600_000}시간 대기). 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
+                    effect={`소환 탭의 월드보스 게이지(${RAIDS.map(r => `${r.name} ${r.cost.toLocaleString()}`).join(' · ')})가 차면 그 보스가 나타납니다(${RAIDS.map(r => `${r.name} ${r.lifetimeHours}시간`).join(' · ')} 머물고, 격파 뒤 다음 소환까지 ${RAIDS.map(r => `${r.name} ${respawnLabel(raidRespawnMs(r))}`).join(' · ')} 대기). 소환 게이지에는 세계석 · 정수만 바칠 수 있습니다(골드는 축복 게이지만). 체력은 서버가 함께 쓰는 하나의 값이라 모든 모험가의 피해가 누적되고, 0이 되면 격파입니다.`}
                     condition={`도전은 ${RAID.cooldownMs / 60_000}분에 한 번, 한 번에 최대 ${RAID.maxTurns}턴. 격파하면 한 번이라도 때린 모험가 전원이 세계석(·SP)을 다음 동기화 때 받고, 마지막 일격은 보너스를 더 받습니다. 피해 순위는 제단의 월드보스 카드에서 봅니다.`}
                     limit="한 번에 한 마리만 나타납니다. 시간 안에 못 잡으면 떠나고 게이지는 다시 채워야 합니다. 신 소환과는 별개입니다."/>
                 {/* v3.103 사냥터 개편: 입장 환생 · 적정 환생 */}

@@ -96,7 +96,8 @@ test('v3.311 fourth world boss: shorter summon waits, pink bean with statue ward
     const A = await load('data/altar'), Du = await load('systems/duel'), C = await load('systems/combat'), E = await load('data/encounters'), { ACHIEVEMENTS } = await load('data/achievements'), { TITLES } = await load('data/titles'), { newState } = await load('systems/engine');
     const pb = A.RAIDS.find(r => r.id === 'pinkBean'), ht = A.RAIDS.find(r => r.id === 'horntail');
     // 소환 대기: 격파 뒤 1시간, 소환 비용 −25%, 혼테일 12시간. 핑크빈은 혼테일 위(체력 ×5 · 관통 0.7 · 석상의 가호 · 지속 피해 기준 체력은 혼테일 1단계).
-    assert.equal(A.RAID.respawnMs, 3600_000); assert.deepEqual(A.RAIDS.map(r => r.cost), [1500, 4000, 9000, 20000]); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]);
+    assert.equal(A.RAID.respawnMs, 3600_000); assert.deepEqual(A.RAIDS.map(r => A.raidRespawnMs(r)), [5 * 60_000, 10 * 60_000, 3600_000, 3600_000], 'v3.312 balrog 5min · zakum 10min'); assert.equal(A.respawnLabel(5 * 60_000), '5분'); assert.equal(A.respawnLabel(3600_000), '1시간');
+    assert.deepEqual(A.RAIDS.map(r => r.cost), [15000, 40000, 90000, 200000], 'v3.312 ×10 (no gold on summon gauges)'); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]);
     assert.ok(pb && pb.statueWard && pb.stats.hp > ht.stats.hp && pb.stats.penetration === .7 && pb.dotHpCap === ht.stats.hp && pb.level > ht.level && !ht.statueWard);
     assert.equal(A.raidImmunity(pb, 1), 'physical'); assert.equal(A.raidImmunity(pb, 2), 'magic'); assert.equal(A.raidImmunity(ht, 1), undefined);
     assert.equal(A.raidImmunity(pb, 7), 'physical'); assert.equal(A.isRaidGauge('pinkBean'), true); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']);
@@ -128,4 +129,28 @@ test('v3.311 fourth world boss: shorter summon waits, pink bean with statue ward
     assert.ok(ach('raidPinkBean:1')?.honor && ach('raidHorntail:10')?.honor && ach('raidZakum:5')?.honor);
     assert.equal(ach('raidPinkBean:1').progress(s), 0); s.raidBest = { pinkBean: 3, horntail: 5 }; assert.equal(ach('raidPinkBean:1').progress(s), 3); assert.equal(ach('raidHorntail:5').progress(s), 5); assert.equal(ach('raidZakum:5').progress(s), 0);
     assert.ok(['raidHorntail:5', 'raidPinkBean:1', 'raidPinkBean:5'].every(id => TITLES.some(t => t.id === id && t.achievement === id && ach(id))));
+});
+
+test('v3.312 summon gauges take no gold (blessings still do); balrog waits 5 minutes after a kill, zakum 10', async () => {
+    const A = await load('data/altar'), Alt = await load('server/altar');
+    assert.deepEqual(A.GAUGE_IDS.map(A.gaugeTakesGold), A.GAUGE_IDS.map(id => !A.SUMMON_GAUGE_IDS.includes(id)));
+    assert.ok(A.gaugeTakesGold('gold') && !A.gaugeTakesGold('god') && !A.gaugeTakesGold('pinkBean'));
+    assert.throws(() => Alt.parseOffering('acc-g1', { gold: 1000, gauge: 'balrog' }, 1), /골드를 바칠 수 없습니다/);
+    assert.throws(() => Alt.parseOffering('acc-g2', { gold: 1000, pearls: 1, gauge: 'god' }, 1), /골드를 바칠 수 없습니다/);
+    assert.equal(Alt.parseOffering('acc-g3', { pearls: 1, gauge: 'zakum' }, 1).points, A.ALTAR.pearlPoints, 'pearls still feed a summon gauge');
+    assert.equal(Alt.parseOffering('acc-g4', { gold: 1000, gauge: 'gold' }, 1).points, 1, 'a blessing gauge takes gold');
+    // 서버 흐름(파일 DB): 발록은 격파 5분 뒤에 다시 소환되고, 그 전에는 게이지가 차 있어도 기다립니다.
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-raid-respawn-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const DB = await load('server/db'), { newState } = await load('systems/engine');
+    try {
+        const database = DB.db(), b = A.RAIDS.find(r => r.id === 'balrog'), now = Date.now(), me = newState(now), raid = async () => (await database.listAltarRaids()).find(r => r.id === 'balrog');
+        await database.addAltarGauge('balrog', b.cost); Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now);
+        let row = await raid(); assert.equal(row.state, 'alive'); const stage1 = row.stage;
+        assert.equal(await database.hitAltarRaid('balrog', row.gen, row.hp_max), 0); assert.ok(await database.slayAltarRaid('balrog', row.gen, 'p1', now + 1000));
+        await database.addAltarGauge('balrog', b.cost); Alt.invalidateAltar(); const info = await Alt.altarInfo('p1', me, now + 3 * 60_000);
+        row = await raid(); assert.equal(row.state, 'slain', 'three minutes after the kill: still waiting'); assert.match(info.gauges.find(g => g.id === 'balrog').next, /격파 뒤 대기 중/);
+        Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now + 6 * 60_000);
+        row = await raid(); assert.equal(row.state, 'alive', 'six minutes after the kill: summoned again'); assert.equal(row.stage, Math.min(A.RAID_STAGE.max, stage1 + 1), 'one stage up (the file DB is shared with earlier test files)');
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
