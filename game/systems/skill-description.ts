@@ -209,7 +209,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     // v3.317 짧게: 수치 · 숙련 성장 · 계승. 계산 방식은 도움말(스킬 › 핵심 패시브)에.
-    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%. ${coreAzeroth(sk) ? '계보 전용(다른 계보는 효과 없음).' : `다른 계보가 계승하면 ${skillPercent(CORE_PASSIVE.borrowed)}.`}`);
+    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%.${coreAzeroth(sk) ? ' 계보 전용(다른 계보는 효과 없음).' : ''}`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
     if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');
@@ -240,7 +240,10 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     // v3.137 페널티 회복형 성장 스킬의 첫 단계(회복 0 · 보너스 없음)도 무엇을 하는지 적습니다.
     else if (sk.levelEffects?.some(l => l.penaltyRelief)) out.push('아직 직업 마이너스 보정을 되찾지 못함 · 숙련하면 단계별로 회복');
-    if (!sk.exclusiveLineage && (jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술입니다. 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'}이 ×${number(SKILL_FORMULA.signatureScale)}로 줄어듭니다.`);
+    // v3.321 패시브(4 · 5차)는 수치 전체가 같은 비율로 줄어든다는 것을 한 줄로 적습니다(핵심 패시브 칸만 줄어드는 것으로 읽히지 않게).
+    const ownerTier = jobById(sk.job)?.tier || 0;
+    if (!sk.exclusiveLineage && sk.type === 'passive' && ownerTier >= SKILL_FORMULA.passiveInheritTier) out.push(`${ownerTier}차 패시브입니다. 계보 밖 직업이 계승하면 이 패시브의 모든 수치${sk.core ? '(핵심 패시브 포함)' : ''}가 ${skillPercent(SKILL_FORMULA.passiveInheritScale)}로 줄어듭니다.`);
+    else if (!sk.exclusiveLineage && sk.type !== 'passive' && ownerTier >= SKILL_FORMULA.signatureTier) out.push(`전용 기술입니다. 계보 밖 직업이 계승하면 피해 배율이 ×${number(SKILL_FORMULA.signatureScale)}로 줄어듭니다.`);
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 처치 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장을 마쳐 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어 있습니다.` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어듭니다.`);
     return out;

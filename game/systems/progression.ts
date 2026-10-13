@@ -151,21 +151,25 @@ export function lineage(job: string): string[] {
     if (!out) lineageCache.set(j, out = [j.id, ...(j.parent ? lineage(j.parent) : [])]);
     return out;
 }
-/** 전용 기술 효율: signatureTier(v3.80 5차) 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
-export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
+/**
+ * 전용 기술 효율: signatureTier(v3.80 5차) 이상 직업의 액티브를 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1.
+ * v3.321 패시브는 passiveInheritTier(4차) 이상이면 계보 밖에서 passiveInheritScale(핵심 패시브 계승 비율과 같은 50%).
+ */
+export function signatureScale(sk: Pick<Skill, 'job' | 'type'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
-    const owner = jobById(sk.job);
-    if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
+    const owner = jobById(sk.job), passive = sk.type === 'passive';
+    if (!owner || owner.tier < (passive ? SKILL_FORMULA.passiveInheritTier : SKILL_FORMULA.signatureTier)) return 1;
     // v3.200 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
     if (jobById(userJob)?.signatureFree) return 1;
-    return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
+    return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : passive ? SKILL_FORMULA.passiveInheritScale : SKILL_FORMULA.signatureScale;
 }
 /**
  * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
  * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
  */
 /** v3.302 숙련 0단계 몫 .7 → .55: 핵심 패시브 상한을 올린 몫이 숙련을 키울수록 들어오게(장비 → 스킬 비중 이동). */
-export const CORE_PASSIVE = { base: .55, borrowed: .5, azerothBase: .4 } as const;
+/** v3.321 borrowed는 패시브 계승 비율(SKILL_FORMULA.passiveInheritScale)과 같은 값을 씁니다. */
+export const CORE_PASSIVE = { base: .55, borrowed: SKILL_FORMULA.passiveInheritScale, azerothBase: .4 } as const;
 /**
  * v3.316 핵심 패시브 초월(docs/endgame-challenge-plan.md PR F) · v3.317 자리 정리: 액티브가 한계돌파 → 극한돌파이듯, 5차 핵심 패시브는 한계돌파 3단계를 마친 뒤
  * 숙련이 마지막 이정표 × multipliers(5차 기본 375만 → 6,000만 · 1억 2천만, 궁극의 모험가 6억 · 12억)에 닿을 때마다 초월 1 · 2단계(한계돌파 ×2 · ×4 · ×8과 겹치지 않음).
