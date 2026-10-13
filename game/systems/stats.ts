@@ -22,7 +22,7 @@ import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { supportMultiplier, supportAmount, commandBonus } from './support';
 import { FUEL, traderMultiplier } from '../data/otherworld';
 import { powerSaving } from './otherworld';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendStages, refinePractice, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
+import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendOf, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -174,7 +174,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
         }
         // v3.228 핵심 패시브: 고정 수치(4차)는 여기서 더하고, 배율(5차)은 모아 두었다가 곱합니다.
         if (sk.core) {
-            const f = coreScale(sk, s.job, mastery, coreTranscendStages(sk, refinePractice(s, id)));
+            const f = coreScale(sk, s.job, mastery, coreTranscendOf(s, id));
             for (const key in sk.core.flat) add(key as 'attack', 'skills', sk.core.flat[key as 'attack']! * f);
             for (const key in sk.core.scale) coreMul[key as 'attack'] = (coreMul[key as 'attack'] || 0) + sk.core.scale[key as 'attack']! * f;
         }

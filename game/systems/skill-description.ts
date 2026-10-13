@@ -53,7 +53,8 @@ export function skillExtraNotes(sk: Skill): string[] {
     const notes: string[] = [];
     if (sk.perRebirth) notes.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     for (const pc of sk.perCount || []) notes.push(`${COUNT_WORD[pc.source]}${pc.per === 1 ? '' : ` ${pc.per.toLocaleString()}`}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
-    if (sk.core) notes.push(`핵심 패시브 ${coreText(sk)} (숙련 마지막 단계, 0단계는 ${skillPercent(coreBase(sk))} · 다른 계보 직업은 ${coreAzeroth(sk) ? '효과 없음' : '절반'})`);
+    // v3.317 한 줄로: 숙련을 채웠을 때의 값과 계승 조건만.
+    if (sk.core) notes.push(`핵심 패시브: ${coreText(sk)} (숙련을 채우면 · 처음엔 ${skillPercent(coreBase(sk))}) · 다른 계보가 계승하면 ${coreAzeroth(sk) ? '효과 없음' : '절반'}`);
     if (sk.masteryGain) notes.push('지정한 적 처치 시 숙련 추가 획득');
     const special = sk.cooldownReset || sk.lastStand || sk.sealFinale || sk.tagBonus || sk.borrowedDiscount;
     if (special && sk.desc) notes.push(sk.desc);
@@ -207,7 +208,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     // v3.169 능력치 수련 패시브: 기본 능력치 자체가 오릅니다(effectiveSkill이 숙련 단계 배율을 적용한 값).
     for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
-    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. ${sk.core.flat && sk.core.scale ? '고정 수치는 배율 전에 더하고, 배율(%)은 직업 보정처럼 최종 능력치에 곱합니다' : sk.core.scale ? '배율(%)은 직업 보정처럼 최종 능력치에 곱합니다' : '고정 수치는 배율 전에 더합니다'}. 숙련 0단계는 ${skillPercent(coreBase(sk))}이고 단계마다 올라 마지막 단계에서 100%가 됩니다. ${coreAzeroth(sk) ? '계보 전용이라 다른 계보 직업이 계승해 쓰면 핵심 몫은 없습니다.' : `다른 계보 직업이 계승해 쓰면 핵심 몫은 ${skillPercent(CORE_PASSIVE.borrowed)}만 받습니다(같은 계보는 100%).`}`);
+    // v3.317 짧게: 수치 · 숙련 성장 · 계승. 계산 방식은 도움말(스킬 › 핵심 패시브)에.
+    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%. ${coreAzeroth(sk) ? '계보 전용(다른 계보는 효과 없음).' : `다른 계보가 계승하면 ${skillPercent(CORE_PASSIVE.borrowed)}.`}`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
     if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');
