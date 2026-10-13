@@ -97,7 +97,7 @@ test('v3.311 fourth world boss: shorter summon waits, pink bean with statue ward
     const pb = A.RAIDS.find(r => r.id === 'pinkBean'), ht = A.RAIDS.find(r => r.id === 'horntail');
     // 소환 대기: 격파 뒤 1시간, 소환 비용 −25%, 혼테일 12시간. 핑크빈은 혼테일 위(체력 ×5 · 관통 0.7 · 석상의 가호 · 지속 피해 기준 체력은 혼테일 1단계).
     assert.equal(A.RAID.respawnMs, 3600_000); assert.deepEqual(A.RAIDS.map(r => A.raidRespawnMs(r)), [5 * 60_000, 10 * 60_000, 3600_000, 3600_000], 'v3.312 balrog 5min · zakum 10min'); assert.equal(A.respawnLabel(5 * 60_000), '5분'); assert.equal(A.respawnLabel(3600_000), '1시간');
-    assert.deepEqual(A.RAIDS.map(r => r.cost), [15000, 40000, 90000, 200000], 'v3.312 ×10 (no gold on summon gauges)'); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]);
+    assert.deepEqual(A.RAIDS.map(r => r.cost), [150000, 400000, 900000, 2000000], 'v3.312 ×10 (no gold on summon gauges) · v3.314 ×10 again with pearls at 5,000'); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]);
     assert.ok(pb && pb.statueWard && pb.stats.hp > ht.stats.hp && pb.stats.penetration === .7 && pb.dotHpCap === ht.stats.hp && pb.level > ht.level && !ht.statueWard);
     assert.equal(A.raidImmunity(pb, 1), 'physical'); assert.equal(A.raidImmunity(pb, 2), 'magic'); assert.equal(A.raidImmunity(ht, 1), undefined);
     assert.equal(A.raidImmunity(pb, 7), 'physical'); assert.equal(A.isRaidGauge('pinkBean'), true); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']);

@@ -543,7 +543,7 @@ test('v27.36 high-rarity gear is damped and enhancement gives +10% per level', a
 test('v27.43 altar: offering points, tithe, blessing events skip offline catch-up, mimic multiplier', async () => {
     const G = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await G.load('data/altar'), ev = await G.load('data/events'), engine = await G.load('systems/engine');
-    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 1000 + 90, 'v3.17 pearl 500 · essence 30');
+    assert.equal(A.offeringPoints({ gold: 2999, pearls: 2, essence: 3 }), 2 + 10000 + 90, 'v3.314 pearl 5000 · essence 30');
     assert.deepEqual(A.tithe({ gold: 12345, pearls: 9, essence: 30 }), { gold: 1234, pearls: 0, essence: 3 });
     assert.ok(A.GAUGE_IDS.includes('god') && A.BLESSINGS.every(b => A.gaugeCost(b.id) === b.cost));
     const now = Date.parse('2027-01-05T12:00:00+09:00');
@@ -626,7 +626,7 @@ test('v27.48 altar blessing levels cost x1.5 per level; v27.51 offline settlemen
     assert.equal(A.blessingJumpCost('gold', 0, 3), 12000 + 24000 + 48000, 'jump 0→3 sums each step'); assert.equal(A.blessingJumpCost('gold', 2, 4), 48000 + 3e8); assert.equal(A.blessingJumpCost('gold', 0, 6), 84000 + 3e8 + 1e9 + 3e9); assert.equal(A.blessingJumpCost('gold', 3, 3), 3e8, 'target at or below live = next step');
     const now = 1_000_000; assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now + 1 }, now), 6); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 6, high_until: now }, now), 3, 'expired high level falls back to 3'); assert.equal(A.effectiveBlessingLevel({ until: now, level: 6, high_until: now + 1 }, now), 0); assert.equal(A.effectiveBlessingLevel({ until: now + 1, level: 2 }, now), 2);
     assert.equal(A.blessingEffect(gold, 3).gold, 3); assert.ok(A.BLESSINGS.find(b => b.id === 'mimic').cost > A.BLESSINGS.find(b => b.id === 'exp').cost, 'mimic costs most');
-    assert.equal(A.gaugeCost('god'), 40000); assert.equal(A.ALTAR.essencePoints, 30); assert.equal(A.ALTAR.pearlPoints, 500);
+    assert.equal(A.gaugeCost('god'), 400000); assert.equal(A.ALTAR.essencePoints, 30); assert.equal(A.ALTAR.pearlPoints, 5000);
     // 부재중 정산: 골드 ×10 이벤트는 1시간 넘게 비운 정산(v3.189) 중 ×5.5(절반)로, 그보다 짧게 밀린 정산은 ×10 그대로 적용됩니다.
     const E = await L.load('systems/engine'), t0 = Date.parse('2030-01-01T00:00:00Z');
     const run = (withEvent, minutes) => { Ev.setRuntimeEvents(withEvent ? [{ id: 'admin-x', name: 'x', from: '2000-01-01T00:00:00Z', until: '2100-01-01T00:00:00Z', gold: 10 }] : [], []); const s = E.newState(t0); E.act(s, { type: 'start' }, t0); s.hp = 1e9; let n = 7; const rng = () => ((n = (n * 9301 + 49297) % 233280) / 233280); do T.advance(s, t0 + minutes * 60_000, rng); while (s.catchUpLeft); return s; };
@@ -1094,7 +1094,7 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
     const A = await L.load('data/altar'), Du = await L.load('systems/duel');
     assert.equal(A.RAIDS.length, 4); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']); assert.equal(A.GAUGE_IDS.length, 9);
     assert.ok(A.RAIDS[0].stats.hp < A.RAIDS[1].stats.hp && A.RAIDS[1].stats.hp < A.RAIDS[2].stats.hp && A.RAIDS[0].cost < A.RAIDS[1].cost && A.RAIDS[1].cost < A.RAIDS[2].cost);
-    assert.equal(A.gaugeCost('zakum'), 40000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
+    assert.equal(A.gaugeCost('zakum'), 400000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 400000); assert.ok(A.RAID.maxTurns <= 100);
     const full = Du.raidBossSnapshot(A.RAIDS[0]), partial = Du.raidBossSnapshot(A.RAIDS[0], 1234);
     assert.equal(full.stats.hp, A.RAIDS[0].stats.hp); assert.equal(partial.stats.hp, 1234); assert.ok(full.skills.includes('foeWard'));
     // 서버 흐름(파일 DB): 소환 → 두 모험가가 때림 → 마지막 일격 → 참여 보상.

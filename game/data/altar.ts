@@ -12,7 +12,8 @@ import type { DamageImmunity } from '../types';
 
 export const ALTAR = {
     /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
-    goldPerPoint: 1000, pearlPoints: 500, essencePoints: 30,
+    /** v3.314 세계석 500 → 5,000 기여도(소환 게이지는 세계석 · 정수만 받으므로 정수가 유의미한 소모처가 되게 소환 비용도 ×10). */
+    goldPerPoint: 1000, pearlPoints: 5000, essencePoints: 30,
     /** 한 번에 바칠 수 있는 최소·최대. 최대는 실수와 정수 넘침을 막는 값입니다. */
     /** v3.16 축복 4~6단계(수천억~조 단위)를 한 번에 바칠 수 있게 골드 상한 10조. */
     minPoints: 1, maxGold: 1e13, maxPearls: 100_000, maxEssence: 1_000_000,
@@ -22,7 +23,7 @@ export const ALTAR = {
     titheRate: .1,
     /** 신 소환에 드는 기여도, 신이 머무는 시간, 모험가별 도전 간격. */
     /** v27.91 월드보스가 생기면서 신 소환은 비싸게(40,000 = 골드 4,000만). */
-    godCost: 40_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
+    godCost: 400_000, godLifetimeMs: 24 * 3600_000, challengeCooldownMs: 10 * 60_000,
     /** 신과의 전투 턴 상한. 무릉도장 보스전에는 턴 제한이 없어 결투(80턴)보다 넉넉히 둡니다. */
     godMaxTurns: 1000,
     /** 축복 시간은 쌓이지만 지금부터 최대 12시간까지만. */
@@ -132,17 +133,17 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
- * v3.311 소환 비용 −25%(2,000 · 5,000 · 12,000 → 1,500 · 4,000 · 9,000) · 혼테일 24 → 12시간. v3.312 소환 게이지가 골드를 받지 않게 되면서 비용 ×10(15,000 · 40,000 · 90,000 · 200,000, 세계석 1 = 500 · 정수 1 = 30 기여도). 핑크빈(빌림 몸 실측, 1단계, 면역이 아닌 유형의 직업): R100 30~100번 · R50 45~150번(칼리 20번) · R30 60~600번(물리 몸은 사망 50%). 면역 없이 평균은 R100 47 · R50 66 · R30 166번.
+ * v3.311 소환 비용 −25%(2,000 · 5,000 · 12,000 → 1,500 · 4,000 · 9,000) · 혼테일 24 → 12시간. v3.312 소환 게이지가 골드를 받지 않게 되면서 비용 ×10(15,000 · 40,000 · 90,000 · 200,000). v3.314 세계석 1 = 5,000 기여도가 되며 신 · 월드보스 소환 비용 다시 ×10(신 400,000 · 150,000 · 400,000 · 900,000 · 2,000,000, 정수 1 = 30). 핑크빈(빌림 몸 실측, 1단계, 면역이 아닌 유형의 직업): R100 30~100번 · R50 45~150번(칼리 20번) · R30 60~600번(물리 몸은 사망 50%). 면역 없이 평균은 R100 47 · R50 66 · R30 166번.
  */
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 15_000, lifetimeHours: 6, respawnMs: 5 * 60_000, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 150_000, lifetimeHours: 6, respawnMs: 5 * 60_000, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
         reward: { pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
-    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 40_000, lifetimeHours: 12, respawnMs: 10 * 60_000, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 400_000, lifetimeHours: 12, respawnMs: 10 * 60_000, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
         reward: { pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
-    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 90_000, lifetimeHours: 12, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 900_000, lifetimeHours: 12, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
     // v3.311 핑크빈: 시간의 신전. 석상의 가호(세대마다 물리/마법 면역) · 관통 0.7(기술 관통과 합쳐 상한 0.85) · 석상의 심판(버팀 무시).
-    { id: 'pinkBean', name: '핑크빈', monster: 'pinkBean', level: 180, cost: 200_000, lifetimeHours: 24, stats: { hp: 10_000_000_000, attack: 150_000, magic: 150_000, defense: 2_500, resist: 2_500, speed: 60, crit: .16, accuracy: 1.1, penetration: .7, evasion: .12 },
+    { id: 'pinkBean', name: '핑크빈', monster: 'pinkBean', level: 180, cost: 2_000_000, lifetimeHours: 24, stats: { hp: 10_000_000_000, attack: 150_000, magic: 150_000, defense: 2_500, resist: 2_500, speed: 60, crit: .16, accuracy: 1.1, penetration: .7, evasion: .12 },
         reward: { pearls: 30, sp: 3 }, slayer: { pearls: 30, sp: 2 }, statueWard: true, dotHpCap: 2_000_000_000 },
 ];
 /** v3.312 격파 뒤 다음 소환까지 대기: 보스별 값이 있으면 그것, 없으면 RAID.respawnMs. */
