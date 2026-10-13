@@ -437,7 +437,7 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
 
 test('v3.208 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),BL=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop'),M=await L.load('systems/migrations');
- assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong']);assert.equal(C.REGION_CORE_IDS.length,7);
+ assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong','abyssGrandmaster']);assert.equal(C.REGION_CORE_IDS.length,7);
  assert.equal(C.BOSS_CORES.abyssMugong.bonus.bossDamage,.08);assert.equal(C.BOSS_CORES.abyssMugong.bonus.penetration,.15);
  const s=newState(0);s.abyssBest=24;BL.syncAbyssCores(s);assert.equal(s.bossCores,undefined);
  s.abyssBest=25;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,0);assert.equal(s.bossCores.abyssTrainee.attrs.length,2);
@@ -522,4 +522,18 @@ test('v3.313 tide challenge bonus: nightmare stages (max +50) and Mu Lung floors
     // 입장 검사: 상한까지는 허용, 그 위는 거절.
     const s = newState(0); s.rebirths = 2; s.nightmareBest = three; s.abyssBest = 45;
     act(s, { type: 'tide', id: '26' }, 1_000); assert.equal(s.tide, 26); assert.throws(() => act(s, { type: 'tide', id: '27' }, 2_000), /난이도 조건/);
+});
+
+test('v3.314 fourth Mu Lung core at floors 70-100, floor 150 achievement, 150/200 titles', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const C = await load('data/boss-core'), L = await load('systems/boss-loot'), { ACHIEVEMENTS } = await load('data/achievements'), { TITLES } = await load('data/titles');
+    const core = C.BOSS_CORES.abyssGrandmaster; assert.deepEqual(core.floors, [70, 76, 82, 88, 94, 100]); assert.equal(core.bonus.bossDamage, .1);
+    assert.equal(C.abyssCoreRank('abyssGrandmaster', 69), -1); assert.equal(C.abyssCoreRank('abyssGrandmaster', 70), 0); assert.equal(C.abyssCoreRank('abyssGrandmaster', 100), 5); assert.equal(C.abyssCoreRank('abyssGrandmaster', 300), 5);
+    const s = newState(0); s.abyssBest = 76; L.syncAbyssCores(s, false);
+    assert.equal(s.bossCores.abyssGrandmaster.rank, 1, 'floor 76: owned with awakening 1'); assert.equal(s.bossCores.abyssMugong.rank, 5, 'the older cores are fully awakened');
+    s.abyssBest = 100; L.syncAbyssCores(s, false); assert.equal(s.bossCores.abyssGrandmaster.rank, 5);
+    const ach = id => ACHIEVEMENTS.find(a => a.id === id);
+    assert.ok(ach('abyss:150') && ach('abyss:150').reward.pearls === 40 && ach('abyss:200') && ach('abyssCore:4')?.honor);
+    assert.equal(ach('abyssCore:4').progress(s), 4);
+    assert.ok(['abyss:150', 'abyss:200', 'abyssCore:4'].every(id => TITLES.some(t => t.id === id && t.achievement === id)));
 });

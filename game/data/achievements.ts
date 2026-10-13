@@ -95,7 +95,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('skillsMax', '숙련', n => `스킬 최대 숙련 ${n}개`, n => `스킬 ${n}개의 실전 숙련을 8,000 이상 쌓습니다.`, [1, 5, 15, 40, 80], masteredSkills, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 30, sp: 1 }][i]),
     ...series('tier', '숙련', n => `${n}차 전직`, n => `${n}차 직업에 처음 전직합니다.`, [2, 3, 4, 5], tiers, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
     ...series('tide', '모험', n => `사냥터 난이도 ${n}`, n => `사냥터에서 사냥터 난이도 ${n} 이상으로 처치합니다.`, [5, 10, 20, 30, 50], tideBest, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, ap: 1 }, { pearls: 15 }, { pearls: 30, ap: 1, sp: 1 }][i]),
-    ...series('abyss', '던전', n => `무릉도장 ${n}층`, n => `무릉도장 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100, 200], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, ap: 1 }, { pearls: 15 }, { pearls: 30, ap: 1, sp: 2 }, { pearls: 50, sp: 1 }][i]),
+    ...series('abyss', '던전', n => `무릉도장 ${n}층`, n => `무릉도장 ${n}층을 정복합니다.`, [5, 10, 25, 50, 100, 150, 200], s => s.abyssBest || 0, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, ap: 1 }, { pearls: 15 }, { pearls: 30, ap: 1, sp: 2 }, /* v3.314 */ { pearls: 40, sp: 1 }, { pearls: 50, sp: 1 }][i]),
     // v27.81 던전 난이도 업적: 헬·나이트메어 정복 횟수와 그 난이도로 정복한 던전 수(무릉도장 제외).
     ...series('hell', '던전', n => `${modeName('hell')} 정복 ${n}회`, n => `던전을 ${modeName('hell')} 난이도로 ${n}회 정복합니다.`, [1, 10, 100], modeClears('hell'), i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 15, sp: 1 }][i]),
     ...series('nightmare', '던전', n => `${modeName('nightmare')} 정복 ${n}회`, n => `던전을 ${modeName('nightmare')} 난이도로 ${n}회 정복합니다.`, [1, 10, 100], modeClears('nightmare'), i => [{ pearls: 5 }, { pearls: 12 }, { pearls: 25, ap: 1, sp: 1 }][i]),
@@ -155,7 +155,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v3.205 보스 코어 명예 업적(보상 없음 · 칭호만). 보유 종 수, 각성을 끝까지 마친 코어 수.
     ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `던전 보스 코어 ${n}종을 보유합니다.`, [1, 4, 7], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
     // v3.208 무릉도장 코어 3종 · 전체 10종 보유(명예).
-    ...series('abyssCore', '던전', n => `무릉 코어 ${n}종`, n => `무릉도장 코어 ${n}종을 모두 얻습니다.`, [3], s => ABYSS_CORE_IDS.filter(id => s.bossCores?.[id] !== undefined).length, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('abyssCore', '던전', n => `무릉 코어 ${n}종`, n => `무릉도장 코어 ${n}종을 모두 얻습니다.`, [3, 4], s => ABYSS_CORE_IDS.filter(id => s.bossCores?.[id] !== undefined).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `보스 코어 ${n}종(지역 던전 · 무릉도장)을 모두 보유합니다.`, [10], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('coreAwaken', '던전', n => `완전 각성 코어 ${n}종`, n => `보스 코어 ${n}종을 각성 ${BOSS_CORE_RULES.awakenMax}단계까지 올립니다.`, [1, 7], s => dungeonCores(s).filter(id => coreEntry(s.bossCores![id])!.rank >= BOSS_CORE_RULES.awakenMax).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, PLAIN_DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),

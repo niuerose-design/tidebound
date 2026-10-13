@@ -26,6 +26,8 @@ export const BOSS_CORES: Record<string, BossCore> = {
     abyssTrainee: { name: '수련생의 띠 코어', boss: '무릉 수련생', desc: '보스 · 사냥감 피해 +5%, 명중 +10%.', bonus: { bossDamage: .05, accuracy: .1 }, floors: [25, 28, 31, 34, 37, 40] },
     abyssMaster: { name: '사범의 권법 코어', boss: '무릉 사범', desc: '보스 · 사냥감 피해 +5%, 치명 피해 +15%p.', bonus: { bossDamage: .05, critDamage: .15 }, floors: [40, 42, 44, 46, 48, 50] },
     abyssMugong: { name: '무공의 일격 코어', boss: '무공', desc: '보스 · 사냥감 피해 +8%, 방어 관통 +15%p(관통 상한 안).', bonus: { bossDamage: .08, penetration: .15 }, floors: [50, 51, 52, 53, 54, 55] },
+    // v3.314 넷째 무릉 코어(docs/endgame-challenge-plan.md PR E): 55층 위에 코어가 없어 70 · 76 · 82 · 88 · 94 · 100층에. 환생 100 빌림 몸이 56층이라 6차급 목표입니다.
+    abyssGrandmaster: { name: '도장주의 비전 코어', boss: '도장의 주인', desc: '보스 · 사냥감 피해 +10%, 치명 피해 +10%p, 명중 +10%.', bonus: { bossDamage: .1, critDamage: .1, accuracy: .1 }, floors: [70, 76, 82, 88, 94, 100] },
     // v3.276 칠흑 보스코어(기획: 윌 격파 보상). 칠흑 수집 9종에 들어갑니다(data/onyx ONYX_CORE_ID).
     onyxGrimoire: { name: '저주받은 마도서', boss: '윌', desc: '보스 · 사냥감 피해 +5%, 상태이상 저항 +10%p, 내 기절 · 침묵 · 감속 지속 +1턴.', bonus: { bossDamage: .05, statusResist: .1, controlBonus: 1 }, onyx: 'onyxWill' },
 };

@@ -32,11 +32,15 @@ export const TITLES: TitleDef[] = [
     { id: 'bossCore:4', name: '🔷 네 보스의 기억', desc: '보스 코어 4종 보유', group: '던전', achievement: 'bossCore:4' },
     { id: 'bossCore:7', name: '🌀 일곱 보스를 품은 자', desc: '보스 코어 7종 보유', group: '던전', achievement: 'bossCore:7' },
     { id: 'abyssCore:3', name: '🥋 도장을 삼킨 자', desc: '무릉도장 코어 3종 획득', group: '던전', achievement: 'abyssCore:3' },
+    { id: 'abyssCore:4', name: '🏯 도장주의 비전', desc: '무릉도장 코어 4종 획득(100층)', group: '던전', achievement: 'abyssCore:4' },
     { id: 'bossCore:10', name: '🔟 열 보스의 계승자', desc: '보스 코어 10종 모두 보유', group: '던전', achievement: 'bossCore:10' },
     { id: 'coreAwaken:1', name: '✨ 깨어난 코어', desc: '보스 코어 하나를 각성 5단계까지', group: '던전', achievement: 'coreAwaken:1' },
     { id: 'coreAwaken:7', name: '👁 모든 보스를 깨운 자', desc: '보스 코어 7종 모두 각성 5단계', group: '던전', achievement: 'coreAwaken:7' },
     { id: 'abyss:25', name: '🥋 무릉 수련자', desc: '무릉도장 25층', group: '무릉도장', achievement: 'abyss:25' },
     { id: 'abyss:100', name: '🏯 무릉의 주인', desc: '무릉도장 100층', group: '무릉도장', achievement: 'abyss:100' },
+    // v3.314 100층 위.
+    { id: 'abyss:150', name: '🏯 무릉의 전설', desc: '무릉도장 150층', group: '무릉도장', achievement: 'abyss:150' },
+    { id: 'abyss:200', name: '🏯 도장을 넘은 자', desc: '무릉도장 200층', group: '무릉도장', achievement: 'abyss:200' },
     // v3.310 나이트메어 단계(지역 던전 7곳 모두).
     { id: 'nightmareStageAll:5', name: '🌑 악몽을 건넌 자', desc: '지역 던전 7곳 모두 나이트메어 5단계', group: '던전', achievement: 'nightmareStageAll:5' },
     { id: 'nightmareStageAll:10', name: '🌑 악몽의 끝', desc: '지역 던전 7곳 모두 나이트메어 10단계', group: '던전', achievement: 'nightmareStageAll:10' },
