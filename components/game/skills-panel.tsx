@@ -9,8 +9,8 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Skill } from '@/game/types';
 import { JOBS, jobById, BASE_JOB } from '@/game/data/classes';
 import { SKILLS, skillById } from '@/game/data/skills';
-import { loadoutSkillAP, lineage, refinePractice, extremeBreakTarget, extremeStage, extremeFinalMultiplier, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, skillExclusiveLabel, exclusiveAccess, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus } from '@/game/systems/progression';
-import { Heading, Meter, SkillIcon, Fold } from './shared';
+import { loadoutSkillAP, lineage, refinePractice, extremeBreakTarget, extremeStage, extremeFinalMultiplier, apCapacity, apUsed, canUse, canInheritSkill, canSpendSkill, effectiveSkill, inherited, masteryMilestonesFor, maxSkillLevel, skillLevel, skillMastery, skillRankHint, validLoadout, skillUnlockReady, masteryGainBonus, skillVeiled, skillBlockReason, skillExclusiveLabel, exclusiveAccess, limitBreakOf, limitBreakOwned, limitBreakNext, passiveGrowthBonus, coreTranscendTargets, coreTranscendStages, CORE_TRANSCEND } from '@/game/systems/progression';
+import { Heading, Meter, SkillIcon, Fold, format } from './shared';
 import { hanjaReading } from '@/game/systems/skill-description';
 import { masteryConditionText } from '@/game/systems/mastery';
 import { recommendLoadout } from '@/game/systems/loadout';
@@ -54,6 +54,8 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
     const growth = detailed ? skillGrowthStages(sk) : [];
     const extremeTarget = extremeBreakTarget(sk), refinePracticeNow = refinePractice(s, sk.id), extremeNow = extremeStage(s, sk.id), extremeNext = EXTREME_STAGES[extremeNow], extremeFx = !!s.extremeFx?.[sk.id];
     const lb = limitBreakOf(s, sk.id), lbOwned = limitBreakOwned(s, sk.id), lbNext = limitBreakNext(s, sk.id);
+    // v3.316 핵심 패시브 초월: 마지막 숙련 단계 뒤 숙련 목표(마지막 이정표 ×2 · ×4), 자기 계보에서만 핵심 배율 ×(1 + 단계 × 0.1).
+    const transcendTargets = coreTranscendTargets(sk), transcendNow = coreTranscendStages(sk, refinePracticeNow), transcendNext = transcendTargets[transcendNow], transcendHome = !sk.job || lineage(sk.job) === lineage(s.job);
     const equipAllowed = validLoadout(s, equipped ? s.skills.filter(id => id !== sk.id) : [...s.skills, sk.id]);
     // 장착 버튼에 '왜 안 되는지'를 바로 적습니다: 사용 조건(계승·레벨·숙련) 또는 AP 부족량.
     const apShort = Math.max(0, cost - (apCapacity(s) - apUsed(s)));
@@ -84,6 +86,10 @@ const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, pinned 
             <div className="skill-stage-table-wrap" tabIndex={0} role="region" aria-label={`${sk.name} 단계별 실제 효과`}><table className="skill-stage-table skill-growth-table"><caption>기본 성장 효과 <small>필요 숙련은 누적 수치 · 기본 Lv.0부터 사용</small></caption><thead><tr><th>성장</th><th>필요 숙련</th><th>AP</th>{sk.type === 'active' && <><th>발동</th><th>마나</th><th>대기</th></>}<th>실제 효과</th></tr></thead><tbody>{growth.map(row => <tr key={row.level} className={level === row.level && acquired ? 'current' : ''}><th>Lv.{row.level}{row.broken ? <small>한계돌파 {row.broken}</small> : null}{level === row.level && acquired && <small>현재</small>}</th><td data-label="필요 숙련">{row.practice ? row.practice.toLocaleString() : '기본 해금'}</td><td data-label="AP" className={(row.effective.cost || 0) < 0 ? 'ap-gain' : ''}>{row.effective.cost}</td>{sk.type === 'active' && <><td data-label="발동">{skillPercent(row.effective.chance)}</td><td data-label="마나">{row.effective.manaCost}</td><td data-label="대기">{row.effective.cooldown}턴</td></>}<td className="skill-stage-effects">{row.effects.map((text, i) => <span key={i}>{text}</span>)}</td></tr>)}</tbody></table></div>
             <p className="footnote">{sk.type === 'active' ? '피해식은 상대 방어·치명타·약화 적용 전입니다. 추가 공격은 각각 명중과 치명타를 판정합니다.' : '능력치 증가량은 직업·연구 배율 적용 전입니다. 조건부 숙련 보너스는 가장 높은 하나만 적용됩니다.'} {!sk.job ? '공용 기술은 계승 없이 사용할 수 있습니다.' : `무료 계승: 누적 숙련 ${milestones[0].toLocaleString()}. SP 계승은 숙련도를 올리지 않습니다.`} 숙련·SP 중 높은 성장 레벨만 적용하며, 다른 직업의 전직 선행조건에는 실전 숙련만 인정됩니다.</p>
         </>}
+        {acquired && transcendTargets.length > 0 && <details className="skill-specialization"><summary>초월 · {transcendNow ? `${transcendNow}단계 · 핵심 배율 ×${(1 + transcendNow * CORE_TRANSCEND.step).toFixed(1)}${transcendHome ? '' : ' (자기 계보에서만)'}` : `숙련 ${format(transcendTargets[0])}부터`}</summary>
+            <p>핵심 패시브는 마지막 숙련 단계 뒤에도 숙련이 쌓여 {transcendTargets.map(n => format(n)).join(' · ')}에서 초월 1 · 2단계가 됩니다. 단계마다 자기 계보에서 핵심 배율 ×{1 + CORE_TRANSCEND.step}(상한 45% → 49.5% → 54%). 다른 계보가 계승하면 초월 효과는 없습니다.</p>
+            {transcendNext !== undefined && <Meter value={Math.min(refinePracticeNow, transcendNext)} max={transcendNext} label={`초월 ${transcendNow + 1}단계까지`}/>}
+        </details>}
         {/* v3.74 극한돌파 · v3.211 극한 단계: 한계돌파 3단계 뒤 숙련 1억 · 2억 · 4억 · 7억 · 10억마다 그 스킬의 최종 피해 +2%. 처음 달성하면 전용 연출이 영구로 열립니다. */}
         {acquired && extremeTarget !== null && <details className="skill-specialization"><summary>극한돌파 · {extremeNow ? `${extremeNow}단계 · 최종 피해 +${Math.round((extremeFinalMultiplier(extremeNow) - 1) * 100)}%` : lb >= PROGRESSION.limitBreak.max ? `숙련 ${refinePracticeNow.toLocaleString()} / ${extremeTarget.toLocaleString()}` : `한계돌파 ${PROGRESSION.limitBreak.max}단계 뒤에 열림`}{extremeFx ? ' · 전용 연출' : ''}</summary>
             <p>숙련 {EXTREME_STAGES.map(n => `${n / 1e8}억`).join(' · ')}마다 이 스킬의 최종 피해가 +{Math.round(EXTREME_FINAL_DAMAGE * 100)}%씩(최대 +{Math.round(EXTREME_FINAL_DAMAGE * EXTREME_STAGES.length * 100)}%) 오릅니다. 처음 극한돌파하면 이 스킬의 전용 연출(極)이 열리고 승천해도 남습니다. 단계는 승천하면 승천 뒤 쌓은 숙련으로 다시 오릅니다.</p>

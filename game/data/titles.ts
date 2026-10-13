@@ -49,6 +49,10 @@ export const TITLES: TitleDef[] = [
     { id: 'raidHorntail:5', name: '🐲 혼테일의 천적', desc: '5단계 혼테일 격파 참여', group: '도전', achievement: 'raidHorntail:5' },
     { id: 'raidPinkBean:1', name: '🩷 신전을 깨운 자', desc: '핑크빈 격파 참여', group: '도전', achievement: 'raidPinkBean:1' },
     { id: 'raidPinkBean:5', name: '🩷 분홍빛 재앙의 끝', desc: '5단계 핑크빈 격파 참여', group: '도전', achievement: 'raidPinkBean:5' },
+    // v3.316 숙련 장기 목표: 핵심 패시브 초월 · 극한 단계.
+    { id: 'coreTranscend:1', name: '✦ 초월한 자', desc: '핵심 패시브 초월 1개', group: '도전', achievement: 'coreTranscend:1' },
+    { id: 'coreTranscend2:5', name: '✦ 다섯 번 초월한 자', desc: '핵심 패시브 초월 2단계 5개', group: '도전', achievement: 'coreTranscend2:5' },
+    { id: 'extremeStage:5', name: '🔥 극한의 끝', desc: '액티브 스킬 극한 5단계(숙련 10억)', group: '도전', achievement: 'extremeStage:5' },
     // v3.38 명예 업적(지역 연구 N곳 완성) 칭호.
     ...([[2, '첫 지도를 넘긴 자'], [3, '세 번째 발자국'], [5, '다섯 지역의 탐구자'], [6, '여섯 번째 지도'], [7, '일곱 갈래 길의 기록자'], [8, '여덟 지역의 박물학자'], [9, '아홉 번째 도감'], [10, '열 곳의 증인'], [11, '빅토리아 너머로'], [12, '세계를 걷는 자'], [13, '마지막 한 곳 앞에서']] as const).map(([n, name]) => ({ id: `regions:${n}`, name: `📖 ${name}`, desc: `사냥터 ${n}곳 도감 완성`, group: '모험' as const, achievement: `regions:${n}` })),
 ];

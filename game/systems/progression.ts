@@ -166,13 +166,29 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
  */
 /** v3.302 숙련 0단계 몫 .7 → .55: 핵심 패시브 상한을 올린 몫이 숙련을 키울수록 들어오게(장비 → 스킬 비중 이동). */
 export const CORE_PASSIVE = { base: .55, borrowed: .5, azerothBase: .4 } as const;
-export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0) {
+/**
+ * v3.316 핵심 패시브 초월(docs/endgame-challenge-plan.md PR F): 5차 핵심 패시브는 마지막 숙련 단계 뒤에도 숙련을 쌓아 마지막 이정표 × multipliers(5차 기본 375만 → 750만 · 1,500만)에 닿을 때마다 초월 1 · 2단계.
+ * 자기 계보에서만 핵심 배율 × (1 + 단계 × step)(상한 .45 → .495 → .54), 다른 계보가 계승하면 효과 없음. 빌림 몸이 못 따라오는 '자기 직업' 축이고, 빌림은 깎지 않습니다. 숙련은 극한돌파와 같은 refinePractice(승천 기준점 위)로 셉니다.
+ */
+export const CORE_TRANSCEND = { multipliers: [2, 4], step: .1 } as const;
+/** 초월 단계의 숙련 목표들(5차 핵심 패시브가 아니면 빈 배열). */
+export function coreTranscendTargets(sk: Pick<Skill, 'job' | 'masteryMilestones' | 'core'>): number[] {
+    if (!sk.core?.scale || jobById(sk.job)?.tier !== 5) return [];
+    const last = masteryMilestonesFor(sk as Skill).at(-1)!;
+    return CORE_TRANSCEND.multipliers.map(m => last * m);
+}
+export const coreTranscendStages = (sk: Pick<Skill, 'job' | 'masteryMilestones' | 'core'>, practice: number) => coreTranscendTargets(sk).filter(n => practice >= n).length;
+/** 세이브 기준 초월 단계(장착 여부 무관). */
+export function coreTranscendOf(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) { const sk = skillById(id); return sk ? coreTranscendStages(sk, refinePractice(s, id)) : 0; }
+export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0, transcend = 0) {
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
     // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.
     const world = owner ? worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
     if (world !== 'maple' && !home) return 0;
     const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
-    return (base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps)) * (home ? 1 : CORE_PASSIVE.borrowed);
+    const grown = base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps);
+    // v3.316 초월은 자기 계보에서만.
+    return home ? grown * (1 + Math.max(0, transcend) * CORE_TRANSCEND.step) : grown * CORE_PASSIVE.borrowed;
 }
 /** 변종·황금 개체 처치 수(마리 수가 아니라 조우 횟수). */
 function variantCatches(s: Pick<State, 'variantBook' | 'goldenBook'>) {

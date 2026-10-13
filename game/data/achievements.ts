@@ -2,7 +2,7 @@ import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
 import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
 import { STORY } from './story';
-import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken } from '../systems/progression';
+import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken, extremeStage, coreTranscendOf } from '../systems/progression';
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
 import { ESSENCE_SLIME } from './essence-slime';
@@ -170,6 +170,10 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개`, n => `아제로스 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('azeroth').length], unlockedIn('azeroth'), () => ({}))),
     ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개`, n => `이계 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
+    // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).
+    ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월(마지막 숙련 단계 뒤 숙련 ×2)합니다.`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
+    ...honor(series('coreTranscend2', '숙련', n => `핵심 패시브 초월 2단계 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월 2단계(숙련 ×4)까지 올립니다.`, [1, 5], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 2).length, () => ({}))),
+    ...honor(series('extremeStage', '숙련', n => `극한 ${n}단계`, n => `액티브 스킬 하나를 극한 ${n}단계(숙련 ${[1, 2, 4, 7, 10][n - 1]}억)까지 올립니다.`, [3, 5], s => Math.max(0, ...Object.keys(s.skillPractice || {}).map(id => extremeStage(s, id))), () => ({}))),
     ...honor(series('limitBreak', '숙련', n => `한계돌파 ${n}개`, n => `스킬 ${n}개를 한계돌파합니다.`, [1, 5, 20], s => Object.values(s.limitBreaks || {}).filter(n => n > 0).length, () => ({}))),
     ...honor(series('fuel', '도전', n => `연료에 세계석 ${n.toLocaleString()}`, n => `이계 연료 충전에 세계석을 누적 ${n.toLocaleString()}개 씁니다.`, [1000, 10000, 100000], s => s.fuelBought || 0, () => ({}))),
     ...honor(series('marketProfit', '도전', n => `실현 수익 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 수익이 누적 ${n.toLocaleString()} G를 넘습니다.`, [1e6, 1e8, 1e10], s => Math.max(0, s.market?.realized || 0), () => ({}))),
