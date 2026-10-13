@@ -155,7 +155,7 @@ export function Guide({ s }: { s?: State }) {
                 {/* v3.317 핵심 패시브 설명을 스킬 카드에서 줄이고 계산 방식은 여기로. */}
                 <Rule icon={<Sparkles size={19}/>} title="핵심 패시브 · 초월"
                     effect={`4차 · 5차 직업마다 패시브 하나가 핵심 패시브입니다. 4차는 고정 수치(배율 전에 더함), 5차는 배율(직업 보정처럼 최종 능력치에 곱함, 공격 최대 +${Math.round(CORE_REWORK.cap.attack * 100)}% · 체력 +${Math.round(CORE_REWORK.cap.hp * 100)}%). 처음엔 ${Math.round(CORE_PASSIVE.base * 100)}%, 숙련 단계마다 올라 마지막 단계에서 100%.`}
-                    condition={`다른 계보 직업이 계승해 쓰면 ${Math.round(CORE_PASSIVE.borrowed * 100)}%(아제로스 · 이계 핵심은 계보 전용). 여러 핵심 패시브의 배율은 더한 뒤 한 번 곱합니다.`}
+                    condition={`다른 계보 직업이 4 · 5차 패시브를 계승해 쓰면 핵심 패시브를 포함한 그 패시브의 모든 수치가 ${Math.round(CORE_PASSIVE.borrowed * 100)}%(아제로스 · 이계 핵심은 계보 전용). 여러 핵심 패시브의 배율은 더한 뒤 한 번 곱합니다.`}
                     limit={`초월(5차 핵심): 한계돌파 ${PROGRESSION.limitBreak.max}단계 뒤 숙련이 마지막 이정표 ×${CORE_TRANSCEND.multipliers.join(' · ×')}에 닿으면 1 · 2단계, 단계마다 핵심 효과 ×${1 + CORE_TRANSCEND.step}. 자기 계보에서만 적용되고 계승에는 없습니다(액티브의 극한돌파에 해당하는 패시브 쪽 장기 목표).`}/>
                 <Rule icon={<BookOpen size={19}/>} title="경험치 배율"
                     effect="경험치 배율 = 1 + 환생 + 세계석 연구 + 직업 + 장착 스킬."

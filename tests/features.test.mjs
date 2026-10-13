@@ -303,3 +303,13 @@ test('v3.320 detail stats always list follow-up power (followUpBonus), even at 0
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Pg=await L.load('data/progression');
  assert.ok(Pg.DETAIL_STATS.includes('followUpBonus'));assert.ok(!Pg.OPTIONAL_STATS.has('followUpBonus'),'not hidden when 0');
 });
+test('v3.321 borrowed 4th/5th passives: every value (bonus, per-count, core) at passiveInheritScale; actives unchanged', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),Sk=await L.load('data/skills'),C=await L.load('data/classes'),B=await L.load('data/balance'),D=await L.load('systems/skill-description');
+ assert.equal(B.SKILL_FORMULA.passiveInheritScale,.5);assert.equal(P.CORE_PASSIVE.borrowed,B.SKILL_FORMULA.passiveInheritScale,'core share = whole-passive share');
+ const t4=Sk.SKILLS.find(k=>k.type==='passive'&&C.jobById(k.job)?.tier===4&&!k.exclusiveLineage&&C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(C.jobById(k.job))))==='maple');
+ const other=C.JOBS.find(j=>j.tier===4&&!j.retired&&!j.hidden&&C.lineageOf(j)!==C.lineageOf(C.jobById(t4.job))).id;
+ assert.equal(P.signatureScale(t4,t4.job),1,'own job keeps it whole');assert.equal(P.signatureScale(t4,other),.5,'4th passive borrowed at 50% (was 100%)');
+ const t5=Sk.skillById('heroSoul');assert.equal(P.signatureScale(t5,'apostle'),.5,'5th passive borrowed at 50% (was 70%)');assert.equal(P.signatureScale(t5,'rebirthFisher'),1,'ultimate adventurer exempt');
+ assert.equal(P.signatureScale(Sk.skillById('braveSlash'),'apostle'),B.SKILL_FORMULA.signatureScale,'5th actives still ×.7');
+ const lines=D.skillEffectLines(Sk.skillById('magusDomain'));assert.ok(lines.some(l=>l.includes('모든 수치(핵심 패시브 포함)가 50%')),'description says the whole passive');
+});
