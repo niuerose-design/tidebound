@@ -299,3 +299,7 @@ test('v3.303 gear hp · defense · resist · mana ×0.6 (bases, affixes, existin
  const g=newState(0);g.level=100;g.job='grandMagus';g.unlockedJobs.push('grandMagus');g.learned.magusDomain=1;g.skills=['magusDomain'];const t={};stats(g,t);
  for(const k of ['defense','resist','mana'])assert.ok(t[k].some(x=>x.source==='skills'&&x.factor>1),`core passive multiplies ${k}`);
 });
+test('v3.320 detail stats always list follow-up power (followUpBonus), even at 0', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Pg=await L.load('data/progression');
+ assert.ok(Pg.DETAIL_STATS.includes('followUpBonus'));assert.ok(!Pg.OPTIONAL_STATS.has('followUpBonus'),'not hidden when 0');
+});
