@@ -33,6 +33,9 @@ export const ENEMY_SKILLS: Skill[] = [
     // v3.278 스우 · 데미안.
     { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 195% 피해 + 3턴 부식(물리 · 마법 방어와 속도 감소). 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.95, penetrationBonus: .57, effect: 'corrode', statusTurns: 3, manaCost: 0 },
     { id: 'onyxBrand', name: '낙인', desc: '복합 피해 250% + 3턴 출혈. 물리 · 마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 2.5, damageType: 'split', effect: 'bleed', statusTurns: 3, manaCost: 0 },
+    // v3.311 핑크빈(월드보스 넷째) 고유 기술: 버팀(無 · 리인카네이션)을 꿰뚫는 심판 · 침묵 광선. 면역은 석상의 가호(data/altar.ts raidImmunity)로 소환마다 바뀝니다.
+    { id: 'pbJudgement', name: '석상의 심판', desc: '물리 공격 260% 피해. 방어 57% 관통. 이 일격에 쓰러지면 체력 1로 버티는 효과(無 등)가 발동하지 않습니다.', type: 'active', level: 1, chance: .26, cooldown: 5, multiplier: 2.6, penetrationBonus: .57, ignoreStand: true, manaCost: 0 },
+    { id: 'pbBeam', name: '시간의 광선', desc: '마법 공격 230% 피해 + 4턴 침묵. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 4, multiplier: 2.3, penetrationBonus: .57, damageType: 'magic', effect: 'silence', statusTurns: 4, manaCost: 0 },
     { id: 'onyxGenesis', name: '창세', desc: '복합 피해 210%. 물리·마법 방어를 절반씩 적용합니다. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 6, multiplier: 2.1, penetrationBonus: .57, damageType: 'split', manaCost: 0 },
 ];
 let enemySkillIndex: Map<string, Skill> | undefined;
@@ -69,6 +72,8 @@ const PROFILES: Record<string, {
     zakum: { name: '불꽃의 석상', hint: '여러 팔로 연달아 때리고 불기둥으로 화상을 겁니다. 짓누르면 기절. 단단하니 방어 관통과 회복을 챙기세요.', skills: ['zakumArms', 'zakumFlame', 'foeCrush'], defense: 1.6, resist: 1.1, evasion: .02, speed: .9 },
     // v3.202 파풀라투스: 시간을 멈춘 차원의 침략자. 기본 공격부터 복합 피해, 시간 정지(긴 기절) · 차원의 균열(약화) · 알람 폭발.
     papulatus: { name: '시간의 침략자', hint: '기본 공격부터 복합 피해. 시간 정지로 3턴 기절시키고, 균열로 약화를 겁니다. 상태이상 저항과 고른 방어를 챙기세요.', skills: ['papTimeStop', 'papRift', 'papAlarm'], splitBasic: true, defense: 1.2, resist: 1.4, evasion: .1, speed: 1.2 },
+    // v3.311 핑크빈: 시간의 신전의 주인. 석상의 심판(버팀 무시) · 시간의 광선(침묵) · 대지 강타(복합) · 몸통 박치기(기절). 면역 · 관통은 월드보스 정의(data/altar.ts)에.
+    pinkBean: { name: '시간의 신전의 주인', hint: '소환마다 석상 하나가 깨어나 물리 또는 마법 피해를 완전히 막습니다. 심판에 쓰러지면 無로도 버티지 못하고, 관통이 높아 방어보다 체력 · 회피 · 회복이 중요합니다.', skills: ['pbJudgement', 'pbBeam', 'foeTideSlam', 'foeCrush'], defense: 1.3, resist: 1.3, evasion: .1, speed: 1.1 },
     // v27 혼돈 생물: 기본 공격부터 복합 피해. 물리·마법 방어 중 하나만 높은 빌드에 부담을 줍니다.
     tidal: { name: '혼돈 생물', hint: '기본 공격이 복합 피해라 물리·마법 방어를 고루 갖춰야 합니다. 마법 공격으로 약화도 겁니다.', skills: ['foeTideSlam', 'foeInkBurst'], splitBasic: true, defense: .9, resist: .9, evasion: .04, speed: 1 },
     stormEel: { name: '전격 짐승', hint: '기본 공격부터 마법(전격) 피해. 플레이어도 배울 수 있는 감속 물리기(귀참)와 침묵을 사용합니다.', skills: ['electricBite', 'foeSilence'], magicBasic: true, power: .82, defense: .85, resist: 1.1, evasion: .04, speed: 1.05 },
@@ -88,7 +93,7 @@ const profileIds: Record<string, string> = {
     seahorse: 'silencer', needlefish: 'swift', tidejelly: 'tidal', emberEel: 'stormEel', ashRay: 'armored', magmaPuffer: 'venom', cinderKoi: 'blaze', starKoi: 'arcane', prismRay: 'tidal', voidGuppy: 'silencer', abyssManta: 'frenzy', stormBarracuda: 'swift', eclipseMoonfish: 'arcane', novaManta: 'frenzy', ventCrab: 'armored', glassSquid: 'arcane', sulfurEel: 'venom', blindShark: 'frenzy', cinderAngler: 'arcane', ventLeviathan: 'armored',
     aqSeaco: 'swift', aqShark: 'frenzy', aqSquid: 'arcane', aqFlower: 'venom', aqGuard: 'armored', lfBlueTurtle: 'armored', lfRedTurtle: 'blaze', lfWyvern: 'swift', lfSkelegon: 'controller', lfManticore: 'venom', ttMonitor: 'silencer', ttGuardian: 'armored', ttChimera: 'tidal', ttDodo: 'swift', ttLyka: 'frenzy', arErdaSpirit: 'arcane', arMemoryGuard: 'controller', arMysticErda: 'stormEel', arVanishSoul: 'silencer', arTrueErda: 'tidal',
     onyxDusk: 'onyxDusk', onyxDunkel: 'onyxDunkel', onyxWill: 'onyxWill', onyxLucid: 'onyxLucid', onyxHilla: 'onyxHilla', onyxSwoo: 'onyxSwoo', onyxDamien: 'onyxDamien', onyxSeren: 'onyxSeren', onyxBlackMage: 'onyxBlackMage',
-    ventColossus: 'zakum', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'papulatus'
+    ventColossus: 'zakum', grottoWarden: 'stormEel', kelpHydra: 'venomBoss', anchorWraith: 'controller', magmaKraken: 'blaze', templeOracle: 'arcaneBoss', abyssSovereign: 'boss', starfallSeraph: 'papulatus', pinkBean: 'pinkBean'
 };
 export const profileId = (id: string) => profileIds[id] || 'armored';
 export function profile(id: string) { return PROFILES[profileId(id)]; }

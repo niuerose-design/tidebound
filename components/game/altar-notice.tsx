@@ -17,7 +17,7 @@ export function AltarNotice({ s, setView }: { s: State; setView: (view: string) 
     const [seen, setSeen] = useState(readSeen);
     const a = s.altarStatus;
     if (!a) return null;
-    const now = serverNow(s), filling = a.gauges.filter(g => g.pct > 0 && !/^(balrog|zakum|horntail)$/.test(g.id)).sort((x, y) => y.pct - x.pct).slice(0, 2);
+    const now = serverNow(s), filling = a.gauges.filter(g => g.pct > 0 && !/^(balrog|zakum|horntail|pinkBean)$/.test(g.id)).sort((x, y) => y.pct - x.pct).slice(0, 2);
     // v3.18 제단 줄은 축복 이름(단계 포함)과 남은 시간만, 신·신의 자리는 짧게. 월드보스는 아래 별도 줄.
     const altarKey = `${a.blessings.map(b => `${b.id}:${b.until}`).join(',')}|${a.god?.gen || 0}|${a.throne}`, raids = a.raids ?? [], raidKey = `raid:${raids.map(r => `${r.gen}:${r.until}`).join(',')}`;
     const [seenAltar, seenRaid] = seen.split('||');

@@ -69,7 +69,10 @@ test('v3.191 world boss summon stages: hp ×2 · attack ×1.15 per stage (max 10
         const ib = info.raids.find(x => x.id === 'horntail'); assert.equal(ib.stage, 2); assert.equal(ib.hpMax, b.stats.hp * 2); assert.equal(ib.attack, Math.round(b.stats.attack * 1.15)); assert.ok(ib.power > 0);
         me.altarStatus = undefined; Alt.invalidateAltar(); await Alt.syncAltarStatus(me, now2 + 5, 'p1'); assert.equal(me.altarStatus.raids.find(x => x.id === 'horntail').stage, 2, 'status carries the stage');
         // 2단계도 격파 → 같은 날 세 번째 소환은 3단계(체력 ×4). (못 잡고 떠난 뒤 같은 단계로 남는 것은 위 nextRaidStage 단위 검사 — 혼테일은 24시간 머물러 여기서 재현할 수 없음.)
+        // v3.311 참여 보상은 단계 보상(raidReward): 2단계 참여 + 마지막 일격 = 15 + 1 + 15 세계석 · 2 + 1 SP, 최고 격파 단계 2 기록.
+        await database.bumpRaidHit(row.gen, 'p1', '첫째', 12345, now2 + 500);
         assert.equal(await database.hitAltarRaid('horntail', row.gen, row.hp_max), 0); assert.ok(await database.slayAltarRaid('horntail', row.gen, 'p1', '첫째', now2 + 1000));
+        { const pearls = me.pearls, sp = me.sp; me.altarStatus = undefined; Alt.invalidateAltar(); await Alt.syncAltarStatus(me, now2 + 2000, 'p1'); assert.equal(me.pearls - pearls, 31); assert.equal(me.sp - sp, 3); assert.equal(me.raidBest.horntail, 2); assert.equal(me.altar.raidClaimedBy.horntail, row.gen); }
         const now3 = now2 + A.RAID.respawnMs + 60_000; await database.addAltarGauge('horntail', b.cost); Alt.invalidateAltar(); await Alt.altarInfo('p1', me, now3);
         row = await raid(); assert.equal(row.state, 'alive'); assert.equal(row.stage, 3, 'third summon of the day'); assert.equal(row.hp_max, b.stats.hp * 4); assert.ok(now3 - now < A.RAID_STAGE.dayMs, 'still the same day');
         assert.equal(await database.hitAltarRaid('horntail', row.gen, row.hp_max), 0); assert.ok(await database.slayAltarRaid('horntail', row.gen, 'p1', '첫째', now3 + 1000));
@@ -87,4 +90,42 @@ test('v3.194 world boss kills open no blessing; blessing events use the live lev
     assert.doesNotMatch(server, /extendAltarGauge|raid\.blessing/, 'the kill path no longer touches blessing gauges'); assert.doesNotMatch(db, /extendAltarGauge/);
     assert.match(events, /blessingEffect\(b, effectiveBlessingLevel\(g, now\)\)/, 'server event multiplier uses the live level, same as the screen');
     assert.equal(A.effectiveBlessingLevel({ until: now + 9 * H, level: 6, high_until: now - H }, now), 3, 'stored 6 after its high time reads as 3');
+});
+
+test('v3.311 fourth world boss: shorter summon waits, pink bean with statue ward (immunity by generation), high penetration, stand-piercing judgement, stage rewards, records', async () => {
+    const A = await load('data/altar'), Du = await load('systems/duel'), C = await load('systems/combat'), E = await load('data/encounters'), { ACHIEVEMENTS } = await load('data/achievements'), { TITLES } = await load('data/titles'), { newState } = await load('systems/engine');
+    const pb = A.RAIDS.find(r => r.id === 'pinkBean'), ht = A.RAIDS.find(r => r.id === 'horntail');
+    // 소환 대기: 격파 뒤 1시간, 소환 비용 −25%, 혼테일 12시간. 핑크빈은 혼테일 위(체력 ×5 · 관통 0.7 · 석상의 가호 · 지속 피해 기준 체력은 혼테일 1단계).
+    assert.equal(A.RAID.respawnMs, 3600_000); assert.deepEqual(A.RAIDS.map(r => r.cost), [1500, 4000, 9000, 20000]); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]);
+    assert.ok(pb && pb.statueWard && pb.stats.hp > ht.stats.hp && pb.stats.penetration === .7 && pb.dotHpCap === ht.stats.hp && pb.level > ht.level && !ht.statueWard);
+    assert.equal(A.raidImmunity(pb, 1), 'physical'); assert.equal(A.raidImmunity(pb, 2), 'magic'); assert.equal(A.raidImmunity(ht, 1), undefined);
+    assert.equal(A.raidImmunity(pb, 7), 'physical'); assert.equal(A.isRaidGauge('pinkBean'), true); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']);
+    // 단계 보상: 단계마다 참여 세계석 +1, 5단계부터 마지막 일격 SP +1.
+    assert.deepEqual(A.raidReward(ht, 1, false), { pearls: 15, sp: 2 }); assert.deepEqual(A.raidReward(ht, 5, false), { pearls: 19, sp: 2 });
+    assert.deepEqual(A.raidReward(ht, 4, true), { pearls: 33, sp: 3 }); assert.deepEqual(A.raidReward(ht, 5, true), { pearls: 34, sp: 4 }); assert.deepEqual(A.raidReward(ht, 99, true), A.raidReward(ht, 10, true), 'capped at max stage');
+    // 결투 상대: 세대에 따라 면역, 지속 피해 기준 체력은 혼테일 1단계 체력, 고유 기술.
+    const s1 = Du.raidBossSnapshot(pb, undefined, 1, 1), s2 = Du.raidBossSnapshot(pb, undefined, 3, 2), s0 = Du.raidBossSnapshot(ht, undefined, 1, 1);
+    assert.equal(s1.immune, 'physical'); assert.equal(s2.immune, 'magic'); assert.equal(s0.immune, undefined); assert.equal(s1.dotHpCap, ht.stats.hp); assert.equal(s2.stats.hp, pb.stats.hp * 4);
+    assert.ok(s1.skills.includes('pbJudgement') && s1.skills.includes('pbBeam') && s1.skills.includes('foeWard')); assert.ok(E.enemySkillById('pbJudgement').ignoreStand && !E.enemySkillById('pbBeam').ignoreStand);
+    // 전투: 면역인 유형의 직접 피해 · 지속 피해 · 반격은 0, 다른 유형은 그대로. 복합 피해는 절반만.
+    const base = { hp: 1e6, attack: 1000, magic: 1000, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 200, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5, thorns: 0 };
+    const fighter = (o = {}) => ({ name: 'F', stats: { ...base, ...(o.stats || {}) }, hp: 1e6, mana: 200, skills: [], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...o });
+    const hit = (att, def) => { C.actTurn(att, def, () => .5, () => {}); return 1e6 - def.hp; };
+    assert.ok(hit(fighter(), fighter()) > 0, 'physical basic lands'); assert.equal(hit(fighter(), fighter({ immune: 'physical' })), 0, 'physical immune: 0 from a physical basic'); assert.ok(hit(fighter(), fighter({ immune: 'magic' })) > 0, 'magic immune: physical basic still lands');
+    assert.ok(hit(fighter({ magicBasic: true }), fighter()) > 0); assert.equal(hit(fighter({ magicBasic: true }), fighter({ immune: 'magic' })), 0, 'magic immune: 0 from a magic basic'); assert.ok(hit(fighter({ magicBasic: true }), fighter({ immune: 'physical' })) > 0);
+    const splitPlain = hit(fighter({ splitBasic: true }), fighter()), splitHalf = hit(fighter({ splitBasic: true }), fighter({ immune: 'physical' }));
+    assert.ok(splitHalf > 0 && splitHalf < splitPlain, 'split damage: only the immune half is 0');
+    const bleeder = fighter({ immune: 'physical', effects: { dot: { name: '출혈', damage: 100, turns: 3, hpRatio: 0 }, poison: { perStack: 100, stacks: 1, turns: 3, hpRatio: 0 } } });
+    C.actTurn(bleeder, fighter({ stats: { defense: 1e9, resist: 1e9 } }), () => .5, () => {}); assert.ok(bleeder.effects.dot, 'ticking is unchanged: immunity blocks applying');
+    const thornsTank = fighter({ stats: { thorns: 1, defense: 500 } }); const boss = fighter({ immune: 'physical' }); C.actTurn(boss, thornsTank, () => .5, () => {}); assert.equal(boss.hp, 1e6, 'physical immune: no reflected damage');
+    const thornsTank2 = fighter({ stats: { thorns: 1, defense: 500 } }); const boss2 = fighter({ immune: 'magic' }); C.actTurn(boss2, thornsTank2, () => .5, () => {}); assert.ok(boss2.hp < 1e6, 'magic immune: reflected damage lands');
+    // 버팀 무시: 석상의 심판에 쓰러지면 無(jobStand)로 버티지 못하고, 다른 공격에는 버팁니다.
+    const stander = () => fighter({ hp: 10, jobStand: { charges: 3 } }), judge = () => fighter({ foe: true, skills: ['pbJudgement'], stats: { attack: 1e6 } }), basic = () => fighter({ foe: true, stats: { attack: 1e6 } });
+    const v1 = stander(); C.actTurn(basic(), v1, () => 0, () => {}); assert.equal(v1.hp, 1, 'a plain blow is endured at hp 1'); assert.equal(v1.effects.lastStand, 1);
+    const v2 = stander(); const logs = []; C.actTurn(judge(), v2, () => 0, t => logs.push(t)); assert.equal(v2.hp, 0, 'judgement pierces the stand'); assert.ok(!v2.effects.lastStand, 'no charge spent'); assert.ok(logs.join(' ').includes('석상의 심판') && logs.join(' ').includes('버티지 못함'));
+    // 업적 · 칭호: 보스별 참여 격파 최고 단계(raidBest).
+    const s = newState(0); const ach = id => ACHIEVEMENTS.find(a => a.id === id);
+    assert.ok(ach('raidPinkBean:1')?.honor && ach('raidHorntail:10')?.honor && ach('raidZakum:5')?.honor);
+    assert.equal(ach('raidPinkBean:1').progress(s), 0); s.raidBest = { pinkBean: 3, horntail: 5 }; assert.equal(ach('raidPinkBean:1').progress(s), 3); assert.equal(ach('raidHorntail:5').progress(s), 5); assert.equal(ach('raidZakum:5').progress(s), 0);
+    assert.ok(['raidHorntail:5', 'raidPinkBean:1', 'raidPinkBean:5'].every(id => TITLES.some(t => t.id === id && t.achievement === id && ach(id))));
 });

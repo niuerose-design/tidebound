@@ -365,6 +365,8 @@ export type Skill = {
     selfEffect?: { status: 'stun' | 'slow' | 'weaken'; turns: number; waivedBy?: string };
     /** v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다. */
     lastStand?: { charges: number; chargesPerLevel?: number; heal?: number };
+    /** v3.311 버팀 무시(월드보스 전용 기술): 이 기술의 직접 피해 · 추가타로 쓰러지면 無 · 리인카네이션 같은 버팀(lastStand)이 발동하지 않습니다. */
+    ignoreStand?: boolean;
     /** v25.5 재사용 대기 초기화: 조건(치명타·처치·연속 행동)이 맞으면 chance 확률로 대기 중인 액티브를 되돌립니다. pick: longest 가장 긴 대기 하나, first 편성 순서 첫 번째, all 전부. */
     cooldownReset?: { on: 'crit' | 'kill' | 'chain'; chance: number; pick: 'longest' | 'first' | 'all' };
     /** v25.5 동시 시전 가능. 같은 표시가 있는 액티브끼리 한 행동에 함께 나갑니다. */
@@ -857,6 +859,8 @@ export type State = {
     modeClears?: Partial<Record<import('./data/balance').DungeonMode, Record<string, number>>>;
     /** v3.310 던전별 나이트메어 최고 정복 단계(던전 id → 단계). 다음 단계 입장 조건 · 업적 · 칭호에 씁니다. */
     nightmareBest?: Record<string, number>;
+    /** v3.311 월드보스별 참여해 격파한 최고 소환 단계(보스 id → 단계). 업적 · 칭호 · 제단 화면. */
+    raidBest?: Record<string, number>;
     logs: Log[];
     logId: number;
     lastDuel: number;
@@ -951,6 +955,8 @@ type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'back
     | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root'
     /** v3.28 블랙 해커 실패(추적 공지만). */
     | 'busted';
+/** v3.311 피해 유형 면역: 물리(물리 직접 피해 · 추가타 · 출혈 · 반격) 또는 마법(마법 직접 피해 · 중독 · 화상 · 넘친 회복). 복합 피해는 면역인 절반만 0, 고정 피해는 기준 능력치(마법 공격이면 마법)로 가릅니다. */
+export type DamageImmunity = 'physical' | 'magic';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
     privacy?: { show: string[] };
@@ -981,6 +987,8 @@ export type Snapshot = {
     extraRolls?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계: 1단계 체력). 없으면 현재 체력 그대로. */
     dotHpCap?: number;
+    /** v3.311 피해 유형 면역(월드보스 석상의 가호): 그 유형의 직접 피해 · 추가타 · 지속 피해 · 반격을 받지 않습니다. */
+    immune?: DamageImmunity;
     power: number;
     rating: number;
     guild?: string;

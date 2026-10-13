@@ -2,7 +2,7 @@ import { SKILLS, skillById } from '../data/skills';
 import { enemySkillById } from '../data/encounters';
 import { jobById } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
-import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill } from '../types';
+import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill, DamageImmunity } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
 export type { CombatEvent, CombatHit } from '../types';
 import { normalizeStats, hitChance, bulwark } from './stats';
@@ -37,6 +37,8 @@ export type Fighter = {
     pnl?: number;
     /** v3.191 지속 피해 체력 비례분의 기준 체력 상한(월드보스 소환 단계). 없으면 현재 체력. */
     dotHpCap?: number;
+    /** v3.311 피해 유형 면역(월드보스 석상의 가호, types.ts DamageImmunity). */
+    immune?: DamageImmunity;
     skills: string[];
     /** 재사용 대기(행동 단위). v3.86 각성기는 턴 단위로 같은 칸에 두고, '~id' 칸에 실패한 판정 수를 셉니다. */
     cooldowns: Record<string, number>;
@@ -236,10 +238,12 @@ export function actTurn(a: Fighter, b: Fighter, rng: () => number, onAction: (te
  * v25 無: 쓰러질 피해를 받으면 체력 1로 버팁니다(전투당 charges번). 버틸 때마다 최대 체력 × heal을 되찾습니다.
  * 직접 피해·추가타·지속 피해·반격 어느 것으로도 체력이 1 아래로 내려가지 않습니다. self는 행동한 쪽이 자기 지속 피해·반격을 버틴 경우입니다.
  */
-function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, self = false) {
+function endure(f: Fighter, sf: CombatStats, notes: string[], ev: CombatEvent, self = false, pierced = false) {
     if (f.hp > 0) return false;
     const id = f.skills.find(x => skillById(x)?.lastStand), stand = id ? skillById(id)!.lastStand! : f.jobStand;
     if (!stand) return false;
+    // v3.311 버팀 무시 기술(ignoreStand)에 쓰러지면 버티지 못합니다(횟수도 쓰지 않음).
+    if (pierced) { notes.push('버팀을 꿰뚫는 일격 · 버티지 못함'); return false; }
     f.effects ??= {};
     // v25.14 無는 함께 새긴 글자(같은 직업의 seal 액티브) 수에 비례합니다. 혼자 새기면 전투당 1번, 회복 없음. 여섯 글자를 모두 새겨야 원래 횟수·회복.
     const owner = id ? skillById(id)! : undefined, sealsAll = owner ? SKILLS.filter(x => x.job === owner.job && x.seal).length : 0, sealsOn = owner ? f.skills.filter(x => skillById(x)?.seal && skillById(x)?.job === owner.job).length : 0;
@@ -651,6 +655,9 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const healOnly = !!chosen?.healOnly;
     const landed = healOnly ? true : rng() < hit;
     const split = chosen?.damageType === 'split' || splitBasic;
+    // v3.311 피해 유형 면역(석상의 가호): 맞는 쪽이 이 공격의 유형(고정 피해는 기준 능력치로)에 면역이면 직접 피해 · 추가타가 0. 복합 피해는 면역인 절반만 0.
+    const immuneHit = !!b.immune && !split && (b.immune === 'magic') === (fixed ? chosen?.baseStat === 'magic' : magical);
+    const floor = immuneHit ? 0 : 1;
     // 올라운드 밸런스는 배분 능력치로 만든 원시 피해만 사용하고 일반 공격력을 더하지 않습니다.
     let base = arcane ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'dual' ? (sa.attack + sa.magic) / 2 : chosen?.scaling === 'swap' ? (magical ? sa.attack : sa.magic) : chosen?.scaling === 'arcane' ? sa.magic * (SKILL_FORMULA.arcaneStrikeRatio + sa.arcaneRatioBonus) : chosen?.scaling === 'attr' ? 0 : splitBasic ? (sa.attack + sa.magic) / 2 : magical || chosen?.baseStat === 'magic' ? sa.magic : sa.attack;
     // 방어 비례 피해: 수호 계열(방어 친화도 1)에서 온전히, 다른 직업이 계승하면 일부만 발휘됩니다.
@@ -710,8 +717,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const corrodeGuard = (b.effects.corrode || 0) > 0 ? { defense: 1 - STATUS_TUNING.corrodeDefense, resist: 1 - STATUS_TUNING.corrodeResist } : { defense: 1, resist: 1 };
     const defense = (magical ? sb.resist * corrodeGuard.resist : sb.defense * corrodeGuard.defense) * pierce;
     // 복합(split) 피해: 한 번의 명중·치명 판정 뒤 물리·마법 절반씩 각각의 방어를 적용합니다.
-    const mitigated = (raw: number) => fixed ? Math.round(raw) : split
-        ? Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * corrodeGuard.defense * pierce, sa.attack)) + Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * corrodeGuard.resist * pierce, sa.magic))
+    const mitigated = (raw: number) => immuneHit ? 0 : fixed ? Math.round(raw) : split
+        ? (b.immune === 'physical' ? 0 : Math.round(mitigate(raw * SKILL_FORMULA.splitPhysical, sb.defense * corrodeGuard.defense * pierce, sa.attack))) + (b.immune === 'magic' ? 0 : Math.round(mitigate(raw * (1 - SKILL_FORMULA.splitPhysical), sb.resist * corrodeGuard.resist * pierce, sa.magic)))
         : Math.round(mitigate(raw, defense, magical ? sa.magic : sa.attack));
     // v3.159 헥스 수집(칼리): 상대에게 걸린 상태이상 종류 수. 1종마다 conditionalDamageBonus.
     const statusCount = [b.stun > 0, !!b.effects.silence, !!b.effects.weaken, !!b.effects.slow, !!b.effects.corrode, !!b.effects.dot, !!b.effects.poison, !!b.effects.burn].filter(Boolean).length;
@@ -752,7 +759,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     const multicastBonus = chosen?.multicast && castCount > 1 ? 1 + MC.damagePerCast * (castCount - 1) : 1;
     // v3.239 주문 강화 패시브(boostSkills): 장착한 패시브가 이 액티브를 키우면 피해 ×(1 + 합).
     const skillBoost = chosen ? 1 + a.skills.reduce((n, id) => { const p = skillOf(a, id); return n + (p?.type === 'passive' && p.boostSkills?.ids.includes(chosen!.id) ? p.boostSkills.value : 0); }, 0) : 1;
-    let damage = !landed || statusOnly ? 0 : Math.max(1, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * multicastBonus * skillBoost * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+    let damage = !landed || statusOnly ? 0 : Math.max(floor, mitigated(base * (chosen?.multiplier || 1) * gambleRoll * multicastBonus * skillBoost * linkMultiplier * (idleHeal ? SKILL_FORMULA.idleHealDamage : 1) * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (crit && chosen?.scaling !== 'luck' ? sa.critDamage * (superCrit ? SKILL_FORMULA.superCritBonus : 1) : 1)));
     // v3.221 황금 올가미 · 하얀 발자국: 대상 최대 체력 비례 고정 피해(방어 · 피해 배율 무시, multiplier는 계보 밖 효율만 담음), 명중하면 숙련 로또 상향 표식.
     if (landed && !statusOnly && chosen?.maxHpDamage) damage = Math.max(1, Math.round(sb.hp * chosen.maxHpDamage * (chosen.multiplier || 1)));
     if (landed && chosen?.jackpotUp) b.effects.jackpotUp = Math.max(b.effects.jackpotUp || 0, chosen.jackpotUp);
@@ -766,6 +773,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         }
     }
     const actual = Math.min(b.hp, damage);
+    if (landed && !statusOnly && b.immune && (immuneHit || split)) notes.push(`${b.immune === 'magic' ? '마법' : '물리'} 면역`);
     b.hp = Math.max(0, b.hp - actual);
     // v3.163 피격 충전(카이저): 피해를 입는 공격을 맞으면 맞은 쪽의 충전이 쌓이고(치명타 +1), 가득 차면 변신합니다.
     if (actual > 0 && b.hp > 0) {
@@ -780,7 +788,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         }
     }
     // v25 無: 쓰러질 피해를 받은 쪽이 無를 장착했으면 체력 1로 버티고, 이 행동의 남은 추가타는 멈춥니다.
-    let stood = endure(b, sb, notes, ev);
+    let stood = endure(b, sb, notes, ev, false, !!chosen?.ignoreStand);
     if (consumedBurn > 0) delete b.effects.burn;
     // v3.143 충전: 충전 기술이 명중하면 중첩이 쌓입니다(약화된 적이면 weakenedExtra 더).
     if (landed && chosen?.charge) {
@@ -790,7 +798,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         triggerSpectre(a, notes, ev);
     }
     // 반격: 맞은 쪽이 방어 비례 피해를 되돌려 줍니다. 공격자의 물리 방어로 경감됩니다.
-    if (landed && !statusOnly && sb.thorns > 0) {
+    if (landed && !statusOnly && sb.thorns > 0 && a.immune !== 'physical') {
         // v27.2 공격자 방어를 절반만 적용하고, 무리 규모에 따라 (1 + log2 N)배(최대 10배). 탱커가 무리 사냥에서 빛나는 장치입니다.
         const crowd = a.swarm && a.swarm > 1 ? Math.min(SKILL_FORMULA.swarmThornsCap, 1 + Math.log2(a.swarm)) : 1;
         // v27.2 마법 공격을 맞으면 마법 방어로 반격합니다(결계 계보가 마법 무리를 갈 수 있도록). 공격자도 같은 종류의 방어로 막습니다.
@@ -835,7 +843,8 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
     // v3.288 각성 관통: 5차 각성기(wardPierce)는 숙련 단계 확률로 상태이상 면역을 무시하고, 건 상태이상에 정화 버팀 확률(pierce)을 남깁니다. 없는 기술은 난수를 쓰지 않습니다.
     // 결투(플레이어 대 플레이어)에는 쓰지 않습니다: 몬스터(foe)에게 걸 때만.
     const pierceP = src && b.foe ? wardPierceOf(a, src) : 0;
-    const immuneTo = (key: ImmuneStatus) => { if (!isImmune(b, key)) return false; if (pierceP > 0 && rng() < pierceP) { notes.push('면역 관통'); return false; } return true; };
+    // v3.311 피해 유형 면역: 물리 면역은 출혈, 마법 면역은 중독 · 화상도 막습니다(면역 관통도 안 됨).
+    const immuneTo = (key: ImmuneStatus) => { if (b.immune === 'physical' ? key === 'bleed' : b.immune === 'magic' ? key === 'poison' || key === 'burn' : false) return true; if (!isImmune(b, key)) return false; if (pierceP > 0 && rng() < pierceP) { notes.push('면역 관통'); return false; } return true; };
     const markPierce = (key: PierceKey, active: boolean) => { const fx = b.effects!; if (pierceP > 0) (fx.pierce ??= {})[key] = Math.max(pierceP, active ? fx.pierce?.[key] || 0 : 0); else if (!active && fx.pierce) delete fx.pierce[key]; };
     if (landed && src && effect === 'stun' && immuneTo('stun')) { notes.push('기절 면역'); ev.immune = 'stun'; }
     else if (landed && src && effect === 'stun') {
@@ -902,7 +911,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         notes.push(`${ev.onset.name} 즉시 ${value}`);
         if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood;
     }
-    if (overheal > 0 && b.hp > 0) {
+    if (overheal > 0 && b.hp > 0 && b.immune !== 'magic') {
         const value = Math.min(b.hp, Math.floor(overheal * SKILL_FORMULA.overhealDamage));
         if (value > 0) { b.hp -= value; ev.holy = value; notes.push(`넘친 회복 → 피해 ${value}`); if (b.hp <= 0) stood = endure(b, sb, notes, ev) || stood; }
     }
@@ -979,10 +988,10 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         }
         const followRoll = rng(), followCrit = followRoll < sa.crit, followSuper = followCrit && followRoll < (sa.superCrit || 0);
         const followMultiplier = (chosen?.multiplier || 1) * ((i >= skillFollowUps && spirit ? spirit.power : (finisher?.hitMultiplier ?? chosen?.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)) + sa.followUpBonus);
-        const followDamage = Math.max(1, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage * (followSuper ? SKILL_FORMULA.superCritBonus : 1) : 1)));
+        const followDamage = Math.max(floor, mitigated(base * followMultiplier * linkMultiplier * (weakened ? SKILL_FORMULA.weakenedDamage : 1) * (followCrit ? sa.critDamage * (followSuper ? SKILL_FORMULA.superCritBonus : 1) : 1)));
         const followActual = Math.min(b.hp, followDamage);
         b.hp = Math.max(0, b.hp - followDamage);
-        if (endure(b, sb, notes, ev)) stood = true;
+        if (endure(b, sb, notes, ev, false, !!chosen?.ignoreStand)) stood = true;
         ev.hits.push(hitRecord('follow', followActual, followDamage, followCrit, followSuper));
         // v3.164 전류(스트라이커): 추가타가 명중하면 전류 버프가 1턴 길어집니다(없으면 시작 턴으로).
         if (i < skillFollowUps) { const fb = a.skills.map(id => skillById(id)?.followUpBuff).filter((x): x is NonNullable<Skill['followUpBuff']> => !!x).sort((x, y) => (y.speedMultiplier || 1) - (x.speedMultiplier || 1))[0]; if (fb) { const cur = a.effects.buffs?.[fb.id]; if (cur && cur.turns > 0) { cur.turns += 1; cur.speedMultiplier = fb.speedMultiplier; } else grantBuff(a.effects, { id: fb.id, name: fb.name, turns: fb.turns, speedMultiplier: fb.speedMultiplier }); currentTurns = a.effects.buffs![fb.id].turns; } }

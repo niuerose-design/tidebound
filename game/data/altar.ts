@@ -8,6 +8,7 @@
  * 제단 화면도 인스턴스마다 15초 캐시를 씁니다. 쓰기는 바치기·도전·거두기 버튼에서만 일어납니다.
  */
 import { jobById } from './classes';
+import type { DamageImmunity } from '../types';
 
 export const ALTAR = {
     /** 기여도 환산: 골드 1,000 = 1, 세계석 1 = 500, 정수 1 = 30. v3.17 골드 수백억이 도는 시점에서 세계석·정수가 저평가되지 않도록(세계석 1 = 골드 50만, 정수 1 = 골드 3만 상당). */
@@ -37,7 +38,7 @@ export const ALTAR = {
 } as const;
 
 export type BlessingId = 'gold' | 'mimic' | 'exp' | 'nuri';
-type RaidId = 'balrog' | 'zakum' | 'horntail';
+type RaidId = 'balrog' | 'zakum' | 'horntail' | 'pinkBean';
 export type AltarGaugeId = BlessingId | 'god' | RaidId;
 type BlessingEffect = { gold?: number; mimic?: number; exp?: number; nuri?: number };
 /**
@@ -82,15 +83,28 @@ export const blessingCost = (b: Blessing, level: number, active: boolean) => {
  * 도전은 결투 엔진으로 maxTurns 안에서 한 번 계산하고(부하·렉 방지), 모험가마다 cooldown 간격으로 다시 때립니다.
  * 격파하면 그 보스를 한 번이라도 때린 모험가 전원이 다음 동기화 때 보상을 받고, 마지막 일격을 넣은 모험가는 보너스를 더 받습니다(v3.194 격파 축복은 없앴습니다).
  * 셋은 입문(0환생도 기여 가능) · 중급 · 상급 순으로 체력이 크게 뜁니다. 공격·방어는 완만하고 체력은 공유를 감안해 큽니다(수치는 밸런스용이라 화면에는 기준을 적지 않음).
+ * v3.311 넷째 핑크빈(docs/endgame-challenge-plan.md PR C): 석상의 가호(소환 세대마다 물리 또는 마법 면역, raidImmunity) · 높은 관통 · 버팀(無)을 꿰뚫는 심판(ignoreStand)을 가진 최상급. 소환 대기도 줄였습니다(격파 뒤 1시간, 소환 비용 −25%, 혼테일 12시간).
  */
 export type RaidDef = {
     id: RaidId; name: string; /** 전투 기술·외형을 빌리는 몬스터 id */ monster: string; level: number; cost: number; /** 머무는 시간 */ lifetimeHours: number;
     stats: { hp: number; attack: number; magic: number; defense: number; resist: number; speed: number; crit: number; accuracy: number; penetration: number; evasion: number };
     /** 참여자 보상(격파 뒤 다음 동기화 때) · 마지막 일격 보너스. v3.194 격파 축복 · 골드는 없앴습니다(보상은 추후 검토). */
     reward: { pearls: number; sp: number }; slayer: { pearls: number; sp: number };
+    /** v3.311 석상의 가호: 소환 세대가 홀수면 물리, 짝수면 마법 피해 면역(raidImmunity). */
+    statueWard?: boolean;
+    /** v3.311 지속 피해 체력 비례분의 기준 체력(Snapshot.dotHpCap). 없으면 1단계 체력. 핑크빈은 혼테일 1단계 체력으로 묶어 체력 비례 지속 피해가 체력 ×10을 그대로 따라가지 않게 합니다. */
+    dotHpCap?: number;
 };
-/** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기. */
-export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 2 * 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
+/** v3.311 석상의 가호 보스의 이번 세대 면역. 세대는 모든 월드보스가 함께 쓰는 순번이라 번갈아 나옵니다. */
+export const raidImmunity = (raid: Pick<RaidDef, 'statueWard'>, gen: number): DamageImmunity | undefined => raid.statueWard ? (gen % 2 ? 'physical' : 'magic') : undefined;
+/** v3.311 소환 단계 보상(PR C): 단계마다 참여 세계석 +pearlsPerStage, slayerSpFrom단계부터 마지막 일격 SP +1. */
+export const RAID_STAGE_REWARD = { pearlsPerStage: 1, slayerSpFrom: 5 } as const;
+export function raidReward(raid: Pick<RaidDef, 'reward' | 'slayer'>, stage: number, slayer: boolean) {
+    const k = Math.max(0, Math.min(RAID_STAGE.max, Math.floor(stage || 1)) - 1);
+    return { pearls: raid.reward.pearls + k * RAID_STAGE_REWARD.pearlsPerStage + (slayer ? raid.slayer.pearls : 0), sp: raid.reward.sp + (slayer ? raid.slayer.sp + (k + 1 >= RAID_STAGE_REWARD.slayerSpFrom ? 1 : 0) : 0) };
+}
+/** v27.93 머무는 시간은 보스마다(lifetimeHours), 격파 뒤 다음 소환까지 respawnMs 대기(v3.311 2시간 → 1시간). */
+export const RAID = { cooldownMs: 10 * 60_000, maxTurns: 80, boardSize: 10, respawnMs: 3600_000, /** v3.84 순위에서 보는 최근 도전 전투 기록 줄 수(끝에서부터). */ logLines: 160 } as const;
 /**
  * v3.191 소환 단계(docs/boss-plan.md §8.3). 센 모험가가 잡는 것은 의도이지만, 같은 날 다시 소환될 때마다 단계가 올라 센 모험가 기준으로도 점점 잡기 힘들어지고,
  * 첫 소환부터 dayMs가 지나면 1단계로 돌아갑니다. 단계 k: 체력 ×hp^(k-1) · 공격/마력 ×attack^(k-1) · 방어/저항 ×defense^(k-1), 최대 max단계.
@@ -116,19 +130,23 @@ export type RaidHitSummary = { at: number; dealt: number; turns: number; died: b
  * (scripts/check-tier5.mjs --only raid): 발록 환생 0급 약 10번 · 자쿰 환생 50급 약 100번 · 혼테일 환생 100급 약 1,500번(방어 1,000, 운영 결정).
  * (v3.191, docs/boss-plan.md §8.3) 1단계 수치는 그대로입니다. 센 모험가가 잡는 것은 의도(발록 R10 · 자쿰 R50 빌림 몸 1번)이고, 같은 날 다시 소환될 때마다 소환 단계(RAID_STAGE)가 올라 점점 잡기 힘들어집니다.
  * 혼테일은 환생 100 몸이 8~17번이라 아직 그만한 모험가가 없어 그대로. 기준 몸 실측은 scripts/check-bosses.mjs --only raid [--raid-stage k].
+ * v3.311 소환 비용 −25%(2,000 · 5,000 · 12,000 → 1,500 · 4,000 · 9,000) · 혼테일 24 → 12시간. 핑크빈(빌림 몸 실측, 1단계, 면역이 아닌 유형의 직업): R100 30~100번 · R50 45~150번(칼리 20번) · R30 60~600번(물리 몸은 사망 50%). 면역 없이 평균은 R100 47 · R50 66 · R30 166번.
  */
 export const RAIDS: RaidDef[] = [
-    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 2_000, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
+    { id: 'balrog', name: '발록', monster: 'magmaKraken', level: 30, cost: 1_500, lifetimeHours: 6, stats: { hp: 500_000, attack: 90, magic: 90, defense: 60, resist: 60, speed: 14, crit: .1, accuracy: 1, penetration: .15, evasion: .05 },
         reward: { pearls: 2, sp: 0 }, slayer: { pearls: 3, sp: 0 } },
-    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 5_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
+    { id: 'zakum', name: '자쿰', monster: 'ventColossus', level: 70, cost: 4_000, lifetimeHours: 12, stats: { hp: 60_000_000, attack: 4_000, magic: 4_000, defense: 350, resist: 350, speed: 30, crit: .12, accuracy: 1.05, penetration: .25, evasion: .08 },
         reward: { pearls: 6, sp: 1 }, slayer: { pearls: 6, sp: 0 } },
-    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 12_000, lifetimeHours: 24, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
+    { id: 'horntail', name: '혼테일', monster: 'abyssSovereign', level: 120, cost: 9_000, lifetimeHours: 12, stats: { hp: 2_000_000_000, attack: 60_000, magic: 60_000, defense: 1_000, resist: 1_000, speed: 50, crit: .14, accuracy: 1.08, penetration: .3, evasion: .1 },
         reward: { pearls: 15, sp: 2 }, slayer: { pearls: 15, sp: 1 } },
+    // v3.311 핑크빈: 시간의 신전. 석상의 가호(세대마다 물리/마법 면역) · 관통 0.7(기술 관통과 합쳐 상한 0.85) · 석상의 심판(버팀 무시).
+    { id: 'pinkBean', name: '핑크빈', monster: 'pinkBean', level: 180, cost: 20_000, lifetimeHours: 24, stats: { hp: 10_000_000_000, attack: 150_000, magic: 150_000, defense: 2_500, resist: 2_500, speed: 60, crit: .16, accuracy: 1.1, penetration: .7, evasion: .12 },
+        reward: { pearls: 30, sp: 3 }, slayer: { pearls: 30, sp: 2 }, statueWard: true, dotHpCap: 2_000_000_000 },
 ];
 let raidIndex: Map<string, (typeof RAIDS)[number]> | undefined;
 export const raidById = (id: string | undefined) => id === undefined ? undefined : (raidIndex ??= new Map(RAIDS.map(r => [r.id, r]))).get(id);
 export const isRaidGauge = (id: string): id is RaidId => !!raidById(id);
-/** 소환 게이지(신 + 월드보스 셋)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
+/** 소환 게이지(신 + 월드보스 넷)와 축복 게이지. 화면의 축복/소환 탭이 이 둘로 나뉩니다. */
 export const SUMMON_GAUGE_IDS: AltarGaugeId[] = ['god', ...RAIDS.map(r => r.id)];
 export const GAUGE_IDS: AltarGaugeId[] = [...BLESSINGS.map(b => b.id), ...SUMMON_GAUGE_IDS];
 /** v3.16 단계 점핑: 지금 live 단계(0 = 닫힘)에서 target 단계까지 한 번에 가는 총 기여도(단계마다 그때의 비용을 더함). */
@@ -166,6 +184,7 @@ export type AltarRaidInfo = {
     /** 피해 순위(상위 RAID.boardSize)와 내 기록 */ board: { rank: number; name: string; dealt: number; hits: number; self: boolean; /** v3.84 가장 최근 도전 요약 */ last?: RaidHitSummary }[]; me: { dealt: number; hits: number; rank: number };
     reward: RaidDef['reward']; slayerBonus: RaidDef['slayer'];
     /** v3.191 소환 단계(1부터, RAID_STAGE). */ stage: number;
+    /** v3.311 이번 세대의 피해 유형 면역(석상의 가호 보스만). */ immune?: DamageImmunity;
 };
 
 /** 받침에 맞는 조사(이/가, 을/를, 은/는, 과/와). 한글이 아니면 받침 없음으로 봅니다. */

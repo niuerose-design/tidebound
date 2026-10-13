@@ -1092,9 +1092,9 @@ test('v27.89 sprout support: exp ×(1 + 0.2 × (10 − rebirths)) below 10 rebir
 test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challenge accumulates damage and pays the whole party on the kill', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const A = await L.load('data/altar'), Du = await L.load('systems/duel');
-    assert.equal(A.RAIDS.length, 3); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail']); assert.equal(A.GAUGE_IDS.length, 8);
+    assert.equal(A.RAIDS.length, 4); assert.deepEqual(A.SUMMON_GAUGE_IDS, ['god', 'balrog', 'zakum', 'horntail', 'pinkBean']); assert.equal(A.GAUGE_IDS.length, 9);
     assert.ok(A.RAIDS[0].stats.hp < A.RAIDS[1].stats.hp && A.RAIDS[1].stats.hp < A.RAIDS[2].stats.hp && A.RAIDS[0].cost < A.RAIDS[1].cost && A.RAIDS[1].cost < A.RAIDS[2].cost);
-    assert.equal(A.gaugeCost('zakum'), 5000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
+    assert.equal(A.gaugeCost('zakum'), 4000); assert.equal(A.gaugeName('balrog'), '발록 소환'); assert.equal(A.ALTAR.godCost, 40000); assert.ok(A.RAID.maxTurns <= 100);
     const full = Du.raidBossSnapshot(A.RAIDS[0]), partial = Du.raidBossSnapshot(A.RAIDS[0], 1234);
     assert.equal(full.stats.hp, A.RAIDS[0].stats.hp); assert.equal(partial.stats.hp, 1234); assert.ok(full.skills.includes('foeWard'));
     // 서버 흐름(파일 DB): 소환 → 두 모험가가 때림 → 마지막 일격 → 참여 보상.
@@ -1105,7 +1105,7 @@ test('v27.91 world bosses: three summon gauges, shared HP snapshot, raid challen
         const database = DB.db();
         const now = Date.now(), hpMax = 1e9;
         const R = A.RAID.respawnMs;
-        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAIDS[0].lifetimeHours * 3600_000, now, R)); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 24]); assert.equal(R, 2 * 3600_000);
+        assert.ok(await database.summonAltarRaid('balrog', hpMax, now + A.RAIDS[0].lifetimeHours * 3600_000, now, R)); assert.deepEqual(A.RAIDS.map(r => r.lifetimeHours), [6, 12, 12, 24]); assert.equal(R, 3600_000);
         assert.equal(await database.summonAltarRaid('balrog', 5, now + 1000, now, R), 0, 'the same boss once at a time');
         // v3.22 보스마다 따로: 발록이 떠 있어도 자쿰은 나타납니다.
         const zGen = await database.summonAltarRaid('zakum', 5e9, now + 3600_000, now, R); assert.ok(zGen > 0, 'zakum alongside balrog');
