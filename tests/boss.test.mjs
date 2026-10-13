@@ -116,6 +116,12 @@ test('v3.311 fourth world boss: shorter summon waits, pink bean with statue ward
     assert.ok(hit(fighter({ magicBasic: true }), fighter()) > 0); assert.equal(hit(fighter({ magicBasic: true }), fighter({ immune: 'magic' })), 0, 'magic immune: 0 from a magic basic'); assert.ok(hit(fighter({ magicBasic: true }), fighter({ immune: 'physical' })) > 0);
     const splitPlain = hit(fighter({ splitBasic: true }), fighter()), splitHalf = hit(fighter({ splitBasic: true }), fighter({ immune: 'physical' }));
     assert.ok(splitHalf > 0 && splitHalf < splitPlain, 'split damage: only the immune half is 0');
+    // v3.315 지속 피해 면역은 거는 공격의 유형으로: 물리 기술의 출혈 · 중독은 물리 면역에, 마법 기술의 화상은 마법 면역에 막히고 반대 유형에는 걸립니다.
+    const dotOf = (skill, immune) => { const v = fighter(immune ? { immune } : {}); C.actTurn(fighter({ foe: true, skills: [skill] }), v, () => 0, () => {}); return v.effects; };
+    assert.ok(dotOf('foeBarbs').dot && !dotOf('foeBarbs', 'physical').dot && dotOf('foeBarbs', 'magic').dot, 'physical bleed skill');
+    assert.ok(dotOf('foeVenom').poison && !dotOf('foeVenom', 'physical').poison && dotOf('foeVenom', 'magic').poison, 'physical (status-only) poison skill');
+    assert.ok(dotOf('foeBurn').burn && !dotOf('foeBurn', 'magic').burn && dotOf('foeBurn', 'physical').burn, 'magic burn skill');
+    assert.ok(dotOf('onyxBrand', 'physical').dot && dotOf('onyxBrand', 'magic').dot, 'split attack: the bleed still lands');
     const bleeder = fighter({ immune: 'physical', effects: { dot: { name: '출혈', damage: 100, turns: 3, hpRatio: 0 }, poison: { perStack: 100, stacks: 1, turns: 3, hpRatio: 0 } } });
     C.actTurn(bleeder, fighter({ stats: { defense: 1e9, resist: 1e9 } }), () => .5, () => {}); assert.ok(bleeder.effects.dot, 'ticking is unchanged: immunity blocks applying');
     const thornsTank = fighter({ stats: { thorns: 1, defense: 500 } }); const boss = fighter({ immune: 'physical' }); C.actTurn(boss, thornsTank, () => .5, () => {}); assert.equal(boss.hp, 1e6, 'physical immune: no reflected damage');

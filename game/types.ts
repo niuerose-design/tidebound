@@ -955,7 +955,7 @@ type HackKind = 'broadcast' | 'crack' | 'tamper' | 'down' | 'sniffClaim' | 'back
     | 'intercept' | 'interceptClaim' | 'savescum' | 'ddos' | 'root'
     /** v3.28 블랙 해커 실패(추적 공지만). */
     | 'busted';
-/** v3.311 피해 유형 면역: 물리(물리 직접 피해 · 추가타 · 출혈 · 반격) 또는 마법(마법 직접 피해 · 중독 · 화상 · 넘친 회복). 복합 피해는 면역인 절반만 0, 고정 피해는 기준 능력치(마법 공격이면 마법)로 가릅니다. */
+/** v3.311 피해 유형 면역: 물리(물리 공격의 직접 피해 · 추가타 · 그 공격이 거는 지속 피해 · 반격) 또는 마법(마법 공격의 직접 피해 · 추가타 · 그 공격이 거는 지속 피해 · 넘친 회복). 복합 피해는 면역인 절반만 0(지속 피해는 걸림), 고정 피해는 기준 능력치(마법 공격이면 마법)로 가릅니다. v3.315 지속 피해는 이름이 아니라 거는 공격의 유형으로. */
 export type DamageImmunity = 'physical' | 'magic';
 export type Snapshot = {
     /** v3.18 옛 애드가드 숨김 정보(v3.26부터 스냅샷에 싣지 않고 서버 설정 hacks.masked로 가림). */
