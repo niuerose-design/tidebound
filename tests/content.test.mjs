@@ -543,18 +543,19 @@ test('v3.316 core passive transcendence: stages at last milestone x2/x4, own lin
     const P = await load('systems/progression'), { SKILLS } = await load('data/skills'), { jobById, lineageOf } = await load('data/classes'), { ACHIEVEMENTS } = await load('data/achievements'), { TITLES } = await load('data/titles');
     const core = SKILLS.find(sk => sk.core?.scale?.attack && jobById(sk.job)?.tier === 5 && sk.job === 'hero'); assert.ok(core, 'hero has a 5th-tier core passive');
     const last = P.masteryMilestonesFor(core).at(-1);
-    assert.deepEqual(P.coreTranscendTargets(core), [last * 2, last * 4]); assert.deepEqual(P.coreTranscendTargets(SKILLS.find(sk => sk.id === 'hook')), [], 'not a core passive');
-    assert.equal(P.coreTranscendStages(core, last), 0); assert.equal(P.coreTranscendStages(core, last * 2), 1); assert.equal(P.coreTranscendStages(core, last * 4), 2);
+    assert.deepEqual(P.coreTranscendTargets(core), [last * 16, last * 32], 'v3.317 beyond limit break ×2 · ×4 · ×8'); assert.deepEqual(P.coreTranscendTargets(SKILLS.find(sk => sk.id === 'hook')), [], 'not a core passive');
+    assert.equal(P.coreTranscendStages(core, last * 8), 0); assert.equal(P.coreTranscendStages(core, last * 16), 1); assert.equal(P.coreTranscendStages(core, last * 32), 2); assert.equal(P.coreTranscendStages(core, last * 32, 2), 0, 'needs limit break 3');
     const home = P.coreScale(core, 'hero', 4), borrowed = P.coreScale(core, 'grandMagus', 4);
     assert.equal(home, 1); assert.equal(borrowed, .5);
     assert.ok(Math.abs(P.coreScale(core, 'hero', 4, 1) - 1.1) < 1e-9 && Math.abs(P.coreScale(core, 'hero', 4, 2) - 1.2) < 1e-9, 'own lineage: ×1.1 per stage');
     assert.equal(P.coreScale(core, 'grandMagus', 4, 2), .5, 'another lineage: no transcendence');
     assert.ok(lineageOf(jobById('hero')) !== lineageOf(jobById('grandMagus')));
     // 능력치: 숙련 ×2에 닿으면 자기 계보 몸의 공격이 핵심 배율 ×1.1만큼 커집니다.
-    const s = newState(0); s.job = 'hero'; s.level = 200; s.rebirths = 30; s.skills = [core.id]; s.learned[core.id] = 1; s.skillPractice = { [core.id]: last };
-    const a0 = stats(s).attack; s.skillPractice[core.id] = last * 2; const a1 = stats(s).attack;
+    const s = newState(0); s.job = 'hero'; s.level = 200; s.rebirths = 30; s.skills = [core.id]; s.learned[core.id] = 1; s.skillPractice = { [core.id]: last * 16 };
+    const a0 = stats(s).attack; assert.equal(P.coreTranscendOf(s, core.id), 0, 'no limit break yet'); s.permanent.limitBreak = 3; s.limitBreaks = { [core.id]: 3 }; const a1 = stats(s).attack;
     const c = core.core.scale.attack, want = (1 + c * 1.1) / (1 + c);
-    assert.ok(Math.abs(a1 / a0 - want) < .01, `${a0} → ${a1} (${(a1 / a0).toFixed(4)} vs ${want.toFixed(4)})`);
+    // 한계돌파 자체는 핵심 배율을 바꾸지 않으므로(숙련 비율이 이미 100%) 차이는 초월 ×1.1뿐 — 핵심 패시브 자체 보너스가 있으면 +10%/단계가 더해져 조금 더 큼.
+    assert.ok(a1 / a0 >= want - .01, `${a0} → ${a1} (${(a1 / a0).toFixed(4)} vs ${want.toFixed(4)})`);
     assert.equal(P.coreTranscendOf(s, core.id), 1);
     const ach = id => ACHIEVEMENTS.find(a => a.id === id);
     assert.ok(ach('coreTranscend:1')?.honor && ach('coreTranscend2:5')?.honor && ach('extremeStage:5')?.honor); assert.equal(ach('coreTranscend:1').progress(s), 1); assert.equal(ach('coreTranscend2:1').progress(s), 0);

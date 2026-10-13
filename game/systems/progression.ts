@@ -167,19 +167,21 @@ export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
 /** v3.302 숙련 0단계 몫 .7 → .55: 핵심 패시브 상한을 올린 몫이 숙련을 키울수록 들어오게(장비 → 스킬 비중 이동). */
 export const CORE_PASSIVE = { base: .55, borrowed: .5, azerothBase: .4 } as const;
 /**
- * v3.316 핵심 패시브 초월(docs/endgame-challenge-plan.md PR F): 5차 핵심 패시브는 마지막 숙련 단계 뒤에도 숙련을 쌓아 마지막 이정표 × multipliers(5차 기본 375만 → 750만 · 1,500만)에 닿을 때마다 초월 1 · 2단계.
+ * v3.316 핵심 패시브 초월(docs/endgame-challenge-plan.md PR F) · v3.317 자리 정리: 액티브가 한계돌파 → 극한돌파이듯, 5차 핵심 패시브는 한계돌파 3단계를 마친 뒤
+ * 숙련이 마지막 이정표 × multipliers(5차 기본 375만 → 6,000만 · 1억 2천만, 궁극의 모험가 6억 · 12억)에 닿을 때마다 초월 1 · 2단계(한계돌파 ×2 · ×4 · ×8과 겹치지 않음).
  * 자기 계보에서만 핵심 배율 × (1 + 단계 × step)(상한 .45 → .495 → .54), 다른 계보가 계승하면 효과 없음. 빌림 몸이 못 따라오는 '자기 직업' 축이고, 빌림은 깎지 않습니다. 숙련은 극한돌파와 같은 refinePractice(승천 기준점 위)로 셉니다.
  */
-export const CORE_TRANSCEND = { multipliers: [2, 4], step: .1 } as const;
+export const CORE_TRANSCEND = { multipliers: [16, 32], step: .1 } as const;
 /** 초월 단계의 숙련 목표들(5차 핵심 패시브가 아니면 빈 배열). */
 export function coreTranscendTargets(sk: Pick<Skill, 'job' | 'masteryMilestones' | 'core'>): number[] {
     if (!sk.core?.scale || jobById(sk.job)?.tier !== 5) return [];
     const last = masteryMilestonesFor(sk as Skill).at(-1)!;
     return CORE_TRANSCEND.multipliers.map(m => last * m);
 }
-export const coreTranscendStages = (sk: Pick<Skill, 'job' | 'masteryMilestones' | 'core'>, practice: number) => coreTranscendTargets(sk).filter(n => practice >= n).length;
+/** 초월 단계: 한계돌파(연구 적용분)를 끝까지 한 뒤에만 셉니다. */
+export const coreTranscendStages = (sk: Pick<Skill, 'job' | 'masteryMilestones' | 'core'>, practice: number, limitBreak = PROGRESSION.limitBreak.max) => limitBreak < PROGRESSION.limitBreak.max ? 0 : coreTranscendTargets(sk).filter(n => practice >= n).length;
 /** 세이브 기준 초월 단계(장착 여부 무관). */
-export function coreTranscendOf(s: Pick<State, 'skillPractice' | 'refineBase'>, id: string) { const sk = skillById(id); return sk ? coreTranscendStages(sk, refinePractice(s, id)) : 0; }
+export function coreTranscendOf(s: Pick<State, 'skillPractice' | 'refineBase' | 'limitBreaks' | 'permanent'>, id: string) { const sk = skillById(id); return sk ? coreTranscendStages(sk, refinePractice(s, id), limitBreakOf(s, id)) : 0; }
 export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0, transcend = 0) {
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
     // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.

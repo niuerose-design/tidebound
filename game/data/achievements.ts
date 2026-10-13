@@ -171,8 +171,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개`, n => `이계 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).
-    ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월(마지막 숙련 단계 뒤 숙련 ×2)합니다.`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
-    ...honor(series('coreTranscend2', '숙련', n => `핵심 패시브 초월 2단계 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월 2단계(숙련 ×4)까지 올립니다.`, [1, 5], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 2).length, () => ({}))),
+    ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월합니다(한계돌파 3단계 뒤 숙련 ×16).`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
+    ...honor(series('coreTranscend2', '숙련', n => `핵심 패시브 초월 2단계 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월 2단계(숙련 ×32)까지 올립니다.`, [1, 5], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 2).length, () => ({}))),
     ...honor(series('extremeStage', '숙련', n => `극한 ${n}단계`, n => `액티브 스킬 하나를 극한 ${n}단계(숙련 ${[1, 2, 4, 7, 10][n - 1]}억)까지 올립니다.`, [3, 5], s => Math.max(0, ...Object.keys(s.skillPractice || {}).map(id => extremeStage(s, id))), () => ({}))),
     ...honor(series('limitBreak', '숙련', n => `한계돌파 ${n}개`, n => `스킬 ${n}개를 한계돌파합니다.`, [1, 5, 20], s => Object.values(s.limitBreaks || {}).filter(n => n > 0).length, () => ({}))),
     ...honor(series('fuel', '도전', n => `연료에 세계석 ${n.toLocaleString()}`, n => `이계 연료 충전에 세계석을 누적 ${n.toLocaleString()}개 씁니다.`, [1000, 10000, 100000], s => s.fuelBought || 0, () => ({}))),
