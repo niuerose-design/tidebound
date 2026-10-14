@@ -4,7 +4,7 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { onyxCollected, onyxSetBonus, onyxResonance } from '../data/onyx';
-import { coreStats, coreAttributes, regionCores, BOSS_CORE_RULES } from '../data/boss-core';
+import { coreStats, coreAttributes, regionCores } from '../data/boss-core';
 import type { State, Snapshot, Stats, CombatStats, Skill, Attribute } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
 import { PROGRESSION, ATTRIBUTE_EFFECTS as E, emptyAttributes } from '../data/progression';
@@ -22,7 +22,7 @@ import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { supportMultiplier, supportAmount, commandBonus } from './support';
 import { FUEL, traderMultiplier } from '../data/otherworld';
 import { powerSaving } from './otherworld';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendOf, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
+import { attributes, coreResonanceOf, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendOf, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
@@ -56,7 +56,7 @@ function usableSkills(s: State): UsableSkill[] {
 }
 /** 정적 스킬 자료에 양수 보너스가 하나라도 있는지(올라운드 밸런스의 ‘빌린 직업’ 판정). */
 type Attributes = Record<Attribute, number>;
-export type AttributeBreakdown = { /** 기본 + 직접 투자 + 포식(전직 조건 · 업적이 보는 값). */ base: Attributes; /** v3.202 보스 코어(칸 100% · 공명). */ cores: Attributes; /** v3.70 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). */ training: Attributes; /** 셋의 합: 능력치 효과 계산에 쓰는 값. */ total: Attributes };
+export type AttributeBreakdown = { /** 기본 + 직접 투자 + 포식(업적이 보는 값 · 전직 조건은 여기에 보스 코어를 더해 봅니다, jobAttributes). */ base: Attributes; /** v3.202 보스 코어(칸 100% · 공명). */ cores: Attributes; /** v3.70 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). */ training: Attributes; /** 셋의 합: 능력치 효과 계산에 쓰는 값. */ total: Attributes };
 /** v3.326 기본 능력치의 출처별 분해(기본 능력치 화면 · 상세 능력치 기록용). 더하는 순서 · 반올림은 trainedAttributes와 같습니다. */
 export function attributeBreakdown(s: State, usable = usableSkills(s)): AttributeBreakdown {
     const base = attributes(s), cores = emptyAttributes(), training = emptyAttributes(), total = { ...base };
@@ -70,7 +70,7 @@ export function attributeBreakdown(s: State, usable = usableSkills(s)): Attribut
 }
 /** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
 export function trainedAttributes(s: State, usable = usableSkills(s)) {
-    // v3.202 보스 코어 기본 능력치는 능력치 효과에만 더합니다(직업 조건 · 기록은 직접 배분 그대로).
+    // v3.202 보스 코어 기본 능력치는 능력치 효과에 더합니다(v3.327부터 전직 조건에도 · 업적 기록은 직접 배분 그대로).
     return attributeBreakdown(s, usable).total;
 }
 /**
@@ -314,8 +314,6 @@ export function powerParts(v: Stats) {
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
 /** v3.221 끼고 있는 칠흑 장신구의 보스 id(칠흑 일식의 형태). */
 export const wornOnyx = (s: Pick<State, 'equipment'>) => Object.values(s.equipment || {}).find(i => i?.onyx)?.onyx;
-/** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
-const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), ...(regionCores(s).length ? { cores: regionCores(s).length } : {}), ...(wornOnyx(s) ? { onyx: wornOnyx(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** v3.219 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.219 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
 export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefined, skills: [...(s.skills || [])] }; if (s.support?.ap) trimLoadout(bare); return snapshot(bare); };

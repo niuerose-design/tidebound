@@ -15,7 +15,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
-import { regionCores, regionCoreRanks, coreEntry } from '../data/boss-core';
+import { regionCores, regionCoreRanks, coreEntry, coreAttributes, BOSS_CORE_RULES } from '../data/boss-core';
 import { ONYX_CORE_ID } from '../data/onyx';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
@@ -406,9 +406,17 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0) {
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
-/** 전직 조건 목록. */
+/** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
+export const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
+/** v3.327 전직 조건이 보는 기본 능력치: 기본 + 직접 투자 + 포식 + 보스 코어(칸 100% · 공명). 수련 패시브 몫은 넣지 않습니다(장착을 바꾸면 조건이 흔들리므로). */
+export function jobAttributes(s: State) {
+    const v = attributes(s), c = coreAttributes(s, coreResonanceOf(s));
+    for (const k in c) v[k as Attribute] += c[k as Attribute] || 0;
+    return v;
+}
+/** 전직 조건 목록. v3.327 능력치 조건(requires)은 보스 코어 몫을 더한 값으로 봅니다(배분 조건 requiresAllocated는 직접 투자만). */
 export function jobRequirements(s: State, j: Job) {
-    const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
+    const a = jobAttributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
     // v3.235 세계석 0(요원 · 트레이더 1차)은 조건 없이 바로 들어옵니다.
     if (j.pearlCost !== undefined) return unlocked || !j.pearlCost ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
