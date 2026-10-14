@@ -10,6 +10,7 @@ import type { PanelProps } from './panel-props';
 import { catalogNow } from '@/game/data/catalog';
 import { ForgeBench, ForgeHead } from './inventory-panel';
 import type { State } from '@/game/types';
+import { AffixGlossaryButton, AffixGlossaryList, useGlossaryToggle } from './affix-glossary';
 
 /** v3.58 뽑기(감정) 천장 현황: 신화·고대·태초 이상까지 남은 감정 수와 지금까지 감정 기록. */
 function PityBar({ s }: { s: State }) {
@@ -29,6 +30,8 @@ export function Shop({ s, send, busy }: PanelProps) {
     const [slot, setSlot] = useState<string>('rod'), [affix, setAffix] = useState(''), [target, setTarget] = useState(4);
     const choices = imprintChoices(GAMBLE_CATEGORIES.find(c => c.id === slot)!.slot), pick = choices.some(c => c.id === affix) ? affix : choices[0]?.id || '';
     const [autoImprint, setAutoImprint] = useState(false);
+    // v3.323 저격 · 자동 뽑기의 옵션 이름(황금 · 탐색 등) 뜻을 펼쳐 보는 버튼.
+    const glossary = useGlossaryToggle(), glossaryButton = <AffixGlossaryButton open={glossary.open} onToggle={glossary.toggle}/>;
     const [forgeSlot, setForgeSlot] = useState<string>('rod'), forgeItem = s.equipment[forgeSlot as keyof typeof s.equipment];
     // v3.72 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 씁니다(한 번에 최대 AUTO_APPRAISAL_MAX회).
     const autoEach = autoImprint ? imprint : { gold: gamble, essence: 0 };
@@ -45,14 +48,14 @@ export function Shop({ s, send, busy }: PanelProps) {
     } : tab === 'imprint' ? {
         label: '저격 뽑기', eyebrow: '부위 · 옵션 지정', head: icons(slot),
         desc: `부위와 옵션 하나를 고르면 그 옵션이 반드시 붙은 장비가 나옵니다. 나머지 옵션과 등급은 랜덤 뽑기와 같고 천장도 함께 쌓입니다. 고대 이상 전용 옵션은 고를 수 없습니다.`,
-        controls: <>{slotSelect}<label>새길 옵션<select value={pick} onChange={e => setAffix(e.target.value)}>{choices.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label><small className="draw-pick-desc">{choices.find(c => c.id === pick)?.description}</small></>,
+        controls: <>{slotSelect}<label>새길 옵션<select value={pick} onChange={e => setAffix(e.target.value)}>{choices.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>{glossaryButton}<small className="draw-pick-desc">{choices.find(c => c.id === pick)?.description}</small></>,
         cost: `한 번 ${format(imprint.gold)} G(랜덤 뽑기의 ${IMPRINT_APPRAISAL.goldMultiplier}배) · 정수 ${imprint.essence}`,
         actions: GAMBLE_COUNTS.map(n => { const gold = imprint.gold * n, ess = imprint.essence * n, noRoom = s.inventory.length + n > cap; return <ConfirmButton key={n} label={`${n}개 · ${format(gold)} G · 정수 ${ess}`} title={`저격 뽑기 ${n}개를 할까요?`} description={`골드 ${format(gold)} G와 정수 ${ess}개를 사용합니다. ${odds}고른 옵션이 반드시 붙습니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || !pick || s.gold < gold || (s.essence || 0) < ess || noRoom} onConfirm={() => send({ type: 'imprintGamble', id: slot, value: `${pick}|${n}` })}/>; }),
     } : tab === 'auto' ? {
         label: '자동 뽑기', eyebrow: '목표 등급까지', head: icons(slot),
         desc: `고른 부위에서 목표 등급 이상이 나올 때까지 가진 골드${autoImprint ? '와 정수' : ''}를 모두 써서 반복합니다(한 번에 최대 ${format(AUTO_APPRAISAL_MAX)}회). 목표 미만은 물건 도감에 없는 종류면 등록하고, 나머지는 분해해 정수로 받습니다. 목표 장비는 가방에 들어가고 거기서 멈춥니다.`,
         controls: <>{slotSelect}<label>목표 등급<select value={target} onChange={e => setTarget(Number(e.target.value))}>{APPRAISAL.map(r => <option key={r.rarity} value={r.rarity}>{RARITIES[r.rarity].name} 이상</option>)}</select></label>
-            <label className="check"><input type="checkbox" checked={autoImprint} onChange={e => setAutoImprint(e.target.checked)}/> 저격 뽑기로{autoImprint && <select value={pick} onChange={e => setAffix(e.target.value)} aria-label="새길 옵션">{choices.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}</label></>,
+            <label className="check"><input type="checkbox" checked={autoImprint} onChange={e => setAutoImprint(e.target.checked)}/> 저격 뽑기로{autoImprint && <select value={pick} onChange={e => setAffix(e.target.value)} aria-label="새길 옵션">{choices.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>}</label>{autoImprint && glossaryButton}</>,
         cost: `한 번 ${format(autoEach.gold)} G${autoEach.essence ? ` · 정수 ${autoEach.essence}` : ''} · 지금 가진 것으로 최대 ${format(autoMax)}회 · ${APPRAISAL_PITY.find(p => p.rarity === target) ? `${RARITIES[target].name} 이상 천장까지 ${format(pityLeft(s).find(p => p.rarity === target)!.left)}회` : '희귀·영웅·전설은 천장 없음'}`,
         actions: [<ConfirmButton key="auto" label={`자동 뽑기 시작 · 최대 ${format(autoMax)}회`} title="자동 뽑기를 시작할까요?" description={`가진 골드 ${format(s.gold)} G${autoEach.essence ? `와 정수 ${format(s.essence || 0)}` : ''}를 모두 쓸 수 있습니다. 목표 미만 장비는 분해되거나 도감에 등록됩니다.`} disabled={busy || full || autoMax < 1} onConfirm={() => send({ type: 'autoGamble', id: slot, value: `${target}|max${autoImprint ? `|${pick}` : ''}` })}/>],
     } : null;
@@ -68,6 +71,7 @@ export function Shop({ s, send, busy }: PanelProps) {
                 <header className="draw-head">{draw.head}<div><span className="eyebrow">{draw.eyebrow}</span><h2>{draw.label}</h2></div></header>
                 <p className="draw-desc">{draw.desc}</p>
                 <div className="imprint-row draw-controls">{draw.controls}</div>
+                {glossary.open && (tab === 'imprint' || tab === 'auto' && autoImprint) && <AffixGlossaryList affixes={choices} picked={pick}/>}
                 <p className="muted draw-cost">{draw.cost}</p>
                 <div className="gamble-count-row draw-actions">{draw.actions}</div>
             </article>
