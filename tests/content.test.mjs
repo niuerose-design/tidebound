@@ -397,6 +397,17 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });
 
+test('v3.327 job attribute requirements count boss-core attributes (allocated-only requirements and the attr achievement do not)',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), BC=await L.load('data/boss-core');
+    const s=newState(0); s.level=100; s.rebirths=100;
+    s.bossCores={grotto:{rank:0,attrs:[{k:'str',f:5},{k:'int',f:5}]}}; s.coreSlot='grotto';
+    const core=BC.coreAttributes(s); assert.ok(core.str>=500,'core gives str');
+    const ja=P.jobAttributes(s), base=P.attributes(s); assert.equal(ja.str,base.str+core.str); assert.equal(ja.dex,base.dex);
+    const j=JOBS.find(x=>!x.retired&&x.pearlCost===undefined&&x.requires&&x.requires.str>5&&x.requires.str<=core.str+base.str&&!x.rebirth);
+    assert.ok(j,'a job with a str requirement');
+    const row=P.jobRequirements(s,j).find(r=>r.label===`근력 ${j.requires.str}`); assert.ok(row,'str row'); assert.equal(row.value,ja.str); assert.ok(row.met,'met through the core');
+    delete s.coreSlot; s.bossCores={}; const row2=P.jobRequirements(s,j).find(r=>r.label===`근력 ${j.requires.str}`); assert.ok(!row2.met,'not met without the core');
+});
 test('v3.326 boss core attributes: shown in the attribute breakdown (base · cores · training) and traced as their own source; totals unchanged',async()=>{
     const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), St=await L.load('systems/stats'), BL=await L.load('systems/boss-loot'), BC=await L.load('data/boss-core');
     const s=newState(0); s.level=100; BL.grantBossCore(s,'grotto',()=>.5,'test'); s.coreSlot='grotto';

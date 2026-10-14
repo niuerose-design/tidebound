@@ -50,7 +50,7 @@ export function Character({ s, send, busy }: PanelProps) {
     const setStep = (n: number) => { setStepState(n); try { localStorage.setItem(STEP_KEY, String(n)); } catch { /* 저장 못 해도 이번 화면에서는 씀 */ } };
     const put = Math.min(step, s.statPoints);
     // v3.49 정보 비공개(10.2-7): 켜져 있으면 드롭·변종 확률 대신 보너스만 보여 줍니다.
-    // v3.326 기본 능력치 화면은 보스 코어 · 수련 패시브 몫까지 더한 값(능력치 효과에 쓰는 값)을 보여 주고, 구성은 줄마다 적습니다. 전직 조건 · 업적은 직접 투자 값(parts.base)을 봅니다.
+    // v3.326 기본 능력치 화면은 보스 코어 · 수련 패시브 몫까지 더한 값(능력치 효과에 쓰는 값)을 보여 주고, 구성은 줄마다 적습니다. v3.327 전직 조건은 기본 + 보스 코어(jobAttributes), 업적은 직접 투자 값(parts.base)을 봅니다.
     const trace: StatTrace = {}, a = stats(s, trace), parts = attributeBreakdown(s), v = parts.total, secret = catalogNow().secret;
     const hasCores = Object.values(parts.cores).some(n => n > 0), hasTraining = Object.values(parts.training).some(n => n > 0);
     return <>
@@ -83,7 +83,7 @@ export function Character({ s, send, busy }: PanelProps) {
         <button className="secondary small" aria-label={`${attr.name} ${put || step} 증가`} disabled={busy || s.statPoints < 1} title={s.statPoints > 0 && s.statPoints < step ? `남은 ${s.statPoints}포인트만 투자합니다` : undefined} onClick={() => send({ type: 'attribute', id: attr.id, value: String(put) })}>+{put || step}</button>
         {s.skipStatConfirm ? <button className="secondary" disabled={busy || s.statPoints < 1} title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자합니다(설정에서 확인 창을 다시 켤 수 있습니다).`} onClick={() => send({ type: 'attribute', id: attr.id, value: 'max' })}>최대</button> : <ConfirmButton label="최대" title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자할까요?`} description={`${attr.description}. 재분배는 무료지만 자동 사냥 중에는 할 수 없습니다.`} confirmLabel="모두 투자" disabled={busy || s.statPoints < 1} onConfirm={() => send({ type: 'attribute', id: attr.id, value: 'max' })}/>}
         </div>
-        </div>)}{(hasCores || hasTraining) && <p className="footnote">보스 코어 · 수련 몫은 능력치 효과에만 더해집니다. 전직 조건과 업적은 직접 투자 값(기본 + 투자{Object.values(s.devoured || {}).some(Boolean) ? ' + 포식' : ''})으로 봅니다.</p>}</section>
+        </div>)}{(hasCores || hasTraining) && <p className="footnote">전직 조건은 보스 코어 몫까지 더한 값으로 봅니다. 수련 몫은 능력치 효과에만 더해지고, 업적(능력치 돌파)은 직접 투자 값(기본 + 투자{Object.values(s.devoured || {}).some(Boolean) ? ' + 포식' : ''})으로 봅니다.</p>}</section>
     <section className="panel derived-panel">
     <div className="section-title">
     <h2>최종 전투 능력치</h2>
