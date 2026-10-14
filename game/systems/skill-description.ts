@@ -210,6 +210,9 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     // v3.317 짧게: 수치 · 숙련 성장 · 계승. 계산 방식은 도움말(스킬 › 핵심 패시브)에.
     if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%. ${coreAzeroth(sk) ? '계보 전용(다른 계보는 효과 없음).' : `다른 계보가 계승하면 ${skillPercent(CORE_PASSIVE.borrowed)}.`}`);
+    // v3.320 초월자.
+    if (sk.chainAwaken) out.push(`연계 각성: 발동하면 장착한 다른 각성기를 모두 ${skillPercent(sk.chainAwaken.power)} 위력으로 한 번씩 이어 발동합니다(대기 · 마나 소모 없음, 턴당 각성기 수에 세지 않음).`);
+    if (sk.awakenFusion) out.push(`융합: 장착한 액티브의 서로 다른 계보 수(자기 계보 제외)마다 각성기 대기 −${sk.awakenFusion.perLineage}턴(최대 −${sk.awakenFusion.max}, 대기 최소 1).`);
     if (sk.song) out.push('노래: 장착 AP 0.');
     if (sk.exclusiveLineage) out.push(`${skillExclusiveLabel(sk)}: 이 계보 직업일 때만 장착할 수 있고 효과도 그때만 납니다. 다른 계보 직업은 숙련 · SP 계승을 마쳐도 쓸 수 없고, 계보를 벗어나 전직하면 효과가 사라집니다. 계보 안에서도 지금 직업이 아닌 차수의 기술은 숙련 · SP 계승을 마쳐야 씁니다.`);
     if (sk.exclusiveLineage && sk.exclusiveUltimate) out.push('예외: 궁극의 모험가는 계승을 마치면 이 기술을 씁니다.');

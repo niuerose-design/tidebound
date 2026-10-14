@@ -31,8 +31,9 @@ for (const raw of SECRET_JOBS) {
     for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * AZEROTH_MASTERY_SCALE);
 }
 // v3.309 궁극의 모험가: 숙달 목표와 궁극의 유산 숙련 단계를 ULTIMATE_MASTERY_SCALE배로(숙달 1,500만 · 궁극의 유산 M4 3,750만). 조건(5차 10개 숙달 · 핵심 5개 완성 · 환생 30 · 원사 · 나이트메어 7곳)과 함께 '5차를 다 돌아 본 뒤의 긴 목표'로.
-{
-    const job = jobById('rebirthFisher');
+// v3.320 초월자(6차)도 같은 ×10(숙달 1,500만 · 연계 각성 · 융합 M4 3,750만).
+for (const id of ['rebirthFisher', 'transcendent']) {
+    const job = jobById(id);
     if (job) { job.masteryTarget = (job.masteryTarget || 0) * ULTIMATE_MASTERY_SCALE; for (const sk of SKILLS) if (sk.job === job.id && sk.masteryMilestones) sk.masteryMilestones = sk.masteryMilestones.map(n => n * ULTIMATE_MASTERY_SCALE); }
 }
 // v3.228 비밀 메이플 월드 4 · 5차도 핵심 패시브 개편(data/core-passive.ts, 아제로스 계보 제외).

@@ -1,6 +1,6 @@
 import { SKILLS, skillById } from '../data/skills';
 import { enemySkillById } from '../data/encounters';
-import { jobById } from '../data/classes';
+import { jobById, lineageOf } from '../data/classes';
 import { BALANCE, STATUS_TUNING, SKILL_FORMULA, diceMultiplier, PENETRATION } from '../data/balance';
 import type { Stats, CombatStats, StatusEffects, CombatEvent, CombatHit, Attribute, Skill, DamageImmunity } from '../types';
 const ATTR_KEY: Record<Attribute, 'attrStr' | 'attrDex' | 'attrInt' | 'attrVit' | 'attrWis' | 'attrLuk'> = { str: 'attrStr', dex: 'attrDex', int: 'attrInt', vit: 'attrVit', wis: 'attrWis', luk: 'attrLuk' };
@@ -80,9 +80,11 @@ export type Fighter = {
 };
 /** v27.4 직업의 제약 장치를 전투 참가자 필드로. 플레이어(PvE)와 결투 스냅샷이 같이 씁니다. */
 export function constraintFields(jobId: string | undefined): Partial<Fighter> {
-    const d = jobById(jobId)?.constraint?.devices;
-    if (!d) return {};
-    return { ...(d.firstStrike ? { firstStrike: true } : {}), ...(d.lastStand ? { jobStand: d.lastStand } : {}), ...(d.sureHit ? { sureHit: true } : {}), ...(d.damageTaken ? { damageTaken: d.damageTaken } : {}), ...(d.damageDealt ? { damageDealt: d.damageDealt } : {}) };
+    const job = jobById(jobId), d = job?.constraint?.devices;
+    // v3.320 6차 초월자: 각성기 턴당 2개.
+    const extra: Partial<Fighter> = job?.awakenPerTurn ? { awakenPerTurn: job.awakenPerTurn } : {};
+    if (!d) return extra;
+    return { ...extra, ...(d.firstStrike ? { firstStrike: true } : {}), ...(d.lastStand ? { jobStand: d.lastStand } : {}), ...(d.sureHit ? { sureHit: true } : {}), ...(d.damageTaken ? { damageTaken: d.damageTaken } : {}), ...(d.damageDealt ? { damageDealt: d.damageDealt } : {}) };
 }
 /** v27.4 턴 순서: 선공 장치가 있으면 속도와 무관하게 먼저. 둘 다 없으면 속도 비교(같으면 a). */
 export function actsFirst(a: Fighter, b: Fighter) {
@@ -420,6 +422,16 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         // 각성기로 쓰러뜨리면 대기를 kill턴만 둡니다(짧은 사냥에서 남는 피해로 버려지는 몫을 돌려줌).
         if (b.hp <= 0) a.cooldowns[id] = Math.min(a.cooldowns[id] ?? 0, SKILL_FORMULA.awaken.kill);
         onAction(`${text} · 각성`, more[0]);
+        // v3.320 연계 각성(6차): 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 · 판정 없음, 턴당 횟수에 안 셈).
+        if (base.chainAwaken) for (const id2 of a.skills) {
+            const b2 = skillById(id2);
+            if (id2 === id || !b2?.awaken || a.hp <= 0 || b.hp <= 0) continue;
+            const sk2 = skillOf(a, id2)!;
+            if (!fuelOk(a, sk2) || (sk2.chargeNeed && (a.effects?.charge || 0) < sk2.chargeNeed) || (sk2.requiresBuff && !((a.effects?.buffs?.[sk2.requiresBuff]?.turns || 0) > 0))) continue;
+            const more2: CombatEvent[] = [];
+            const t2 = act(a, b, rng, more2, false, false, { id: id2, index: 0, count: 1, kind: 'awaken', power: base.chainAwaken.power, free: true });
+            onAction(`${t2} · 연계 각성 (위력 ${Math.round(base.chainAwaken.power * 100)}%)`, more2[0]);
+        }
     }
 }
 /**
@@ -435,7 +447,17 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
 }
 /** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다.
  * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
-type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number };
+type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number; /** v3.320 연계 각성으로 이어진 발동: 대기 · 마나를 쓰지 않음. */ free?: boolean };
+/** v3.320 융합: 장착한 액티브의 서로 다른 계보 수(융합 주인의 계보 제외) × perLineage, 최대 max. 융합 패시브가 없으면 0. */
+function fusionCut(a: Fighter) {
+    const ownerId = a.skills.find(id => skillById(id)?.awakenFusion);
+    if (!ownerId) return 0;
+    const owner = skillById(ownerId)!, rule = owner.awakenFusion!, home = owner.job ? lineageOf(jobById(owner.job)!) : '';
+    const lineages = new Set<string>();
+    for (const id of a.skills) { const sk = skillById(id); if (!sk || sk.type !== 'active' || !sk.job) continue; const j = jobById(sk.job); if (j) lineages.add(lineageOf(j)); }
+    lineages.delete(home);
+    return Math.min(rule.max, rule.perLineage * lineages.size);
+}
 function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], bonusAction = false, chained = false, forced?: ForcedCast) {
     a.effects ??= {};
     b.effects ??= {};
@@ -568,8 +590,13 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.mineChance) ev.mineSwing = true;
         if (a.magazine && !forced && a.effects.mag && !a.effects.overdrive) a.effects.mag.left--;
         if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (chosen.pnlAbs ? Math.abs(a.pnl || 0) : a.pnl || 0) * chosen.pnlScale) };
-        a.cooldowns[chosen.id] = chosen.cooldown + (castCount - 1) * MC.cooldownStep;
-        a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
+        // v3.320 연계 각성으로 이어진 발동(free)은 대기 · 마나를 쓰지 않고, 각성기 대기는 융합만큼 줄어듭니다(최소 1).
+        if (!forced?.free) {
+            const cut = chosen.awaken ? fusionCut(a) : 0;
+            a.cooldowns[chosen.id] = Math.max(chosen.awaken ? 1 : 0, chosen.cooldown + (castCount - 1) * MC.cooldownStep - cut);
+            if (cut > 0) notes.push(`융합 대기 −${cut}`);
+            a.mana = Math.max(0, (a.mana ?? 0) - Math.ceil((chosen.manaCost || 0) * (1 + (castCount - 1) * MC.manaScale)));
+        }
         // v3.145 체력 소모: 현재 체력 × hpCost를 바칩니다(1은 남김). 피의 분노가 그만큼 더 세게 반응합니다.
         if (chosen.hpCost) { const pay = Math.min(Math.max(0, a.hp - 1), Math.floor(a.hp * chosen.hpCost)); if (pay > 0) { a.hp -= pay; ev.hpSpent = pay; notes.push(`체력 ${pay.toLocaleString()} 소모`); } }
         // v3.148 마나 연소: 현재 마나 × manaBurn을 태웁니다. 태운 만큼 아래에서 피해 기준값에 더합니다.
