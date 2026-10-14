@@ -5,7 +5,7 @@ import { addLog } from './state';
 import { syncAchievements, unclaimedAchievements, claimAchievements } from './progress';
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
 import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipment';
-import { plainCodexBook } from './progression';
+import { plainCodexBook, skillCost } from './progression';
 import { ownedOnyx, onyxCodexKey } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
 import { syncAbyssCores } from './boss-loot';
@@ -416,7 +416,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
     if (s.version === SAVE_VERSION) syncAbyssCores(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundTrainingSP(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -429,6 +429,22 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
 const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
 export function registerOnyxCodex(s: State) { for (const id of ownedOnyx(s)) { s.itemBook ??= {}; s.itemBook[onyxCodexKey(id)] = true; } }
+/**
+ * v3.329 능력치 수련 패시브(attrBonus)에 쓴 강화 SP 환급: 효과는 숙련으로만 올랐는데 강화 버튼이 열려 있어 SP만 들었습니다.
+ * 강화 단계(learned − 1) × 스킬 SP 비용을 돌려주고 단계를 1로 되돌립니다. skillSpent에서도 빼 ‘SP 초기화’가 두 번 돌려주지 않게 합니다. 계승 SP는 그대로.
+ */
+export function refundTrainingSP(s: State) {
+    let refund = 0;
+    for (const [id, rank] of Object.entries(s.learned || {})) {
+        const sk = skillById(id);
+        if (!sk?.attrBonus || !(rank > 1)) continue;
+        const sp = (rank - 1) * skillCost();
+        refund += sp; s.learned[id] = 1;
+        if (s.skillSpent?.[id]) s.skillSpent[id] = Math.max(0, s.skillSpent[id] - sp);
+    }
+    if (refund) s.sp = (s.sp || 0) + refund;
+    return refund;
+}
 export function refundAutoStar(s: State) {
     if (s.autoStarRefunded) return 0;
     s.autoStarRefunded = true;

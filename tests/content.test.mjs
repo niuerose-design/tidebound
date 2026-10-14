@@ -397,6 +397,18 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });
 
+test('v3.329 stat-training passives grow by mastery only: SP rank is ignored for level/AP, cannot be bought, and SP already spent is refunded once on load',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), St=await L.load('systems/stats'), M=await L.load('systems/migrations');
+    const str=SKILLS.find(x=>x.attrBonus?.str), dex=SKILLS.find(x=>x.attrBonus?.dex); assert.ok(str&&dex);
+    assert.equal(P.skillLevel(dex,5,0),0,'SP rank ignored'); assert.equal(P.skillLevel(dex,1,4),4,'mastery counts'); assert.equal(P.skillLevel(str,5,2),2);
+    const s=newState(0); s.level=100; s.job=str.job; s.sp=10;
+    s.learned[str.id]=1; s.skillPractice[str.id]=80_000_000; s.learned[dex.id]=5; s.skillSpent[dex.id]=4; s.skillInheritances[dex.id]=true; s.skills=[str.id,dex.id];
+    assert.ok(!P.canSpendSkill(s,str.id)&&!P.canSpendSkill(s,dex.id),'no SP on training passives'); assert.throws(()=>act(s,{type:'learn',id:str.id},0),/강화/);
+    const t=St.attributeBreakdown(s).training; assert.equal(t.str,80,'mastery Lv.4 ×2'); assert.equal(t.dex,40,'SP Lv.4 gives base only');
+    assert.equal(P.effectiveSkill(dex,5,0).cost,P.effectiveSkill(dex,1,0).cost,'no mastered-passive AP discount from SP');
+    const sp=s.sp; M.migrateState(s,0); assert.equal(s.sp,sp+4,'4 SP refunded'); assert.equal(s.learned[dex.id],1,'rank reset'); assert.equal(s.skillSpent[dex.id]||0,0,'spent record reduced');
+    const again=s.sp; M.migrateState(s,0); assert.equal(s.sp,again,'refund once');
+});
 test('v3.327 job attribute requirements count boss-core attributes (allocated-only requirements and the attr achievement do not)',async()=>{
     const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), BC=await L.load('data/boss-core');
     const s=newState(0); s.level=100; s.rebirths=100;
