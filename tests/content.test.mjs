@@ -397,6 +397,19 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });
 
+test('v3.326 boss core attributes: shown in the attribute breakdown (base · cores · training) and traced as their own source; totals unchanged',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), St=await L.load('systems/stats'), BL=await L.load('systems/boss-loot'), BC=await L.load('data/boss-core');
+    const s=newState(0); s.level=100; BL.grantBossCore(s,'grotto',()=>.5,'test'); s.coreSlot='grotto';
+    const parts=St.attributeBreakdown(s), core=BC.coreAttributes(s);
+    for(const k of Object.keys(core)) { assert.equal(parts.cores[k],core[k],`core share ${k}`); assert.equal(parts.total[k],parts.base[k]+parts.cores[k]+parts.training[k]); }
+    assert.deepEqual(parts.total,St.trainedAttributes(s),'total = trainedAttributes');
+    const trace={}, a=St.stats(s,trace);
+    const coreHp=(trace.hp||[]).filter(x=>x.source==='cores').reduce((n,x)=>n+x.delta,0), attrHp=(trace.hp||[]).filter(x=>x.source==='attributes').reduce((n,x)=>n+x.delta,0);
+    assert.ok(coreHp>0,'hp has a cores line'); assert.ok(Math.abs(coreHp-core.vit*(await L.load('data/progression')).ATTRIBUTE_EFFECTS.vit.hp)<1e-9,'cores line = core vit × hp per vit');
+    assert.ok(attrHp>0 && attrHp<coreHp,'allocation line is separate and smaller');
+    assert.equal(a.attrVit,parts.total.vit,'attrVit detail = total'); assert.ok((trace.attrVit||[]).some(x=>x.source==='cores'),'attrVit traced by cores');
+    assert.ok(St.STAT_SOURCES.includes('cores')&&St.statSourceLabel('hp','cores')==='보스 코어');
+});
 test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken, 10% resonance); daily random core box',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),D=await L.load('data/dungeon-shop');
  const a=C.rollCoreAttrs(()=>.5);assert.equal(a.length,2);assert.notEqual(a[0].k,a[1].k);for(const x of a)assert.ok(x.f>=.2&&x.f<=1);
