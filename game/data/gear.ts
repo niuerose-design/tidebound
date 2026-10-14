@@ -216,7 +216,7 @@ export function heirRollQuality(u: number, top = HEIR_ROLL_TOP) {
 /** 100% 위 q(1~top)를 넘을 확률(화면 안내용). */
 export const heirRollChanceAbove = (q: number, top = HEIR_ROLL_TOP) => q <= 1 ? 1 : q >= top ? 0 : HEIR_ROLL_TAIL * Math.pow(1 - (q - 1) / (top - 1), HEIR_ROLL_TAIL_POWER);
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
-const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
+export const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
 /**
  * v3.133 규칙 옵션(◆ 기절 · 지속 등 8종, 장비당 1줄)의 등장 가중치. 일반 옵션(30종)과 같은 1이던 때는 전설 60% · 신화 70% · 태초 80%의 장비에 규칙 옵션이 붙어
