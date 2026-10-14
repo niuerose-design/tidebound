@@ -88,8 +88,8 @@ export function limitBreakNext(s: State, id: string) {
     return { stage, sp, practice, ok: !reason, reason };
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
-/** v3.329 능력치 수련 패시브(attrBonus)는 숙련으로만 자랍니다(v3.169 규칙): 성장 레벨 · '현재' 줄 · AP 할인 · 강화 가능 여부 모두 SP 단계를 보지 않습니다. */
-export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); if (sk.attrBonus) rank = 1; return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
+/** v3.330 능력치 수련 패시브(attrBonus)도 성장 레벨은 SP · 숙련 중 높은 값입니다(장착 AP 할인용). 능력치 수치만 숙련 단계로 자랍니다(effectiveSkill · stats.attributeBreakdown). */
+export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
 /** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). */
 export function apSources(s: State): { id: string; label: string; value: number }[] {
     return [
@@ -300,8 +300,8 @@ export function canInheritSkill(s: State, id: string) {
 }
 export function canSpendSkill(s: State, id: string) {
     const sk = skillById(id), rank = s.learned?.[id] || 0;
-    // v3.329 능력치 수련 패시브는 SP로 강화할 수 없습니다(효과가 없는데 SP만 들던 것을 막음).
-    return !!sk && !sk.attrBonus && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
+    // v3.330 능력치 수련 패시브도 SP 강화 가능: 능력치는 오르지 않지만 최대 성장에 닿으면 장착 AP가 1 줄어듭니다.
+    return !!sk && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
 }
 /** v27.28 한계돌파 단계(최대 성장을 넘은 만큼)에 따른 패시브 배율: 단계마다 +10%. */
 export const limitBreakScale = (broken: number) => 1 + Math.max(0, broken) * PROGRESSION.limitBreak.passive;
@@ -390,7 +390,7 @@ export function masteryGainBonus(sk: Skill, level: number) {
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
 export function skillRankDeltas(sk: Skill, rank: number, mastery = 0): SkillRankDelta[] {
-    // v3.169 능력치 수련 패시브는 숙련 단계로만 자랍니다(SP 강화 무관). 다음 숙련 단계의 값을 보여 줍니다.
+    // v3.169 능력치 수련 패시브의 능력치는 숙련 단계로만 자랍니다(SP 강화는 장착 AP만). 다음 숙련 단계의 값을 보여 줍니다.
     if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery), effectiveSkill(sk, 1, mastery + 1)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
