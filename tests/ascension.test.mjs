@@ -522,8 +522,8 @@ test('v3.81 permanent gear (relic / heir / onyx) star force costs × (1 + 0.21 �
     assert.equal(Eq.enhanceCost({ ...base, heir: 'primal' }, { ...s, rebirths: 0 }), plain, 'no extra cost at 0 rebirths');
     assert.equal(Ec.appraisalRebirthFactor(60), 1 + 60 * .45); assert.ok(Ec.appraisalRebirthFactor(30) < 1 + 30 * .45); assert.equal(Ec.appraisalRebirthFactor(200), 1 + 200 * .45);
 });
-test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source damp ÷ relic damp); old imprints are corrected once, never raised', async () => {
-    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations');
+test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source damp ÷ relic damp); old imprints are corrected once (v3.325: under-scaled lines raised)', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
     const s = newState(0); s.level = 100; s.gold = 1e12;
     const relic = { id: 'r', name: 'r', slot: 'rod', style: 'balanced', rarity: 3, level: 100, power: 300, relic: 'memoryRod', locked: true, affixes: [] };
     const glass = G.rollOption(G.affixDef('glassCannon'), 530, 6, () => .5, 100);
@@ -537,7 +537,9 @@ test('v3.82 relic imprint keeps the source item\'s effective flat bonus (source 
     // 예전 줄(srcRarity 없음): 태초급 수치는 줄고, 낮은 수치는 그대로.
     const old = { ...relic, id: 'r2', relic: 'soulCoat', affixes: [{ ...glass }, { id: 'might', name: '맹공', stat: 'attack', value: 20 }] };
     const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
-    assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, 20, 'small line is not raised');
+    // v3.325 유물 레벨의 최저 굴림보다 낮은 줄은 그 등급(짐작 등급, 최소 유물 등급)의 보통 최고 굴림으로 올립니다.
+    const smallTop = Eq.imprintAffix(G.optionAtQuality(G.affixDef('might'), Math.round(102 * Bal.RARITIES[3].factor), 3, 100, 1), 3, 3).value;
+    assert.ok(old.affixes[0].value < glass.value, 'primal-sized line shrinks'); assert.equal(old.affixes[1].value, smallTop, 'small line is raised to the top roll at relic level'); assert.equal(old.affixes[1].srcLevel, 100);
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
 });
 test('v3.141 relic imprint scales percent lines to relic rarity quality (primal 2.2 → legendary 1.6), never raises, penalties untouched; v3.82~139 lines corrected once on load', async () => {
@@ -774,6 +776,36 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
 });
+test('v3.325 old under-scaled relic imprints are raised once on load to the normal top roll at the relic level; in-range lines and percent lines untouched; steadfast scales by level', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
+    const power = (lv, r) => Math.round((lv + 2) * Bal.RARITIES[r].factor);
+    const might = G.affixDef('might'), guard = G.affixDef('guardian'), lucky = G.affixDef('lucky');
+    // v3.324 전: Lv.10 태초 줄을 Lv.100 유물에 그대로 새긴 값(srcLevel 없음).
+    const low = Eq.imprintAffix(G.optionAtQuality(might, power(10, 6), 6, 10, 1), 6, 3), lowGuard = Eq.imprintAffix(G.optionAtQuality(guard, power(10, 6), 6, 10, 1), 6, 3);
+    const fine = Eq.imprintAffix(G.optionAtQuality(might, power(100, 6), 6, 100, .2), 6, 3), pct = Eq.imprintAffix(G.optionAtQuality(lucky, power(10, 6), 6, 10, 1), 6, 3);
+    const relic = { id: 'r', name: 'r', slot: 'coat', style: 'balanced', rarity: 3, level: 100, power: 300, relic: 'soulCoat', locked: true, affixes: [low, fine, pct] };
+    const relic2 = { ...relic, id: 'r2', affixes: [lowGuard] };
+    const s = newState(0); s.inventory = [relic, relic2]; M.migrateState(s, 0);
+    const top = Eq.imprintAffix(G.optionAtQuality(might, power(100, 6), 6, 100, 1), 6, 3), topGuard = Eq.imprintAffix(G.optionAtQuality(guard, power(100, 6), 6, 100, 1), 6, 3);
+    assert.ok(low.value < top.value / 5, 'old line was far below');
+    assert.equal(relic.affixes[0].value, top.value, 'under-scaled line raised to the top roll'); assert.equal(relic.affixes[0].srcLevel, 100, 'stamped');
+    assert.equal(relic.affixes[1].value, fine.value, 'low-roll but in-range line untouched'); assert.equal(relic.affixes[1].srcLevel, 100, 'stamped too');
+    assert.equal(relic.affixes[2].value, pct.value, 'percent line untouched'); assert.equal(relic.affixes[2].srcLevel, undefined, 'percent line not stamped');
+    assert.equal(relic2.affixes[0].value, topGuard.value, 'rollBoth first value'); assert.equal(relic2.affixes[0].value2, topGuard.value2, 'rollBoth second value');
+    const once = JSON.stringify([relic.affixes, relic2.affixes]); M.migrateState(s, 0); assert.equal(JSON.stringify([relic.affixes, relic2.affixes]), once, 'idempotent');
+    // v3.324 뒤에 새긴 줄(srcLevel 있음)은 낮아도 손대지 않습니다.
+    const stamped = { ...low, srcLevel: 10 }; const r3 = { ...relic, id: 'r3', affixes: [stamped] }; const t = newState(0); t.inventory = [r3]; M.migrateState(t, 0);
+    assert.equal(r3.affixes[0].value, low.value, 'stamped line left alone');
+    // 불굴(레벨 비례 비율)도 이식 때 레벨로 환산: Lv.10 망토 줄을 Lv.100 유물에 넣으면 Lv.100 줄과 같습니다.
+    const sf = G.affixDef('steadfast'); if (sf) {
+        const at10 = G.optionAtQuality(sf, power(10, 6), 6, 10, 1), at100 = G.optionAtQuality(sf, power(100, 6), 6, 100, 1);
+        assert.ok(at10.value < at100.value / 10, 'steadfast is tiny at Lv.10');
+        const sfRef = Eq.imprintAffix(at100, 6, 3, 100, 100).value, sfRaised = Eq.imprintAffix(at10, 6, 3, 10, 100).value;
+        assert.ok(Math.abs(sfRaised - sfRef) <= sfRef * .03, `steadfast raised to relic level ${sfRaised} ≈ ${sfRef} (Lv.10 줄은 소수 4자리 반올림 오차)`);
+        const oldSf = Eq.imprintAffix(at10, 6, 3); const r4 = { ...relic, slot: 'cape', id: 'r4', affixes: [oldSf] }; const u = newState(0); u.inventory = [r4]; M.migrateState(u, 0);
+        assert.equal(r4.affixes[0].value, Eq.imprintAffix(at100, 6, 3).value, 'old steadfast line raised on load');
+    }
+});
 test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic level, so levelling the relic cannot inflate them; inflated old lines are capped on load', async () => {
     const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
     const s = newState(0); s.level = 100; s.gold = 1e15;
@@ -805,7 +837,7 @@ test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic
     const t = newState(0); t.inventory = [old]; M.migrateState(t, 0);
     const cap = Math.round(G.optionAtQuality(G.affixDef('bulwark'), Math.round(102 * Bal.RARITIES[6].factor * 1.2), 6, 100, G.HEIR_ROLL_TOP).value * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3]);
     assert.equal(old.affixes[0].value, cap, 'inflated line capped'); assert.ok(cap < blown.value / 10);
-    assert.deepEqual(old.affixes[1], fine, 'normal line untouched');
+    assert.deepEqual(old.affixes[1], { ...fine, srcLevel: 100 }, 'normal line untouched (v3.325: level stamped only)');
     const once = JSON.stringify(old.affixes); M.migrateState(t, 0); assert.equal(JSON.stringify(old.affixes), once, 'idempotent');
 });
 test('v3.217 heir drops: ancient/primal drops can come pre-inherited (rare), never replacing an heir already in that slot', async () => {
