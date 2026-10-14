@@ -219,7 +219,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     // v3.169 능력치 수련 패시브: 기본 능력치 자체가 오릅니다(effectiveSkill이 숙련 단계 배율을 적용한 값).
-    for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
+    for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화는 장착 AP 할인에만`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     // v3.317 짧게: 수치 · 숙련 성장 · 계승. 계산 방식은 도움말(스킬 › 핵심 패시브)에.
     if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%.`);
