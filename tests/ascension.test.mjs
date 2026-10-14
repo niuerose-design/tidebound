@@ -787,8 +787,18 @@ test('v3.217 relic imprint: lines from higher-level gear are scaled to the relic
     // 유물을 Lv.100으로 올려도 같은 레벨에서 바로 옮긴 값을 넘지 않습니다.
     Eq.applyLevelUp(relic, 100, s); assert.ok(Math.abs(relic.affixes[0].value - atOne.value) <= atOne.value * .05, `${relic.affixes[0].value} ≈ ${atOne.value}`);
     // 같은 레벨 이하 장비의 줄은 레벨 환산을 받지 않습니다(v3.82 감쇠만).
-    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 100, 100), Eq.imprintAffix(guard, 6, 3), 'same level unchanged');
-    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 50, 100), Eq.imprintAffix(guard, 6, 3), 'lower level not raised');
+    assert.deepEqual(Eq.imprintAffix(guard, 6, 3, 100, 100), { ...Eq.imprintAffix(guard, 6, 3), srcLevel: 100 }, 'same level unchanged');
+    // v3.324 낮은 레벨 장비의 줄은 유물 레벨로 올려 새깁니다(언제 이식해도 같은 레벨에서 옮긴 값과 같게).
+    const half = Eq.imprintAffix(guard, 6, 3, 50, 100), same = Eq.imprintAffix(guard, 6, 3);
+    assert.equal(half.value, Math.round(Math.round(guard.value * 102 / 52 * Eq.GEAR_RARITY_SCALE[6] / Eq.GEAR_RARITY_SCALE[3])), 'lower level raised to relic level');
+    assert.equal(half.srcLevel, 50, 'source level recorded');
+    const low10 = G.rollOption(G.affixDef('guardian'), Math.round(12 * Bal.RARITIES[6].factor), 6, () => 1, 10);
+    const raised = Eq.imprintAffix(low10, 6, 3, 10, 100);
+    assert.ok(Math.abs(raised.value - same.value) <= same.value * .03, `Lv.10 line on Lv.100 relic ${raised.value} ≈ Lv.100 line ${same.value}`);
+    assert.ok(Math.abs((raised.value2 || 0) - (same.value2 || 0)) <= (same.value2 || 0) * .03, 'rollBoth second value raised too');
+    // 유물 Lv.30에 Lv.10 줄을 넣고 Lv.100으로 올려도 같습니다.
+    const relic30 = { ...relic, id: 'r30', level: 30, affixes: [Eq.imprintAffix(low10, 6, 3, 10, 30)] };
+    Eq.applyLevelUp(relic30, 100, s); assert.ok(Math.abs(relic30.affixes[0].value - same.value) <= same.value * .03, `levelled ${relic30.affixes[0].value} ≈ ${same.value}`);
     // 예전에 부푼 줄(Lv.1에서 이식 → Lv.100으로 34배): 지금 유물 레벨의 최대치로 줄고, 정상 줄은 그대로, 두 번 불러도 같음.
     const blown = { ...atOne, value: atOne.value * 34 }, fine = { ...Eq.imprintAffix(guard, 6, 3) };
     const old = { ...relic, id: 'r2', level: 100, affixes: [blown, fine] };

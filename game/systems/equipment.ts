@@ -137,17 +137,20 @@ export function tuneOnyx(item: Item) {
  * 손해 쪽(음수)은 감쇠를 받지 않아 그대로입니다. srcRarity는 원래 장비 등급(맞춘 표시).
  * v3.217 레벨 환산: 유물 레벨보다 높은 장비에서 옮긴 고정 수치 줄은 (유물 레벨 + 2) ÷ (원래 레벨 + 2)로 낮춰 새깁니다(손해 쪽도 같이).
  * 레벨 올리기가 이식 줄도 (새 레벨 + 2) ÷ (옛 레벨 + 2)배 하므로, 전에는 낮은 레벨 유물에 Lv.100 줄을 옮긴 뒤 유물 레벨을 올리면 수치가 수십 배로 부풀었습니다.
+ * v3.324 같은 비율로 올리기도 합니다: 유물보다 낮은 레벨 장비의 줄은 유물 레벨에 맞춰 키워 새깁니다. 전에는 내리기만 해서, 환생 뒤 Lv.10 드롭을 Lv.100 유물에
+ * 옮기면 Lv.100 드롭을 옮긴 값의 12%로 영구히 고정됐습니다(옵션 굴림도 레벨 올리기도 (레벨 + 2)에 비례하므로 언제 옮기든 같은 값이 기획 의도).
+ * srcLevel은 원래 장비 레벨(기록용).
  */
 export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number, srcLevel?: number, relicLevel?: number): ItemAffix {
     const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
-    const def = affixDef(affix.id), lv = def?.kind === 'flat' && !def.fixed && !affix.rule && srcLevel && relicLevel ? Math.min(1, (relicLevel + 2) / (srcLevel + 2)) : 1;
+    const def = affixDef(affix.id), lv = def?.kind === 'flat' && !def.fixed && !affix.rule && srcLevel && relicLevel ? (relicLevel + 2) / (srcLevel + 2) : 1;
     // 등급 감쇠는 고정 수치 능력치의 이득 쪽만, 레벨 환산은 레벨 올리기(rescaleAffix)가 키우는 수치에 똑같이 겁니다.
     const fix = (stat: string | undefined, n: number | undefined, levelled: boolean) => {
         if (!stat || !n) return n;
         const damp = n > 0 && FLAT_GEAR_STATS.has(stat) ? ratio : 1, scale = levelled ? lv : 1;
         return damp === 1 && scale === 1 ? n : Math.round(n * damp * scale);
     };
-    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity }, srcRarity, relicRarity);
+    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity, ...(srcLevel ? { srcLevel } : {}) }, srcRarity, relicRarity);
 }
 /**
  * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
