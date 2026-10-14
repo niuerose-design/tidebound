@@ -316,3 +316,8 @@ test('v3.321 borrowed 4th/5th passives: every value (bonus, per-count, core) at 
  assert.ok(!D.skillExtraNotes(Sk.skillById('magusDomain')).some(l=>l.startsWith('핵심 패시브')&&l.includes('계승')),'core line no longer carries its own inherit note');
  assert.equal(D.inheritText(Sk.skillById('doomMark')),'','status-only 5th skill has no damage-ratio line');
 });
+test('v3.323 affix glossary: every imprintable option has a name, a stat label and a description', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Cm=await L.load('systems/commerce'),Pg=await L.load('data/progression'),E=await L.load('data/economy');
+ for(const c of E.GAMBLE_CATEGORIES)for(const a of Cm.imprintChoices(c.slot)){assert.ok(a.name&&a.description,a.id);assert.ok(Pg.STAT_LABELS[a.stat],`${a.id} stat label`);if(a.stat2)assert.ok(Pg.STAT_LABELS[a.stat2],`${a.id} stat2 label`);}
+ const golden=Cm.imprintChoices('rod').find(a=>a.id==='golden'),seeker=Cm.imprintChoices('rod').find(a=>a.id==='seeker');assert.ok(golden&&seeker,'황금 · 탐색 are imprintable');
+});
