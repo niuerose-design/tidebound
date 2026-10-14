@@ -776,6 +776,28 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
 });
+test('v3.328 inflated steadfast relic lines (imprinted at a low relic level before v3.325, then levelled) are capped on load; low-level steadfast keeps precision through level-ups', async () => {
+    const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
+    const sf = G.affixDef('steadfast'), power = (lv, r) => Math.round((lv + 2) * Bal.RARITIES[r].factor);
+    const at100 = G.optionAtQuality(sf, power(100, 6), 6, 100, 1);
+    // v3.325 전: Lv.4 유물에 Lv.100 줄을 그대로 새김 → 유물을 Lv.100으로 올리면 625배.
+    const relic = { id: 'r', name: 'r', slot: 'cape', style: 'balanced', rarity: 3, level: 4, power: 20, relic: 'soulCape', locked: true, affixes: [Eq.imprintAffix(at100, 6, 3)] };
+    const s = newState(0); s.level = 100; Eq.applyLevelUp(relic, 100, s);
+    assert.ok(relic.affixes[0].value > 100, `inflated ${relic.affixes[0].value}`);
+    s.inventory = [relic]; M.migrateState(s, 0);
+    const cap = Eq.imprintAffix(G.optionAtQuality(sf, power(100, 6), 6, 100, G.HEIR_ROLL_TOP), 6, 3).value;
+    assert.equal(relic.affixes[0].value, cap, 'capped to the top roll at the relic level'); assert.ok(cap < 1, 'cap is a sane percent');
+    const once = JSON.stringify(relic.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(relic.affixes), once, 'idempotent');
+    // 정상 줄(Lv.100 유물에 Lv.100 줄)은 그대로.
+    const fine = { ...relic, id: 'r2', level: 100, affixes: [Eq.imprintAffix(at100, 6, 3, 100, 100)] }; const t = newState(0); t.inventory = [fine]; M.migrateState(t, 0);
+    assert.equal(fine.affixes[0].value, Eq.imprintAffix(at100, 6, 3, 100, 100).value, 'normal line untouched');
+    // v3.328 정밀도: Lv.100 줄을 Lv.2 유물에 새기면 0이 아니고, Lv.100으로 올리면 원래 값으로 돌아옵니다.
+    const low = Eq.imprintAffix(at100, 6, 3, 100, 2); assert.ok(low.value > 0, `Lv.2 imprint keeps precision ${low.value}`);
+    const back = G.rescaleAffix(low, 1, 2, 100); const ref = Eq.imprintAffix(at100, 6, 3, 100, 100).value;
+    assert.ok(Math.abs(back.value - ref) <= ref * .01, `level-up restores ${back.value} ≈ ${ref}`);
+    // 보통 망토도 Lv.1 굴림이 0이 아닙니다.
+    assert.ok(G.optionAtQuality(sf, power(1, 6), 6, 1, 1).value > 0, 'Lv.1 cape steadfast is not rounded to 0');
+});
 test('v3.325 old under-scaled relic imprints are raised once on load to the normal top roll at the relic level; in-range lines and percent lines untouched; steadfast scales by level', async () => {
     const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');
     const power = (lv, r) => Math.round((lv + 2) * Bal.RARITIES[r].factor);
