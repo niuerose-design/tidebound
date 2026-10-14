@@ -215,6 +215,8 @@ export function heirRollQuality(u: number, top = HEIR_ROLL_TOP) {
 }
 /** 100% 위 q(1~top)를 넘을 확률(화면 안내용). */
 export const heirRollChanceAbove = (q: number, top = HEIR_ROLL_TOP) => q <= 1 ? 1 : q >= top ? 0 : HEIR_ROLL_TAIL * Math.pow(1 - (q - 1) / (top - 1), HEIR_ROLL_TAIL_POWER);
+/** 비율 옵션 반올림: 보통 소수 4자리, v3.328 레벨 비례 옵션(불굴)은 8자리(Lv.1~10에서 10⁻⁵ 수준이라 4자리면 0으로 뭉개져 레벨을 올려도 0). */
+export const pctRound = (def: Pick<AffixDef, 'levelPower'>, n: number) => def.levelPower ? Math.round(n * 1e8) / 1e8 : Math.round(n * 10000) / 10000;
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
 export const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
@@ -243,7 +245,7 @@ export function optionAtQuality(def: AffixDef, power: number, rarity: number, le
     // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     const roll = (ROLL_MIN + quality * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
-    const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
+    const round = (n: number) => def.kind === 'flat' ? Math.round(n) : pctRound(def, n);
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
     if (def.stat2 && def.base2) {
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
@@ -276,7 +278,7 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
     if (!def || x.rule || def.kind === 'rule' || def.fixed) return x;
     const out = { ...x };
     if (def.kind === 'flat') out.value = Math.round(x.value * ratio);
-    else if (def.levelPower) out.value = Math.round(x.value * levelScale(def, newLevel) / levelScale(def, oldLevel) * 10000) / 10000;
+    else if (def.levelPower) out.value = pctRound(def, x.value * levelScale(def, newLevel) / levelScale(def, oldLevel));
     if (def.stat2 && out.value2 && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2)) out.value2 = Math.round(out.value2 * ratio);
     return out;
 }

@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, levelScale, refineOption, rollAffixes, rarityQuality, optionAtQuality, GEAR_GUARD_SHARE, type ItemAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, levelScale, pctRound, refineOption, rollAffixes, rarityQuality, optionAtQuality, GEAR_GUARD_SHARE, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { monsterGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -146,7 +146,7 @@ export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: n
     const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
     const def = affixDef(affix.id), levelled = !!def && !def.fixed && !affix.rule && !!srcLevel && !!relicLevel;
     const lv = !levelled ? 1 : def.kind === 'flat' ? (relicLevel! + 2) / (srcLevel! + 2) : def.kind === 'percent' && def.levelPower ? levelScale(def, relicLevel!) / levelScale(def, srcLevel!) : 1;
-    const round = (n: number) => def?.kind === 'percent' ? Math.round(n * 10000) / 10000 : Math.round(n);
+    const round = (n: number) => def?.kind === 'percent' ? pctRound(def, n) : Math.round(n);
     // 등급 감쇠는 고정 수치 능력치의 이득 쪽만, 레벨 환산은 레벨 올리기(rescaleAffix)가 키우는 수치에 똑같이 겁니다.
     const fix = (stat: string | undefined, n: number | undefined, scaled: boolean) => {
         if (!stat || !n) return n;
@@ -158,10 +158,11 @@ export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: n
 /**
  * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
  * 레벨 환산이 없던 때 낮은 레벨 유물에 높은 레벨 줄을 옮기고 유물 레벨을 올려 부푼 줄을 불러올 때 이 값으로 줄입니다. 늘리지는 않습니다.
+ * v3.328 레벨 비례 비율 옵션(불굴)도 같은 상한을 받습니다: v3.325 전에는 이식 때 내려 새기지 않아, Lv.4 유물에 Lv.100 줄을 옮기고 Lv.100으로 올리면 (100 ÷ 4)² = 625배(+26940%)로 부풀었습니다.
  */
 function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
-    const def = affixDef(x.id);
-    if (!def || x.rule || def.fixed || def.kind !== 'flat') return x;
+    const def = levelledImprint(x);
+    if (!def) return x;
     const src = Math.min(RARITIES.length - 1, Math.max(0, x.srcRarity ?? RARITIES.length - 1)), level = relic.level || 1;
     const top = imprintAffix(optionAtQuality(def, Math.round((level + 2) * RARITIES[src].factor * 1.2), src, level, HEIR_ROLL_TOP), src, relic.rarity);
     const out = { ...x };
@@ -178,7 +179,7 @@ function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRarity: n
     const def = affixDef(affix.id);
     if (!def || affix.rule || def.kind !== 'percent' || def.fixed) return affix;
     const q = Math.min(1, rarityQuality(relicRarity) / rarityQuality(Math.max(srcRarity, relicRarity)));
-    const pct = (n: number | undefined) => n && n > 0 ? Math.round(n * q * 10000) / 10000 : n;
+    const pct = (n: number | undefined) => n && n > 0 ? pctRound(def, n * q) : n;
     return { ...affix, value: pct(affix.value)!, ...(affix.value2 !== undefined ? { value2: pct(affix.value2) } : {}), pctFixed: true };
 }
 /** v3.82 원래 등급이 기록되지 않은 예전 이식 줄: 그 수치가 나올 수 있는 가장 낮은 등급(Lv.100 · 최고 굴림 기준)으로 봅니다. 실제보다 덜 깎이는 쪽입니다. */
