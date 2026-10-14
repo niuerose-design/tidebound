@@ -192,7 +192,7 @@ function RelicImprint({ s, send, busy, item }: PanelProps & { item: Item }) {
             </div>}
             {blocked && <p className="footnote negative">{blocked}</p>}
         </> : <p className="footnote">같은 부위의 옵션 달린 장비(보호 제외)가 가방에 있어야 이식할 수 있습니다.</p>}
-        <p className="footnote">고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산하고, 유물보다 레벨이 높은 장비의 줄은 유물 레벨에 맞춰 낮춰 새깁니다(목록의 수치가 새겨질 값, 유물 레벨을 올리면 함께 오름). 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
+        <p className="footnote">고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산하고, 장비 레벨이 유물과 다르면 유물 레벨에 맞춰 환산해 새깁니다(낮은 장비는 올리고 높은 장비는 내림 · 목록의 수치가 새겨질 값, 유물 레벨을 올리면 함께 오름 · 언제 이식해도 같은 레벨에서 옮긴 값과 같음). 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
     </div>;
 }
 
