@@ -8,7 +8,7 @@
 import 'server-only';
 import type { State } from '../types';
 import { HOUR } from '../data/time';
-import { masteredJobCount, jobMasteryTarget, skillMasteryLevel, masteryMilestonesFor } from '../systems/progression';
+import { masteredJobCount, jobMasteryTarget, skillMasteryLevel, masteryMilestonesFor, extremeBroken } from '../systems/progression';
 import { SKILLS } from '../data/skills';
 import { jobById } from '../data/classes';
 import { setUnlockSource } from '../data/unlock-info';
@@ -21,6 +21,8 @@ const variantKills = (s: State) => Object.values(s.variantBook || {}).reduce((x,
 const masteredCore5 = (s: State) => SKILLS.filter(sk => sk.core && sk.type === 'passive' && (jobById(sk.job || '')?.tier ?? 0) >= 5 && skillMasteryLevel(s.skillPractice?.[sk.id] || 0, masteryMilestonesFor(sk)) >= masteryMilestonesFor(sk).length).length;
 /** v3.309 지역 던전(무릉도장 제외) 모두 나이트메어로 1번 이상 정복. */
 const nightmareAll = (s: State) => DUNGEONS.every(d => d.id === 'abyss' || (s.modeClears?.nightmare?.[d.id] || 0) >= 1);
+/** v3.335 지역 던전 7곳 모두 나이트메어 k단계 이상 정복(v3.310 nightmareBest). */
+const nightmareStageAll = (s: State, k: number) => DUNGEONS.every(d => d.id === 'abyss' || (s.nightmareBest?.[d.id] || 0) >= k);
 const masteredTier5 = (s: State) => Object.entries(s.jobMastery || {}).filter(([id, n]) => { const j = jobById(id); return !!j && !j.retired && j.tier >= 5 && n >= jobMasteryTarget(j); }).length;
 
 /** 숨은 조건. 정확한 조건 문장은 해커 정보 해킹 조각(leaks.ts UNLOCK_CONDITIONS)에만 있습니다. */
@@ -31,6 +33,8 @@ const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     { job: 'journeyman', test: s => masteredJobCount(s) >= 5 },
     // v3.200 궁극의 모험가: 5차 직업 3개 숙달. v3.309 5차 10개 숙달 · 5차 핵심 패시브 5개 숙련 완료 · 나이트메어 7곳 정복(docs/endgame-challenge-plan.md PR A: 계승 몸이 하루 만에 열던 것을 '5차를 다 돌아 본 뒤'로).
     { job: 'rebirthFisher', test: s => masteredTier5(s) >= 10 && masteredCore5(s) >= 5 && nightmareAll(s) },
+    // v3.335 6차 초월자: 5차 핵심 10개 완성 · 극한돌파 1단계(어느 액티브든) · 지역 던전 7곳 나이트메어 5단계 · 혼테일 3단계 격파 참여. 궁극의 모험가 숙달은 직업의 parent 조건.
+    { job: 'transcendent', test: s => masteredCore5(s) >= 10 && Object.keys(s.skillPractice || {}).some(id => extremeBroken(s, id)) && nightmareStageAll(s, 5) && (s.raidBest?.horntail || 0) >= 3 },
     // v3.220 아제로스 히든 계보: 까미 100 · 누리 100 · 지역 던전마다 정복 100(무릉도장 제외) · 칠흑 보스 처치 합계 100.
     { job: 'kkamiHunter', test: s => (s.book?.masteryMimic || 0) >= 100 },
     { job: 'nuriTracker', test: s => (s.book?.expNuri || 0) >= 100 },
