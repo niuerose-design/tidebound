@@ -15,8 +15,8 @@ const AUTO_STAR_MAX_TRIES = 2000;
 const monsterPrice = (s: State, n: number) => monsterGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, monsterPrice(s, GAMBLE_MONSTERS)) * appraisalRebirthFactor(s.rebirths || 0));
 /** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
-/** v3.333 상점 정수 1개 값(골드): 랜덤 뽑기 1회 ÷ ESSENCE_SHOP.perGamble, 올림. */
-export const essencePrice = (s: State) => Math.max(1, Math.ceil(gambleCost(s) / ESSENCE_SHOP.perGamble));
+/** v3.333 상점 정수 1개 값(골드): 랜덤 뽑기 1회 × ESSENCE_SHOP.gambleRatio, 올림. */
+export const essencePrice = (s: State) => Math.max(1, Math.ceil(gambleCost(s) * ESSENCE_SHOP.gambleRatio));
 /** v3.333 정수 구매 개수: 'max'는 가진 골드로 살 수 있는 만큼(한 번에 maxCount까지). */
 export const essenceBuyCount = (s: State, value: string | undefined) => { const price = essencePrice(s); return value === 'max' ? Math.min(ESSENCE_SHOP.maxCount, Math.floor(s.gold / price)) : Number(value || 0); };
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
@@ -314,7 +314,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.pearls += refund;
         return `${tab.name} 연구 재분배 · 세계석 +${refund} (100% 반환)`;
     }
-    // v3.333 상점 정수 구매: value = 개수('10' · '100' · '1000' · 'max'). 정수 1개 = 랜덤 뽑기 골드 ÷ 3.
+    // v3.333 상점 정수 구매: value = 개수('10' · '100' · '1000' · 'max'). 정수 1개 = 랜덤 뽑기 골드 × ESSENCE_SHOP.gambleRatio.
     if (a.type === 'buyEssence') {
         const price = essencePrice(s), count = essenceBuyCount(s, a.value);
         if (!Number.isInteger(count) || count < 1) throw Error('살 정수 개수를 고르세요.');
