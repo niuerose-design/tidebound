@@ -423,13 +423,16 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         if (b.hp <= 0) a.cooldowns[id] = Math.min(a.cooldowns[id] ?? 0, SKILL_FORMULA.awaken.kill);
         onAction(`${text} · 각성`, more[0]);
         // v3.333 연계 각성(6차): 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 · 판정 없음, 턴당 횟수에 안 셈).
+        let chained = 0;
         if (base.chainAwaken) for (const id2 of a.skills) {
             const b2 = skillById(id2);
+            if (chained >= base.chainAwaken.max) break;
             if (id2 === id || !b2?.awaken || a.hp <= 0 || b.hp <= 0) continue;
             const sk2 = skillOf(a, id2)!;
             if (!fuelOk(a, sk2) || (sk2.chargeNeed && (a.effects?.charge || 0) < sk2.chargeNeed) || (sk2.requiresBuff && !((a.effects?.buffs?.[sk2.requiresBuff]?.turns || 0) > 0))) continue;
             const more2: CombatEvent[] = [];
             const t2 = act(a, b, rng, more2, false, false, { id: id2, index: 0, count: 1, kind: 'awaken', power: base.chainAwaken.power, free: true });
+            chained++;
             onAction(`${t2} · 연계 각성 (위력 ${Math.round(base.chainAwaken.power * 100)}%)`, more2[0]);
         }
     }

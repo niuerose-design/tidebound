@@ -31,7 +31,7 @@ test('v3.333 초월자 combat: two awakenings a turn, chain awaken fires the oth
     const Co = await load('systems/combat'), Sk = await load('data/skills'), C = await load('data/classes');
     const others = Sk.SKILLS.filter(sk => sk.awaken && !sk.chainAwaken && !sk.chargeNeed && !sk.requiresBuff && !sk.fuelCost && !sk.statusOnly && !sk.healOnly && (sk.manaCost || 0) <= 60 && sk.job && C.jobById(sk.job)?.tier === 5 && !C.jobById(sk.job).hidden);
     const byLineage = new Map(); for (const sk of others) { const l = C.lineageOf(C.jobById(sk.job)); if (!byLineage.has(l)) byLineage.set(l, sk); }
-    const [x, y] = [...byLineage.values()]; assert.ok(x && y && C.lineageOf(C.jobById(x.job)) !== C.lineageOf(C.jobById(y.job)));
+    const [x, y, z, w] = [...byLineage.values()]; assert.ok(x && y && z && w && C.lineageOf(C.jobById(x.job)) !== C.lineageOf(C.jobById(y.job)));
     const base = { hp: 1e6, attack: 2000, magic: 2000, defense: 0, resist: 0, crit: 0, accuracy: 5, evasion: 0, speed: 10, mana: 2000, manaRegen: 0, penetration: 0, lifesteal: 0, critDamage: 1.5 };
     const fighter = (job, skills, o = {}) => ({ ...Co.constraintFields(job), name: 'A', job, stats: { ...base }, hp: 1e6, mana: 2000, skills, cooldowns: Object.fromEntries(skills.map(id => [id, 0])), stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...o });
     const dummy = () => ({ name: 'D', stats: { ...base, hp: 1e12, attack: 1 }, hp: 1e12, mana: 0, skills: [], cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {} });
@@ -47,4 +47,7 @@ test('v3.333 초월자 combat: two awakenings a turn, chain awaken fires the oth
     const manaSpent = 2000 - a.mana, expected = Sk.skillById('chainAwaken').manaCost + (x.manaCost || 0); assert.equal(manaSpent, expected, `mana ${manaSpent} vs ${expected}: chained casts are free`);
     // 융합이 없으면 대기 10 그대로.
     const b = fighter('transcendent', ['chainAwaken', x.id, y.id]); run(b); assert.equal(b.cooldowns.chainAwaken, 10);
+    // 연계는 편성 순서대로 최대 3개: 각성기 넷을 끼워도 세 번째까지만 잇고 넷째(w)는 안 이어집니다(대기 0 그대로, 자기 각성도 턴당 2개 한도에 걸려 안 나감).
+    const c = fighter('transcendent', ['chainAwaken', x.id, y.id, z.id, w.id]); const logs2 = run(c);
+    assert.equal(logs2.filter(t => /연계 각성 \(위력 60%\)/.test(t)).length, 3, logs2.join('\n')); assert.equal(c.cooldowns[w.id], 0);
 });
