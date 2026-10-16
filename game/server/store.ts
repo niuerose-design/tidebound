@@ -71,11 +71,24 @@ export function checkOrigin(req: Request) {
     if (origin && origin !== new URL(req.url).origin)
         throw new ApiError('허용되지 않은 요청입니다.', 403);
 }
+/**
+ * v3.332 방금 저장한 세이브(같은 인스턴스): 옵션 재설정 · 재련 연타처럼 같은 모험가의 요청이 바로 이어지면 DB에서 다시 읽지 않고 이 사본으로 시작합니다(요청마다 DB 왕복 2번 → 1번).
+ * 저장은 revision 조건(UPDATE … WHERE revision=)이 있어, 다른 인스턴스 · 다른 창 · 관리자 수정이 먼저 썼으면 실패하고 DB에서 다시 읽어 그 위에 적용하므로 결과는 전과 같습니다.
+ */
+const RECENT_TTL = 90_000, RECENT_MAX = 300;
+const recent = new Map<string, { state: string; revision: number; at: number }>();
+function rememberRecent(id: string, state: string, revision: number, at: number) {
+    recent.delete(id); recent.set(id, { state, revision, at });
+    if (recent.size > RECENT_MAX) recent.delete(recent.keys().next().value!);
+}
+/** 테스트 · 관리자 경로용: 기억한 세이브를 지웁니다(id가 없으면 전부). */
+export function forgetRecent(id?: string) { if (id === undefined) recent.clear(); else recent.delete(id); }
 export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
     const database = db(), now = Date.now();
     // v3.18 침투 작전 정답 키(인스턴스마다 한 번). v3.25 해킹 효과(이벤트 변조·서버 다운)도 30초 캐시로 반영합니다.
     // v3.92 이벤트 · 정답 키 · 해킹 설정과 첫 세이브 읽기는 서로 기다릴 필요가 없어 함께 읽습니다(DB 왕복 최대 4번 → 1번).
-    const [, , , first] = await Promise.all([refreshEvents(now), ensurePuzzleKey(now), readHacks(now), database.getPlayer(id)]);
+    const kept = recent.get(id), fresh = kept && now - kept.at < RECENT_TTL ? kept : null;
+    const [, , , first] = await Promise.all([refreshEvents(now), ensurePuzzleKey(now), readHacks(now), fresh ? Promise.resolve({ state: fresh.state, revision: fresh.revision }) : database.getPlayer(id)]);
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = attempt === 0 ? first : await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
@@ -88,8 +101,10 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         const result = extra ? await extra(s) : null;
         // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
         await syncHackerBoard(id, s, now);
-        if (await database.updatePlayer(id, JSON.stringify(s), now, row.revision))
-            return { state: s, result };
+        const json = JSON.stringify(s);
+        if (await database.updatePlayer(id, json, now, row.revision)) { rememberRecent(id, json, row.revision + 1, now); return { state: s, result }; }
+        // 다른 곳이 먼저 저장했음: 기억한 사본은 버리고 DB에서 다시 읽습니다.
+        recent.delete(id);
     }
     throw new ApiError('다른 창에서 진행 중입니다. 다시 시도하세요.', 409);
 }

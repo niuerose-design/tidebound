@@ -4,7 +4,7 @@
  */
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { db } from './db';
-import { ApiError } from './store';
+import { ApiError, forgetRecent } from './store';
 import { allow, clientIp } from './throttle';
 import { migrateState } from '../systems/migrations';
 import { restartLife } from '../systems/actions/lifecycle';
@@ -93,6 +93,7 @@ export async function applyRestart(id: string, revision: number) {
     if (!Number.isInteger(revision) || row.revision !== revision) throw new ApiError('미리 본 뒤에 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
     const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
     restartLife(s, now);
+    forgetRecent(id);
     if (!await db().updatePlayer(id, JSON.stringify(s), now, revision)) throw new ApiError('그사이 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
     console.info('admin restartLife', { id, username, from: before.level });
     return { before, after: view(id, username, revision + 1, now, s) };
@@ -116,6 +117,7 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
         const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
         if (gold !== undefined) s.gold = gold;
         if (pearls !== undefined) s.pearls = pearls;
+        forgetRecent(id);
         if (await db().updatePlayer(id, JSON.stringify(s), now, row.revision)) {
             console.info('admin adjustCurrency', { id, username, gold: [before.gold, s.gold], pearls: [before.pearls, s.pearls] });
             return { before, after: view(id, username, row.revision + 1, now, s) };
