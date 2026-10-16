@@ -2,9 +2,9 @@
 import { ConfirmButton } from './confirm-button';
 import { useState } from 'react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { GAMBLE_CATEGORIES, APPRAISAL, APPRAISAL_PITY, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, inventoryCap } from '@/game/data/economy';
+import { GAMBLE_CATEGORIES, APPRAISAL, APPRAISAL_PITY, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, ESSENCE_SHOP, inventoryCap } from '@/game/data/economy';
 import { SLOTS, RARITIES } from '@/game/data/balance';
-import { gambleCost, imprintGambleCost, imprintChoices, pityLeft, GAMBLE_COUNTS, APPRAISAL_ALL } from '@/game/systems/commerce';
+import { gambleCost, imprintGambleCost, imprintChoices, pityLeft, GAMBLE_COUNTS, APPRAISAL_ALL, essencePrice, essenceBuyCount } from '@/game/systems/commerce';
 import { Heading, SlotIcon, format, WalletBar } from './shared';
 import type { PanelProps } from './panel-props';
 import { catalogNow } from '@/game/data/catalog';
@@ -33,6 +33,8 @@ export function Shop({ s, send, busy }: PanelProps) {
     // v3.323 저격 · 자동 뽑기의 옵션 이름(황금 · 탐색 등) 뜻을 펼쳐 보는 버튼.
     const glossary = useGlossaryToggle(), glossaryButton = <AffixGlossaryButton open={glossary.open} onToggle={glossary.toggle}/>;
     const [forgeSlot, setForgeSlot] = useState<string>('rod'), forgeItem = s.equipment[forgeSlot as keyof typeof s.equipment];
+    // v3.333 정수 구매: 정수 1개 = 랜덤 뽑기 골드 ÷ 3. '최대'는 가진 골드로 살 수 있는 만큼(한 번에 10만 개까지).
+    const essence = essencePrice(s), essenceMax = essenceBuyCount(s, 'max');
     // v3.72 자동 뽑기는 골드 한도 없이 가진 골드 · 정수를 모두 씁니다(한 번에 최대 AUTO_APPRAISAL_MAX회).
     const autoEach = autoImprint ? imprint : { gold: gamble, essence: 0 };
     const autoMax = Math.min(AUTO_APPRAISAL_MAX, Math.floor(s.gold / Math.max(1, autoEach.gold)), autoEach.essence ? Math.floor((s.essence || 0) / autoEach.essence) : Infinity);
@@ -62,7 +64,7 @@ export function Shop({ s, send, busy }: PanelProps) {
     return <>
         <Heading eyebrow="ITEM SHOP" title="상점" description="모든 부위가 나오는 랜덤 뽑기, 부위와 옵션을 골라 노리는 저격 뽑기, 목표 등급까지 돌리는 자동 뽑기, 그리고 강화."/>
         <WalletBar s={s} label="상점 재화와 보관함" extra={<div><span>뽑기 장비 레벨<strong>Lv.{s.level}</strong></span><span>환생 {s.rebirths} · 뽑기 가격 ×{(gamble / Math.max(1, gambleCost({ ...s, rebirths: 0 }))).toFixed(1)}</span></div>}/>
-        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">랜덤 뽑기</TabsTrigger><TabsTrigger value="imprint">저격 뽑기</TabsTrigger><TabsTrigger value="auto">자동 뽑기</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
+        <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="gamble">랜덤 뽑기</TabsTrigger><TabsTrigger value="imprint">저격 뽑기</TabsTrigger><TabsTrigger value="auto">자동 뽑기</TabsTrigger><TabsTrigger value="essence">정수 구매</TabsTrigger><TabsTrigger value="forge">장비 강화</TabsTrigger></TabsList></Tabs>
         <div className="shop-body">
         {draw && <section aria-label={draw.label}>
             <PityBar s={s}/>
@@ -74,6 +76,15 @@ export function Shop({ s, send, busy }: PanelProps) {
                 {glossary.open && (tab === 'imprint' || tab === 'auto' && autoImprint) && <AffixGlossaryList affixes={choices} picked={pick}/>}
                 <p className="muted draw-cost">{draw.cost}</p>
                 <div className="gamble-count-row draw-actions">{draw.actions}</div>
+            </article>
+        </section>}
+        {tab === 'essence' && <section aria-label="정수 구매">
+            <article className="panel market-card draw-card">
+                <header className="draw-head"><div><span className="eyebrow">골드 → 정수</span><h2>정수 구매</h2></div></header>
+                <p className="draw-desc">골드로 정수를 바로 삽니다. 정수 1개 값은 랜덤 뽑기 1회의 {ESSENCE_SHOP.perGamble}분의 1이라 뽑기 가격처럼 레벨 · 환생에 따라 오릅니다. 랜덤 뽑기를 돌려 분해하면 평균 약 3.4개가 나오니, 직접 사는 쪽이 조금 비싼 대신 가방 칸과 시간이 들지 않습니다.</p>
+                <p className="muted draw-cost">정수 1개 {format(essence)} G · 가진 정수 {format(s.essence || 0)} · 가진 골드로 최대 {format(essenceMax)}개</p>
+                <div className="gamble-count-row draw-actions">{[...ESSENCE_SHOP.counts, 'max' as const].map(n => { const count = n === 'max' ? essenceMax : n, gold = essence * count, short = count < 1 || s.gold < gold; return <ConfirmButton key={String(n)} label={n === 'max' ? `최대 ${format(count)}개 · ${format(gold)} G` : `${format(n)}개 · ${format(gold)} G`} title={`정수 ${format(count)}개를 살까요?`} description={`골드 ${format(gold)} G를 쓰고 정수 ${format(count)}개를 받습니다(개당 ${format(essence)} G). 구매한 정수는 환불되지 않습니다.`} disabled={busy || short} onConfirm={() => send({ type: 'buyEssence', value: String(n) })}/>; })}</div>
+                <p className="footnote">정수는 수치 재련 · 저격 뽑기 · 원시 각성 · 제단 공물에 씁니다. 사냥터 난이도를 올리거나 장비를 분해해도 모입니다.</p>
             </article>
         </section>}
         {tab === 'forge' && <section aria-label="장비 강화">

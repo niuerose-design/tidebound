@@ -2,7 +2,7 @@ import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
 import { ASCENSION } from '../data/ascension';
-import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
+import { SHOP, GAMBLE_CATEGORIES, RELICS, RELIC_GROWTH, heirPower, awakenEssence, PRIMAL_INHERIT, ECONOMY, researchRank, APPRAISAL, APPRAISAL_PITY, appraisalRebirthFactor, IMPRINT_APPRAISAL, AUTO_APPRAISAL_MAX, ESSENCE_SHOP, RESEARCH, RESEARCH_TABS, RESEARCH_RESET, researchCost, researchSpent, researchUnlocked, researchMaxFor, inventoryCap, researchById } from '../data/economy';
 import { apCapacity, apUsed, itemKey } from './progression';
 import { rollAffix, enhanceCost, bulkItems, saleValue, dismantleEssence, dismantleInto, primalGaugeGain, primalGaugeNote, keepsAcrossLives, rerollCost, refineCost, canResetGear, refineTopOf, enhanceMaxFor, imprintCost, syncRelicPower, levelUpTarget, levelUpCost, applyLevelUp, imprintAffix, ownedItems, inheritGear } from './equipment';
 import { STARFORCE, starSuccess, starCatchSuccess, relicResetFor, starDrops, starDestroy, canSafeguard, chanceTime } from '../data/starforce';
@@ -15,6 +15,10 @@ const AUTO_STAR_MAX_TRIES = 2000;
 const monsterPrice = (s: State, n: number) => monsterGoldAt(Math.min(PRICE_LEVEL_CAP, s.level)) * n;
 export const gambleCost = (s: State) => Math.floor(Math.max(ECONOMY.gambleBase + s.level * ECONOMY.gamblePerLevel, monsterPrice(s, GAMBLE_MONSTERS)) * appraisalRebirthFactor(s.rebirths || 0));
 /** v3.58 각인 감정 비용(한 번): 골드 = 감정 × 2, 정수 10. */
+/** v3.333 상점 정수 1개 값(골드): 랜덤 뽑기 1회 ÷ ESSENCE_SHOP.perGamble, 올림. */
+export const essencePrice = (s: State) => Math.max(1, Math.ceil(gambleCost(s) / ESSENCE_SHOP.perGamble));
+/** v3.333 정수 구매 개수: 'max'는 가진 골드로 살 수 있는 만큼(한 번에 maxCount까지). */
+export const essenceBuyCount = (s: State, value: string | undefined) => { const price = essencePrice(s); return value === 'max' ? Math.min(ESSENCE_SHOP.maxCount, Math.floor(s.gold / price)) : Number(value || 0); };
 export const imprintGambleCost = (s: State) => ({ gold: gambleCost(s) * IMPRINT_APPRAISAL.goldMultiplier, essence: IMPRINT_APPRAISAL.essence });
 /** 각인 감정으로 고를 수 있는 옵션: 일반 옵션(규칙 · 전용 출처 · v3.71 고대 이상 전용 제외), 부위 제한 맞는 것. */
 export const imprintChoices = (slot: string) => AFFIX_POOL.filter(a => a.kind !== 'rule' && !a.junk && !a.rare && !a.onlyOrigin && !a.minRarity && !a.retired && (!a.onlySlot || a.onlySlot === slot));
@@ -309,6 +313,17 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         s.researchResetUsed = true;
         s.pearls += refund;
         return `${tab.name} 연구 재분배 · 세계석 +${refund} (100% 반환)`;
+    }
+    // v3.333 상점 정수 구매: value = 개수('10' · '100' · '1000' · 'max'). 정수 1개 = 랜덤 뽑기 골드 ÷ 3.
+    if (a.type === 'buyEssence') {
+        const price = essencePrice(s), count = essenceBuyCount(s, a.value);
+        if (!Number.isInteger(count) || count < 1) throw Error('살 정수 개수를 고르세요.');
+        if (count > ESSENCE_SHOP.maxCount) throw Error(`한 번에 ${ESSENCE_SHOP.maxCount.toLocaleString()}개까지 살 수 있습니다.`);
+        const gold = price * count;
+        if (s.gold < gold) throw Error(`골드가 부족합니다(정수 ${count.toLocaleString()}개 = ${gold.toLocaleString()} G).`);
+        spend(gold);
+        s.essence = (s.essence || 0) + count;
+        return `정수 ${count.toLocaleString()}개 구매 · -${gold.toLocaleString()} G (개당 ${price.toLocaleString()} G)`;
     }
     if (a.type === 'buyRelic') {
         const r = RELICS.find(x => x.id === id);

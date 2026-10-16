@@ -397,6 +397,16 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });
 
+test('v3.333 shop essence purchase: 1 essence = random-draw gold ÷ 3 (rounded up), bundles and max, gold checks, cap per purchase',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), C=await L.load('systems/commerce'), E=await L.load('data/economy');
+    const s=newState(0); s.level=100; s.rebirths=50; s.essence=5;
+    const price=C.essencePrice(s); assert.equal(price,Math.ceil(C.gambleCost(s)/E.ESSENCE_SHOP.perGamble)); assert.ok(price>1000);
+    s.gold=price*100; act(s,{type:'buyEssence',value:'100'},0); assert.equal(s.essence,105); assert.equal(s.gold,0);
+    assert.throws(()=>act(s,{type:'buyEssence',value:'10'},0),/골드가 부족/); assert.throws(()=>act(s,{type:'buyEssence',value:'0'},0),/개수/); assert.throws(()=>act(s,{type:'buyEssence',value:'abc'},0),/개수/);
+    s.gold=price*7+3; assert.equal(C.essenceBuyCount(s,'max'),7); act(s,{type:'buyEssence',value:'max'},0); assert.equal(s.essence,112); assert.equal(s.gold,3);
+    s.gold=price*(E.ESSENCE_SHOP.maxCount+5); assert.equal(C.essenceBuyCount(s,'max'),E.ESSENCE_SHOP.maxCount,'max capped per purchase'); assert.throws(()=>act(s,{type:'buyEssence',value:String(E.ESSENCE_SHOP.maxCount+1)},0),/까지/);
+    const low=newState(0); low.level=10; assert.ok(C.essencePrice(low)<price,'price follows level/rebirth like the draw price');
+});
 test('v3.330 stat-training passives: SP rank counts for growth level and the max-growth AP discount, attribute value grows by mastery only, SP can be spent',async()=>{
     const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), St=await L.load('systems/stats'), Bal=await L.load('data/balance');
     const str=SKILLS.find(x=>x.attrBonus?.str), dex=SKILLS.find(x=>x.attrBonus?.dex); assert.ok(str&&dex);
