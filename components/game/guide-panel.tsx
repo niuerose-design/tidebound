@@ -279,7 +279,7 @@ export function Guide({ s }: { s?: State }) {
                 {/* v3.323 옵션 이름(황금 · 탐색 등)만 보고는 뜻을 알기 어렵다는 의견: 상점의 ‘옵션 설명’ 버튼과 같은 목록. */}
                 <Rule icon={<Coins size={19}/>} title="장비 옵션 이름"
                     effect={<AffixGlossaryList affixes={GLOSSARY_AFFIXES}/>}
-                    condition="저격 뽑기에서는 그 부위에 붙는 옵션만 고를 수 있고, ◆ 규칙 옵션 · 고대 이상 전용 옵션은 고를 수 없습니다. 상점의 ‘옵션 설명’ 버튼으로도 볼 수 있습니다."/>
+                    condition="저격 뽑기에서는 그 부위에 붙는 옵션만 고를 수 있고, ◆ 규칙 옵션 · 고대 이상 전용 옵션은 고를 수 없습니다. ◆ 규칙 옵션은 장비당 1줄이며, 칠흑 장신구는 고유 옵션 외에 ◆ 1줄이 더 붙을 수 있습니다(v3.331). 상점의 ‘옵션 설명’ 버튼으로도 볼 수 있습니다."/>
             </div>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="저장 데이터" note="초기화 규칙.">

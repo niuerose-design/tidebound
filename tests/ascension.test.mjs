@@ -691,7 +691,8 @@ test('v3.125 primal gauge fills on every exit path, rare foes are never golden, 
     // 칠흑 위력 계수 6.37: Lv.100 650. 옛 530 장신구는 불러올 때 위력과 고정 수치 옵션이 함께 맞춰지고, 레벨 올리기도 같은 식을 씁니다.
     const O = await L.load('data/onyx'), M = await L.load('systems/migrations');
     assert.equal(O.onyxPower(100), 650); assert.equal(O.onyxAccessory(O.ONYX_ITEMS[0], 'ox', 100).power, 650);
-    const old = O.onyxAccessory(O.onyxItemById('onyxBlackMage'), 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
+    // v3.331 창세의 뱃지는 불러올 때 1줄이 메아리로 바뀌므로 위력 보정 검사는 다른 칠흑으로 합니다.
+    const old = O.onyxAccessory(O.ONYX_ITEMS.find(x => x.id !== 'onyxBlackMage'), 'old', 100); old.power = 530; old.affixes = G.rollAffixes(6, 530, old.origin, () => .3, old.affixes, 'charm', 100).map(x => x.rule ? x : G.refineOption(x, 530, 6, () => 1, 100)); old.onyxTuned = true;
     const flatOld = old.affixes.find(x => !x.rule && G.affixDef(x.id)?.kind === 'flat'), flatBefore = flatOld?.value;
     const o = newState(0); o.level = 100; o.inventory = [old]; M.migrateState(o, 0);
     assert.equal(old.power, 650, 'old accessories are raised on load'); if (flatOld) assert.equal(old.affixes.find(x => x.id === flatOld.id).value, Math.round(flatBefore * 650 / 530), 'flat options follow the power');
@@ -775,6 +776,33 @@ test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3
         const full = power(stats(s)); for (const slot of Object.keys(drop)) { const it = s.equipment[slot]; s.equipment[slot] = null; drop[slot] += (1 - power(stats(s)) / full) / N; s.equipment[slot] = it; }
     }
     assert.ok(drop.rod > drop.coat, `weapon ${drop.rod} should outrank coat ${drop.coat}`); assert.ok(drop.rod > drop.charm && drop.rod > drop.cape);
+});
+test('v3.331 onyx accessories can roll one random rule option (unique rule line does not count); Genesis badges get one echo line once on load', async () => {
+    const G = await L.load('data/gear'), On = await L.load('data/onyx'), M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment');
+    const unique = { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true };
+    // 규칙 옵션 후보가 뽑히도록 난수를 끝쪽(가중치 목록 뒤 = 규칙 옵션)에 둡니다. 칠흑 장신구(origin 없음) · 태초 등급 · 장신구 부위.
+    let rules = 0, two = 0;
+    for (let t = 0; t < 300; t++) {
+        let seed = t * 31 + 7; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+        const out = G.rollAffixes(7, 600, undefined, rng, [{ ...unique }], 'charm', 100, 6);
+        const randomRules = out.filter(x => x.rule && G.affixDef(x.id)?.onlyOrigin !== 'onyx').length;
+        if (randomRules) rules++; if (randomRules > 1) two++;
+        assert.ok(out.some(x => x.id === 'onyxGenesis'), 'unique kept');
+    }
+    assert.ok(rules > 0, `a random rule option can now appear on onyx (${rules}/300)`); assert.equal(two, 0, 'still at most one random rule option');
+    // 고유 옵션이 없는 보통 장비는 전처럼 규칙 1줄까지.
+    for (let t = 0; t < 100; t++) { let seed = t * 97 + 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); assert.ok(G.rollAffixes(6, 530, undefined, rng, [], 'charm', 100, 6).filter(x => x.rule).length <= 1); }
+    // 창세의 뱃지 보정: 무작위 1줄(고유 제외)이 메아리로, 한 번만. 다른 칠흑은 그대로.
+    const mkBadge = (id, onyx) => { let seed = 5; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); return { id, name: 'b', slot: 'charm', rarity: 6, level: 100, power: On.onyxPower(100), locked: true, onyx, onyxTuned: true, affixes: G.rollAffixes(7, On.onyxPower(100), undefined, rng, [{ ...(On.ONYX_ITEMS.find(x => x.id === onyx).affix) }], 'charm', 100, 6).filter(x => !x.rule || G.affixDef(x.id)?.onlyOrigin === 'onyx') }; };
+    const badge = mkBadge('badge-1', 'onyxBlackMage'), other = mkBadge('badge-2', 'onyxDusk'), before = JSON.stringify(badge.affixes), otherBefore = JSON.stringify(other.affixes);
+    const s = newState(0); s.inventory = [badge]; s.equipment.charm = other; M.migrateState(s, 0);
+    assert.equal(badge.affixes.filter(x => x.id === 'echoing').length, 1, 'one echo line'); assert.ok(badge.affixes.some(x => x.id === On.ONYX_ITEMS.find(x => x.id === 'onyxBlackMage').affix.id), 'unique kept');
+    assert.equal(badge.affixes.length, JSON.parse(before).length, 'line count unchanged'); assert.equal(badge.onyxEcho, true);
+    assert.equal(JSON.stringify(other.affixes), otherBefore, 'other onyx untouched');
+    const once = JSON.stringify(badge.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(badge.affixes), once, 'idempotent');
+    // 메아리를 날려도 다시 주지 않습니다.
+    badge.affixes = badge.affixes.filter(x => x.id !== 'echoing'); M.migrateState(s, 0); assert.ok(!badge.affixes.some(x => x.id === 'echoing'), 'granted once only');
+    assert.ok(Eq.itemStats(badge).followUpBonus === undefined || Eq.itemStats(badge).followUpBonus === 0, 'stat follows the lines');
 });
 test('v3.328 inflated steadfast relic lines (imprinted at a low relic level before v3.325, then levelled) are capped on load; low-level steadfast keeps precision through level-ups', async () => {
     const Eq = await L.load('systems/equipment'), G = await L.load('data/gear'), M = await L.load('systems/migrations'), Bal = await L.load('data/balance');

@@ -174,6 +174,8 @@ export type Item = {
     onyxRank?: number;
     /** v3.77 칠흑 장신구 무작위 옵션을 최고 굴림으로 맞췄는지(한 번만). */
     onyxTuned?: boolean;
+    /** v3.331 창세의 뱃지 보정(무작위 1줄 → 메아리)을 한 번 받았음. */
+    onyxEcho?: boolean;
     /** v21 이전 장비와 유물의 단일 옵션. */
     affix?: {
         stat: keyof Stats;

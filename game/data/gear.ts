@@ -287,7 +287,8 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
 export function rollAffixes(count: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1, rarity = count): ItemAffix[] {
     const out = [...keep];
     while (out.length < count) {
-        const hasRule = out.some(a => a.rule);
+        // v3.331 칠흑 고유 옵션(onlyOrigin 'onyx')은 ‘장비당 규칙 옵션 1줄’에 세지 않습니다: 전에는 고유 옵션이 그 1줄을 차지해 칠흑에는 메아리 · 기절 연장 같은 ◆ 옵션이 어떤 굴림으로도 붙지 않았습니다.
+        const hasRule = out.some(a => a.rule && affixDef(a.id)?.onlyOrigin !== 'onyx');
         // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
         if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }
         const pool = AFFIX_POOL.filter(a => !a.junk && !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
