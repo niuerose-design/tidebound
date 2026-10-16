@@ -6,7 +6,7 @@ import { syncAchievements, unclaimedAchievements, claimAchievements } from './pr
 import { RELICS, RESEARCH_GROWTH } from '../data/economy';
 import { syncRelicPower, tuneOnyx, fixRelicImprints, ownedItems } from './equipment';
 import { plainCodexBook } from './progression';
-import { ownedOnyx, onyxCodexKey } from '../data/onyx';
+import { ownedOnyx, onyxCodexKey, isOnyxUnique } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
 import { syncAbyssCores } from './boss-loot';
 import { affixDef, GEAR_GUARD_SHARE } from '../data/gear';
@@ -416,7 +416,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
     if (s.version === SAVE_VERSION) syncAbyssCores(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); grantGenesisEcho(s); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -429,6 +429,30 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
 const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */
 export function registerOnyxCodex(s: State) { for (const id of ownedOnyx(s)) { s.itemBook ??= {}; s.itemBook[onyxCodexKey(id)] = true; } }
+/**
+ * v3.331 창세의 뱃지(칠흑 · 검은 마법사) 보정: 칠흑에는 ◆ 규칙 옵션이 어떤 굴림으로도 붙지 않던 때 메아리를 노리고 재설정에 쓴 골드 보상으로,
+ * 이미 가진 창세의 뱃지의 무작위 옵션 1줄을 메아리(추가타 위력 +10%p)로 바꿉니다. 고유 옵션(창세의 힘)은 두고, 장신구 id로 정한 난수라 몇 번 불러도 같은 줄입니다.
+ * 이미 메아리가 있거나 한 번 받은(onyxEcho) 장신구는 건너뜁니다. 메아리 외 ◆ 옵션이 있으면 그 줄을 바꿉니다(규칙 1줄 유지).
+ */
+export function grantGenesisEcho(s: State) {
+    const echo = affixDef('echoing');
+    if (!echo) return 0;
+    let n = 0;
+    for (const item of ownedItems(s)) {
+        if (!item || item.onyx !== 'onyxBlackMage' || item.onyxEcho) continue;
+        item.onyxEcho = true;
+        const lines = item.affixes || [];
+        if (lines.some(x => x.id === 'echoing')) continue;
+        const candidates = lines.map((x, i) => [x, i] as const).filter(([x]) => !isOnyxUnique(item, x.id));
+        if (!candidates.length) continue;
+        const rule = candidates.find(([x]) => x.rule);
+        let seed = [...item.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 17) >>> 0;
+        const pick = rule ?? candidates[Math.floor(((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296) * candidates.length)];
+        lines[pick[1]] = { id: echo.id, name: echo.name, stat: echo.stat, value: echo.base, rule: true };
+        item.affixes = lines; n++;
+    }
+    return n;
+}
 export function refundAutoStar(s: State) {
     if (s.autoStarRefunded) return 0;
     s.autoStarRefunded = true;

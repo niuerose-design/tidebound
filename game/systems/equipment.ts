@@ -120,7 +120,8 @@ export function tuneOnyx(item: Item) {
     const next = onyxPower(item.level || 1), before = item.power;
     if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
     // v3.284 칠흑은 무작위 옵션 ONYX.affixes(6)줄: 예전(5줄) 장신구는 빠진 줄을 최고 수치로 채웁니다. 장신구 id로 정해지는 난수라 몇 번 불러도 같습니다.
-    const extra = (item.affixes || []).filter(x => !x.rule).length;
+    // v3.331 무작위 줄 수는 고유 옵션을 뺀 나머지로 셉니다(무작위 ◆ 규칙 줄도 한 줄). 전에는 규칙 줄을 빼고 세어, 규칙 줄이 생기면 불러올 때마다 한 줄씩 늘어날 뻔했습니다.
+    const extra = (item.affixes || []).filter(x => !isOnyxUnique(item, x.id)).length;
     if (item.affixes && extra < ONYX.affixes) {
         let seed = [...item.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0;
         const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296), had = item.affixes.length;
