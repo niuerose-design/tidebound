@@ -606,6 +606,25 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
+test('v3.332 mutate reuses the save it just wrote on the same instance, and still applies on top of a save written elsewhere (revision conflict → re-read)', async () => {
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-recent-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const St = await L.load('server/store'), D = await L.load('server/db');
+    try {
+        const id = 'acct_recent'; St.forgetRecent();
+        const database = D.db(); await database.createPlayerIfMissing(id, JSON.stringify({ ...newState(0), gold: 100 }), 1);
+        let reads = 0; const realGet = database.getPlayer.bind(database); database.getPlayer = async x => { reads++; return realGet(x); };
+        const a = await St.mutate(id, { type: 'sync' }); assert.equal(reads, 1, 'first request reads the save');
+        const b = await St.mutate(id, { type: 'sync' }); assert.equal(reads, 1, 'the next request on the same instance does not re-read');
+        assert.ok(b.state.gold >= a.state.gold);
+        // 다른 인스턴스(관리자 · 다른 창)가 먼저 저장: 기억한 사본의 revision이 맞지 않아 다시 읽고 그 위에 적용합니다.
+        const row = await realGet(id); const other = JSON.parse(row.state); other.gold = 777_777; assert.ok(await database.updatePlayer(id, JSON.stringify(other), 2, row.revision));
+        const c = await St.mutate(id, { type: 'sync' }); assert.equal(c.state.gold, 777_777, 'external write kept'); assert.ok(reads >= 2, 're-read after the conflict');
+        const saved = JSON.parse((await realGet(id)).state); assert.equal(saved.gold, 777_777); assert.equal((await realGet(id)).revision, row.revision + 2, 'two more revisions: external + ours');
+        // 다시 같은 인스턴스: 재읽기 없음.
+        const before = reads; await St.mutate(id, { type: 'sync' }); assert.equal(reads, before, 'cached again after a successful write');
+    } finally { St.forgetRecent(); delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
 test('v3.116 account vault onyx: deposit (not worn) keeps stars and awakening, withdraw into another slot, repeat kind awakens, ascension keeps all onyx deposits (v3.242)', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-vault-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
