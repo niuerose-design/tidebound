@@ -5,5 +5,8 @@
       "main": true,
       "**": false
     }
-  }
+  },
+  "regions": [
+    "sin1"
+  ]
 }
