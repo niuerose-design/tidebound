@@ -21,6 +21,11 @@ const APPRAISAL_REBIRTH = { scale: 30, perRebirth: .45 };
 export const appraisalRebirthFactor = (rebirths: number) => { const r = Math.max(0, rebirths); return Math.min(Math.pow(10, r / APPRAISAL_REBIRTH.scale), 1 + r * APPRAISAL_REBIRTH.perRebirth); };
 /** v3.58 각인 감정: 고른 옵션 하나가 반드시 붙습니다. 골드는 감정 × goldMultiplier, 정수 essence가 더 듭니다. */
 export const IMPRINT_APPRAISAL = { goldMultiplier: 5, essence: 50 };
+/**
+ * v3.333 상점 정수 구매: 정수 1개 = 랜덤 뽑기 1회 골드 ÷ perGamble(올림). 랜덤 뽑기를 돌려 분해하면 평균 약 3.4정수가 나오므로(등급 확률 × 분해 정수),
+ * 직접 사는 값은 그 환산보다 약 12% 비싼 ‘바로 받는 값’입니다. 뽑기 가격처럼 레벨 · 환생 배율을 따라 골드 수입과 같이 오릅니다. 한 번에 maxCount까지.
+ */
+export const ESSENCE_SHOP = { perGamble: 3, counts: [10, 100, 1000] as const, maxCount: 100_000 };
 /** v3.58 자동 감정 한 번에 최대 시도 수(렉 방지). */
 export const AUTO_APPRAISAL_MAX = 1000;
 /** 감정 등급(희귀 ~ 태초). v3.52 확률은 서버 전용(game/secret/odds.ts, ODDS.appraisal). */
