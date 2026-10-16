@@ -9,7 +9,7 @@ import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey, isOnyxUnique } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
 import { syncAbyssCores } from './boss-loot';
-import { affixDef, GEAR_GUARD_SHARE } from '../data/gear';
+import { affixDef, GEAR_GUARD_SHARE, rollOption, refineOption } from '../data/gear';
 /** v3.303 체력 · 방어 · 마방 · 마나 몫이 첫째 수치(value)인 옵션 · 둘째 수치(value2)인 옵션. */
 const GUARD_FIRST = new Set(['vigor', 'plating', 'ward', 'guardian', 'flow', 'wellspring', 'bulwark']), GUARD_SECOND = new Set(['guardian', 'berserk', 'glassCannon', 'bloodPact']);
 import { SAVE_VERSION, PENETRATION } from '../data/balance';
@@ -416,7 +416,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
     if (s.version === SAVE_VERSION) syncAbyssCores(s);
-    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); grantGenesisEcho(s); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
+    if (s.version === SAVE_VERSION) { rescaleRanks(s); keepLegacyInheritance(s); refundGoldenResearch(s); refundRelicPurchases(s); refundAutoStar(s); refundTailwindWindow(s); refundPearlResearch(s); retireRandomGame(s); rescaleConvenienceResearch(s); mergeResearch337(s); movePlaceAp(s); stampResearchLegacy(s); registerPlainCodex(s); grantLimitBreakResearch(s); renameMapleGear(s); syncRelicPower(s); for (const item of ownedItems(s)) if (item) tuneOnyx(item); grantGenesisEcho(s); /* v3.332 메아리 보정 뒤에 남은 ‘고통’ 줄만 ‘파멸’로 */ swapGenesisVenom(s); fixRelicImprints(s); registerOnyxCodex(s); retireDoors(s); retireHiddenJobs(s); remakeRebirthFisher(s); retireNightWalker(s); moveToTraining(s); keepTrainingInheritance(s); keepMasteredJobs(s); boostPenetrationAffixes(s); startLifeClock(s, now); return s; }
     const name = typeof s.name === 'string' && s.name.trim() ? s.name : undefined;
     const fresh = newState(now);
     if (name) fresh.name = name;
@@ -425,6 +425,24 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     return s;
 }
 
+/**
+ * v3.332 운영 요청(2026-10-16): 칠흑 창세의 뱃지(onyxBlackMage)에 붙은 무작위 옵션 ‘고통’(venom, 지속 피해 증가)을 ‘파멸’(ruin, 치명 피해)로 바꿉니다.
+ * 수치는 칠흑의 무작위 옵션과 같은 최고 굴림(tuneOnyx와 같은 refineOption(…, () => 1)). 이미 ‘파멸’이 있으면 건드리지 않고, 세이브마다 한 번만 돕니다(genesisVenomSwapped).
+ * 지금 창세의 뱃지를 가진 모험가가 한 명뿐이라 그 한 명을 위한 보정이지만, 조건은 장신구로 두어 누가 가졌든 같게 적용됩니다.
+ */
+function swapGenesisVenom(s: State) {
+    if (s.genesisVenomSwapped) return;
+    const ruin = affixDef('ruin');
+    if (ruin) for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) {
+        if (!item || item.onyx !== 'onyxBlackMage' || !item.affixes) continue;
+        const i = item.affixes.findIndex(a => a.id === 'venom');
+        if (i < 0 || item.affixes.some(a => a.id === 'ruin')) continue;
+        const lv = item.level || 1, best = () => 1;
+        item.affixes[i] = refineOption(rollOption(ruin, item.power, item.rarity, best, lv), item.power, item.rarity, best, lv);
+        addLog(s, `✦ 운영 보정 · ${item.name}의 ‘고통’ 옵션을 ‘파멸’(치명 피해, 최고 수치)로 바꿨습니다.`, 'reward');
+    }
+    s.genesisVenomSwapped = true;
+}
 /** v3.8 자동 강화 연구 비용 100 → 10: 이미 찍은 세이브에 차액 90을 한 번 돌려줍니다. */
 const AUTO_STAR_REFUND = 90;
 /** v3.14 이미 가진 칠흑 장신구를 물건 도감에 자동 등록합니다(장비 소모 없음). */

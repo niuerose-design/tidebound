@@ -778,6 +778,8 @@ export type State = {
     manaRegenRescaled?: boolean;
     /** v3.303 이미 붙은 체력 · 방어 · 마방 · 마나 옵션을 ×0.6으로 맞췄는지(한 번만). */
     guardAffixRescaled?: boolean;
+    /** v3.332 운영 보정: 칠흑 창세의 뱃지의 ‘고통’ 줄을 ‘파멸’로 바꾼 적이 있음(한 번만). */
+    genesisVenomSwapped?: boolean;
     /** v3.302 이미 붙은 주 능력치 · 방어 옵션(맹공 · 신비 · 위력 · 생명 · 철갑 · 정신 · 수호)을 −10%로 맞췄는지(한 번만). */
     mainAffixRescaled?: boolean;
     /** v3.58 물건 도감 ‘일반’ 4칸을 처음부터 등록된 것으로 처리했는지(확정 구매 삭제). */
