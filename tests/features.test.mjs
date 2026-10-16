@@ -299,3 +299,25 @@ test('v3.303 gear hp · defense · resist · mana ×0.6 (bases, affixes, existin
  const g=newState(0);g.level=100;g.job='grandMagus';g.unlockedJobs.push('grandMagus');g.learned.magusDomain=1;g.skills=['magusDomain'];const t={};stats(g,t);
  for(const k of ['defense','resist','mana'])assert.ok(t[k].some(x=>x.source==='skills'&&x.factor>1),`core passive multiplies ${k}`);
 });
+test('v3.320 detail stats always list follow-up power (followUpBonus), even at 0', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Pg=await L.load('data/progression');
+ assert.ok(Pg.DETAIL_STATS.includes('followUpBonus'));assert.ok(!Pg.OPTIONAL_STATS.has('followUpBonus'),'not hidden when 0');
+});
+test('v3.321 borrowed 4th/5th passives: every value (bonus, per-count, core) at passiveInheritScale; actives unchanged', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),P=await L.load('systems/progression'),Sk=await L.load('data/skills'),C=await L.load('data/classes'),B=await L.load('data/balance'),D=await L.load('systems/skill-description');
+ assert.equal(B.SKILL_FORMULA.passiveInheritScale,.5);assert.equal(P.CORE_PASSIVE.borrowed,B.SKILL_FORMULA.passiveInheritScale,'core share = whole-passive share');
+ const t4=Sk.SKILLS.find(k=>k.type==='passive'&&C.jobById(k.job)?.tier===4&&!k.exclusiveLineage&&C.worldOf(C.LINEAGES.find(l=>l.id===C.lineageOf(C.jobById(k.job))))==='maple');
+ const other=C.JOBS.find(j=>j.tier===4&&!j.retired&&!j.hidden&&C.lineageOf(j)!==C.lineageOf(C.jobById(t4.job))).id;
+ assert.equal(P.signatureScale(t4,t4.job),1,'own job keeps it whole');assert.equal(P.signatureScale(t4,other),.5,'4th passive borrowed at 50% (was 100%)');
+ const t5=Sk.skillById('heroSoul');assert.equal(P.signatureScale(t5,'apostle'),.5,'5th passive borrowed at 50% (was 70%)');assert.equal(P.signatureScale(t5,'rebirthFisher'),1,'ultimate adventurer exempt');
+ assert.equal(P.signatureScale(Sk.skillById('braveSlash'),'apostle'),B.SKILL_FORMULA.signatureScale,'5th actives still ×.7');
+ const lines=D.skillEffectLines(Sk.skillById('magusDomain'));assert.ok(lines.some(l=>l.includes('핵심 패시브를 포함한 모든 수치가 50%')),'description says the whole passive');
+ assert.deepEqual(D.skillExtraNotes(Sk.skillById('magusDomain')).filter(l=>l.includes('계승')),[D.inheritText(Sk.skillById('magusDomain'))],'v3.322 compact card uses the same single inherit line');
+ assert.ok(!D.skillExtraNotes(Sk.skillById('magusDomain')).some(l=>l.startsWith('핵심 패시브')&&l.includes('계승')),'core line no longer carries its own inherit note');
+ assert.equal(D.inheritText(Sk.skillById('doomMark')),'','status-only 5th skill has no damage-ratio line');
+});
+test('v3.323 affix glossary: every imprintable option has a name, a stat label and a description', async () => {
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),Cm=await L.load('systems/commerce'),Pg=await L.load('data/progression'),E=await L.load('data/economy');
+ for(const c of E.GAMBLE_CATEGORIES)for(const a of Cm.imprintChoices(c.slot)){assert.ok(a.name&&a.description,a.id);assert.ok(Pg.STAT_LABELS[a.stat],`${a.id} stat label`);if(a.stat2)assert.ok(Pg.STAT_LABELS[a.stat2],`${a.id} stat2 label`);}
+ const golden=Cm.imprintChoices('rod').find(a=>a.id==='golden'),seeker=Cm.imprintChoices('rod').find(a=>a.id==='seeker');assert.ok(golden&&seeker,'황금 · 탐색 are imprintable');
+});

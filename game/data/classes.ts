@@ -57,7 +57,7 @@ export type Job = {
     fullKit?: boolean;
     /** v3.200 궁극의 모험가: 다른 계보의 5차 전용 기술을 계승해 써도 효율이 깎이지 않습니다(signatureScale · outsiderChance 면제). */
     signatureFree?: boolean;
-    /** v3.320 6차: 한 턴에 쓸 수 있는 각성기 수(기본 SKILL_FORMULA.awaken.perTurn). 전투 참가자 awakenPerTurn으로 갑니다. */
+    /** v3.333 6차: 한 턴에 쓸 수 있는 각성기 수(기본 SKILL_FORMULA.awaken.perTurn). 전투 참가자 awakenPerTurn으로 갑니다. */
     awakenPerTurn?: number;
     /** v3.221 이 직업이 현재 직업일 때 숙련의 까미 출현 확률 가산(0.5 = ×1.5). 까미 사냥꾼. */
     mimicFind?: number;

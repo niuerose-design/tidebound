@@ -61,8 +61,8 @@ export const formatStat = (key: string, n: number) => PERCENT_STATS.has(key) ? `
 /** 능력치 표시 순서: 체력 → 물리·마법 공격 → 물리·마법 방어 → 속도 → 명중·회피 → 치명타. 평소에는 CORE만, 나머지는 상세보기. */
 export const CORE_STATS = ['hp', 'mana', 'hpRegen', 'manaRegen', 'attack', 'magic', 'defense', 'resist', 'speed', 'penetration', 'accuracy', 'evasion', 'crit', 'superCrit'] as const;
 export const DETAIL_STATS = ['statusResist', 'chainBonus', 'bossDamage', 'allStats', 'combatScale', 'critDamage', 'lifesteal', 'expBonus', 'goldBonus', 'dropBonus', 'dungeonGoldBonus', 'thorns', 'dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'varietyBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind'] as const;
-/** 0보다 클 때만 상세 능력치에 보이는 항목. */
-export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'varietyBonus', 'followUpBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
+/** 0보다 클 때만 상세 능력치에 보이는 항목. v3.320 추가타 위력(followUpBonus)은 0이어도 늘 보입니다(장비 · 보스 코어 · 스킬 몫을 확인할 수 있게). */
+export const OPTIONAL_STATS = new Set(['thorns', 'dotBonus', 'bleedBonus', 'poisonBonus', 'burnBonus', 'arcaneStrike', 'stunBonus', 'controlBonus', 'dotTurnsBonus', 'poisonStackBonus', 'arcaneRatioBonus', 'varietyBonus', 'healBonus', 'executeBonus', 'variantFind', 'goldenFind']);
 const STAT_ORDER: string[] = [...CORE_STATS, ...DETAIL_STATS];
 /** v3.76 화면에 숫자로 보이지 않는 능력치(꽝 옵션 장식은 이름 앞 '반짝이는'으로만 보입니다). */
 export const HIDDEN_STATS = new Set(['ornament']);

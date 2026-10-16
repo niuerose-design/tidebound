@@ -15,7 +15,7 @@ import { STAT_TRAINING_GROWTH } from '../data/stat-training';
 import { HACKER_ID, isHackerJob } from '../data/hacker';
 import { MAPLE_LINEAGE_NAMES } from '../data/maple-names';
 import { RANKS, rankIndex, rankState, reenlistCount } from '../data/rank';
-import { regionCores, regionCoreRanks, coreEntry } from '../data/boss-core';
+import { regionCores, regionCoreRanks, coreEntry, coreAttributes, BOSS_CORE_RULES } from '../data/boss-core';
 import { ONYX_CORE_ID } from '../data/onyx';
 /** v3.58 확정 구매를 없애며 물건 도감 ‘일반’ 4칸은 처음부터 등록된 것으로 둡니다(시작 장비와 같은 등급). */
 const PLAIN_CODEX_SLOTS = ['rod', 'coat', 'charm', 'cape'] as const;
@@ -88,6 +88,7 @@ export function limitBreakNext(s: State, id: string) {
     return { stage, sp, practice, ok: !reason, reason };
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
+/** v3.330 능력치 수련 패시브(attrBonus)도 성장 레벨은 SP · 숙련 중 높은 값입니다(장착 AP 할인용). 능력치 수치만 숙련 단계로 자랍니다(effectiveSkill · stats.attributeBreakdown). */
 export function skillLevel(sk: Skill, rank = 1, mastery = 0) { const max = maxSkillLevel(sk); return Math.min(max + Math.min(PROGRESSION.limitBreak.max, Math.max(0, mastery - max)), Math.max(0, rank - 1, mastery)); }
 /** v3.38 장착 AP 내역(능력치 화면 표시와 apCapacity가 같은 목록을 씁니다). */
 export function apSources(s: State): { id: string; label: string; value: number }[] {
@@ -151,21 +152,25 @@ export function lineage(job: string): string[] {
     if (!out) lineageCache.set(j, out = [j.id, ...(j.parent ? lineage(j.parent) : [])]);
     return out;
 }
-/** 전용 기술 효율: signatureTier(v3.80 5차) 이상 직업의 기술을 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1. */
-export function signatureScale(sk: Pick<Skill, 'job'>, userJob?: string) {
+/**
+ * 전용 기술 효율: signatureTier(v3.80 5차) 이상 직업의 액티브를 계보 밖 직업이 쓰면 SKILL_FORMULA.signatureScale, 그 외 1.
+ * v3.321 패시브는 passiveInheritTier(4차) 이상이면 계보 밖에서 passiveInheritScale(핵심 패시브 계승 비율과 같은 50%).
+ */
+export function signatureScale(sk: Pick<Skill, 'job' | 'type'>, userJob?: string) {
     if (!sk.job || !userJob) return 1;
-    const owner = jobById(sk.job);
-    if (!owner || owner.tier < SKILL_FORMULA.signatureTier) return 1;
+    const owner = jobById(sk.job), passive = sk.type === 'passive';
+    if (!owner || owner.tier < (passive ? SKILL_FORMULA.passiveInheritTier : SKILL_FORMULA.signatureTier)) return 1;
     // v3.200 궁극의 모험가는 모든 계보의 전용 기술을 온전히 씁니다.
     if (jobById(userJob)?.signatureFree) return 1;
-    return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : SKILL_FORMULA.signatureScale;
+    return lineage(userJob).includes(sk.job) || lineage(sk.job).includes(userJob) ? 1 : passive ? SKILL_FORMULA.passiveInheritScale : SKILL_FORMULA.signatureScale;
 }
 /**
  * v3.228 핵심 패시브(sk.core): 숙련 0단계 base → 마지막 단계 100%.
  * 메이플 월드: base 70%, 다른 계보 직업이 쓰면 ×0.5. 아제로스 계보: base 40%(키울수록 커지는 계보), 다른 계보 직업은 효과 없음(계보 전용).
  */
 /** v3.302 숙련 0단계 몫 .7 → .55: 핵심 패시브 상한을 올린 몫이 숙련을 키울수록 들어오게(장비 → 스킬 비중 이동). */
-export const CORE_PASSIVE = { base: .55, borrowed: .5, azerothBase: .4 } as const;
+/** v3.321 borrowed는 패시브 계승 비율(SKILL_FORMULA.passiveInheritScale)과 같은 값을 씁니다. */
+export const CORE_PASSIVE = { base: .55, borrowed: SKILL_FORMULA.passiveInheritScale, azerothBase: .4 } as const;
 /**
  * v3.316 핵심 패시브 초월(docs/endgame-challenge-plan.md PR F) · v3.317 자리 정리: 액티브가 한계돌파 → 극한돌파이듯, 5차 핵심 패시브는 한계돌파 3단계를 마친 뒤
  * 숙련이 마지막 이정표 × multipliers(5차 기본 375만 → 6,000만 · 1억 2천만, 궁극의 모험가 6억 · 12억)에 닿을 때마다 초월 1 · 2단계(한계돌파 ×2 · ×4 · ×8과 겹치지 않음).
@@ -295,6 +300,7 @@ export function canInheritSkill(s: State, id: string) {
 }
 export function canSpendSkill(s: State, id: string) {
     const sk = skillById(id), rank = s.learned?.[id] || 0;
+    // v3.330 능력치 수련 패시브도 SP 강화 가능: 능력치는 오르지 않지만 최대 성장에 닿으면 장착 AP가 1 줄어듭니다.
     return !!sk && rank > 0 && canUse(s, id) && skillLevel(sk, rank, skillMastery(s, id)) < maxSkillLevel(sk);
 }
 /** v27.28 한계돌파 단계(최대 성장을 넘은 만큼)에 따른 패시브 배율: 단계마다 +10%. */
@@ -384,7 +390,7 @@ export function masteryGainBonus(sk: Skill, level: number) {
     return stages?.[Math.min(level, stages.length - 1)] ?? 0;
 }
 export function skillRankDeltas(sk: Skill, rank: number, mastery = 0): SkillRankDelta[] {
-    // v3.169 능력치 수련 패시브는 숙련 단계로만 자랍니다(SP 강화 무관). 다음 숙련 단계의 값을 보여 줍니다.
+    // v3.169 능력치 수련 패시브의 능력치는 숙련 단계로만 자랍니다(SP 강화는 장착 AP만). 다음 숙련 단계의 값을 보여 줍니다.
     if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery), effectiveSkill(sk, 1, mastery + 1)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
@@ -402,9 +408,17 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0) {
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
-/** 전직 조건 목록. */
+/** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
+export const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
+/** v3.327 전직 조건이 보는 기본 능력치: 기본 + 직접 투자 + 포식 + 보스 코어(칸 100% · 공명). 수련 패시브 몫은 넣지 않습니다(장착을 바꾸면 조건이 흔들리므로). */
+export function jobAttributes(s: State) {
+    const v = attributes(s), c = coreAttributes(s, coreResonanceOf(s));
+    for (const k in c) v[k as Attribute] += c[k as Attribute] || 0;
+    return v;
+}
+/** 전직 조건 목록. v3.327 능력치 조건(requires)은 보스 코어 몫을 더한 값으로 봅니다(배분 조건 requiresAllocated는 직접 투자만). */
 export function jobRequirements(s: State, j: Job) {
-    const a = attributes(s), unlocked = s.unlockedJobs?.includes(j.id);
+    const a = jobAttributes(s), unlocked = s.unlockedJobs?.includes(j.id);
     // v3.231 이계: 세계석만 내면 해금(레벨 · 환생 · 선행 직업 조건 없음). 한 번 산 직업은 조건이 없습니다.
     // v3.235 세계석 0(요원 · 트레이더 1차)은 조건 없이 바로 들어옵니다.
     if (j.pearlCost !== undefined) return unlocked || !j.pearlCost ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];

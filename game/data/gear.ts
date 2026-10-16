@@ -45,7 +45,7 @@ type AffixDef = {
     levelPower?: number;
     description: string;
 };
-export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number; /** v3.141 이식한 비율 옵션(초월 · 포식자 · 관통 등)을 유물 등급 품질로 맞춘 줄. 마이그레이션이 한 번만 손대도록 표시. */ pctFixed?: true };
+export type ItemAffix = { id: string; name: string; stat: GearStat; value: number; stat2?: GearStat; value2?: number; rule?: boolean; /** v3.82 유물에 이식한 줄의 원래 장비 등급(감쇠를 맞춘 표시). */ srcRarity?: number; /** v3.324 유물에 이식한 줄의 원래 장비 레벨(기록용, 나중에 다시 환산할 때 씀). */ srcLevel?: number; /** v3.141 이식한 비율 옵션(초월 · 포식자 · 관통 등)을 유물 등급 품질로 맞춘 줄. 마이그레이션이 한 번만 손대도록 표시. */ pctFixed?: true };
 /** 장비 옵션 합계 상한. */
 export const GEAR_CAPS: Partial<Record<GearStat, number>> = { lifesteal: .1, statusResist: .5 };
 
@@ -215,8 +215,10 @@ export function heirRollQuality(u: number, top = HEIR_ROLL_TOP) {
 }
 /** 100% 위 q(1~top)를 넘을 확률(화면 안내용). */
 export const heirRollChanceAbove = (q: number, top = HEIR_ROLL_TOP) => q <= 1 ? 1 : q >= top ? 0 : HEIR_ROLL_TAIL * Math.pow(1 - (q - 1) / (top - 1), HEIR_ROLL_TAIL_POWER);
+/** 비율 옵션 반올림: 보통 소수 4자리, v3.328 레벨 비례 옵션(불굴)은 8자리(Lv.1~10에서 10⁻⁵ 수준이라 4자리면 0으로 뭉개져 레벨을 올려도 0). */
+export const pctRound = (def: Pick<AffixDef, 'levelPower'>, n: number) => def.levelPower ? Math.round(n * 1e8) / 1e8 : Math.round(n * 10000) / 10000;
 /** v3.5 레벨 비례 옵션(불굴): (장비 레벨 ÷ 100)^levelPower, Lv.100 이상은 1. */
-const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
+export const levelScale = (def: AffixDef, level: number) => def.levelPower ? Math.pow(Math.min(1, Math.max(1, level) / 100), def.levelPower) : 1;
 
 /**
  * v3.133 규칙 옵션(◆ 기절 · 지속 등 8종, 장비당 1줄)의 등장 가중치. 일반 옵션(30종)과 같은 1이던 때는 전설 60% · 신화 70% · 태초 80%의 장비에 규칙 옵션이 붙어
@@ -243,7 +245,7 @@ export function optionAtQuality(def: AffixDef, power: number, rarity: number, le
     // 수치 굴림: 0.6~1.4배 × 등급 배율. 양날 옵션의 손해 쪽은 굴림 없이 고정입니다. v3.5 levelPower 옵션은 (레벨/100)^levelPower를 곱합니다.
     const roll = (ROLL_MIN + quality * ROLL_SPAN) * rarityQuality(rarity) * levelScale(def, level);
     const scale = def.kind === 'flat' ? Math.max(1, power) : 1;
-    const round = (n: number) => def.kind === 'flat' ? Math.round(n) : Math.round(n * 10000) / 10000;
+    const round = (n: number) => def.kind === 'flat' ? Math.round(n) : pctRound(def, n);
     const out: ItemAffix = { id: def.id, name: def.name, stat: def.stat, value: round(def.base * scale * roll) };
     if (def.stat2 && def.base2) {
         // 체력·공격·방어 같은 고정 수치 손해는 위력 비례, 속도·명중 같은 손해는 고정 폭입니다.
@@ -276,7 +278,7 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
     if (!def || x.rule || def.kind === 'rule' || def.fixed) return x;
     const out = { ...x };
     if (def.kind === 'flat') out.value = Math.round(x.value * ratio);
-    else if (def.levelPower) out.value = Math.round(x.value * levelScale(def, newLevel) / levelScale(def, oldLevel) * 10000) / 10000;
+    else if (def.levelPower) out.value = pctRound(def, x.value * levelScale(def, newLevel) / levelScale(def, oldLevel));
     if (def.stat2 && out.value2 && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2)) out.value2 = Math.round(out.value2 * ratio);
     return out;
 }
@@ -285,7 +287,8 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
 export function rollAffixes(count: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1, rarity = count): ItemAffix[] {
     const out = [...keep];
     while (out.length < count) {
-        const hasRule = out.some(a => a.rule);
+        // v3.331 칠흑 고유 옵션(onlyOrigin 'onyx')은 ‘장비당 규칙 옵션 1줄’에 세지 않습니다: 전에는 고유 옵션이 그 1줄을 차지해 칠흑에는 메아리 · 기절 연장 같은 ◆ 옵션이 어떤 굴림으로도 붙지 않았습니다.
+        const hasRule = out.some(a => a.rule && affixDef(a.id)?.onlyOrigin !== 'onyx');
         // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
         if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }
         const pool = AFFIX_POOL.filter(a => !a.junk && !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));

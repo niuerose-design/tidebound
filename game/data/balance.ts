@@ -208,6 +208,9 @@ export const SKILL_FORMULA = {
     // 계보 밖에서 계승하면 배율·패시브 수치가 signatureScale 배로 발휘됩니다. 1~3차 기술은 자유롭게 조합됩니다.
     // v3.80 시작 차수 5(docs/concept.md 11.3): 4차 기술은 계보 밖에서도 온전히 씁니다.
     signatureTier: 5, signatureScale: .7,
+    // v3.321 패시브 계승: 4 · 5차 패시브는 계보 밖 직업이 계승하면 모든 수치(능력치 · 누적 비례 · 핵심 패시브)가 passiveInheritScale 배.
+    // 전에는 핵심 패시브 칸만 50%, 5차 나머지 수치 70%, 4차 나머지 수치 100%로 제각각이라 무엇이 줄어드는지 헷갈렸습니다. 액티브는 그대로(5차 ×signatureScale).
+    passiveInheritTier: 4, passiveInheritScale: .5,
     // v24.2 지정 몬스터 연구(와일드헌터 계보)의 대상: 리본 돼지·파이어보어·머쉬맘.
     designatedSpecies: ['eel', 'emberEel', 'grottoWarden'],
     // v24 환생 비례 패시브(perRebirth): 환생 횟수는 이 값까지만 셉니다.

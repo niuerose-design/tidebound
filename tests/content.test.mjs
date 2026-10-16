@@ -397,6 +397,42 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
  assert.ok(!E.RESEARCH.find(x=>x.id==='gold').desc.includes('던전 골드'));
 });
 
+test('v3.330 stat-training passives: SP rank counts for growth level and the max-growth AP discount, attribute value grows by mastery only, SP can be spent',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), St=await L.load('systems/stats'), Bal=await L.load('data/balance');
+    const str=SKILLS.find(x=>x.attrBonus?.str), dex=SKILLS.find(x=>x.attrBonus?.dex); assert.ok(str&&dex);
+    assert.equal(P.skillLevel(dex,5,0),4,'SP rank counts for level'); assert.equal(P.skillLevel(dex,1,4),4);
+    const s=newState(0); s.level=100; s.job=str.job; s.sp=10;
+    s.learned[str.id]=1; s.skillPractice[str.id]=80_000_000; s.learned[dex.id]=5; s.skillInheritances[dex.id]=true; s.skills=[str.id,dex.id];
+    const t=St.attributeBreakdown(s).training; assert.equal(t.str,80,'mastery Lv.4 ×2'); assert.equal(t.dex,40,'SP Lv.4 gives base value only');
+    const base=P.effectiveSkill(dex,1,0).cost, maxed=P.effectiveSkill(dex,5,0).cost; assert.equal(maxed,base-Bal.SKILL_FORMULA.masteredPassiveAP,'SP max growth cuts AP'); assert.equal(P.effectiveSkill(str,1,4).cost,maxed,'same AP via mastery');
+    assert.ok(!P.canSpendSkill(s,dex.id),'already max'); assert.ok(P.canSpendSkill(s,str.id)===false,'str is max via mastery');
+    const u=newState(0); u.level=100; u.job=str.job; u.sp=3; u.learned[str.id]=1; u.skills=[str.id]; assert.ok(P.canSpendSkill(u,str.id),'SP allowed on a training passive');
+    act(u,{type:'learn',id:str.id},0); assert.equal(u.learned[str.id],2); assert.equal(u.sp,2); assert.equal(St.attributeBreakdown(u).training.str,40,'value unchanged by SP');
+});
+test('v3.327 job attribute requirements count boss-core attributes (allocated-only requirements and the attr achievement do not)',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), P=await L.load('systems/progression'), BC=await L.load('data/boss-core');
+    const s=newState(0); s.level=100; s.rebirths=100;
+    s.bossCores={grotto:{rank:0,attrs:[{k:'str',f:5},{k:'int',f:5}]}}; s.coreSlot='grotto';
+    const core=BC.coreAttributes(s); assert.ok(core.str>=500,'core gives str');
+    const ja=P.jobAttributes(s), base=P.attributes(s); assert.equal(ja.str,base.str+core.str); assert.equal(ja.dex,base.dex);
+    const j=JOBS.find(x=>!x.retired&&x.pearlCost===undefined&&x.requires&&x.requires.str>5&&x.requires.str<=core.str+base.str&&!x.rebirth);
+    assert.ok(j,'a job with a str requirement');
+    const row=P.jobRequirements(s,j).find(r=>r.label===`근력 ${j.requires.str}`); assert.ok(row,'str row'); assert.equal(row.value,ja.str); assert.ok(row.met,'met through the core');
+    delete s.coreSlot; s.bossCores={}; const row2=P.jobRequirements(s,j).find(r=>r.label===`근력 ${j.requires.str}`); assert.ok(!row2.met,'not met without the core');
+});
+test('v3.326 boss core attributes: shown in the attribute breakdown (base · cores · training) and traced as their own source; totals unchanged',async()=>{
+    const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), St=await L.load('systems/stats'), BL=await L.load('systems/boss-loot'), BC=await L.load('data/boss-core');
+    const s=newState(0); s.level=100; BL.grantBossCore(s,'grotto',()=>.5,'test'); s.coreSlot='grotto';
+    const parts=St.attributeBreakdown(s), core=BC.coreAttributes(s);
+    for(const k of Object.keys(core)) { assert.equal(parts.cores[k],core[k],`core share ${k}`); assert.equal(parts.total[k],parts.base[k]+parts.cores[k]+parts.training[k]); }
+    assert.deepEqual(parts.total,St.trainedAttributes(s),'total = trainedAttributes');
+    const trace={}, a=St.stats(s,trace);
+    const coreHp=(trace.hp||[]).filter(x=>x.source==='cores').reduce((n,x)=>n+x.delta,0), attrHp=(trace.hp||[]).filter(x=>x.source==='attributes').reduce((n,x)=>n+x.delta,0);
+    assert.ok(coreHp>0,'hp has a cores line'); assert.ok(Math.abs(coreHp-core.vit*(await L.load('data/progression')).ATTRIBUTE_EFFECTS.vit.hp)<1e-9,'cores line = core vit × hp per vit');
+    assert.ok(attrHp>0 && attrHp<coreHp,'allocation line is separate and smaller');
+    assert.equal(a.attrVit,parts.total.vit,'attrVit detail = total'); assert.ok((trace.attrVit||[]).some(x=>x.source==='cores'),'attrVit traced by cores');
+    assert.ok(St.STAT_SOURCES.includes('cores')&&St.statSourceLabel('hp','cores')==='보스 코어');
+});
 test('v3.202 boss cores roll two random attributes scaled by level (x1~5, awaken, 10% resonance); daily random core box',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),D=await L.load('data/dungeon-shop');
  const a=C.rollCoreAttrs(()=>.5);assert.equal(a.length,2);assert.notEqual(a[0].k,a[1].k);for(const x of a)assert.ok(x.f>=.2&&x.f<=1);
@@ -562,7 +598,7 @@ test('v3.316 core passive transcendence: stages at last milestone x2/x4, own lin
     assert.ok(['coreTranscend:1', 'coreTranscend2:5', 'extremeStage:5'].every(id => TITLES.some(t => t.id === id && t.achievement === id)));
 });
 
-test('v3.321 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) line for 파멸 (ruin) at the onyx top roll, once, leaving other items alone', async () => {
+test('v3.332 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) line for 파멸 (ruin) at the onyx top roll, once, leaving other items alone', async () => {
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { migrateState } = await load('systems/migrations'), { ONYX_ITEMS, onyxAccessory } = await load('data/onyx'), G = await load('data/gear'), { newState } = await load('systems/engine');
     const venom = (power, rarity, lv) => G.rollOption(G.affixDef('venom'), power, rarity, () => .5, lv);

@@ -70,8 +70,9 @@ test('v21.2 tier 5 (v3.80) signature skills work fully in their own lineage and 
  assert.equal(hit(undefined),own,'enemies and legacy fighters are unaffected');assert.equal(hit('apostle','flashCut'),hit('hero','flashCut'),'tier 3 skills combine freely');
  const s=newState(0);s.level=100;s.rebirths=2;s.skillInheritances.heroSoul=true;s.learned.heroSoul=1;s.skills=['heroSoul'];
  const withHero=stats({...s,job:'hero'}).critDamage-stats({...s,job:'hero',skills:[]}).critDamage,withApostle=stats({...s,job:'apostle'}).critDamage-stats({...s,job:'apostle',skills:[]}).critDamage;
- assert.ok(Math.abs(withApostle/withHero-SKILL_FORMULA.signatureScale)<1e-9);
- // v3.80 시작 차수 5: 4차 기술은 계보 밖에서도 온전히 씁니다.
+ // v3.321 패시브는 4 · 5차 모두 계보 밖에서 수치 전체 ×passiveInheritScale(50%). 액티브는 그대로 5차만 ×signatureScale.
+ assert.ok(Math.abs(withApostle/withHero-SKILL_FORMULA.passiveInheritScale)<1e-9);
+ // v3.80 시작 차수 5: 4차 액티브는 계보 밖에서도 온전히 씁니다.
  assert.equal(SKILL_FORMULA.signatureTier,5);const t4=SKILLS.find(sk=>sk.type==='active'&&JOBS.find(j=>j.id===sk.job)?.tier===4&&!sk.song);const owner=t4.job,other=JOBS.find(j=>j.tier===4&&j.id!==owner&&!j.retired&&!j.hidden).id;assert.equal(hit(other,t4.id),hit(owner,t4.id),'tier 4 skills combine freely');
 });
 

@@ -177,7 +177,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
             sk.desc = `피해 없이 ${sk.alsoEffect ? '중독·화상(중첩)' : statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 피해(방어 무시).` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 피해(방어 무시).` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 피해(방어 무시).` : ''}`;
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·중독·감속 해제.';
-            if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
+            if (sk.outsiderChance !== undefined) sk.desc += ` 다른 계보가 계승하면 발동률 ×${sk.outsiderChance}.`;
             sk.desc += progressDesc(sk);
             continue;
         }
@@ -190,7 +190,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (sk.effect && !['heal', 'drain'].includes(sk.effect)) sk.desc += sk.alsoEffect ? ` 중독·화상(중첩) ${sk.statusTurns}턴.` : ` ${statusName} 효과.`;
         // v3.132 장착 효과가 있는 액티브(도트 퍼니셔)는 무엇이 오르는지 적습니다.
         if (sk.bonus) sk.desc += ` 장착하면 ${Object.keys(sk.bonus).map(k => STAT_LABELS[k as keyof typeof STAT_LABELS]).join('·')}이 오릅니다.`;
-        if (sk.outsiderChance !== undefined) sk.desc += ` 계보 밖에서 계승하면 발동률 ×${sk.outsiderChance}.`;
+        if (sk.outsiderChance !== undefined) sk.desc += ` 다른 계보가 계승하면 발동률 ×${sk.outsiderChance}.`;
         if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴${sk.dotFinisher.fullReset ? '(대기 초기화)' : ''}, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
         if (sk.damageBonusCondition === 'statuses') sk.desc += ` 적에게 걸린 상태이상 1종마다 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         else if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;

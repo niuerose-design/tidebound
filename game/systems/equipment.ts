@@ -1,6 +1,6 @@
 import type { Item, Stats, State } from '../types';
 import { ECONOMY, AFFIXES, RELIC_GROWTH, GEAR_LEVEL_UP, PRIMAL_INHERIT, AWAKENING, heirPower, legacyRelicPower, smithDiscount, appraisalRebirthFactor, type HeirKind } from '../data/economy';
-import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, refineOption, rollAffixes, rarityQuality, optionAtQuality, GEAR_GUARD_SHARE, type ItemAffix } from '../data/gear';
+import { ESSENCE_BY_RARITY, rerollScaled, refineEssenceAt, REROLL_GOLD, GEAR_CAPS, STATUS_RESIST_STAR, HEIR_ROLL_TOP, rescaleAffix, affixDef, levelScale, pctRound, refineOption, rollAffixes, rarityQuality, optionAtQuality, GEAR_GUARD_SHARE, type ItemAffix } from '../data/gear';
 import { RARITIES } from '../data/balance';
 import { monsterGoldAt, priceScale } from '../data/world';
 import { STARFORCE, starMax, starMultiplier } from '../data/starforce';
@@ -120,7 +120,8 @@ export function tuneOnyx(item: Item) {
     const next = onyxPower(item.level || 1), before = item.power;
     if (next !== before) { item.power = next; if (item.affixes && before > 0) item.affixes = item.affixes.map(x => rescaleAffix(x, next / before, item.level || 1, item.level || 1)); }
     // v3.284 칠흑은 무작위 옵션 ONYX.affixes(6)줄: 예전(5줄) 장신구는 빠진 줄을 최고 수치로 채웁니다. 장신구 id로 정해지는 난수라 몇 번 불러도 같습니다.
-    const extra = (item.affixes || []).filter(x => !x.rule).length;
+    // v3.331 무작위 줄 수는 고유 옵션을 뺀 나머지로 셉니다(무작위 ◆ 규칙 줄도 한 줄). 전에는 규칙 줄을 빼고 세어, 규칙 줄이 생기면 불러올 때마다 한 줄씩 늘어날 뻔했습니다.
+    const extra = (item.affixes || []).filter(x => !isOnyxUnique(item, x.id)).length;
     if (item.affixes && extra < ONYX.affixes) {
         let seed = [...item.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0;
         const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296), had = item.affixes.length;
@@ -137,25 +138,32 @@ export function tuneOnyx(item: Item) {
  * 손해 쪽(음수)은 감쇠를 받지 않아 그대로입니다. srcRarity는 원래 장비 등급(맞춘 표시).
  * v3.217 레벨 환산: 유물 레벨보다 높은 장비에서 옮긴 고정 수치 줄은 (유물 레벨 + 2) ÷ (원래 레벨 + 2)로 낮춰 새깁니다(손해 쪽도 같이).
  * 레벨 올리기가 이식 줄도 (새 레벨 + 2) ÷ (옛 레벨 + 2)배 하므로, 전에는 낮은 레벨 유물에 Lv.100 줄을 옮긴 뒤 유물 레벨을 올리면 수치가 수십 배로 부풀었습니다.
+ * v3.324 같은 비율로 올리기도 합니다: 유물보다 낮은 레벨 장비의 줄은 유물 레벨에 맞춰 키워 새깁니다. 전에는 내리기만 해서, 환생 뒤 Lv.10 드롭을 Lv.100 유물에
+ * 옮기면 Lv.100 드롭을 옮긴 값의 12%로 영구히 고정됐습니다(옵션 굴림도 레벨 올리기도 (레벨 + 2)에 비례하므로 언제 옮기든 같은 값이 기획 의도).
+ * srcLevel은 원래 장비 레벨(기록용 · 불러오기 보정이 한 번만 손대도록 표시).
+ * v3.325 레벨 비례 비율 옵션(불굴)도 (유물 레벨 ÷ 100)^levelPower ÷ (장비 레벨 ÷ 100)^levelPower로 같이 환산합니다(레벨 올리기와 같은 식).
  */
 export function imprintAffix(affix: ItemAffix, srcRarity: number, relicRarity: number, srcLevel?: number, relicLevel?: number): ItemAffix {
     const ratio = (GEAR_RARITY_SCALE[srcRarity] ?? 1) / (GEAR_RARITY_SCALE[relicRarity] ?? 1);
-    const def = affixDef(affix.id), lv = def?.kind === 'flat' && !def.fixed && !affix.rule && srcLevel && relicLevel ? Math.min(1, (relicLevel + 2) / (srcLevel + 2)) : 1;
+    const def = affixDef(affix.id), levelled = !!def && !def.fixed && !affix.rule && !!srcLevel && !!relicLevel;
+    const lv = !levelled ? 1 : def.kind === 'flat' ? (relicLevel! + 2) / (srcLevel! + 2) : def.kind === 'percent' && def.levelPower ? levelScale(def, relicLevel!) / levelScale(def, srcLevel!) : 1;
+    const round = (n: number) => def?.kind === 'percent' ? pctRound(def, n) : Math.round(n);
     // 등급 감쇠는 고정 수치 능력치의 이득 쪽만, 레벨 환산은 레벨 올리기(rescaleAffix)가 키우는 수치에 똑같이 겁니다.
-    const fix = (stat: string | undefined, n: number | undefined, levelled: boolean) => {
+    const fix = (stat: string | undefined, n: number | undefined, scaled: boolean) => {
         if (!stat || !n) return n;
-        const damp = n > 0 && FLAT_GEAR_STATS.has(stat) ? ratio : 1, scale = levelled ? lv : 1;
-        return damp === 1 && scale === 1 ? n : Math.round(n * damp * scale);
+        const damp = n > 0 && FLAT_GEAR_STATS.has(stat) ? ratio : 1, scale = scaled ? lv : 1;
+        return damp === 1 && scale === 1 ? n : round(n * damp * scale);
     };
-    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity }, srcRarity, relicRarity);
+    return scaleImprintPercent({ ...affix, value: fix(affix.stat, affix.value, true)!, ...(affix.value2 !== undefined ? { value2: fix(affix.stat2, affix.value2, FLAT_GEAR_STATS.has(affix.stat2 || '')) } : {}), srcRarity, ...(srcLevel ? { srcLevel } : {}) }, srcRarity, relicRarity);
 }
 /**
  * v3.217 유물 이식 줄 상한: 원래 등급 장비가 유물과 같은 레벨에서 낼 수 있는 가장 큰 고정 수치(위력 굴림 ×1.2 · 수치 굴림 최고 HEIR_ROLL_TOP)를 이식 환산한 값.
  * 레벨 환산이 없던 때 낮은 레벨 유물에 높은 레벨 줄을 옮기고 유물 레벨을 올려 부푼 줄을 불러올 때 이 값으로 줄입니다. 늘리지는 않습니다.
+ * v3.328 레벨 비례 비율 옵션(불굴)도 같은 상한을 받습니다: v3.325 전에는 이식 때 내려 새기지 않아, Lv.4 유물에 Lv.100 줄을 옮기고 Lv.100으로 올리면 (100 ÷ 4)² = 625배(+26940%)로 부풀었습니다.
  */
 function capRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
-    const def = affixDef(x.id);
-    if (!def || x.rule || def.fixed || def.kind !== 'flat') return x;
+    const def = levelledImprint(x);
+    if (!def) return x;
     const src = Math.min(RARITIES.length - 1, Math.max(0, x.srcRarity ?? RARITIES.length - 1)), level = relic.level || 1;
     const top = imprintAffix(optionAtQuality(def, Math.round((level + 2) * RARITIES[src].factor * 1.2), src, level, HEIR_ROLL_TOP), src, relic.rarity);
     const out = { ...x };
@@ -172,7 +180,7 @@ function scaleImprintPercent(affix: ItemAffix, srcRarity: number, relicRarity: n
     const def = affixDef(affix.id);
     if (!def || affix.rule || def.kind !== 'percent' || def.fixed) return affix;
     const q = Math.min(1, rarityQuality(relicRarity) / rarityQuality(Math.max(srcRarity, relicRarity)));
-    const pct = (n: number | undefined) => n && n > 0 ? Math.round(n * q * 10000) / 10000 : n;
+    const pct = (n: number | undefined) => n && n > 0 ? pctRound(def, n * q) : n;
     return { ...affix, value: pct(affix.value)!, ...(affix.value2 !== undefined ? { value2: pct(affix.value2) } : {}), pctFixed: true };
 }
 /** v3.82 원래 등급이 기록되지 않은 예전 이식 줄: 그 수치가 나올 수 있는 가장 낮은 등급(Lv.100 · 최고 굴림 기준)으로 봅니다. 실제보다 덜 깎이는 쪽입니다. */
@@ -185,6 +193,27 @@ function guessImprintRarity(affix: ItemAffix, relicRarity: number) {
     for (let r = 0; r < RARITIES.length; r++) if (def.base * 102 * RARITIES[r].factor * 1.4 * rarityQuality(r) >= affix.value) return r;
     return RARITIES.length - 1;
 }
+/** 레벨에 따라 수치가 달라지는 이식 줄: 고정 수치와 레벨 비례 비율 옵션(불굴). 규칙 · 고정 옵션은 아닙니다. */
+const levelledImprint = (x: ItemAffix) => { const def = affixDef(x.id); return !!def && !x.rule && !def.fixed && (def.kind === 'flat' || (def.kind === 'percent' && !!def.levelPower)) ? def : null; };
+/**
+ * v3.325 v3.324 전에 낮은 레벨 장비에서 옮겨 낮게 굳은 줄을 한 번 올립니다(srcLevel이 없는 레벨 비례 줄만).
+ * 원래 장비 레벨 기록이 없어 정확한 값을 되짚을 수는 없으므로, 유물 레벨에서 같은 등급 장비가 낼 수 있는 최저 굴림(위력 기준값 · 수치 굴림 0.6배)보다 낮은 줄만
+ * '분명히 낮게 새겨진 줄'로 보고 그 등급의 보통 최고 굴림(수치 굴림 1.4배)으로 올립니다. 양날 옵션의 위력 비례 손해 쪽도 같은 줄의 값으로 맞춥니다.
+ * 정상 범위 안의 줄은 손대지 않고, 처리한 줄에는 srcLevel(유물 레벨)을 적어 다시 손대지 않습니다. 줄이지는 않습니다.
+ */
+function raiseRelicImprint(x: ItemAffix, relic: Pick<Item, 'rarity' | 'level'>): ItemAffix {
+    const def = levelledImprint(x);
+    if (!def || x.srcLevel !== undefined) return x;
+    const src = Math.min(RARITIES.length - 1, Math.max(0, x.srcRarity ?? relic.rarity)), level = relic.level || 1, power = Math.round((level + 2) * RARITIES[src].factor);
+    const floor = imprintAffix(optionAtQuality(def, power, src, level, 0), src, relic.rarity);
+    const out: ItemAffix = { ...x, srcLevel: level };
+    if (!(x.value > 0) || x.value >= floor.value - 1e-9) return out;
+    const top = imprintAffix(optionAtQuality(def, power, src, level, 1), src, relic.rarity);
+    out.value = Math.max(x.value, top.value);
+    if (def.stat2 && top.value2 !== undefined && x.value2 !== undefined && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana', 'manaRegen'].includes(def.stat2))
+        out.value2 = top.value2 > 0 ? Math.max(x.value2, top.value2) : top.value2;
+    return out;
+}
 /** v3.82 예전 유물 이식 줄을 한 번 맞춥니다(srcRarity가 없는 줄만). 전설보다 높은 등급에서 온 것이 확실한 줄만 줄어듭니다. */
 export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
     for (const item of ownedItems(s)) {
@@ -193,6 +222,8 @@ export function fixRelicImprints(s: Pick<State, 'inventory' | 'equipment'>) {
         item.affixes = item.affixes.map(x => x.srcRarity === undefined ? imprintAffix(x, Math.max(item.rarity, guessImprintRarity(x, item.rarity)), item.rarity) : x);
         // v3.141 원래 등급이 기록된 줄(v3.82~v3.139 이식)의 비율 옵션을 한 번 유물 품질로 맞춥니다.
         item.affixes = item.affixes.map(x => x.pctFixed || x.srcRarity === undefined ? x : scaleImprintPercent(x, x.srcRarity, item.rarity));
+        // v3.325 v3.324 전에 낮은 레벨 장비에서 옮겨 낮게 굳은 줄을 올립니다(최저 굴림 미만인 줄만, 한 번만).
+        item.affixes = item.affixes.map(x => raiseRelicImprint(x, item));
         // v3.217 레벨 올리기로 부푼 고정 수치 줄을 지금 유물 레벨의 최대치로 줄입니다(넘는 줄만, 여러 번 불러도 같음).
         item.affixes = item.affixes.map(x => capRelicImprint(x, item));
     }

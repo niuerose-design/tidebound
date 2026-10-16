@@ -663,3 +663,13 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .onyx-pity b { color:#ffd76a; font-variant-numeric:tabular-nums; }
 .onyx-pity small { color:#8fa9a1; font-size:11px; }
 .onyx-pity.done { color:#ffd76a; }
+/* v3.323 장비 옵션 설명(상점 저격 · 자동 뽑기 · 도움말): 긴 설명도 칸 안에서 줄바꿈하고, 목록 높이를 넘으면 목록 안에서만 스크롤합니다. */
+.affix-glossary-toggle, .imprint-row .affix-glossary-toggle { flex:0 0 auto; width:auto; align-self:flex-end; display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; border:1px solid #35504f; background:transparent; color:#bcd3cd; font-size:12px; white-space:nowrap; cursor:pointer; }
+.affix-glossary-toggle[aria-expanded="true"] { border-color:#7fc6b2; color:#e4f4ee; }
+.affix-glossary { list-style:none; margin:8px 0 0; padding:6px; max-height:260px; overflow-y:auto; overscroll-behavior:contain; border:1px solid #2a3f3f; border-radius:10px; display:grid; gap:2px; min-width:0; }
+.affix-glossary li { display:grid; grid-template-columns:minmax(4.5em, max-content) minmax(0, 1fr); column-gap:10px; row-gap:2px; padding:6px 8px; border-radius:8px; min-width:0; }
+.affix-glossary li.on { background:rgba(127,198,178,.12); }
+.affix-glossary b { font-size:13px; white-space:nowrap; }
+.affix-glossary-stat { font-size:12px; color:#9fd0c1; min-width:0; overflow-wrap:anywhere; }
+.affix-glossary small { grid-column:1 / -1; font-size:12px; line-height:1.45; color:#9fb5b2; word-break:keep-all; overflow-wrap:anywhere; }
+.help-rule .affix-glossary { max-height:320px; }

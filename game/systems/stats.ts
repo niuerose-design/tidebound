@@ -4,10 +4,10 @@ import { rebirthExperience, rebirthMemory, evasionRating, evasionRaw, vocationTa
 import { itemStats } from './equipment';
 import { GEAR_CAPS, RULE_CAPS, affixDef } from '../data/gear';
 import { onyxCollected, onyxSetBonus, onyxResonance } from '../data/onyx';
-import { coreStats, coreAttributes, regionCores, BOSS_CORE_RULES } from '../data/boss-core';
-import type { State, Snapshot, Stats, CombatStats, Skill } from '../types';
+import { coreStats, coreAttributes, regionCores } from '../data/boss-core';
+import type { State, Snapshot, Stats, CombatStats, Skill, Attribute } from '../types';
 import { BALANCE, SAVE_VERSION, SKILL_FORMULA, PENETRATION, stackPenetration, stackBossDamage } from '../data/balance';
-import { PROGRESSION, ATTRIBUTE_EFFECTS as E } from '../data/progression';
+import { PROGRESSION, ATTRIBUTE_EFFECTS as E, emptyAttributes } from '../data/progression';
 import { JOBS, jobById } from '../data/classes';
 import { researchRank, MANA_RESEARCH_PER, HP_RESEARCH_PER, GUARD_RESEARCH_PER, researchById } from '../data/economy';
 import { roughReward, roughGear, roughHeal, restraintExp, vowBadges, lv1Active } from './vows';
@@ -22,15 +22,16 @@ import { accountExpGold, accountPower, accountCrit } from '../data/account';
 import { supportMultiplier, supportAmount, commandBonus } from './support';
 import { FUEL, traderMultiplier } from '../data/otherworld';
 import { powerSaving } from './otherworld';
-import { attributes, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendOf, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
+import { attributes, coreResonanceOf, effectiveSkill, canUse, skillMastery, skillMasteryRanks, jobMasteryTarget, jobCombatMultiplier, jobFlatBonus, jobFactor, signatureScale, coreScale, coreTranscendOf, progressCounts, limitBreakScale, brokenStages, extraRollLevel, extremeFinalTable, trimLoadout } from './progression';
 /** v3.84 장비 부위마다 따로 곱연산하는 능력치(관통 · 보스 피해). */
 const PER_ITEM_STATS = new Set(['penetration', 'bossDamage']);
 /** Legacy PvP snapshots gain safe defaults, never client-supplied progression. */
 export function normalizeStats(a: Stats): CombatStats { return { dotScale: 1, expBonus: 0, goldBonus: 0, dropBonus: 0, dungeonGoldBonus: 0, magic: a.attack, resist: a.defense, accuracy: 1, evasion: 0, critDamage: BALANCE.critMultiplier, superCrit: 0, speed: 10, mana: 40, manaRegen: 3, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 1, wardAffinity: 1, healFocus: 0, tankEdge: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, combatScale: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, huntPower: 0, goldPower: 0, masteredPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0, ...a }; }
 /** 능력치 증가 원인. 능력치 화면의 상세보기가 이 순서로 보여줍니다. */
-export const STAT_SOURCES = ['base', 'attributes', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'support', 'equipment', 'limit'] as const;
+export const STAT_SOURCES = ['base', 'attributes', 'cores', 'job', 'skills', 'rebirth', 'research', 'book', 'achievement', 'account', 'support', 'equipment', 'limit'] as const;
 type StatSource = typeof STAT_SOURCES[number];
-const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', support: '분신 지원', equipment: '장비', limit: '상한·정수 처리' };
+/** v3.326 cores: 보스 코어 기본 능력치 몫(전에는 ‘능력치 배분’에 합쳐 기록). 수련 패시브(attrBonus) 몫은 ‘스킬·숙련’. */
+const STAT_SOURCE_LABELS: Record<StatSource, string> = { base: '기본(레벨)', attributes: '능력치 배분', cores: '보스 코어', job: '직업', skills: '스킬·숙련', rebirth: '환생', research: '세계석 연구', book: '도감', achievement: '업적', account: '계정 보너스', support: '분신 지원', equipment: '장비', limit: '상한·정수 처리' };
 /** 세계석 연구가 올리는 능력치 → 연구 id. 물리·마법 공격과 방어는 각각 다른 연구입니다. */
 const RESEARCH_BY_STAT: Partial<Record<keyof CombatStats, string>> = { attack: 'attack', magic: 'magicAttack', hp: 'hp', defense: 'guard', resist: 'magicGuard', mana: 'mana', goldBonus: 'gold', dungeonGoldBonus: 'dungeon', crit: 'crit', critDamage: 'critDamage', penetration: 'penetration', evasion: 'evasion', lifesteal: 'lifesteal', manaRegen: 'manaRegen' };
 /** 능력치 분해의 원인 이름. 세계석 연구는 해당 연구 이름까지 붙입니다(예: 세계석 연구 · 마법력 강화 I). */
@@ -54,27 +55,35 @@ function usableSkills(s: State): UsableSkill[] {
     return out;
 }
 /** 정적 스킬 자료에 양수 보너스가 하나라도 있는지(올라운드 밸런스의 ‘빌린 직업’ 판정). */
-/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
-export function trainedAttributes(s: State, usable = usableSkills(s)) {
-    // v3.202 보스 코어 기본 능력치는 능력치 효과에만 더합니다(직업 조건 · 기록은 직접 배분 그대로).
-    const v = attributes(s);
-    { const c = coreAttributes(s, coreResonanceOf(s)); for (const k in c) v[k as keyof typeof v] += c[k as keyof typeof c] || 0; }
+type Attributes = Record<Attribute, number>;
+export type AttributeBreakdown = { /** 기본 + 직접 투자 + 포식(업적이 보는 값 · 전직 조건은 여기에 보스 코어를 더해 봅니다, jobAttributes). */ base: Attributes; /** v3.202 보스 코어(칸 100% · 공명). */ cores: Attributes; /** v3.70 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). */ training: Attributes; /** 셋의 합: 능력치 효과 계산에 쓰는 값. */ total: Attributes };
+/** v3.326 기본 능력치의 출처별 분해(기본 능력치 화면 · 상세 능력치 기록용). 더하는 순서 · 반올림은 trainedAttributes와 같습니다. */
+export function attributeBreakdown(s: State, usable = usableSkills(s)): AttributeBreakdown {
+    const base = attributes(s), cores = emptyAttributes(), training = emptyAttributes(), total = { ...base };
+    { const c = coreAttributes(s, coreResonanceOf(s)); for (const k in c) { const key = k as keyof Attributes; cores[key] += c[key] || 0; total[key] += c[key] || 0; } }
     for (const { sk, mastery } of usable) {
         if (!sk.attrBonus) continue;
         const scale = 1 + STAT_TRAINING_GROWTH * Math.min(4, mastery);
-        for (const k in sk.attrBonus) v[k as keyof typeof v] += Math.round((sk.attrBonus[k as keyof typeof sk.attrBonus] || 0) * scale);
+        for (const k in sk.attrBonus) { const key = k as keyof Attributes, n = Math.round((sk.attrBonus[key] || 0) * scale); training[key] += n; total[key] += n; }
     }
-    return v;
+    return { base, cores, training, total };
+}
+/** v3.70 기본 능력치 + 장착한 능력치 수련 패시브(attrBonus, 숙련 단계마다 +25%). 전직 조건은 배분 능력치만 봅니다. */
+export function trainedAttributes(s: State, usable = usableSkills(s)) {
+    // v3.202 보스 코어 기본 능력치는 능력치 효과에 더합니다(v3.327부터 전직 조건에도 · 업적 기록은 직접 배분 그대로).
+    return attributeBreakdown(s, usable).total;
 }
 /**
  * 최종 전투 능력치. trace를 넘기면 각 단계의 증감을 원인별로 기록합니다.
  * 기록 여부와 관계없이 계산 순서와 결과는 같습니다(덧셈·곱셈 순서 유지).
  */
 export function stats(s: State, trace?: StatTrace): CombatStats {
-    const j = jobById(s.job) || JOBS[0], usable = usableSkills(s), v = trainedAttributes(s, usable), themes = regionThemes(s);
+    const j = jobById(s.job) || JOBS[0], usable = usableSkills(s), attr = attributeBreakdown(s, usable), v = attr.total, themes = regionThemes(s);
     const rec = (k: keyof CombatStats, source: StatSource, delta: number, factor?: number) => {
         if (trace && delta) (trace[k] ||= []).push(factor === undefined ? { source, delta } : { source, delta, factor });
     };
+    /** v3.326 기본 능력치 몫의 기록: 값은 전처럼 합계(v) × 계수 한 번으로 더하고, 기록만 배분 · 보스 코어 · 수련(스킬·숙련)으로 나눕니다. */
+    const recAttr = (k: keyof CombatStats, key: keyof Attributes, factor: number) => { rec(k, 'attributes', attr.base[key] * factor); rec(k, 'cores', attr.cores[key] * factor); rec(k, 'skills', attr.training[key] * factor); };
     const a = { expBonus: 0, goldBonus: 0, dropBonus: 0, dungeonGoldBonus: 0, hp: 0, attack: 0, magic: 0, defense: 0, resist: 0, crit: 0, critDamage: 0, superCrit: 0, accuracy: 0, evasion: 0, speed: 0, mana: 0, manaRegen: 0, hpRegen: 0, penetration: 0, lifesteal: 0, thorns: 0, diceTrim: 0, swarmFind: 0, dotBonus: 0, bleedBonus: 0, poisonBonus: 0, burnBonus: 0, guardAffinity: 0, wardAffinity: 0, healFocus: 0, tankEdge: 0, arcaneStrike: 0, statusResist: 0, chainBonus: 0, bossDamage: 0, allStats: 0, combatScale: 0, stunBonus: 0, controlBonus: 0, dotTurnsBonus: 0, poisonStackBonus: 0, arcaneRatioBonus: 0, varietyBonus: 0, followUpBonus: 0, healBonus: 0, executeBonus: 0, masteryFlat: 0, rankFlat: 0, essenceBonus: 0, ornament: 0, codexPower: 0, huntPower: 0, goldPower: 0, relicPower: 0, variantPower: 0, variantFind: 0, goldenFind: 0, attrStr: 0, attrDex: 0, attrInt: 0, attrVit: 0, attrWis: 0, attrLuk: 0 } as CombatStats;
     const set = (k: keyof CombatStats, source: StatSource, n: number) => { a[k] = n; rec(k, source, n); };
     // v3.84 관통은 출처끼리 곱연산(PENETRATION · stackPenetration), 보스 피해도 출처끼리 곱연산((1 + a)(1 + b) − 1, stackBossDamage).
@@ -93,30 +102,30 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v27.80 노련함(연구)을 환생 보너스와 분리해 기록합니다(합은 permanentExpBonus와 같음).
     set('expBonus', 'rebirth', rebirthExperience(s.rebirths)); add('expBonus', 'research', (s.permanent.exp || 0) * .2); add('expBonus', 'job', j.expBonus || 0);
     for (const k of ['goldBonus', 'dropBonus', 'dungeonGoldBonus', 'penetration', 'lifesteal'] as const) a[k] = 0;
-    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); add('hp', 'attributes', v.vit * E.vit.hp);
-    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); add('attack', 'attributes', v.str * E.str.attack);
-    set('magic', 'base', 10 + (s.level - 1) * 3); add('magic', 'attributes', v.int * E.int.magic);
-    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); add('defense', 'attributes', v.vit * E.vit.defense);
+    set('hp', 'base', BALANCE.baseHp + (s.level - 1) * BALANCE.hpPerLevel); a.hp += v.vit * E.vit.hp; recAttr('hp', 'vit', E.vit.hp);
+    set('attack', 'base', BALANCE.baseAttack + (s.level - 1) * BALANCE.attackPerLevel); a.attack += v.str * E.str.attack; recAttr('attack', 'str', E.str.attack);
+    set('magic', 'base', 10 + (s.level - 1) * 3); a.magic += v.int * E.int.magic; recAttr('magic', 'int', E.int.magic);
+    set('defense', 'base', BALANCE.baseDefense + (s.level - 1) * BALANCE.defensePerLevel); a.defense += v.vit * E.vit.defense; recAttr('defense', 'vit', E.vit.defense);
     // v3.303 방어는 체질, 마방은 지혜에서만 받습니다(v3.129의 근력 → 방어 · 지능 → 마방 삭제).
-    set('resist', 'base', BALANCE.baseResist + (s.level - 1) * BALANCE.resistPerLevel); add('resist', 'attributes', v.wis * E.wis.resist);
-    set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); add('crit', 'attributes', v.luk * E.luk.crit);
-    set('critDamage', 'base', BALANCE.critMultiplier); add('critDamage', 'attributes', v.luk * E.luk.critDamage);
+    set('resist', 'base', BALANCE.baseResist + (s.level - 1) * BALANCE.resistPerLevel); a.resist += v.wis * E.wis.resist; recAttr('resist', 'wis', E.wis.resist);
+    set('crit', 'base', BALANCE.baseCrit); add('crit', 'job', j.crit); a.crit += v.luk * E.luk.crit; recAttr('crit', 'luk', E.luk.crit);
+    set('critDamage', 'base', BALANCE.critMultiplier); a.critDamage += v.luk * E.luk.critDamage; recAttr('critDamage', 'luk', E.luk.critDamage);
     set('goldenFind', 'base', BALANCE.goldenBase);
-    set('accuracy', 'base', .92); add('accuracy', 'attributes', v.dex * E.dex.accuracy);
-    const dexEvasion = v.dex * E.dex.evasion; set('evasion', 'attributes', dexEvasion);
-    set('speed', 'base', 10); add('speed', 'attributes', v.dex * E.dex.speed);
-    set('mana', 'base', BALANCE.baseMana + (s.level - 1) * BALANCE.manaPerLevel); add('mana', 'attributes', v.wis * E.wis.mana); add('mana', 'attributes', v.int * E.int.mana);
-    set('manaRegen', 'base', 2); add('manaRegen', 'attributes', v.wis * E.wis.manaRegen);
-    add('hpRegen', 'attributes', v.vit * E.vit.hpRegen);
+    set('accuracy', 'base', .92); a.accuracy += v.dex * E.dex.accuracy; recAttr('accuracy', 'dex', E.dex.accuracy);
+    const dexEvasion = v.dex * E.dex.evasion; a.evasion = dexEvasion; recAttr('evasion', 'dex', E.dex.evasion);
+    set('speed', 'base', 10); a.speed += v.dex * E.dex.speed; recAttr('speed', 'dex', E.dex.speed);
+    set('mana', 'base', BALANCE.baseMana + (s.level - 1) * BALANCE.manaPerLevel); a.mana += v.wis * E.wis.mana; recAttr('mana', 'wis', E.wis.mana); a.mana += v.int * E.int.mana; recAttr('mana', 'int', E.int.mana);
+    set('manaRegen', 'base', 2); a.manaRegen += v.wis * E.wis.manaRegen; recAttr('manaRegen', 'wis', E.wis.manaRegen);
+    a.hpRegen += v.vit * E.vit.hpRegen; recAttr('hpRegen', 'vit', E.vit.hpRegen);
     set('guardAffinity', 'job', guardAffinity(jobFactor(j, 'defense'))); set('wardAffinity', 'job', guardAffinity(jobFactor(j, 'resist'))); set('healFocus', 'job', j.healer ? 1 : 0); set('tankEdge', 'job', j.tree === 'defense' && !j.healer ? SKILL_FORMULA.tankEdge : 0); set('arcaneStrike', 'job', arcaneStrikeChance({ tier: j.tier, magic: jobFactor(j, 'magic'), attack: jobFactor(j, 'attack') * (trainingRestraint(j)?.tree === 'magic' ? 0 : 1) }));
     if (a.arcaneStrike > 0) add('arcaneRatioBonus', 'job', SKILL_FORMULA.arcaneRatioByTier[Math.min(j.tier, SKILL_FORMULA.arcaneRatioByTier.length - 1)] || 0);
     a.goldBonus = (s.permanent.gold || 0) * .1 + v.luk * E.luk.goldBonus;
     // v3.202 세계석 연구 ‘던전 탐험 I’: 던전 주화 +10%/단계.
     add('dungeonGoldBonus', 'research', researchRank(s, 'dungeon') * .1);
-    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); rec('goldBonus', 'attributes', v.luk * E.luk.goldBonus);
+    rec('goldBonus', 'research', (s.permanent.gold || 0) * .1); recAttr('goldBonus', 'luk', E.luk.goldBonus);
     // v27.73 장비 드롭 보너스도 여기서 모읍니다(연구 ‘보물의 냄새’ 1단계 = 0.01 = 드롭 확률 +10%, 행운, 물건도감).
     a.dropBonus = researchRank(s, 'drop') * .01 + v.luk * E.luk.dropBonus + Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus;
-    rec('dropBonus', 'research', researchRank(s, 'drop') * .01); rec('dropBonus', 'attributes', v.luk * E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
+    rec('dropBonus', 'research', researchRank(s, 'drop') * .01); recAttr('dropBonus', 'luk', E.luk.dropBonus); rec('dropBonus', 'book', Object.keys(s.itemBook || {}).length * PROGRESSION.itemDropBonus);
     // 세계석 연구 2단계: 치명·치명 피해·관통·회피·흡혈은 고정값으로 더합니다. 관통·흡혈 상한은 아래 limit에서 그대로 적용됩니다(v3.84 관통 단계당 2%, 곱연산).
     add('crit', 'research', researchRank(s, 'crit') * .005); add('critDamage', 'research', researchRank(s, 'critDamage') * .02);
     add('penetration', 'research', researchRank(s, 'penetration') * PENETRATION.researchPerRank); add('evasion', 'research', researchRank(s, 'evasion') * .006);
@@ -162,7 +171,7 @@ export function stats(s: State, trace?: StatTrace): CombatStats {
     // v24.2 진행도 기록: 진행도 비례 피해의 기준값과 perCount 패시브가 씁니다.
     const counts = progressCounts(s);
     set('codexPower', 'book', counts.codex); set('huntPower', 'book', Math.sqrt(counts.hunt)); set('goldPower', 'book', Math.log10(1 + Math.max(0, s.gold || 0))); set('masteredPower', 'book', counts.mastered); set('variantPower', 'book', Math.sqrt(counts.variant));
-    set('attrStr', 'attributes', v.str); set('attrDex', 'attributes', v.dex); set('attrInt', 'attributes', v.int); set('attrVit', 'attributes', v.vit); set('attrWis', 'attributes', v.wis); set('attrLuk', 'attributes', v.luk);
+    a.attrStr = v.str; recAttr('attrStr', 'str', 1); a.attrDex = v.dex; recAttr('attrDex', 'dex', 1); a.attrInt = v.int; recAttr('attrInt', 'int', 1); a.attrVit = v.vit; recAttr('attrVit', 'vit', 1); a.attrWis = v.wis; recAttr('attrWis', 'wis', 1); a.attrLuk = v.luk; recAttr('attrLuk', 'luk', 1);
     // v3.130 스킬마다 숙련 단계 · 시그니처 배율 · 한계돌파 배율을 한 번만 계산하고, Object.entries 대신 키 순회로 할당을 없앴습니다(더하는 순서 · 식은 그대로).
     for (const { id, sk, mastery } of usable) {
         const rank = s.learned[id] || 1;
@@ -305,8 +314,6 @@ export function powerParts(v: Stats) {
 export function power(v: Stats) { const p = powerParts(v); return Math.round(POWER_SCALE * Math.pow(p.offense, POWER_WEIGHT.offense) * Math.pow(p.durability, POWER_WEIGHT.durability)); }
 /** v3.221 끼고 있는 칠흑 장신구의 보스 id(칠흑 일식의 형태). */
 export const wornOnyx = (s: Pick<State, 'equipment'>) => Object.values(s.equipment || {}).find(i => i?.onyx)?.onyx;
-/** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
-const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
 export function snapshot(s: State): Snapshot { const a = stats(s); return { season: SAVE_VERSION, name: s.name, title: displayTitle(s), level: s.level, job: s.job, rebirths: s.rebirths, stats: a, skills: s.skills.filter(id => canUse(s, id)), ...(extraRollLevel(s) ? { extraRolls: extraRollLevel(s) } : {}), ...(regionCores(s).length ? { cores: regionCores(s).length } : {}), ...(wornOnyx(s) ? { onyx: wornOnyx(s) } : {}), skillRanks: { ...s.learned }, skillMastery: skillMasteryRanks(s), ...(() => { const f = extremeFinalTable(s, s.skills.filter(id => canUse(s, id))); return f ? { skillFinal: f } : {}; })(), power: power(a), rating: s.rating, guild: s.guildMember?.name || '', ...(vowBadges(s.vows).length ? { vows: vowBadges(s.vows) } : {}) }; }
 /** v3.219 결투용 스냅샷: 분신 지원(참모 계보, s.support)을 빼고 만듭니다. 제단 신 · 월드보스(PvE)는 snapshot을 그대로 씁니다. v3.219 지원 AP로 늘어난 장착은 지원 없는 AP 안으로 줄입니다. */
 export const duelSnapshot = (s: State) => { const bare = { ...s, support: undefined, skills: [...(s.skills || [])] }; if (s.support?.ap) trimLoadout(bare); return snapshot(bare); };

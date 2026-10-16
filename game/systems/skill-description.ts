@@ -28,6 +28,17 @@ function coreText(sk: Skill) {
     const scale = byStatOrder(Object.entries(sk.core.scale || {})).map(([key, n]) => `${STAT_LABELS[key as keyof Stats] || key} +${skillPercent(n as number)}`);
     return [...flat, ...scale].join(' · ');
 }
+/**
+ * v3.322 계승 효율 한 줄(간단히 보기 · 자세히 보기 공통 문장). 4 · 5차 패시브는 수치 전체가 같은 비율로, 5차 전용 액티브는 피해 배율이 줄어듭니다.
+ * 핵심 패시브 칸만 줄어드는 것처럼 읽히지 않도록 핵심 패시브 줄에는 계승 문구를 넣지 않고 이 한 줄로만 말합니다.
+ */
+export function inheritText(sk: Skill): string {
+    if (sk.exclusiveLineage || !sk.job) return '';
+    const tier = jobById(sk.job)?.tier || 0, share = skillPercent(SKILL_FORMULA.passiveInheritScale);
+    if (sk.type === 'passive' && tier >= SKILL_FORMULA.passiveInheritTier) return sk.core && coreAzeroth(sk) ? `${tier}차 패시브 · 다른 계보가 계승하면 수치가 ${share}로 줄고 핵심 패시브는 효과 없음` : `${tier}차 패시브 · 다른 계보가 계승하면 ${sk.core ? '핵심 패시브를 포함한 ' : ''}모든 수치가 ${share}로 줄어듦`;
+    if (sk.type !== 'passive' && !sk.statusOnly && tier >= SKILL_FORMULA.signatureTier) return `${tier}차 전용 기술 · 다른 계보가 계승하면 피해 배율 ×${number(SKILL_FORMULA.signatureScale)}`;
+    return '';
+}
 const PROGRESS_WORD: Record<string, string> = { codex: '도감 기록', catch: '누적 처치', hunt: '사냥 기록', gold: '보유 골드', variant: '변종 기록', relic: '렐릭의 힘(경험치 보너스)' };
 const goldCapText = (g: NonNullable<Skill['goldSpend']>, magic: boolean) => [g.capAttack ? `${magic ? '마법' : '물리'} 공격 × ${number(g.capAttack)}` : '', g.cap ? g.cap.toLocaleString() : ''].filter(Boolean).join(' · ');
 const STATUS_WORD: Record<string, string> = { stun: '기절', bleed: '출혈', poison: '중독', burn: '화상', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' };
@@ -54,7 +65,9 @@ export function skillExtraNotes(sk: Skill): string[] {
     if (sk.perRebirth) notes.push(`환생마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${SKILL_FORMULA.perRebirthCap}회)`);
     for (const pc of sk.perCount || []) notes.push(`${COUNT_WORD[pc.source]}${pc.per === 1 ? '' : ` ${pc.per.toLocaleString()}`}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     // v3.317 한 줄로: 숙련을 채웠을 때의 값과 계승 조건만.
-    if (sk.core) notes.push(`핵심 패시브: ${coreText(sk)} (숙련을 채우면 · 처음엔 ${skillPercent(coreBase(sk))}) · 다른 계보가 계승하면 ${coreAzeroth(sk) ? '효과 없음' : '절반'}`);
+    if (sk.core) notes.push(`핵심 패시브: ${coreText(sk)} (숙련을 채우면 · 처음엔 ${skillPercent(coreBase(sk))})`);
+    // v3.322 계승 효율은 패시브 전체에 대한 한 줄로(자세히 보기와 같은 문장).
+    { const inherit = inheritText(sk); if (inherit) notes.push(inherit); }
     if (sk.masteryGain) notes.push('지정한 적 처치 시 숙련 추가 획득');
     const special = sk.cooldownReset || sk.lastStand || sk.sealFinale || sk.tagBonus || sk.borrowedDiscount;
     if (special && sk.desc) notes.push(sk.desc);
@@ -199,18 +212,18 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.effect === 'drain') out.push(`깎은 체력의 ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}를 회복합니다. 한 번에 최대 체력 × (흡혈률 + ${skillPercent(sk.drainRatio ?? SKILL_FORMULA.drainRatio)}) × ${skillPercent(SKILL_FORMULA.lifestealHpCap)}까지입니다.`);
         const statusKey = ({ stun: 'stun', bleed: 'bleed', poison: 'poison', burn: 'burn', weaken: 'weaken', silence: 'silence', slow: 'slow', corrode: 'corrode' } as Record<string, keyof typeof STATUS_TUNING.immuneTurns>)[sk.effect || ''];
         if (statusKey) out.push(`${statusKey === 'poison' ? '중첩은 계속 쌓입니다.' : statusKey === 'burn' ? `최대 ${STATUS_TUNING.burnMaxStacks}중첩까지 쌓고, 가득 차 있으면 이 기술은 건너뜁니다.` : '상대에게 이미 걸려 있으면 이 기술은 건너뜁니다.'} 풀린 뒤 ${STATUS_TUNING.immuneTurns[statusKey]}턴은 면역입니다.`);
-        if (sk.outsiderChance !== undefined) out.push(`아크메이지(불,독) 계보 밖에서 계승하면 발동률이 ${skillPercent(sk.outsiderChance)}로 줄어듭니다${sk.statusOnly ? '' : '(피해는 다른 5차 기술처럼 계승 효율을 따름)'}.`);
+        if (sk.outsiderChance !== undefined) out.push(`아크메이지(불,독) 계보가 아닌 직업이 계승하면 발동률이 ${skillPercent(sk.outsiderChance)}로 줄어듭니다${sk.statusOnly ? '' : '(피해는 다른 5차 기술처럼 계승 효율을 따름)'}.`);
         if (sk.alsoEffect) out.push(`같은 공격으로 ${STATUS_WORD[sk.alsoEffect]}도 한 중첩 겁니다(${sk.statusTurns}턴, 지속 턴 옵션이 그대로 더해집니다).`);
         if (sk.dotFinisher) out.push(`맞히면 상대의 중독·화상 중첩(각 최대 대비 비율의 평균)에 비례해 위 피해식의 ${skillPercent(sk.dotFinisher.hitMultiplier)}(+추가타 위력)로 추가 공격을 최대 ${sk.dotFinisher.maxHits}회 합니다. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴, 하나라도 걸려 있으면 중첩에 따라 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴, 둘 다 없으면 추가타·기절 없이 피해만 줍니다.${sk.dotFinisher.fullReset ? ' 둘 다 최대 중첩인 적에게 쓰면 이 기술의 대기가 바로 초기화됩니다.' : ''}`);
         if (sk.extraAttacks) out.push(`이어서 추가 공격을 ${Math.min(STATUS_TUNING.maxExtraAttacks, sk.extraAttacks)}회 합니다. 각 타격은 위 피해식의 ${skillPercent(sk.extraAttackMultiplier ?? SKILL_FORMULA.extraAttackMultiplier)}입니다.`);
     }
     for (const [key, n] of byStatOrder(Object.entries(sk.bonus || {}))) out.push(skillBonusText(key, n as number));
     // v3.169 능력치 수련 패시브: 기본 능력치 자체가 오릅니다(effectiveSkill이 숙련 단계 배율을 적용한 값).
-    for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화로는 오르지 않음`);
+    for (const [key, n] of Object.entries(sk.attrBonus || {})) out.push(`${ATTRIBUTE_NAMES[key as Attribute]} +${n} · 배분 능력치처럼 모든 파생 수치에 반영. 숙련 단계마다 +${skillPercent(STAT_TRAINING_GROWTH)}(최대 ×2) · SP 강화는 장착 AP 할인에만`);
     for (const pc of sk.perCount || []) out.push(`${COUNT_WORD[pc.source]} ${pc.per.toLocaleString()}마다 ${byStatOrder(Object.entries(pc.bonus)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} (최대 ${pc.cap}회)`);
     // v3.317 짧게: 수치 · 숙련 성장 · 계승. 계산 방식은 도움말(스킬 › 핵심 패시브)에.
-    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%. ${coreAzeroth(sk) ? '계보 전용(다른 계보는 효과 없음).' : `다른 계보가 계승하면 ${skillPercent(CORE_PASSIVE.borrowed)}.`}`);
-    // v3.320 초월자.
+    if (sk.core) out.push(`핵심 패시브: ${coreText(sk)}. 처음엔 ${skillPercent(coreBase(sk))}, 숙련을 채우면 100%.`);
+    // v3.333 초월자.
     if (sk.chainAwaken) out.push(`연계 각성: 발동하면 장착한 다른 각성기를 모두 ${skillPercent(sk.chainAwaken.power)} 위력으로 한 번씩 이어 발동합니다(대기 · 마나 소모 없음, 턴당 각성기 수에 세지 않음).`);
     if (sk.awakenFusion) out.push(`융합: 장착한 액티브의 서로 다른 계보 수(자기 계보 제외)마다 각성기 대기 −${sk.awakenFusion.perLineage}턴(최대 −${sk.awakenFusion.max}, 대기 최소 1).`);
     if (sk.song) out.push('노래: 장착 AP 0.');
@@ -243,7 +256,8 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.penaltyRelief) out.push(`현재 직업의 마이너스 보정(체력·공격·방어 배율) ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     // v3.137 페널티 회복형 성장 스킬의 첫 단계(회복 0 · 보너스 없음)도 무엇을 하는지 적습니다.
     else if (sk.levelEffects?.some(l => l.penaltyRelief)) out.push('아직 직업 마이너스 보정을 되찾지 못함 · 숙련하면 단계별로 회복');
-    if (!sk.exclusiveLineage && (jobById(sk.job)?.tier || 0) >= SKILL_FORMULA.signatureTier) out.push(`전용 기술입니다. 계보 밖 직업이 계승하면 ${sk.type === 'active' ? '피해 배율' : '능력치'}이 ×${number(SKILL_FORMULA.signatureScale)}로 줄어듭니다.`);
+    // v3.321 · v3.322 계승 효율: 간단히 보기와 같은 한 줄(inheritText). 궁극의 모험가는 핵심 패시브 칸 밖의 수치 · 피해 배율이 깎이지 않습니다.
+    { const inherit = inheritText(sk); if (inherit) out.push(`${inherit}(궁극의 모험가는 ${sk.type !== 'passive' ? '줄지 않음' : sk.core && coreAzeroth(sk) ? '수치가 줄지 않고 핵심 패시브는 효과 없음' : sk.core ? '핵심 패시브만 줄어듦' : '줄지 않음'}).`); }
     if (sk.masteryGain) out.push(`${masteryConditionText(sk)} 처치 시 숙련 ×${masteryPerVictory(masteryGainBonus(sk, level))}`);
     if (sk.type === 'passive' && !sk.song && !sk.levelEffects && SKILL_FORMULA.masteredPassiveAP) out.push(level >= maxSkillLevel(sk) ? `최대 성장을 마쳐 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어 있습니다.` : `최대 성장(Lv.${maxSkillLevel(sk)})에 닿으면 장착 AP가 ${SKILL_FORMULA.masteredPassiveAP} 줄어듭니다.`);
     return out;

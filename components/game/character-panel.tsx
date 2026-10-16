@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { ConfirmButton } from './confirm-button';
 import { ChevronDown, RefreshCw, Target } from 'lucide-react';
 import { ATTRIBUTES, PROGRESSION, CORE_STATS, DETAIL_STATS, OPTIONAL_STATS, percent } from '@/game/data/progression';
-import { attributes, apCapacity, apUsed, apSources } from '@/game/systems/progression';
+import { apCapacity, apUsed, apSources } from '@/game/systems/progression';
 import { victoryHeal, victoryHealRate } from '@/game/systems/encounter';
 import { masteryMultipliers } from '@/game/systems/mastery';
 import { RANK_PERKS, rankTitle, rankPerkLevel, rankPerkValue } from '@/game/data/rank';
 import { VARIANTS, VARIANT_BOOK_MIN, variantChances } from '@/game/data/variants';
 import {MONSTER_TUNING, BALANCE } from '@/game/data/balance';
 import { StatBreakdown } from './stat-breakdown';
-import { type StatTrace, stats, dropRate, goldMultiplier, expMultiplier, focusGold, focusExp } from '@/game/systems/stats';
+import { type StatTrace, stats, attributeBreakdown, dropRate, goldMultiplier, expMultiplier, focusGold, focusExp } from '@/game/systems/stats';
 import { roughReward, restraintExp } from '@/game/systems/vows';
 import { sproutExp, sproutCount } from '@/game/data/sprout';
 import { ascensionEarlyExp } from '@/game/data/ascension';
@@ -50,7 +50,9 @@ export function Character({ s, send, busy }: PanelProps) {
     const setStep = (n: number) => { setStepState(n); try { localStorage.setItem(STEP_KEY, String(n)); } catch { /* 저장 못 해도 이번 화면에서는 씀 */ } };
     const put = Math.min(step, s.statPoints);
     // v3.49 정보 비공개(10.2-7): 켜져 있으면 드롭·변종 확률 대신 보너스만 보여 줍니다.
-    const trace: StatTrace = {}, a = stats(s, trace), v = attributes(s), secret = catalogNow().secret;
+    // v3.326 기본 능력치 화면은 보스 코어 · 수련 패시브 몫까지 더한 값(능력치 효과에 쓰는 값)을 보여 주고, 구성은 줄마다 적습니다. v3.327 전직 조건은 기본 + 보스 코어(jobAttributes), 업적은 직접 투자 값(parts.base)을 봅니다.
+    const trace: StatTrace = {}, a = stats(s, trace), parts = attributeBreakdown(s), v = parts.total, secret = catalogNow().secret;
+    const hasCores = Object.values(parts.cores).some(n => n > 0), hasTraining = Object.values(parts.training).some(n => n > 0);
     return <>
     <Heading eyebrow="CHARACTER BUILD" title="어떤 모험가가 될 것인가" description={`기본 능력치는 전직 조건과 전투 특성을 함께 결정합니다. 레벨마다 ${PROGRESSION.statPerLevel}포인트를 직접 배분하세요.`}>
     <ConfirmButton icon={<RefreshCw size={15}/>} confirmLabel="초기화" title="능력치를 재분배할까요?" description="투자한 포인트를 전부 돌려받습니다. 전직 해금 기록은 유지되며 체력·마나는 새 최대값을 초과할 수 없습니다." disabled={busy || s.running} onConfirm={() => send({ type: 'resetAttributes' })} label="무료 재분배"/>
@@ -66,7 +68,7 @@ export function Character({ s, send, busy }: PanelProps) {
     <section className="panel attribute-panel">
     <div className="section-title">
     <h2>기본 능력치</h2>
-    <span>기본 + 성장 + 직접 투자</span>
+    <span>기본 + 직접 투자{hasCores ? ' + 보스 코어' : ''}{hasTraining ? ' + 수련' : ''}</span>
     </div>
     {/* v3.292 찍기 단위: 줄마다 +1 · +5 대신 고른 단위 한 버튼(남은 포인트가 적으면 남은 만큼). */}
     <div className="stat-step" role="radiogroup" aria-label="능력치 찍기 단위"><span>찍기 단위</span>{STAT_STEPS.map(n => <button key={n} type="button" role="radio" aria-checked={step === n} className={step === n ? 'primary small' : 'secondary small'} onClick={() => setStep(n)}>×{n}</button>)}</div>{ATTRIBUTES.map(attr => <div className="attribute-row" key={attr.id}>
@@ -75,13 +77,13 @@ export function Character({ s, send, busy }: PanelProps) {
         <h3>{attr.name}<strong>{v[attr.id]}</strong>
         </h3>
         <p>{attr.description}</p>
-        <small>직접 투자 {s.attributes[attr.id]}포인트</small>
+        <small>직접 투자 {s.attributes[attr.id]}포인트{s.devoured?.[attr.id] ? ` · 포식 +${s.devoured[attr.id]}` : ''}{parts.cores[attr.id] ? ` · 보스 코어 +${parts.cores[attr.id].toLocaleString()}` : ''}{parts.training[attr.id] ? ` · 수련 +${parts.training[attr.id].toLocaleString()}` : ''}</small>
         </div>
         <div className="attribute-buttons">
         <button className="secondary small" aria-label={`${attr.name} ${put || step} 증가`} disabled={busy || s.statPoints < 1} title={s.statPoints > 0 && s.statPoints < step ? `남은 ${s.statPoints}포인트만 투자합니다` : undefined} onClick={() => send({ type: 'attribute', id: attr.id, value: String(put) })}>+{put || step}</button>
         {s.skipStatConfirm ? <button className="secondary" disabled={busy || s.statPoints < 1} title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자합니다(설정에서 확인 창을 다시 켤 수 있습니다).`} onClick={() => send({ type: 'attribute', id: attr.id, value: 'max' })}>최대</button> : <ConfirmButton label="최대" title={`${attr.name}에 남은 ${s.statPoints}포인트를 모두 투자할까요?`} description={`${attr.description}. 재분배는 무료지만 자동 사냥 중에는 할 수 없습니다.`} confirmLabel="모두 투자" disabled={busy || s.statPoints < 1} onConfirm={() => send({ type: 'attribute', id: attr.id, value: 'max' })}/>}
         </div>
-        </div>)}</section>
+        </div>)}{(hasCores || hasTraining) && <p className="footnote">전직 조건은 보스 코어 몫까지 더한 값으로 봅니다. 수련 몫은 능력치 효과에만 더해지고, 업적(능력치 돌파)은 직접 투자 값(기본 + 투자{Object.values(s.devoured || {}).some(Boolean) ? ' + 포식' : ''})으로 봅니다.</p>}</section>
     <section className="panel derived-panel">
     <div className="section-title">
     <h2>최종 전투 능력치</h2>

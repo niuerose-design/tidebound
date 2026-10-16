@@ -81,7 +81,7 @@ export type Fighter = {
 /** v27.4 직업의 제약 장치를 전투 참가자 필드로. 플레이어(PvE)와 결투 스냅샷이 같이 씁니다. */
 export function constraintFields(jobId: string | undefined): Partial<Fighter> {
     const job = jobById(jobId), d = job?.constraint?.devices;
-    // v3.320 6차 초월자: 각성기 턴당 2개.
+    // v3.333 6차 초월자: 각성기 턴당 2개.
     const extra: Partial<Fighter> = job?.awakenPerTurn ? { awakenPerTurn: job.awakenPerTurn } : {};
     if (!d) return extra;
     return { ...extra, ...(d.firstStrike ? { firstStrike: true } : {}), ...(d.lastStand ? { jobStand: d.lastStand } : {}), ...(d.sureHit ? { sureHit: true } : {}), ...(d.damageTaken ? { damageTaken: d.damageTaken } : {}), ...(d.damageDealt ? { damageDealt: d.damageDealt } : {}) };
@@ -422,7 +422,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
         // 각성기로 쓰러뜨리면 대기를 kill턴만 둡니다(짧은 사냥에서 남는 피해로 버려지는 몫을 돌려줌).
         if (b.hp <= 0) a.cooldowns[id] = Math.min(a.cooldowns[id] ?? 0, SKILL_FORMULA.awaken.kill);
         onAction(`${text} · 각성`, more[0]);
-        // v3.320 연계 각성(6차): 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 · 판정 없음, 턴당 횟수에 안 셈).
+        // v3.333 연계 각성(6차): 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 · 판정 없음, 턴당 횟수에 안 셈).
         if (base.chainAwaken) for (const id2 of a.skills) {
             const b2 = skillById(id2);
             if (id2 === id || !b2?.awaken || a.hp <= 0 || b.hp <= 0) continue;
@@ -447,8 +447,8 @@ export function strike(a: Fighter, b: Fighter, rng = Math.random, events?: Comba
 }
 /** v25.5 동시 시전 묶음의 2번째 이후 줄: 행동 시작 효과(회복·지속 피해·대기 감소·기절)를 건너뛰고 정해진 기술을 바로 씁니다.
  * v3.86 kind: 'awaken'(각성기) · 'followUp'(추가 판정, power = 위력 배율)도 같은 방식으로 씁니다. */
-type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number; /** v3.320 연계 각성으로 이어진 발동: 대기 · 마나를 쓰지 않음. */ free?: boolean };
-/** v3.320 융합: 장착한 액티브의 서로 다른 계보 수(융합 주인의 계보 제외) × perLineage, 최대 max. 융합 패시브가 없으면 0. */
+type ForcedCast = { id: string; index: number; count: number; kind?: 'awaken' | 'followUp'; power?: number; /** v3.333 연계 각성으로 이어진 발동: 대기 · 마나를 쓰지 않음. */ free?: boolean };
+/** v3.333 융합: 장착한 액티브의 서로 다른 계보 수(융합 주인의 계보 제외) × perLineage, 최대 max. 융합 패시브가 없으면 0. */
 function fusionCut(a: Fighter) {
     const ownerId = a.skills.find(id => skillById(id)?.awakenFusion);
     if (!ownerId) return 0;
@@ -590,7 +590,7 @@ function act(a: Fighter, b: Fighter, rng = Math.random, events?: CombatEvent[], 
         if (chosen.mineChance) ev.mineSwing = true;
         if (a.magazine && !forced && a.effects.mag && !a.effects.overdrive) a.effects.mag.left--;
         if (chosen.pnlScale) chosen = { ...chosen, multiplier: chosen.multiplier * Math.max(0, 1 + (chosen.pnlAbs ? Math.abs(a.pnl || 0) : a.pnl || 0) * chosen.pnlScale) };
-        // v3.320 연계 각성으로 이어진 발동(free)은 대기 · 마나를 쓰지 않고, 각성기 대기는 융합만큼 줄어듭니다(최소 1).
+        // v3.333 연계 각성으로 이어진 발동(free)은 대기 · 마나를 쓰지 않고, 각성기 대기는 융합만큼 줄어듭니다(최소 1).
         if (!forced?.free) {
             const cut = chosen.awaken ? fusionCut(a) : 0;
             a.cooldowns[chosen.id] = Math.max(chosen.awaken ? 1 : 0, chosen.cooldown + (castCount - 1) * MC.cooldownStep - cut);
