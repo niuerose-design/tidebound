@@ -561,3 +561,24 @@ test('v3.316 core passive transcendence: stages at last milestone x2/x4, own lin
     assert.ok(ach('coreTranscend:1')?.honor && ach('coreTranscend2:5')?.honor && ach('extremeStage:5')?.honor); assert.equal(ach('coreTranscend:1').progress(s), 1); assert.equal(ach('coreTranscend2:1').progress(s), 0);
     assert.ok(['coreTranscend:1', 'coreTranscend2:5', 'extremeStage:5'].every(id => TITLES.some(t => t.id === id && t.achievement === id)));
 });
+
+test('v3.321 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) line for 파멸 (ruin) at the onyx top roll, once, leaving other items alone', async () => {
+    const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+    const { migrateState } = await load('systems/migrations'), { ONYX_ITEMS, onyxAccessory } = await load('data/onyx'), G = await load('data/gear'), { newState } = await load('systems/engine');
+    const venom = (power, rarity, lv) => G.rollOption(G.affixDef('venom'), power, rarity, () => .5, lv);
+    const make = (defId, id) => { const it = onyxAccessory(ONYX_ITEMS.find(d => d.id === defId), id, 100); it.affixes.push(venom(it.power, it.rarity, it.level)); it.onyxTuned = true; return it; };
+    const s = newState(0); delete s.genesisVenomSwapped; /* 옛 세이브처럼 */ const bag = make('onyxBlackMage', 'onyx-a'), other = make('onyxDusk', 'onyx-b');
+    const worn = make('onyxBlackMage', 'onyx-c'); worn.affixes.push({ ...G.rollOption(G.affixDef('ruin'), worn.power, worn.rarity, () => .5, worn.level) });
+    const plain = { id: 'g1', name: '보통 장비', slot: 'charm', rarity: 5, level: 100, power: 300, affixes: [venom(300, 5, 100)] };
+    s.inventory.push(bag, other, plain); s.equipment.charm = worn;
+    migrateState(s, 0);
+    assert.ok(s.genesisVenomSwapped);
+    assert.ok(!bag.affixes.some(a => a.id === 'venom') && bag.affixes.some(a => a.id === 'ruin'), 'the bag badge swapped');
+    const want = G.refineOption(G.rollOption(G.affixDef('ruin'), bag.power, bag.rarity, () => 1, bag.level), bag.power, bag.rarity, () => 1, bag.level);
+    assert.equal(bag.affixes.find(a => a.id === 'ruin').value, want.value, 'top onyx roll'); assert.equal(bag.affixes.find(a => a.id === 'ruin').name, '파멸');
+    assert.ok(other.affixes.some(a => a.id === 'venom') && !other.affixes.some(a => a.id === 'ruin'), 'another onyx charm is untouched');
+    assert.ok(plain.affixes.some(a => a.id === 'venom'), 'plain gear is untouched');
+    assert.ok(worn.affixes.some(a => a.id === 'venom') && worn.affixes.filter(a => a.id === 'ruin').length === 1, 'a badge that already has 파멸 keeps its lines');
+    assert.ok(s.logs.some(l => /운영 보정/.test(l.text || l.message || JSON.stringify(l))));
+    const before = JSON.stringify([bag.affixes, s.logs.length]); migrateState(s, 0); assert.equal(JSON.stringify([bag.affixes, s.logs.length]), before, 'runs once');
+});
