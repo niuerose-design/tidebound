@@ -400,7 +400,7 @@ test('v3.202 research 던전 탐험 I: +10% dungeon coins per rank; 황금 비 i
 test('v3.333 shop essence purchase: 1 essence = random-draw gold ÷ 3 (rounded up), bundles and max, gold checks, cap per purchase',async()=>{
     const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(), C=await L.load('systems/commerce'), E=await L.load('data/economy');
     const s=newState(0); s.level=100; s.rebirths=50; s.essence=5;
-    const price=C.essencePrice(s); assert.equal(price,Math.ceil(C.gambleCost(s)/E.ESSENCE_SHOP.perGamble)); assert.ok(price>1000);
+    const price=C.essencePrice(s); assert.equal(price,Math.ceil(C.gambleCost(s)*E.ESSENCE_SHOP.gambleRatio)); assert.ok(price>C.gambleCost(s)*3,'v3.334: about 3.3 draws per essence');
     s.gold=price*100; act(s,{type:'buyEssence',value:'100'},0); assert.equal(s.essence,105); assert.equal(s.gold,0);
     assert.throws(()=>act(s,{type:'buyEssence',value:'10'},0),/골드가 부족/); assert.throws(()=>act(s,{type:'buyEssence',value:'0'},0),/개수/); assert.throws(()=>act(s,{type:'buyEssence',value:'abc'},0),/개수/);
     s.gold=price*7+3; assert.equal(C.essenceBuyCount(s,'max'),7); act(s,{type:'buyEssence',value:'max'},0); assert.equal(s.essence,112); assert.equal(s.gold,3);
