@@ -606,6 +606,20 @@ test('v3.115 news: a milestone onyx reads ‘환생 N회 달성 보상으로 …
     assert.ok(N.collectNews(s, 86_400_000).find(e => e.kind === 'onyx').text('영희').endsWith('얻었습니다.'), 'hunted onyx keeps the old line');
 });
 
+test('v3.333 server region check: reads the Neon region from the DB host and recommends the matching Vercel region', async () => {
+    const R = await L.load('server/region');
+    assert.equal(R.dbRegionOf('postgresql://user:pw@ep-cool-name-123456-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'), 'aws-ap-southeast-1');
+    assert.equal(R.dbRegionOf('postgres://u:p@ep-x-pooler.us-east-1.aws.neon.tech/db'), 'aws-us-east-1');
+    assert.equal(R.dbRegionOf('postgres://u:p@ep-x.eastus2.azure.neon.tech/db'), 'azure-eastus2');
+    assert.equal(R.dbRegionOf('postgres://u:p@localhost/db'), null); assert.equal(R.dbRegionOf(undefined), null);
+    const saved = { url: process.env.DATABASE_URL, region: process.env.VERCEL_REGION };
+    try {
+        process.env.DATABASE_URL = 'postgres://u:p@ep-x.ap-southeast-1.aws.neon.tech/db'; process.env.VERCEL_REGION = 'iad1';
+        const r = R.serverRegions(); assert.equal(r.recommended, 'sin1'); assert.equal(r.aligned, false); assert.equal(r.functionRegion, 'iad1');
+        process.env.VERCEL_REGION = 'sin1'; assert.equal(R.serverRegions().aligned, true);
+        delete process.env.VERCEL_REGION; assert.equal(R.serverRegions().functionRegion, null);
+    } finally { if (saved.url === undefined) delete process.env.DATABASE_URL; else process.env.DATABASE_URL = saved.url; if (saved.region === undefined) delete process.env.VERCEL_REGION; else process.env.VERCEL_REGION = saved.region; }
+});
 test('v3.332 mutate reuses the save it just wrote on the same instance, and still applies on top of a save written elsewhere (revision conflict → re-read)', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-recent-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;

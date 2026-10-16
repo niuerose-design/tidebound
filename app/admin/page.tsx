@@ -92,6 +92,8 @@ export default function AdminPage() {
     const [broadcast, setBroadcast] = useState<{ text: string; by: string; until: number } | null>(null);
     /** v3.43 정보 비공개 스위치(docs/concept.md 10장). env가 있으면 환경 변수가 우선합니다. */
     const [secrecy, setSecrecyState] = useState<{ on: boolean; env: string | null } | null>(null);
+    // v3.333 서버 리전 점검.
+    const [region, setRegion] = useState<{ functionRegion: string | null; functionCity: string | null; dbRegion: string | null; recommended: string | null; recommendedCity: string | null; aligned: boolean } | null>(null);
     const [hackFx, setHackFx] = useState<{ tamper: number; down: number; patched: number; ddos?: number } | null>(null);
     const [tab, setTab] = useState<Tab>('life'), [events, setEvents] = useState<EventList | null>(null), [closures, setClosures] = useState<ClosureList | null>(null), [stats, setStats] = useState<Stats | null>(null);
     const [draft, setDraft] = useState({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' });
@@ -146,7 +148,7 @@ export default function AdminPage() {
         const d = await call({ action: 'setBlessing', id: blessId, level: blessLevel, minutes: mins });
         if (d) { setStats(d); setDone(`${BLESS_NAMES[blessId]} ${blessLevel ? `${blessLevel}단계 설정` : '끔'} 완료.`); }
     };
-    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) { setBroadcast(h.broadcast); setHackFx(h.effects || null); } const sc = await call({ action: 'secrecy' }); if (sc) setSecrecyState(sc); };
+    const loadClosures = async () => { const d = await call({ action: 'closures' }); if (d) setClosures(d); const h = await call({ action: 'hacks' }); if (h) { setBroadcast(h.broadcast); setHackFx(h.effects || null); } const sc = await call({ action: 'secrecy' }); if (sc) setSecrecyState(sc); const rg = await call({ action: 'region' }); if (rg) setRegion(rg); };
     const toggleSecrecy = async () => {
         if (!secrecy) return;
         if (!confirm(secrecy.on ? '정보 비공개를 끌까요? 모든 모험가에게 전체 정보(오픈 베타 화면)가 보입니다.' : '정보 비공개를 켤까요? 모험가는 스스로 알아낸 정보만 보게 됩니다(아직 옮기지 않은 화면은 그대로).')) return;
@@ -389,6 +391,7 @@ export default function AdminPage() {
                 <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
                     <li style={rowItem}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={muted}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={muted}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</li>
                     <li style={rowItem}><span style={{ fontSize: 13 }}><b>정보 비공개</b> · {secrecy ? `${secrecy.on ? '켜짐' : '꺼짐(오픈 베타)'}${secrecy.env ? ` · 환경 변수 ${secrecy.env} 우선` : ''}` : '-'}</span>{secrecy && <button className="secondary" disabled={busy || !!secrecy.env} onClick={toggleSecrecy}>{secrecy.on ? '끄기' : '켜기'}</button>}</li>
+                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>서버 리전</b> · {region ? <>함수 {region.functionRegion ? `${region.functionRegion}${region.functionCity ? `(${region.functionCity})` : ''}` : '로컬'} · DB {region.dbRegion || '알 수 없음'}{region.dbRegion && region.recommended ? (region.aligned ? <small style={muted}> · 같은 곳입니다</small> : <small style={{ color: '#e0b36a' }}> · 다릅니다 → vercel.json에 {'"regions": ["' + region.recommended + '"]'}{region.recommendedCity ? `(${region.recommendedCity})` : ''}를 넣고 다시 배포하세요</small>) : null}</> : '-'}</span></li>
                     <li style={rowItem}><span style={{ fontSize: 13 }}><b>해킹 효과</b> · {hackFx ? `변조 ${hackFx.tamper} · 다운 ${hackFx.down} · 패치 ${hackFx.patched} · DDoS ${hackFx.ddos || 0}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 && <button className="secondary" disabled={busy} onClick={removeHackEffects}>모두 지우기</button>}</li>
                 </ul>
             </Fold>
