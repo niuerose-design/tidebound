@@ -408,9 +408,9 @@ export type Skill = {
     wardPierce?: number[];
     /** v3.282 각성기의 대기(턴)와 첫 대기. 없으면 SKILL_FORMULA.awaken.cooldown · start(포이즌 노바 5턴). */
     awakenCooldown?: number;
-    /** v3.333 연계 각성(6차): 이 각성기가 발동하면 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 소모 없음). */
+    /** v3.335 연계 각성(6차): 이 각성기가 발동하면 장착한 다른 각성기를 모두 power 위력으로 한 번씩 이어 발동합니다(대기 · 마나 소모 없음). */
     chainAwaken?: { power: number; /** 이어 발동하는 각성기 최대 수(편성 순서대로). 끼운 각성기 수에 비례해 끝없이 커지지 않게. */ max: number };
-    /** v3.333 융합(6차 패시브): 장착한 액티브의 서로 다른 계보 수(자기 계보 제외) × perLineage만큼 각성기 대기를 줄입니다(최대 max, 대기 최소 1). */
+    /** v3.335 융합(6차 패시브): 장착한 액티브의 서로 다른 계보 수(자기 계보 제외) × perLineage만큼 각성기 대기를 줄입니다(최대 max, 대기 최소 1). */
     awakenFusion?: { perLineage: number; max: number };
     /** v3.132 도트 퍼니셔: 적의 중독·화상 중첩에 비례한 추가타(최대 maxHits회, 위력 hitMultiplier). 둘 다 최대 중첩이면 기절 fullStun턴, 일부면 partStun턴, 없으면 추가타·기절 없음. */
     dotFinisher?: { maxHits: number; hitMultiplier: number; fullStun: number; partStun: number; /** v3.282 둘 다 최대 중첩인 적에게 쓰면 이 기술의 대기를 바로 초기화합니다. */ fullReset?: boolean };

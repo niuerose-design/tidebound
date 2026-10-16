@@ -3,7 +3,7 @@ import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, assert, test } from './h
 
 test('Job trees: seven trees, no job left in the old other tree, v24 job counts per tree', () => {
     assert.deepEqual(JOB_TREES.map(t => t.id), ['physical', 'magic', 'defense', 'status', 'hybrid', 'support', 'mystery']);
-    assert.equal(JOBS.length, 282); assert.equal(new Set(JOBS.map(j => j.id)).size, 282); // v3.333 초월자(6차) // v3.246 아제로스 히든 2개(정수 포식자 · 세계석 광부) · v3.230 아제로스 히든 3개(무릉 수행자 · 변종 학자 · 제단 순례자) · v3.231 이계 요원 4개(5차 두 갈래) · 트레이더 3개 // v3.225 참모 계보 5차 2개(총사령관 · 군수사령관) // v3.220 아제로스 히든 계보 4개(까미 사냥꾼 · 누리 추적자 · 어둠의 추종자 · 칠흑의 화신) // 참모 계보: v3.219 보급관 · v3.219 군의관 · v3.219 작전참모 · 화력참모
+    assert.equal(JOBS.length, 282); assert.equal(new Set(JOBS.map(j => j.id)).size, 282); // v3.335 초월자(6차) // v3.246 아제로스 히든 2개(정수 포식자 · 세계석 광부) · v3.230 아제로스 히든 3개(무릉 수행자 · 변종 학자 · 제단 순례자) · v3.231 이계 요원 4개(5차 두 갈래) · 트레이더 3개 // v3.225 참모 계보 5차 2개(총사령관 · 군수사령관) // v3.220 아제로스 히든 계보 4개(까미 사냥꾼 · 누리 추적자 · 어둠의 추종자 · 칠흑의 화신) // 참모 계보: v3.219 보급관 · v3.219 군의관 · v3.219 작전참모 · 화력참모
     // v3.69 옛 독립 수련 27개는 retired(표에는 남고 화면·전직에서 빠짐), 수련 직업 6개가 새로 생겼습니다.
     assert.equal(JOBS.filter(j => j.retired).length, 27); assert.equal(JOBS.filter(j => !j.retired).length, 255);
     // v3.70 능력치 수련 I~III 18개(계열마다 3개, 수련 계보).
@@ -91,7 +91,7 @@ test('v3.47 secret skills: server-only table registered by the engine, missing f
     const Sk = await load('data/skills'), { SECRET_SKILLS } = await load('secret/skills'), { SECRET_JOBS } = await load('secret/jobs');
     const secretJobs = new Set(SECRET_JOBS.map(j => j.id));
     // v3.199 은월 3~5차 스킬 6개는 공개 표(data/specials.ts)로, 청빈 수도승 스킬 2개는 삭제(35 → 27). v3.200 궁극의 모험가 스킬 1개가 비밀로(→ 28).
-    assert.equal(SECRET_SKILLS.length, 45); // v3.333 초월자 2개(→ 45) // v3.246 정수 포식자 · 세계석 광부 4개(→ 43) · v3.220 아제로스 히든 계보 스킬 8개(→ 36) · v3.230 3계보 6개(→ 42) · v3.231 해커 스킬 3개는 공개 이계 표로(→ 39) assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
+    assert.equal(SECRET_SKILLS.length, 45); // v3.335 초월자 2개(→ 45) // v3.246 정수 포식자 · 세계석 광부 4개(→ 43) · v3.220 아제로스 히든 계보 스킬 8개(→ 36) · v3.230 3계보 6개(→ 42) · v3.231 해커 스킬 3개는 공개 이계 표로(→ 39) assert.ok(SECRET_SKILLS.every(sk => secretJobs.has(sk.job)), 'every secret skill belongs to a secret job');
     assert.ok(SECRET_SKILLS.every(sk => Sk.skillById(sk.id) === sk), 'the engine registered the finished objects');
     assert.equal(Sk.SKILLS.filter(sk => secretJobs.has(sk.job)).length, 45, 'full table on the server');
     // 공개 표(game/data)에는 정의가 없습니다. v3.199 은월이 공개로 가며 예외였던 tentacleBarrage도 비밀 표에서 빠졌습니다.

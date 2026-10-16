@@ -378,7 +378,7 @@ test('v3.25 server: pending hacks write the shared config, white hackers restore
         process.env.TIDEBOUND_SECRECY = 'off'; assert.equal(await Sc.secrecyOn(now + 2), false, 'env wins'); delete process.env.TIDEBOUND_SECRECY;
         await Sc.setSecrecy(false, now); assert.equal((await Sc.buildCatalog(newState(0), now + 3)).secret, false);
         // v3.44 비밀 직업: 비공개가 꺼져 있으면 전체, 켜면 드러난 것만 전체·나머지는 실루엣(이름·설명·조건·능력치 없음). 같은 키면 다시 보내지 않음.
-        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 21, 'v3.333 초월자 · v3.246 아제로스 2개 · v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가 · v3.220 아제로스 4개 · v3.230 아제로스 3개 · v3.231 해커 3개는 공개 이계로'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
+        const openCat = await Sc.buildCatalog(newState(0), now + 4); assert.equal(openCat.jobs.length, 21, 'v3.335 초월자 · v3.246 아제로스 2개 · v3.199 은월 3~5차는 공개 · 청빈 수도승 삭제 · v3.200 궁극의 모험가 추가 · v3.220 아제로스 4개 · v3.230 아제로스 3개 · v3.231 해커 3개는 공개 이계로'); assert.ok(openCat.jobs.every(j => !j.veiled && j.name !== '???'));
         assert.equal(await Sc.buildCatalog(newState(0), now + 4, openCat.key), null, 'same key: nothing to send');
         process.env.TIDEBOUND_SECRECY = 'on';
         const veiledCat = await Sc.buildCatalog(newState(0), now + 5), lich = veiledCat.jobs.find(j => j.id === 'voidSovereign');

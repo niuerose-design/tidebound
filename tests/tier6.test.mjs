@@ -1,8 +1,8 @@
-// v3.333 6차 초월자(docs/tier6-10-plan.md): 궁극의 모험가 위 히든 직업. 입구는 기록, 효과는 규칙(각성기 턴당 2개 · 연계 각성 · 융합).
+// v3.335 6차 초월자(docs/tier6-10-plan.md): 궁극의 모험가 위 히든 직업. 입구는 기록, 효과는 규칙(각성기 턴당 2개 · 연계 각성 · 융합).
 import { assert, test } from './harness.mjs';
 const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
 
-test('v3.333 초월자: hidden tier 6 above 궁극의 모험가, ×10 mastery, record-gated unlock, parent mastery 15M', async () => {
+test('v3.335 초월자: hidden tier 6 above 궁극의 모험가, ×10 mastery, record-gated unlock, parent mastery 15M', async () => {
     const C = await load('data/classes'), P = await load('systems/progression'), Sk = await load('data/skills'), U = await load('secret/unlocks'), L = await load('secret/leaks'), { newState } = await load('systems/engine'), { DUNGEONS } = await load('data/world');
     const j = C.jobById('transcendent');
     assert.ok(j && j.hidden && j.tier === 6 && j.parent === 'rebirthFisher' && j.signatureFree && j.awakenPerTurn === 2 && j.tree === 'mystery'); assert.equal(C.lineageOf(j), 'fisher');
@@ -27,7 +27,7 @@ test('v3.333 초월자: hidden tier 6 above 궁극의 모험가, ×10 mastery, r
     assert.equal(U.unlockMet(s, 'transcendent'), true, 'once opened, the door stays open (doorsOpened)');
 });
 
-test('v3.333 초월자 combat: two awakenings a turn, chain awaken fires the other equipped awakenings for free at 60%, fusion cuts awaken cooldowns', async () => {
+test('v3.335 초월자 combat: two awakenings a turn, chain awaken fires the other equipped awakenings for free at 60%, fusion cuts awaken cooldowns', async () => {
     const Co = await load('systems/combat'), Sk = await load('data/skills'), C = await load('data/classes');
     const others = Sk.SKILLS.filter(sk => sk.awaken && !sk.chainAwaken && !sk.chargeNeed && !sk.requiresBuff && !sk.fuelCost && !sk.statusOnly && !sk.healOnly && (sk.manaCost || 0) <= 60 && sk.job && C.jobById(sk.job)?.tier === 5 && !C.jobById(sk.job).hidden);
     const byLineage = new Map(); for (const sk of others) { const l = C.lineageOf(C.jobById(sk.job)); if (!byLineage.has(l)) byLineage.set(l, sk); }
