@@ -1,0 +1,6 @@
+$ next start --port 3000
+▲ Next.js 16.3.4
+- Local:         http://localhost:3000
+- Network:       http://10.1.0.93:3000
+✓ Ready in 93ms
+✓ Running next.config.ts took 35ms
