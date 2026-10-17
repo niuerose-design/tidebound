@@ -795,7 +795,7 @@ test('v3.133 rule options (◆) draw at weight .25: about 36% of primal items ca
     let x = 11; const rng = () => ((x = (x * 16807) % 2147483647) / 2147483647); const N = 6000; let rule6 = 0, rule3 = 0, rare6 = 0;
     for (let i = 0; i < N; i++) { const a = G.rollAffixes(6, 500, undefined, rng, [], 'rod', 100); if (a.some(o => o.rule)) rule6++; if (a.some(o => G.affixDef(o.id)?.rare)) rare6++; const b = G.rollAffixes(3, 500, undefined, rng, [], 'rod', 100); if (b.some(o => o.rule)) rule3++; }
     assert.ok(rule6 / N > .30 && rule6 / N < .43, `primal with a rule option ${rule6 / N}`); assert.ok(rule3 / N > .16 && rule3 / N < .29, `legendary with a rule option ${rule3 / N}`); assert.ok(rare6 / N < .01, `rare ${rare6 / N}`);
-    assert.ok(G.rollAffixes(6, 500, undefined, () => 0, [], 'rod', 100).filter(o => o.rule).length <= 1, 'still at most one rule line');
+    // v3.336 규칙 옵션 장비당 1줄 제한 해제: 여러 줄이 될 수 있습니다.
 });
 test('v3.134 combat power weights offense .65 · durability .35 (v3.197 .7 · .3), Lv.1 ≈45 (v3.141 display ÷10), and the weapon outranks the coat on primal 22★', async () => {
     const { stats, power, powerParts, POWER_WEIGHT } = await L.load('systems/stats'), { RARITIES } = await L.load('data/balance'), { rollAffixes } = await L.load('data/gear'), { gearName } = await L.load('data/maple-gear');
@@ -822,9 +822,7 @@ test('v3.331 onyx accessories can roll one random rule option (unique rule line 
         if (randomRules) rules++; if (randomRules > 1) two++;
         assert.ok(out.some(x => x.id === 'onyxGenesis'), 'unique kept');
     }
-    assert.ok(rules > 0, `a random rule option can now appear on onyx (${rules}/300)`); assert.equal(two, 0, 'still at most one random rule option');
-    // 고유 옵션이 없는 보통 장비는 전처럼 규칙 1줄까지.
-    for (let t = 0; t < 100; t++) { let seed = t * 97 + 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); assert.ok(G.rollAffixes(6, 530, undefined, rng, [], 'charm', 100, 6).filter(x => x.rule).length <= 1); }
+    assert.ok(rules > 0, `a random rule option can now appear on onyx (${rules}/300)`); void two; // v3.336 규칙 1줄 제한 해제
     // 창세의 뱃지 보정: 무작위 1줄(고유 제외)이 메아리로, 한 번만. 다른 칠흑은 그대로.
     const mkBadge = (id, onyx) => { let seed = 5; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296); return { id, name: 'b', slot: 'charm', rarity: 6, level: 100, power: On.onyxPower(100), locked: true, onyx, onyxTuned: true, affixes: G.rollAffixes(7, On.onyxPower(100), undefined, rng, [{ ...(On.ONYX_ITEMS.find(x => x.id === onyx).affix) }], 'charm', 100, 6).filter(x => !x.rule || G.affixDef(x.id)?.onlyOrigin === 'onyx') }; };
     const badge = mkBadge('badge-1', 'onyxBlackMage'), other = mkBadge('badge-2', 'onyxDusk'), before = JSON.stringify(badge.affixes), otherBefore = JSON.stringify(other.affixes);
@@ -951,4 +949,18 @@ test('v3.242 onboarding: novice menus open at Lv.10 / first clear, auto attribut
     a.level = 100; a.rebirths = 0; act(a, { type: 'rebirth' }, 1000); assert.equal(a.rebirths, 1);
     assert.equal(a.statPoints, 0); const sum = a.attributes.str + a.attributes.dex; assert.ok(sum === 0 || Math.abs(a.attributes.str / sum - 2 / 3) < .1, JSON.stringify(a.attributes));
     act(a, { type: 'autoAttr', id: 'off' }, 0); assert.equal(a.autoAttr, false);
+});
+
+test('v3.336 rule options (◆) on any line without the one-per-item cap; onyx charms can reroll a ◆ line but never the unique line', async () => {
+    const G = await L.load('data/gear'), On = await L.load('data/onyx'), { newState, act } = await L.load('systems/engine');
+    let seed = 3; const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    let maxRules = 0; for (let t = 0; t < 400; t++) maxRules = Math.max(maxRules, G.rollAffixes(6, 530, undefined, rng, [], 'charm', 100, 6).filter(x => x.rule).length);
+    assert.ok(maxRules >= 2, `two or more rule lines can roll (${maxRules})`);
+    const s = newState(0); s.gold = 1e12; s.level = 100;
+    const def = On.ONYX_ITEMS.find(d => d.id === 'onyxBlackMage'), item = On.onyxAccessory(def, 'badge-x', 100);
+    const echo = G.affixDef('echoing'); item.affixes.push({ id: echo.id, name: echo.name, stat: echo.stat, value: echo.base, rule: true });
+    item.affixes.push(G.rollOption(G.affixDef('might'), item.power, item.rarity, () => .5, 100)); item.onyxTuned = true; s.inventory.push(item);
+    assert.throws(() => act(s, { type: 'reforge', id: item.id, value: '0' }, 1000), /고유 옵션/);
+    act(s, { type: 'reforge', id: item.id, value: '1' }, 2000);
+    assert.ok(item.affixes[0].id === 'onyxGenesis' && item.affixes.length === 3, 'unique kept, the ◆ line was rerolled');
 });

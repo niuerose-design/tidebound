@@ -282,16 +282,14 @@ export function rescaleAffix(x: ItemAffix, ratio: number, oldLevel: number, newL
     if (def.stat2 && out.value2 && ['hp', 'attack', 'magic', 'defense', 'resist', 'mana'].includes(def.stat2)) out.value2 = Math.round(out.value2 * ratio);
     return out;
 }
-/** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만, 규칙 옵션은 장비당 최대 1개. */
+/** 등급 번호만큼 옵션을 굴립니다. 같은 옵션은 한 번만. v3.336 규칙 옵션(◆)은 어느 줄에나, 몇 줄이든 붙습니다(장비당 1줄 제한 해제 · 운영 결정). */
 /** count: 옵션 줄 수(보통 등급 번호와 같음). v3.284 rarity: 수치 · 최소 등급 판정에 쓰는 등급(칠흑은 7줄이지만 태초 등급). */
 export function rollAffixes(count: number, power: number, origin: string | undefined, rng: () => number, keep: ItemAffix[] = [], slot?: string, level = 1, rarity = count): ItemAffix[] {
     const out = [...keep];
     while (out.length < count) {
-        // v3.331 칠흑 고유 옵션(onlyOrigin 'onyx')은 ‘장비당 규칙 옵션 1줄’에 세지 않습니다: 전에는 고유 옵션이 그 1줄을 차지해 칠흑에는 메아리 · 기절 연장 같은 ◆ 옵션이 어떤 굴림으로도 붙지 않았습니다.
-        const hasRule = out.some(a => a.rule && affixDef(a.id)?.onlyOrigin !== 'onyx');
         // v3.75 꽝: 한 장비에 최대 1줄, 칠흑 제외. 확률이 0이면(화면 · 비공개) 난수를 쓰지 않습니다.
         if (ODDS.affix.junk > 0 && origin !== 'onyx' && !out.some(a => affixDef(a.id)?.junk) && rng() < ODDS.affix.junk) { out.push(rollOption(JUNK_AFFIXES[Math.floor(rng() * JUNK_AFFIXES.length)], power, rarity, rng, level)); continue; }
-        const pool = AFFIX_POOL.filter(a => !a.junk && !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0) && (a.kind !== 'rule' || !hasRule));
+        const pool = AFFIX_POOL.filter(a => !a.junk && !out.some(o => o.id === a.id) && (!a.onlyOrigin || a.onlyOrigin === origin) && (!a.onlySlot || a.onlySlot === slot) && !a.retired && rarity >= (a.minRarity || 0));
         if (!pool.length) break;
         out.push(rollOption(pickAffix(pool, origin, rng), power, rarity, rng, level));
     }
