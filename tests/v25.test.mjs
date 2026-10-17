@@ -1426,12 +1426,12 @@ test('v3.284 onyx accessories carry 7 lines (unique + 6 random); old 6-line ones
     const O = await L.load('data/onyx'), G = await L.load('systems/onyx-grant'), Eq = await L.load('systems/equipment'), Gear = await L.load('data/gear');
     assert.equal(O.ONYX.affixes, 6);
     const s = newState(0); s.level = 60; G.grantOnyx(s, 'onyxDusk', 5, () => .4, 'test'); const got = s.inventory.find(i => i.onyx);
-    assert.equal(got.affixes.length, 7); assert.equal(got.affixes.filter(a => a.rule).length, 1); assert.equal(got.affixes[0].id, 'onyxThorns');
+    assert.equal(got.affixes.length, 7); assert.ok(got.affixes.filter(a => a.rule).length >= 1); assert.equal(got.affixes[0].id, 'onyxThorns');
     const old = { ...got, id: 'old-dusk', affixes: got.affixes.slice(0, 6).map(a => ({ ...a })) }, copy = JSON.parse(JSON.stringify(old));
     Eq.tuneOnyx(old); Eq.tuneOnyx(copy); assert.equal(old.affixes.length, 7, 'filled to 7'); assert.deepEqual(old.affixes, copy.affixes, 'deterministic');
     assert.deepEqual(old.affixes.slice(0, 6), got.affixes.slice(0, 6), 'existing lines untouched');
-    const added = old.affixes[6]; assert.ok(!added.rule && !old.affixes.slice(0, 6).some(a => a.id === added.id), 'a new non-rule line');
-    assert.equal(Gear.refineOption(added, old.power, old.rarity, () => 1, old.level).value, added.value, 'best roll');
+    const added = old.affixes[6]; assert.ok(!old.affixes.slice(0, 6).some(a => a.id === added.id), 'a new line');
+    if (!added.rule) assert.equal(Gear.refineOption(added, old.power, old.rarity, () => 1, old.level).value, added.value, 'best roll');
     Eq.tuneOnyx(old); assert.equal(old.affixes.length, 7, 'stays 7');
 });
 

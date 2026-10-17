@@ -91,7 +91,7 @@ test('v27.17 poison is its own stacking status; bleed does not stack but makes t
 
 test('v22 gear: rarity = option count, at most one rule option, themed origins and value rolls',()=>{
  assert.equal(RARITIES.length,7);let r=0;const seq=()=>{r=(r*16807+11)%2147483647;return r/2147483647;};r=7;
- for(let rarity=0;rarity<=6;rarity++)for(let n=0;n<200;n++){const opts=gear.rollAffixes(rarity,500,'moon',seq);assert.equal(opts.length,rarity);assert.equal(new Set(opts.map(o=>o.id)).size,rarity);assert.ok(opts.filter(o=>o.rule).length<=(rarity>=3?1:0));}
+ for(let rarity=0;rarity<=6;rarity++)for(let n=0;n<200;n++){const opts=gear.rollAffixes(rarity,500,'moon',seq);assert.equal(opts.length,rarity);assert.equal(new Set(opts.map(o=>o.id)).size,rarity);/* v3.336 규칙 옵션 1줄 제한 해제 */}
  // 테마 옵션은 더 자주 나옵니다.
  let themed=0,plain=0;for(let n=0;n<4000;n++){const o=gear.rollAffixes(1,500,'moon',seq)[0];if(['arcana','flow','glassCannon'].includes(o.id))themed++;if(['might','vigor','plating','ward'].includes(o.id))plain++;}assert.ok(themed>plain*2,themed+' vs '+plain);
  const def=gear.affixDef('might'),lo=gear.rollOption(def,1000,1,()=>0),hi=gear.rollOption(def,1000,1,()=>.9999);assert.ok(hi.value>lo.value*2);assert.equal(lo.value,Math.round(1000*def.base*.6*gear.rarityQuality(1)));

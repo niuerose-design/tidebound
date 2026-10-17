@@ -1,3 +1,4 @@
+import { isOnyxUnique } from '../data/onyx';
 import { gearName } from '../data/maple-gear';
 import type { State, Action, Item } from '../types';
 import { RARITIES } from '../data/balance';
@@ -263,7 +264,8 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const index = Number(a.value || '0');
         if (!Number.isInteger(index) || index < 0 || index >= item.affixes.length)
             throw Error('재설정할 옵션을 고르세요.');
-        if (item.onyx && item.affixes[index].rule)
+        // v3.336 칠흑은 고유 옵션 줄만 못 바꿉니다(v3.331부터 붙는 ◆ 규칙 옵션은 다른 줄처럼 재설정 가능).
+        if (isOnyxUnique(item, item.affixes[index].id))
             throw Error('칠흑 장신구의 고유 옵션은 바꿀 수 없습니다.');
         // v3.118 재설정은 골드만(정수 없음).
         const cost = rerollCost(item, s);
