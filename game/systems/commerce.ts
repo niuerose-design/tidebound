@@ -279,12 +279,12 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         return `${item.name} 옵션 재설정 · ${before} → ${next.name} · -${cost.gold.toLocaleString()} G`;
     }
     if (a.type === 'dismantle' || a.type === 'dismantleRarity') {
-        // 분해: 가방의 장비를 정수로 바꿉니다. 보호·유물·장착 장비는 제외합니다.
+        // 분해: 가방의 장비를 정수로 바꿉니다. 보호 · 칠흑 · 장착 장비는 제외합니다. v3.337 유물 · 계승 장비(태초 계승 · 원시 고대 · 환생 유물)는 보호를 풀면 분해할 수 있습니다(일괄 분해에는 안 섞임).
         const items = a.type === 'dismantle' ? s.inventory.filter(i => i.id === id) : bulkItems(s, Number(id));
         if (a.type === 'dismantle' && !items.length)
             throw Error('가방에 있는 장비를 선택하세요.');
-        if (items.some(i => i.locked || keepsAcrossLives(i)))
-            throw Error('보호 장비와 유물·계승 장비는 분해할 수 없습니다.');
+        if (items.some(i => i.locked || i.onyx))
+            throw Error('보호 장비와 칠흑 장신구는 분해할 수 없습니다.');
         if (!items.length)
             throw Error('분해할 장비가 없습니다.');
         const ids = new Set(items.map(i => i.id));

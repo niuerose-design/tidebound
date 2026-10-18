@@ -964,3 +964,19 @@ test('v3.336 rule options (◆) on any line without the one-per-item cap; onyx c
     act(s, { type: 'reforge', id: item.id, value: '1' }, 2000);
     assert.ok(item.affixes[0].id === 'onyxGenesis' && item.affixes.length === 3, 'unique kept, the ◆ line was rerolled');
 });
+
+test('v3.337 heir and relic gear can be dismantled once unprotected (bulk dismantle still skips them); onyx stays blocked', async () => {
+    const { newState, act } = await L.load('systems/engine'), Eq = await L.load('systems/equipment'), On = await L.load('data/onyx');
+    const s = newState(0); s.level = 100;
+    const heir = { id: 'h1', name: '계승 태초', slot: 'rod', rarity: 6, level: 100, power: 900, heir: 'primal', locked: true, affixes: [] };
+    const relic = { id: 'r1', name: '유물', slot: 'cape', rarity: 3, level: 100, power: 300, relic: 'tideCape', affixes: [] };
+    const onyx = On.onyxAccessory(On.ONYX_ITEMS.find(d => d.id === 'onyxDusk'), 'o1', 100); onyx.locked = false;
+    s.inventory.push(heir, relic, onyx);
+    assert.throws(() => act(s, { type: 'dismantle', id: 'h1' }, 0), /보호 장비/, 'still protected');
+    assert.deepEqual(Eq.bulkItems(s, 6).map(i => i.id), [], 'bulk dismantle never takes heir gear');
+    act(s, { type: 'lockItem', id: 'h1' }, 0); assert.equal(s.inventory.find(i => i.id === 'h1').locked, false);
+    const e0 = s.essence || 0; act(s, { type: 'dismantle', id: 'h1' }, 0); assert.ok(!s.inventory.some(i => i.id === 'h1')); assert.equal((s.essence || 0) - e0, Eq.dismantleEssence(heir, s));
+    act(s, { type: 'dismantle', id: 'r1' }, 0); assert.ok(!s.inventory.some(i => i.id === 'r1'), 'relic dismantled');
+    assert.throws(() => act(s, { type: 'dismantle', id: 'o1' }, 0), /칠흑/); assert.ok(s.inventory.some(i => i.id === 'o1'));
+    assert.throws(() => act(s, { type: 'sell', id: 'o1' }, 0), /판매할 수 없/);
+});
