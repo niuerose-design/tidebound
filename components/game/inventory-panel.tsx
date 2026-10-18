@@ -105,7 +105,7 @@ export function Inventory({ s, send, busy }: PanelProps) {
             <div className="button-row">
                 <button className="secondary small" disabled={busy} onClick={() => send({ type: 'lockItem', id: item.id })}>{item.locked ? '보호 해제' : '보호'}</button>
                 <ConfirmButton label={`${format(saleValue(item))} G 판매${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 판매할까요?`} description={`${format(saleValue(item))} G를 받고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'sell', id: item.id })}/>
-                <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item, s)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item, s)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}`} disabled={busy || !!item.locked || keepsAcrossLives(item)} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
+                <ConfirmButton label={`분해 · 정수 +${dismantleEssence(item, s)}${primalGaugeOf(item) ? ' · 계승 게이지 +1' : ''}`} title={`${item.name}을(를) 분해할까요?`} description={`정수 ${dismantleEssence(item, s)}를 얻고 장비가 사라집니다.${primalGaugeOf(item) ? ` 태초 계승 게이지가 1 찹니다(${(s.primalGauge || 0) + 1}/${PRIMAL_INHERIT.gauge}).` : ''}${keepsAcrossLives(item) ? ' 환생해도 남는 장비입니다. 분해하면 되돌릴 수 없습니다.' : ''}`} disabled={busy || !!item.locked || !!item.onyx} onConfirm={() => send({ type: 'dismantle', id: item.id })}/>
             </div>
         </>}/></div>;
     };
@@ -208,7 +208,7 @@ function HeirPanel({ s, send, busy, item }: PanelProps & { item: Item }) {
     </div>;
     const old = [...s.inventory, ...Object.values(s.equipment)].find(x => x && x.id !== item.id && x.heir === kind && x.slot === item.slot);
     const replace = old ? ` 이 부위의 ${label} ‘${old.name}’은(는) 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).` : '';
-    const what = `환생해도 남고, 위력이 (레벨 + 2) × ${factor(s.rebirths)}(환생 ${HEIR_GROWTH.toRebirth}회 ×${g.to})로 바뀌며 옵션 수치가 최고로 고정됩니다. 판매·분해할 수 없게 됩니다.`;
+    const what = `환생해도 남고, 위력이 (레벨 + 2) × ${factor(s.rebirths)}(환생 ${HEIR_GROWTH.toRebirth}회 ×${g.to})로 바뀌며 옵션 수치가 최고로 고정됩니다. 판매할 수 없게 되고, 분해는 보호를 푼 뒤에만 됩니다.`;
     if (kind === 'ancient') {
         const cost = awakenEssence(s.rebirths), have = s.essence || 0;
         return <div className="relic-imprint">
