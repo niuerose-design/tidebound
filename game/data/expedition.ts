@@ -20,7 +20,10 @@ export const ROLE_NAMES: Record<Role, string> = { charge: '돌격', arcane: '마
 export const SPECIAL_NAMES: Record<Special, string> = { boss: '보스', onyx: '칠흑' };
 
 export const EXPEDITION = {
-    rounds: 8, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, baseGold: 5, interestPer: 10, interestMax: 5,
+    /** 10단계: 12라운드 · 3막(1~4 · 5~8 · 9~12). 각 막의 마지막 라운드는 보스 웨이브(고스트 없음)이고 이기면 막 보상 세계석 +actPearls. */
+    rounds: 12, actLength: 4, actPearls: 2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, baseGold: 5, interestPer: 10, interestMax: 5,
+    /** 10단계 상점 시너지 슬롯: 2라운드부터 상점 마지막 칸은 보드의 시너지(다음 단계에 가장 가까운 것)를 늘리는 유닛이 나옵니다. */
+    synergySlotRound: 2,
     /** 판 레벨(2~8)마다 배치 수. */
     boardSlots: [0, 0, 2, 3, 4, 5, 6, 7, 8],
     /** 판 레벨별 상점 등장 비중(비용 1~5). TFT 표준 곡선 차용. */
@@ -32,15 +35,18 @@ export const EXPEDITION = {
     maxTurns: 40,
     /** 마나: 기본 공격 +10 · 피격 +5, 100에 기술 발동. */
     manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
-    /** 판 체력 100. 패배마다 15 + 라운드 × 3 + 남은 적 유닛 × 3. */
-    hp: 100, lossBase: 15, lossPerRound: 3, lossPerUnit: 3,
+    /** 판 체력 100. 패배마다 12 + 라운드 × 2 + 남은 적 유닛 × 2(12라운드 기준 4~5패에 탈락). */
+    hp: 100, lossBase: 12, lossPerRound: 2, lossPerUnit: 2,
     /** 3단계: 2라운드부터 고스트(다른 플레이어 보드)가 있으면 이 확률로 고스트와 싸웁니다. */
     ghostChance: .6,
     /** 4단계 시즌 점수: 최고 판 승수 × 100 + 완주 50 + 라운드 + 이긴 고스트의 승수 × ghostPointPerWin(이번 달 누적). */
     ghostPointPerWin: 10,
-    /** 5단계(운영 결정): 하루 횟수 제한 없음. 보상은 세계석 — 승리마다 pearlsPerWin, 8라운드를 모두 마치면 +clearPearls(한 판 최대 12). 사냥 세계석 수입(시간당 30~100)과 능동 플레이 기준으로 비슷하게 둔 값. */
+    /** 5단계(운영 결정): 하루 횟수 제한 없음. 보상은 세계석 — 승리마다 pearlsPerWin, 12라운드를 모두 마치면 +clearPearls, 막 보스마다 +actPearls(한 판 최대 12 + 6 + 4 = 22). */
     pearlsPerWin: 1, clearPearls: 4,
 };
+/** 10단계: 라운드의 막(1~3)과 막 보스 라운드 여부. */
+export const actOf = (round: number) => Math.min(3, Math.ceil(round / EXPEDITION.actLength));
+export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0 && round <= EXPEDITION.rounds;
 /** 유닛 판매가: ★1 비용, ★2 비용 × 3, ★3 비용 × 9(산 값 그대로 돌려줌). */
 export const sellPrice = (cost: number, star: number) => cost * (star === 3 ? 9 : star === 2 ? 3 : 1);
 /** 비용별 기본 능력치(★1): 체력 · 공격. 수호는 체력 ×1.4 · 공격 ×0.7, 마력은 공격을 마법 공격으로, 제어 · 역병 · 망령은 공격 ×0.85. */

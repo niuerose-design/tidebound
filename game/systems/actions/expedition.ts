@@ -2,7 +2,7 @@
  * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
-import { EXPEDITION, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement } from '../../data/expedition';
+import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
@@ -57,7 +57,7 @@ export function mergeStars(r: ExpeditionRun) {
     }
 }
 const income = (r: ExpeditionRun) => EXPEDITION.baseGold + Math.min(EXPEDITION.interestMax, Math.floor(r.gold / EXPEDITION.interestPer)) + Math.min(3, Math.max(0, r.streak - 1));
-const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(9).fill(0), roundWins: Array(9).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
+const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(EXPEDITION.rounds + 1).fill(0), roundWins: Array(EXPEDITION.rounds + 1).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
 /** 3단계: 서버가 a.value에 실어 보낸 라운드별 고스트(다른 플레이어 보드)에서 이 라운드 것을 읽습니다. 모양이 맞지 않으면 무시. */
 export function parseGhost(value: string | undefined, round: number): ExpeditionGhost | null {
     if (!value) return null;
@@ -65,19 +65,19 @@ export function parseGhost(value: string | undefined, round: number): Expedition
         const g = (JSON.parse(value) as Record<number, ExpeditionGhost>)?.[round];
         if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
         if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back') && (p.item === undefined || itemById(p.item)))) return null;
-        const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= 8 ? g.wins : 0;
+        const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= EXPEDITION.rounds ? g.wins : 0;
         return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins };
     } catch { return null; }
 }
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
-    r.done = true;
+    r.done = true; delete r.box;
     const st = statsOf(s); st.runs++; st.wins += r.wins;
     const cleared = r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
     if (cleared) st.clears++;
-    const reward = expeditionReward(r.wins, !!cleared);
+    const reward = expeditionReward(r.wins, !!cleared) + (r.acts || 0) * EXPEDITION.actPearls;
     r.reward = reward; s.pearls = (s.pearls || 0) + reward;
     delete s.expeditionDay; s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
-    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}`, 'reward');
+    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${EXPEDITION.actPearls})` : ''}`, 'reward');
 }
 
 export const expeditionActions: ActionHandlers = {
@@ -112,7 +112,7 @@ export const expeditionActions: ActionHandlers = {
     },
     expeditionReroll(s, { rng }) {
         const r = run(s); if (r.gold < EXPEDITION.reroll) throw Error('골드가 부족합니다.');
-        r.gold -= EXPEDITION.reroll; r.shop = rollShop(r.level, rng);
+        r.gold -= EXPEDITION.reroll; r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
     },
     expeditionXp(s) {
         const r = run(s); if (r.level >= 8) throw Error('최대 레벨입니다.'); if (r.gold < EXPEDITION.xp) throw Error('골드가 부족합니다.');
@@ -139,7 +139,8 @@ export const expeditionActions: ActionHandlers = {
         const r = run(s);
         if (!r.board.length) throw Error('유닛을 한 명 이상 배치하세요.');
         if (r.box?.length) throw Error('상자에서 아이템을 고르거나 건너뛴 뒤 전투하세요.');
-        const ghost = r.round >= 2 ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < EXPEDITION.ghostChance;
+        // 10단계: 막 보스 라운드(4 · 8 · 12)는 고스트 없이 보스 웨이브.
+        const boss = isBossRound(r.round), ghost = r.round >= 2 && !boss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < EXPEDITION.ghostChance;
         const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}) };
@@ -149,11 +150,12 @@ export const expeditionActions: ActionHandlers = {
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
+        if (won && boss) r.acts = (r.acts || 0) + 1;
         if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()]; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < BOX_CHOICES - (r.round >= EMBLEM_ROUND ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (r.round >= EMBLEM_ROUND) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
-        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
+        addLog(s, `원정대 ${r.round}라운드${boss ? `(${actOf(r.round)}막 보스)` : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
-        r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng);
+        r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
     },
     /** 7단계 상자 고르기: value = 선택지 번호. 건너뛰면 상자가 사라집니다. */
     expeditionPickBox(s, { a }) {

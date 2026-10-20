@@ -8,7 +8,7 @@
 import type { Stats, CombatEvent } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, type UnitDef, type TraitDef, type Role } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, actOf, type UnitDef, type TraitDef, type Role } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
@@ -138,25 +138,50 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
     return { winner, turns, hpLeft: { a: ra, b: rb }, log, events };
 }
 /** 상점 5장: 판 레벨의 비용 비중대로 뽑습니다(풀 소진은 2단계). */
-export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize): string[] {
+/** 10단계 시너지 슬롯: 보드의 시너지 가운데 다음 단계에 가장 가까운 것(같으면 머릿수 큰 쪽)을 늘리는, 보드에 없는 유닛. 없으면 null. */
+export function synergyPick(board: Placed[], cost: number, rng: () => number): string | null {
+    const active = activeTraits(board).filter(t => t.tier < t.trait.tiers.length);
+    if (!active.length) return null;
+    const gap = (t: ActiveTrait) => t.trait.tiers[t.tier].count - t.count;
+    active.sort((a, b) => gap(a) - gap(b) || b.count - a.count);
+    const onBoard = new Set(board.map(p => p.unit));
+    for (const t of active) {
+        const want = t.trait.id as string;
+        let pool = UNITS.filter(u => u.cost === cost && !onBoard.has(u.id) && (u.origin === want || (u.roles as string[]).includes(want) || (u.special as string[] | undefined)?.includes(want)));
+        if (!pool.length) pool = UNITS.filter(u => !onBoard.has(u.id) && Math.abs(u.cost - cost) <= 1 && (u.origin === want || (u.roles as string[]).includes(want)));
+        if (pool.length) return pool[Math.floor(rng() * pool.length)].id;
+    }
+    return null;
+}
+export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize, board?: Placed[]): string[] {
     const odds = EXPEDITION.shopOdds[Math.min(EXPEDITION.shopOdds.length - 1, Math.max(2, level))];
     const out: string[] = [];
     for (let i = 0; i < size; i++) {
         let r = rng(), cost = 1; for (let c = 0; c < odds.length; c++) { r -= odds[c]; if (r <= 0) { cost = c + 1; break; } }
+        // 마지막 칸은 시너지 슬롯(보드가 주어졌을 때).
+        const pick = board && i === size - 1 ? synergyPick(board, cost, rng) : null;
+        if (pick) { out.push(pick); continue; }
         const pool = UNITS.filter(u => u.cost === cost); out.push(pool[Math.floor(rng() * pool.length)].id);
     }
     return out;
 }
-/** 라운드별 PvE 웨이브: 비용 예산 안에서 같은 풀의 유닛을 고르고, 뒤 라운드일수록 ★이 오릅니다. 수호 · 돌격은 앞줄, 나머지는 뒷줄. */
-export const WAVE_BUDGET = [0, 2, 5, 8, 12, 16, 21, 27, 38];
+/** 라운드별 PvE 웨이브(10단계: 12라운드 곡선): 비용 예산 안에서 같은 풀의 유닛을 고르고, 뒤 라운드일수록 ★이 오릅니다. 수호 · 돌격은 앞줄, 나머지는 뒷줄. */
+export const WAVE_BUDGET = [0, 2, 5, 7, 9, 12, 14, 16, 18, 21, 24, 27, 29];
+/** 막 보스 웨이브: 막마다 정해진 보스 유닛(★은 막 번호)이 앞에 서고 나머지 예산으로 호위가 붙습니다. */
+export const ACT_BOSSES = ['', 'mushmom', 'zakum', 'blackMage'];
 export function rollWave(round: number, rng: () => number): Placed[] {
     let budget = WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)];
-    const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 6 ? 3 : round <= 7 ? 4 : 5, slots = Math.min(8, 1 + round);
+    const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 7 ? 3 : round <= 9 ? 4 : 5, slots = Math.min(8, 1 + round);
     const out: Placed[] = [];
+    if (isBossRound(round)) {
+        const boss = unitById(ACT_BOSSES[actOf(round)])!;
+        out.push({ unit: boss.id, star: 1, row: frontRole(boss) ? 'front' : 'back' });
+        budget = Math.max(0, budget - boss.cost);
+    }
     while (out.length < slots && budget > 0) {
         const pool = UNITS.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
         const def = pool[Math.floor(rng() * pool.length)];
-        let star: 1 | 2 | 3 = round >= 8 && rng() < .2 ? 3 : round >= 6 && rng() < .45 ? 2 : round >= 4 && rng() < .25 ? 2 : round >= 3 && rng() < .1 ? 2 : 1;
+        let star: 1 | 2 | 3 = round >= 10 && rng() < .15 ? 3 : round >= 7 && rng() < .45 ? 2 : round >= 4 && rng() < .25 ? 2 : round >= 3 && rng() < .1 ? 2 : 1;
         const starCost = (st: number) => def.cost * (st === 3 ? 4 : st === 2 ? 2 : 1);
         // 예산을 넘기면 ★을 내립니다(★3 = 비용 × 4, ★2 = × 2).
         while (star > 1 && starCost(star) > budget) star--;

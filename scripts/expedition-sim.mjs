@@ -4,7 +4,7 @@ const L = loadGame();
 const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
 const runs = Number(process.argv[2] || 300);
 const mkRng = seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
-const ROUND_LEVEL = [0, 2, 3, 4, 5, 6, 7, 8, 8];
+const ROUND_LEVEL = [0, 2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8];
 /** 한 판: 전략 함수가 라운드마다 상점에서 살 유닛을 고릅니다. 벤치 · 성급 합치기 · 배치는 공통. */
 function play(strategy, rng, comp) {
     const owned = new Map(); // unit → count(★1 환산 장수)
@@ -15,7 +15,7 @@ function play(strategy, rng, comp) {
         gold += D.EXPEDITION.baseGold + Math.min(D.EXPEDITION.interestMax, Math.floor(gold / D.EXPEDITION.interestPer)) + Math.min(3, Math.max(0, streak - 1));
         let rerolls = 0;
         for (let pass = 0; pass < 4; pass++) {
-            const shop = X.rollShop(level, rng);
+            const shop = X.rollShop(level, rng, D.EXPEDITION.shopSize, round >= D.EXPEDITION.synergySlotRound ? place(owned, level, comp) : undefined);
             const buys = strategy(shop, owned, gold, comp, round);
             for (const id of buys) { const cost = D.unitById(id).cost; if (gold >= cost) { gold -= cost; owned.set(id, (owned.get(id) || 0) + 1); } }
             if (strategy === synergy && gold >= D.EXPEDITION.reroll + 2 && rerolls < 3) { gold -= D.EXPEDITION.reroll; rerolls++; continue; }
@@ -55,7 +55,7 @@ const starOf = def => def.cost === 1 ? 3 : def.cost === 2 ? 2 : 1;
 const fixed = units => units.map(id => { const def = D.unitById(id); return { unit: id, star: starOf(def), row: X.frontRole(def) ? 'front' : 'back' }; });
 const lastRound = D.EXPEDITION.rounds, trials = Math.max(100, runs);
 const vsWave = (board, seed) => { let w = 0; for (let k = 0; k < trials; k++) { const rng = mkRng(seed + k * 97); if (X.battle(board, X.rollWave(lastRound, rng), rng).winner === 'a') w++; } return Math.round(100 * w / trials); };
-console.log('\n완성 편성 vs 8라운드 웨이브');
+console.log(`\n완성 편성 vs ${lastRound}라운드 웨이브`);
 { let w = 0; for (let k = 0; k < trials; k++) { const rng = mkRng(99991 + k * 7); const pick = [...D.UNITS].sort(() => rng() - .5).slice(0, 8).map(d => d.id); if (X.battle(fixed(pick), X.rollWave(lastRound, rng), rng).winner === 'a') w++; } console.log('무작위 8유닛'.padEnd(28), String(Math.round(100 * w / trials)).padStart(3) + '%'); }
 for (const comp of D.INTENDED_COMPS) console.log(comp.name.padEnd(28), String(vsWave(fixed(comp.units), 4242)).padStart(3) + '%', '· 특성', X.activeTraits(fixed(comp.units)).filter(t => t.tier).map(t => `${t.trait.name} ${t.count}`).join(' · '));
 // 유닛별 1대1 가치: ★1 유닛 둘을 맞붙여 승률(비용 대비 강약 점검).

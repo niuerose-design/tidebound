@@ -723,6 +723,17 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-traits button.open { border-color:#8fc7a4; }
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
 .exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
+/* 10단계 라운드 진행 띠 · 보스 */
+.exp-progress { list-style:none; margin:-6px 0 10px; padding:0; display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:3px; }
+.exp-progress li { position:relative; height:24px; border-radius:4px; background:#13262b; color:#5a6f71; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px solid transparent; }
+.exp-progress li.past { background:#264237; color:#9cc5ad; }
+.exp-progress li.now { background:#2f5a3f; color:#eaf5df; border-color:#8fc7a4; font-weight:700; }
+.exp-progress li.boss { background:#2b1d1d; color:#e09a7a; border-color:#6b3a2e; }
+.exp-progress li.boss.past { background:#4a2a24; } .exp-progress li.boss.now { background:#6b3a2e; border-color:#e09a7a; }
+.exp-progress li i { position:absolute; right:2px; top:2px; width:6px; height:6px; border-radius:50%; background:#e07a7a; }
+.exp-todo.boss { border-left-color:#e09a7a; background:#2b1d1d; color:#f3c9b5; }
+.exp-boss-btn { background:linear-gradient(135deg,#8c4a3a,#c26a4a); color:#fff2ea; }
+@media (max-width:480px) { .exp-progress { grid-template-columns:repeat(12, minmax(0,1fr)); gap:2px; } .exp-progress li { height:20px; font-size:10px; } }
 /* 9단계 지난 시즌 정산 */
 .exp-season { margin:0 0 10px; padding:8px 12px; border-radius:6px; background:#2b2a1d; border-left:3px solid #e0b36a; color:#f0dcae; font-size:13px; }
 /* 8단계 다음 할 일 · 상점 표시 · 배지 색 */

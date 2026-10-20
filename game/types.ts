@@ -1032,6 +1032,8 @@ export type ExpeditionRun = {
     items?: string[];
     /** 7단계: 아직 고르지 않은 상자 선택지(3개 중 1개). 고르거나 건너뛰기 전에는 다음 전투를 할 수 없습니다. */
     box?: string[];
+    /** 10단계: 이긴 막 보스 수(막 보상 세계석 × actPearls). */
+    acts?: number;
 };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
 export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
