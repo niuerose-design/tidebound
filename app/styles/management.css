@@ -723,6 +723,14 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-traits button.open { border-color:#8fc7a4; }
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
 .exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
+/* 16단계 난이도 */
+.exp-diff { margin:0 0 12px; } .exp-diff .section-title { margin-bottom:6px; }
+.exp-diff-list { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:6px; }
+.exp-diff-card { display:flex; flex-direction:column; gap:3px; padding:8px 6px; border-radius:6px; border:1px solid #2a4a46; background:#0f2227; color:#c7d6d2; cursor:pointer; text-align:left; min-width:0; }
+.exp-diff-card b { font-size:13px; color:#d7dec9; } .exp-diff-card small { font-size:10px; line-height:1.3; color:#9dadaf; } .exp-diff-card .exp-diff-reward { color:#e0b36a; }
+.exp-diff-card.on { border-color:#8fc7a4; background:#1c3229; box-shadow:0 0 0 1px #8fc7a455; }
+.exp-diff-card.locked { opacity:.45; cursor:default; }
+@media (max-width:640px) { .exp-diff-list { grid-template-columns:repeat(2, minmax(0,1fr)); } }
 /* 15단계 심연 · 최근 판 · 도전 기록 */
 .exp-abyss-choice { margin:0 0 10px; padding:12px 14px; border-radius:8px; border:1px solid #7f6fd6; background:linear-gradient(160deg,#1b1733,#0f1a2b); }
 .exp-abyss-choice h3 { font-size:17px; margin:0 0 6px; color:#e6d6ff; } .exp-abyss-choice p { font-size:12px; color:#c3cfeb; line-height:1.5; margin:0 0 10px; }
