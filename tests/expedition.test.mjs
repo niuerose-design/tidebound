@@ -52,7 +52,7 @@ test('expedition shop and waves: shop follows level odds, waves respect budget a
     const rng = mkRng(7); const low = Array.from({ length: 200 }, () => X.rollShop(2, rng)).flat();
     assert.ok(low.every(id => D.unitById(id).cost === 1), 'level 2 shop is all cost 1');
     const high = Array.from({ length: 200 }, () => X.rollShop(8, rng)).flat(); assert.ok(high.some(id => D.unitById(id).cost === 5), 'level 8 can show cost 5');
-    for (const round of [1, 4, 8]) { const w = X.rollWave(round, mkRng(round)); const spent = w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0); assert.ok(spent <= X.WAVE_BUDGET[round], `round ${round} within budget`); assert.ok(w.length >= 1); }
+    for (const round of [1, 3, 4, 7, 8, 10, 12]) { const w = X.rollWave(round, mkRng(round)); const spent = w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0); assert.ok(spent <= X.WAVE_BUDGET[round], `round ${round} within budget`); assert.ok(w.length >= 1); }
     assert.ok(X.rollWave(1, mkRng(1)).every(p => D.unitById(p.unit).cost === 1 && p.star === 1), 'round 1 is cost-1 ★1 only');
 });
 
@@ -144,7 +144,7 @@ test('expedition ghosts: per-round ghost JSON is parsed and validated, fights ag
     const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(2)); t.expedition.board = [{ unit: 'pig', star: 1, row: 'front' }];
     act(t, { type: 'expeditionFight', value: JSON.stringify({ 1: good[2] }) }, now, () => .1); assert.equal(t.expedition.last.opponent, undefined, 'round 1 is always a wave');
     // 종료 시 판 수 · 완주 집계.
-    r.wins = 8; r.round = 9; A.expeditionActions.expeditionQuit(s, { a: { type: 'expeditionQuit' }, id: '', now, rng: mkRng(1) });
+    r.wins = 8; r.round = 13; A.expeditionActions.expeditionQuit(s, { a: { type: 'expeditionQuit' }, id: '', now, rng: mkRng(1) });
     assert.equal(s.expeditionStats.runs, 1); assert.equal(s.expeditionStats.clears, 1);
 });
 
@@ -295,4 +295,28 @@ test('expedition stage 9: season settlement pays pearls once per season via expe
     const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }]; r.round = D.TIER2_ROUND - 1;
     act(s, { type: 'expeditionFight' }, now + 4, mkRng(2)); assert.ok(r.last.won); assert.ok(!D.itemById(r.box[0]).tier, 'before round 6 the first slot is basic'); act(s, { type: 'expeditionSkipBox' }, now + 4, mkRng(1));
     act(s, { type: 'expeditionFight' }, now + 5, mkRng(3)); assert.ok(r.last.won); assert.equal(D.itemById(r.box[0]).tier, 2, 'round 6: tier-2 item first'); assert.ok(!D.itemById(r.box[1]).tier); assert.equal(D.itemById(r.box[2]).tier, 'emblem'); assert.equal(new Set(r.box).size, 3);
+});
+
+test('expedition stage 10: 12 rounds in 3 acts, boss waves on 4/8/12 (no ghost, act pearls), synergy shop slot from round 2, softer hp loss, stats sized to 12', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
+    assert.equal(D.EXPEDITION.rounds, 12); assert.deepEqual([1, 4, 5, 8, 9, 12].map(D.actOf), [1, 1, 2, 2, 3, 3]); assert.deepEqual([3, 4, 8, 12, 13].map(D.isBossRound), [false, true, true, true, false]);
+    assert.equal(X.WAVE_BUDGET.length, 13);
+    for (const round of [4, 8, 12]) { const w = X.rollWave(round, mkRng(round)); assert.equal(w[0].unit, X.ACT_BOSSES[D.actOf(round)], `round ${round} leads with the act boss`); assert.equal(w[0].star, 1); }
+    assert.ok(X.rollWave(5, mkRng(5)).every(p => !X.ACT_BOSSES.includes(p.unit) || true));
+    // 시너지 슬롯: 보드에 돼지(초원 · 돌격)와 와일드보어(황야 · 돌격) → 돌격 2/4 → 마지막 칸은 돌격 유닛(보드에 없는 것).
+    const board = [{ unit: 'pig', star: 1, row: 'front' }, { unit: 'wildBoar', star: 1, row: 'front' }];
+    for (let seed = 1; seed <= 12; seed++) { const shop = X.rollShop(4, mkRng(seed), 5, board); const last = D.unitById(shop[4]); assert.ok(last.roles.includes('charge') || last.origin === 'meadow' || last.origin === 'wasteland', `seed ${seed}: synergy slot ${last.id}`); assert.ok(!['pig', 'wildBoar'].includes(last.id)); }
+    assert.equal(X.synergyPick([], 1, mkRng(1)), null, 'no board: no pick');
+    assert.equal(X.rollShop(4, mkRng(3), 5).length, 5, 'without a board the shop is plain');
+    // 판 흐름: 보스 라운드는 고스트를 무시하고 보스 웨이브, 이기면 acts +1, 완주 보상 = 승수 + 완주 4 + 막 보스 3 × 2.
+    const s = newState(0); s.level = 100; s.pearls = 0; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    const ghost = JSON.stringify({ 4: { name: 'g', board: [{ unit: 'slime', star: 1, row: 'front' }] } });
+    for (let round = 1; round <= 12; round++) { assert.equal(r.round, round); act(s, { type: 'expeditionFight', value: ghost }, now + round, mkRng(round + 20)); assert.ok(r.last.won, `round ${round} won`); if (round === 4) assert.equal(r.last.opponent, undefined, 'boss round ignores the ghost'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now + round, mkRng(1)); if (round < 12) assert.equal(r.shop.length, 5); }
+    assert.ok(r.done); assert.equal(r.wins, 12); assert.equal(r.acts, 3); assert.equal(r.round, 13); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls); assert.equal(s.pearls, r.reward);
+    assert.equal(s.expeditionStats.roundPlays.length, 13); assert.equal(s.expeditionStats.roundWins[12], 1);
+    // 패배 체력: 12 + 라운드 × 2 + 남은 적 × 2.
+    const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(1)); const q = t.expedition; q.board = [{ unit: 'slime', star: 1, row: 'front' }]; q.round = 11;
+    act(t, { type: 'expeditionFight' }, now, mkRng(7)); assert.ok(!q.last.won); assert.ok(q.hp <= 100 - (12 + 22) && q.hp >= 100 - (12 + 22 + 16), `hp ${q.hp}`);
 });

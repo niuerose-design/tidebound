@@ -6,7 +6,7 @@ import 'server-only';
  */
 import { db } from './db';
 import { monthKey, previousMonthKey } from '../data/time';
-import { seasonPearls, type SeasonSettlement } from '../data/expedition';
+import { seasonPearls, EXPEDITION, isBossRound, type SeasonSettlement } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
@@ -22,7 +22,7 @@ export async function pickGhosts(key: string, me: string, rng = Math.random): Pr
     for (const r of rows) {
         let snap: ExpeditionSnapshot; try { snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; } catch { continue; }
         if (snap.account === me) continue;
-        for (let round = 2; round <= 8; round++) { const board = snap.boards?.[round]; if (board?.length) (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0 }); }
+        for (let round = 2; round <= EXPEDITION.rounds; round++) { if (isBossRound(round)) continue; const board = snap.boards?.[round]; if (board?.length) (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0 }); }
     }
     const out: Record<number, ExpeditionGhost> = {};
     for (const [round, pool] of Object.entries(pools)) out[Number(round)] = pool[Math.floor(rng() * pool.length)];
@@ -40,7 +40,7 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
     const next: ExpeditionSnapshot = {
         season, account: id, name: s.name, updated: now,
         runs: (snap?.runs || 0) + (r.done && r.last ? 1 : 0),
-        wins: better ? r.wins : snap!.wins, cleared: better ? r.round > 8 : snap!.cleared, round: better ? Math.min(8, r.round) : snap!.round,
+        wins: better ? r.wins : snap!.wins, cleared: better ? r.round > EXPEDITION.rounds : snap!.cleared, round: better ? Math.min(EXPEDITION.rounds, r.round) : snap!.round,
         boards: better ? r.history : snap!.boards, ghostByRun,
     };
     next.score = expeditionScore(next);
