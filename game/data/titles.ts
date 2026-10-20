@@ -12,6 +12,11 @@ export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.
     { id: 'novice', name: '🌱 초심자', desc: '모험을 시작한 모든 모험가', group: '시작' },
     ...REBIRTH_TITLES.map(t => ({ id: `rebirth:${t.rebirths}`, name: t.title, desc: `환생 ${t.rebirths}회`, group: '환생' as const, achievement: `rebirths:${t.rebirths}` })),
+    // 11단계 원정 숙련 칭호.
+    { id: 'expMastery:2', name: '🧭 원정 견습', desc: '원정 숙련 2', group: '모험', achievement: 'expMastery:2' },
+    { id: 'expMastery:20', name: '🏕 원정 베테랑', desc: '원정 숙련 20', group: '모험', achievement: 'expMastery:20' },
+    { id: 'expMastery:40', name: '🚩 원정대장', desc: '원정 숙련 40', group: '모험', achievement: 'expMastery:40' },
+    { id: 'expMastery:50', name: '🌟 원정 전설', desc: '원정 숙련 50(최대)', group: '모험', achievement: 'expMastery:50' },
     { id: 'playtime:100', name: '🍁 메이플 월드에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
     { id: 'playtime:500', name: '🌍 세계 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },
     { id: 'turns:1000000', name: '⚔ 끝없는 모험가', desc: '전투 1,000,000턴', group: '도전', achievement: 'turns:1000000' },

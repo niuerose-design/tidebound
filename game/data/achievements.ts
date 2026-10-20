@@ -169,6 +169,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v3.240 명예 업적(보상 없음 · 업적 보너스 집계 제외): 아제로스 · 이계 · 한계돌파 · 이계 연료 · 증권거래소 · 승천 · 스토리 · 결투 레이팅 · 겹영창.
     ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개`, n => `아제로스 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('azeroth').length], unlockedIn('azeroth'), () => ({}))),
     ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개`, n => `이계 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
+    // 11단계 원정 숙련(명예 업적 → 칭호).
+    ...[2, 20, 40, 50].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).
     ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월합니다(한계돌파 3단계 뒤 숙련 ×16).`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
