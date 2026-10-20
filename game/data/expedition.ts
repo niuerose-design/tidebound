@@ -156,6 +156,14 @@ for (const r of Object.keys(ROLE_NAMES) as Role[]) ITEMS.push({ id: `emblem_${r}
 export const EMBLEMS = () => ITEMS.filter(x => x.tier === 'emblem');
 /** 8단계: 문장이 상자에 섞이기 시작하는 라운드. */
 export const EMBLEM_ROUND = 3;
+/** 9단계: 이 라운드부터 상자 첫째 칸에 조합 아이템(상위)이 바로 나옵니다. */
+export const TIER2_ROUND = 6;
+/** 9단계 시즌 말 보상(세계석): 지난달 순위표 순위로. 표 밖(또는 순위 없음)은 마지막 줄. 다음 달 첫 ‘원정 출발’ 때 지급됩니다. */
+export const SEASON_REWARDS: { upto: number; pearls: number; label: string }[] = [
+    { upto: 1, pearls: 50, label: '1위' }, { upto: 3, pearls: 30, label: '2~3위' }, { upto: 10, pearls: 15, label: '4~10위' }, { upto: 30, pearls: 8, label: '11~30위' }, { upto: Infinity, pearls: 3, label: '그 외 참가' },
+];
+export const seasonPearls = (rank: number) => SEASON_REWARDS.find(x => rank >= 1 && rank <= x.upto)?.pearls ?? SEASON_REWARDS[SEASON_REWARDS.length - 1].pearls;
+export type SeasonSettlement = { season: string; rank: number; total: number; wins: number; pearls: number };
 /** 7단계 조합표(순서 무관). 표에 없는 짝은 합칠 수 없습니다. */
 const COMBOS: Record<string, string> = { 'blade+blade': 'greatBlade', 'wand+wand': 'archStaff', 'shield+shield': 'towerShield', 'boots+boots': 'windBoots', 'blade+wand': 'doomSpear', 'shield+thornMail': 'citadel', 'boots+horn': 'galeHorn', 'fang+manaStone': 'bloodOrb' };
 export const comboOf = (a: string, b: string) => COMBOS[[a, b].sort().join('+')] ? itemById(COMBOS[[a, b].sort().join('+')]) : undefined;

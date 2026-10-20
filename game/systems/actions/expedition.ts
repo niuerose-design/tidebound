@@ -2,7 +2,7 @@
  * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
-import { EXPEDITION, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND } from '../../data/expedition';
+import { EXPEDITION, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
@@ -13,6 +13,16 @@ const slotsOf = (r: ExpeditionRun) => EXPEDITION.boardSlots[Math.min(EXPEDITION.
 /** 5단계: 보상 세계석 = 승수 × pearlsPerWin + (완주면 clearPearls). 환생 배율 없음. */
 export const expeditionReward = (wins: number, cleared: boolean) => wins * EXPEDITION.pearlsPerWin + (cleared ? EXPEDITION.clearPearls : 0);
 /** 같은 유닛 · 같은 ★이 3개 모이면 한 단계 올립니다(보드에 있던 자리는 유지, 나머지는 사라짐). 더 합칠 것이 없을 때까지. */
+/** 9단계 시즌 정산 검증: 서버가 만든 값만 믿되 모양은 확인합니다. 세계석은 순위에서 다시 계산(값 위조 방지). */
+export function parseSettlement(value: unknown): SeasonSettlement | null {
+    if (typeof value !== 'string' || !value) return null;
+    try {
+        const v = JSON.parse(value) as Partial<SeasonSettlement>;
+        if (!/^\d{4}-\d{2}$/.test(String(v.season)) || !Number.isInteger(v.rank) || !Number.isInteger(v.total)) return null;
+        const rank = Math.max(0, v.rank!), wins = Math.max(0, Math.floor(Number(v.wins) || 0));
+        return { season: v.season!, rank, total: Math.max(rank, v.total!), wins, pearls: seasonPearls(rank) };
+    } catch { return null; }
+}
 /** 8단계 문장 고르기: 보드에서 다음 단계까지 가장 가까운(아직 최대가 아닌) 시너지의 문장. 같은 거리면 머릿수가 많은 쪽, 그래도 같으면 무작위, 시너지가 없으면 아무 문장. */
 export function pickEmblem(r: ExpeditionRun, rng: () => number): string {
     const cands = activeTraits(r.board).filter(t => t.trait.kind !== 'special' && t.tier < t.trait.tiers.length).map(t => ({ id: `emblem_${t.trait.id}`, gap: t.trait.tiers[t.tier].count - t.count, count: t.count })).filter(x => itemById(x.id));
@@ -71,8 +81,14 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
 }
 
 export const expeditionActions: ActionHandlers = {
-    expeditionStart(s, { now, rng }) {
+    /** 9단계: value는 서버가 넣는 지난 시즌 정산(JSON). 같은 시즌은 한 번만 받습니다. 화면이 보낸 값은 서버가 덮어씁니다. */
+    expeditionStart(s, { a, now, rng }) {
         if (s.expedition && !s.expedition.done) throw Error('이미 원정이 진행 중입니다.');
+        const settle = parseSettlement(a.value);
+        if (settle && s.expeditionSeasonClaimed !== settle.season) {
+            s.expeditionSeasonClaimed = settle.season; s.expeditionSeasonLast = settle; s.pearls = (s.pearls || 0) + settle.pearls;
+            addLog(s, `원정대 ${settle.season} 시즌 정산 · ${settle.rank ? `${settle.rank}위` : '순위 밖'}(${settle.total}명 중) · 최고 ${settle.wins}승 · 세계석 +${settle.pearls}`, 'reward');
+        }
         const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1) };
         r.gold = income(r); r.shop = rollShop(r.level, rng);
         s.expedition = r;
@@ -133,7 +149,7 @@ export const expeditionActions: ActionHandlers = {
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
-        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()]; box = []; while (box.length < BOX_CHOICES - (r.round >= EMBLEM_ROUND ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (r.round >= EMBLEM_ROUND) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
+        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()]; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < BOX_CHOICES - (r.round >= EMBLEM_ROUND ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (r.round >= EMBLEM_ROUND) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
         addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
