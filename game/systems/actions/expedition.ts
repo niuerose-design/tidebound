@@ -2,7 +2,7 @@
  * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
-import { EXPEDITION, unitById, sellPrice } from '../../data/expedition';
+import { EXPEDITION, unitById, sellPrice, ITEMS, itemById, ITEM_HOLD } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
@@ -24,10 +24,14 @@ export function mergeStars(r: ExpeditionRun) {
                 const next = (star + 1) as 2 | 3; let left = 3;
                 // 벤치부터 지우고, 보드에 있으면 첫 자리를 승급시킵니다.
                 const benchDrop = onBench.slice(0, left).map(([, i]) => i); left -= benchDrop.length;
-                r.bench = r.bench.filter((_, i) => !benchDrop.includes(i));
                 const boardDrop = onBoard.slice(0, left).map(([, i]) => i);
-                if (boardDrop.length) { r.board[boardDrop[0]] = { ...r.board[boardDrop[0]], star: next }; r.board = r.board.filter((_, i) => !boardDrop.slice(1).includes(i)); }
-                else r.bench.push({ unit, star: next });
+                // 6단계: 승급한 유닛은 보드 첫 자리(없으면 벤치 첫 장)의 아이템을 물려받고, 나머지 아이템은 가진 칸으로 돌아갑니다.
+                const keep = boardDrop.length ? r.board[boardDrop[0]].item : r.bench[benchDrop[0]]?.item;
+                const spare = [...boardDrop.slice(boardDrop.length ? 1 : 0).map(i => r.board[i].item), ...benchDrop.slice(boardDrop.length ? 0 : 1).map(i => r.bench[i].item)].filter((x): x is string => !!x);
+                r.bench = r.bench.filter((_, i) => !benchDrop.includes(i));
+                if (boardDrop.length) { r.board[boardDrop[0]] = { ...r.board[boardDrop[0]], star: next, ...(keep ? { item: keep } : {}) }; r.board = r.board.filter((_, i) => !boardDrop.slice(1).includes(i)); }
+                else r.bench.push({ unit, star: next, ...(keep ? { item: keep } : {}) });
+                if (spare.length) (r.items ??= []).push(...spare);
                 merged = true;
             }
         }
@@ -42,9 +46,9 @@ export function parseGhost(value: string | undefined, round: number): Expedition
     try {
         const g = (JSON.parse(value) as Record<number, ExpeditionGhost>)?.[round];
         if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
-        if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back'))) return null;
+        if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back') && (p.item === undefined || itemById(p.item)))) return null;
         const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= 8 ? g.wins : 0;
-        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row })), wins };
+        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins };
     } catch { return null; }
 }
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
@@ -79,6 +83,7 @@ export const expeditionActions: ActionHandlers = {
         const list: (ExpeditionPlaced | ExpeditionBench)[] = where === 'board' ? r.board : where === 'bench' ? r.bench : [];
         const x = list[i]; if (!x) throw Error('팔 유닛을 고르세요.');
         r.gold += sellPrice(unitById(x.unit)!.cost, x.star);
+        if (x.item) (r.items ??= []).push(x.item);
         if (where === 'board') r.board.splice(i, 1); else r.bench.splice(i, 1);
     },
     expeditionReroll(s, { rng }) {
@@ -97,12 +102,12 @@ export const expeditionActions: ActionHandlers = {
             const row = rowText === 'front' || rowText === 'back' ? rowText : frontRole(unitById(x.unit)!) ? 'front' : 'back';
             if (r.board.length >= slotsOf(r)) throw Error(`배치는 ${slotsOf(r)}명까지입니다(판 레벨 ${r.level}).`);
             if (r.board.filter(b => b.row === row).length >= (row === 'front' ? EXPEDITION.boardFront : EXPEDITION.boardBack)) throw Error(`${row === 'front' ? '앞줄' : '뒷줄'}이 가득 찼습니다.`);
-            r.bench.splice(i, 1); r.board.push({ unit: x.unit, star: x.star, row });
+            r.bench.splice(i, 1); r.board.push({ unit: x.unit, star: x.star, row, ...(x.item ? { item: x.item } : {}) });
         } else if (where === 'board') {
             const x = r.board[i]; if (!x) throw Error('내릴 유닛을 고르세요.');
             if (rowText === 'front' || rowText === 'back') { if (x.row === rowText) return; if (r.board.filter(b => b.row === rowText).length >= 4) throw Error('그 줄이 가득 찼습니다.'); x.row = rowText; return; }
             if (r.bench.length >= EXPEDITION.bench) throw Error('벤치가 가득 찼습니다.');
-            r.board.splice(i, 1); r.bench.push({ unit: x.unit, star: x.star });
+            r.board.splice(i, 1); r.bench.push({ unit: x.unit, star: x.star, ...(x.item ? { item: x.item } : {}) });
         } else throw Error('배치 명령이 잘못되었습니다.');
     },
     /** value: 서버가 넣는 라운드별 고스트 JSON(없으면 웨이브). 2라운드부터 이 라운드 고스트가 있으면 ghostChance로 고스트와 싸웁니다. */
@@ -117,11 +122,31 @@ export const expeditionActions: ActionHandlers = {
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
         for (const p of r.board) st.units[p.unit] = (st.units[p.unit] || 0) + 1;
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
-        if (won) { r.wins++; r.streak++; } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
-        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}`, won ? 'reward' : 'battle');
+        // 6단계 상자: 이기면 아이템 하나(가진 칸이 차 있으면 못 받음).
+        let box: string | undefined;
+        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { box = ITEMS[Math.floor(rng() * ITEMS.length)].id; (r.items ??= []).push(box); } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
+        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${itemById(box)!.name}` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng);
+    },
+    /** 6단계 장착: value 'bench:i:k' | 'board:i:k'(k = 가진 아이템 번호). 이미 낀 아이템은 가진 칸으로 돌아옵니다. */
+    expeditionEquip(s, { a }) {
+        const r = run(s), [where, iText, kText] = String(a.value || '').split(':'), i = Number(iText), k = Number(kText);
+        const list: (ExpeditionPlaced | ExpeditionBench)[] = where === 'board' ? r.board : where === 'bench' ? r.bench : [];
+        const x = list[i], id = r.items?.[k];
+        if (!x) throw Error('장착할 유닛을 고르세요.'); if (!id || !itemById(id)) throw Error('장착할 아이템을 고르세요.');
+        r.items!.splice(k, 1);
+        if (x.item) r.items!.push(x.item);
+        x.item = id;
+    },
+    /** 6단계 해제: value 'bench:i' | 'board:i'. */
+    expeditionUnequip(s, { a }) {
+        const r = run(s), [where, iText] = String(a.value || '').split(':'), i = Number(iText);
+        const list: (ExpeditionPlaced | ExpeditionBench)[] = where === 'board' ? r.board : where === 'bench' ? r.bench : [];
+        const x = list[i]; if (!x?.item) throw Error('해제할 아이템이 없습니다.');
+        if ((r.items?.length || 0) >= ITEM_HOLD) throw Error(`아이템은 ${ITEM_HOLD}개까지 들고 있을 수 있습니다.`);
+        (r.items ??= []).push(x.item); delete x.item;
     },
     expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, `${r.round}라운드에서 포기`); },
     /** 끝난 판을 치웁니다(화면 정리). */

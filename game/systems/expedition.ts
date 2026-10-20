@@ -8,12 +8,12 @@
 import type { Stats, CombatEvent } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, type UnitDef, type TraitDef, type Role } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, type UnitDef, type TraitDef, type Role } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
-export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back' };
+export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
 export type ActiveTrait = { trait: TraitDef; count: number; tier: number };
-export type UnitFighter = Fighter & { placed: Placed; def: UnitDef; side: 'a' | 'b'; revived?: boolean; maxHp: number; /** 마나(0~100). */ charge: number; manaGain: number };
+export type UnitFighter = Fighter & { placed: Placed; def: UnitDef; side: 'a' | 'b'; revived?: boolean; maxHp: number; /** 마나(0~100). */ charge: number; manaGain: number; /** 6단계 가시 갑옷: 받은 피해 비례 반격. */ reflect?: number };
 
 /** 보드의 특성 집계: 같은 유닛은 한 번만 셉니다(TFT 규칙). tier는 닿은 단계 번호(0 = 없음). */
 export function activeTraits(board: Placed[]): ActiveTrait[] {
@@ -54,10 +54,17 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
             if (t.damageTaken) damageTaken = Math.max(damageTaken, t.damageTaken);
         }
         if (flags.has('backline15') && placed.row === 'back') damageTaken = Math.max(damageTaken, .15);
+        // 6단계 아이템: 시너지 뒤에 같은 방식으로 더합니다(받는 피해 감소는 큰 쪽 하나가 아니라 곱으로 겹침).
+        const item = placed.item ? itemById(placed.item) : undefined;
+        if (item) {
+            for (const k in item.mult || {}) mult[k as keyof typeof mult] *= item.mult![k as keyof typeof mult]!;
+            for (const k in item.bonus || {}) stats[k] = (stats[k] || 0) + (item.bonus as Record<string, number>)[k];
+            if (item.damageTaken) damageTaken = 1 - (1 - damageTaken) * (1 - item.damageTaken);
+        }
         stats.hp = Math.round(stats.hp * mult.hp); stats.attack = Math.round(stats.attack * mult.attack); stats.magic = Math.round(stats.magic * mult.magic);
         const combat = normalizeStats(stats as Stats);
-        const charge = flags.has('startMana100') ? EXPEDITION.manaCast : flags.has('startMana50') ? EXPEDITION.manaCast / 2 : 0;
-        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, placed, def, side, charge, manaGain: flags.has('manaBoost') ? 1.25 : 1 };
+        const charge = Math.min(EXPEDITION.manaCast, (flags.has('startMana100') ? EXPEDITION.manaCast : flags.has('startMana50') ? EXPEDITION.manaCast / 2 : 0) + (item?.startMana || 0));
+        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}${item ? `[${item.name}]` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, placed, def, side, charge, manaGain: flags.has('manaBoost') ? 1.25 : 1, ...(item?.reflect ? { reflect: item.reflect } : {}) };
         return f;
     });
     return { units, active, flags };
@@ -99,7 +106,8 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 target.charge = Math.min(EXPEDITION.manaCast, target.charge + EXPEDITION.manaPerHit * target.manaGain);
                 // 황야 4: 받은 피해의 15%를 공격자에게 되돌립니다.
                 const theirs = target.side === 'a' ? A : B;
-                if (theirs.flags.has('reflect') && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * .25); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
+                const reflectRate = (theirs.flags.has('reflect') ? .25 : 0) + (target.reflect || 0);
+                if (reflectRate > 0 && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * reflectRate); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
             }
             if (u.hp < selfBefore) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerHit * u.manaGain);
             // 지하: 처치마다 아군 전체 주는 피해 +5%(전투 안 누적).
