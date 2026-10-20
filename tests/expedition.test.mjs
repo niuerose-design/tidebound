@@ -71,10 +71,10 @@ test('expedition mana casting: skills fire only at 100 mana (basic +10 · hit +5
     assert.equal(D.unitById('orangeMushroom').skill, 'foeBurn'); assert.equal(D.unitById('seacle').skill, 'foeBarbs');
 });
 
-test('expedition run: start → buy → merge stars → place → fight → finish with essence reward; daily limit; sell refunds; xp levels', async () => {
+test('expedition run: start → buy → merge stars → place → fight → finish with pearl reward; no daily limit (v3.341); sell refunds; xp levels', async () => {
     const { newState, act } = await import('./harness.mjs');
-    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition'), T = await L.load('data/time');
-    const s = newState(0); s.level = 100; s.rebirths = 120; s.essence = 0;
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
+    const s = newState(0); s.level = 100; s.rebirths = 120; s.pearls = 0;
     const rng = mkRng(21), now = 1_800_000_000_000;
     act(s, { type: 'expeditionStart' }, now, rng); const r = s.expedition; assert.ok(r && r.round === 1 && r.level === 2 && r.shop.length === 5 && r.gold === D.EXPEDITION.baseGold);
     assert.throws(() => act(s, { type: 'expeditionStart' }, now, rng), /진행 중/);
@@ -97,12 +97,13 @@ test('expedition run: start → buy → merge stars → place → fight → fini
     r.gold = 10; act(s, { type: 'expeditionXp' }, now, rng); assert.equal(r.level, 3); assert.equal(r.gold, 6);
     // 전투 → 다음 라운드 · 수입 · 새 상점.
     act(s, { type: 'expeditionFight' }, now, rng); assert.equal(r.round, 2); assert.ok(r.last && typeof r.last.won === 'boolean'); assert.ok(r.gold >= 6 + D.EXPEDITION.baseGold); assert.ok(r.shop.every(x => x === null || D.unitById(x)));
-    // 포기 → 보상 · 하루 1판.
+    // 포기 → 세계석 보상(승리당 1, 완주 없음) · 같은 날에도 바로 다시 출발.
     r.wins = 3; act(s, { type: 'expeditionQuit' }, now, rng);
-    assert.ok(r.done); assert.equal(r.reward, 3 * A.expeditionRewardPerWin(120)); assert.equal(s.essence, r.reward); assert.equal(A.expeditionRewardPerWin(120), 140); assert.equal(s.expeditionDay, T.dayKey(now)); assert.equal(s.expeditionBest, 3);
-    act(s, { type: 'expeditionClear' }, now, rng); assert.equal(s.expedition, undefined);
-    assert.throws(() => act(s, { type: 'expeditionStart' }, now, rng), /오늘 원정/);
-    act(s, { type: 'expeditionStart' }, now + 86_400_000, rng); assert.ok(s.expedition && !s.expedition.done, 'next day opens again');
+    assert.ok(r.done); assert.equal(r.reward, 3 * D.EXPEDITION.pearlsPerWin); assert.equal(s.pearls, r.reward); assert.equal(A.expeditionReward(8, true), 8 * D.EXPEDITION.pearlsPerWin + D.EXPEDITION.clearPearls); assert.equal(s.expeditionDay, undefined, 'no daily key any more'); assert.equal(s.expeditionBest, 3);
+    assert.equal(s.essence, 0, 'essence untouched');
+    act(s, { type: 'expeditionStart' }, now, rng); assert.ok(s.expedition && !s.expedition.done && s.expedition.round === 1, 'a finished run is replaced the same day'); assert.ok(s.expedition.startedAt > r.startedAt, 'new run has a distinct startedAt');
+    act(s, { type: 'expeditionQuit' }, now, rng); act(s, { type: 'expeditionClear' }, now, rng); assert.equal(s.expedition, undefined);
+    act(s, { type: 'expeditionStart' }, now + 86_400_000, rng); assert.ok(s.expedition && !s.expedition.done);
     // 체력 0이면 탈락 종료.
     const t = s.expedition; t.hp = 1; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 5; act(s, { type: 'expeditionFight' }, now + 86_400_000, mkRng(5));
     if (!t.last.won) { assert.ok(t.done, 'knocked out'); } else assert.equal(t.round, 6);

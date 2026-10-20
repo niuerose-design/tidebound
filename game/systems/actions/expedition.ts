@@ -1,18 +1,17 @@
 /**
- * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 하루 1판(KST), 8라운드 PvE. 보상은 승리마다 정수.
+ * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
 import { EXPEDITION, unitById, sellPrice } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole } from '../expedition';
-import { dayKey } from '../../data/time';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
 import type { ActionHandlers } from './types';
 
 const run = (s: State): ExpeditionRun => { const r = s.expedition; if (!r || r.done) throw Error('진행 중인 원정이 없습니다.'); return r; };
 const slotsOf = (r: ExpeditionRun) => EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
-/** 승리당 정수 보상(환생 배율). */
-export const expeditionRewardPerWin = (rebirths: number) => Math.round(EXPEDITION.essencePerWin * Math.pow(10, Math.max(0, rebirths) / 120));
+/** 5단계: 보상 세계석 = 승수 × pearlsPerWin + (완주면 clearPearls). 환생 배율 없음. */
+export const expeditionReward = (wins: number, cleared: boolean) => wins * EXPEDITION.pearlsPerWin + (cleared ? EXPEDITION.clearPearls : 0);
 /** 같은 유닛 · 같은 ★이 3개 모이면 한 단계 올립니다(보드에 있던 자리는 유지, 나머지는 사라짐). 더 합칠 것이 없을 때까지. */
 export function mergeStars(r: ExpeditionRun) {
     for (let guard = 0; guard < 20; guard++) {
@@ -53,17 +52,16 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     const st = statsOf(s); st.runs++; st.wins += r.wins;
     const cleared = r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
     if (cleared) st.clears++;
-    const reward = Math.round(r.wins * expeditionRewardPerWin(s.rebirths || 0) * (cleared ? EXPEDITION.clearBonus : 1));
-    r.reward = reward; s.essence = (s.essence || 0) + reward;
-    s.expeditionDay = dayKey(now); s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
-    addLog(s, `원정대 ${why} · ${r.wins}승 · 정수 +${reward.toLocaleString()}${cleared ? ' (완주 보너스)' : ''}`, 'reward');
+    const reward = expeditionReward(r.wins, !!cleared);
+    r.reward = reward; s.pearls = (s.pearls || 0) + reward;
+    delete s.expeditionDay; s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
+    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}`, 'reward');
 }
 
 export const expeditionActions: ActionHandlers = {
     expeditionStart(s, { now, rng }) {
         if (s.expedition && !s.expedition.done) throw Error('이미 원정이 진행 중입니다.');
-        if (s.expeditionDay === dayKey(now)) throw Error('오늘 원정은 마쳤습니다. 자정(KST)에 다시 열립니다.');
-        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: now };
+        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1) };
         r.gold = income(r); r.shop = rollShop(r.level, rng);
         s.expedition = r;
         addLog(s, '원정대 출발 · 1라운드', 'system');
