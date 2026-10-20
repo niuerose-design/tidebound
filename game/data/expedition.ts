@@ -118,7 +118,7 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
  * 6단계 유닛 아이템(판 전용 8종): 라운드를 이기면 하나를 얻고(상자), 유닛마다 한 칸에 장착합니다. 본편 장비 옵션과 같은 능력치 이름을 써서 전투 계층이 Stats 보정으로 바로 적용합니다.
  * 판이 끝나면 사라집니다. 같은 아이템을 여럿 가질 수 있고, 유닛을 팔거나 승급하면 아이템은 가진 칸으로 돌아옵니다.
  */
-export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number };
+export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). */ tier?: 2 };
 export const ITEMS: ItemDef[] = [
     { id: 'blade', name: '맹공의 검', desc: '물리 공격 +35%', mult: { attack: 1.35 } },
     { id: 'wand', name: '마력의 지팡이', desc: '마법 공격 +35%', mult: { magic: 1.35 } },
@@ -128,7 +128,23 @@ export const ITEMS: ItemDef[] = [
     { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 +30%p · 치명타 +10%p', bonus: { followUpBonus: .3, crit: .1 } },
     { id: 'manaStone', name: '마나석', desc: '시작 마나 +60 · 최대 체력 +15%', startMana: 60, mult: { hp: 1.15 } },
     { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30% 반격 · 최대 체력 +20%', reflect: .3, mult: { hp: 1.2 } },
+    // 7단계 조합 아이템(상자에 안 나옴).
+    { id: 'greatBlade', name: '대검', desc: '물리 공격 +80%', mult: { attack: 1.8 }, tier: 2 },
+    { id: 'archStaff', name: '대마법봉', desc: '마법 공격 +80%', mult: { magic: 1.8 }, tier: 2 },
+    { id: 'towerShield', name: '대방패', desc: '받는 피해 −45% · 최대 체력 +15%', damageTaken: .45, mult: { hp: 1.15 }, tier: 2 },
+    { id: 'windBoots', name: '폭풍의 신발', desc: '속도 +10(거의 항상 선공)', bonus: { speed: 10 }, tier: 2 },
+    { id: 'doomSpear', name: '파멸의 창', desc: '물리 · 마법 공격 +45%', mult: { attack: 1.45, magic: 1.45 }, tier: 2 },
+    { id: 'citadel', name: '성채', desc: '받는 피해 −35% · 반격 45% · 최대 체력 +30%', damageTaken: .35, reflect: .45, mult: { hp: 1.3 }, tier: 2 },
+    { id: 'galeHorn', name: '질풍의 뿔', desc: '속도 +6 · 추가타 위력 +45%p · 치명타 +15%p', bonus: { speed: 6, followUpBonus: .45, crit: .15 }, tier: 2 },
+    { id: 'bloodOrb', name: '흡혈의 보주', desc: '흡혈 +40%p · 시작 마나 +100 · 최대 체력 +20%', bonus: { lifesteal: .4 }, startMana: 100, mult: { hp: 1.2 }, tier: 2 },
 ];
+/** 7단계 조합표(순서 무관). 표에 없는 짝은 합칠 수 없습니다. */
+const COMBOS: Record<string, string> = { 'blade+blade': 'greatBlade', 'wand+wand': 'archStaff', 'shield+shield': 'towerShield', 'boots+boots': 'windBoots', 'blade+wand': 'doomSpear', 'shield+thornMail': 'citadel', 'boots+horn': 'galeHorn', 'fang+manaStone': 'bloodOrb' };
+export const comboOf = (a: string, b: string) => COMBOS[[a, b].sort().join('+')] ? itemById(COMBOS[[a, b].sort().join('+')]) : undefined;
+/** 상자에 나오는 아이템(기본 8종). */
+export const BOX_ITEMS = () => ITEMS.filter(x => !x.tier);
+/** 상자 선택지 수. */
+export const BOX_CHOICES = 3;
 export const itemById = (id: string) => ITEMS.find(x => x.id === id);
 /** 한 번에 가질 수 있는 미장착 아이템 수. */
 export const ITEM_HOLD = 4;
