@@ -2,8 +2,8 @@
 /** 원정대(오토배틀러) 화면: 8라운드 PvE · 고스트, 횟수 제한 없음(5단계). 상점 5장 → 벤치 → 보드(앞줄 · 뒷줄 4칸) → 전투. 드래그 없이 버튼만으로 390px에서도 쓰이게. */
 import { useState } from 'react';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
-import { EXPEDITION, UNITS, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS } from '@/game/data/expedition';
-import { weekKey } from '@/game/data/time';
+import { EXPEDITION, UNITS, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier } from '@/game/data/expedition';
+import { weekKey, dayKey } from '@/game/data/time';
 import { activeTraits, traitKeys, ACT_BOSSES } from '@/game/systems/expedition';
 import { expeditionReward, runMods, benchCap } from '@/game/systems/actions/expedition';
 import { enemySkillById } from '@/game/data/encounters';
@@ -35,6 +35,18 @@ export function Expedition({ s, send, busy }: PanelProps) {
         <details><summary>특전 목록</summary><ul>{MASTERY_PERKS.map(p => <li key={p.id} className={p.level <= mastery.level ? 'on' : ''}>Lv.{p.level} <b>{p.name}</b> · {p.desc}</li>)}</ul></details>
     </div>;
     const weekRule = thisWeek ? weeklyRuleById(thisWeek) : undefined;
+    // 13단계: 과제(일일 · 주간) · 도감.
+    const q = s.expeditionQuests, stale = !!(q && now && (q.day !== dayKey(now) || q.week !== weekKey(now)));
+    const questList = (list: { id: string; n: number; done?: boolean }[]) => <ul className="exp-quests">{list.map(st => { const def = questById(st.id); if (!def) return null; return <li key={st.id} className={st.done ? 'done' : ''}><div className="exp-quest-head"><b>{def.name}</b><small>{st.done ? '완료' : `${st.n} / ${def.target}`} · 세계석 {def.pearls} · 숙련 {def.xp}</small></div><small className="muted">{def.desc}</small><span className="exp-quest-bar"><i style={{ width: `${Math.min(100, Math.round(100 * st.n / def.target))}%` }}/></span></li>; })}</ul>;
+    const questBox = <div className="exp-quest-box" aria-label="원정 과제">
+        <div className="section-title"><h2>과제</h2><span>{stale ? '새 과제는 다음 행동 때 바뀝니다' : '한국 시간 자정 · 월요일에 새로'}</span></div>
+        {q ? <div className="exp-quest-cols"><div><h3>오늘</h3>{questList(q.daily)}</div><div><h3>이번 주</h3>{questList(q.weekly)}</div></div> : <p className="muted">원정을 출발하면 오늘 · 이번 주 과제가 생깁니다. 완료하면 바로 세계석과 숙련 경험치를 받습니다.</p>}
+    </div>;
+    const unitWins = s.expeditionStats?.unitWins || {}, unitUse = s.expeditionStats?.units || {};
+    const codexBox = <details className="exp-codex"><summary>유닛 도감 · {Object.values(unitWins).filter(n => n > 0).length}/{UNITS.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
+        <p className="footnote">보드에 두고 이긴 라운드 수로 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}. 30종 모두 이기면 칭호 📘, 금 5종이면 🏅.</p>
+        <div className="exp-codex-grid">{[...UNITS].sort((a, b) => a.cost - b.cost).map(def => { const w = unitWins[def.id] || 0, tier = codexTier(w); return <div key={def.id} className={`exp-codex-unit cost-${def.cost} tier-${tier}${w ? '' : ' unseen'}`} title={`${def.name} · ${tags(def)} · 배치 ${unitUse[def.id] || 0} · 승리 ${w}`}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{w ? `${w}승${tier ? ` · ${CODEX_TIERS[tier - 1].name}` : ''}` : unitUse[def.id] ? '아직 승리 없음' : '미등록'}</small></div>; })}</div>
+    </details>;
     const weekBanner = weekRule ? <p className="exp-rule">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="muted">(매주 월요일 바뀜 · 판을 시작할 때 규칙이 붙어 끝까지 유지)</small></p> : null;
 
     const intro = <Heading eyebrow="EXPEDITION" title="원정대" description={`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}. 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}/>;
@@ -44,14 +56,14 @@ export function Expedition({ s, send, busy }: PanelProps) {
     if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
         {season}{weekBanner}
         <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart' })}>원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
-        {masteryBox}
+        {masteryBox}{questBox}{codexBox}
         <p className="footnote">유닛 {UNITS.length}종 · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
         {rewardTable}
     </section></>;
     if (r.done) return <>{intro}<section className="panel exp-start">
         <h2>원정 종료 · {r.wins}승</h2><p>세계석 +{format(r.reward || 0)}{r.round > EXPEDITION.rounds ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
         <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart' })}>바로 다시 출발</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
-        {masteryBox}{season}{weekBanner}{rewardTable}
+        {masteryBox}{questBox}{codexBox}{season}{weekBanner}{rewardTable}
     </section></>;
     const mods = runMods(r), runRule = weeklyRuleById(r.rule), bench = benchCap(r);
     const traits = activeTraits(r.board, mods), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
@@ -104,5 +116,6 @@ export function Expedition({ s, send, busy }: PanelProps) {
             <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); const own = ownedCount(id), plus = onBoard.has(id) ? [] : traitKeys({ unit: id, star: 1, row: 'front' }, def).filter(k => boardKeys.has(k)).map(k => (ORIGIN_NAMES as Record<string, string>)[k] || (ROLE_NAMES as Record<string, string>)[k] || (SPECIAL_NAMES as Record<string, string>)[k]); return <button type="button" key={i} className={`exp-card cost-${def.cost}${plus.length ? ' synergy' : ''}`} disabled={busy || r.gold < def.cost || r.bench.length >= bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><UnitArt def={def} size={34}/><b>{def.name}</b><small>{tags(def)}</small>{plus.length ? <span className="exp-plus">시너지 +{plus.map(n => n.split(' ')[0]).join(' · ')}</span> : null}{own ? <span className="exp-own">{own >= 9 ? '★3 보유' : `합치기 ${own % 3 || 3}/3${own >= 3 ? ' → ★3' : ''}`}</span> : null}<em>{def.cost} G</em></button>; })}</div>
             <p className="footnote">같은 유닛 3개면 ★이 오릅니다(★2 → ★3도 3개, 아이템은 첫 유닛 것을 물려받고 나머지는 되돌아옴). 판매는 산 값 그대로 돌려받고 아이템도 돌아옵니다. {EXPEDITION.synergySlotRound}라운드부터 마지막 칸은 보드 시너지를 늘리는 유닛이 나옵니다. 기술은 마나 100에 발동하고(기본 공격 +10 · 피격 +5), 카드를 길게 누르면 기술 설명이 보입니다.</p>
         </section>
+        <section className="panel" aria-label="과제">{questBox}</section>
     </>;
 }

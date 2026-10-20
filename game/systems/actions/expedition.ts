@@ -3,8 +3,9 @@
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
-    AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods } from '../../data/expedition';
-import { weekKey } from '../../data/time';
+    AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey } from '../../data/expedition';
+import { weekKey, dayKey } from '../../data/time';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
@@ -33,7 +34,7 @@ export function pickEmblem(r: ExpeditionRun, rng: () => number): string {
     const best = Math.min(...cands.map(x => x.gap)), near = cands.filter(x => x.gap === best), most = Math.max(...near.map(x => x.count)), top = near.filter(x => x.count === most);
     return top[Math.floor(rng() * top.length)].id;
 }
-export function mergeStars(r: ExpeditionRun) {
+export function mergeStars(r: ExpeditionRun, onStar3?: () => void) {
     for (let guard = 0; guard < 20; guard++) {
         let merged = false;
         for (const star of [1, 2] as const) {
@@ -41,7 +42,7 @@ export function mergeStars(r: ExpeditionRun) {
             for (const unit of units) {
                 const onBoard = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.unit === unit && x.star === star), onBench = r.bench.map((x, i) => [x, i] as const).filter(([x]) => x.unit === unit && x.star === star);
                 if (onBoard.length + onBench.length < 3) continue;
-                const next = (star + 1) as 2 | 3; let left = 3;
+                const next = (star + 1) as 2 | 3; if (next === 3) onStar3?.(); let left = 3;
                 // 벤치부터 지우고, 보드에 있으면 첫 자리를 승급시킵니다.
                 const benchDrop = onBench.slice(0, left).map(([, i]) => i); left -= benchDrop.length;
                 const boardDrop = onBoard.slice(0, left).map(([, i]) => i);
@@ -76,14 +77,31 @@ export function rollAugments(r: ExpeditionRun, rng: () => number): string[] {
     while (out.length < n && pool.length) out.push(pool.splice(Math.floor(rng() * pool.length), 1)[0]);
     return out;
 }
-/** 11단계 숙련: 판이 끝날 때 경험치를 주고 레벨을 올립니다. 올라간 레벨의 특전을 로그로 알립니다. */
-function gainMastery(s: State, r: ExpeditionRun, cleared: boolean) {
-    const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 }, xp = masteryRunXp(r.wins, r.acts || 0, cleared);
-    m.xp += xp; m.total += xp; const before = m.level;
+/** 13단계 과제: 날짜 · 주가 바뀌면 새로 뽑습니다(진행 중이던 것은 사라짐). */
+export function ensureQuests(s: State, now: number) {
+    const day = dayKey(now), week = weekKey(now), q = s.expeditionQuests ??= { day: '', week: '', daily: [], weekly: [] };
+    if (q.day !== day) { q.day = day; q.daily = pickQuests('daily', day).map(id => ({ id, n: 0 })); }
+    if (q.week !== week) { q.week = week; q.weekly = pickQuests('weekly', week).map(id => ({ id, n: 0 })); }
+    return q;
+}
+/** 과제 진행: 같은 키의 일일 · 주간 과제가 함께 오르고, 목표에 닿으면 바로 세계석 · 숙련 경험치를 줍니다. */
+export function questProgress(s: State, now: number, key: QuestKey, n = 1) {
+    const q = ensureQuests(s, now);
+    for (const st of [...q.daily, ...q.weekly]) {
+        const def = questById(st.id); if (!def || def.key !== key || st.done) continue;
+        st.n = Math.min(def.target, st.n + n);
+        if (st.n >= def.target) { st.done = true; s.pearls = (s.pearls || 0) + def.pearls; addMasteryXp(s, def.xp); addLog(s, `원정 과제 완료 · ${def.name} · 세계석 +${def.pearls} · 숙련 +${def.xp}`, 'reward'); }
+    }
+}
+function addMasteryXp(s: State, xp: number) {
+    const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 }; m.xp += xp; m.total += xp; const before = m.level;
     while (m.level < MASTERY_MAX && m.xp >= masteryXpFor(m.level)) { m.xp -= masteryXpFor(m.level); m.level++; }
     if (m.level >= MASTERY_MAX) m.xp = 0;
     if (m.level > before) { const perks = MASTERY_PERKS.filter(p => p.level > before && p.level <= m.level); addLog(s, `원정 숙련 ${m.level} 달성${perks.length ? ` · 특전: ${perks.map(p => `${p.name}(${p.desc})`).join(', ')}` : ''}`, 'reward'); }
-    return xp;
+}
+/** 11단계 숙련: 판이 끝날 때 경험치를 주고 레벨을 올립니다. 올라간 레벨의 특전을 로그로 알립니다. */
+function gainMastery(s: State, r: ExpeditionRun, cleared: boolean) {
+    const xp = masteryRunXp(r.wins, r.acts || 0, cleared); addMasteryXp(s, xp); return xp;
 }
 const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(EXPEDITION.rounds + 1).fill(0), roundWins: Array(EXPEDITION.rounds + 1).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
 /** 3단계: 서버가 a.value에 실어 보낸 라운드별 고스트(다른 플레이어 보드)에서 이 라운드 것을 읽습니다. 모양이 맞지 않으면 무시. */
@@ -107,6 +125,7 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     r.reward = reward; s.pearls = (s.pearls || 0) + reward;
     delete s.expeditionDay; s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
     const mxp = gainMastery(s, r, !!cleared);
+    questProgress(s, now, 'runs'); if (cleared) questProgress(s, now, 'clears');
     addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''} · 숙련 +${mxp}`, 'reward');
 }
 
@@ -114,8 +133,10 @@ export const expeditionActions: ActionHandlers = {
     /** 9단계: value는 서버가 넣는 지난 시즌 정산(JSON). 같은 시즌은 한 번만 받습니다. 화면이 보낸 값은 서버가 덮어씁니다. */
     expeditionStart(s, { a, now, rng }) {
         if (s.expedition && !s.expedition.done) throw Error('이미 원정이 진행 중입니다.');
+        ensureQuests(s, now);
         const settle = parseSettlement(a.value);
         if (settle && s.expeditionSeasonClaimed !== settle.season) {
+            if (settle.rank) s.expeditionSeasonBest = s.expeditionSeasonBest ? Math.min(s.expeditionSeasonBest, settle.rank) : settle.rank;
             s.expeditionSeasonClaimed = settle.season; s.expeditionSeasonLast = settle; s.pearls = (s.pearls || 0) + settle.pearls;
             addLog(s, `원정대 ${settle.season} 시즌 정산 · ${settle.rank ? `${settle.rank}위` : '순위 밖'}(${settle.total}명 중) · 최고 ${settle.wins}승 · 세계석 +${settle.pearls}`, 'reward');
         }
@@ -125,13 +146,13 @@ export const expeditionActions: ActionHandlers = {
         s.expedition = r;
         addLog(s, `원정대 출발 · 1라운드 · 이번 주 규칙: ${rule.name}(${rule.desc})`, 'system');
     },
-    expeditionBuy(s, { a }) {
+    expeditionBuy(s, { a, now }) {
         const r = run(s), i = Number(a.value), id = r.shop[i];
         if (!Number.isInteger(i) || !id) throw Error('살 유닛을 고르세요.');
         const def = unitById(id)!;
         if (r.gold < def.cost) throw Error(`골드가 부족합니다(비용 ${def.cost}).`);
         if (r.bench.length >= benchCap(r)) throw Error('벤치가 가득 찼습니다. 배치하거나 팔아서 자리를 비우세요.');
-        r.gold -= def.cost; r.shop[i] = null; r.bench.push({ unit: id, star: 1 }); mergeStars(r);
+        r.gold -= def.cost; r.shop[i] = null; r.bench.push({ unit: id, star: 1 }); mergeStars(r, () => questProgress(s, now, 'star3'));
     },
     expeditionSell(s, { a }) {
         const r = run(s), [where, iText] = String(a.value || '').split(':'), i = Number(iText);
@@ -179,7 +200,11 @@ export const expeditionActions: ActionHandlers = {
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
-        for (const p of r.board) st.units[p.unit] = (st.units[p.unit] || 0) + 1;
+        for (const p of r.board) { st.units[p.unit] = (st.units[p.unit] || 0) + 1; if (won) (st.unitWins ??= {})[p.unit] = (st.unitWins[p.unit] || 0) + 1; }
+        // 13단계 조합 집계(관리자): 켜진 시너지 조합 키별 전투 · 승. 키가 40개를 넘으면 가장 적게 쓴 키를 버립니다.
+        { const active = activeTraits(r.board, mods), key = compKey(active); const comps = st.comps ??= {}, cw = st.compWins ??= {}; comps[key] = (comps[key] || 0) + 1; if (won) cw[key] = (cw[key] || 0) + 1;
+          const keys = Object.keys(comps).filter(k => k !== key); if (keys.length >= COMP_KEYS_MAX) { const drop = keys.sort((x, y) => comps[x] - comps[y])[0]; delete comps[drop]; delete cw[drop]; }
+          if (won) { questProgress(s, now, 'wins'); if (boss) questProgress(s, now, 'bossWins'); if (useGhost) questProgress(s, now, 'ghostWins'); if (active.some(t => t.tier >= 1 && t.trait.tiers[t.tier - 1].count >= 4)) questProgress(s, now, 'synergy4'); } }
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
@@ -189,34 +214,35 @@ export const expeditionActions: ActionHandlers = {
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
+        if (r.round === 9) questProgress(s, now, 'reach8');
         // 11단계: 2 · 5 · 8라운드 시작 때 증강 선택지.
         if (AUGMENT_ROUNDS.includes(r.round)) { const offer = rollAugments(r, rng); if (offer.length) r.augmentOffer = offer; }
     },
     /** 11단계 증강 고르기: value = 선택지 번호. 고르기 전에는 전투할 수 없습니다(건너뛰기 없음). */
-    expeditionPickAugment(s, { a }) {
+    expeditionPickAugment(s, { a, now }) {
         const r = run(s), k = Number(a.value), id = r.augmentOffer?.[k];
         if (!r.augmentOffer?.length) throw Error('고를 증강이 없습니다.');
         if (!id || !augmentById(id)) throw Error('증강을 고르세요.');
-        (r.augments ??= []).push(id); delete r.augmentOffer;
+        (r.augments ??= []).push(id); delete r.augmentOffer; questProgress(s, now, 'augments');
         const def = augmentById(id)!; if (def.heal) r.hp = Math.min(EXPEDITION.hp, r.hp + def.heal);
         addLog(s, `원정대 증강 · ${augmentName(id)}`, 'reward');
     },
     /** 7단계 상자 고르기: value = 선택지 번호. 건너뛰면 상자가 사라집니다. */
-    expeditionPickBox(s, { a }) {
+    expeditionPickBox(s, { a, now }) {
         const r = run(s), k = Number(a.value), id = r.box?.[k];
         if (!r.box?.length) throw Error('고를 상자가 없습니다.');
         if (!id || !itemById(id)) throw Error('고를 아이템을 고르세요.');
         if ((r.items?.length || 0) >= ITEM_HOLD) throw Error(`아이템은 ${ITEM_HOLD}개까지 들고 있을 수 있습니다. 장착하거나 조합한 뒤 고르세요.`);
-        (r.items ??= []).push(id); delete r.box;
+        (r.items ??= []).push(id); delete r.box; if (itemById(id)?.tier === 'emblem') questProgress(s, now, 'emblems');
     },
     expeditionSkipBox(s) { const r = run(s); if (!r.box?.length) throw Error('고를 상자가 없습니다.'); delete r.box; },
     /** 7단계 조합: value 'a:b'(가진 아이템 번호 둘). 조합표에 있는 짝만 합쳐지고, 결과는 가진 칸에 들어갑니다. */
-    expeditionCombine(s, { a }) {
+    expeditionCombine(s, { a, now }) {
         const r = run(s), [x, y] = String(a.value || '').split(':').map(Number);
         const items = r.items || [], ia = items[x], ib = items[y];
         if (!Number.isInteger(x) || !Number.isInteger(y) || x === y || !ia || !ib) throw Error('합칠 아이템 둘을 고르세요.');
         const out = comboOf(ia, ib); if (!out) throw Error('이 둘은 합칠 수 없습니다. 조합표를 확인하세요.');
-        r.items = items.filter((_, i) => i !== x && i !== y); r.items.push(out.id);
+        r.items = items.filter((_, i) => i !== x && i !== y); r.items.push(out.id); questProgress(s, now, 'combines');
         addLog(s, `원정대 조합 · ${itemById(ia)!.name} + ${itemById(ib)!.name} → ${out.name}`, 'reward');
     },
     /** 6단계 장착: value 'bench:i:k' | 'board:i:k'(k = 가진 아이템 번호). 이미 낀 아이템은 가진 칸으로 돌아옵니다. */

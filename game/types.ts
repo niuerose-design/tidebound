@@ -615,6 +615,9 @@ export type State = {
     expeditionSeasonLast?: { season: string; rank: number; total: number; wins: number; pearls: number };
     /** 11단계: 원정 숙련(레벨 · 현재 경험치 · 누적). */
     expeditionMastery?: ExpeditionMastery;
+    /** 13단계: 일일 · 주간 과제 · 역대 최고 시즌 순위(1이 최고, 0 = 없음). */
+    expeditionQuests?: ExpeditionQuests;
+    expeditionSeasonBest?: number;
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
@@ -1047,7 +1050,12 @@ export type ExpeditionMastery = { level: number; xp: number; total: number };
 /** 12단계 전투 재생 프레임(작게 저장): t 턴 · a 행동 유닛('a0'~'b7' = 편 + 보드 번호) · d 대상 · v 피해 · c 치명 · k 처치 · s 종류(cast · reflect · revive · start · heal) · m 짧은 글(기술 이름 등) · th 대상 남은 체력 % · ah 행동 유닛 남은 체력 %(바뀌었을 때만). */
 export type ReplayFrame = { t: number; a: string; d?: string; v?: number; c?: 1; k?: 1; s?: 'cast' | 'reflect' | 'revive' | 'start' | 'heal' | 'miss'; m?: string; th?: number; ah?: number };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
-export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
+export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number;
+    /** 13단계: 유닛별 이긴 라운드 수(도감 숙달) · 조합 키별 전투 수/승 수(관리자 집계, 최대 40키). */
+    unitWins?: Record<string, number>; comps?: Record<string, number>; compWins?: Record<string, number> };
+/** 13단계 과제 상태: 날짜 · 주 키가 바뀌면 새로 뽑습니다. 완료하면 바로 보상(세계석 · 숙련)을 주고 done에 기록. */
+export type ExpeditionQuestState = { id: string; n: number; done?: boolean };
+export type ExpeditionQuests = { day: string; week: string; daily: ExpeditionQuestState[]; weekly: ExpeditionQuestState[] };
 /** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */
 export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[]; /** 4단계: 그 고스트의 이번 달 최고 승수(이기면 시즌 점수 가산). */ wins?: number };
 export type DuelResult = {

@@ -277,3 +277,47 @@ export function mergeMods(list: (RunMods | undefined)[]): RunMods {
     if (out.bossGuard) out.bossGuard = Math.min(.6, out.bossGuard);
     return out;
 }
+
+// ───────────── 13단계: 과제 · 도감 · 시즌 칭호 ─────────────
+/** 과제 진행 키: 핸들러가 questProgress(s, key, n)으로 올립니다. */
+export type QuestKey = 'wins' | 'ghostWins' | 'bossWins' | 'clears' | 'runs' | 'star3' | 'combines' | 'augments' | 'synergy4' | 'reach8' | 'emblems';
+export type QuestDef = { id: string; key: QuestKey; name: string; desc: string; target: number; period: 'daily' | 'weekly'; pearls: number; xp: number };
+export const EXPEDITION_QUESTS: QuestDef[] = [
+    // 일일(보상 세계석 3 · 숙련 30)
+    { id: 'd_wins5', key: 'wins', name: '다섯 번의 승리', desc: '라운드 5번 이기기', target: 5, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_ghost2', key: 'ghostWins', name: '모험가 사냥', desc: '다른 모험가의 원정대(고스트) 2번 이기기', target: 2, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_boss1', key: 'bossWins', name: '막 보스 격파', desc: '막 보스 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_star3', key: 'star3', name: '세 별', desc: '유닛을 ★3으로 1번 올리기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_combine', key: 'combines', name: '대장간', desc: '아이템 조합 1번', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_augment2', key: 'augments', name: '선택의 순간', desc: '증강 2번 고르기', target: 2, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_synergy', key: 'synergy4', name: '완성된 조합', desc: '4단계(머릿수 4) 이상 시너지를 켠 채 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_reach8', key: 'reach8', name: '3막 진입', desc: '9라운드까지 가기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_emblem', key: 'emblems', name: '문장 수집', desc: '문장 1개 고르기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    // 주간(보상 세계석 10 · 숙련 150)
+    { id: 'w_wins30', key: 'wins', name: '서른 번의 승리', desc: '라운드 30번 이기기', target: 30, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_clear2', key: 'clears', name: '완주 두 번', desc: '12라운드 완주 2번', target: 2, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_boss6', key: 'bossWins', name: '보스 사냥 주간', desc: '막 보스 6번 이기기', target: 6, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_ghost10', key: 'ghostWins', name: '열 명의 모험가', desc: '고스트 10번 이기기', target: 10, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_runs5', key: 'runs', name: '다섯 판', desc: '원정 5판 마치기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_synergy5', key: 'synergy4', name: '조합의 달인', desc: '4단계 이상 시너지를 켠 채 5번 이기기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_star3x3', key: 'star3', name: '별 셋 셋', desc: '유닛을 ★3으로 3번 올리기', target: 3, period: 'weekly', pearls: 10, xp: 150 },
+];
+export const QUESTS_PER_PERIOD = 3;
+/** 일일 · 주간 과제 3개씩을 키(날짜 · 주) 해시로 고릅니다(모두에게 같은 과제). */
+export function pickQuests(period: 'daily' | 'weekly', key: string): string[] {
+    const pool = EXPEDITION_QUESTS.filter(q => q.period === period);
+    let h = 7; for (const ch of key) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
+    const out: string[] = [], list = [...pool];
+    while (out.length < QUESTS_PER_PERIOD && list.length) { h = (h * 1664525 + 1013904223) >>> 0; out.push(list.splice(h % list.length, 1)[0].id); }
+    return out;
+}
+export const questById = (id: string) => EXPEDITION_QUESTS.find(q => q.id === id);
+/** 유닛 도감 숙달 단계(그 유닛을 보드에 두고 이긴 라운드 수): 동 10 · 은 50 · 금 200. */
+export const CODEX_TIERS = [{ wins: 10, name: '동' }, { wins: 50, name: '은' }, { wins: 200, name: '금' }];
+export const codexTier = (wins: number) => CODEX_TIERS.filter(t => wins >= t.wins).length;
+/** 13단계 관리자 집계용 조합 키: 2단계 이상(4명 이상 또는 역할 6) 켜진 시너지를 ‘id머릿수’로 정렬해 이어 붙입니다. 없으면 'none'. */
+export const compKey = (active: { trait: { id: string; tiers: { count: number }[] }; count: number; tier: number }[]) => {
+    const parts = active.filter(t => t.tier >= 2 || (t.tier >= 1 && t.trait.tiers[t.tier - 1].count >= 4)).map(t => `${t.trait.id}${t.trait.tiers[t.tier - 1].count}`).sort();
+    return parts.length ? parts.join('+') : 'none';
+};
+export const COMP_KEYS_MAX = 40;

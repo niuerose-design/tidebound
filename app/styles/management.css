@@ -723,6 +723,21 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-traits button.open { border-color:#8fc7a4; }
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
 .exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
+/* 13단계 과제 · 도감 */
+.exp-quest-box { margin:10px 0 4px; } .exp-quest-box .section-title { margin-bottom:6px; }
+.exp-quest-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .exp-quest-cols h3 { font-size:12px; color:#9dadaf; margin:0 0 4px; font-weight:600; }
+.exp-quests { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.exp-quests li { padding:7px 9px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; font-size:12px; display:grid; gap:3px; }
+.exp-quests li.done { border-color:#5fa37a; background:#13262b; } .exp-quests li.done .exp-quest-head b::before { content:'✓ '; color:#8fc7a4; }
+.exp-quest-head { display:flex; justify-content:space-between; gap:6px; align-items:baseline; } .exp-quest-head b { color:#d7dec9; } .exp-quest-head small { color:#c9b68a; white-space:nowrap; font-size:11px; }
+.exp-quest-bar { display:block; height:4px; border-radius:2px; background:#1b2f30; overflow:hidden; } .exp-quest-bar i { display:block; height:100%; background:linear-gradient(90deg,#e0b36a,#f0dcae); }
+.exp-codex { margin:12px 0 4px; font-size:12px; } .exp-codex summary { cursor:pointer; color:#c9b68a; font-weight:600; }
+.exp-codex-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:6px; margin-top:6px; }
+.exp-codex-unit { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); text-align:center; min-width:0; }
+.exp-codex-unit b { font-size:11px; word-break:keep-all; } .exp-codex-unit small { font-size:10px; color:#9dadaf; }
+.exp-codex-unit.unseen { opacity:.45; filter:grayscale(.6); }
+.exp-codex-unit.tier-1 { box-shadow:0 0 0 1px #b87333; } .exp-codex-unit.tier-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; } .exp-codex-unit.tier-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
+@media (max-width:480px) { .exp-quest-cols { grid-template-columns:1fr; } }
 /* 12단계 전투 재생 · ★ 광채 */
 .exp-cell.star-3, .exp-fighter.star-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
 .exp-cell.star-2, .exp-fighter.star-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; }

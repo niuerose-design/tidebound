@@ -133,7 +133,7 @@ export default function AdminPage() {
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
     const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); const x = await call({ action: 'expedition' }); if (x) setExpedition(x); };
-    const [expedition, setExpedition] = useState<{ players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[] } | null>(null);
+    const [expedition, setExpedition] = useState<{ players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[]; comps?: { key: string; name: string; plays: number; wins: number; rate: number }[] } | null>(null);
     /** v27.69 제단 초기화: 공물(게이지 기여도) 또는 신(깨어난 신·신의 자리·몫). */
     const resetAltar = async (kind: 'offers' | 'god') => {
         const msg = kind === 'offers' ? '제단 게이지(축복 3종·신 소환)에 쌓인 공물(기여도)을 모두 0으로 되돌릴까요?\n이미 열려 있는 축복은 남은 시간 동안 유지됩니다. 바친 재화는 돌려주지 않습니다.' : '신을 초기화할까요?\n깨어 있는 신이 사라지고, 신의 자리 주인과 쌓인 몫(거두지 않은 재화)이 비워집니다. 다음에 소환되는 신은 처음 신(검은 마법사)입니다.';
@@ -253,6 +253,7 @@ export default function AdminPage() {
                     {expedition.rounds.map(r => <Tile key={r.round} label={`${r.round}라운드 승률`} value={`${r.rate}%`} note={`${format(r.plays)}전 ${format(r.wins)}승`}/>)}
                 </div>
                 <p style={{ fontSize: 13, marginTop: 12 }}><b>많이 배치한 유닛</b> · {expedition.units.length ? expedition.units.map(u => `${u.name} ${format(u.count)}`).join(' · ') : '아직 없음'}</p>
+                <p style={{ fontSize: 13, marginTop: 8 }}><b>시너지 조합별 승률</b>(전투 20 이상, 4명 이상 켜진 조합) · {expedition.comps?.length ? expedition.comps.map(c => `${c.name} ${c.rate}%(${format(c.plays)}전)`).join(' · ') : '아직 없음'}</p>
             </Fold>}
             <Fold title="요약" note={`${new Date(stats.at).toLocaleString('ko-KR')} 기준`}>
                 <div style={grid(150)}>
