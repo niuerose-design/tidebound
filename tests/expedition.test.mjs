@@ -168,6 +168,11 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
         const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
         const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2].name, '하나');
         assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
+        // 9단계 정산: 다음 달에 지난달 행으로 순위 · 보상. 행이 없으면 null.
+        const nextMonth = now + 32 * 86_400_000;
+        const one = await E.settleExpeditionSeason('p1', nextMonth); assert.deepEqual(one, { season: key, rank: 2, total: 2, wins: 3, pearls: 30 });
+        const two2 = await E.settleExpeditionSeason('p2', nextMonth); assert.equal(two2.rank, 1); assert.equal(two2.pearls, 50);
+        assert.equal(await E.settleExpeditionSeason('p3', nextMonth), null); assert.equal(await E.settleExpeditionSeason('p1', now), null, 'the current month is not settled');
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
@@ -272,4 +277,22 @@ test('expedition stage 8: emblems add a trait key (counted once per unit), guard
     assert.equal(D.describeTier({ count: 4, mult: { hp: 1.7 }, flags: ['regen'] }), '체력 +70% · 매 턴 체력 4% 회복');
     assert.equal(D.describeTier({ count: 2, damageTaken: .2, only: 'guard' }), '수호 유닛만: 받는 피해 −20%');
     for (const t of D.TRAITS) for (const tier of t.tiers) assert.ok(D.describeTier(tier).length > 3, `${t.id} tier ${tier.count} has a description`);
+});
+
+test('expedition stage 9: season settlement pays pearls once per season via expeditionStart value (server-made, shape-checked, pearls recomputed), and boxes offer a tier-2 item from round 6', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
+    assert.equal(D.seasonPearls(1), 50); assert.equal(D.seasonPearls(3), 30); assert.equal(D.seasonPearls(10), 15); assert.equal(D.seasonPearls(30), 8); assert.equal(D.seasonPearls(31), 3); assert.equal(D.seasonPearls(0), 3, 'outside the pool: participation reward');
+    assert.equal(A.parseSettlement(undefined), null); assert.equal(A.parseSettlement('{"season":"2026-9","rank":1,"total":3}'), null, 'bad season key'); assert.equal(A.parseSettlement('nope'), null);
+    assert.deepEqual(A.parseSettlement(JSON.stringify({ season: '2026-09', rank: 2, total: 9, wins: 6, pearls: 9999 })), { season: '2026-09', rank: 2, total: 9, wins: 6, pearls: 30 }, 'pearls come from the rank, not the payload');
+    const s = newState(0); s.level = 100; s.pearls = 0; const now = 1_800_000_000_000;
+    const v = JSON.stringify({ season: '2026-09', rank: 1, total: 12, wins: 8 });
+    act(s, { type: 'expeditionStart', value: v }, now, mkRng(1)); assert.equal(s.pearls, 50); assert.equal(s.expeditionSeasonClaimed, '2026-09'); assert.deepEqual(s.expeditionSeasonLast, { season: '2026-09', rank: 1, total: 12, wins: 8, pearls: 50 });
+    act(s, { type: 'expeditionQuit' }, now, mkRng(1)); act(s, { type: 'expeditionStart', value: v }, now + 1, mkRng(1)); assert.equal(s.pearls, 50, 'same season is paid once');
+    act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); act(s, { type: 'expeditionStart' }, now + 2, mkRng(1)); assert.equal(s.pearls, 50, 'no value: nothing');
+    act(s, { type: 'expeditionQuit' }, now + 2, mkRng(1)); act(s, { type: 'expeditionStart', value: JSON.stringify({ season: '2026-10', rank: 0, total: 700, wins: 1 }) }, now + 3, mkRng(1)); assert.equal(s.pearls, 53, 'next season, outside the pool: +3');
+    // 상자 품질: 6라운드부터 첫째 칸이 조합 아이템.
+    const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }]; r.round = D.TIER2_ROUND - 1;
+    act(s, { type: 'expeditionFight' }, now + 4, mkRng(2)); assert.ok(r.last.won); assert.ok(!D.itemById(r.box[0]).tier, 'before round 6 the first slot is basic'); act(s, { type: 'expeditionSkipBox' }, now + 4, mkRng(1));
+    act(s, { type: 'expeditionFight' }, now + 5, mkRng(3)); assert.ok(r.last.won); assert.equal(D.itemById(r.box[0]).tier, 2, 'round 6: tier-2 item first'); assert.ok(!D.itemById(r.box[1]).tier); assert.equal(D.itemById(r.box[2]).tier, 'emblem'); assert.equal(new Set(r.box).size, 3);
 });

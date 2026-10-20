@@ -5,7 +5,8 @@ import 'server-only';
  * - 전투 뒤: 이번 달 행을 갱신합니다. 이번 판이 지난 최고보다 못하면 보드 스냅샷은 두고 '판 수'만 올립니다.
  */
 import { db } from './db';
-import { monthKey } from '../data/time';
+import { monthKey, previousMonthKey } from '../data/time';
+import { seasonPearls, type SeasonSettlement } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
@@ -48,4 +49,14 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
 export async function listExpeditionBoard(key: string) {
     const rows = await db().listRankings(expeditionSeason(key), 50);
     return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; return { rank: i + 1, id: snap.account, name: snap.name, wins: snap.wins, cleared: snap.cleared, round: snap.round, runs: snap.runs, score: snap.score ?? expeditionScore(snap), ghostPoints: Object.values(snap.ghostByRun || {}).reduce((a, n) => a + (n || 0), 0), units: Object.values(snap.boards || {}).at(-1)?.map(p => `${p.unit}:${p.star}`) || [] }; });
+}
+const SETTLE_POOL = 500;
+/** 9단계 시즌 말 정산: 지난달(한국 시간) 행이 있으면 그 달 순위(상위 500 안, 밖이면 0)와 보상을 돌려줍니다. 지급 · 중복 방지는 expeditionStart 핸들러가 세이브의 expeditionSeasonClaimed로 합니다. */
+export async function settleExpeditionSeason(id: string, now: number): Promise<SeasonSettlement | null> {
+    const key = previousMonthKey(monthKey(now)), season = expeditionSeason(key);
+    const mine = await db().getRanking(expeditionRowId(key, id), season); if (!mine) return null;
+    let snap: ExpeditionSnapshot; try { snap = JSON.parse(mine.snapshot) as ExpeditionSnapshot; } catch { return null; }
+    const rows = await db().listRankings(season, SETTLE_POOL);
+    const rank = rows.findIndex(r => r.id === mine.id) + 1;
+    return { season: key, rank, total: rows.length, wins: snap.wins || 0, pearls: seasonPearls(rank) };
 }

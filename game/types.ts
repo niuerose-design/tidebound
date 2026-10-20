@@ -610,6 +610,9 @@ export type State = {
     expeditionDay?: string;
     expeditionBest?: number;
     expeditionStats?: ExpeditionStats;
+    /** 9단계: 시즌 말 보상을 받은 마지막 시즌 키(YYYY-MM)와 그 내역. */
+    expeditionSeasonClaimed?: string;
+    expeditionSeasonLast?: { season: string; rank: number; total: number; wins: number; pearls: number };
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;

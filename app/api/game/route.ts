@@ -14,7 +14,7 @@ import { postPlayerNews } from '@/game/server/news';
 import { collectNews, type NewsEvent } from '@/game/systems/news';
 import { vaultAfterAscend } from '@/game/server/vault';
 import { marketFeed, marketStatus } from '@/game/systems/market';
-import { pickGhosts, syncExpeditionRow } from '@/game/server/expedition';
+import { pickGhosts, syncExpeditionRow, settleExpeditionSeason } from '@/game/server/expedition';
 import { monthKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
@@ -24,6 +24,8 @@ export async function POST(req: Request) { try {
     if (a.type === 'hackRun') throw new ApiError('해킹은 해킹 화면에서 실행하세요.');
     // 원정대 3단계: 고스트 상대는 서버가 고릅니다(화면이 보낸 value는 버림). 2라운드부터, 같은 라운드 보드를 가진 다른 플레이어 행에서.
     if (a.type === 'expeditionFight') { const g = await pickGhosts(monthKey(Date.now()), id).catch(() => ({})); a.value = Object.keys(g).length ? JSON.stringify(g) : undefined; }
+    // 원정대 9단계: 출발 때 지난달 시즌 정산을 서버가 계산해 넣습니다(화면이 보낸 value는 버림). 이미 받은 시즌이면 핸들러가 건너뜁니다.
+    if (a.type === 'expeditionStart') { const settle = await settleExpeditionSeason(id, Date.now()).catch(() => null); a.value = settle ? JSON.stringify(settle) : undefined; }
     try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
