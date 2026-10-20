@@ -2,7 +2,7 @@
  * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
-import { EXPEDITION, unitById, sellPrice, ITEMS, itemById, ITEM_HOLD } from '../../data/expedition';
+import { EXPEDITION, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
@@ -114,6 +114,7 @@ export const expeditionActions: ActionHandlers = {
     expeditionFight(s, { a, now, rng }) {
         const r = run(s);
         if (!r.board.length) throw Error('유닛을 한 명 이상 배치하세요.');
+        if (r.box?.length) throw Error('상자에서 아이템을 고르거나 건너뛴 뒤 전투하세요.');
         const ghost = r.round >= 2 ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < EXPEDITION.ghostChance;
         const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
@@ -122,13 +123,31 @@ export const expeditionActions: ActionHandlers = {
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
         for (const p of r.board) st.units[p.unit] = (st.units[p.unit] || 0) + 1;
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
-        // 6단계 상자: 이기면 아이템 하나(가진 칸이 차 있으면 못 받음).
-        let box: string | undefined;
-        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { box = ITEMS[Math.floor(rng() * ITEMS.length)].id; (r.items ??= []).push(box); } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
-        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${itemById(box)!.name}` : ''}`, won ? 'reward' : 'battle');
+        // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
+        let box: string[] | undefined;
+        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()]; box = []; while (box.length < BOX_CHOICES && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
+        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng);
+    },
+    /** 7단계 상자 고르기: value = 선택지 번호. 건너뛰면 상자가 사라집니다. */
+    expeditionPickBox(s, { a }) {
+        const r = run(s), k = Number(a.value), id = r.box?.[k];
+        if (!r.box?.length) throw Error('고를 상자가 없습니다.');
+        if (!id || !itemById(id)) throw Error('고를 아이템을 고르세요.');
+        if ((r.items?.length || 0) >= ITEM_HOLD) throw Error(`아이템은 ${ITEM_HOLD}개까지 들고 있을 수 있습니다. 장착하거나 조합한 뒤 고르세요.`);
+        (r.items ??= []).push(id); delete r.box;
+    },
+    expeditionSkipBox(s) { const r = run(s); if (!r.box?.length) throw Error('고를 상자가 없습니다.'); delete r.box; },
+    /** 7단계 조합: value 'a:b'(가진 아이템 번호 둘). 조합표에 있는 짝만 합쳐지고, 결과는 가진 칸에 들어갑니다. */
+    expeditionCombine(s, { a }) {
+        const r = run(s), [x, y] = String(a.value || '').split(':').map(Number);
+        const items = r.items || [], ia = items[x], ib = items[y];
+        if (!Number.isInteger(x) || !Number.isInteger(y) || x === y || !ia || !ib) throw Error('합칠 아이템 둘을 고르세요.');
+        const out = comboOf(ia, ib); if (!out) throw Error('이 둘은 합칠 수 없습니다. 조합표를 확인하세요.');
+        r.items = items.filter((_, i) => i !== x && i !== y); r.items.push(out.id);
+        addLog(s, `원정대 조합 · ${itemById(ia)!.name} + ${itemById(ib)!.name} → ${out.name}`, 'reward');
     },
     /** 6단계 장착: value 'bench:i:k' | 'board:i:k'(k = 가진 아이템 번호). 이미 낀 아이템은 가진 칸으로 돌아옵니다. */
     expeditionEquip(s, { a }) {

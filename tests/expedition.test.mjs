@@ -174,7 +174,7 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
 test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip/swap, items follow units through place/sell/merge, effects apply in battle, ghosts may carry items', async () => {
     const { newState, act } = await import('./harness.mjs');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
-    assert.equal(D.ITEMS.length, 8); for (const it of D.ITEMS) assert.ok(it.id && it.name && it.desc);
+    assert.equal(D.BOX_ITEMS().length, 8); for (const it of D.ITEMS) assert.ok(it.id && it.name && it.desc);
     // 전투 효과: 맹공의 검 +35% 물리, 수호의 방패 받는 피해 −25%(시너지와 곱), 마나석 시작 마나, 가시 갑옷 반격.
     const base = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a').units[0], blade = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'blade' }], 'a').units[0];
     assert.equal(blade.stats.attack, Math.round(base.stats.attack * 1.35)); assert.ok(blade.name.includes('[맹공의 검]'));
@@ -186,8 +186,8 @@ test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
-    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.items.length, 1, 'box on win'); assert.ok(D.itemById(r.items[0]));
-    r.items = ['blade', 'shield', 'boots', 'fang']; r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.equal(r.items.length, 4, 'hold cap: no box when full');
+    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.box.length, 3, 'box offer on win (stage 7)'); act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)); assert.equal(r.items.length, 1); assert.ok(D.itemById(r.items[0]));
+    r.items = ['blade', 'shield', 'boots', 'fang']; r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.equal(r.items.length, 4, 'hold cap: no box when full'); assert.equal(r.box, undefined);
     // 장착 · 교체 · 해제.
     r.bench = [{ unit: 'pig', star: 1 }];
     act(s, { type: 'expeditionEquip', value: 'bench:0:0' }, now, mkRng(1)); assert.equal(r.bench[0].item, 'blade'); assert.deepEqual(r.items, ['shield', 'boots', 'fang']);
@@ -207,4 +207,36 @@ test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip
     // 고스트 보드의 아이템은 검증을 거쳐 전투에 들어갑니다.
     assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'blade' }] } }), 2).board[0].item, 'blade');
     assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'nope' }] } }), 2), null, 'unknown item rejected');
+});
+
+test('expedition stage 7: box offers 3 distinct basic items and blocks the fight until picked or skipped; combining two held items by table yields a tier-2 item', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
+    assert.equal(D.ITEMS.filter(x => x.tier).length, 8); assert.ok(D.BOX_ITEMS().every(x => !x.tier), 'tier-2 items never drop from boxes');
+    assert.equal(D.comboOf('blade', 'blade').id, 'greatBlade'); assert.equal(D.comboOf('wand', 'blade').id, 'doomSpear', 'order does not matter'); assert.equal(D.comboOf('blade', 'fang'), undefined);
+    const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
+    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(new Set(r.box).size, 3, 'three distinct choices'); assert.ok(r.box.every(id => D.itemById(id) && !D.itemById(id).tier));
+    assert.throws(() => act(s, { type: 'expeditionFight' }, now, mkRng(3)), /상자/, 'fight blocked while a box is pending');
+    assert.throws(() => act(s, { type: 'expeditionPickBox', value: '7' }, now, mkRng(1)), /고르세요/);
+    const want = r.box[2]; act(s, { type: 'expeditionPickBox', value: '2' }, now, mkRng(1)); assert.deepEqual(r.items, [want]); assert.equal(r.box, undefined);
+    assert.throws(() => act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)), /없습니다/);
+    r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(4)); assert.equal(r.box.length, 3); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); assert.equal(r.box, undefined); assert.equal(r.items.length, 1, 'skip adds nothing');
+    // 가진 칸이 꽉 찬 채 고르면 거부(먼저 조합하거나 장착).
+    r.items = ['blade', 'blade', 'shield', 'thornMail']; r.box = ['wand', 'boots', 'fang'];
+    assert.throws(() => act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)), /4개까지/);
+    // 조합: 표에 있는 짝만, 둘이 사라지고 결과 1개가 가진 칸 끝에 들어감.
+    assert.throws(() => act(s, { type: 'expeditionCombine', value: '0:2' }, now, mkRng(1)), /합칠 수 없습니다/);
+    assert.throws(() => act(s, { type: 'expeditionCombine', value: '1:1' }, now, mkRng(1)), /둘을 고르세요/);
+    act(s, { type: 'expeditionCombine', value: '0:1' }, now, mkRng(1)); assert.deepEqual(r.items, ['shield', 'thornMail', 'greatBlade']);
+    act(s, { type: 'expeditionCombine', value: '1:0' }, now, mkRng(1)); assert.deepEqual(r.items, ['greatBlade', 'citadel']);
+    act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)); assert.deepEqual(r.items, ['greatBlade', 'citadel', 'wand']); assert.equal(r.box, undefined);
+    // 상위 아이템 전투 효과: 대검 물리 +80%, 성채 받는 피해 −35% · 반격 · 체력 +30%, 흡혈의 보주 시작 마나 100.
+    const base = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a').units[0], great = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'greatBlade' }], 'a').units[0];
+    assert.equal(great.stats.attack, Math.round(base.stats.attack * 1.8));
+    const cit = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'citadel' }], 'a').units[0]; assert.ok(Math.abs(cit.damageTaken - .35) < 1e-9); assert.equal(cit.reflect, .45); assert.equal(cit.maxHp, Math.round(base.maxHp * 1.3));
+    assert.equal(X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'bloodOrb' }], 'a').units[0].charge, 100);
+    // 고스트 보드의 상위 아이템도 검증을 통과한다.
+    const A = await L.load('systems/actions/expedition');
+    const g = A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'citadel' }] } }), 2); assert.equal(g.board[0].item, 'citadel');
 });
