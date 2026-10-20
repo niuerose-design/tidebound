@@ -2,16 +2,17 @@
  * 원정대(오토배틀러) 1단계: N대N 전투 계층 프로토타입. 화면 · 저장 없이 순수 계산만 있습니다.
  * - 유닛은 본편 전투 엔진의 Fighter로 만들고, 행동은 엔진의 actTurn(기술 선택 · 상태이상 · 추가타 · 흡혈 모두 엔진 그대로)을 씁니다.
  * - 이 계층이 하는 일: 보드(앞줄 · 뒷줄) · 시너지 집계와 적용 · 턴 순서(속도) · 대상 선택(앞줄 우선) · 처치 누적 · 부활 · 승패.
- * - 기술 발동은 아직 엔진의 확률 · 재사용 대기 방식입니다(기획서의 마나 발동은 2단계).
+ * - 2단계: 기술은 마나로 발동합니다(기본 공격 +10 · 피격 +5, 100에 강제 시전). 엔진에는 기술 목록을 비워 두고, 시전 턴에만 forced로 그 유닛의 기술을 넘깁니다.
+ *   기절 · 침묵 중에는 시전하지 않습니다(엔진의 forced는 기절을 건너뛰므로 여기서 먼저 봅니다).
  */
 import type { Stats, CombatEvent } from '../types';
-import { actTurn, fighterSpeed, type Fighter } from './combat';
+import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
 import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, type UnitDef, type TraitDef, type Role } from '../data/expedition';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back' };
 export type ActiveTrait = { trait: TraitDef; count: number; tier: number };
-export type UnitFighter = Fighter & { placed: Placed; def: UnitDef; side: 'a' | 'b'; revived?: boolean; maxHp: number };
+export type UnitFighter = Fighter & { placed: Placed; def: UnitDef; side: 'a' | 'b'; revived?: boolean; maxHp: number; /** 마나(0~100). */ charge: number; manaGain: number };
 
 /** 보드의 특성 집계: 같은 유닛은 한 번만 셉니다(TFT 규칙). tier는 닿은 단계 번호(0 = 없음). */
 export function activeTraits(board: Placed[]): ActiveTrait[] {
@@ -39,7 +40,7 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
     const units = board.map(placed => {
         const def = unitById(placed.unit)!, base = unitBaseStats(def, placed.star);
         const stats: Record<string, number> = { ...base }, mult = { hp: 1, attack: 1, magic: 1 };
-        let damageTaken = 0, thorns = 0;
+        let damageTaken = 0;
         const isBoss = !!def.special?.includes('boss');
         for (const a of active) {
             if (!a.tier) continue;
@@ -51,15 +52,12 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
             for (const k in t.bonus || {}) stats[k] = (stats[k] || 0) + (t.bonus as Record<string, number>)[k];
             if (t.damageTaken) damageTaken = Math.max(damageTaken, t.damageTaken);
         }
-        if (flags.has('guardThorns') && def.roles.includes('guard')) thorns += .25;
         if (flags.has('backline15') && placed.row === 'back') damageTaken = Math.max(damageTaken, .15);
-        if (flags.has('dealt10')) stats.damageDealtBonus = .1;
         if (flags.has('haste')) stats.speed = (stats.speed || 10) + 3;
         stats.hp = Math.round(stats.hp * mult.hp); stats.attack = Math.round(stats.attack * mult.attack); stats.magic = Math.round(stats.magic * mult.magic);
-        if (thorns) stats.thorns = (stats.thorns || 0) + thorns;
-        const { damageDealtBonus, ...rest } = stats;
-        const combat = normalizeStats(rest as Stats);
-        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [def.skill], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, damageDealt: damageDealtBonus || undefined, placed, def, side };
+        const combat = normalizeStats(stats as Stats);
+        const charge = flags.has('startMana100') ? EXPEDITION.manaCast : flags.has('startMana50') ? EXPEDITION.manaCast / 2 : 0;
+        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, placed, def, side, charge, manaGain: flags.has('manaBoost') ? 1.25 : 1 };
         return f;
     });
     return { units, active, flags };
@@ -84,9 +82,22 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
             if (u.hp <= 0) continue;
             const foes = u.side === 'a' ? B.units : A.units, allies = u.side === 'a' ? A.units : B.units, mine = u.side === 'a' ? A : B;
             const target = pickTarget(foes, rng); if (!target) break;
-            const before = target.hp;
-            actTurn(u, target, rng, (text, ev) => { log.push(`${turns}턴 · ${text}`); events.push(ev); });
-            // 지하: 처치마다 아군 전체 주는 피해 +8%(판 안 누적은 2단계, 지금은 전투 안 누적).
+            // 초원 4: 턴마다 최대 체력 4% 재생.
+            if (mine.flags.has('regen') && u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * .04));
+            const before = target.hp, selfBefore = u.hp;
+            const onAction = (text: string, ev: CombatEvent) => { log.push(`${turns}턴 · ${text}`); events.push(ev); };
+            const canCast = u.charge >= EXPEDITION.manaCast && u.stun <= 0 && !((u.effects?.silence || 0) > 0);
+            if (canCast) { u.charge = 0; const ev: CombatEvent[] = []; const text = strike(u, target, rng, ev, false, false, { id: u.def.skill, index: 0, count: 1 }); onAction(`${text} · 마나 시전`, ev[0]); }
+            else { actTurn(u, target, rng, onAction); if (u.stun <= 0) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerAttack * u.manaGain); }
+            const dealt = Math.max(0, before - target.hp);
+            if (dealt > 0) {
+                target.charge = Math.min(EXPEDITION.manaCast, target.charge + EXPEDITION.manaPerHit * target.manaGain);
+                // 황야 4: 받은 피해의 15%를 공격자에게 되돌립니다.
+                const theirs = target.side === 'a' ? A : B;
+                if (theirs.flags.has('reflect') && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * .15); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
+            }
+            if (u.hp < selfBefore) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerHit * u.manaGain);
+            // 지하: 처치마다 아군 전체 주는 피해 +5%(전투 안 누적).
             if (before > 0 && target.hp <= 0) {
                 if (mine.flags.has('killStack')) for (const al of allies) al.damageDealt = (al.damageDealt || 0) + .05;
                 // 망령 4: 쓰러진 망령이 전투당 1회 체력 30%로 부활.
@@ -112,7 +123,7 @@ export function rollShop(level: number, rng: () => number, size = EXPEDITION.sho
     return out;
 }
 /** 라운드별 PvE 웨이브: 비용 예산 안에서 같은 풀의 유닛을 고르고, 뒤 라운드일수록 ★이 오릅니다. 수호 · 돌격은 앞줄, 나머지는 뒷줄. */
-export const WAVE_BUDGET = [0, 2, 5, 8, 12, 16, 21, 27, 35];
+export const WAVE_BUDGET = [0, 2, 5, 9, 13, 17, 22, 27, 33];
 export function rollWave(round: number, rng: () => number): Placed[] {
     let budget = WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)];
     const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 6 ? 3 : round <= 7 ? 4 : 5, slots = Math.min(8, 1 + round);
@@ -120,7 +131,7 @@ export function rollWave(round: number, rng: () => number): Placed[] {
     while (out.length < slots && budget > 0) {
         const pool = UNITS.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
         const def = pool[Math.floor(rng() * pool.length)];
-        const star: 1 | 2 | 3 = round >= 8 && rng() < .2 ? 3 : round >= 6 && rng() < .45 ? 2 : round >= 4 && rng() < .25 ? 2 : 1;
+        const star: 1 | 2 | 3 = round >= 8 && rng() < .2 ? 3 : round >= 6 && rng() < .45 ? 2 : round >= 3 && rng() < .2 ? 2 : 1;
         budget -= def.cost * (star === 3 ? 4 : star === 2 ? 2 : 1);
         out.push({ unit: def.id, star, row: frontRole(def) ? 'front' : 'back' });
     }

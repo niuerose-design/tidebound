@@ -30,20 +30,28 @@ export const EXPEDITION = {
     /** 판 레벨별 경험치 목표(레벨 2 → 3 …). */
     xpToLevel: [0, 0, 2, 6, 10, 20, 36, 56, 80],
     maxTurns: 40,
+    /** 마나: 기본 공격 +10 · 피격 +5, 100에 기술 발동. */
+    manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
+    /** 판 체력 100. 패배마다 15 + 라운드 × 3 + 남은 적 유닛 × 3. */
+    hp: 100, lossBase: 15, lossPerRound: 3, lossPerUnit: 3,
+    /** 보상: 승리마다 정수 essencePerWin × 10^(환생 ÷ 120), 8라운드를 모두 마치면 ×clearBonus. 하루 1판. */
+    essencePerWin: 14, clearBonus: 1.5,
 };
+/** 유닛 판매가: ★1 비용, ★2 비용 × 3, ★3 비용 × 9(산 값 그대로 돌려줌). */
+export const sellPrice = (cost: number, star: number) => cost * (star === 3 ? 9 : star === 2 ? 3 : 1);
 /** 비용별 기본 능력치(★1): 체력 · 공격. 수호는 체력 ×1.4 · 공격 ×0.7, 마력은 공격을 마법 공격으로, 제어 · 역병 · 망령은 공격 ×0.85. */
 export const BASE_BY_COST: Record<number, { hp: number; attack: number }> = { 1: { hp: 100, attack: 10 }, 2: { hp: 150, attack: 16 }, 3: { hp: 220, attack: 24 }, 4: { hp: 320, attack: 36 }, 5: { hp: 500, attack: 55 } };
 export const DEFENSE_BY_COST: Record<number, number> = { 1: 4, 2: 7, 3: 11, 4: 16, 5: 24 };
 
 export const UNITS: UnitDef[] = [
     { id: 'slime', name: '슬라임', monster: 'ray', cost: 1, origin: 'meadow', roles: ['control'], skill: 'foeSlow' },
-    { id: 'orangeMushroom', name: '주황버섯', monster: 'puffer', cost: 1, origin: 'meadow', roles: ['plague'], skill: 'foeVenom' },
+    { id: 'orangeMushroom', name: '주황버섯', monster: 'puffer', cost: 1, origin: 'meadow', roles: ['plague'], skill: 'foeBurn' },
     { id: 'pig', name: '돼지', monster: 'lionfish', cost: 1, origin: 'meadow', roles: ['charge'], skill: 'foeShellRam' },
     { id: 'wildBoar', name: '와일드보어', monster: 'ghost', cost: 1, origin: 'wasteland', roles: ['charge'], skill: 'foeShellRam' },
     { id: 'skeletonSoldier', name: '스켈레톤 솔저', monster: 'angler', cost: 1, origin: 'wasteland', roles: ['guard'], skill: 'foeWard' },
     { id: 'evilEye', name: '이블아이', monster: 'viper', cost: 1, origin: 'forest', roles: ['arcane'], skill: 'foeShock' },
     { id: 'kingClang', name: '킹 클랑', monster: 'ventCrab', cost: 1, origin: 'underground', roles: ['guard'], skill: 'foeCrush' },
-    { id: 'seacle', name: '씨코', monster: 'aqSeaco', cost: 1, origin: 'sea', roles: ['plague'], skill: 'foeVenom' },
+    { id: 'seacle', name: '씨코', monster: 'aqSeaco', cost: 1, origin: 'sea', roles: ['plague'], skill: 'foeBarbs' },
     { id: 'zombieMushroom', name: '좀비버섯', monster: 'tidejelly', cost: 2, origin: 'meadow', roles: ['wraith'], skill: 'onyxSoulDrain' },
     { id: 'stoneGolem', name: '스톤골렘', monster: 'shark', cost: 2, origin: 'wasteland', roles: ['guard'], skill: 'foeTideSlam' },
     { id: 'fireBoar', name: '파이어보어', monster: 'emberEel', cost: 2, origin: 'wasteland', roles: ['plague'], skill: 'foeBurn' },
@@ -71,17 +79,18 @@ export const unitById = (id: string) => UNITS.find(u => u.id === id);
 
 /**
  * 시너지 효과(단계별). 능력치로 적을 수 있는 것은 Stats 보정(bonus)과 배율(mult)로, 나머지는 flag로 두고 systems/expedition.ts의 전투 계층이 처리합니다.
- * 초안과 다른 점(프로토타입): 숲 4의 ‘마나 충전’은 치명타 +10%p로, 신전 · 아케인의 ‘시작 마나 · 즉시 발동’은 관통 · 주는 피해로 바꿨습니다(기술 발동이 아직 확률 · 대기 방식).
+ * 2단계: 기술은 마나 100에 발동(기본 공격 +10 · 피격 +5)하므로 숲 4 ‘마나 충전 +25%’(manaBoost), 신전 · 아케인 ‘시작 마나 50 · 100’(startMana50 · 100)을 초안대로 둡니다.
+ * 초원 4 재생(regen: 턴마다 최대 체력 4%), 황야 4 반격(reflect: 받은 피해의 15%를 공격자에게)은 전투 계층이 처리합니다.
  */
 export type TraitTier = { count: number; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; flags?: string[]; only?: Role | 'backline' | 'boss' };
 export type TraitDef = { id: Origin | Role | Special; kind: 'origin' | 'role' | 'special'; name: string; tiers: TraitTier[] };
 export const TRAITS: TraitDef[] = [
-    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.2 } }, { count: 4, mult: { hp: 1.6 }, bonus: { hpRegen: 8 }, flags: ['regen'] }] },
-    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .15 }, { count: 4, damageTaken: .35, flags: ['guardThorns'] }] },
-    { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.15 } }, { count: 4, mult: { magic: 1.35 }, bonus: { crit: .1 } }] },
+    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.2 } }, { count: 4, mult: { hp: 1.5 }, flags: ['regen'] }] },
+    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .15 }, { count: 4, damageTaken: .3, flags: ['reflect'] }] },
+    { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.15 } }, { count: 4, mult: { magic: 1.35 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, flags: ['killStack'] }, { count: 4, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
     { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 5 }, flags: ['haste'] }] },
-    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, bonus: { penetration: .1 } }, { count: 4, bonus: { penetration: .2 }, flags: ['dealt10'] }] },
+    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, flags: ['startMana50'] }, { count: 4, bonus: { penetration: .2 }, flags: ['startMana100'] }] },
     { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.5 }, bonus: { crit: .15 } }] },
     { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.45 } }, { count: 6, mult: { magic: 1.5 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .2, only: 'guard' }, { count: 4, damageTaken: .4, only: 'guard', flags: ['backline15'] }] },

@@ -1,0 +1,111 @@
+/**
+ * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 하루 1판(KST), 8라운드 PvE. 보상은 승리마다 정수.
+ * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
+ */
+import { EXPEDITION, unitById, sellPrice } from '../../data/expedition';
+import { rollShop, rollWave, battle, frontRole } from '../expedition';
+import { dayKey } from '../../data/time';
+import { addLog } from '../state';
+import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench } from '../../types';
+import type { ActionHandlers } from './types';
+
+const run = (s: State): ExpeditionRun => { const r = s.expedition; if (!r || r.done) throw Error('진행 중인 원정이 없습니다.'); return r; };
+const slotsOf = (r: ExpeditionRun) => EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
+/** 승리당 정수 보상(환생 배율). */
+export const expeditionRewardPerWin = (rebirths: number) => Math.round(EXPEDITION.essencePerWin * Math.pow(10, Math.max(0, rebirths) / 120));
+/** 같은 유닛 · 같은 ★이 3개 모이면 한 단계 올립니다(보드에 있던 자리는 유지, 나머지는 사라짐). 더 합칠 것이 없을 때까지. */
+export function mergeStars(r: ExpeditionRun) {
+    for (let guard = 0; guard < 20; guard++) {
+        let merged = false;
+        for (const star of [1, 2] as const) {
+            const units = new Set([...r.board, ...r.bench].filter(x => x.star === star).map(x => x.unit));
+            for (const unit of units) {
+                const onBoard = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.unit === unit && x.star === star), onBench = r.bench.map((x, i) => [x, i] as const).filter(([x]) => x.unit === unit && x.star === star);
+                if (onBoard.length + onBench.length < 3) continue;
+                const next = (star + 1) as 2 | 3; let left = 3;
+                // 벤치부터 지우고, 보드에 있으면 첫 자리를 승급시킵니다.
+                const benchDrop = onBench.slice(0, left).map(([, i]) => i); left -= benchDrop.length;
+                r.bench = r.bench.filter((_, i) => !benchDrop.includes(i));
+                const boardDrop = onBoard.slice(0, left).map(([, i]) => i);
+                if (boardDrop.length) { r.board[boardDrop[0]] = { ...r.board[boardDrop[0]], star: next }; r.board = r.board.filter((_, i) => !boardDrop.slice(1).includes(i)); }
+                else r.bench.push({ unit, star: next });
+                merged = true;
+            }
+        }
+        if (!merged) return;
+    }
+}
+const income = (r: ExpeditionRun) => EXPEDITION.baseGold + Math.min(EXPEDITION.interestMax, Math.floor(r.gold / EXPEDITION.interestPer)) + Math.min(3, Math.max(0, r.streak - 1));
+function finish(s: State, r: ExpeditionRun, now: number, why: string) {
+    r.done = true;
+    const cleared = r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
+    const reward = Math.round(r.wins * expeditionRewardPerWin(s.rebirths || 0) * (cleared ? EXPEDITION.clearBonus : 1));
+    r.reward = reward; s.essence = (s.essence || 0) + reward;
+    s.expeditionDay = dayKey(now); s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
+    addLog(s, `원정대 ${why} · ${r.wins}승 · 정수 +${reward.toLocaleString()}${cleared ? ' (완주 보너스)' : ''}`, 'reward');
+}
+
+export const expeditionActions: ActionHandlers = {
+    expeditionStart(s, { now, rng }) {
+        if (s.expedition && !s.expedition.done) throw Error('이미 원정이 진행 중입니다.');
+        if (s.expeditionDay === dayKey(now)) throw Error('오늘 원정은 마쳤습니다. 자정(KST)에 다시 열립니다.');
+        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: now };
+        r.gold = income(r); r.shop = rollShop(r.level, rng);
+        s.expedition = r;
+        addLog(s, '원정대 출발 · 1라운드', 'system');
+    },
+    expeditionBuy(s, { a }) {
+        const r = run(s), i = Number(a.value), id = r.shop[i];
+        if (!Number.isInteger(i) || !id) throw Error('살 유닛을 고르세요.');
+        const def = unitById(id)!;
+        if (r.gold < def.cost) throw Error(`골드가 부족합니다(비용 ${def.cost}).`);
+        if (r.bench.length >= EXPEDITION.bench) throw Error('벤치가 가득 찼습니다. 배치하거나 팔아서 자리를 비우세요.');
+        r.gold -= def.cost; r.shop[i] = null; r.bench.push({ unit: id, star: 1 }); mergeStars(r);
+    },
+    expeditionSell(s, { a }) {
+        const r = run(s), [where, iText] = String(a.value || '').split(':'), i = Number(iText);
+        const list: (ExpeditionPlaced | ExpeditionBench)[] = where === 'board' ? r.board : where === 'bench' ? r.bench : [];
+        const x = list[i]; if (!x) throw Error('팔 유닛을 고르세요.');
+        r.gold += sellPrice(unitById(x.unit)!.cost, x.star);
+        if (where === 'board') r.board.splice(i, 1); else r.bench.splice(i, 1);
+    },
+    expeditionReroll(s, { rng }) {
+        const r = run(s); if (r.gold < EXPEDITION.reroll) throw Error('골드가 부족합니다.');
+        r.gold -= EXPEDITION.reroll; r.shop = rollShop(r.level, rng);
+    },
+    expeditionXp(s) {
+        const r = run(s); if (r.level >= 8) throw Error('최대 레벨입니다.'); if (r.gold < EXPEDITION.xp) throw Error('골드가 부족합니다.');
+        r.gold -= EXPEDITION.xp; r.xp += EXPEDITION.xp;
+        while (r.level < 8 && r.xp >= EXPEDITION.xpToLevel[r.level]) { r.xp -= EXPEDITION.xpToLevel[r.level]; r.level++; }
+    },
+    expeditionPlace(s, { a }) {
+        const r = run(s), [where, iText, rowText] = String(a.value || '').split(':'), i = Number(iText);
+        if (where === 'bench') {
+            const x = r.bench[i]; if (!x) throw Error('배치할 유닛을 고르세요.');
+            const row = rowText === 'front' || rowText === 'back' ? rowText : frontRole(unitById(x.unit)!) ? 'front' : 'back';
+            if (r.board.length >= slotsOf(r)) throw Error(`배치는 ${slotsOf(r)}명까지입니다(판 레벨 ${r.level}).`);
+            if (r.board.filter(b => b.row === row).length >= (row === 'front' ? EXPEDITION.boardFront : EXPEDITION.boardBack)) throw Error(`${row === 'front' ? '앞줄' : '뒷줄'}이 가득 찼습니다.`);
+            r.bench.splice(i, 1); r.board.push({ unit: x.unit, star: x.star, row });
+        } else if (where === 'board') {
+            const x = r.board[i]; if (!x) throw Error('내릴 유닛을 고르세요.');
+            if (rowText === 'front' || rowText === 'back') { if (x.row === rowText) return; if (r.board.filter(b => b.row === rowText).length >= 4) throw Error('그 줄이 가득 찼습니다.'); x.row = rowText; return; }
+            if (r.bench.length >= EXPEDITION.bench) throw Error('벤치가 가득 찼습니다.');
+            r.board.splice(i, 1); r.bench.push({ unit: x.unit, star: x.star });
+        } else throw Error('배치 명령이 잘못되었습니다.');
+    },
+    expeditionFight(s, { now, rng }) {
+        const r = run(s);
+        if (!r.board.length) throw Error('유닛을 한 명 이상 배치하세요.');
+        const wave = rollWave(r.round, rng), result = battle(r.board, wave, rng);
+        const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-12) };
+        if (won) { r.wins++; r.streak++; } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
+        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'} · ${result.turns}턴 · 남은 체력 ${r.hp}`, won ? 'reward' : 'battle');
+        if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
+        if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
+        r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng);
+    },
+    expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, `${r.round}라운드에서 포기`); },
+    /** 끝난 판을 치웁니다(화면 정리). */
+    expeditionClear(s) { if (s.expedition?.done) delete s.expedition; },
+};
