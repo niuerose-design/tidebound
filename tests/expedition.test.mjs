@@ -55,3 +55,55 @@ test('expedition shop and waves: shop follows level odds, waves respect budget a
     for (const round of [1, 4, 8]) { const w = X.rollWave(round, mkRng(round)); const spent = w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0); assert.ok(spent <= X.WAVE_BUDGET[round], `round ${round} within budget`); assert.ok(w.length >= 1); }
     assert.ok(X.rollWave(1, mkRng(1)).every(p => D.unitById(p.unit).cost === 1 && p.star === 1), 'round 1 is cost-1 ★1 only');
 });
+
+test('expedition mana casting: skills fire only at 100 mana (basic +10 · hit +5), temple start mana, forest charge boost, meadow regen, wasteland reflect', async () => {
+    const X = await L.load('systems/expedition'), D = await L.load('data/expedition');
+    // 바다 수호병 ★3 둘: 턴마다 기본 공격 +10 · 피격 +5 = 15라 7턴 끝에 105가 되어 8턴째 행동에서 처음 시전합니다. 그 전에는 ‘마나 시전’ 줄이 없습니다.
+    const r = X.battle([{ unit: 'seaGuard', star: 3, row: 'front' }], [{ unit: 'seaGuard', star: 3, row: 'front' }], mkRng(11), 14);
+    const casts = r.log.filter(l => l.includes('마나 시전'));
+    assert.ok(casts.length >= 1, 'a cast happened'); assert.ok(casts[0].startsWith('8턴'), `first cast on turn 8: ${casts[0]}`); assert.ok(!r.log.slice(0, 14).some(l => l.includes('마나 시전')), 'no cast in the first seven turns');
+    const side = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }], 'a'); assert.equal(side.units[0].charge, 50, 'temple 2: start mana 50');
+    const full = X.buildSide(['erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul'].map(u => ({ unit: u, star: 1, row: 'back' })), 'a'); assert.equal(full.units[0].charge, 100, 'temple 4: start mana 100');
+    const forest = X.buildSide(['evilEye', 'curseEye', 'wraithUnit', 'darkDrake'].map(u => ({ unit: u, star: 1, row: 'back' })), 'a'); assert.equal(forest.units[0].manaGain, 1.25, 'forest 4: mana +25%');
+    assert.ok(X.buildSide(['slime', 'orangeMushroom', 'pig', 'zombieMushroom'].map(u => ({ unit: u, star: 1, row: 'front' })), 'a').flags.has('regen'), 'meadow 4 regen flag');
+    const w = X.battle(['wildBoar', 'skeletonSoldier', 'stoneGolem', 'mixedGolem'].map(u => ({ unit: u, star: 2, row: 'front' })), [{ unit: 'zakum', star: 1, row: 'front' }], mkRng(3), 6);
+    assert.ok(w.log.some(l => l.includes('반격')), 'wasteland 4 reflects damage');
+    assert.equal(D.unitById('orangeMushroom').skill, 'foeBurn'); assert.equal(D.unitById('seacle').skill, 'foeBarbs');
+});
+
+test('expedition run: start → buy → merge stars → place → fight → finish with essence reward; daily limit; sell refunds; xp levels', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition'), T = await L.load('data/time');
+    const s = newState(0); s.level = 100; s.rebirths = 120; s.essence = 0;
+    const rng = mkRng(21), now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, rng); const r = s.expedition; assert.ok(r && r.round === 1 && r.level === 2 && r.shop.length === 5 && r.gold === D.EXPEDITION.baseGold);
+    assert.throws(() => act(s, { type: 'expeditionStart' }, now, rng), /진행 중/);
+    // 벤치에 같은 유닛 ★1 셋 → ★2 하나.
+    r.bench = [{ unit: 'pig', star: 1 }, { unit: 'pig', star: 1 }, { unit: 'pig', star: 1 }]; A.mergeStars(r); assert.deepEqual(r.bench, [{ unit: 'pig', star: 2 }]);
+    // 보드에 하나 있으면 그 자리가 승급.
+    r.board = [{ unit: 'slime', star: 1, row: 'front' }]; r.bench = [{ unit: 'slime', star: 1 }, { unit: 'slime', star: 1 }]; A.mergeStars(r); assert.deepEqual(r.board, [{ unit: 'slime', star: 2, row: 'front' }]); assert.equal(r.bench.length, 0);
+    // 구매: 골드 차감 · 상점 칸 비움 · 벤치로.
+    r.bench = []; r.board = []; r.gold = 10; const i = r.shop.findIndex(Boolean), cost = D.unitById(r.shop[i]).cost; act(s, { type: 'expeditionBuy', value: String(i) }, now, rng);
+    assert.equal(r.gold, 10 - cost); assert.equal(r.shop[i], null); assert.equal(r.bench.length, 1);
+    assert.throws(() => act(s, { type: 'expeditionBuy', value: String(i) }, now, rng), /고르세요/);
+    // 판매 환불.
+    const sold = r.bench[0]; act(s, { type: 'expeditionSell', value: 'bench:0' }, now, rng); assert.equal(r.gold, 10 - cost + D.sellPrice(D.unitById(sold.unit).cost, sold.star)); assert.equal(r.bench.length, 0);
+    // 배치 제한: 레벨 2 = 2명.
+    r.bench = [{ unit: 'pig', star: 1 }, { unit: 'wildBoar', star: 1 }, { unit: 'evilEye', star: 1 }];
+    act(s, { type: 'expeditionPlace', value: 'bench:0:front' }, now, rng); act(s, { type: 'expeditionPlace', value: 'bench:0:front' }, now, rng);
+    assert.throws(() => act(s, { type: 'expeditionPlace', value: 'bench:0:back' }, now, rng), /배치는/); assert.equal(r.board.length, 2);
+    act(s, { type: 'expeditionPlace', value: 'board:0' }, now, rng); assert.equal(r.board.length, 1); assert.equal(r.bench.length, 2);
+    // 경험치: 4 G → 레벨 2 → 3(목표 2).
+    r.gold = 10; act(s, { type: 'expeditionXp' }, now, rng); assert.equal(r.level, 3); assert.equal(r.gold, 6);
+    // 전투 → 다음 라운드 · 수입 · 새 상점.
+    act(s, { type: 'expeditionFight' }, now, rng); assert.equal(r.round, 2); assert.ok(r.last && typeof r.last.won === 'boolean'); assert.ok(r.gold >= 6 + D.EXPEDITION.baseGold); assert.ok(r.shop.every(x => x === null || D.unitById(x)));
+    // 포기 → 보상 · 하루 1판.
+    r.wins = 3; act(s, { type: 'expeditionQuit' }, now, rng);
+    assert.ok(r.done); assert.equal(r.reward, 3 * A.expeditionRewardPerWin(120)); assert.equal(s.essence, r.reward); assert.equal(A.expeditionRewardPerWin(120), 140); assert.equal(s.expeditionDay, T.dayKey(now)); assert.equal(s.expeditionBest, 3);
+    act(s, { type: 'expeditionClear' }, now, rng); assert.equal(s.expedition, undefined);
+    assert.throws(() => act(s, { type: 'expeditionStart' }, now, rng), /오늘 원정/);
+    act(s, { type: 'expeditionStart' }, now + 86_400_000, rng); assert.ok(s.expedition && !s.expedition.done, 'next day opens again');
+    // 체력 0이면 탈락 종료.
+    const t = s.expedition; t.hp = 1; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 5; act(s, { type: 'expeditionFight' }, now + 86_400_000, mkRng(5));
+    if (!t.last.won) { assert.ok(t.done, 'knocked out'); } else assert.equal(t.round, 6);
+});

@@ -19,6 +19,7 @@ import { itemActions } from './actions/items';
 import { lifecycleActions } from './actions/lifecycle';
 import { hackerActions } from './actions/hacker';
 import { dungeonShopActions } from './actions/dungeon-shop';
+import { expeditionActions } from './actions/expedition';
 import { marketActions } from './market';
 import { syncStory } from './story';
 
@@ -26,7 +27,7 @@ export { newState } from './state';
 export { tick, advance } from './turn';
 export { victoryHeal, rollRarity } from './encounter';
 
-const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions, ...dungeonShopActions, ...marketActions };
+const HANDLERS: ActionHandlers = { ...voyageActions, ...buildActions, ...collectionActions, ...itemActions, ...lifecycleActions, ...hackerActions, ...dungeonShopActions, ...marketActions, ...expeditionActions };
 
 export function act(s: State, a: Action, now: number, rng = Math.random) {
     syncStatRate(s);

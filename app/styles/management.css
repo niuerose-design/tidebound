@@ -674,3 +674,40 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .affix-glossary-stat { font-size:12px; color:#9fd0c1; min-width:0; overflow-wrap:anywhere; }
 .affix-glossary small { grid-column:1 / -1; font-size:12px; line-height:1.45; color:#9fb5b2; word-break:keep-all; overflow-wrap:anywhere; }
 .help-rule .affix-glossary { max-height:320px; }
+
+/* 원정대(오토배틀러) 2단계 화면. 비용 색은 등급 색(일반 · 희귀 · 영웅 · 전설 · 신화)을 빌립니다. */
+.exp-start { padding:22px; display:flex; flex-direction:column; gap:14px; }
+.exp-start h2 { font-size:20px; margin:0; }
+.exp-bar { margin-bottom:16px; }
+.exp-columns { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:16px; margin-bottom:16px; }
+.exp-board-panel, .exp-bench-panel, .exp-shop-panel { padding:18px; }
+.exp-board { display:grid; grid-template-columns:44px repeat(4,minmax(0,1fr)); gap:6px; align-items:stretch; }
+.exp-row-label { font-size:12px; color:#8fa6a4; display:flex; align-items:center; }
+.exp-cell { min-height:58px; border:1px dashed #3a5250; border-radius:6px; background:#0f2227; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px; color:inherit; cursor:pointer; min-width:0; }
+.exp-cell.empty { cursor:default; }
+.exp-cell b { font-size:12px; line-height:1.2; text-align:center; word-break:keep-all; }
+.exp-cell small, .exp-bench small, .exp-card small { font-size:11px; color:#9dadaf; }
+.exp-cell:not(.empty), .exp-card:not(.sold), .exp-bench li { border-style:solid; border-left-width:3px; border-left-color:var(--rarity, #5a6f71); }
+.cost-1 { --rarity:#9dadaf; } .cost-2 { --rarity:#68b6ee; } .cost-3 { --rarity:#bf96ef; } .cost-4 { --rarity:#e7be71; } .cost-5 { --rarity:#f08a6c; }
+.exp-traits { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
+.exp-traits span { font-size:12px; padding:4px 8px; border-radius:4px; background:#1b2f30; color:#8fa6a4; }
+.exp-traits span.on { background:#264237; color:#d7dec9; }
+.exp-actions { margin-top:8px; }
+.exp-last { margin-top:12px; font-size:13px; padding:10px 12px; border-radius:6px; background:#1b2f30; }
+.exp-last.won { border-left:3px solid #7fc48f; } .exp-last.lost { border-left:3px solid #e08a7a; }
+.exp-log { margin:8px 0 0; padding-left:16px; font-size:12px; color:#9dadaf; line-height:1.6; }
+.exp-bench { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.exp-bench li { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:#0f2227; }
+.exp-bench li > div:first-child { display:flex; flex-direction:column; min-width:0; }
+.exp-shop { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+.exp-card { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 6px; border:1px solid var(--border); border-radius:6px; background:#0f2227; color:inherit; cursor:pointer; text-align:center; min-width:0; }
+.exp-card b { font-size:13px; word-break:keep-all; } .exp-card em { font-style:normal; color:var(--gold); font-size:12px; }
+.exp-card.sold { color:#5a6f71; justify-content:center; cursor:default; }
+.exp-card:disabled { opacity:.55; cursor:default; }
+@media (max-width:767px) {
+    .exp-columns { grid-template-columns:1fr; }
+    .exp-shop { grid-template-columns:repeat(3,minmax(0,1fr)); }
+    .exp-board { grid-template-columns:36px repeat(4,minmax(0,1fr)); gap:4px; }
+    .exp-cell { min-height:52px; } .exp-cell b { font-size:11px; }
+    .exp-bench li { flex-direction:column; align-items:stretch; }
+}

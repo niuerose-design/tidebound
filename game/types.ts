@@ -605,6 +605,10 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
+    /** 원정대(오토배틀러) 진행 중인 판 · 오늘 마친 날(KST, 하루 1판) · 최고 승수. */
+    expedition?: ExpeditionRun;
+    expeditionDay?: string;
+    expeditionBest?: number;
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
@@ -1005,6 +1009,17 @@ export type Action = {
     type: string;
     id?: string;
     value?: string;
+};
+/** 원정대(오토배틀러) 보드 · 벤치의 유닛. */
+export type ExpeditionPlaced = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back' };
+export type ExpeditionBench = { unit: string; star: 1 | 2 | 3 };
+/** 원정대 한 판의 상태(하루 1판, 8라운드). */
+export type ExpeditionRun = {
+    round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
+    board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
+    /** 마지막 전투 요약. */
+    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[] };
+    done?: boolean; reward?: number; startedAt: number;
 };
 export type DuelResult = {
     winner: 'player' | 'opponent' | 'draw';
