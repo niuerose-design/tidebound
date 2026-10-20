@@ -274,6 +274,21 @@ export const MASTERY_PERKS: MasteryPerk[] = [
     { level: 50, id: 'm50', name: '전설', desc: '칭호 🌟 원정 전설 · 마나 획득 +10%', mods: { manaGain: 1.1 }, title: 'expMastery:50' },
 ];
 export const masteryPerks = (level: number) => MASTERY_PERKS.filter(p => p.level <= level);
+/** 17단계: 고스트에 실어 보내는 전투 보정(경제 · 상자 · 고스트 확률 · 턴은 뺌). 값은 범위를 잘라 위조를 막습니다. */
+export function combatMods(m: RunMods | undefined): RunMods | undefined {
+    if (!m) return undefined;
+    const clamp = (v: unknown, lo: number, hi: number) => { const n = Number(v); return Number.isFinite(n) ? Math.max(lo, Math.min(hi, n)) : undefined; };
+    const out: RunMods = {};
+    for (const [k, v] of Object.entries(m.traitPlus || {})) { const n = clamp(v, 0, 3); if (n && TRAITS.some(t => t.id === k)) (out.traitPlus ??= {})[k] = n; }
+    const f = clamp(m.frontHp, 1, 2); if (f && f !== 1) out.frontHp = f;
+    const b = clamp(m.backPower, 1, 2); if (b && b !== 1) out.backPower = b;
+    const sp = clamp(m.starPower, 1, 2); if (sp && sp !== 1) out.starPower = sp;
+    const mg = clamp(m.manaGain, 1, 2); if (mg && mg !== 1) out.manaGain = mg;
+    const spd = clamp(m.speed, 0, 10); if (spd) out.speed = spd;
+    const rf = clamp(m.reflect, 0, .5); if (rf) out.reflect = rf;
+    const bg = clamp(m.bossGuard, 0, .6); if (bg) out.bossGuard = bg;
+    return Object.keys(out).length ? out : undefined;
+}
 /** 여러 보정을 하나로: 배율은 곱, 가산은 합, 비용 · 확률 · 턴은 작은 쪽/마지막 값. */
 export function mergeMods(list: (RunMods | undefined)[]): RunMods {
     const out: RunMods = {};

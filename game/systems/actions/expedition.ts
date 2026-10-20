@@ -4,7 +4,7 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked } from '../../data/expedition';
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods } from '../../data/expedition';
 import { weekKey, dayKey } from '../../data/time';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
@@ -112,7 +112,10 @@ export function parseGhost(value: string | undefined, round: number): Expedition
         if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
         if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back') && (p.item === undefined || itemById(p.item)))) return null;
         const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= EXPEDITION.rounds + ABYSS.max ? g.wins : 0;
-        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins };
+        // 17단계: 상대의 전투 보정(서버가 스냅샷의 증강 · 규칙 · 숙련으로 계산). 범위를 잘라 받고, 증강 id는 표시용으로 아는 것만.
+        const mods = g.mods && typeof g.mods === 'object' ? combatMods(g.mods) : undefined;
+        const augments = Array.isArray(g.augments) ? g.augments.filter(id => typeof id === 'string' && augmentById(id)).slice(0, 8) : [];
+        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins, ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) };
     } catch { return null; }
 }
 /** 15단계 도전 기록: 완주 판의 12라운드 보드와 흐름으로 판정합니다. */
@@ -221,10 +224,11 @@ export const expeditionActions: ActionHandlers = {
         const mods = runMods(r);
         // 10단계: 막 보스 라운드(4 · 8 · 12)는 고스트 없이 보스 웨이브.
         const boss = isBossRound(r.round), abyss = isAbyssRound(r.round), ghost = r.round >= 2 && !boss && !abyss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
-        const wave = useGhost ? ghost!.board : rollWave(r.round, rng, r.difficulty || 1), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss);
+        const wave = useGhost ? ghost!.board : rollWave(r.round, rng, r.difficulty || 1), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : undefined);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
-        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
+        if (r.augments?.length) (r.augHistory ??= {})[r.round] = [...r.augments];
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
         for (const p of r.board) { st.units[p.unit] = (st.units[p.unit] || 0) + 1; if (won) (st.unitWins ??= {})[p.unit] = (st.unitWins[p.unit] || 0) + 1; }
         // 13단계 조합 집계(관리자): 켜진 시너지 조합 키별 전투 · 승. 키가 40개를 넘으면 가장 적게 쓴 키를 버립니다.
