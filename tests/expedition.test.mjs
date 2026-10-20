@@ -170,3 +170,41 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
         assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip/swap, items follow units through place/sell/merge, effects apply in battle, ghosts may carry items', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
+    assert.equal(D.ITEMS.length, 8); for (const it of D.ITEMS) assert.ok(it.id && it.name && it.desc);
+    // 전투 효과: 맹공의 검 +35% 물리, 수호의 방패 받는 피해 −25%(시너지와 곱), 마나석 시작 마나, 가시 갑옷 반격.
+    const base = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a').units[0], blade = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'blade' }], 'a').units[0];
+    assert.equal(blade.stats.attack, Math.round(base.stats.attack * 1.35)); assert.ok(blade.name.includes('[맹공의 검]'));
+    const shield = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front', item: 'shield' }, { unit: 'stoneGolem', star: 1, row: 'front' }], 'a').units[0];
+    assert.ok(Math.abs(shield.damageTaken - (1 - .8 * .75)) < 1e-9, 'guard 2 (20%) and shield (25%) multiply');
+    assert.equal(X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'manaStone' }], 'a').units[0].charge, 60);
+    const mail = X.battle([{ unit: 'seaGuard', star: 3, row: 'front', item: 'thornMail' }], [{ unit: 'pig', star: 1, row: 'front' }], mkRng(4), 3); assert.ok(mail.log.some(l => l.includes('반격')), 'thorn mail reflects');
+    // 판 흐름.
+    const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
+    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.items.length, 1, 'box on win'); assert.ok(D.itemById(r.items[0]));
+    r.items = ['blade', 'shield', 'boots', 'fang']; r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.equal(r.items.length, 4, 'hold cap: no box when full');
+    // 장착 · 교체 · 해제.
+    r.bench = [{ unit: 'pig', star: 1 }];
+    act(s, { type: 'expeditionEquip', value: 'bench:0:0' }, now, mkRng(1)); assert.equal(r.bench[0].item, 'blade'); assert.deepEqual(r.items, ['shield', 'boots', 'fang']);
+    act(s, { type: 'expeditionEquip', value: 'bench:0:0' }, now, mkRng(1)); assert.equal(r.bench[0].item, 'shield'); assert.deepEqual(r.items, ['boots', 'fang', 'blade'], 'swapped item returns to the held row');
+    assert.throws(() => act(s, { type: 'expeditionEquip', value: 'bench:0:9' }, now, mkRng(1)), /아이템/);
+    act(s, { type: 'expeditionPlace', value: 'bench:0:back' }, now, mkRng(1)); assert.equal(r.board.at(-1).item, 'shield', 'item follows the unit to the board');
+    act(s, { type: 'expeditionUnequip', value: `board:${r.board.length - 1}` }, now, mkRng(1)); assert.equal(r.board.at(-1).item, undefined); assert.equal(r.items.length, 4);
+    assert.throws(() => act(s, { type: 'expeditionUnequip', value: `board:${r.board.length - 1}` }, now, mkRng(1)), /해제할/);
+    r.items = ['blade', 'boots', 'fang', 'horn']; r.board[r.board.length - 1].item = 'wand';
+    assert.throws(() => act(s, { type: 'expeditionUnequip', value: `board:${r.board.length - 1}` }, now, mkRng(1)), /까지/, 'cannot unequip when hold is full');
+    // 판매 · 승급 때 아이템 회수.
+    r.items = []; act(s, { type: 'expeditionSell', value: `board:${r.board.length - 1}` }, now, mkRng(1)); assert.deepEqual(r.items, ['wand']);
+    r.items = []; r.bench = [{ unit: 'slime', star: 1, item: 'blade' }, { unit: 'slime', star: 1, item: 'boots' }, { unit: 'slime', star: 1 }]; A.mergeStars(r);
+    assert.deepEqual(r.bench, [{ unit: 'slime', star: 2, item: 'blade' }]); assert.deepEqual(r.items, ['boots'], 'first unit keeps its item, the other returns');
+    r.items = []; r.board = [{ unit: 'pig', star: 1, row: 'front', item: 'fang' }]; r.bench = [{ unit: 'pig', star: 1, item: 'horn' }, { unit: 'pig', star: 1 }]; A.mergeStars(r);
+    assert.deepEqual(r.board, [{ unit: 'pig', star: 2, row: 'front', item: 'fang' }]); assert.deepEqual(r.items, ['horn']);
+    // 고스트 보드의 아이템은 검증을 거쳐 전투에 들어갑니다.
+    assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'blade' }] } }), 2).board[0].item, 'blade');
+    assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'nope' }] } }), 2), null, 'unknown item rejected');
+});

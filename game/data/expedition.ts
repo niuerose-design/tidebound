@@ -113,3 +113,22 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
     { id: 'seaCharge', name: '바다 · 용 4 + 돌격 4', units: ['seacle', 'sharkUnit', 'seaGuard', 'skelegon', 'manticore', 'pig', 'wildBoar', 'ligator'] },
     { id: 'templeBoss', name: '신전 · 아케인 4 + 보스 2', units: ['erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul', 'blackMage', 'zakum', 'stoneGolem', 'seaGuard'] },
 ];
+
+/**
+ * 6단계 유닛 아이템(판 전용 8종): 라운드를 이기면 하나를 얻고(상자), 유닛마다 한 칸에 장착합니다. 본편 장비 옵션과 같은 능력치 이름을 써서 전투 계층이 Stats 보정으로 바로 적용합니다.
+ * 판이 끝나면 사라집니다. 같은 아이템을 여럿 가질 수 있고, 유닛을 팔거나 승급하면 아이템은 가진 칸으로 돌아옵니다.
+ */
+export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number };
+export const ITEMS: ItemDef[] = [
+    { id: 'blade', name: '맹공의 검', desc: '물리 공격 +35%', mult: { attack: 1.35 } },
+    { id: 'wand', name: '마력의 지팡이', desc: '마법 공격 +35%', mult: { magic: 1.35 } },
+    { id: 'shield', name: '수호의 방패', desc: '받는 피해 −25%', damageTaken: .25 },
+    { id: 'boots', name: '질풍의 신발', desc: '속도 +4(먼저 행동)', bonus: { speed: 4 } },
+    { id: 'fang', name: '흡혈의 송곳니', desc: '흡혈 +25%p', bonus: { lifesteal: .25 } },
+    { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 +30%p · 치명타 +10%p', bonus: { followUpBonus: .3, crit: .1 } },
+    { id: 'manaStone', name: '마나석', desc: '시작 마나 +60 · 최대 체력 +15%', startMana: 60, mult: { hp: 1.15 } },
+    { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30% 반격 · 최대 체력 +20%', reflect: .3, mult: { hp: 1.2 } },
+];
+export const itemById = (id: string) => ITEMS.find(x => x.id === id);
+/** 한 번에 가질 수 있는 미장착 아이템 수. */
+export const ITEM_HOLD = 4;

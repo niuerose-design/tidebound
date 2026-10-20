@@ -1012,8 +1012,8 @@ export type Action = {
     value?: string;
 };
 /** 원정대(오토배틀러) 보드 · 벤치의 유닛. */
-export type ExpeditionPlaced = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back' };
-export type ExpeditionBench = { unit: string; star: 1 | 2 | 3 };
+export type ExpeditionPlaced = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; /** 6단계: 장착 아이템 id. */ item?: string };
+export type ExpeditionBench = { unit: string; star: 1 | 2 | 3; item?: string };
 /** 원정대 한 판의 상태(하루 1판, 8라운드). */
 export type ExpeditionRun = {
     round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
@@ -1025,6 +1025,8 @@ export type ExpeditionRun = {
     history?: Record<number, ExpeditionPlaced[]>;
     /** 4단계: 이 판에서 이긴 고스트로 얻은 시즌 가산점. */
     ghostPoints?: number;
+    /** 6단계: 미장착 아이템(라운드 승리 상자). */
+    items?: string[];
 };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
 export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
