@@ -176,7 +176,7 @@ export const expeditionActions: ActionHandlers = {
         const boss = isBossRound(r.round), ghost = r.round >= 2 && !boss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
         const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
-        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}) };
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
         for (const p of r.board) st.units[p.unit] = (st.units[p.unit] || 0) + 1;

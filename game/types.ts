@@ -1023,8 +1023,8 @@ export type ExpeditionBench = { unit: string; star: 1 | 2 | 3; item?: string };
 export type ExpeditionRun = {
     round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
     board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
-    /** 마지막 전투 요약. */
-    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string };
+    /** 마지막 전투 요약. 12단계: 상대 보드(foe)와 재생 프레임(frames)으로 화면이 전투를 애니메이션으로 다시 보여줍니다. */
+    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean };
     done?: boolean; reward?: number; startedAt: number;
     /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. */
     history?: Record<number, ExpeditionPlaced[]>;
@@ -1044,6 +1044,8 @@ export type ExpeditionRun = {
 };
 /** 11단계 원정 숙련(계정 성장). */
 export type ExpeditionMastery = { level: number; xp: number; total: number };
+/** 12단계 전투 재생 프레임(작게 저장): t 턴 · a 행동 유닛('a0'~'b7' = 편 + 보드 번호) · d 대상 · v 피해 · c 치명 · k 처치 · s 종류(cast · reflect · revive · start · heal) · m 짧은 글(기술 이름 등) · th 대상 남은 체력 % · ah 행동 유닛 남은 체력 %(바뀌었을 때만). */
+export type ReplayFrame = { t: number; a: string; d?: string; v?: number; c?: 1; k?: 1; s?: 'cast' | 'reflect' | 'revive' | 'start' | 'heal' | 'miss'; m?: string; th?: number; ah?: number };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
 export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
 /** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */

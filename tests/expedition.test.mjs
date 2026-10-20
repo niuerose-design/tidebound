@@ -371,3 +371,30 @@ test('expedition stage 11: augments offered on rounds 2/5/8 (tiered, trait augme
     assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expMastery:20')); assert.ok(TT.TITLES.find(t => t.id === 'expMastery:50'));
     assert.equal(D.masteryXpFor(1), 100); assert.equal(D.masteryXpFor(50), 100 + 50 * 49);
 });
+
+test('expedition stage 12: battles emit compact replay frames (valid unit keys, hp %, cast/kill flags, reflect/revive frames, cap with truncated), the fight stores foe + frames', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
+    const a = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'evilEye', star: 1, row: 'back' }], b = [{ unit: 'pig', star: 1, row: 'front' }, { unit: 'slime', star: 1, row: 'front' }];
+    const r = X.battle(a, b, mkRng(3));
+    assert.ok(r.frames.length > 0 && r.frames.length <= X.REPLAY_FRAMES); assert.equal(r.truncated, false);
+    const keyOk = k => /^[ab]\d$/.test(k) && Number(k.slice(1)) < (k[0] === 'a' ? a.length : b.length);
+    for (const f of r.frames) { assert.ok(keyOk(f.a), `actor ${f.a}`); if (f.d) assert.ok(keyOk(f.d)); if (f.th !== undefined) assert.ok(f.th >= 0 && f.th <= 100); assert.ok(Number.isInteger(f.t)); }
+    assert.ok(r.frames.some(f => f.k === 1), 'a kill frame'); assert.ok(r.frames.some(f => f.v > 0 && f.d), 'damage frames');
+    const dmg = r.frames.filter(f => f.d === 'b0' && f.th !== undefined).map(f => f.th); for (let i = 1; i < dmg.length; i++) assert.ok(dmg[i] <= dmg[i - 1], 'target hp never rises without heal/revive');
+    assert.equal(r.winner, 'a');
+    // 시전 프레임: 신전 2(시작 마나 50)면 몇 턴 안에 시전.
+    const t = X.battle([{ unit: 'erdaSpirit', star: 3, row: 'back' }, { unit: 'memoryMonitor', star: 3, row: 'back' }], [{ unit: 'seaGuard', star: 3, row: 'front' }], mkRng(5), 20);
+    assert.ok(t.frames.some(f => f.s === 'cast' && f.m), 'cast frame carries the skill name');
+    // 반격 프레임(가시 갑옷) · 부활 프레임(망령 4).
+    const m = X.battle([{ unit: 'seaGuard', star: 3, row: 'front', item: 'thornMail' }], [{ unit: 'pig', star: 1, row: 'front' }], mkRng(4), 3); assert.ok(m.frames.some(f => f.s === 'reflect' && f.a === 'a0' && f.d === 'b0'));
+    const w = X.battle([{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }], [{ unit: 'juniorWraith', star: 1, row: 'back' }, { unit: 'wraithUnit', star: 1, row: 'back' }, { unit: 'zombieMushroom', star: 1, row: 'back' }, { unit: 'vanishingSoul', star: 1, row: 'back' }], mkRng(6));
+    assert.ok(w.frames.some(f => f.s === 'revive' && f.ah === 30), 'revive frame at 30%');
+    // 상한: 4v4 수호 ★3끼리 40턴이면 프레임이 넘쳐 truncated.
+    const g = Array.from({ length: 4 }, () => ({ unit: 'seaGuard', star: 3, row: 'front' })), stall = X.battle(g, g, mkRng(7));
+    assert.equal(stall.frames.length, X.REPLAY_FRAMES); assert.equal(stall.truncated, true);
+    // 전투 뒤 r.last에 상대 보드와 프레임이 남는다.
+    const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const run = s.expedition; delete run.rule; run.board = [{ unit: 'zakum', star: 3, row: 'front' }];
+    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(run.last.foe.length >= 1 && run.last.foe.every(p => D.unitById(p.unit))); assert.ok(run.last.frames.length > 0); assert.equal(run.last.truncated, undefined);
+});
