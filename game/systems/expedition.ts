@@ -102,8 +102,8 @@ function pickTarget(enemies: UnitFighter[], rng: () => number) {
     return pool[Math.floor(rng() * pool.length)];
 }
 /** N대N 전투. 매 턴 전체 유닛을 속도 순으로 한 번씩 행동시키고, 한쪽이 전멸하거나 최대 턴에 닿으면 끝(남은 체력 비율로 판정). */
-export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns, modsA?: RunMods, bossRound = false): BattleResult {
-    const A = buildSide(boardA, 'a', modsA, bossRound), B = buildSide(boardB, 'b');
+export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns, modsA?: RunMods, bossRound = false, modsB?: RunMods): BattleResult {
+    const A = buildSide(boardA, 'a', modsA, bossRound), B = buildSide(boardB, 'b', modsB, bossRound);
     const log: string[] = [], events: CombatEvent[] = [], frames: ReplayFrame[] = [];
     let truncated = false;
     const frame = (f: ReplayFrame) => { if (frames.length < REPLAY_FRAMES) frames.push(f); else truncated = true; };

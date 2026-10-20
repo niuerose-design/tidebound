@@ -167,7 +167,7 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
         assert.equal(two.score, 536); assert.equal(two.ghostPoints, 30);
         await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }, true, 30, 2), now + 3); assert.equal((await E.listExpeditionBoard(key)).find(r => r.name === '둘').score, 536, 'idempotent per run');
         assert.equal(E.expeditionScore({ wins: 8, cleared: true, round: 8, ghostByRun: { a: 10, b: 20 } }), 888);
-        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
+        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2].mods, undefined, 'no augments: no mods'); assert.equal(ghosts[2].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
         const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2].name, '하나');
         assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
         // 9단계 정산: 다음 달에 지난달 행으로 순위 · 보상. 행이 없으면 null.
@@ -507,4 +507,40 @@ test('expedition stage 16: difficulty tiers scale waves and bosses, unlock by cl
     assert.equal(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }), 1000 + 50 + 12 + 240); assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 1 }), 'legend 10 wins beats normal 12 wins');
     assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:5')); assert.ok(TT.TITLES.find(t => t.id === 'expDiff:4'));
     assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:3').progress(s), 0);
+});
+
+test('expedition stage 17: ghost boards carry the opponent run mods (augments · weekly rule · mastery perks) — recorded per round, synced in the season row, sent with pickGhosts, validated and applied to side B in battle, and shown as foe augments', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
+    // 전투 보정 정제: 경제 키는 빠지고 범위를 자른다.
+    assert.deepEqual(D.combatMods({ goldPlus: 5, rerollCost: 0, frontHp: 1.15, speed: 2, traitPlus: { meadow: 1, bogus: 3 }, reflect: 9, bossGuard: .25 }), { traitPlus: { meadow: 1 }, frontHp: 1.15, speed: 2, reflect: .5, bossGuard: .25 });
+    assert.equal(D.combatMods({ goldPlus: 2 }), undefined); assert.equal(D.combatMods(undefined), undefined);
+    // 고스트 파싱: mods · augments를 받고, 모르는 증강 id는 버린다.
+    const g = A.parseGhost(JSON.stringify({ 3: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front' }], mods: { frontHp: 1.3, goldPlus: 4 }, augments: ['frontWall', 'nope', 'traitPlus1:meadow'] } }), 3);
+    assert.deepEqual(g.mods, { frontHp: 1.3 }); assert.deepEqual(g.augments, ['frontWall', 'traitPlus1:meadow']);
+    // 전투: 같은 보드끼리 B쪽에만 체력 보정을 주면 B가 이긴다(결정적 시드).
+    const same = [{ unit: 'seaGuard', star: 2, row: 'front' }, { unit: 'pig', star: 2, row: 'front' }];
+    const plain = X.battle(same, same, mkRng(11), 40), buffed = X.battle(same, same, mkRng(11), 40, undefined, false, { frontHp: 1.6, starPower: 1.3 });
+    assert.ok(buffed.hpLeft.b > plain.hpLeft.b || buffed.winner === 'b', 'side B mods apply');
+    assert.equal(X.buildSide(same, 'b', { traitPlus: { meadow: 1 } }).active.find(t => t.trait.id === 'meadow').count, 2, 'B side trait plus');
+    // 판: 라운드별 증강 기록 · 고스트 상대의 증강이 r.last.foeAugments로.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.augments = ['coinPurse']; r.round = 3;
+    const ghostJson = JSON.stringify({ 3: { name: '상대', board: [{ unit: 'slime', star: 1, row: 'front' }], mods: { speed: 2 }, augments: ['quickFeet'] } });
+    let used = false; for (let seed = 1; seed <= 20 && !used; seed++) { r.round = 3; (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghostJson }, now + seed, mkRng(seed)); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); if (r.last.opponent) used = true; }
+    assert.ok(used, 'a ghost fight happened'); assert.deepEqual(r.last.foeAugments, ['quickFeet']); assert.deepEqual(r.augHistory[3], ['coinPurse']);
+    // 시즌 행: augs · rule · mastery가 실리고 pickGhosts가 라운드별 보정을 만든다.
+    const file = path.join(os.tmpdir(), `tb-exp17-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        // 앞 테스트가 같은 DB 인스턴스에 남긴 행과 섞이지 않도록 다른 달을 씁니다.
+        const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 45 * 86_400_000, key = T.monthKey(now2);
+        const mk = (name, round, augs) => ({ name, expedition: { round, wins: 4, done: true, last: { won: true }, history: { 3: [{ unit: 'pig', star: 1, row: 'front' }] }, augHistory: augs, rule: 'giants', mastery: 30, startedAt: 1 } });
+        await E.syncExpeditionRow('g1', mk('증강맨', 4, { 3: ['frontWall', 'traitPlus1:meadow'] }), now2);
+        const ghosts = await E.pickGhosts(key, 'other', () => 0);
+        assert.deepEqual(ghosts[3].augments, ['frontWall', 'traitPlus1:meadow']);
+        // 방벽 1.15 × 숙련 30 특전 앞줄 1.05, 거인의 주 ★2+ 1.08, 초원 문양 +1.
+        assert.ok(Math.abs(ghosts[3].mods.frontHp - 1.15 * 1.05) < 1e-9); assert.equal(ghosts[3].mods.starPower, 1.08); assert.deepEqual(ghosts[3].mods.traitPlus, { meadow: 1 }); assert.equal(ghosts[3].mods.goldPlus, undefined);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

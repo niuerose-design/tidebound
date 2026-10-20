@@ -1033,11 +1033,12 @@ export type ExpeditionBench = { unit: string; star: 1 | 2 | 3; item?: string };
 export type ExpeditionRun = {
     round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
     board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
-    /** 마지막 전투 요약. 12단계: 상대 보드(foe)와 재생 프레임(frames)으로 화면이 전투를 애니메이션으로 다시 보여줍니다. */
-    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean };
+    /** 마지막 전투 요약. 12단계: 상대 보드(foe)와 재생 프레임(frames)으로 화면이 전투를 애니메이션으로 다시 보여줍니다. 17단계: 고스트 상대의 증강(foeAugments). */
+    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean; foeAugments?: string[] };
     done?: boolean; reward?: number; startedAt: number;
-    /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. */
+    /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. 17단계: 라운드마다 그때 가진 증강(고스트에 반영). */
     history?: Record<number, ExpeditionPlaced[]>;
+    augHistory?: Record<number, string[]>;
     /** 4단계: 이 판에서 이긴 고스트로 얻은 시즌 가산점. */
     ghostPoints?: number;
     /** 6단계: 미장착 아이템(라운드 승리 상자). */
@@ -1068,7 +1069,7 @@ export type ExpeditionStats = { runs: number; clears: number; wins: number; roun
 export type ExpeditionQuestState = { id: string; n: number; done?: boolean };
 export type ExpeditionQuests = { day: string; week: string; daily: ExpeditionQuestState[]; weekly: ExpeditionQuestState[] };
 /** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */
-export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[]; /** 4단계: 그 고스트의 이번 달 최고 승수(이기면 시즌 점수 가산). */ wins?: number };
+export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[]; /** 4단계: 그 고스트의 이번 달 최고 승수(이기면 시즌 점수 가산). */ wins?: number; /** 17단계: 그 라운드 때 상대가 가진 전투 보정(증강 · 주간 규칙 · 숙련 특전)과 증강 이름 표시용 id. */ mods?: import('./data/expedition').RunMods; augments?: string[] };
 export type DuelResult = {
     winner: 'player' | 'opponent' | 'draw';
     turns: number;
