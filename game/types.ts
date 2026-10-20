@@ -613,6 +613,8 @@ export type State = {
     /** 9단계: 시즌 말 보상을 받은 마지막 시즌 키(YYYY-MM)와 그 내역. */
     expeditionSeasonClaimed?: string;
     expeditionSeasonLast?: { season: string; rank: number; total: number; wins: number; pearls: number };
+    /** 11단계: 원정 숙련(레벨 · 현재 경험치 · 누적). */
+    expeditionMastery?: ExpeditionMastery;
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
@@ -1034,7 +1036,14 @@ export type ExpeditionRun = {
     box?: string[];
     /** 10단계: 이긴 막 보스 수(막 보상 세계석 × actPearls). */
     acts?: number;
+    /** 11단계: 고른 증강(id, 동적은 'traitPlus2:meadow') · 아직 고르지 않은 증강 선택지 · 이 판의 주간 규칙 id · 시작 때 숙련 레벨(특전 고정). */
+    augments?: string[];
+    augmentOffer?: string[];
+    rule?: string;
+    mastery?: number;
 };
+/** 11단계 원정 숙련(계정 성장). */
+export type ExpeditionMastery = { level: number; xp: number; total: number };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
 export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
 /** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */

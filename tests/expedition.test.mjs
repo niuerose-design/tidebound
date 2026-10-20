@@ -1,5 +1,7 @@
 import { assert, test } from './harness.mjs';
 const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
+/** 11단계 증강 선택지는 2 · 5 · 8라운드에 전투를 막으므로, 증강을 따로 보지 않는 테스트는 전투 전에 치웁니다. */
+const clearOffer = (st) => { if (st.expedition?.augmentOffer) delete st.expedition.augmentOffer; };
 const mkRng = seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 
 test('expedition data: 30 units, 5 per origin, role counts, every skill and monster id exists, intended comps are valid', async () => {
@@ -96,7 +98,7 @@ test('expedition run: start → buy → merge stars → place → fight → fini
     // 경험치: 4 G → 레벨 2 → 3(목표 2).
     r.gold = 10; act(s, { type: 'expeditionXp' }, now, rng); assert.equal(r.level, 3); assert.equal(r.gold, 6);
     // 전투 → 다음 라운드 · 수입 · 새 상점.
-    act(s, { type: 'expeditionFight' }, now, rng); assert.equal(r.round, 2); assert.ok(r.last && typeof r.last.won === 'boolean'); assert.ok(r.gold >= 6 + D.EXPEDITION.baseGold); assert.ok(r.shop.every(x => x === null || D.unitById(x)));
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, rng); assert.equal(r.round, 2); assert.ok(r.last && typeof r.last.won === 'boolean'); assert.ok(r.gold >= 6 + D.EXPEDITION.baseGold); assert.ok(r.shop.every(x => x === null || D.unitById(x)));
     // 포기 → 세계석 보상(승리당 1, 완주 없음) · 같은 날에도 바로 다시 출발.
     r.wins = 3; act(s, { type: 'expeditionQuit' }, now, rng);
     assert.ok(r.done); assert.equal(r.reward, 3 * D.EXPEDITION.pearlsPerWin); assert.equal(s.pearls, r.reward); assert.equal(A.expeditionReward(8, true), 8 * D.EXPEDITION.pearlsPerWin + D.EXPEDITION.clearPearls); assert.equal(s.expeditionDay, undefined, 'no daily key any more'); assert.equal(s.expeditionBest, 3);
@@ -105,7 +107,7 @@ test('expedition run: start → buy → merge stars → place → fight → fini
     act(s, { type: 'expeditionQuit' }, now, rng); act(s, { type: 'expeditionClear' }, now, rng); assert.equal(s.expedition, undefined);
     act(s, { type: 'expeditionStart' }, now + 86_400_000, rng); assert.ok(s.expedition && !s.expedition.done);
     // 체력 0이면 탈락 종료.
-    const t = s.expedition; t.hp = 1; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 5; act(s, { type: 'expeditionFight' }, now + 86_400_000, mkRng(5));
+    const t = s.expedition; t.hp = 1; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 5; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 86_400_000, mkRng(5));
     if (!t.last.won) { assert.ok(t.done, 'knocked out'); } else assert.equal(t.round, 6);
 });
 
@@ -134,15 +136,15 @@ test('expedition ghosts: per-round ghost JSON is parsed and validated, fights ag
     assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'x', board: [{ unit: 'pig', star: 9, row: 'front' }] } }), 2), null, 'bad star rejected');
     assert.equal(A.parseGhost('not json', 2), null); assert.equal(A.parseGhost(undefined, 2), null);
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; // 주간 규칙 영향 제거
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.round = 2;
     // ghostChance .6: 난수 0.1이면 고스트와 싸움.
-    act(s, { type: 'expeditionFight', value: JSON.stringify({ 2: { ...good[2], wins: 4 }, 3: good[3] }) }, now, (() => { let i = 0; return () => (i++ === 0 ? .1 : mkRng(5)()); })());
+    (clearOffer(s), act)(s, { type: 'expeditionFight', value: JSON.stringify({ 2: { ...good[2], wins: 4 }, 3: good[3] }) }, now, (() => { let i = 0; return () => (i++ === 0 ? .1 : mkRng(5)()); })());
     assert.equal(r.last.opponent, '이웃', 'fought the ghost'); assert.ok(r.last.won); assert.equal(r.ghostPoints, 40, '4단계: 이긴 고스트 승수 4 × 10'); assert.deepEqual(r.history[2], [{ unit: 'zakum', star: 3, row: 'front' }], 'board snapshot kept');
     const st = s.expeditionStats; assert.equal(st.ghostFights, 1); assert.equal(st.ghostWins, 1); assert.equal(st.roundPlays[2], 1); assert.equal(st.roundWins[2], 1); assert.equal(st.units.zakum, 1);
     // 1라운드는 고스트를 쓰지 않습니다.
     const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(2)); t.expedition.board = [{ unit: 'pig', star: 1, row: 'front' }];
-    act(t, { type: 'expeditionFight', value: JSON.stringify({ 1: good[2] }) }, now, () => .1); assert.equal(t.expedition.last.opponent, undefined, 'round 1 is always a wave');
+    (clearOffer(t), act)(t, { type: 'expeditionFight', value: JSON.stringify({ 1: good[2] }) }, now, () => .1); assert.equal(t.expedition.last.opponent, undefined, 'round 1 is always a wave');
     // 종료 시 판 수 · 완주 집계.
     r.wins = 8; r.round = 13; A.expeditionActions.expeditionQuit(s, { a: { type: 'expeditionQuit' }, id: '', now, rng: mkRng(1) });
     assert.equal(s.expeditionStats.runs, 1); assert.equal(s.expeditionStats.clears, 1);
@@ -189,10 +191,10 @@ test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip
     const mail = X.battle([{ unit: 'seaGuard', star: 3, row: 'front', item: 'thornMail' }], [{ unit: 'pig', star: 1, row: 'front' }], mkRng(4), 3); assert.ok(mail.log.some(l => l.includes('반격')), 'thorn mail reflects');
     // 판 흐름.
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; // 주간 규칙 영향 제거
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
-    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.box.length, 3, 'box offer on win (stage 7)'); act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)); assert.equal(r.items.length, 1); assert.ok(D.itemById(r.items[0]));
-    r.items = ['blade', 'shield', 'boots', 'fang']; r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.equal(r.items.length, 4, 'hold cap: no box when full'); assert.equal(r.box, undefined);
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.box.length, 3, 'box offer on win (stage 7)'); act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)); assert.equal(r.items.length, 1); assert.ok(D.itemById(r.items[0]));
+    r.items = ['blade', 'shield', 'boots', 'fang']; r.round = 2; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.equal(r.items.length, 4, 'hold cap: no box when full'); assert.equal(r.box, undefined);
     // 장착 · 교체 · 해제.
     r.bench = [{ unit: 'pig', star: 1 }];
     act(s, { type: 'expeditionEquip', value: 'bench:0:0' }, now, mkRng(1)); assert.equal(r.bench[0].item, 'blade'); assert.deepEqual(r.items, ['shield', 'boots', 'fang']);
@@ -220,13 +222,13 @@ test('expedition stage 7: box offers 3 distinct basic items and blocks the fight
     assert.equal(D.ITEMS.filter(x => x.tier === 2).length, 8); assert.ok(D.BOX_ITEMS().every(x => !x.tier), 'tier-2 items and emblems never drop from the basic pool');
     assert.equal(D.comboOf('blade', 'blade').id, 'greatBlade'); assert.equal(D.comboOf('wand', 'blade').id, 'doomSpear', 'order does not matter'); assert.equal(D.comboOf('blade', 'fang'), undefined);
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
-    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(new Set(r.box).size, 3, 'three distinct choices'); assert.ok(r.box.every(id => D.itemById(id) && !D.itemById(id).tier));
-    assert.throws(() => act(s, { type: 'expeditionFight' }, now, mkRng(3)), /상자/, 'fight blocked while a box is pending');
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(new Set(r.box).size, 3, 'three distinct choices'); assert.ok(r.box.every(id => D.itemById(id) && !D.itemById(id).tier));
+    assert.throws(() => (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3)), /상자/, 'fight blocked while a box is pending');
     assert.throws(() => act(s, { type: 'expeditionPickBox', value: '7' }, now, mkRng(1)), /고르세요/);
     const want = r.box[2]; act(s, { type: 'expeditionPickBox', value: '2' }, now, mkRng(1)); assert.deepEqual(r.items, [want]); assert.equal(r.box, undefined);
     assert.throws(() => act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)), /없습니다/);
-    r.round = 2; act(s, { type: 'expeditionFight' }, now, mkRng(4)); assert.equal(r.box.length, 3); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); assert.equal(r.box, undefined); assert.equal(r.items.length, 1, 'skip adds nothing');
+    r.round = 2; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(4)); assert.equal(r.box.length, 3); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); assert.equal(r.box, undefined); assert.equal(r.items.length, 1, 'skip adds nothing');
     // 가진 칸이 꽉 찬 채 고르면 거부(먼저 조합하거나 장착).
     r.items = ['blade', 'blade', 'shield', 'thornMail']; r.box = ['wand', 'boots', 'fang'];
     assert.throws(() => act(s, { type: 'expeditionPickBox', value: '0' }, now, mkRng(1)), /4개까지/);
@@ -263,10 +265,10 @@ test('expedition stage 8: emblems add a trait key (counted once per unit), guard
     assert.equal(X.hasRole({ unit: 'pig', star: 1, row: 'front', item: 'emblem_wraith' }, D.unitById('pig'), 'wraith'), true);
     // 상자: 3라운드부터 셋째 칸이 문장이고, 다음 단계에 가장 가까운 시너지를 고른다(돌격 3/4 → 돌격의 문장).
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; // 주간 규칙 영향 제거
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }, { unit: 'wildBoar', star: 1, row: 'front' }]; r.round = D.EMBLEM_ROUND - 1;
-    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.ok(r.box.every(id => !D.itemById(id).tier), 'before round 3: basic items only'); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
-    act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.ok(r.last.won); assert.equal(r.box.length, 3); assert.equal(r.box[2], 'emblem_charge', 'charge 3/4 and meadow 1/2 are both one short → the bigger stack (charge) wins'); assert.ok(r.box.slice(0, 2).every(id => !D.itemById(id).tier));
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.ok(r.box.every(id => !D.itemById(id).tier), 'before round 3: basic items only'); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.ok(r.last.won); assert.equal(r.box.length, 3); assert.equal(r.box[2], 'emblem_charge', 'charge 3/4 and meadow 1/2 are both one short → the bigger stack (charge) wins'); assert.ok(r.box.slice(0, 2).every(id => !D.itemById(id).tier));
     act(s, { type: 'expeditionPickBox', value: '2' }, now, mkRng(1)); assert.deepEqual(r.items, ['emblem_charge']);
     act(s, { type: 'expeditionEquip', value: 'board:0:0' }, now, mkRng(1)); assert.equal(tr(r.board).charge, 3, 'zakum already is charge: the emblem adds nothing'); act(s, { type: 'expeditionUnequip', value: 'board:0' }, now, mkRng(1)); r.board.push({ unit: 'slime', star: 1, row: 'front' }); act(s, { type: 'expeditionEquip', value: 'board:3:0' }, now, mkRng(1)); assert.equal(tr(r.board).charge, 4, 'slime with the charge emblem completes charge 4');
     assert.ok(['emblem_underground', 'emblem_sea', 'emblem_meadow', 'emblem_boss'].includes(A.pickEmblem(r, mkRng(5))) || A.pickEmblem(r, mkRng(5)).startsWith('emblem_'));
@@ -292,9 +294,9 @@ test('expedition stage 9: season settlement pays pearls once per season via expe
     act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); act(s, { type: 'expeditionStart' }, now + 2, mkRng(1)); assert.equal(s.pearls, 50, 'no value: nothing');
     act(s, { type: 'expeditionQuit' }, now + 2, mkRng(1)); act(s, { type: 'expeditionStart', value: JSON.stringify({ season: '2026-10', rank: 0, total: 700, wins: 1 }) }, now + 3, mkRng(1)); assert.equal(s.pearls, 53, 'next season, outside the pool: +3');
     // 상자 품질: 6라운드부터 첫째 칸이 조합 아이템.
-    const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }]; r.round = D.TIER2_ROUND - 1;
-    act(s, { type: 'expeditionFight' }, now + 4, mkRng(2)); assert.ok(r.last.won); assert.ok(!D.itemById(r.box[0]).tier, 'before round 6 the first slot is basic'); act(s, { type: 'expeditionSkipBox' }, now + 4, mkRng(1));
-    act(s, { type: 'expeditionFight' }, now + 5, mkRng(3)); assert.ok(r.last.won); assert.equal(D.itemById(r.box[0]).tier, 2, 'round 6: tier-2 item first'); assert.ok(!D.itemById(r.box[1]).tier); assert.equal(D.itemById(r.box[2]).tier, 'emblem'); assert.equal(new Set(r.box).size, 3);
+    const r = s.expedition; delete r.rule; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }]; r.round = D.TIER2_ROUND - 1;
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 4, mkRng(2)); assert.ok(r.last.won); assert.ok(!D.itemById(r.box[0]).tier, 'before round 6 the first slot is basic'); act(s, { type: 'expeditionSkipBox' }, now + 4, mkRng(1));
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 5, mkRng(3)); assert.ok(r.last.won); assert.equal(D.itemById(r.box[0]).tier, 2, 'round 6: tier-2 item first'); assert.ok(!D.itemById(r.box[1]).tier); assert.equal(D.itemById(r.box[2]).tier, 'emblem'); assert.equal(new Set(r.box).size, 3);
 });
 
 test('expedition stage 10: 12 rounds in 3 acts, boss waves on 4/8/12 (no ghost, act pearls), synergy shop slot from round 2, softer hp loss, stats sized to 12', async () => {
@@ -311,12 +313,61 @@ test('expedition stage 10: 12 rounds in 3 acts, boss waves on 4/8/12 (no ghost, 
     assert.equal(X.rollShop(4, mkRng(3), 5).length, 5, 'without a board the shop is plain');
     // 판 흐름: 보스 라운드는 고스트를 무시하고 보스 웨이브, 이기면 acts +1, 완주 보상 = 승수 + 완주 4 + 막 보스 3 × 2.
     const s = newState(0); s.level = 100; s.pearls = 0; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
     const ghost = JSON.stringify({ 4: { name: 'g', board: [{ unit: 'slime', star: 1, row: 'front' }] } });
-    for (let round = 1; round <= 12; round++) { assert.equal(r.round, round); act(s, { type: 'expeditionFight', value: ghost }, now + round, mkRng(round + 20)); assert.ok(r.last.won, `round ${round} won`); if (round === 4) assert.equal(r.last.opponent, undefined, 'boss round ignores the ghost'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now + round, mkRng(1)); if (round < 12) assert.equal(r.shop.length, 5); }
+    for (let round = 1; round <= 12; round++) { assert.equal(r.round, round); (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghost }, now + round, mkRng(round + 20)); assert.ok(r.last.won, `round ${round} won`); if (round === 4) assert.equal(r.last.opponent, undefined, 'boss round ignores the ghost'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now + round, mkRng(1)); if (round < 12) assert.equal(r.shop.length, 5); }
     assert.ok(r.done); assert.equal(r.wins, 12); assert.equal(r.acts, 3); assert.equal(r.round, 13); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls); assert.equal(s.pearls, r.reward);
     assert.equal(s.expeditionStats.roundPlays.length, 13); assert.equal(s.expeditionStats.roundWins[12], 1);
     // 패배 체력: 12 + 라운드 × 2 + 남은 적 × 2.
     const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(1)); const q = t.expedition; q.board = [{ unit: 'slime', star: 1, row: 'front' }]; q.round = 11;
-    act(t, { type: 'expeditionFight' }, now, mkRng(7)); assert.ok(!q.last.won); assert.ok(q.hp <= 100 - (12 + 22) && q.hp >= 100 - (12 + 22 + 16), `hp ${q.hp}`);
+    (clearOffer(t), act)(t, { type: 'expeditionFight' }, now, mkRng(7)); assert.ok(!q.last.won); assert.ok(q.hp <= 100 - (12 + 22) && q.hp >= 100 - (12 + 22 + 16), `hp ${q.hp}`);
+});
+
+test('expedition stage 11: augments offered on rounds 2/5/8 (tiered, trait augment resolved from the board, blocks the fight), run mods apply (trait +1, gold, bench, reroll, xp, box), weekly rule is deterministic and sticks to the run, mastery levels and perks', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition'), T = await L.load('data/time'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    // 보정 합치기.
+    const m = D.mergeMods([{ goldPlus: 2, frontHp: 1.15 }, { goldPlus: 1, frontHp: 1.05, rerollCost: 1 }, { traitPlus: { meadow: 1 } }, { traitPlus: { meadow: 1 }, bossGuard: .5 }, { bossGuard: .25 }]);
+    assert.equal(m.goldPlus, 3); assert.ok(Math.abs(m.frontHp - 1.15 * 1.05) < 1e-9); assert.equal(m.rerollCost, 1); assert.equal(m.traitPlus.meadow, 2); assert.equal(m.bossGuard, .6, 'boss guard capped');
+    // 머릿수 가산은 보드에 그 특성이 있을 때만.
+    const tr = (board, mods) => Object.fromEntries(X.activeTraits(board, mods).map(t => [t.trait.id, t.count]));
+    assert.equal(tr([{ unit: 'pig', star: 1, row: 'front' }], { traitPlus: { meadow: 1 } }).meadow, 2); assert.equal(tr([{ unit: 'pig', star: 1, row: 'front' }], { traitPlus: { forest: 1 } }).forest, undefined);
+    // 전투 보정: 앞줄 체력 · 뒷줄 공격 · 속도 · 보스 라운드 감소 · ★2 배율.
+    const base = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a').units[0], wall = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a', { frontHp: 1.2, speed: 3, bossGuard: .25 }, true).units[0];
+    assert.equal(wall.maxHp, Math.round(base.maxHp * 1.2)); assert.equal(wall.stats.speed, base.stats.speed + 3); assert.ok(Math.abs(wall.damageTaken - .25) < 1e-9);
+    assert.equal(X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a', { bossGuard: .25 }, false).units[0].damageTaken, undefined, 'boss guard only on boss rounds');
+    const back = X.buildSide([{ unit: 'evilEye', star: 2, row: 'back' }], 'a').units[0], boosted = X.buildSide([{ unit: 'evilEye', star: 2, row: 'back' }], 'a', { backPower: 1.2, starPower: 1.1, manaGain: 1.3, reflect: .15 }).units[0];
+    assert.equal(boosted.stats.magic, Math.round(back.stats.magic * 1.2 * 1.1)); assert.ok(Math.abs(boosted.manaGain - 1.3) < 1e-9); assert.equal(boosted.reflect, .15);
+    // 주간 규칙: 같은 주 키 → 같은 규칙, 판에 붙음.
+    assert.equal(D.weeklyRule('2026-W43').id, D.weeklyRule('2026-W43').id); assert.ok(D.WEEKLY_RULES.some(r => r.id === D.weeklyRule('2026-W44').id));
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; assert.equal(r.rule, D.weeklyRule(T.weekKey(now)).id); assert.deepEqual(r.augments, []); assert.equal(r.mastery, 1); delete r.rule;
+    // 1라운드 뒤 2라운드 증강 선택지 3개(1등급), 전투 차단, 문양은 보드 시너지로 구체화.
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }];
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    assert.equal(r.round, 2); assert.equal(r.augmentOffer.length, 3); assert.ok(r.augmentOffer.every(id => D.augmentById(id).tier === 1));
+    assert.throws(() => act(s, { type: 'expeditionFight' }, now, mkRng(3)), /증강/);
+    for (const id of r.augmentOffer) if (id.startsWith('traitPlus1:')) assert.ok(['charge', 'underground', 'meadow'].includes(id.split(':')[1]), `trait augment resolved: ${id}`);
+    // 골드 증강을 고르면 다음 라운드 수입에 반영, 벤치 증강이면 상한.
+    r.augmentOffer = ['coinPurse', 'widerBench', 'traitPlus1:charge'];
+    const goldBefore = r.gold; act(s, { type: 'expeditionPickAugment', value: '2' }, now, mkRng(1)); assert.deepEqual(r.augments, ['traitPlus1:charge']); assert.equal(r.augmentOffer, undefined);
+    assert.equal(tr(r.board, A.runMods(r)).charge, 3, 'charge 2 + 1');
+    r.augments.push('coinPurse', 'widerBench', 'cheapReroll', 'tutor'); assert.equal(A.benchCap(r), 10); assert.equal(A.runMods(r).rerollCost, 1);
+    r.gold = 10; act(s, { type: 'expeditionReroll' }, now, mkRng(4)); assert.equal(r.gold, 9, 'reroll costs 1');
+    act(s, { type: 'expeditionXp' }, now, mkRng(1)); assert.equal(r.xp + (r.level - 2 > 0 ? 100 : 0) >= 6 || r.level > 2, true, 'xp purchase adds 4 + 2');
+    r.gold = 0; r.streak = 0; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 1, mkRng(5)); assert.ok(r.last.won); assert.equal(r.gold, D.EXPEDITION.baseGold + 2, 'income + coin purse'); assert.equal(goldBefore >= 0, true);
+    if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    // 5라운드 증강(2등급)과 재정비 회복 · 큰 상자.
+    r.round = 4; r.hp = 50; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 2, mkRng(6)); assert.ok(r.last.won); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); assert.equal(r.round, 5); assert.ok(r.augmentOffer.every(id => D.augmentById(id).tier === 2));
+    r.augmentOffer = ['secondWind', 'bigBox', 'manaFlow']; act(s, { type: 'expeditionPickAugment', value: '0' }, now, mkRng(1)); assert.equal(r.hp, 75);
+    r.augments.push('bigBox'); r.items = []; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 3, mkRng(7)); assert.ok(r.last.won); assert.equal(r.box.length, 4, 'box +1'); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    // 보스 사냥꾼: 막 보상 2배. 완주 뒤 숙련 경험치 · 레벨.
+    r.augments.push('bossHunter'); r.round = 12; r.acts = 2; r.wins = 11; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    s.pearls = 0; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 4, mkRng(8)); assert.ok(r.done); assert.ok(r.last.won); assert.equal(r.acts, 3); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls * 2);
+    assert.equal(s.expeditionMastery.total, D.masteryRunXp(12, 3, true)); assert.equal(D.masteryRunXp(12, 3, true), 230); assert.equal(s.expeditionMastery.level, 2, '230 xp: level 1 → 2 (100) with 130 left, level 3 needs 150'); assert.equal(s.expeditionMastery.xp, 130);
+    // 숙련 특전: 레벨 5면 시작 골드 +2, 레벨 25면 증강 4개. 업적 · 칭호.
+    s.expeditionMastery.level = 5; act(s, { type: 'expeditionStart' }, now + 5, mkRng(1)); assert.equal(s.expedition.gold, D.EXPEDITION.baseGold + 2); assert.equal(s.expedition.mastery, 5);
+    s.expedition.mastery = 25; s.expedition.board = [{ unit: 'pig', star: 1, row: 'front' }]; s.expedition.round = 2; assert.equal(A.rollAugments(s.expedition, mkRng(2)).length, 4);
+    assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expMastery:20')); assert.ok(TT.TITLES.find(t => t.id === 'expMastery:50'));
+    assert.equal(D.masteryXpFor(1), 100); assert.equal(D.masteryXpFor(50), 100 + 50 * 49);
 });

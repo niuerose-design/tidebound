@@ -8,7 +8,7 @@
 import type { Stats, CombatEvent } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, actOf, type UnitDef, type TraitDef, type Role } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, actOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
@@ -25,7 +25,7 @@ export function traitKeys(p: Placed, def: UnitDef): string[] {
     return keys;
 }
 export const hasRole = (p: Placed, def: UnitDef, role: Role) => def.roles.includes(role) || itemById(p.item || '')?.emblem?.role === role;
-export function activeTraits(board: Placed[]): ActiveTrait[] {
+export function activeTraits(board: Placed[], mods?: RunMods): ActiveTrait[] {
     const byUnit = new Map<string, Set<string>>();
     for (const p of board) {
         const def = unitById(p.unit); if (!def) continue;
@@ -34,6 +34,8 @@ export function activeTraits(board: Placed[]): ActiveTrait[] {
     }
     const counts = new Map<string, number>();
     for (const set of byUnit.values()) for (const key of set) counts.set(key, (counts.get(key) || 0) + 1);
+    // 11단계 증강 · 주간 규칙의 머릿수 가산: 보드에 그 특성이 하나라도 있을 때만.
+    for (const [k, v] of Object.entries(mods?.traitPlus || {})) if (counts.get(k)) counts.set(k, counts.get(k)! + v);
     return TRAITS.map(trait => { const count = counts.get(trait.id) || 0; let tier = 0; trait.tiers.forEach((t, i) => { if (count >= t.count) tier = i + 1; }); return { trait, count, tier }; }).filter(x => x.count > 0);
 }
 /** 유닛 하나의 기본 능력치(★ 배율 · 역할 배율 포함, 시너지 전). */
@@ -46,8 +48,8 @@ export function unitBaseStats(def: UnitDef, star: 1 | 2 | 3) {
 }
 function tierFlags(active: ActiveTrait[]) { const flags = new Set<string>(); for (const a of active) if (a.tier) for (const t of a.trait.tiers.slice(0, a.tier)) for (const f of t.flags || []) flags.add(f); return flags; }
 /** 보드를 전투 유닛으로 만듭니다(시너지 적용). */
-export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighter[]; active: ActiveTrait[]; flags: Set<string> } {
-    const active = activeTraits(board), flags = tierFlags(active);
+export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, bossRound = false): { units: UnitFighter[]; active: ActiveTrait[]; flags: Set<string> } {
+    const active = activeTraits(board, mods), flags = tierFlags(active);
     const units = board.map(placed => {
         const def = unitById(placed.unit)!, base = unitBaseStats(def, placed.star);
         const stats: Record<string, number> = { ...base }, mult = { hp: 1, attack: 1, magic: 1 };
@@ -71,10 +73,18 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
             for (const k in item.bonus || {}) stats[k] = (stats[k] || 0) + (item.bonus as Record<string, number>)[k];
             if (item.damageTaken) damageTaken = 1 - (1 - damageTaken) * (1 - item.damageTaken);
         }
+        // 11단계 판 보정(증강 · 주간 규칙 · 숙련 특전).
+        if (mods) {
+            if (mods.frontHp && placed.row === 'front') mult.hp *= mods.frontHp;
+            if (mods.backPower && placed.row === 'back') { mult.attack *= mods.backPower; mult.magic *= mods.backPower; }
+            if (mods.starPower && placed.star >= 2) { mult.hp *= mods.starPower; mult.attack *= mods.starPower; mult.magic *= mods.starPower; }
+            if (mods.speed) stats.speed = (stats.speed || 0) + mods.speed;
+            if (mods.bossGuard && bossRound) damageTaken = 1 - (1 - damageTaken) * (1 - mods.bossGuard);
+        }
         stats.hp = Math.round(stats.hp * mult.hp); stats.attack = Math.round(stats.attack * mult.attack); stats.magic = Math.round(stats.magic * mult.magic);
         const combat = normalizeStats(stats as Stats);
         const charge = Math.min(EXPEDITION.manaCast, (flags.has('startMana100') ? EXPEDITION.manaCast : flags.has('startMana50') ? EXPEDITION.manaCast / 2 : 0) + (item?.startMana || 0));
-        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}${item ? `[${item.name}]` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, placed, def, side, charge, manaGain: flags.has('manaBoost') ? 1.25 : 1, ...(item?.reflect ? { reflect: item.reflect } : {}) };
+        const f: UnitFighter = { name: `${def.name}${placed.star > 1 ? `★${placed.star}` : ''}${item ? `[${item.name}]` : ''}`, foeId: def.monster, stats: combat, hp: combat.hp, maxHp: combat.hp, skills: [], cooldowns: {}, stun: 0, effects: {}, mana: 0, ...(def.roles.includes('arcane') ? { magicBasic: true } : {}), damageTaken: damageTaken || undefined, placed, def, side, charge, manaGain: (flags.has('manaBoost') ? 1.25 : 1) * (mods?.manaGain || 1), ...(item?.reflect || mods?.reflect ? { reflect: (item?.reflect || 0) + (mods?.reflect || 0) } : {}) };
         return f;
     });
     return { units, active, flags };
@@ -87,8 +97,8 @@ function pickTarget(enemies: UnitFighter[], rng: () => number) {
     return pool[Math.floor(rng() * pool.length)];
 }
 /** N대N 전투. 매 턴 전체 유닛을 속도 순으로 한 번씩 행동시키고, 한쪽이 전멸하거나 최대 턴에 닿으면 끝(남은 체력 비율로 판정). */
-export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns): BattleResult {
-    const A = buildSide(boardA, 'a'), B = buildSide(boardB, 'b');
+export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns, modsA?: RunMods, bossRound = false): BattleResult {
+    const A = buildSide(boardA, 'a', modsA, bossRound), B = buildSide(boardB, 'b');
     const log: string[] = [], events: CombatEvent[] = [];
     // 전투 시작 효과: 바다 · 용 4 가속 3턴(엔진 buffs.haste), 보스 4 포효(적 전체 약화 2턴).
     for (const [mine, theirs] of [[A, B], [B, A]] as const) {

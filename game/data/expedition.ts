@@ -180,3 +180,100 @@ export const BOX_CHOICES = 3;
 export const itemById = (id: string) => ITEMS.find(x => x.id === id);
 /** 한 번에 가질 수 있는 미장착 아이템 수. */
 export const ITEM_HOLD = 4;
+
+// ───────────── 11단계: 증강 · 주간 규칙 · 원정 숙련 ─────────────
+/** 판 전체에 걸리는 보정(증강 · 주간 규칙 · 숙련 특전을 합친 결과). 전투 계층은 이것만 봅니다. */
+export type RunMods = {
+    /** 특성 머릿수 가산(보드에 그 특성이 하나라도 있을 때만). */
+    traitPlus?: Record<string, number>;
+    /** 앞줄 체력 배율 · 뒷줄 공격/마법 배율 · 전체 속도 가산 · 마나 획득 배율 · 전체 반격 · 보스 라운드 받는 피해 감소 · ★2+ 능력치 배율. */
+    frontHp?: number; backPower?: number; speed?: number; manaGain?: number; reflect?: number; bossGuard?: number; starPower?: number;
+    /** 경제: 라운드 골드 가산 · 이자 상한 가산 · 경험치 구매 가산 · 새로 고침 비용 · 벤치 가산 · 상자 선택지 가산 · 문장 매 라운드 · 증강 선택지 가산 · 막 보상 배율 · 고스트 확률 · 최대 턴. */
+    goldPlus?: number; interestPlus?: number; xpPlus?: number; rerollCost?: number; benchPlus?: number; boxPlus?: number; emblemEvery?: boolean; augmentPlus?: number; actMult?: number; ghostChance?: number; maxTurns?: number;
+};
+export type AugmentDef = { id: string; name: string; desc: string; tier: 1 | 2 | 3; kind: 'economy' | 'synergy' | 'combat'; mods?: RunMods; /** 고를 때 바로: 판 체력 회복. */ heal?: number; /** 'trait'면 보드에 맞춰 traitPlus:<id>로 만들어집니다(표에는 틀만). */ dynamic?: 'trait' };
+/** 증강은 2 · 5 · 8라운드 시작 때 3개 중 하나(숙련 특전으로 4개). 라운드별 등급: 2 → 1등급, 5 → 2등급, 8 → 3등급. */
+export const AUGMENT_ROUNDS = [2, 5, 8];
+export const AUGMENTS: AugmentDef[] = [
+    // 1등급(2라운드)
+    { id: 'coinPurse', name: '동전 주머니', desc: '라운드마다 골드 +2', tier: 1, kind: 'economy', mods: { goldPlus: 2 } },
+    { id: 'cheapReroll', name: '단골 상점', desc: '새로 고침 1골드', tier: 1, kind: 'economy', mods: { rerollCost: 1 } },
+    { id: 'widerBench', name: '넓은 벤치', desc: '벤치 +2칸', tier: 1, kind: 'economy', mods: { benchPlus: 2 } },
+    { id: 'quickFeet', name: '날랜 발', desc: '모든 유닛 속도 +2', tier: 1, kind: 'combat', mods: { speed: 2 } },
+    { id: 'frontWall', name: '방벽', desc: '앞줄 체력 +15%', tier: 1, kind: 'combat', mods: { frontHp: 1.15 } },
+    { id: 'traitPlus1', name: '문양', desc: '시너지 머릿수 +1', tier: 1, kind: 'synergy', dynamic: 'trait' },
+    // 2등급(5라운드)
+    { id: 'interest', name: '복리', desc: '이자 상한 +3(최대 8)', tier: 2, kind: 'economy', mods: { interestPlus: 3 } },
+    { id: 'tutor', name: '가정교사', desc: '경험치 구매마다 +2', tier: 2, kind: 'economy', mods: { xpPlus: 2 } },
+    { id: 'bigBox', name: '큰 상자', desc: '상자 선택지 +1', tier: 2, kind: 'economy', mods: { boxPlus: 1 } },
+    { id: 'manaFlow', name: '마나 흐름', desc: '마나 획득 +30%', tier: 2, kind: 'combat', mods: { manaGain: 1.3 } },
+    { id: 'backline', name: '후방 지원', desc: '뒷줄 공격 · 마법 +20%', tier: 2, kind: 'combat', mods: { backPower: 1.2 } },
+    { id: 'secondWind', name: '재정비', desc: '판 체력 +25 즉시 회복', tier: 2, kind: 'combat', heal: 25 },
+    { id: 'traitPlus2', name: '깊은 문양', desc: '시너지 머릿수 +1', tier: 2, kind: 'synergy', dynamic: 'trait' },
+    { id: 'emblemRain', name: '문장의 비', desc: '매 라운드 상자에 문장', tier: 2, kind: 'synergy', mods: { emblemEvery: true } },
+    // 3등급(8라운드)
+    { id: 'thorns', name: '가시 덤불', desc: '모든 유닛 받은 피해 15% 반격', tier: 3, kind: 'combat', mods: { reflect: .15 } },
+    { id: 'bossHunter', name: '보스 사냥꾼', desc: '보스 라운드 받는 피해 −25% · 막 보상 2배', tier: 3, kind: 'combat', mods: { bossGuard: .25, actMult: 2 } },
+    { id: 'bigStars', name: '별의 축복', desc: '★2 이상 유닛 능력치 +12%', tier: 3, kind: 'combat', mods: { starPower: 1.12 } },
+    { id: 'traitPlus3', name: '고대 문양', desc: '시너지 머릿수 +2', tier: 3, kind: 'synergy', dynamic: 'trait' },
+    { id: 'treasury', name: '금고', desc: '라운드마다 골드 +4', tier: 3, kind: 'economy', mods: { goldPlus: 4 } },
+];
+export const augmentById = (id: string) => { const base = id.split(':')[0]; return AUGMENTS.find(a => a.id === base); };
+/** 'traitPlus2:meadow' 같은 동적 증강의 보정. */
+export function augmentMods(id: string): RunMods | undefined {
+    const def = augmentById(id); if (!def) return undefined;
+    if (def.dynamic === 'trait') { const trait = id.split(':')[1]; return trait ? { traitPlus: { [trait]: def.tier === 3 ? 2 : 1 } } : undefined; }
+    return def.mods;
+}
+export function augmentName(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return id; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} ${def.name}` : def.name; }
+export function augmentDesc(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return ''; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} 머릿수 +${def.tier === 3 ? 2 : 1}(보드에 ${tn}가 하나라도 있을 때)` : def.desc; }
+
+/** 주간 규칙: 한국 시간 주(ISO)마다 하나. 판을 시작할 때 그 주 규칙이 판에 붙어 끝까지 유지됩니다. */
+export type WeeklyRule = { id: string; name: string; desc: string; mods: RunMods };
+export const WEEKLY_RULES: WeeklyRule[] = [
+    { id: 'golden', name: '황금 주간', desc: '라운드마다 골드 +1', mods: { goldPlus: 1 } },
+    { id: 'emblems', name: '문장 주간', desc: '매 라운드 상자에 문장', mods: { emblemEvery: true } },
+    { id: 'blitz', name: '속전속결', desc: '전투 최대 25턴(남은 체력 비율 판정이 잦음) · 모든 유닛 속도 +1', mods: { maxTurns: 25, speed: 1 } },
+    { id: 'giants', name: '거인의 주', desc: '★2 이상 유닛 능력치 +8%', mods: { starPower: 1.08 } },
+    { id: 'bossRush', name: '보스 러시', desc: '막 보스 보상 2배', mods: { actMult: 2 } },
+    { id: 'haunted', name: '고스트 주간', desc: '고스트 상대 확률 90%', mods: { ghostChance: .9 } },
+    { id: 'thrift', name: '절약 주간', desc: '새로 고침 1골드', mods: { rerollCost: 1 } },
+    { id: 'bazaar', name: '큰 장', desc: '벤치 +1 · 상자 선택지 +1', mods: { benchPlus: 1, boxPlus: 1 } },
+];
+export function weeklyRule(weekKey: string): WeeklyRule { let h = 0; for (const ch of weekKey) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return WEEKLY_RULES[h % WEEKLY_RULES.length]; }
+export const weeklyRuleById = (id?: string) => WEEKLY_RULES.find(r => r.id === id);
+
+/** 원정 숙련(계정 성장): 판이 끝날 때 승리 × 10 + 막 보스 × 20 + 완주 50 경험치. 레벨 n → n+1에 100 + 50 × (n − 1). 최대 50. */
+export const MASTERY_MAX = 50;
+export const masteryXpFor = (level: number) => 100 + 50 * (level - 1);
+export const masteryRunXp = (wins: number, acts: number, cleared: boolean) => wins * 10 + acts * 20 + (cleared ? 50 : 0);
+export type MasteryPerk = { level: number; id: string; name: string; desc: string; mods?: RunMods; startGold?: number; title?: string };
+export const MASTERY_PERKS: MasteryPerk[] = [
+    { level: 2, id: 'm2', name: '견습 원정가', desc: '칭호 🧭 원정 견습', title: 'expMastery:2' },
+    { level: 5, id: 'm5', name: '노잣돈', desc: '시작 골드 +2', startGold: 2 },
+    { level: 10, id: 'm10', name: '넉넉한 벤치', desc: '벤치 +1', mods: { benchPlus: 1 } },
+    { level: 15, id: 'm15', name: '눈썰미', desc: '상자 선택지 +1', mods: { boxPlus: 1 } },
+    { level: 20, id: 'm20', name: '베테랑', desc: '칭호 🏕 원정 베테랑', title: 'expMastery:20' },
+    { level: 25, id: 'm25', name: '넓은 시야', desc: '증강 선택지 4개', mods: { augmentPlus: 1 } },
+    { level: 30, id: 'm30', name: '단련된 보병', desc: '앞줄 체력 +5%', mods: { frontHp: 1.05 } },
+    { level: 35, id: 'm35', name: '노련한 지휘', desc: '시작 골드 +2 더', startGold: 2 },
+    { level: 40, id: 'm40', name: '원정대장', desc: '칭호 🚩 원정대장', title: 'expMastery:40' },
+    { level: 50, id: 'm50', name: '전설', desc: '칭호 🌟 원정 전설 · 마나 획득 +10%', mods: { manaGain: 1.1 }, title: 'expMastery:50' },
+];
+export const masteryPerks = (level: number) => MASTERY_PERKS.filter(p => p.level <= level);
+/** 여러 보정을 하나로: 배율은 곱, 가산은 합, 비용 · 확률 · 턴은 작은 쪽/마지막 값. */
+export function mergeMods(list: (RunMods | undefined)[]): RunMods {
+    const out: RunMods = {};
+    for (const m of list) {
+        if (!m) continue;
+        for (const [k, v] of Object.entries(m.traitPlus || {})) (out.traitPlus ??= {})[k] = (out.traitPlus[k] || 0) + v;
+        for (const k of ['frontHp', 'backPower', 'manaGain', 'starPower', 'actMult'] as const) if (m[k]) out[k] = (out[k] || 1) * m[k]!;
+        for (const k of ['speed', 'reflect', 'bossGuard', 'goldPlus', 'interestPlus', 'xpPlus', 'benchPlus', 'boxPlus', 'augmentPlus'] as const) if (m[k]) out[k] = (out[k] || 0) + m[k]!;
+        if (m.rerollCost !== undefined) out.rerollCost = Math.min(out.rerollCost ?? Infinity, m.rerollCost);
+        if (m.emblemEvery) out.emblemEvery = true;
+        if (m.ghostChance !== undefined) out.ghostChance = Math.max(out.ghostChance ?? 0, m.ghostChance);
+        if (m.maxTurns !== undefined) out.maxTurns = Math.min(out.maxTurns ?? Infinity, m.maxTurns);
+    }
+    if (out.bossGuard) out.bossGuard = Math.min(.6, out.bossGuard);
+    return out;
+}
