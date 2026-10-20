@@ -38,8 +38,8 @@ export const EXPEDITION = {
     ghostChance: .6,
     /** 4단계 시즌 점수: 최고 판 승수 × 100 + 완주 50 + 라운드 + 이긴 고스트의 승수 × ghostPointPerWin(이번 달 누적). */
     ghostPointPerWin: 10,
-    /** 보상: 승리마다 정수 essencePerWin × 10^(환생 ÷ 120), 8라운드를 모두 마치면 ×clearBonus. 하루 1판. */
-    essencePerWin: 14, clearBonus: 1.5,
+    /** 5단계(운영 결정): 하루 횟수 제한 없음. 보상은 세계석 — 승리마다 pearlsPerWin, 8라운드를 모두 마치면 +clearPearls(한 판 최대 12). 사냥 세계석 수입(시간당 30~100)과 능동 플레이 기준으로 비슷하게 둔 값. */
+    pearlsPerWin: 1, clearPearls: 4,
 };
 /** 유닛 판매가: ★1 비용, ★2 비용 × 3, ★3 비용 × 9(산 값 그대로 돌려줌). */
 export const sellPrice = (cost: number, star: number) => cost * (star === 3 ? 9 : star === 2 ? 3 : 1);

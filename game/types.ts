@@ -605,7 +605,7 @@ export type State = {
     shopSerial: number;
     /** v22 장비 분해로 얻는 정수. 옵션 재설정에 쓰며 환생해도 유지됩니다. */
     essence?: number;
-    /** 원정대(오토배틀러) 진행 중인 판 · 오늘 마친 날(KST, 하루 1판) · 최고 승수. */
+    /** 원정대(오토배틀러) 진행 중인 판 · (v3.341 전) 오늘 마친 날 — 횟수 제한을 없애 더는 쓰지 않음 · 최고 승수. */
     expedition?: ExpeditionRun;
     expeditionDay?: string;
     expeditionBest?: number;
