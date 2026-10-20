@@ -18,7 +18,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const r = s.expedition, now = useNow(60_000), today = s.expeditionDay === dayKey(now);
     const [showLog, setShowLog] = useState(false);
     const perWin = expeditionRewardPerWin(s.rebirths || 0);
-    const intro = <Heading eyebrow="EXPEDITION" title="원정대" description={`하루 한 판, 8라운드. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브와 싸웁니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 정수 ${format(perWin)}, 완주하면 ×${EXPEDITION.clearBonus}.`}/>;
+    const intro = <Heading eyebrow="EXPEDITION" title="원정대" description={`하루 한 판, 8라운드. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 정수 ${format(perWin)}, 완주하면 ×${EXPEDITION.clearBonus}.`}/>;
     if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
         {today ? <p className="notice">오늘 원정은 마쳤습니다. 자정(KST)에 다시 열립니다.{s.expeditionBest ? ` 최고 ${s.expeditionBest}승.` : ''}</p> : <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart' })}>원정 출발</button>}
         <p className="footnote">유닛 {UNITS.length}종 · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
@@ -46,7 +46,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
                 <button className="primary" disabled={busy || !r.board.length} onClick={() => send({ type: 'expeditionFight' })}>{r.round}라운드 전투</button>
                 <ConfirmButton label="포기" title="원정을 포기할까요?" description={`지금까지 ${r.wins}승 보상(정수 ${format(r.wins * perWin)})만 받고 오늘 원정을 마칩니다.`} disabled={busy} onConfirm={() => send({ type: 'expeditionQuit' })}/>
             </div>
-            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b> · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i}>{l}</li>)}</ul>}</div>}
+            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i}>{l}</li>)}</ul>}</div>}
         </section>
         <section className="panel exp-bench-panel" aria-label="벤치">
             <div className="section-title"><h2>벤치</h2><span>{r.bench.length} / {EXPEDITION.bench}</span></div>

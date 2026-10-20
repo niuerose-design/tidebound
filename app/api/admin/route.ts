@@ -1,5 +1,5 @@
 import { checkOrigin, failure, readJson } from '@/game/server/store';
-import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, resetAltar, setAltarBlessingLevel, adminIncome } from '@/game/server/admin';
+import { requireAdmin, searchPlayers, previewRestart, applyRestart, adjustCurrency, listEvents, saveEvent, deleteEvent, toggleCodeEvent, listClosures, setClosed, adminStats, adminExpedition, resetAltar, setAltarBlessingLevel, adminIncome } from '@/game/server/admin';
 import { readHacks, clearBroadcast, clearHackEffects } from '@/game/server/hacks';
 import { postNewsSample, recentNews, clearChatScope } from '@/game/server/news';
 import { secrecyOn, setSecrecy } from '@/game/server/secrecy';
@@ -21,6 +21,8 @@ export async function POST(req: Request) { try {
     // v3.58 사냥 골드 수입 통계(시간당) · query로 특정 모험가의 시간별 기록.
     if (body.action === 'income') return Response.json(await adminIncome(String(body.query ?? '')), { headers });
     if (body.action === 'stats') return Response.json(await adminStats(), { headers });
+    // 원정대 3단계 지표: 판 수 · 완주 · 라운드별 승률 · 많이 쓴 유닛 · 고스트 전적.
+    if (body.action === 'expedition') return Response.json(await adminExpedition(), { headers });
     // v27.69 제단 초기화 { kind: 'offers' | 'god' } → 새 통계
     if (body.action === 'altarReset') return Response.json(await resetAltar(String(body.kind ?? '')), { headers });
     // v3.18 해커의 방송 탈취 보기·지우기.

@@ -9,6 +9,7 @@ import type { Stats, CombatEvent } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
 import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, type UnitDef, type TraitDef, type Role } from '../data/expedition';
+import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back' };
 export type ActiveTrait = { trait: TraitDef; count: number; tier: number };
@@ -53,7 +54,6 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
             if (t.damageTaken) damageTaken = Math.max(damageTaken, t.damageTaken);
         }
         if (flags.has('backline15') && placed.row === 'back') damageTaken = Math.max(damageTaken, .15);
-        if (flags.has('haste')) stats.speed = (stats.speed || 10) + 3;
         stats.hp = Math.round(stats.hp * mult.hp); stats.attack = Math.round(stats.attack * mult.attack); stats.magic = Math.round(stats.magic * mult.magic);
         const combat = normalizeStats(stats as Stats);
         const charge = flags.has('startMana100') ? EXPEDITION.manaCast : flags.has('startMana50') ? EXPEDITION.manaCast / 2 : 0;
@@ -73,6 +73,11 @@ function pickTarget(enemies: UnitFighter[], rng: () => number) {
 export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns): BattleResult {
     const A = buildSide(boardA, 'a'), B = buildSide(boardB, 'b');
     const log: string[] = [], events: CombatEvent[] = [];
+    // 전투 시작 효과: 바다 · 용 4 가속 3턴(엔진 buffs.haste), 보스 4 포효(적 전체 약화 2턴).
+    for (const [mine, theirs] of [[A, B], [B, A]] as const) {
+        if (mine.flags.has('haste')) for (const u of mine.units) (u.effects ??= {}).buffs = { ...(u.effects.buffs || {}), haste: { turns: 3, name: '가속', speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier } };
+        if (mine.flags.has('roar')) { for (const u of theirs.units) (u.effects ??= {}).weaken = Math.max(u.effects.weaken || 0, 2); log.push(`전투 시작 · ${mine.units.find(u => u.def.special?.includes('boss'))?.name || '보스'} 포효 · 적 전체 약화 2턴`); }
+    }
     const alive = (side: UnitFighter[]) => side.some(u => u.hp > 0);
     let turns = 0;
     while (alive(A.units) && alive(B.units) && turns < maxTurns) {
@@ -94,12 +99,14 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 target.charge = Math.min(EXPEDITION.manaCast, target.charge + EXPEDITION.manaPerHit * target.manaGain);
                 // 황야 4: 받은 피해의 15%를 공격자에게 되돌립니다.
                 const theirs = target.side === 'a' ? A : B;
-                if (theirs.flags.has('reflect') && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * .15); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
+                if (theirs.flags.has('reflect') && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * .25); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
             }
             if (u.hp < selfBefore) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerHit * u.manaGain);
             // 지하: 처치마다 아군 전체 주는 피해 +5%(전투 안 누적).
             if (before > 0 && target.hp <= 0) {
                 if (mine.flags.has('killStack')) for (const al of allies) al.damageDealt = (al.damageDealt || 0) + .05;
+                // 역병 4: 쓰러진 적의 중독 · 화상이 살아 있는 적 하나에게 옮겨 붙습니다(중첩 · 남은 턴 그대로).
+                if (mine.flags.has('spread')) { const fx = target.effects || {}, next = pickTarget(foes, rng); if (next && (fx.poison || fx.burn)) { next.effects ??= {}; if (fx.poison && !next.effects.poison) next.effects.poison = { ...fx.poison }; if (fx.burn && !next.effects.burn) next.effects.burn = { ...fx.burn }; log.push(`${turns}턴 · ${target.name}의 역병이 ${next.name}에게 전파`); } }
                 // 망령 4: 쓰러진 망령이 전투당 1회 체력 30%로 부활.
                 const theirs = target.side === 'a' ? A : B;
                 if (theirs.flags.has('revive') && target.def.roles.includes('wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); }
@@ -123,7 +130,7 @@ export function rollShop(level: number, rng: () => number, size = EXPEDITION.sho
     return out;
 }
 /** 라운드별 PvE 웨이브: 비용 예산 안에서 같은 풀의 유닛을 고르고, 뒤 라운드일수록 ★이 오릅니다. 수호 · 돌격은 앞줄, 나머지는 뒷줄. */
-export const WAVE_BUDGET = [0, 2, 5, 9, 13, 17, 22, 27, 33];
+export const WAVE_BUDGET = [0, 2, 5, 8, 12, 16, 21, 27, 33];
 export function rollWave(round: number, rng: () => number): Placed[] {
     let budget = WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)];
     const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 6 ? 3 : round <= 7 ? 4 : 5, slots = Math.min(8, 1 + round);
@@ -131,8 +138,11 @@ export function rollWave(round: number, rng: () => number): Placed[] {
     while (out.length < slots && budget > 0) {
         const pool = UNITS.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
         const def = pool[Math.floor(rng() * pool.length)];
-        const star: 1 | 2 | 3 = round >= 8 && rng() < .2 ? 3 : round >= 6 && rng() < .45 ? 2 : round >= 3 && rng() < .2 ? 2 : 1;
-        budget -= def.cost * (star === 3 ? 4 : star === 2 ? 2 : 1);
+        let star: 1 | 2 | 3 = round >= 8 && rng() < .2 ? 3 : round >= 6 && rng() < .45 ? 2 : round >= 4 && rng() < .25 ? 2 : round >= 3 && rng() < .1 ? 2 : 1;
+        const starCost = (st: number) => def.cost * (st === 3 ? 4 : st === 2 ? 2 : 1);
+        // 예산을 넘기면 ★을 내립니다(★3 = 비용 × 4, ★2 = × 2).
+        while (star > 1 && starCost(star) > budget) star--;
+        budget -= starCost(star);
         out.push({ unit: def.id, star, row: frontRole(def) ? 'front' : 'back' });
     }
     return out;
