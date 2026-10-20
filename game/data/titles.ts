@@ -5,6 +5,7 @@
  */
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
+import { FEATS } from './expedition';
 
 type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
@@ -21,6 +22,7 @@ export const TITLES: TitleDef[] = [
     { id: 'expSeasonTop:3', name: '🥇 시즌 3위 안의 원정대', desc: '월간 원정대 순위 3위 안', group: '모험', achievement: 'expSeasonTop:3' },
     { id: 'expCodex:30', name: '📘 원정 도감 완성', desc: '유닛 30종 모두 승리', group: '모험', achievement: 'expCodex:30' },
     { id: 'expCodexGold:5', name: '🏅 다섯 유닛의 주인', desc: '유닛 5종 도감 금', group: '모험', achievement: 'expCodexGold:5' },
+    ...FEATS.map(f => ({ id: `expFeat:${f.id}`, name: f.title, desc: `원정 ${f.desc}`, group: '모험' as const, achievement: `expFeat:${f.id}` })),
     { id: 'playtime:100', name: '🍁 메이플 월드에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
     { id: 'playtime:500', name: '🌍 세계 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },
     { id: 'turns:1000000', name: '⚔ 끝없는 모험가', desc: '전투 1,000,000턴', group: '도전', achievement: 'turns:1000000' },

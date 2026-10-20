@@ -316,6 +316,7 @@ test('expedition stage 10: 12 rounds in 3 acts, boss waves on 4/8/12 (no ghost, 
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = []; /* 과제 보상 제외 */ r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
     const ghost = JSON.stringify({ 4: { name: 'g', board: [{ unit: 'slime', star: 1, row: 'front' }] } });
     for (let round = 1; round <= 12; round++) { assert.equal(r.round, round); (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghost }, now + round, mkRng(round + 20)); assert.ok(r.last.won, `round ${round} won`); if (round === 4) assert.equal(r.last.opponent, undefined, 'boss round ignores the ghost'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now + round, mkRng(1)); if (round < 12) assert.equal(r.shop.length, 5); }
+    assert.equal(r.abyssChoice, true, 'stage 15: clearing offers the abyss first'); act(s, { type: 'expeditionFinish' }, now + 13, mkRng(1));
     assert.ok(r.done); assert.equal(r.wins, 12); assert.equal(r.acts, 3); assert.equal(r.round, 13); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls); assert.equal(s.pearls, r.reward);
     assert.equal(s.expeditionStats.roundPlays.length, 13); assert.equal(s.expeditionStats.roundWins[12], 1);
     // 패배 체력: 12 + 라운드 × 2 + 남은 적 × 2.
@@ -363,7 +364,7 @@ test('expedition stage 11: augments offered on rounds 2/5/8 (tiered, trait augme
     r.augments.push('bigBox'); r.items = []; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 3, mkRng(7)); assert.ok(r.last.won); assert.equal(r.box.length, 4, 'box +1'); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
     // 보스 사냥꾼: 막 보상 2배. 완주 뒤 숙련 경험치 · 레벨.
     r.augments.push('bossHunter'); r.round = 12; r.acts = 2; r.wins = 11; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
-    s.pearls = 0; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 4, mkRng(8)); assert.ok(r.done); assert.ok(r.last.won); assert.equal(r.acts, 3); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls * 2);
+    s.pearls = 0; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 4, mkRng(8)); assert.ok(r.last.won); act(s, { type: 'expeditionFinish' }, now + 4, mkRng(1)); assert.ok(r.done); assert.equal(r.acts, 3); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls * 2);
     assert.equal(s.expeditionMastery.total, D.masteryRunXp(12, 3, true)); assert.equal(D.masteryRunXp(12, 3, true), 230); assert.equal(s.expeditionMastery.level, 2, '230 xp: level 1 → 2 (100) with 130 left, level 3 needs 150'); assert.equal(s.expeditionMastery.xp, 130);
     // 숙련 특전: 레벨 5면 시작 골드 +2, 레벨 25면 증강 4개. 업적 · 칭호.
     s.expeditionMastery.level = 5; act(s, { type: 'expeditionStart' }, now + 5, mkRng(1)); assert.equal(s.expedition.gold, D.EXPEDITION.baseGold + 2); assert.equal(s.expedition.mastery, 5);
@@ -442,4 +443,41 @@ test('expedition stage 13: daily/weekly quests are picked per key, progress from
     act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); act(s, { type: 'expeditionStart', value: JSON.stringify({ season: '2026-08', rank: 1, total: 9, wins: 6 }) }, now + 2, mkRng(1)); assert.equal(s.expeditionSeasonBest, 1);
     assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expSeasonTop:1').progress(s), 1); assert.ok(TT.TITLES.find(t => t.id === 'expSeasonTop:1')); assert.ok(TT.TITLES.find(t => t.id === 'expCodex:30'));
     assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expCodex:30').progress(s), Object.values(s.expeditionStats.unitWins).filter(n => n > 0).length);
+});
+
+test('expedition stage 15: clearing round 12 offers the abyss (continue or finish), abyss waves grow and carry bosses, abyss wins count and pay bonuses, feats and recent runs are recorded, season score adds abyss', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition'), E = await L.load('server/expedition'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    assert.equal(D.isBossRound(16), true); assert.equal(D.isAbyssRound(13), true); assert.equal(D.isAbyssRound(12), false);
+    const w13 = X.rollWave(13, mkRng(13)), w16 = X.rollWave(16, mkRng(16)), w24 = X.rollWave(24, mkRng(24));
+    const spent = w => w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
+    assert.ok(spent(w13) <= Math.round(X.WAVE_BUDGET[12] * 1.1)); assert.equal(w16[0].unit, X.abyssBoss(16)); assert.equal(w16[0].star, 2); assert.equal(w24[0].star, 3); assert.equal(X.abyssBoss(16), 'zakum'); assert.equal(X.abyssBoss(20), 'blackMage'); assert.equal(X.abyssBoss(24), 'lucid'); assert.equal(X.abyssBoss(28), 'zakum');
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.pearls = 0;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    const strong = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    r.board = strong.map(p => ({ ...p })); r.round = 12; r.wins = 11; r.acts = 2;
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.equal(r.done, undefined, 'not finished yet'); assert.equal(r.abyssChoice, true); assert.equal(r.cleared, true); assert.equal(r.round, 13); assert.equal(s.pearls, 0, 'no reward before choosing');
+    assert.throws(() => act(s, { type: 'expeditionFight' }, now, mkRng(3)), /심연/);
+    // 계속: 수입 · 상점, 고스트 무시, 승리마다 abyss++.
+    const gold = r.gold; act(s, { type: 'expeditionAbyss' }, now, mkRng(4)); assert.equal(r.abyssChoice, undefined); assert.ok(r.gold > gold); assert.equal(r.shop.length, 5);
+    if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    const ghost = JSON.stringify({ 13: { name: 'g', board: [{ unit: 'slime', star: 1, row: 'front' }] } });
+    (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghost }, now + 1, mkRng(5)); assert.ok(r.last.won); assert.equal(r.last.opponent, undefined, 'no ghosts in the abyss'); assert.equal(r.abyss, 1); assert.equal(r.wins, 13); assert.equal(r.round, 14); assert.ok(r.augmentOffer?.every(id => D.augmentById(id).tier === 3), 'abyss augment at round 14 is tier 3');
+    // 마치기: 완주 보상 + 심연 보너스(5라운드마다 5) · 최근 판 · 심연 최고.
+    r.abyss = 7; r.wins = 19; act(s, { type: 'expeditionQuit' }, now + 2, mkRng(1)); assert.ok(r.done); assert.equal(r.acts, 3, 'round-12 boss counted'); assert.equal(r.reward, 19 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls + 5); assert.equal(s.expeditionAbyssBest, 7);
+    assert.equal(s.expeditionRecent.length, 1); assert.equal(s.expeditionRecent[0].cleared, true); assert.equal(s.expeditionRecent[0].abyss, 7); assert.equal(s.expeditionRecent[0].wins, 19);
+    // 바로 마치기 경로 · 도전 기록(맨손 · 무패는 history[12] 보드와 losses로).
+    act(s, { type: 'expeditionStart' }, now + 3, mkRng(1)); const q = s.expedition; delete q.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    q.board = strong.map(p => ({ ...p })); q.round = 12; q.wins = 11; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 3, mkRng(2)); assert.equal(q.abyssChoice, true);
+    const before = s.pearls; act(s, { type: 'expeditionFinish' }, now + 4, mkRng(1)); assert.ok(q.done); assert.equal(q.abyss, undefined); assert.equal(s.pearls, before + q.reward);
+    assert.equal(s.expeditionFeats.flawless, 2, 'both cleared runs were flawless'); assert.equal(s.expeditionFeats.noItem, 2); assert.equal(s.expeditionFeats.oneOrigin, undefined, 'zakum underground + others: not one origin'); assert.equal(s.expeditionFeats.cheap, undefined);
+    assert.equal(s.expeditionRecent.length, 2); assert.equal(s.expeditionRecent[0].abyss, 0); assert.equal(s.expeditionRecent[1].abyss, 7, 'newest first');
+    assert.deepEqual(A.featsOf({ cleared: true, wins: 12, losses: 0, history: { 12: [{ unit: 'slime', star: 3, row: 'front' }, { unit: 'pig', star: 3, row: 'front' }] }, abyss: 20 }).sort(), ['abyss10', 'abyss20', 'cheap', 'flawless', 'noItem', 'oneOrigin']);
+    assert.deepEqual(A.featsOf({ cleared: false, wins: 5, history: {} }), []);
+    assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expFeat:flawless').progress(s) >= 1); assert.ok(TT.TITLES.find(t => t.id === 'expFeat:abyss20'));
+    // 탈락으로 12라운드를 넘기면 심연 선택 없이 종료. 심연 패배로 체력이 0이면 완주 보상 유지.
+    act(s, { type: 'expeditionStart' }, now + 5, mkRng(1)); const t = s.expedition; delete t.rule; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 12; t.hp = 100; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 5, mkRng(6)); assert.ok(!t.last.won); assert.ok(t.done); assert.equal(t.cleared, true, 'reaching the end of round 12 with hp left still counts as cleared'); assert.equal(t.abyssChoice, undefined);
+    // 시즌 점수에 심연 라운드 × 20.
+    assert.equal(E.expeditionScore({ wins: 15, cleared: true, round: 12, abyss: 3, ghostByRun: {} }), 1500 + 50 + 12 + 60);
+    assert.ok(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front' }], wins: 25 } }), 2).wins === 25, 'ghost wins above 12 are allowed now');
 });

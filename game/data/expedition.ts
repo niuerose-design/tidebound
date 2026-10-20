@@ -46,7 +46,20 @@ export const EXPEDITION = {
 };
 /** 10단계: 라운드의 막(1~3)과 막 보스 라운드 여부. */
 export const actOf = (round: number) => Math.min(3, Math.ceil(round / EXPEDITION.actLength));
-export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0 && round <= EXPEDITION.rounds;
+export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0;
+/** 15단계 심연: 12라운드를 완주한 뒤 ‘계속 가기’를 고르면 13라운드부터. 라운드마다 웨이브 예산 ×1.1, 4라운드마다 보스(★2, 24라운드부터 ★3), 고스트 없음, 최대 abyssMax라운드. 심연 5라운드마다 세계석 +abyssBonus. */
+export const ABYSS = { max: 20, budgetGrowth: 1.1, bonusEvery: 5, bonus: 5, scorePerRound: 20 };
+export const isAbyssRound = (round: number) => round > EXPEDITION.rounds;
+/** 15단계 도전 기록(완주 조건 칭호): 판이 끝날 때 판정해 expeditionFeats에 횟수를 쌓습니다. */
+export const FEATS: { id: string; name: string; desc: string; title: string }[] = [
+    { id: 'flawless', name: '무패 완주', desc: '한 번도 지지 않고 12라운드 완주', title: '🛡 무패의 원정대장' },
+    { id: 'noItem', name: '맨손 완주', desc: '12라운드 보드에 아이템 없이 완주', title: '✋ 맨손의 원정대장' },
+    { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드 보드가 모두 한 지역(문장 제외)', title: '🏳 한 깃발의 원정대' },
+    { id: 'cheap', name: '서민 완주', desc: '12라운드 보드가 모두 비용 1~2 유닛', title: '🪙 동전의 원정대' },
+    { id: 'abyss10', name: '심연 10', desc: '심연 10라운드 이상 생존', title: '🌑 심연을 걷는 자' },
+    { id: 'abyss20', name: '심연 끝', desc: '심연 20라운드(끝)까지 생존', title: '🕳 심연의 주인' },
+];
+export const featById = (id: string) => FEATS.find(f => f.id === id);
 /** 유닛 판매가: ★1 비용, ★2 비용 × 3, ★3 비용 × 9(산 값 그대로 돌려줌). */
 export const sellPrice = (cost: number, star: number) => cost * (star === 3 ? 9 : star === 2 ? 3 : 1);
 /** 비용별 기본 능력치(★1): 체력 · 공격. 수호는 체력 ×1.4 · 공격 ×0.7, 마력은 공격을 마법 공격으로, 제어 · 역병 · 망령은 공격 ×0.85. */
