@@ -8,7 +8,7 @@
 import type { Stats, CombatEvent, ReplayFrame } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, ABYSS, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, ABYSS, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, difficultyOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
@@ -200,21 +200,21 @@ export const ACT_BOSSES = ['', 'mushmom', 'zakum', 'blackMage'];
 /** 심연 보스: 16 · 20 · 24… 라운드에 자쿰 → 검은 마법사 → 루시드 순으로 돌아갑니다. */
 export const ABYSS_BOSSES = ['zakum', 'blackMage', 'lucid'];
 export const abyssBoss = (round: number) => ABYSS_BOSSES[Math.max(0, round / EXPEDITION.actLength - 4) % ABYSS_BOSSES.length];
-export function rollWave(round: number, rng: () => number): Placed[] {
-    // 15단계 심연(13라운드~): 12라운드 예산 × 1.1^(n − 12), 보스는 4라운드마다 돌아가며 ★2(24라운드부터 ★3).
-    const abyss = isAbyssRound(round), depth = abyss ? round - EXPEDITION.rounds : 0;
-    let budget = abyss ? Math.round(WAVE_BUDGET[EXPEDITION.rounds] * Math.pow(ABYSS.budgetGrowth, depth)) : WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)];
+export function rollWave(round: number, rng: () => number, difficulty = 1): Placed[] {
+    // 15단계 심연(13라운드~): 12라운드 예산 × 1.1^(n − 12), 보스는 4라운드마다 돌아가며 ★2(24라운드부터 ★3). 16단계 난이도: 예산 배율 · ★ 확률 가산 · 막 보스 ★.
+    const diff = difficultyOf(difficulty), abyss = isAbyssRound(round), depth = abyss ? round - EXPEDITION.rounds : 0;
+    let budget = Math.round((abyss ? WAVE_BUDGET[EXPEDITION.rounds] * Math.pow(ABYSS.budgetGrowth, depth) : WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)]) * diff.budget);
     const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 7 ? 3 : round <= 9 ? 4 : 5, slots = Math.min(8, 1 + round);
     const out: Placed[] = [];
     if (isBossRound(round)) {
-        const boss = unitById(abyss ? abyssBoss(round) : ACT_BOSSES[actOf(round)])!, star = (abyss ? (depth >= 12 ? 3 : 2) : 1) as 1 | 2 | 3;
+        const boss = unitById(abyss ? abyssBoss(round) : ACT_BOSSES[actOf(round)])!, star = (abyss ? (depth >= 12 ? 3 : 2) : diff.bossStar) as 1 | 2 | 3;
         out.push({ unit: boss.id, star, row: frontRole(boss) ? 'front' : 'back' });
         budget = Math.max(0, budget - boss.cost * (star === 3 ? 4 : star === 2 ? 2 : 1));
     }
     while (out.length < slots && budget > 0) {
         const pool = UNITS.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
         const def = pool[Math.floor(rng() * pool.length)];
-        let star: 1 | 2 | 3 = round >= 10 && rng() < Math.min(.6, .15 + .03 * depth) ? 3 : round >= 7 && rng() < .45 ? 2 : round >= 4 && rng() < .25 ? 2 : round >= 3 && rng() < .1 ? 2 : 1;
+        const sp = diff.starPlus; let star: 1 | 2 | 3 = round >= 10 && rng() < Math.min(.6, .15 + .03 * depth + sp) ? 3 : round >= 7 && rng() < .45 + sp ? 2 : round >= 4 && rng() < .25 + sp ? 2 : round >= 3 && rng() < .1 + sp ? 2 : 1;
         const starCost = (st: number) => def.cost * (st === 3 ? 4 : st === 2 ? 2 : 1);
         // 예산을 넘기면 ★을 내립니다(★3 = 비용 × 4, ★2 = × 2).
         while (star > 1 && starCost(star) > budget) star--;

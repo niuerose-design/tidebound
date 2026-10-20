@@ -481,3 +481,30 @@ test('expedition stage 15: clearing round 12 offers the abyss (continue or finis
     assert.equal(E.expeditionScore({ wins: 15, cleared: true, round: 12, abyss: 3, ghostByRun: {} }), 1500 + 50 + 12 + 60);
     assert.ok(A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front' }], wins: 25 } }), 2).wins === 25, 'ghost wins above 12 are allowed now');
 });
+
+test('expedition stage 16: difficulty tiers scale waves and bosses, unlock by clearing the tier below, multiply rewards and mastery, record per-tier bests, add season score and titles', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), E = await L.load('server/expedition'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    assert.equal(D.DIFFICULTIES.length, 5); assert.equal(D.difficultyOf(undefined).level, 1); assert.equal(D.difficultyOf(9).level, 1);
+    assert.equal(D.difficultyUnlocked(undefined), 1); assert.equal(D.difficultyUnlocked({ 1: 2 }), 2); assert.equal(D.difficultyUnlocked({ 1: 1, 2: 1, 3: 1 }), 4); assert.equal(D.difficultyUnlocked({ 1: 1, 5: 1 }), 5);
+    const spent = w => w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
+    for (const round of [6, 10, 12]) { const base = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k))))), hard = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k), 5)))); assert.ok(hard > base, `round ${round}: legend waves spend more (${hard} > ${base})`); assert.ok(spent(X.rollWave(round, mkRng(1), 5)) <= Math.round(X.WAVE_BUDGET[round] * 1.6)); }
+    assert.equal(X.rollWave(8, mkRng(8), 4)[0].star, 2, 'nightmare act boss is ★2'); assert.equal(X.rollWave(8, mkRng(8), 3)[0].star, 1);
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.pearls = 0;
+    assert.throws(() => act(s, { type: 'expeditionStart', id: '2' }, now, mkRng(1)), /열립니다/, 'tier 2 locked until tier 1 is cleared');
+    act(s, { type: 'expeditionStart', id: '1' }, now, mkRng(1)); let r = s.expedition; assert.equal(r.difficulty, undefined, 'tier 1 stored as default'); delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    const strong = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    r.board = strong.map(p => ({ ...p })); r.round = 12; r.wins = 11; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); act(s, { type: 'expeditionFinish' }, now, mkRng(1));
+    assert.equal(s.expeditionDiffClears[1], 1); assert.equal(s.expeditionDiffBest[1].wins, 12); assert.equal(D.difficultyUnlocked(s.expeditionDiffClears), 2);
+    assert.throws(() => act(s, { type: 'expeditionStart', id: '3' }, now + 1, mkRng(1)), /열립니다/);
+    act(s, { type: 'expeditionStart', id: '2' }, now + 1, mkRng(1)); r = s.expedition; assert.equal(r.difficulty, 2); delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = strong.map(p => ({ ...p })); r.round = 12; r.wins = 11; r.acts = 2; s.pearls = 0; const mx = s.expeditionMastery.total;
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 1, mkRng(2)); assert.ok(r.last.won); act(s, { type: 'expeditionFinish' }, now + 1, mkRng(1));
+    assert.equal(r.reward, Math.round((12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls) * 1.25), 'reward ×1.25 on tier 2'); assert.equal(s.pearls, r.reward);
+    assert.equal(s.expeditionMastery.total - mx, Math.round(D.masteryRunXp(12, 3, true) * 1.25), 'mastery ×1.25');
+    assert.equal(s.expeditionRecent[0].difficulty, 2); assert.equal(s.expeditionDiffClears[2], 1); assert.equal(D.difficultyUnlocked(s.expeditionDiffClears), 3);
+    // 시즌 점수 · 최고 판 비교는 점수로(난이도 가산 포함).
+    assert.equal(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }), 1000 + 50 + 12 + 240); assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 1 }), 'legend 10 wins beats normal 12 wins');
+    assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:5')); assert.ok(TT.TITLES.find(t => t.id === 'expDiff:4'));
+    assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:3').progress(s), 0);
+});

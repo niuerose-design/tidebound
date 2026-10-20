@@ -4,7 +4,7 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS } from '../../data/expedition';
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked } from '../../data/expedition';
 import { weekKey, dayKey } from '../../data/time';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
@@ -101,7 +101,7 @@ function addMasteryXp(s: State, xp: number) {
 }
 /** 11단계 숙련: 판이 끝날 때 경험치를 주고 레벨을 올립니다. 올라간 레벨의 특전을 로그로 알립니다. */
 function gainMastery(s: State, r: ExpeditionRun, cleared: boolean) {
-    const xp = masteryRunXp(r.wins, r.acts || 0, cleared); addMasteryXp(s, xp); return xp;
+    const xp = Math.round(masteryRunXp(r.wins, r.acts || 0, cleared) * difficultyOf(r.difficulty).reward); addMasteryXp(s, xp); return xp;
 }
 const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(EXPEDITION.rounds + 1).fill(0), roundWins: Array(EXPEDITION.rounds + 1).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
 /** 3단계: 서버가 a.value에 실어 보낸 라운드별 고스트(다른 플레이어 보드)에서 이 라운드 것을 읽습니다. 모양이 맞지 않으면 무시. */
@@ -135,8 +135,11 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     if (cleared) { st.clears++; r.cleared = true; }
     const actMult = runMods(r).actMult || 1, actPearls = Math.round(EXPEDITION.actPearls * actMult);
     const abyss = r.abyss || 0, abyssBonus = Math.floor(abyss / ABYSS.bonusEvery) * ABYSS.bonus;
-    const reward = expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus;
+    const diff = difficultyOf(r.difficulty);
+    const reward = Math.round((expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus) * diff.reward);
     r.reward = reward; s.pearls = (s.pearls || 0) + reward;
+    if (cleared) (s.expeditionDiffClears ??= {})[diff.level] = (s.expeditionDiffClears[diff.level] || 0) + 1;
+    { const best = (s.expeditionDiffBest ??= {})[diff.level] || { wins: 0, abyss: 0 }; best.wins = Math.max(best.wins, r.wins); best.abyss = Math.max(best.abyss, abyss); s.expeditionDiffBest[diff.level] = best; }
     delete s.expeditionDay; s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
     if (abyss) s.expeditionAbyssBest = Math.max(s.expeditionAbyssBest || 0, abyss);
     const mxp = gainMastery(s, r, !!cleared);
@@ -144,8 +147,8 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     // 15단계: 도전 기록 · 최근 판 요약.
     const feats = featsOf(r); for (const id of feats) (s.expeditionFeats ??= {})[id] = (s.expeditionFeats[id] || 0) + 1;
     const reached = Math.min(r.round, EXPEDITION.rounds + abyss + (r.last?.won === false && isAbyssRound(r.round) ? 1 : 0));
-    (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why }); s.expeditionRecent.splice(8);
-    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''}${abyss ? ` (심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${abyssBonus}` : ''})` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
+    (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why, ...(diff.level > 1 ? { difficulty: diff.level } : {}) }); s.expeditionRecent.splice(8);
+    addLog(s, `원정대 ${why}${diff.level > 1 ? ` · ${diff.icon} ${diff.name}(보상 ×${diff.reward})` : ''} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''}${abyss ? ` (심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${abyssBonus}` : ''})` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
 }
 
 export const expeditionActions: ActionHandlers = {
@@ -159,11 +162,14 @@ export const expeditionActions: ActionHandlers = {
             s.expeditionSeasonClaimed = settle.season; s.expeditionSeasonLast = settle; s.pearls = (s.pearls || 0) + settle.pearls;
             addLog(s, `원정대 ${settle.season} 시즌 정산 · ${settle.rank ? `${settle.rank}위` : '순위 밖'}(${settle.total}명 중) · 최고 ${settle.wins}승 · 세계석 +${settle.pearls}`, 'reward');
         }
+        // 16단계: 난이도는 a.id(‘1’~‘5’). 열리지 않은 단계는 거부.
+        const difficulty = Math.max(1, Math.min(DIFFICULTIES.length, Math.floor(Number(a.id) || 1)));
+        if (difficulty > difficultyUnlocked(s.expeditionDiffClears)) throw Error(`난이도 ${difficultyOf(difficulty).name}은(는) 아래 단계를 완주해야 열립니다.`);
         const mastery = s.expeditionMastery?.level || 1, rule = weeklyRule(weekKey(now));
-        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1), augments: [], rule: rule.id, mastery };
+        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1), augments: [], rule: rule.id, mastery, ...(difficulty > 1 ? { difficulty } : {}) };
         r.gold = income(r) + masteryPerks(mastery).reduce((n, p) => n + (p.startGold || 0), 0); r.shop = rollShop(r.level, rng);
         s.expedition = r;
-        addLog(s, `원정대 출발 · 1라운드 · 이번 주 규칙: ${rule.name}(${rule.desc})`, 'system');
+        addLog(s, `원정대 출발 · 1라운드${difficulty > 1 ? ` · 난이도 ${difficultyOf(difficulty).icon} ${difficultyOf(difficulty).name}` : ''} · 이번 주 규칙: ${rule.name}(${rule.desc})`, 'system');
     },
     expeditionBuy(s, { a, now }) {
         const r = run(s), i = Number(a.value), id = r.shop[i];
@@ -215,7 +221,7 @@ export const expeditionActions: ActionHandlers = {
         const mods = runMods(r);
         // 10단계: 막 보스 라운드(4 · 8 · 12)는 고스트 없이 보스 웨이브.
         const boss = isBossRound(r.round), abyss = isAbyssRound(r.round), ghost = r.round >= 2 && !boss && !abyss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
-        const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss);
+        const wave = useGhost ? ghost!.board : rollWave(r.round, rng, r.difficulty || 1), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));

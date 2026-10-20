@@ -621,7 +621,10 @@ export type State = {
     /** 15단계: 심연 최고 라운드 · 도전 기록 횟수 · 최근 판 요약(최대 8개, 최신이 앞). */
     expeditionAbyssBest?: number;
     expeditionFeats?: Record<string, number>;
-    expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string }[];
+    expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number }[];
+    /** 16단계: 난이도별 완주 횟수 · 난이도별 최고 기록(승 · 심연). */
+    expeditionDiffClears?: Record<number, number>;
+    expeditionDiffBest?: Record<number, { wins: number; abyss: number }>;
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
@@ -1043,6 +1046,8 @@ export type ExpeditionRun = {
     box?: string[];
     /** 10단계: 이긴 막 보스 수(막 보상 세계석 × actPearls). */
     acts?: number;
+    /** 16단계: 난이도(1~5, 없으면 1). */
+    difficulty?: number;
     /** 15단계: 12라운드 완주 여부 · 완주 직후 심연 선택 대기 · 심연에서 이긴 라운드 수 · 이 판의 패배 수. */
     cleared?: boolean; abyssChoice?: boolean; abyss?: number; losses?: number;
     /** 11단계: 고른 증강(id, 동적은 'traitPlus2:meadow') · 아직 고르지 않은 증강 선택지 · 이 판의 주간 규칙 id · 시작 때 숙련 레벨(특전 고정). */

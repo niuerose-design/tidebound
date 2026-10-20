@@ -2,7 +2,7 @@
 /** 원정대(오토배틀러) 화면: 8라운드 PvE · 고스트, 횟수 제한 없음(5단계). 상점 5장 → 벤치 → 보드(앞줄 · 뒷줄 4칸) → 전투. 드래그 없이 버튼만으로 390px에서도 쓰이게. */
 import { useState } from 'react';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
-import { EXPEDITION, UNITS, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS } from '@/game/data/expedition';
+import { EXPEDITION, UNITS, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked } from '@/game/data/expedition';
 import { weekKey, dayKey } from '@/game/data/time';
 import { activeTraits, traitKeys, ACT_BOSSES, abyssBoss } from '@/game/systems/expedition';
 import { expeditionReward, runMods, benchCap } from '@/game/systems/actions/expedition';
@@ -21,6 +21,14 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const [showLog, setShowLog] = useState(false);
     // 12단계: 전투 재생. 새 결과가 오면 자동으로 열리고, 닫으면 그 결과 키를 기억합니다.
     const [closedReplay, setClosedReplay] = useState('');
+    // 16단계: 출발 난이도(기기에 기억). 열리지 않은 단계는 잠김.
+    const unlocked = difficultyUnlocked(s.expeditionDiffClears);
+    const [diff, setDiffState] = useState(() => { try { const v = Number(localStorage.getItem('exp-difficulty')); return v >= 1 && v <= DIFFICULTIES.length ? v : 1; } catch { return 1; } });
+    const chosenDiff = Math.min(diff, unlocked), setDiff = (n: number) => { setDiffState(n); try { localStorage.setItem('exp-difficulty', String(n)); } catch { /* 저장 불가 */ } };
+    const diffPicker = <div className="exp-diff" aria-label="난이도">
+        <div className="section-title"><h2>난이도</h2><span>아래 단계를 완주하면 다음 단계가 열립니다</span></div>
+        <div className="exp-diff-list">{DIFFICULTIES.map(d => { const locked = d.level > unlocked, best = s.expeditionDiffBest?.[d.level], clears = s.expeditionDiffClears?.[d.level] || 0; return <button type="button" key={d.level} className={`exp-diff-card${chosenDiff === d.level ? ' on' : ''}${locked ? ' locked' : ''}`} disabled={busy || locked} aria-pressed={chosenDiff === d.level} onClick={() => setDiff(d.level)}><b>{d.icon} {d.name}</b><small>{d.desc}</small><small className="exp-diff-reward">보상 ×{d.reward}{d.score ? ` · 시즌 점수 +${d.score}` : ''}</small><small className="muted">{locked ? `🔒 ${DIFFICULTIES[d.level - 2].name} 완주 필요` : clears ? `완주 ${clears}회 · 최고 ${best?.wins || 0}승${best?.abyss ? ` · 심연 ${best.abyss}` : ''}` : best ? `최고 ${best.wins}승` : '기록 없음'}</small></button>; })}</div>
+    </div>;
     // 6단계 아이템: 가진 아이템을 누르면(고른 상태) 유닛마다 ‘장착’ 버튼이 나타나고, 낀 아이템 배지를 누르면 해제합니다.
     const [pick, setPick] = useState<number | null>(null);
     // 8단계: 시너지 칩을 누르면 단계별 효과가 펼쳐집니다.
@@ -47,7 +55,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const recent = s.expeditionRecent || [];
     const fmtAt = (t: number) => { const d = new Date(t + 9 * 3600_000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
     const recentBox = recent.length ? <div className="exp-recent" aria-label="최근 판"><div className="section-title"><h2>최근 판</h2><span>{s.expeditionAbyssBest ? `심연 최고 ${s.expeditionAbyssBest}라운드 · ` : ''}최고 {s.expeditionBest || 0}승</span></div>
-        <ul>{recent.slice(0, 5).map((x, i) => <li key={i} className={x.cleared ? 'cleared' : ''}><span className="when">{fmtAt(x.at)}</span><b>{x.cleared ? `완주${x.abyss ? ` · 심연 ${x.abyss}` : ''}` : `${Math.min(x.round, EXPEDITION.rounds)}라운드까지`}</b><span>{x.wins}승 · 세계석 +{x.reward}</span><small className="muted">{x.why}</small></li>)}</ul></div> : null;
+        <ul>{recent.slice(0, 5).map((x, i) => <li key={i} className={x.cleared ? 'cleared' : ''}><span className="when">{fmtAt(x.at)}</span><b>{x.difficulty && x.difficulty > 1 ? `${difficultyOf(x.difficulty).icon} ` : ''}{x.cleared ? `완주${x.abyss ? ` · 심연 ${x.abyss}` : ''}` : `${Math.min(x.round, EXPEDITION.rounds)}라운드까지`}</b><span>{x.wins}승 · 세계석 +{x.reward}</span><small className="muted">{x.why}</small></li>)}</ul></div> : null;
     const feats = s.expeditionFeats || {};
     const featBox = <details className="exp-feats"><summary>도전 기록 · {FEATS.filter(f => feats[f.id]).length}/{FEATS.length}</summary><ul>{FEATS.map(f => <li key={f.id} className={feats[f.id] ? 'on' : ''}><b>{f.name}</b> · {f.desc}{feats[f.id] ? <small> · {feats[f.id]}회 · 칭호 {f.title}</small> : <small className="muted"> · 칭호 {f.title}</small>}</li>)}</ul></details>;
     const codexBox = <details className="exp-codex"><summary>유닛 도감 · {Object.values(unitWins).filter(n => n > 0).length}/{UNITS.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
@@ -62,15 +70,16 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const rewardTable = <p className="footnote">월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>;
     if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
         {season}{weekBanner}
-        <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart' })}>원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
+        {diffPicker}
+        <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
         {recentBox}{masteryBox}{questBox}{featBox}{codexBox}
         <p className="footnote">유닛 {UNITS.length}종 · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
         {rewardTable}
     </section></>;
     if (r.done) return <>{intro}<section className="panel exp-start">
-        <h2>원정 종료 · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
-        <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart' })}>바로 다시 출발</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
-        {recentBox}{masteryBox}{questBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
+        <h2>원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
+        <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>바로 다시 출발 · {difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name}</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
+        {diffPicker}{recentBox}{masteryBox}{questBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
     </section></>;
     const mods = runMods(r), runRule = weeklyRuleById(r.rule), bench = benchCap(r);
     const traits = activeTraits(r.board, mods), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
@@ -87,7 +96,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <div className={`exp-cell cost-${def.cost} star-${x.star}${x.item ? ' has-item' : ''}`} key={`${row}${col}`}><button type="button" className="exp-cell-main" title={`${def.name} · ${tags(def)}${x.item && itemById(x.item)?.emblem ? ` (+${itemById(x.item)!.name})` : ''} · 누르면 벤치로`} disabled={busy || picking !== null} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{stars(x.star)}</small></button>{itemBadge('board', i, x.item)}{equipButton('board', i)}</div>; };
     return <>{intro}
         <section className="panel port-resource-bar exp-bar" aria-label="원정 상태">
-            <div><Flag size={22}/><span>{inAbyss ? '심연 · 라운드' : `${actOf(r.round)}막 · 라운드`}<strong>{r.round} <small>{inAbyss ? `· 심연 ${depth} / ${ABYSS.max}` : `/ ${EXPEDITION.rounds}`}</small></strong></span></div>
+            <div><Flag size={22}/><span>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{inAbyss ? '심연 · 라운드' : `${actOf(r.round)}막 · 라운드`}<strong>{r.round} <small>{inAbyss ? `· 심연 ${depth} / ${ABYSS.max}` : `/ ${EXPEDITION.rounds}`}</small></strong></span></div>
             <div><Heart size={22}/><span>원정 체력<strong>{r.hp}</strong></span></div>
             <div><Coins size={22}/><span>판 골드<strong>{r.gold}</strong></span></div>
             <div><Sparkles size={22}/><span>판 레벨<strong>{r.level} <small>· 배치 {r.board.length}/{slots} · 경험치 {r.xp}/{EXPEDITION.xpToLevel[r.level] || '-'}</small></strong></span></div>

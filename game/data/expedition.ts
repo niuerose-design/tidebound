@@ -334,3 +334,17 @@ export const compKey = (active: { trait: { id: string; tiers: { count: number }[
     return parts.length ? parts.join('+') : 'none';
 };
 export const COMP_KEYS_MAX = 40;
+
+// ───────────── 16단계: 난이도 단계 ─────────────
+/** 난이도 1~5. 출발 때 고르며, 바로 위 단계는 아래 단계를 한 번 완주해야 열립니다(expeditionDiffClears). */
+export type DifficultyDef = { level: number; name: string; icon: string; /** 웨이브 예산 배율 · 적 ★ 확률 가산 · 막 보스 ★ · 보상(세계석 · 숙련) 배율 · 시즌 점수 가산 · 설명. */ budget: number; starPlus: number; bossStar: 1 | 2; reward: number; score: number; desc: string };
+export const DIFFICULTIES: DifficultyDef[] = [
+    { level: 1, name: '일반', icon: '🌱', budget: 1, starPlus: 0, bossStar: 1, reward: 1, score: 0, desc: '기본 난이도' },
+    { level: 2, name: '숙련', icon: '🌿', budget: 1.12, starPlus: .05, bossStar: 1, reward: 1.25, score: 60, desc: '웨이브 +12% · 적 ★ 확률 +5%p' },
+    { level: 3, name: '정예', icon: '⚔', budget: 1.25, starPlus: .1, bossStar: 1, reward: 1.5, score: 120, desc: '웨이브 +25% · 적 ★ 확률 +10%p' },
+    { level: 4, name: '악몽', icon: '🔥', budget: 1.4, starPlus: .15, bossStar: 2, reward: 1.8, score: 180, desc: '웨이브 +40% · 적 ★ 확률 +15%p · 막 보스 ★2' },
+    { level: 5, name: '전설', icon: '⚡', budget: 1.6, starPlus: .2, bossStar: 2, reward: 2.2, score: 240, desc: '웨이브 +60% · 적 ★ 확률 +20%p · 막 보스 ★2' },
+];
+export const difficultyOf = (level?: number) => DIFFICULTIES.find(d => d.level === (level || 1)) || DIFFICULTIES[0];
+/** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 5). */
+export const difficultyUnlocked = (clears?: Record<number, number>) => Math.min(DIFFICULTIES.length, 1 + Math.max(0, ...Object.entries(clears || {}).filter(([, n]) => n > 0).map(([d]) => Number(d))));
