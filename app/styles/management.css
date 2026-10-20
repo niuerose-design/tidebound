@@ -723,6 +723,17 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-traits button.open { border-color:#8fc7a4; }
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
 .exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
+/* 15단계 심연 · 최근 판 · 도전 기록 */
+.exp-abyss-choice { margin:0 0 10px; padding:12px 14px; border-radius:8px; border:1px solid #7f6fd6; background:linear-gradient(160deg,#1b1733,#0f1a2b); }
+.exp-abyss-choice h3 { font-size:17px; margin:0 0 6px; color:#e6d6ff; } .exp-abyss-choice p { font-size:12px; color:#c3cfeb; line-height:1.5; margin:0 0 10px; }
+.exp-abyss-btn { background:linear-gradient(135deg,#4a3a8c,#7f6fd6); color:#f3ecff; }
+.exp-rule.small.abyss { border-left-color:#7f6fd6; background:#1b1733; color:#dccfff; }
+.exp-progress.abyss li { opacity:.55; } .exp-progress.abyss li.boss { opacity:.7; }
+.exp-recent { margin:0 0 12px; } .exp-recent ul { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
+.exp-recent li { display:grid; grid-template-columns:auto 1fr auto; gap:8px 10px; align-items:baseline; padding:6px 10px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; font-size:12px; }
+.exp-recent li.cleared { border-color:#5fa37a; } .exp-recent li b { color:#d7dec9; } .exp-recent .when { color:#6f8a88; font-variant-numeric:tabular-nums; } .exp-recent li small { grid-column:2 / 4; }
+.exp-feats { margin:10px 0 4px; font-size:12px; } .exp-feats summary { cursor:pointer; color:#c9b68a; font-weight:600; }
+.exp-feats ul { margin:6px 0 0; padding-left:16px; display:grid; gap:3px; color:#6f8a88; } .exp-feats li.on { color:#d7dec9; } .exp-feats li.on::before { content:'✓ '; color:#8fc7a4; }
 /* 13단계 과제 · 도감 */
 .exp-quest-box { margin:10px 0 4px; } .exp-quest-box .section-title { margin-bottom:6px; }
 .exp-quest-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .exp-quest-cols h3 { font-size:12px; color:#9dadaf; margin:0 0 4px; font-weight:600; }

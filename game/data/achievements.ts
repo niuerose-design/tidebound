@@ -1,3 +1,4 @@
+import { FEATS } from './expedition';
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
 import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
@@ -175,6 +176,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'expSeasonTop:3', honor: true, group: '모험' as const, title: '원정 시즌 3위 안', desc: '월간 원정대 순위 3위 안으로 시즌을 마칩니다.', reward: {}, progress: (s: State) => s.expeditionSeasonBest && s.expeditionSeasonBest <= 3 ? 1 : 0, target: 1 },
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
+    // 15단계: 도전 기록(완주 조건) 명예 업적.
+    ...['flawless', 'noItem', 'oneOrigin', 'cheap', 'abyss10', 'abyss20'].map(id => { const f = FEATS.find(x => x.id === id)!; return { id: `expFeat:${id}`, honor: true, group: '모험' as const, title: `원정 · ${f.name}`, desc: `${f.desc}.`, reward: {}, progress: (s: State) => s.expeditionFeats?.[id] || 0, target: 1 }; }),
     ...[2, 20, 40, 50].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).

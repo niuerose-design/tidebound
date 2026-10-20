@@ -235,7 +235,7 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
     </section>;
 }
 
-type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; runs: number; score: number; ghostPoints: number; units: string[]; self: boolean };
+type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; abyss?: number; runs: number; score: number; ghostPoints: number; units: string[]; self: boolean };
 /** 원정대 3단계: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드). 다른 플레이어의 보드는 2라운드부터 고스트 상대로 나옵니다. */
 function ExpeditionBoard({ s }: { s: State }) {
     const [board, setBoard] = useState<{ month: string; rows: ExpeditionRow[] } | null>(null), [error, setError] = useState('');
@@ -247,10 +247,10 @@ function ExpeditionBoard({ s }: { s: State }) {
     }, [nonce]);
     return <section className="panel ranking-panel abyss-board">
         <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 달 원정대 순위{board ? ` · ${board.month}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
-        <p className="footnote">점수 = 이번 달 최고 판 승수 × 100 + 완주 50 + 닿은 라운드 + 고스트 가산(이긴 상대의 승수 × 10, 이번 달 누적). 한국 시간 매월 1일에 새로 셉니다. 순위에 오른 보드는 다른 플레이어의 원정에서 2라운드부터 고스트 상대로 나옵니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''} 월말 순위 보상(세계석, 다음 달 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>
+        <p className="footnote">점수 = 이번 달 최고 판 승수 × 100 + 완주 50 + 닿은 라운드 + 심연 라운드 × 20 + 고스트 가산(이긴 상대의 승수 × 10, 이번 달 누적). 한국 시간 매월 1일에 새로 셉니다. 순위에 오른 보드는 다른 플레이어의 원정에서 2라운드부터 고스트 상대로 나옵니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''} 월말 순위 보상(세계석, 다음 달 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>
         {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 원정을 다녀온 모험가가 없습니다."/> :
         <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>승</TableHead><TableHead>완주</TableHead><TableHead>라운드</TableHead><TableHead>고스트</TableHead><TableHead>판</TableHead></TableRow></TableHeader>
-        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}</TableCell><TableCell>{r.ghostPoints ? `+${r.ghostPoints}` : '-'}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table>}
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}{r.abyss ? <small> +심연 {r.abyss}</small> : null}</TableCell><TableCell>{r.ghostPoints ? `+${r.ghostPoints}` : '-'}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table>}
     </section>;
 }
 type CrewRow = { rank: number; id: string; name: string; side: string; members: number; grade: number; nodes: number; hacks: number; score: number };

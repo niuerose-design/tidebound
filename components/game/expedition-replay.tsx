@@ -35,7 +35,9 @@ export function BattleReplay({ board, foe, frames, turns, won, opponent, truncat
     const reduce = useMemo(() => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
     const [step, setStep] = useState(() => reduce ? frames.length - 1 : -1);
     const [playing, setPlaying] = useState(!reduce);
-    const [speed, setSpeed] = useState(1);
+    // 15단계: 배속은 브라우저에 기억합니다(다음 전투에도 유지).
+    const [speed, setSpeedState] = useState(() => { try { const v = Number(localStorage.getItem('exp-replay-speed')); return v === 2 || v === 4 ? v : 1; } catch { return 1; } });
+    const setSpeed = (f: (s: number) => number) => setSpeedState(s => { const n = f(s); try { localStorage.setItem('exp-replay-speed', String(n)); } catch { /* 저장 불가 */ } return n; });
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const keys = useMemo(() => [...board.map((_, i) => `a${i}`), ...foe.map((_, i) => `b${i}`)], [board, foe]);
     const unit = (k: string) => (k[0] === 'a' ? board : foe)[Number(k.slice(1))];

@@ -4,7 +4,7 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey } from '../../data/expedition';
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS } from '../../data/expedition';
 import { weekKey, dayKey } from '../../data/time';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
@@ -67,7 +67,7 @@ export const benchCap = (r: ExpeditionRun) => EXPEDITION.bench + (runMods(r).ben
 const income = (r: ExpeditionRun) => { const m = runMods(r); return EXPEDITION.baseGold + (m.goldPlus || 0) + Math.min(EXPEDITION.interestMax + (m.interestPlus || 0), Math.floor(r.gold / EXPEDITION.interestPer)) + Math.min(3, Math.max(0, r.streak - 1)); };
 /** 11단계 증강 선택지: 라운드 등급(2 → 1 · 5 → 2 · 8 → 3)의 증강 가운데 아직 안 고른 것 3개(+숙련 특전). 동적 ‘문양’은 보드에서 다음 단계에 가장 가까운 시너지로 구체화하고, 맞는 시너지가 없으면 뺍니다. */
 export function rollAugments(r: ExpeditionRun, rng: () => number): string[] {
-    const tier = (AUGMENT_ROUNDS.indexOf(r.round) + 1) as 1 | 2 | 3, taken = new Set((r.augments || []).map(id => id.split(':')[0]));
+    const tier = (isAbyssRound(r.round) ? 3 : AUGMENT_ROUNDS.indexOf(r.round) + 1) as 1 | 2 | 3, taken = new Set((r.augments || []).map(id => id.split(':')[0]));
     const pool = AUGMENTS.filter(a => a.tier === tier && !taken.has(a.id)).map(a => {
         if (a.dynamic !== 'trait') return a.id;
         const cands = activeTraits(r.board).filter(t => t.trait.kind !== 'special' && t.tier < t.trait.tiers.length).sort((x, y) => (x.trait.tiers[x.tier].count - x.count) - (y.trait.tiers[y.tier].count - y.count) || y.count - x.count);
@@ -111,22 +111,41 @@ export function parseGhost(value: string | undefined, round: number): Expedition
         const g = (JSON.parse(value) as Record<number, ExpeditionGhost>)?.[round];
         if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
         if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back') && (p.item === undefined || itemById(p.item)))) return null;
-        const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= EXPEDITION.rounds ? g.wins : 0;
+        const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= EXPEDITION.rounds + ABYSS.max ? g.wins : 0;
         return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins };
     } catch { return null; }
 }
+/** 15단계 도전 기록: 완주 판의 12라운드 보드와 흐름으로 판정합니다. */
+export function featsOf(r: ExpeditionRun): string[] {
+    const out: string[] = [];
+    if (!r.cleared) return out;
+    const board = r.history?.[EXPEDITION.rounds] || [];
+    if ((r.losses || 0) === 0 && r.wins >= EXPEDITION.rounds) out.push('flawless');
+    if (board.length && board.every(p => !p.item)) out.push('noItem');
+    if (board.length && new Set(board.map(p => unitById(p.unit)?.origin)).size === 1) out.push('oneOrigin');
+    if (board.length && board.every(p => (unitById(p.unit)?.cost || 9) <= 2)) out.push('cheap');
+    if ((r.abyss || 0) >= 10) out.push('abyss10');
+    if ((r.abyss || 0) >= ABYSS.max) out.push('abyss20');
+    return out;
+}
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
-    r.done = true; delete r.box;
+    r.done = true; delete r.box; delete r.abyssChoice; delete r.augmentOffer;
     const st = statsOf(s); st.runs++; st.wins += r.wins;
-    const cleared = r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
-    if (cleared) st.clears++;
+    const cleared = !!r.cleared || r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
+    if (cleared) { st.clears++; r.cleared = true; }
     const actMult = runMods(r).actMult || 1, actPearls = Math.round(EXPEDITION.actPearls * actMult);
-    const reward = expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls;
+    const abyss = r.abyss || 0, abyssBonus = Math.floor(abyss / ABYSS.bonusEvery) * ABYSS.bonus;
+    const reward = expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus;
     r.reward = reward; s.pearls = (s.pearls || 0) + reward;
     delete s.expeditionDay; s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
+    if (abyss) s.expeditionAbyssBest = Math.max(s.expeditionAbyssBest || 0, abyss);
     const mxp = gainMastery(s, r, !!cleared);
     questProgress(s, now, 'runs'); if (cleared) questProgress(s, now, 'clears');
-    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''} · 숙련 +${mxp}`, 'reward');
+    // 15단계: 도전 기록 · 최근 판 요약.
+    const feats = featsOf(r); for (const id of feats) (s.expeditionFeats ??= {})[id] = (s.expeditionFeats[id] || 0) + 1;
+    const reached = Math.min(r.round, EXPEDITION.rounds + abyss + (r.last?.won === false && isAbyssRound(r.round) ? 1 : 0));
+    (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why }); s.expeditionRecent.splice(8);
+    addLog(s, `원정대 ${why} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''}${abyss ? ` (심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${abyssBonus}` : ''})` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
 }
 
 export const expeditionActions: ActionHandlers = {
@@ -190,11 +209,12 @@ export const expeditionActions: ActionHandlers = {
     expeditionFight(s, { a, now, rng }) {
         const r = run(s);
         if (!r.board.length) throw Error('유닛을 한 명 이상 배치하세요.');
+        if (r.abyssChoice) throw Error('완주했습니다. 심연으로 계속 갈지, 보상을 받고 마칠지 고르세요.');
         if (r.box?.length) throw Error('상자에서 아이템을 고르거나 건너뛴 뒤 전투하세요.');
         if (r.augmentOffer?.length) throw Error('증강을 하나 고른 뒤 전투하세요.');
         const mods = runMods(r);
         // 10단계: 막 보스 라운드(4 · 8 · 12)는 고스트 없이 보스 웨이브.
-        const boss = isBossRound(r.round), ghost = r.round >= 2 && !boss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
+        const boss = isBossRound(r.round), abyss = isAbyssRound(r.round), ghost = r.round >= 2 && !boss && !abyss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
         const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
@@ -208,15 +228,19 @@ export const expeditionActions: ActionHandlers = {
         if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
-        if (won && boss) r.acts = (r.acts || 0) + 1;
+        if (won && boss && !abyss) r.acts = (r.acts || 0) + 1;
+        if (won && abyss) r.abyss = (r.abyss || 0) + 1;
+        if (!won) r.losses = (r.losses || 0) + 1;
         if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
-        addLog(s, `원정대 ${r.round}라운드${boss ? `(${actOf(r.round)}막 보스)` : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
-        if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
-        if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
+        addLog(s, `원정대 ${abyss ? `심연 ${r.round - EXPEDITION.rounds}` : r.round}라운드${boss ? (abyss ? '(심연 보스)' : `(${actOf(r.round)}막 보스)`) : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
+        if (r.hp <= 0) { finish(s, r, now, abyss ? `심연 ${r.round - EXPEDITION.rounds}라운드에서 탈락` : `${r.round}라운드에서 탈락`); return; }
+        // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).
+        if (r.round === EXPEDITION.rounds) { if (won) { r.cleared = true; r.abyssChoice = true; r.round++; addLog(s, `원정대 완주 · 심연으로 계속 갈 수 있습니다(라운드마다 더 세지고 고스트 없음 · ${ABYSS.bonusEvery}라운드마다 세계석 +${ABYSS.bonus})`, 'reward'); return; } r.round++; finish(s, r, now, '완주'); return; }
+        if (abyss && (r.abyss || 0) >= ABYSS.max) { r.round++; finish(s, r, now, '심연 끝'); return; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
         if (r.round === 9) questProgress(s, now, 'reach8');
-        // 11단계: 2 · 5 · 8라운드 시작 때 증강 선택지.
-        if (AUGMENT_ROUNDS.includes(r.round)) { const offer = rollAugments(r, rng); if (offer.length) r.augmentOffer = offer; }
+        // 11단계: 2 · 5 · 8라운드 시작 때 증강 선택지. 15단계: 심연에서는 14 · 18 · 22…(4라운드마다) 3등급.
+        if (AUGMENT_ROUNDS.includes(r.round) || (isAbyssRound(r.round) && (r.round - EXPEDITION.rounds) % EXPEDITION.actLength === 2)) { const offer = rollAugments(r, rng); if (offer.length) r.augmentOffer = offer; }
     },
     /** 11단계 증강 고르기: value = 선택지 번호. 고르기 전에는 전투할 수 없습니다(건너뛰기 없음). */
     expeditionPickAugment(s, { a, now }) {
@@ -263,7 +287,15 @@ export const expeditionActions: ActionHandlers = {
         if ((r.items?.length || 0) >= ITEM_HOLD) throw Error(`아이템은 ${ITEM_HOLD}개까지 들고 있을 수 있습니다.`);
         (r.items ??= []).push(x.item); delete x.item;
     },
-    expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, `${r.round}라운드에서 포기`); },
+    expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, r.cleared ? (r.abyss ? `심연 ${r.abyss}라운드 뒤 마침` : '완주 뒤 마침') : `${r.round}라운드에서 포기`); },
+    /** 15단계: 완주 뒤 심연으로 계속(13라운드 시작: 수입 · 상점). */
+    expeditionAbyss(s, { rng }) {
+        const r = run(s); if (!r.abyssChoice) throw Error('지금은 심연으로 갈 수 없습니다.');
+        delete r.abyssChoice; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.board);
+        addLog(s, '원정대 심연 진입 · 13라운드', 'system');
+    },
+    /** 15단계: 완주 뒤 보상 받고 마치기. */
+    expeditionFinish(s, { now }) { const r = run(s); if (!r.abyssChoice) throw Error('완주 선택 중이 아닙니다.'); finish(s, r, now, '완주'); },
     /** 끝난 판을 치웁니다(화면 정리). */
     expeditionClear(s) { if (s.expedition?.done) delete s.expedition; },
 };
