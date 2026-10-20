@@ -264,11 +264,12 @@ const bucketize = (xs: number[], edges: number[], unit: string) => edges.map((lo
  * 활동은 마지막 저장 시각 기준이라 자동 사냥을 켜 둔 채 접속을 끊은 모험가는 다시 접속할 때까지 세지 않습니다.
  */
 /** 원정대 3단계 운영 지표: 모든 세이브의 누적 지표(State.expeditionStats)를 합칩니다. */
-export type ExpeditionAdmin = { players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[] };
+export type ExpeditionAdmin = { players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[]; /** 13단계: 시너지 조합별 전투 수 · 승률(상위 15, 전투 20 이상). */ comps: { key: string; name: string; plays: number; wins: number; rate: number }[] };
 export async function adminExpedition(): Promise<ExpeditionAdmin> {
     const { unitById, EXPEDITION } = await import('../data/expedition');
     const rows = await db().listPlayers();
-    const out: ExpeditionAdmin = { players: 0, runs: 0, clears: 0, wins: 0, ghostFights: 0, ghostWins: 0, rounds: [], units: [] };
+    const out: ExpeditionAdmin = { players: 0, runs: 0, clears: 0, wins: 0, ghostFights: 0, ghostWins: 0, rounds: [], units: [], comps: [] };
+    const comps = new Map<string, { plays: number; wins: number }>();
     const R = EXPEDITION.rounds, plays = Array(R + 1).fill(0) as number[], winsBy = Array(R + 1).fill(0) as number[], units = new Map<string, number>();
     for (const row of rows) {
         let st: State['expeditionStats'] | undefined;
@@ -277,9 +278,13 @@ export async function adminExpedition(): Promise<ExpeditionAdmin> {
         out.players++; out.runs += st.runs || 0; out.clears += st.clears || 0; out.wins += st.wins || 0; out.ghostFights += st.ghostFights || 0; out.ghostWins += st.ghostWins || 0;
         for (let r = 1; r <= R; r++) { plays[r] += st.roundPlays?.[r] || 0; winsBy[r] += st.roundWins?.[r] || 0; }
         for (const [id, n] of Object.entries(st.units || {})) units.set(id, (units.get(id) || 0) + n);
+        for (const [key, n] of Object.entries(st.comps || {})) { const c = comps.get(key) || { plays: 0, wins: 0 }; c.plays += n; c.wins += st.compWins?.[key] || 0; comps.set(key, c); }
     }
     out.rounds = Array.from({ length: R }, (_, i) => ({ round: i + 1, plays: plays[i + 1], wins: winsBy[i + 1], rate: plays[i + 1] ? Math.round(100 * winsBy[i + 1] / plays[i + 1]) : 0 }));
     out.units = [...units].map(([id, count]) => ({ id, name: unitById(id)?.name || id, count })).sort((a, b) => b.count - a.count).slice(0, 15);
+    const { TRAITS } = await import('../data/expedition');
+    const compName = (key: string) => key === 'none' ? '시너지 없음' : key.split('+').map(part => { const m = part.match(/^([a-zA-Z]+)(\d+)$/); const t = m && TRAITS.find(x => x.id === m[1]); return t ? `${t.name} ${m![2]}` : part; }).join(' + ');
+    out.comps = [...comps].filter(([, c]) => c.plays >= 20).map(([key, c]) => ({ key, name: compName(key), plays: c.plays, wins: c.wins, rate: Math.round(100 * c.wins / c.plays) })).sort((a, b) => b.plays - a.plays).slice(0, 15);
     return out;
 }
 export async function adminStats(now = Date.now()): Promise<AdminStats> {

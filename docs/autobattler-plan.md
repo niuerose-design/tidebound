@@ -200,3 +200,10 @@
 - 화면 `components/game/expedition-replay.tsx`: 프레임을 순서대로 적용해 체력 %를 재구성(`hpAt`), 현재 프레임의 행동 유닛은 lunge(내 편 위로 · 상대 아래로), 대상은 shake(치명 · 처치는 강하게) + 떠오르는 숫자, 시전은 기술 이름 띠 + 푸른 광채, 부활은 보라 광채, 반격은 pulse, 빗나감은 옆으로 피함. 프레임 간격 420ms(시전 · 처치 1.4배), 1/2/4배속. 새 결과 키(startedAt:round)마다 자동 열림, 닫으면 그 키를 기억. `prefers-reduced-motion`이면 마지막 장면으로 바로.
 - 유닛 카드: `.star-3` 금빛 · `.star-2` 은빛 광채(보드 · 재생 칸). `UnitArt`는 재생 모듈로 옮겨 패널이 가져다 쓴다.
 - 다음(PR D): 일일 · 주간 과제, 유닛 도감, 시즌 칭호, 관리자 조합 집계.
+
+## 17. 13단계 (2026-10-20, v3.349): 과제 · 도감 · 시즌 칭호 · 조합 집계
+- 과제(`EXPEDITION_QUESTS` 일일 9 · 주간 7 풀, `pickQuests(period, key)`가 날짜 · 주 키 해시로 3개씩): `s.expeditionQuests` {day, week, daily[], weekly[]}. `ensureQuests(s, now)`가 키가 바뀌면 새로 뽑고(진행 중이던 것은 사라짐 — 단순함 우선), `questProgress(s, now, key, n)`이 같은 키의 일일 · 주간을 함께 올리고 목표에 닿으면 바로 세계석 · 숙련 경험치 지급(수령 버튼 없음). 진행 키: wins · ghostWins · bossWins · clears · runs · star3(mergeStars 콜백) · combines · augments · emblems · synergy4(머릿수 4 이상 켜진 채 승리) · reach8(9라운드 진입).
+- 도감: `expeditionStats.unitWins`(보드에 두고 이긴 라운드 수) → `codexTier` 동 10 · 은 50 · 금 200. 명예 업적 `expCodex:30` · `expCodexGold:5` → 칭호. 출발 · 종료 화면에 접힌 도감(30종, 비용순, 숙달 테두리 색).
+- 시즌 칭호: 정산 때 `expeditionSeasonBest`(최소 순위) 기록 → 명예 업적 `expSeasonTop:1/3` → 칭호 👑 · 🥇.
+- 조합 집계: 전투마다 `compKey(activeTraits)`(머릿수 4 이상 켜진 시너지를 ‘id머릿수’로 정렬해 이어 붙임, 없으면 none)별 전투 · 승 수를 세이브에 누적(키 40개 상한, 넘치면 현재 키를 제외한 최소 사용 키 삭제). 관리자 `adminExpedition().comps`가 전투 20 이상 조합의 승률 상위 15를 돌려주고 운영 페이지에 한 줄로 보인다. 이것으로 2차 균형 조정을 한다.
+- 로드맵 PR A~D 완료. 이후 후보: 운영 집계 기반 2차 균형, 시즌 테마(월마다 유닛 풀 일부 교체), 고스트 보드에 상대 증강 반영, 과제 수령 알림 · 미완 과제 이월.

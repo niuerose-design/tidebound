@@ -313,7 +313,7 @@ test('expedition stage 10: 12 rounds in 3 acts, boss waves on 4/8/12 (no ghost, 
     assert.equal(X.rollShop(4, mkRng(3), 5).length, 5, 'without a board the shop is plain');
     // 판 흐름: 보스 라운드는 고스트를 무시하고 보스 웨이브, 이기면 acts +1, 완주 보상 = 승수 + 완주 4 + 막 보스 3 × 2.
     const s = newState(0); s.level = 100; s.pearls = 0; const now = 1_800_000_000_000;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = []; /* 과제 보상 제외 */ r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
     const ghost = JSON.stringify({ 4: { name: 'g', board: [{ unit: 'slime', star: 1, row: 'front' }] } });
     for (let round = 1; round <= 12; round++) { assert.equal(r.round, round); (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghost }, now + round, mkRng(round + 20)); assert.ok(r.last.won, `round ${round} won`); if (round === 4) assert.equal(r.last.opponent, undefined, 'boss round ignores the ghost'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now + round, mkRng(1)); if (round < 12) assert.equal(r.shop.length, 5); }
     assert.ok(r.done); assert.equal(r.wins, 12); assert.equal(r.acts, 3); assert.equal(r.round, 13); assert.equal(r.reward, 12 + D.EXPEDITION.clearPearls + 3 * D.EXPEDITION.actPearls); assert.equal(s.pearls, r.reward);
@@ -341,7 +341,7 @@ test('expedition stage 11: augments offered on rounds 2/5/8 (tiered, trait augme
     // 주간 규칙: 같은 주 키 → 같은 규칙, 판에 붙음.
     assert.equal(D.weeklyRule('2026-W43').id, D.weeklyRule('2026-W43').id); assert.ok(D.WEEKLY_RULES.some(r => r.id === D.weeklyRule('2026-W44').id));
     const now = 1_800_000_000_000, s = newState(0); s.level = 100;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; assert.equal(r.rule, D.weeklyRule(T.weekKey(now)).id); assert.deepEqual(r.augments, []); assert.equal(r.mastery, 1); delete r.rule;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; assert.equal(r.rule, D.weeklyRule(T.weekKey(now)).id); assert.deepEqual(r.augments, []); assert.equal(r.mastery, 1); delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = []; /* 과제 보상 제외 */
     // 1라운드 뒤 2라운드 증강 선택지 3개(1등급), 전투 차단, 문양은 보드 시너지로 구체화.
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }];
     (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
@@ -397,4 +397,49 @@ test('expedition stage 12: battles emit compact replay frames (valid unit keys, 
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const run = s.expedition; delete run.rule; run.board = [{ unit: 'zakum', star: 3, row: 'front' }];
     act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(run.last.foe.length >= 1 && run.last.foe.every(p => D.unitById(p.unit))); assert.ok(run.last.frames.length > 0); assert.equal(run.last.truncated, undefined);
+});
+
+test('expedition stage 13: daily/weekly quests are picked per key, progress from fights/boss/ghost/synergy/star3/combine/augment/emblem, pay pearls + mastery once, reset on a new day; codex unit wins and tiers; comp keys aggregate with a cap; season best rank feeds titles', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition'), T = await L.load('data/time'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    assert.deepEqual(D.pickQuests('daily', '2026-10-20'), D.pickQuests('daily', '2026-10-20')); assert.equal(D.pickQuests('daily', '2026-10-20').length, 3); assert.equal(new Set(D.pickQuests('weekly', '2026-W43')).size, 3);
+    assert.ok(D.pickQuests('daily', '2026-10-20').every(id => D.questById(id)?.period === 'daily'));
+    assert.deepEqual([0, 10, 50, 200, 999].map(D.codexTier), [0, 1, 1, 3, 3].map((v, i) => i === 2 ? 2 : v));
+    assert.equal(D.compKey([{ trait: { id: 'meadow', tiers: [{ count: 2 }, { count: 4 }] }, count: 4, tier: 2 }, { trait: { id: 'charge', tiers: [{ count: 2 }, { count: 4 }, { count: 6 }] }, count: 2, tier: 1 }]), 'meadow4'); assert.equal(D.compKey([]), 'none');
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.pearls = 0;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule;
+    const q = s.expeditionQuests; assert.equal(q.day, T.dayKey(now)); assert.equal(q.daily.length, 3); assert.equal(q.weekly.length, 3); assert.ok(q.daily.every(x => x.n === 0 && !x.done));
+    // 승리 → wins 키 과제 진행 · 유닛 승리 집계 · 조합 키.
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }, { unit: 'wildBoar', star: 1, row: 'front' }, { unit: 'ligator', star: 1, row: 'front' }];
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won);
+    assert.equal(s.expeditionStats.unitWins.zakum, 1); assert.equal(s.expeditionStats.comps.charge4, 1); assert.equal(s.expeditionStats.compWins.charge4, 1);
+    const winsQuest = [...q.daily, ...q.weekly].find(x => D.questById(x.id).key === 'wins'); if (winsQuest) assert.equal(winsQuest.n, 1);
+    const synQuest = [...q.daily, ...q.weekly].find(x => D.questById(x.id).key === 'synergy4'); if (synQuest) assert.equal(synQuest.n, 1, 'charge 4 counts as a 4-stack synergy');
+    // 직접 진행: 목표에 닿으면 보상 한 번.
+    q.daily = [{ id: 'd_star3', n: 0 }]; q.weekly = [{ id: 'w_star3x3', n: 0 }];
+    const pearls = s.pearls, xp = s.expeditionMastery?.total || 0;
+    A.questProgress(s, now, 'star3'); assert.equal(q.daily[0].done, true); assert.equal(s.pearls, pearls + 3); assert.equal(s.expeditionMastery.total, xp + 30); assert.equal(q.weekly[0].n, 1);
+    A.questProgress(s, now, 'star3'); assert.equal(s.pearls, pearls + 3, 'done quest pays once'); assert.equal(q.weekly[0].n, 2);
+    A.questProgress(s, now, 'star3'); assert.equal(q.weekly[0].done, true); assert.equal(s.pearls, pearls + 3 + 10); assert.equal(s.expeditionMastery.total, xp + 30 + 150);
+    // 상점 구매로 ★3이 되면 star3, 조합 · 증강 · 문장 고르기도 키를 올린다.
+    q.daily = [{ id: 'd_star3', n: 0 }, { id: 'd_combine', n: 0 }, { id: 'd_augment2', n: 0 }]; q.weekly = [];
+    r.bench = [{ unit: 'slime', star: 2 }, { unit: 'slime', star: 2 }]; r.shop = ['slime', null, null, null, null]; r.gold = 10; act(s, { type: 'expeditionBuy', value: '0' }, now, mkRng(1));
+    assert.equal(r.bench[0].star, 2, 'two ★2 + one ★1 do not merge'); r.bench = [{ unit: 'slime', star: 2 }, { unit: 'slime', star: 2 }]; r.shop = ['slime', null, null, null, null]; r.bench.push({ unit: 'slime', star: 1 }); r.bench.push({ unit: 'slime', star: 1 });
+    r.bench = [{ unit: 'pig', star: 2 }, { unit: 'pig', star: 2 }]; r.shop = ['pig', null, null, null, null]; r.gold = 10;
+    // ★2 둘 + ★1 셋이 되도록 ★1 둘을 더 넣고 사면 ★1 셋 → ★2 셋 → ★3.
+    r.bench.push({ unit: 'pig', star: 1 }, { unit: 'pig', star: 1 }); act(s, { type: 'expeditionBuy', value: '0' }, now, mkRng(1)); assert.ok(r.bench.some(x => x.unit === 'pig' && x.star === 3)); assert.equal(q.daily[0].done, true);
+    r.items = ['blade', 'blade']; act(s, { type: 'expeditionCombine', value: '0:1' }, now, mkRng(1)); assert.equal(q.daily[1].n, 1);
+    r.augmentOffer = ['coinPurse', 'quickFeet', 'frontWall']; act(s, { type: 'expeditionPickAugment', value: '0' }, now, mkRng(1)); assert.equal(q.daily[2].n, 1);
+    q.daily = [{ id: 'd_emblem', n: 0 }]; r.items = []; r.box = ['blade', 'wand', 'emblem_meadow']; act(s, { type: 'expeditionPickBox', value: '2' }, now, mkRng(1)); assert.equal(q.daily[0].done, true);
+    // 날짜가 바뀌면 새 과제(진행 초기화), 주는 그대로.
+    const tomorrow = now + 86_400_000; A.ensureQuests(s, tomorrow); assert.equal(s.expeditionQuests.day, T.dayKey(tomorrow)); assert.ok(s.expeditionQuests.daily.every(x => x.n === 0));
+    assert.equal(s.expeditionQuests.week, T.weekKey(now) === T.weekKey(tomorrow) ? T.weekKey(now) : T.weekKey(tomorrow));
+    // 조합 키 상한 40.
+    const st = s.expeditionStats; st.comps = Object.fromEntries(Array.from({ length: 40 }, (_, i) => [`k${i}`, i + 2])); st.compWins = {};
+    r.round = 2; r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.ok(Object.keys(st.comps).length <= 40); assert.equal(st.comps.k0, undefined, 'least-used key dropped');
+    // 시즌 최고 순위 → 업적 · 칭호.
+    act(s, { type: 'expeditionQuit' }, now, mkRng(1)); act(s, { type: 'expeditionStart', value: JSON.stringify({ season: '2026-09', rank: 3, total: 9, wins: 6 }) }, now + 1, mkRng(1)); assert.equal(s.expeditionSeasonBest, 3);
+    act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); act(s, { type: 'expeditionStart', value: JSON.stringify({ season: '2026-08', rank: 1, total: 9, wins: 6 }) }, now + 2, mkRng(1)); assert.equal(s.expeditionSeasonBest, 1);
+    assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expSeasonTop:1').progress(s), 1); assert.ok(TT.TITLES.find(t => t.id === 'expSeasonTop:1')); assert.ok(TT.TITLES.find(t => t.id === 'expCodex:30'));
+    assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expCodex:30').progress(s), Object.values(s.expeditionStats.unitWins).filter(n => n > 0).length);
 });
