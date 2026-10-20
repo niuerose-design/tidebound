@@ -94,7 +94,7 @@ export function Collection({ s, send, busy }: PanelProps) {
     <TabsContent value="monsters">{(() => { const n = s.book[MIMIC.id] || 0, m = s.book[EXP_NURI.id] || 0, sl = s.book[ESSENCE_SLIME.id] || 0, kings = KING_KINDS.map(k => s.book[KING[k].id] || 0), luck = specialLuck(s), tier = s.tide || 0, bundle = slimeBundle(tier);
     /* v3.161 특별 도감: 까미 · 누리 · 정수의 슬라임과 대왕 3종. 대왕은 작은 녀석을 KING.minBookKills마리 잡은 뒤에만 섞입니다. */
     const seen = [n ? `숙련의 까미 ${n}회` : '', m ? `경험의 누리 ${m}회` : '', sl ? `정수의 슬라임 ${sl}회` : '', ...KING_KINDS.map((k, i) => kings[i] ? `${KING[k].name} ${kings[i]}회` : '')].filter(Boolean);
-    return <details className="book-section book-region book-special" open={seen.length > 0}>
+    return <details className="book-section book-region book-special">{/* v3.338 기본 닫힘: open을 ‘만난 적 있음’에 묶어 두면 까미를 잡을 때마다 다시 열려 닫을 수 없었습니다. */}
         <summary className="section-title"><h2><ChevronDown size={18} className="book-region-chevron"/>특별 도감 <small>{seen.length ? seen.join(' · ') + ' 처치' : '아직 만나지 못함'}</small></h2></summary>
         <div className="book-grid"><article className={`panel book-card ${!n ? 'undiscovered' : ''}`}>
             <div className="book-icon"><MonsterArt id={MIMIC.id} size={56}/><span>{n ? `${n}회 처치` : '미발견'}</span></div>
