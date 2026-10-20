@@ -696,6 +696,13 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-last { margin-top:12px; font-size:13px; padding:10px 12px; border-radius:6px; background:#1b2f30; }
 .exp-last.won { border-left:3px solid #7fc48f; } .exp-last.lost { border-left:3px solid #e08a7a; }
 .exp-log { margin:8px 0 0; padding-left:16px; font-size:12px; color:#9dadaf; line-height:1.6; }
+/* 4단계: 전투 기록이 한 줄씩 나타나는 재생 연출(줄마다 70ms 지연). */
+.exp-log li { animation:exp-line .35s ease both; }
+@keyframes exp-line { from { opacity:0; transform:translateX(-6px); } to { opacity:1; transform:none; } }
+.exp-bench-unit { display:flex; align-items:center; gap:8px; min-width:0; }
+.exp-bench-unit > div { display:flex; flex-direction:column; min-width:0; }
+.exp-cell .monster-art, .exp-card .monster-art, .exp-bench .monster-art { flex:none; }
+@media (prefers-reduced-motion: reduce) { .exp-log li { animation:none; } }
 .exp-bench { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
 .exp-bench li { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 10px; border:1px solid var(--border); border-radius:6px; background:#0f2227; }
 .exp-bench li > div:first-child { display:flex; flex-direction:column; min-width:0; }

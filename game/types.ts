@@ -1023,11 +1023,13 @@ export type ExpeditionRun = {
     done?: boolean; reward?: number; startedAt: number;
     /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. */
     history?: Record<number, ExpeditionPlaced[]>;
+    /** 4단계: 이 판에서 이긴 고스트로 얻은 시즌 가산점. */
+    ghostPoints?: number;
 };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
 export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
 /** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */
-export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[] };
+export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[]; /** 4단계: 그 고스트의 이번 달 최고 승수(이기면 시즌 점수 가산). */ wins?: number };
 export type DuelResult = {
     winner: 'player' | 'opponent' | 'draw';
     turns: number;

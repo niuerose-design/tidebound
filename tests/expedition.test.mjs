@@ -127,7 +127,8 @@ test('expedition ghosts: per-round ghost JSON is parsed and validated, fights ag
     const { newState, act } = await import('./harness.mjs');
     const A = await L.load('systems/actions/expedition');
     const good = { 2: { name: '이웃', board: [{ unit: 'pig', star: 1, row: 'front' }] }, 3: { name: '멀리', board: [{ unit: 'evilEye', star: 2, row: 'back' }] } };
-    assert.deepEqual(A.parseGhost(JSON.stringify(good), 2), good[2]); assert.equal(A.parseGhost(JSON.stringify(good), 4), null, 'no ghost for that round');
+    assert.deepEqual(A.parseGhost(JSON.stringify(good), 2), { ...good[2], wins: 0 }); assert.equal(A.parseGhost(JSON.stringify(good), 4), null, 'no ghost for that round');
+    assert.equal(A.parseGhost(JSON.stringify({ 2: { ...good[2], wins: 5 } }), 2).wins, 5); assert.equal(A.parseGhost(JSON.stringify({ 2: { ...good[2], wins: 99 } }), 2).wins, 0, 'out-of-range wins ignored');
     assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'x', board: [{ unit: 'nope', star: 1, row: 'front' }] } }), 2), null, 'unknown unit rejected');
     assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'x', board: [{ unit: 'pig', star: 9, row: 'front' }] } }), 2), null, 'bad star rejected');
     assert.equal(A.parseGhost('not json', 2), null); assert.equal(A.parseGhost(undefined, 2), null);
@@ -135,8 +136,8 @@ test('expedition ghosts: per-round ghost JSON is parsed and validated, fights ag
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.round = 2;
     // ghostChance .6: 난수 0.1이면 고스트와 싸움.
-    act(s, { type: 'expeditionFight', value: JSON.stringify(good) }, now, (() => { let i = 0; return () => (i++ === 0 ? .1 : mkRng(5)()); })());
-    assert.equal(r.last.opponent, '이웃', 'fought the ghost'); assert.ok(r.last.won); assert.deepEqual(r.history[2], [{ unit: 'zakum', star: 3, row: 'front' }], 'board snapshot kept');
+    act(s, { type: 'expeditionFight', value: JSON.stringify({ 2: { ...good[2], wins: 4 }, 3: good[3] }) }, now, (() => { let i = 0; return () => (i++ === 0 ? .1 : mkRng(5)()); })());
+    assert.equal(r.last.opponent, '이웃', 'fought the ghost'); assert.ok(r.last.won); assert.equal(r.ghostPoints, 40, '4단계: 이긴 고스트 승수 4 × 10'); assert.deepEqual(r.history[2], [{ unit: 'zakum', star: 3, row: 'front' }], 'board snapshot kept');
     const st = s.expeditionStats; assert.equal(st.ghostFights, 1); assert.equal(st.ghostWins, 1); assert.equal(st.roundPlays[2], 1); assert.equal(st.roundWins[2], 1); assert.equal(st.units.zakum, 1);
     // 1라운드는 고스트를 쓰지 않습니다.
     const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(2)); t.expedition.board = [{ unit: 'pig', star: 1, row: 'front' }];
@@ -152,14 +153,18 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
     const E = await L.load('server/expedition'), T = await L.load('data/time');
     try {
         const now = 1_800_000_000_000, key = T.monthKey(now);
-        const mk = (name, wins, round, boards, done = true) => ({ name, expedition: { round, wins, done, last: { won: true }, history: boards } });
+        const mk = (name, wins, round, boards, done = true, ghostPoints = 0, startedAt = 1) => ({ name, expedition: { round, wins, done, last: { won: true }, history: boards, ghostPoints, startedAt } });
         await E.syncExpeditionRow('p1', mk('하나', 3, 4, { 1: [{ unit: 'pig', star: 1, row: 'front' }], 2: [{ unit: 'pig', star: 2, row: 'front' }] }), now);
         await E.syncExpeditionRow('p2', mk('둘', 5, 6, { 2: [{ unit: 'slime', star: 1, row: 'front' }], 3: [{ unit: 'slime', star: 2, row: 'front' }] }), now + 1);
         let rows = await E.listExpeditionBoard(key); assert.deepEqual(rows.map(r => [r.name, r.wins, r.rank]), [['둘', 5, 1], ['하나', 3, 2]]);
         // 더 못한 판은 판 수만 오르고 보드 · 승수는 그대로.
-        await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }), now + 2);
+        await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }, true, 30, 2), now + 2);
         rows = await E.listExpeditionBoard(key); const two = rows.find(r => r.name === '둘'); assert.equal(two.wins, 5); assert.equal(two.runs, 2);
-        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
+        // 4단계 점수: 5 × 100 + 라운드 6 + 두 판의 고스트 가산(0 + 30). 같은 판을 다시 갱신해도 가산은 판별로 한 번.
+        assert.equal(two.score, 536); assert.equal(two.ghostPoints, 30);
+        await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }, true, 30, 2), now + 3); assert.equal((await E.listExpeditionBoard(key)).find(r => r.name === '둘').score, 536, 'idempotent per run');
+        assert.equal(E.expeditionScore({ wins: 8, cleared: true, round: 8, ghostByRun: { a: 10, b: 20 } }), 888);
+        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
         const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2].name, '하나');
         assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
