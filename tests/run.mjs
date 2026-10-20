@@ -18,6 +18,7 @@ await import('./hacker.test.mjs');
 await import('./ascension.test.mjs');
 await import('./odds.test.mjs');
 await import('./roles.test.mjs');
+await import('./expedition.test.mjs');
 await import('./training.test.mjs');
 await import('./awaken.test.mjs');
 await import('./replay.test.mjs');
