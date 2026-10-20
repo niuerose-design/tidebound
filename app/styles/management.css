@@ -715,9 +715,22 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-cell small, .exp-bench small, .exp-card small { font-size:11px; color:#9dadaf; }
 .exp-cell:not(.empty), .exp-card:not(.sold), .exp-bench li { border-style:solid; border-left-width:3px; border-left-color:var(--rarity, #5a6f71); }
 .cost-1 { --rarity:#9dadaf; } .cost-2 { --rarity:#68b6ee; } .cost-3 { --rarity:#bf96ef; } .cost-4 { --rarity:#e7be71; } .cost-5 { --rarity:#f08a6c; }
-.exp-traits { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0; }
-.exp-traits span { font-size:12px; padding:4px 8px; border-radius:4px; background:#1b2f30; color:#8fa6a4; }
-.exp-traits span.on { background:#264237; color:#d7dec9; }
+.exp-traits { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 6px; }
+.exp-traits button { all:unset; cursor:pointer; font-size:12px; padding:4px 8px; border-radius:4px; background:#1b2f30; color:#8fa6a4; border:1px solid transparent; }
+.exp-traits button b { font-weight:700; } .exp-traits button small { font-size:11px; opacity:.8; }
+.exp-traits button.on { background:#264237; color:#d7dec9; }
+.exp-traits button.max { background:#2f5a3f; color:#eaf5df; }
+.exp-traits button.open { border-color:#8fc7a4; }
+.exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
+.exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
+/* 8단계 다음 할 일 · 상점 표시 · 배지 색 */
+.exp-todo { margin:-6px 0 12px; padding:8px 12px; border-radius:6px; background:#13262b; border-left:3px solid #5a8f87; color:#c7d6d2; font-size:13px; }
+.exp-todo.urgent { border-left-color:#e0b36a; background:#2b2a1d; color:#f0dcae; }
+.exp-card.synergy { border-color:#5fa37a; box-shadow:inset 0 0 0 1px #5fa37a44; }
+.exp-plus { font-size:11px; color:#8fe0ab; } .exp-own { font-size:11px; color:#e0b36a; }
+.exp-item-badge.emblem { border-color:#9a7fd6; background:#241f33; color:#cdbbf5; }
+.exp-item-badge.tier2 { border-color:#e0b36a; background:#3a3722; color:#f5d98a; }
+.exp-box-choice.emblem { border-color:#9a7fd6; }
 .exp-actions { margin-top:8px; }
 .exp-last { margin-top:12px; font-size:13px; padding:10px 12px; border-radius:6px; background:#1b2f30; }
 .exp-last.won { border-left:3px solid #7fc48f; } .exp-last.lost { border-left:3px solid #e08a7a; }

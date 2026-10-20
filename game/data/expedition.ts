@@ -89,14 +89,14 @@ export const unitById = (id: string) => UNITS.find(u => u.id === id);
 export type TraitTier = { count: number; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; flags?: string[]; only?: Role | 'backline' | 'boss' };
 export type TraitDef = { id: Origin | Role | Special; kind: 'origin' | 'role' | 'special'; name: string; tiers: TraitTier[] };
 export const TRAITS: TraitDef[] = [
-    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.2 } }, { count: 4, mult: { hp: 1.5 }, flags: ['regen'] }] },
-    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .15 }, { count: 4, damageTaken: .35, flags: ['reflect'] }] },
+    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.25 } }, { count: 4, mult: { hp: 1.7 }, flags: ['regen'] }] },
+    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .2 }, { count: 4, damageTaken: .45, mult: { attack: 1.2, magic: 1.2 }, flags: ['reflect'] }] },
     { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.15 } }, { count: 4, mult: { magic: 1.35 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, flags: ['killStack'] }, { count: 4, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
-    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 5 }, flags: ['haste'] }] },
-    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, flags: ['startMana50'] }, { count: 4, bonus: { penetration: .2 }, flags: ['startMana100'] }] },
-    { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.4 }, bonus: { crit: .15 } }] },
-    { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.45 } }, { count: 6, mult: { magic: 1.4 }, bonus: { penetration: .3 } }] },
+    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 6 }, flags: ['haste'] }] },
+    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, flags: ['startMana50'] }, { count: 4, bonus: { penetration: .35 }, flags: ['startMana100'] }] },
+    { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.25 }, bonus: { crit: .15 } }] },
+    { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.45 } }, { count: 6, mult: { magic: 1.25 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .2, only: 'guard' }, { count: 4, damageTaken: .4, only: 'guard', flags: ['backline15'] }] },
     { id: 'control', kind: 'role', name: '제어', tiers: [{ count: 2, bonus: { stunBonus: 1, controlBonus: 1 } }, { count: 4, bonus: { stunBonus: 2, controlBonus: 2 }, flags: ['ignoreResist'] }] },
     { id: 'plague', kind: 'role', name: '역병', tiers: [{ count: 2, bonus: { poisonStackBonus: 1, dotTurnsBonus: 1 } }, { count: 4, bonus: { poisonStackBonus: 2, dotTurnsBonus: 2 }, flags: ['spread'] }] },
@@ -105,6 +105,18 @@ export const TRAITS: TraitDef[] = [
     { id: 'onyx', kind: 'special', name: '칠흑', tiers: [{ count: 2, bonus: { crit: .1 } }] },
 ];
 /** 기획서의 ‘의도한 조합’ 6개(균형 측정용 목표 편성). */
+/** 8단계 화면용: 시너지 단계 효과를 글로 풉니다(데이터에서 자동 생성 → 수치가 바뀌어도 설명이 어긋나지 않음). */
+const FLAG_DESC: Record<string, string> = { regen: '매 턴 체력 4% 회복', reflect: '받은 피해 25% 반격', manaBoost: '마나 획득 +25%', killStack: '처치마다 공격 +10%', haste: '시작 때 가속', startMana50: '시작 마나 50', startMana100: '시작 마나 100', backline15: '뒷줄 받는 피해 −15%', ignoreResist: '상태이상 저항 무시', spread: '독 · 화상 전염', revive: '망령 1회 부활(30%)', roar: '시작 때 포효 · 적 약화 2턴' };
+const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}`, crit: v => `치명타 +${Math.round(v * 100)}%p`, penetration: v => `관통 +${Math.round(v * 100)}%p`, followUpBonus: v => `추가타 위력 +${Math.round(v * 100)}%p`, lifesteal: v => `흡혈 +${Math.round(v * 100)}%p`, stunBonus: v => `기절 +${v}턴`, controlBonus: v => `제어 +${v}턴`, poisonStackBonus: v => `독 중첩 +${v}`, dotTurnsBonus: v => `지속 피해 +${v}턴` };
+export function describeTier(t: TraitTier): string {
+    const out: string[] = [];
+    for (const k of ['hp', 'attack', 'magic'] as const) if (t.mult?.[k]) out.push(`${k === 'hp' ? '체력' : k === 'attack' ? '물리 공격' : '마법 공격'} +${Math.round((t.mult[k]! - 1) * 100)}%`);
+    if (t.damageTaken) out.push(`받는 피해 −${Math.round(t.damageTaken * 100)}%`);
+    for (const k in t.bonus || {}) out.push(STAT_DESC[k] ? STAT_DESC[k]((t.bonus as Record<string, number>)[k]) : `${k} +${(t.bonus as Record<string, number>)[k]}`);
+    for (const f of t.flags || []) if (FLAG_DESC[f]) out.push(FLAG_DESC[f]);
+    const who = t.only === 'guard' ? '수호 유닛만' : t.only === 'boss' ? '보스만' : t.only === 'backline' ? '뒷줄만' : '';
+    return (who ? `${who}: ` : '') + out.join(' · ');
+}
 export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
     { id: 'meadowWraith', name: '초원 4 + 망령 2', units: ['slime', 'orangeMushroom', 'pig', 'zombieMushroom', 'mushmom', 'juniorWraith', 'wraithUnit', 'skeletonSoldier'] },
     { id: 'wastelandControl', name: '황야 4 + 제어 4 + 수호 4', units: ['wildBoar', 'skeletonSoldier', 'stoneGolem', 'mixedGolem', 'kingClang', 'slime', 'curseEye', 'seaGuard'] },
@@ -118,7 +130,7 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
  * 6단계 유닛 아이템(판 전용 8종): 라운드를 이기면 하나를 얻고(상자), 유닛마다 한 칸에 장착합니다. 본편 장비 옵션과 같은 능력치 이름을 써서 전투 계층이 Stats 보정으로 바로 적용합니다.
  * 판이 끝나면 사라집니다. 같은 아이템을 여럿 가질 수 있고, 유닛을 팔거나 승급하면 아이템은 가진 칸으로 돌아옵니다.
  */
-export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). */ tier?: 2 };
+export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). 8단계: 'emblem'은 문장(3라운드부터 상자 셋째 칸). */ tier?: 2 | 'emblem'; /** 8단계 문장: 낀 유닛을 이 지역 · 역할로도 셉니다(시너지 머릿수 +1). */ emblem?: { origin?: Origin; role?: Role } };
 export const ITEMS: ItemDef[] = [
     { id: 'blade', name: '맹공의 검', desc: '물리 공격 +35%', mult: { attack: 1.35 } },
     { id: 'wand', name: '마력의 지팡이', desc: '마법 공격 +35%', mult: { magic: 1.35 } },
@@ -138,6 +150,12 @@ export const ITEMS: ItemDef[] = [
     { id: 'galeHorn', name: '질풍의 뿔', desc: '속도 +6 · 추가타 위력 +45%p · 치명타 +15%p', bonus: { speed: 6, followUpBonus: .45, crit: .15 }, tier: 2 },
     { id: 'bloodOrb', name: '흡혈의 보주', desc: '흡혈 +40%p · 시작 마나 +100 · 최대 체력 +20%', bonus: { lifesteal: .4 }, startMana: 100, mult: { hp: 1.2 }, tier: 2 },
 ];
+// 8단계 문장 12종: 지역 6 · 역할 6. 조합 불가, 상자 셋째 칸에만(3라운드부터).
+for (const o of Object.keys(ORIGIN_NAMES) as Origin[]) ITEMS.push({ id: `emblem_${o}`, name: `${ORIGIN_NAMES[o].split(' ')[0]}의 문장`, desc: `낀 유닛을 ${ORIGIN_NAMES[o]}(으)로도 셉니다 · 시너지 머릿수 +1`, tier: 'emblem', emblem: { origin: o } });
+for (const r of Object.keys(ROLE_NAMES) as Role[]) ITEMS.push({ id: `emblem_${r}`, name: `${ROLE_NAMES[r]}의 문장`, desc: `낀 유닛을 ${ROLE_NAMES[r]}(으)로도 셉니다 · 시너지 머릿수 +1`, tier: 'emblem', emblem: { role: r } });
+export const EMBLEMS = () => ITEMS.filter(x => x.tier === 'emblem');
+/** 8단계: 문장이 상자에 섞이기 시작하는 라운드. */
+export const EMBLEM_ROUND = 3;
 /** 7단계 조합표(순서 무관). 표에 없는 짝은 합칠 수 없습니다. */
 const COMBOS: Record<string, string> = { 'blade+blade': 'greatBlade', 'wand+wand': 'archStaff', 'shield+shield': 'towerShield', 'boots+boots': 'windBoots', 'blade+wand': 'doomSpear', 'shield+thornMail': 'citadel', 'boots+horn': 'galeHorn', 'fang+manaStone': 'bloodOrb' };
 export const comboOf = (a: string, b: string) => COMBOS[[a, b].sort().join('+')] ? itemById(COMBOS[[a, b].sort().join('+')]) : undefined;

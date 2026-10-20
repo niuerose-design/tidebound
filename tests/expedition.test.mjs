@@ -212,7 +212,7 @@ test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip
 test('expedition stage 7: box offers 3 distinct basic items and blocks the fight until picked or skipped; combining two held items by table yields a tier-2 item', async () => {
     const { newState, act } = await import('./harness.mjs');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
-    assert.equal(D.ITEMS.filter(x => x.tier).length, 8); assert.ok(D.BOX_ITEMS().every(x => !x.tier), 'tier-2 items never drop from boxes');
+    assert.equal(D.ITEMS.filter(x => x.tier === 2).length, 8); assert.ok(D.BOX_ITEMS().every(x => !x.tier), 'tier-2 items and emblems never drop from the basic pool');
     assert.equal(D.comboOf('blade', 'blade').id, 'greatBlade'); assert.equal(D.comboOf('wand', 'blade').id, 'doomSpear', 'order does not matter'); assert.equal(D.comboOf('blade', 'fang'), undefined);
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
@@ -239,4 +239,37 @@ test('expedition stage 7: box offers 3 distinct basic items and blocks the fight
     // 고스트 보드의 상위 아이템도 검증을 통과한다.
     const A = await L.load('systems/actions/expedition');
     const g = A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'citadel' }] } }), 2); assert.equal(g.board[0].item, 'citadel');
+});
+
+test('expedition stage 8: emblems add a trait key (counted once per unit), guard-only and revive effects honor emblem roles, boxes offer a smart emblem from round 3, trait descriptions come from data', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
+    assert.equal(D.EMBLEMS().length, 12); assert.ok(D.EMBLEMS().every(x => x.emblem && (x.emblem.origin || x.emblem.role) && !D.BOX_ITEMS().includes(x)));
+    assert.equal(D.comboOf('emblem_meadow', 'emblem_meadow'), undefined, 'emblems never combine');
+    // 머릿수: 돼지(초원 · 돌격) + 숲의 문장 → 숲 1. 같은 유닛 둘 중 하나만 문장이어도 숲은 1(유닛당 한 번).
+    const tr = (board) => Object.fromEntries(X.activeTraits(board).map(t => [t.trait.id, t.count]));
+    assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_forest' }]).forest, 1);
+    assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_forest' }, { unit: 'pig', star: 1, row: 'front' }]).forest, 1);
+    assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_meadow' }]).meadow, 1, 'an emblem of a trait the unit already has adds nothing');
+    assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_guard' }, { unit: 'kingClang', star: 1, row: 'front' }]).guard, 2);
+    // 수호 2 효과는 수호 문장을 낀 돼지에게도 적용(받는 피해 −20%).
+    const g = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_guard' }, { unit: 'kingClang', star: 1, row: 'front' }], 'a').units;
+    assert.ok(Math.abs(g[0].damageTaken - .2) < 1e-9); assert.ok(Math.abs(g[1].damageTaken - .2) < 1e-9);
+    assert.equal(X.hasRole({ unit: 'pig', star: 1, row: 'front', item: 'emblem_wraith' }, D.unitById('pig'), 'wraith'), true);
+    // 상자: 3라운드부터 셋째 칸이 문장이고, 다음 단계에 가장 가까운 시너지를 고른다(돌격 3/4 → 돌격의 문장).
+    const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }, { unit: 'wildBoar', star: 1, row: 'front' }]; r.round = D.EMBLEM_ROUND - 1;
+    act(s, { type: 'expeditionFight' }, now, mkRng(2)); assert.ok(r.last.won); assert.ok(r.box.every(id => !D.itemById(id).tier), 'before round 3: basic items only'); act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    act(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.ok(r.last.won); assert.equal(r.box.length, 3); assert.equal(r.box[2], 'emblem_charge', 'charge 3/4 and meadow 1/2 are both one short → the bigger stack (charge) wins'); assert.ok(r.box.slice(0, 2).every(id => !D.itemById(id).tier));
+    act(s, { type: 'expeditionPickBox', value: '2' }, now, mkRng(1)); assert.deepEqual(r.items, ['emblem_charge']);
+    act(s, { type: 'expeditionEquip', value: 'board:0:0' }, now, mkRng(1)); assert.equal(tr(r.board).charge, 3, 'zakum already is charge: the emblem adds nothing'); act(s, { type: 'expeditionUnequip', value: 'board:0' }, now, mkRng(1)); r.board.push({ unit: 'slime', star: 1, row: 'front' }); act(s, { type: 'expeditionEquip', value: 'board:3:0' }, now, mkRng(1)); assert.equal(tr(r.board).charge, 4, 'slime with the charge emblem completes charge 4');
+    assert.ok(['emblem_underground', 'emblem_sea', 'emblem_meadow', 'emblem_boss'].includes(A.pickEmblem(r, mkRng(5))) || A.pickEmblem(r, mkRng(5)).startsWith('emblem_'));
+    assert.ok(A.pickEmblem({ board: [] }, mkRng(1)).startsWith('emblem_'), 'empty board: any emblem');
+    // 고스트 보드의 문장도 통과하고 상대 시너지에 반영된다.
+    const ghost = A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'emblem_forest' }] } }), 2); assert.equal(ghost.board[0].item, 'emblem_forest');
+    // 설명 생성.
+    assert.equal(D.describeTier({ count: 4, mult: { hp: 1.7 }, flags: ['regen'] }), '체력 +70% · 매 턴 체력 4% 회복');
+    assert.equal(D.describeTier({ count: 2, damageTaken: .2, only: 'guard' }), '수호 유닛만: 받는 피해 −20%');
+    for (const t of D.TRAITS) for (const tier of t.tiers) assert.ok(D.describeTier(tier).length > 3, `${t.id} tier ${tier.count} has a description`);
 });
