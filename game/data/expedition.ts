@@ -95,19 +95,19 @@ export const unitById = (id: string) => UNITS.find(u => u.id === id);
 export type TraitTier = { count: number; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; flags?: string[]; only?: Role | 'backline' | 'boss' };
 export type TraitDef = { id: Origin | Role | Special; kind: 'origin' | 'role' | 'special'; name: string; tiers: TraitTier[] };
 export const TRAITS: TraitDef[] = [
-    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.25 } }, { count: 4, mult: { hp: 1.7 }, flags: ['regen'] }] },
+    { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.25 } }, { count: 4, mult: { hp: 1.6 }, flags: ['regen'] }] },
     { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .2 }, { count: 4, damageTaken: .45, mult: { attack: 1.2, magic: 1.2 }, flags: ['reflect'] }] },
-    { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.15 } }, { count: 4, mult: { magic: 1.35 }, flags: ['manaBoost'] }] },
+    { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.4 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, flags: ['killStack'] }, { count: 4, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
-    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 6 }, flags: ['haste'] }] },
-    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, flags: ['startMana50'] }, { count: 4, bonus: { penetration: .35 }, flags: ['startMana100'] }] },
+    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 5 }, flags: ['haste'] }] },
+    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, mult: { magic: 1.1 }, flags: ['startMana50'] }, { count: 4, mult: { magic: 1.15 }, bonus: { penetration: .4 }, flags: ['startMana100'] }] },
     { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.25 }, bonus: { crit: .15 } }] },
     { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.45 } }, { count: 6, mult: { magic: 1.25 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .2, only: 'guard' }, { count: 4, damageTaken: .4, only: 'guard', flags: ['backline15'] }] },
     { id: 'control', kind: 'role', name: '제어', tiers: [{ count: 2, bonus: { stunBonus: 1, controlBonus: 1 } }, { count: 4, bonus: { stunBonus: 2, controlBonus: 2 }, flags: ['ignoreResist'] }] },
     { id: 'plague', kind: 'role', name: '역병', tiers: [{ count: 2, bonus: { poisonStackBonus: 1, dotTurnsBonus: 1 } }, { count: 4, bonus: { poisonStackBonus: 2, dotTurnsBonus: 2 }, flags: ['spread'] }] },
     { id: 'wraith', kind: 'role', name: '망령', tiers: [{ count: 2, bonus: { lifesteal: .15 } }, { count: 4, bonus: { lifesteal: .35 }, flags: ['revive'] }] },
-    { id: 'boss', kind: 'special', name: '보스', tiers: [{ count: 2, mult: { hp: 1.2 }, only: 'boss' }, { count: 4, mult: { hp: 1.2 }, only: 'boss', flags: ['roar'] }] },
+    { id: 'boss', kind: 'special', name: '보스', tiers: [{ count: 2, mult: { hp: 1.3 }, only: 'boss' }, { count: 4, mult: { hp: 1.3 }, only: 'boss', flags: ['roar'] }] },
     { id: 'onyx', kind: 'special', name: '칠흑', tiers: [{ count: 2, bonus: { crit: .1 } }] },
 ];
 /** 기획서의 ‘의도한 조합’ 6개(균형 측정용 목표 편성). */
