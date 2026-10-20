@@ -5,7 +5,7 @@
  * - 2단계: 기술은 마나로 발동합니다(기본 공격 +10 · 피격 +5, 100에 강제 시전). 엔진에는 기술 목록을 비워 두고, 시전 턴에만 forced로 그 유닛의 기술을 넘깁니다.
  *   기절 · 침묵 중에는 시전하지 않습니다(엔진의 forced는 기절을 건너뛰므로 여기서 먼저 봅니다).
  */
-import type { Stats, CombatEvent } from '../types';
+import type { Stats, CombatEvent, ReplayFrame } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
 import { UNITS, TRAITS, EXPEDITION, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, actOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
@@ -89,7 +89,11 @@ export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, boss
     });
     return { units, active, flags };
 }
-export type BattleResult = { winner: 'a' | 'b' | 'draw'; turns: number; hpLeft: { a: number; b: number }; log: string[]; events: CombatEvent[] };
+export type BattleResult = { winner: 'a' | 'b' | 'draw'; turns: number; hpLeft: { a: number; b: number }; log: string[]; events: CombatEvent[]; /** 12단계 재생 프레임(최대 REPLAY_FRAMES개, 넘치면 truncated). */ frames: ReplayFrame[]; truncated: boolean };
+/** 12단계: 저장 크기를 위해 재생 프레임은 이 수까지만 남깁니다(그 뒤는 결과만). */
+export const REPLAY_FRAMES = 160;
+const keyOf = (u: UnitFighter, side: { units: UnitFighter[] }) => `${u.side}${side.units.indexOf(u)}`;
+const pct = (u: UnitFighter) => Math.max(0, Math.min(100, Math.round(100 * u.hp / Math.max(1, u.maxHp))));
 /** 대상: 살아 있는 적 앞줄 중 무작위, 앞줄이 없으면 뒷줄. */
 function pickTarget(enemies: UnitFighter[], rng: () => number) {
     const alive = enemies.filter(u => u.hp > 0); if (!alive.length) return null;
@@ -99,11 +103,14 @@ function pickTarget(enemies: UnitFighter[], rng: () => number) {
 /** N대N 전투. 매 턴 전체 유닛을 속도 순으로 한 번씩 행동시키고, 한쪽이 전멸하거나 최대 턴에 닿으면 끝(남은 체력 비율로 판정). */
 export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, maxTurns = EXPEDITION.maxTurns, modsA?: RunMods, bossRound = false): BattleResult {
     const A = buildSide(boardA, 'a', modsA, bossRound), B = buildSide(boardB, 'b');
-    const log: string[] = [], events: CombatEvent[] = [];
+    const log: string[] = [], events: CombatEvent[] = [], frames: ReplayFrame[] = [];
+    let truncated = false;
+    const frame = (f: ReplayFrame) => { if (frames.length < REPLAY_FRAMES) frames.push(f); else truncated = true; };
+    const sideOf = (u: UnitFighter) => u.side === 'a' ? A : B;
     // 전투 시작 효과: 바다 · 용 4 가속 3턴(엔진 buffs.haste), 보스 4 포효(적 전체 약화 2턴).
     for (const [mine, theirs] of [[A, B], [B, A]] as const) {
-        if (mine.flags.has('haste')) for (const u of mine.units) (u.effects ??= {}).buffs = { ...(u.effects.buffs || {}), haste: { turns: 3, name: '가속', speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier } };
-        if (mine.flags.has('roar')) { for (const u of theirs.units) (u.effects ??= {}).weaken = Math.max(u.effects.weaken || 0, 2); log.push(`전투 시작 · ${mine.units.find(u => u.def.special?.includes('boss'))?.name || '보스'} 포효 · 적 전체 약화 2턴`); }
+        if (mine.flags.has('haste')) { for (const u of mine.units) (u.effects ??= {}).buffs = { ...(u.effects.buffs || {}), haste: { turns: 3, name: '가속', speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier } }; if (mine.units[0]) frame({ t: 0, a: keyOf(mine.units[0], mine), s: 'start', m: '가속' }); }
+        if (mine.flags.has('roar')) { const boss = mine.units.find(u => u.def.special?.includes('boss')); for (const u of theirs.units) (u.effects ??= {}).weaken = Math.max(u.effects.weaken || 0, 2); log.push(`전투 시작 · ${boss?.name || '보스'} 포효 · 적 전체 약화 2턴`); if (boss) frame({ t: 0, a: keyOf(boss, mine), s: 'start', m: '포효' }); }
     }
     const alive = (side: UnitFighter[]) => side.some(u => u.hp > 0);
     let turns = 0;
@@ -116,18 +123,28 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
             const target = pickTarget(foes, rng); if (!target) break;
             // 초원 4: 턴마다 최대 체력 4% 재생.
             if (mine.flags.has('regen') && u.hp < u.maxHp) u.hp = Math.min(u.maxHp, u.hp + Math.round(u.maxHp * .04));
-            const before = target.hp, selfBefore = u.hp;
-            const onAction = (text: string, ev: CombatEvent) => { log.push(`${turns}턴 · ${text}`); events.push(ev); };
+            const before = target.hp, selfBefore = u.hp, mineEvs: CombatEvent[] = [];
+            const onAction = (text: string, ev: CombatEvent) => { log.push(`${turns}턴 · ${text}`); events.push(ev); if (ev) mineEvs.push(ev); };
             const canCast = u.charge >= EXPEDITION.manaCast && u.stun <= 0 && !((u.effects?.silence || 0) > 0);
             if (canCast) { u.charge = 0; const ev: CombatEvent[] = []; const text = strike(u, target, rng, ev, false, false, { id: u.def.skill, index: 0, count: 1 }); onAction(`${text} · 마나 시전`, ev[0]); }
             else { actTurn(u, target, rng, onAction); if (u.stun <= 0) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerAttack * u.manaGain); }
             const dealt = Math.max(0, before - target.hp);
+            // 12단계 재생 프레임: 행동 하나 = 프레임 하나(피해 · 치명 · 처치 · 시전 · 빗나감, 대상/행동 유닛의 남은 체력 %).
+            {
+                const crit = mineEvs.some(e => e.hits?.some(h => h.critical && !h.miss)), missed = mineEvs.length > 0 && mineEvs.every(e => e.hits?.length && e.hits.every(h => h.miss));
+                const f: ReplayFrame = { t: turns, a: keyOf(u, mine), d: keyOf(target, sideOf(target)), th: pct(target) };
+                if (dealt > 0) f.v = dealt; if (crit) f.c = 1; if (before > 0 && target.hp <= 0) f.k = 1;
+                if (canCast) { f.s = 'cast'; f.m = mineEvs[0]?.skillName || '기술'; } else if (missed) f.s = 'miss';
+                if (u.hp !== selfBefore) f.ah = pct(u);
+                if (mineEvs.some(e => (e.healed || 0) > 0 || (e.drained || 0) > 0) && u.hp > selfBefore) f.s ??= 'heal';
+                frame(f);
+            }
             if (dealt > 0) {
                 target.charge = Math.min(EXPEDITION.manaCast, target.charge + EXPEDITION.manaPerHit * target.manaGain);
                 // 황야 4: 받은 피해의 15%를 공격자에게 되돌립니다.
                 const theirs = target.side === 'a' ? A : B;
                 const reflectRate = (theirs.flags.has('reflect') ? .25 : 0) + (target.reflect || 0);
-                if (reflectRate > 0 && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * reflectRate); u.hp = Math.max(0, u.hp - back); if (back > 0) log.push(`${turns}턴 · ${target.name} 반격 ${back}`); }
+                if (reflectRate > 0 && target.hp > 0 && u.hp > 0) { const back = Math.round(dealt * reflectRate); u.hp = Math.max(0, u.hp - back); if (back > 0) { log.push(`${turns}턴 · ${target.name} 반격 ${back}`); frame({ t: turns, a: keyOf(target, theirs), d: keyOf(u, mine), v: back, s: 'reflect', th: pct(u), ...(u.hp <= 0 ? { k: 1 as const } : {}) }); } }
             }
             if (u.hp < selfBefore) u.charge = Math.min(EXPEDITION.manaCast, u.charge + EXPEDITION.manaPerHit * u.manaGain);
             // 지하: 처치마다 아군 전체 주는 피해 +5%(전투 안 누적).
@@ -137,7 +154,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 if (mine.flags.has('spread')) { const fx = target.effects || {}, next = pickTarget(foes, rng); if (next && (fx.poison || fx.burn)) { next.effects ??= {}; if (fx.poison && !next.effects.poison) next.effects.poison = { ...fx.poison }; if (fx.burn && !next.effects.burn) next.effects.burn = { ...fx.burn }; log.push(`${turns}턴 · ${target.name}의 역병이 ${next.name}에게 전파`); } }
                 // 망령 4: 쓰러진 망령이 전투당 1회 체력 30%로 부활.
                 const theirs = target.side === 'a' ? A : B;
-                if (theirs.flags.has('revive') && hasRole(target.placed, target.def, 'wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); }
+                if (theirs.flags.has('revive') && hasRole(target.placed, target.def, 'wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); frame({ t: turns, a: keyOf(target, theirs), s: 'revive', ah: pct(target), m: '부활' }); }
             }
             if (!alive(A.units) || !alive(B.units)) break;
         }
@@ -145,7 +162,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
     const ratio = (side: UnitFighter[]) => side.reduce((n, u) => n + Math.max(0, u.hp), 0) / Math.max(1, side.reduce((n, u) => n + u.maxHp, 0));
     const ra = ratio(A.units), rb = ratio(B.units);
     const winner = !alive(B.units) && alive(A.units) ? 'a' : !alive(A.units) && alive(B.units) ? 'b' : ra > rb + .05 ? 'a' : rb > ra + .05 ? 'b' : 'draw';
-    return { winner, turns, hpLeft: { a: ra, b: rb }, log, events };
+    return { winner, turns, hpLeft: { a: ra, b: rb }, log, events, frames, truncated };
 }
 /** 상점 5장: 판 레벨의 비용 비중대로 뽑습니다(풀 소진은 2단계). */
 /** 10단계 시너지 슬롯: 보드의 시너지 가운데 다음 단계에 가장 가까운 것(같으면 머릿수 큰 쪽)을 늘리는, 보드에 없는 유닛. 없으면 null. */

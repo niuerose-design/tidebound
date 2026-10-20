@@ -9,18 +9,18 @@ import { expeditionReward, runMods, benchCap } from '@/game/systems/actions/expe
 import { enemySkillById } from '@/game/data/encounters';
 import { Heading, format, useNow } from './shared';
 import { ConfirmButton } from './confirm-button';
-import { MonsterArt } from './art';
-import { OnyxArt } from './onyx-art';
+import { BattleReplay, UnitArt } from './expedition-replay';
 import type { PanelProps } from './panel-props';
 
 const tags = (def: UnitDef) => [ORIGIN_NAMES[def.origin], ...def.roles.map(r => ROLE_NAMES[r]), ...(def.special || []).map(x => SPECIAL_NAMES[x])].join(' · ');
 const stars = (n: number) => '★'.repeat(n);
 /** 유닛 아이콘: 본편 몬스터 그림(없으면 실루엣), 칠흑 보스는 칠흑 아트. */
-const UnitArt = ({ def, size }: { def: UnitDef; size: number }) => def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>;
 
 export function Expedition({ s, send, busy }: PanelProps) {
     const r = s.expedition;
     const [showLog, setShowLog] = useState(false);
+    // 12단계: 전투 재생. 새 결과가 오면 자동으로 열리고, 닫으면 그 결과 키를 기억합니다.
+    const [closedReplay, setClosedReplay] = useState('');
     // 6단계 아이템: 가진 아이템을 누르면(고른 상태) 유닛마다 ‘장착’ 버튼이 나타나고, 낀 아이템 배지를 누르면 해제합니다.
     const [pick, setPick] = useState<number | null>(null);
     // 8단계: 시너지 칩을 누르면 단계별 효과가 펼쳐집니다.
@@ -64,7 +64,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const todo = r.augmentOffer?.length ? '증강을 하나 고르세요(판 전체에 걸리는 효과).' : r.box?.length ? '상자에서 아이템을 고르거나 건너뛰세요.' : freeSlots && r.bench.length ? `보드에 빈 칸 ${freeSlots} · 벤치 유닛을 앞줄 · 뒷줄에 놓으세요.` : !r.board.length ? '상점에서 유닛을 사서 보드에 놓으세요.' : picking !== null ? '장착할 유닛의 ‘장착’을 누르거나 합쳐지는 아이템(→)을 누르세요.' : held.length && r.board.some(x => !x.item) ? `아이템 ${held.length}개가 놀고 있어요. 장착하면 더 강해집니다.` : r.gold >= EXPEDITION.xp && r.level < 8 && r.bench.length ? '골드가 남으면 경험치를 사서 배치 칸을 늘릴 수 있습니다.' : bossNext ? `${actOf(r.round)}막 보스 ${bossNext.name}이(가) 기다립니다. 이기면 세계석 +${EXPEDITION.actPearls}.` : '전투 준비 완료.';
     const equipButton = (where: 'board' | 'bench', i: number) => picking === null ? null : <button type="button" className="primary small exp-equip" disabled={busy} onClick={e => { e.stopPropagation(); send({ type: 'expeditionEquip', value: `${where}:${i}:${picking}` }); setPick(null); }}>장착</button>;
     const itemBadge = (where: 'board' | 'bench', i: number, item?: string) => item ? <button type="button" className={`exp-item-badge${itemById(item)?.tier === 'emblem' ? ' emblem' : itemById(item)?.tier === 2 ? ' tier2' : ''}`} title={`${itemById(item)?.name}: ${itemById(item)?.desc} · 누르면 해제`} disabled={busy} onClick={e => { e.stopPropagation(); send({ type: 'expeditionUnequip', value: `${where}:${i}` }); }}>{itemById(item)?.tier === 'emblem' ? `+${itemById(item)!.name.replace('의 문장', '')}` : itemById(item)?.name}</button> : null;
-    const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <div className={`exp-cell cost-${def.cost}${x.item ? ' has-item' : ''}`} key={`${row}${col}`}><button type="button" className="exp-cell-main" title={`${def.name} · ${tags(def)}${x.item && itemById(x.item)?.emblem ? ` (+${itemById(x.item)!.name})` : ''} · 누르면 벤치로`} disabled={busy || picking !== null} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{stars(x.star)}</small></button>{itemBadge('board', i, x.item)}{equipButton('board', i)}</div>; };
+    const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <div className={`exp-cell cost-${def.cost} star-${x.star}${x.item ? ' has-item' : ''}`} key={`${row}${col}`}><button type="button" className="exp-cell-main" title={`${def.name} · ${tags(def)}${x.item && itemById(x.item)?.emblem ? ` (+${itemById(x.item)!.name})` : ''} · 누르면 벤치로`} disabled={busy || picking !== null} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{stars(x.star)}</small></button>{itemBadge('board', i, x.item)}{equipButton('board', i)}</div>; };
     return <>{intro}
         <section className="panel port-resource-bar exp-bar" aria-label="원정 상태">
             <div><Flag size={22}/><span>{actOf(r.round)}막 · 라운드<strong>{r.round} <small>/ {EXPEDITION.rounds}</small></strong></span></div>
@@ -91,7 +91,8 @@ export function Expedition({ s, send, busy }: PanelProps) {
                 <button className={`primary${bossNext ? ' exp-boss-btn' : ''}`} disabled={busy || !r.board.length || !!r.box?.length || !!r.augmentOffer?.length} title={r.augmentOffer?.length ? '증강을 고른 뒤 전투할 수 있습니다.' : r.box?.length ? '상자에서 아이템을 고르거나 건너뛴 뒤 전투할 수 있습니다.' : undefined} onClick={() => send({ type: 'expeditionFight' })}>{bossNext ? `${actOf(r.round)}막 보스 전투` : `${r.round}라운드 전투`}</button>
                 <ConfirmButton label="포기" title="원정을 포기할까요?" description={`지금까지 ${r.wins}승 보상(세계석 ${expeditionReward(r.wins, false)})만 받고 이 원정을 마칩니다. 바로 새 원정을 시작할 수 있습니다.`} disabled={busy} onConfirm={() => send({ type: 'expeditionQuit' })}/>
             </div>
-            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{r.ghostPoints ? <small className="muted"> · 고스트 가산 +{r.ghostPoints}</small> : null}{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i} style={{ animationDelay: `${Math.min(i, 30) * 70}ms` }}>{l}</li>)}</ul>}</div>}
+            {r.last?.frames && r.last.foe && closedReplay !== `${r.startedAt}:${r.round}` ? <BattleReplay key={`${r.startedAt}:${r.round}`} board={r.history?.[r.round - 1] || r.board} foe={r.last.foe} frames={r.last.frames} turns={r.last.turns} won={r.last.won} opponent={r.last.opponent} truncated={r.last.truncated} onClose={() => setClosedReplay(`${r.startedAt}:${r.round}`)}/> : null}
+            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{r.last.frames && r.last.foe && closedReplay === `${r.startedAt}:${r.round}` ? <> · <button type="button" className="text-button" onClick={() => setClosedReplay('')}>재생 보기</button></> : null}{r.ghostPoints ? <small className="muted"> · 고스트 가산 +{r.ghostPoints}</small> : null}{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i} style={{ animationDelay: `${Math.min(i, 30) * 70}ms` }}>{l}</li>)}</ul>}</div>}
         </section>
         <section className="panel exp-bench-panel" aria-label="벤치">
             <div className="section-title"><h2>벤치</h2><span>{r.bench.length} / {bench}</span></div>
