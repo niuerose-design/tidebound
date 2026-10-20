@@ -107,3 +107,60 @@ test('expedition run: start → buy → merge stars → place → fight → fini
     const t = s.expedition; t.hp = 1; t.board = [{ unit: 'slime', star: 1, row: 'front' }]; t.round = 5; act(s, { type: 'expeditionFight' }, now + 86_400_000, mkRng(5));
     if (!t.last.won) { assert.ok(t.done, 'knocked out'); } else assert.equal(t.round, 6);
 });
+
+test('expedition stage 3 effects: plague spread, boss roar, sea haste buff, wasteland reflect 25%', async () => {
+    const X = await L.load('systems/expedition');
+    const plague = ['orangeMushroom', 'seacle', 'fireBoar', 'skelegon'].map(u => ({ unit: u, star: 3, row: 'front' }));
+    assert.ok(X.buildSide(plague, 'a').flags.has('spread'));
+    // 적이 기술이 나가기 전에 죽으면 옮길 것이 없으므로, 오래 버티는 적(★3 수호)으로 봅니다.
+    let spread = false; for (let k = 0; k < 30 && !spread; k++) spread = X.battle(plague, [{ unit: 'kingClang', star: 3, row: 'front' }, { unit: 'stoneGolem', star: 3, row: 'front' }, { unit: 'seaGuard', star: 3, row: 'front' }], mkRng(k)).log.some(l => l.includes('전파'));
+    assert.ok(spread, 'a dot spread to another enemy at least once');
+    const bosses = ['mushmom', 'lucid', 'zakum', 'blackMage'].map(u => ({ unit: u, star: 1, row: 'front' }));
+    const roar = X.battle(bosses, [{ unit: 'pig', star: 1, row: 'front' }], mkRng(2), 1); assert.ok(roar.log[0].includes('포효'), roar.log[0]);
+    const sea = ['seacle', 'sharkUnit', 'seaGuard', 'skelegon'].map(u => ({ unit: u, star: 1, row: 'front' }));
+    const built = X.buildSide(sea, 'a'); assert.ok(built.flags.has('haste')); assert.equal(built.units[0].effects?.buffs, undefined, 'buff is granted at battle start, not at build');
+    const w = X.battle(['wildBoar', 'skeletonSoldier', 'stoneGolem', 'mixedGolem'].map(u => ({ unit: u, star: 2, row: 'front' })), [{ unit: 'zakum', star: 1, row: 'front' }], mkRng(3), 6);
+    const back = w.log.find(l => l.includes('반격')); assert.ok(back, 'reflect line');
+});
+
+test('expedition ghosts: per-round ghost JSON is parsed and validated, fights against it are recorded, play stats accumulate', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const A = await L.load('systems/actions/expedition');
+    const good = { 2: { name: '이웃', board: [{ unit: 'pig', star: 1, row: 'front' }] }, 3: { name: '멀리', board: [{ unit: 'evilEye', star: 2, row: 'back' }] } };
+    assert.deepEqual(A.parseGhost(JSON.stringify(good), 2), good[2]); assert.equal(A.parseGhost(JSON.stringify(good), 4), null, 'no ghost for that round');
+    assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'x', board: [{ unit: 'nope', star: 1, row: 'front' }] } }), 2), null, 'unknown unit rejected');
+    assert.equal(A.parseGhost(JSON.stringify({ 2: { name: 'x', board: [{ unit: 'pig', star: 9, row: 'front' }] } }), 2), null, 'bad star rejected');
+    assert.equal(A.parseGhost('not json', 2), null); assert.equal(A.parseGhost(undefined, 2), null);
+    const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition;
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.round = 2;
+    // ghostChance .6: 난수 0.1이면 고스트와 싸움.
+    act(s, { type: 'expeditionFight', value: JSON.stringify(good) }, now, (() => { let i = 0; return () => (i++ === 0 ? .1 : mkRng(5)()); })());
+    assert.equal(r.last.opponent, '이웃', 'fought the ghost'); assert.ok(r.last.won); assert.deepEqual(r.history[2], [{ unit: 'zakum', star: 3, row: 'front' }], 'board snapshot kept');
+    const st = s.expeditionStats; assert.equal(st.ghostFights, 1); assert.equal(st.ghostWins, 1); assert.equal(st.roundPlays[2], 1); assert.equal(st.roundWins[2], 1); assert.equal(st.units.zakum, 1);
+    // 1라운드는 고스트를 쓰지 않습니다.
+    const t = newState(0); t.level = 100; act(t, { type: 'expeditionStart' }, now, mkRng(2)); t.expedition.board = [{ unit: 'pig', star: 1, row: 'front' }];
+    act(t, { type: 'expeditionFight', value: JSON.stringify({ 1: good[2] }) }, now, () => .1); assert.equal(t.expedition.last.opponent, undefined, 'round 1 is always a wave');
+    // 종료 시 판 수 · 완주 집계.
+    r.wins = 8; r.round = 9; A.expeditionActions.expeditionQuit(s, { a: { type: 'expeditionQuit' }, id: '', now, rng: mkRng(1) });
+    assert.equal(s.expeditionStats.runs, 1); assert.equal(s.expeditionStats.clears, 1);
+});
+
+test('expedition season rows: sync keeps the best run of the month, ghosts exclude self, board lists by rating', async () => {
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const file = path.join(os.tmpdir(), `tb-exp-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const E = await L.load('server/expedition'), T = await L.load('data/time');
+    try {
+        const now = 1_800_000_000_000, key = T.monthKey(now);
+        const mk = (name, wins, round, boards, done = true) => ({ name, expedition: { round, wins, done, last: { won: true }, history: boards } });
+        await E.syncExpeditionRow('p1', mk('하나', 3, 4, { 1: [{ unit: 'pig', star: 1, row: 'front' }], 2: [{ unit: 'pig', star: 2, row: 'front' }] }), now);
+        await E.syncExpeditionRow('p2', mk('둘', 5, 6, { 2: [{ unit: 'slime', star: 1, row: 'front' }], 3: [{ unit: 'slime', star: 2, row: 'front' }] }), now + 1);
+        let rows = await E.listExpeditionBoard(key); assert.deepEqual(rows.map(r => [r.name, r.wins, r.rank]), [['둘', 5, 1], ['하나', 3, 2]]);
+        // 더 못한 판은 판 수만 오르고 보드 · 승수는 그대로.
+        await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }), now + 2);
+        rows = await E.listExpeditionBoard(key); const two = rows.find(r => r.name === '둘'); assert.equal(two.wins, 5); assert.equal(two.runs, 2);
+        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
+        const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2].name, '하나');
+        assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});

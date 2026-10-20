@@ -34,6 +34,8 @@ export const EXPEDITION = {
     manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
     /** 판 체력 100. 패배마다 15 + 라운드 × 3 + 남은 적 유닛 × 3. */
     hp: 100, lossBase: 15, lossPerRound: 3, lossPerUnit: 3,
+    /** 3단계: 2라운드부터 고스트(다른 플레이어 보드)가 있으면 이 확률로 고스트와 싸웁니다. */
+    ghostChance: .6,
     /** 보상: 승리마다 정수 essencePerWin × 10^(환생 ÷ 120), 8라운드를 모두 마치면 ×clearBonus. 하루 1판. */
     essencePerWin: 14, clearBonus: 1.5,
 };
@@ -80,13 +82,13 @@ export const unitById = (id: string) => UNITS.find(u => u.id === id);
 /**
  * 시너지 효과(단계별). 능력치로 적을 수 있는 것은 Stats 보정(bonus)과 배율(mult)로, 나머지는 flag로 두고 systems/expedition.ts의 전투 계층이 처리합니다.
  * 2단계: 기술은 마나 100에 발동(기본 공격 +10 · 피격 +5)하므로 숲 4 ‘마나 충전 +25%’(manaBoost), 신전 · 아케인 ‘시작 마나 50 · 100’(startMana50 · 100)을 초안대로 둡니다.
- * 초원 4 재생(regen: 턴마다 최대 체력 4%), 황야 4 반격(reflect: 받은 피해의 15%를 공격자에게)은 전투 계층이 처리합니다.
+ * 초원 4 재생(regen: 턴마다 최대 체력 4%), 황야 4 반격(reflect: 받은 피해의 25%를 공격자에게), 역병 4 전파(spread), 보스 4 포효(roar: 적 전체 약화 2턴), 바다 · 용 4 시작 가속(haste 3턴)은 전투 계층이 처리합니다.
  */
 export type TraitTier = { count: number; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; flags?: string[]; only?: Role | 'backline' | 'boss' };
 export type TraitDef = { id: Origin | Role | Special; kind: 'origin' | 'role' | 'special'; name: string; tiers: TraitTier[] };
 export const TRAITS: TraitDef[] = [
     { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.2 } }, { count: 4, mult: { hp: 1.5 }, flags: ['regen'] }] },
-    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .15 }, { count: 4, damageTaken: .3, flags: ['reflect'] }] },
+    { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .15 }, { count: 4, damageTaken: .35, flags: ['reflect'] }] },
     { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.15 } }, { count: 4, mult: { magic: 1.35 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, flags: ['killStack'] }, { count: 4, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
     { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 5 }, flags: ['haste'] }] },

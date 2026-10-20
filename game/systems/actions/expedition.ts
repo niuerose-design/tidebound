@@ -6,7 +6,7 @@ import { EXPEDITION, unitById, sellPrice } from '../../data/expedition';
 import { rollShop, rollWave, battle, frontRole } from '../expedition';
 import { dayKey } from '../../data/time';
 import { addLog } from '../state';
-import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench } from '../../types';
+import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
 import type { ActionHandlers } from './types';
 
 const run = (s: State): ExpeditionRun => { const r = s.expedition; if (!r || r.done) throw Error('진행 중인 원정이 없습니다.'); return r; };
@@ -36,9 +36,22 @@ export function mergeStars(r: ExpeditionRun) {
     }
 }
 const income = (r: ExpeditionRun) => EXPEDITION.baseGold + Math.min(EXPEDITION.interestMax, Math.floor(r.gold / EXPEDITION.interestPer)) + Math.min(3, Math.max(0, r.streak - 1));
+const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(9).fill(0), roundWins: Array(9).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
+/** 3단계: 서버가 a.value에 실어 보낸 라운드별 고스트(다른 플레이어 보드)에서 이 라운드 것을 읽습니다. 모양이 맞지 않으면 무시. */
+export function parseGhost(value: string | undefined, round: number): ExpeditionGhost | null {
+    if (!value) return null;
+    try {
+        const g = (JSON.parse(value) as Record<number, ExpeditionGhost>)?.[round];
+        if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
+        if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back'))) return null;
+        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row })) };
+    } catch { return null; }
+}
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     r.done = true;
+    const st = statsOf(s); st.runs++; st.wins += r.wins;
     const cleared = r.round > EXPEDITION.rounds || (r.round === EXPEDITION.rounds && r.last?.won && r.hp > 0);
+    if (cleared) st.clears++;
     const reward = Math.round(r.wins * expeditionRewardPerWin(s.rebirths || 0) * (cleared ? EXPEDITION.clearBonus : 1));
     r.reward = reward; s.essence = (s.essence || 0) + reward;
     s.expeditionDay = dayKey(now); s.expeditionBest = Math.max(s.expeditionBest || 0, r.wins);
@@ -93,14 +106,20 @@ export const expeditionActions: ActionHandlers = {
             r.board.splice(i, 1); r.bench.push({ unit: x.unit, star: x.star });
         } else throw Error('배치 명령이 잘못되었습니다.');
     },
-    expeditionFight(s, { now, rng }) {
+    /** value: 서버가 넣는 라운드별 고스트 JSON(없으면 웨이브). 2라운드부터 이 라운드 고스트가 있으면 ghostChance로 고스트와 싸웁니다. */
+    expeditionFight(s, { a, now, rng }) {
         const r = run(s);
         if (!r.board.length) throw Error('유닛을 한 명 이상 배치하세요.');
-        const wave = rollWave(r.round, rng), result = battle(r.board, wave, rng);
+        const ghost = r.round >= 2 ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < EXPEDITION.ghostChance;
+        const wave = useGhost ? ghost!.board : rollWave(r.round, rng), result = battle(r.board, wave, rng);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
-        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-12) };
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-12), ...(useGhost ? { opponent: ghost!.name } : {}) };
+        (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
+        const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
+        for (const p of r.board) st.units[p.unit] = (st.units[p.unit] || 0) + 1;
+        if (useGhost) { st.ghostFights++; if (won) st.ghostWins++; }
         if (won) { r.wins++; r.streak++; } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
-        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'} · ${result.turns}턴 · 남은 체력 ${r.hp}`, won ? 'reward' : 'battle');
+        addLog(s, `원정대 ${r.round}라운드 ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, `${r.round}라운드에서 탈락`); return; }
         if (r.round >= EXPEDITION.rounds) { r.round++; finish(s, r, now, '완주'); return; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng);

@@ -91,10 +91,12 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     {s.rebirths >= 3 && <TabsTrigger value="abyss" onClick={() => { if (!abyss) loadAbyss(); }}>무릉도장 · 주간</TabsTrigger>}
     {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="hacker">해커 · 월간</TabsTrigger>}
     {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="crew">조직 · 주간</TabsTrigger>}
+    <TabsTrigger value="expedition">원정대 · 월간</TabsTrigger>
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="hacker"><HackerBoard s={s} send={send} busy={busy}/></TabsContent>
     <TabsContent value="crew"><CrewBoard s={s}/></TabsContent>
+    <TabsContent value="expedition"><ExpeditionBoard s={s}/></TabsContent>
     <TabsContent value="ranking">
     {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
         <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
@@ -232,6 +234,24 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
     </section>;
 }
 
+type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; runs: number; units: string[]; self: boolean };
+/** 원정대 3단계: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드). 다른 플레이어의 보드는 2라운드부터 고스트 상대로 나옵니다. */
+function ExpeditionBoard({ s }: { s: State }) {
+    const [board, setBoard] = useState<{ month: string; rows: ExpeditionRow[] } | null>(null), [error, setError] = useState('');
+    const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1);
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/ranking?board=expedition', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || '불러오지 못했습니다.'); if (alive) { setBoard(d); setError(''); } }).catch(e => { if (alive) setError(e instanceof Error ? e.message : '불러오지 못했습니다.'); });
+        return () => { alive = false; };
+    }, [nonce]);
+    return <section className="panel ranking-panel abyss-board">
+        <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 달 원정대 순위{board ? ` · ${board.month}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
+        <p className="footnote">이번 달 가장 좋은 판 기준: 승수 → 완주 → 닿은 라운드. 한국 시간 매월 1일에 새로 셉니다. 순위에 오른 보드는 다른 플레이어의 원정에서 2라운드부터 고스트 상대로 나옵니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''}</p>
+        {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 원정을 다녀온 모험가가 없습니다."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>승</TableHead><TableHead>완주</TableHead><TableHead>라운드</TableHead><TableHead>판</TableHead></TableRow></TableHeader>
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table>}
+    </section>;
+}
 type CrewRow = { rank: number; id: string; name: string; side: string; members: number; grade: number; nodes: number; hacks: number; score: number };
 const SIDE_NAME: Record<string, string> = { gray: '회색', white: '화이트', black: '블랙' };
 /** v3.34 해커 조직 순위(주간): 합동 작전 노드 합 ×10 + 조직원 해킹 수 ×2. 탭을 열 때 한 번 불러옵니다(서버 5분 캐시). */

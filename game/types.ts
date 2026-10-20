@@ -609,6 +609,7 @@ export type State = {
     expedition?: ExpeditionRun;
     expeditionDay?: string;
     expeditionBest?: number;
+    expeditionStats?: ExpeditionStats;
     /** v3.201 던전 주화: 던전 정복마다 받아 주화 상점에서 씁니다. 환생해도 남고 승천하면 사라집니다. dungeonCoinFrac는 주화 보너스의 소수점 이월. */
     dungeonCoins?: number;
     dungeonCoinFrac?: number;
@@ -1018,9 +1019,15 @@ export type ExpeditionRun = {
     round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
     board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
     /** 마지막 전투 요약. */
-    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[] };
+    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string };
     done?: boolean; reward?: number; startedAt: number;
+    /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. */
+    history?: Record<number, ExpeditionPlaced[]>;
 };
+/** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */
+export type ExpeditionStats = { runs: number; clears: number; wins: number; roundPlays: number[]; roundWins: number[]; units: Record<string, number>; ghostFights: number; ghostWins: number };
+/** 3단계: 고스트 상대(다른 플레이어의 그 라운드 보드). */
+export type ExpeditionGhost = { name: string; board: ExpeditionPlaced[] };
 export type DuelResult = {
     winner: 'player' | 'opponent' | 'draw';
     turns: number;

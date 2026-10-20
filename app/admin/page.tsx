@@ -132,7 +132,8 @@ export default function AdminPage() {
         if (d) { setEvents(d); setDone('이벤트를 저장했습니다. 유저 화면에는 최대 1분 안에 반영됩니다.'); setDraft({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' }); }
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
-    const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); };
+    const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); const x = await call({ action: 'expedition' }); if (x) setExpedition(x); };
+    const [expedition, setExpedition] = useState<{ players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[] } | null>(null);
     /** v27.69 제단 초기화: 공물(게이지 기여도) 또는 신(깨어난 신·신의 자리·몫). */
     const resetAltar = async (kind: 'offers' | 'god') => {
         const msg = kind === 'offers' ? '제단 게이지(축복 3종·신 소환)에 쌓인 공물(기여도)을 모두 0으로 되돌릴까요?\n이미 열려 있는 축복은 남은 시간 동안 유지됩니다. 바친 재화는 돌려주지 않습니다.' : '신을 초기화할까요?\n깨어 있는 신이 사라지고, 신의 자리 주인과 쌓인 몫(거두지 않은 재화)이 비워집니다. 다음에 소환되는 신은 처음 신(검은 마법사)입니다.';
@@ -246,6 +247,13 @@ export default function AdminPage() {
         </>}
 
         {tab === 'stats' && stats && <>
+            {expedition && <Fold title="원정대(오토배틀러)" note={`${expedition.players}명 · ${format(expedition.runs)}판 · 완주 ${format(expedition.clears)} · 고스트 ${expedition.ghostFights ? `${Math.round(100 * expedition.ghostWins / expedition.ghostFights)}%(${expedition.ghostFights}전)` : '없음'}`} open={false}>
+                <div style={grid(150)}>
+                    <Tile label="판 수" value={format(expedition.runs)} note={`완주율 ${expedition.runs ? Math.round(100 * expedition.clears / expedition.runs) : 0}% · 판당 ${expedition.runs ? (expedition.wins / expedition.runs).toFixed(1) : '0'}승`}/>
+                    {expedition.rounds.map(r => <Tile key={r.round} label={`${r.round}라운드 승률`} value={`${r.rate}%`} note={`${format(r.plays)}전 ${format(r.wins)}승`}/>)}
+                </div>
+                <p style={{ fontSize: 13, marginTop: 12 }}><b>많이 배치한 유닛</b> · {expedition.units.length ? expedition.units.map(u => `${u.name} ${format(u.count)}`).join(' · ') : '아직 없음'}</p>
+            </Fold>}
             <Fold title="요약" note={`${new Date(stats.at).toLocaleString('ko-KR')} 기준`}>
                 <div style={grid(150)}>
                     <Tile label="가입 계정" value={format(stats.accounts)} note={`세이브(분신 포함) ${format(stats.saves)}`}/>

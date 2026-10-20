@@ -1,6 +1,7 @@
 import { identity, checkOrigin, db, register, failure, listAbyssBoard, duelSeasonKey, duelRowId } from '@/game/server/store';
 import { readHacks, maskSnapshot, playerOfRow, listHackerBoard } from '@/game/server/hacks';
 import { crewBoard } from '@/game/server/crews';
+import { listExpeditionBoard } from '@/game/server/expedition';
 import { power } from '@/game/systems/stats';
 import { monthSeason, monthKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,8 @@ export async function GET(req: Request) { try {
     if (new URL(req.url).searchParams.get('board') === 'abyss') { const now = Date.now(), { key, rows } = await listAbyssBoard(now), hacks = await readHacks(now); return Response.json({ week: key, rows: rows.map(r => { const self = r.id === id, out = self ? r : maskSnapshot(r, r.id, hacks, now); const { privacy: _privacy, ...rest } = out as typeof out & { privacy?: unknown }; void _privacy; return { ...rest, self }; }) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // v3.25 ?board=hacker: 이번 달 해커 순위(침투 깊이 · 해킹 · 복구). 신원 조작으로 숨긴 이름은 가립니다.
     if (new URL(req.url).searchParams.get('board') === 'hacker') { const now = Date.now(), key = monthKey(now), rows = await listHackerBoard(key), hacks = await readHacks(now); return Response.json({ month: key, rows: rows.map(r => { const self = r.id === id, out = self ? r : maskSnapshot(r, r.id, hacks, now); const { privacy: _privacy, ...rest } = out as typeof out & { privacy?: unknown }; void _privacy; return { ...rest, self }; }) }, { headers: { 'Cache-Control': 'no-store' } }); }
+    // 원정대 3단계 ?board=expedition: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드).
+    if (new URL(req.url).searchParams.get('board') === 'expedition') { const key = monthKey(Date.now()), rows = await listExpeditionBoard(key); return Response.json({ month: key, rows: rows.map(r => ({ ...r, self: r.id === id })) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // v3.34 ?board=crew: 이번 주 해커 조직 순위(5분 캐시).
     if (new URL(req.url).searchParams.get('board') === 'crew') { const b = await crewBoard(Date.now()); return Response.json({ week: b.week, rows: b.rows }, { headers: { 'Cache-Control': 'no-store' } }); }
     const now = Date.now(), season = duelSeasonKey(now), rows = await db().listRankings(monthSeason(season), 100), hacks = await readHacks(now);
