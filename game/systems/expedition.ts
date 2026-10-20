@@ -41,8 +41,9 @@ export function activeTraits(board: Placed[], mods?: RunMods): ActiveTrait[] {
 /** 유닛 하나의 기본 능력치(★ 배율 · 역할 배율 포함, 시너지 전). */
 export function unitBaseStats(def: UnitDef, star: 1 | 2 | 3) {
     const base = BASE_BY_COST[def.cost], s = EXPEDITION.star[star];
-    const guard = def.roles.includes('guard'), arcane = def.roles.includes('arcane'), soft = def.roles.some(r => r === 'control' || r === 'plague' || r === 'wraith');
-    const hp = Math.round(base.hp * s * (guard ? 1.4 : 1)), power = Math.round(base.attack * s * (guard ? .7 : soft ? .85 : 1));
+    const guard = def.roles.includes('guard'), arcane = def.roles.includes('arcane'), wraith = def.roles.includes('wraith'), soft = def.roles.some(r => r === 'control' || r === 'plague');
+    // 14단계 2차 균형: 제어 · 역병은 ×.9(상태이상 값을 감안해도 1대1 3~8%는 너무 낮았음), 망령은 흡혈이 있어 ×.85 유지.
+    const hp = Math.round(base.hp * s * (guard ? 1.4 : 1)), power = Math.round(base.attack * s * (guard ? .7 : wraith ? .85 : soft ? .9 : 1));
     const defense = Math.round(DEFENSE_BY_COST[def.cost] * (guard ? 1.5 : 1) * (1 + (star - 1) * .25));
     return { hp, attack: arcane ? Math.round(power * .5) : power, magic: arcane ? power : Math.round(power * .5), defense, resist: defense, speed: 10 + (def.roles.includes('charge') ? 1 : 0) };
 }
