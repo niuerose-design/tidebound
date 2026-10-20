@@ -64,7 +64,9 @@ export function Expedition({ s, send, busy }: PanelProps) {
     </details>;
     const weekBanner = weekRule ? <p className="exp-rule">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="muted">(매주 월요일 바뀜 · 판을 시작할 때 규칙이 붙어 끝까지 유지)</small></p> : null;
 
-    const intro = <Heading eyebrow="EXPEDITION" title="원정대" description={`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}. 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}/>;
+    // 18단계(모바일 정리): 소개는 한 줄로 줄이고 긴 설명은 접어 둡니다.
+    const introShort = `${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 유닛을 사서 보드에 놓고, 시너지를 켜고, 막 보스를 넘으세요.`;
+    const intro = <Heading eyebrow="EXPEDITION" title="원정대" description={introShort}><details className="exp-intro-more"><summary>규칙 자세히</summary><p>{`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}. 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}</p></details></Heading>;
     // 9단계: 지난 시즌 정산 내역과 시즌 보상표.
     const season = s.expeditionSeasonLast ? <p className="exp-season">지난 시즌 {s.expeditionSeasonLast.season} · {s.expeditionSeasonLast.rank ? `${s.expeditionSeasonLast.rank}위` : '순위 밖'} / {s.expeditionSeasonLast.total}명 · 최고 {s.expeditionSeasonLast.wins}승 · 세계석 +{s.expeditionSeasonLast.pearls} 받음</p> : null;
     const rewardTable = <p className="footnote">월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>;
@@ -97,9 +99,9 @@ export function Expedition({ s, send, busy }: PanelProps) {
     return <>{intro}
         <section className="panel port-resource-bar exp-bar" aria-label="원정 상태">
             <div><Flag size={22}/><span>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{inAbyss ? '심연 · 라운드' : `${actOf(r.round)}막 · 라운드`}<strong>{r.round} <small>{inAbyss ? `· 심연 ${depth} / ${ABYSS.max}` : `/ ${EXPEDITION.rounds}`}</small></strong></span></div>
-            <div><Heart size={22}/><span>원정 체력<strong>{r.hp}</strong></span></div>
+            <div><Heart size={22}/><span>원정 체력<strong>{r.hp}<i className="exp-hpbar" aria-hidden><b style={{ width: `${Math.max(0, Math.min(100, r.hp))}%` }}/></i></strong></span></div>
             <div><Coins size={22}/><span>판 골드<strong>{r.gold}</strong></span></div>
-            <div><Sparkles size={22}/><span>판 레벨<strong>{r.level} <small>· 배치 {r.board.length}/{slots} · 경험치 {r.xp}/{EXPEDITION.xpToLevel[r.level] || '-'}</small></strong></span></div>
+            <div><Sparkles size={22}/><span>판 레벨<strong>{r.level} <small>· 배치 {r.board.length}/{slots}</small></strong><small className="exp-xp">경험치 {r.xp}/{EXPEDITION.xpToLevel[r.level] || '-'}</small></span></div>
             <div><Swords size={22}/><span>전적<strong>{r.wins}승 <small>· 연승 {r.streak}</small></strong></span></div>
         </section>
         <ol className={`exp-progress${inAbyss ? ' abyss' : ''}`} aria-label="라운드 진행">{Array.from({ length: EXPEDITION.rounds }, (_, i) => i + 1).map(n => { const boss = isBossRound(n), won = r.history?.[n] && n < r.round ? (n === r.round - 1 ? r.last?.won : undefined) : undefined; return <li key={n} className={`${n < r.round ? 'past' : n === r.round ? 'now' : ''}${boss ? ' boss' : ''}`} title={boss ? `${actOf(n)}막 보스 ${unitById(ACT_BOSSES[actOf(n)])?.name}` : `${n}라운드`}>{boss ? <UnitArt def={unitById(ACT_BOSSES[actOf(n)])!} size={18}/> : n}{won === false ? <i/> : null}</li>; })}</ol>
@@ -133,7 +135,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
         <section className="panel exp-shop-panel" aria-label="상점">
             <div className="section-title"><h2>상점</h2><span><button className="secondary small" disabled={busy || r.gold < (mods.rerollCost ?? EXPEDITION.reroll)} onClick={() => send({ type: 'expeditionReroll' })}>새로 고침 {mods.rerollCost ?? EXPEDITION.reroll} G</button> <button className="secondary small" disabled={busy || r.gold < EXPEDITION.xp || r.level >= 8} onClick={() => send({ type: 'expeditionXp' })}>경험치 {EXPEDITION.xp} G</button></span></div>
             <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); const own = ownedCount(id), plus = onBoard.has(id) ? [] : traitKeys({ unit: id, star: 1, row: 'front' }, def).filter(k => boardKeys.has(k)).map(k => (ORIGIN_NAMES as Record<string, string>)[k] || (ROLE_NAMES as Record<string, string>)[k] || (SPECIAL_NAMES as Record<string, string>)[k]); return <button type="button" key={i} className={`exp-card cost-${def.cost}${plus.length ? ' synergy' : ''}`} disabled={busy || r.gold < def.cost || r.bench.length >= bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><UnitArt def={def} size={34}/><b>{def.name}</b><small>{tags(def)}</small>{plus.length ? <span className="exp-plus">시너지 +{plus.map(n => n.split(' ')[0]).join(' · ')}</span> : null}{own ? <span className="exp-own">{own >= 9 ? '★3 보유' : `합치기 ${own % 3 || 3}/3${own >= 3 ? ' → ★3' : ''}`}</span> : null}<em>{def.cost} G</em></button>; })}</div>
-            <p className="footnote">같은 유닛 3개면 ★이 오릅니다(★2 → ★3도 3개, 아이템은 첫 유닛 것을 물려받고 나머지는 되돌아옴). 판매는 산 값 그대로 돌려받고 아이템도 돌아옵니다. {EXPEDITION.synergySlotRound}라운드부터 마지막 칸은 보드 시너지를 늘리는 유닛이 나옵니다. 기술은 마나 100에 발동하고(기본 공격 +10 · 피격 +5), 카드를 길게 누르면 기술 설명이 보입니다.</p>
+            <details className="exp-shop-help"><summary>상점 · 승급 규칙</summary><p className="footnote">같은 유닛 3개면 ★이 오릅니다(★2 → ★3도 3개, 아이템은 첫 유닛 것을 물려받고 나머지는 되돌아옴). 판매는 산 값 그대로 돌려받고 아이템도 돌아옵니다. {EXPEDITION.synergySlotRound}라운드부터 마지막 칸은 보드 시너지를 늘리는 유닛이 나옵니다. 기술은 마나 100에 발동하고(기본 공격 +10 · 피격 +5), 카드를 길게 누르면 기술 설명이 보입니다.</p></details>
         </section>
         <section className="panel" aria-label="과제">{questBox}</section>
     </>;
