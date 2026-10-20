@@ -16,14 +16,24 @@ export type ActiveTrait = { trait: TraitDef; count: number; tier: number };
 export type UnitFighter = Fighter & { placed: Placed; def: UnitDef; side: 'a' | 'b'; revived?: boolean; maxHp: number; /** 마나(0~100). */ charge: number; manaGain: number; /** 6단계 가시 갑옷: 받은 피해 비례 반격. */ reflect?: number };
 
 /** 보드의 특성 집계: 같은 유닛은 한 번만 셉니다(TFT 규칙). tier는 닿은 단계 번호(0 = 없음). */
+/** 유닛 하나가 가진 특성 키(지역 · 역할 · 특수). 8단계 문장을 끼면 그 지역 · 역할이 더해집니다. */
+export function traitKeys(p: Placed, def: UnitDef): string[] {
+    const keys = [def.origin, ...def.roles, ...(def.special || [])] as string[];
+    const em = p.item ? itemById(p.item)?.emblem : undefined;
+    if (em?.origin && !keys.includes(em.origin)) keys.push(em.origin);
+    if (em?.role && !keys.includes(em.role)) keys.push(em.role);
+    return keys;
+}
+export const hasRole = (p: Placed, def: UnitDef, role: Role) => def.roles.includes(role) || itemById(p.item || '')?.emblem?.role === role;
 export function activeTraits(board: Placed[]): ActiveTrait[] {
-    const seen = new Set<string>(), counts = new Map<string, number>();
+    const byUnit = new Map<string, Set<string>>();
     for (const p of board) {
-        if (seen.has(p.unit)) continue;
-        seen.add(p.unit);
         const def = unitById(p.unit); if (!def) continue;
-        for (const key of [def.origin, ...def.roles, ...(def.special || [])]) counts.set(key, (counts.get(key) || 0) + 1);
+        const set = byUnit.get(p.unit) || new Set<string>(); byUnit.set(p.unit, set);
+        for (const key of traitKeys(p, def)) set.add(key);
     }
+    const counts = new Map<string, number>();
+    for (const set of byUnit.values()) for (const key of set) counts.set(key, (counts.get(key) || 0) + 1);
     return TRAITS.map(trait => { const count = counts.get(trait.id) || 0; let tier = 0; trait.tiers.forEach((t, i) => { if (count >= t.count) tier = i + 1; }); return { trait, count, tier }; }).filter(x => x.count > 0);
 }
 /** 유닛 하나의 기본 능력치(★ 배율 · 역할 배율 포함, 시너지 전). */
@@ -46,7 +56,7 @@ export function buildSide(board: Placed[], side: 'a' | 'b'): { units: UnitFighte
         for (const a of active) {
             if (!a.tier) continue;
             const t = a.trait.tiers[a.tier - 1];
-            if (t.only === 'guard' && !def.roles.includes('guard')) continue;
+            if (t.only === 'guard' && !hasRole(placed, def, 'guard')) continue;
             if (t.only === 'boss' && !isBoss) continue;
             if (t.only === 'backline' && placed.row !== 'back') continue;
             for (const k in t.mult || {}) mult[k as keyof typeof mult] *= t.mult![k as keyof typeof mult]!;
@@ -117,7 +127,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 if (mine.flags.has('spread')) { const fx = target.effects || {}, next = pickTarget(foes, rng); if (next && (fx.poison || fx.burn)) { next.effects ??= {}; if (fx.poison && !next.effects.poison) next.effects.poison = { ...fx.poison }; if (fx.burn && !next.effects.burn) next.effects.burn = { ...fx.burn }; log.push(`${turns}턴 · ${target.name}의 역병이 ${next.name}에게 전파`); } }
                 // 망령 4: 쓰러진 망령이 전투당 1회 체력 30%로 부활.
                 const theirs = target.side === 'a' ? A : B;
-                if (theirs.flags.has('revive') && target.def.roles.includes('wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); }
+                if (theirs.flags.has('revive') && hasRole(target.placed, target.def, 'wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); }
             }
             if (!alive(A.units) || !alive(B.units)) break;
         }
