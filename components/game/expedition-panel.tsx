@@ -9,10 +9,14 @@ import { enemySkillById } from '@/game/data/encounters';
 import { dayKey } from '@/game/data/time';
 import { Heading, format, useNow } from './shared';
 import { ConfirmButton } from './confirm-button';
+import { MonsterArt } from './art';
+import { OnyxArt } from './onyx-art';
 import type { PanelProps } from './panel-props';
 
 const tags = (def: UnitDef) => [ORIGIN_NAMES[def.origin], ...def.roles.map(r => ROLE_NAMES[r]), ...(def.special || []).map(x => SPECIAL_NAMES[x])].join(' · ');
 const stars = (n: number) => '★'.repeat(n);
+/** 유닛 아이콘: 본편 몬스터 그림(없으면 실루엣), 칠흑 보스는 칠흑 아트. */
+const UnitArt = ({ def, size }: { def: UnitDef; size: number }) => def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>;
 
 export function Expedition({ s, send, busy }: PanelProps) {
     const r = s.expedition, now = useNow(60_000), today = s.expeditionDay === dayKey(now);
@@ -28,7 +32,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
         <button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button>
     </section></>;
     const traits = activeTraits(r.board), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
-    const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <button type="button" className={`exp-cell cost-${def.cost}`} key={`${row}${col}`} title={`${def.name} · ${tags(def)} · 누르면 벤치로`} disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><b>{def.name}</b><small>{stars(x.star)}</small></button>; };
+    const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <button type="button" className={`exp-cell cost-${def.cost}`} key={`${row}${col}`} title={`${def.name} · ${tags(def)} · 누르면 벤치로`} disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{stars(x.star)}</small></button>; };
     return <>{intro}
         <section className="panel port-resource-bar exp-bar" aria-label="원정 상태">
             <div><Flag size={22}/><span>라운드<strong>{r.round} <small>/ {EXPEDITION.rounds}</small></strong></span></div>
@@ -46,16 +50,16 @@ export function Expedition({ s, send, busy }: PanelProps) {
                 <button className="primary" disabled={busy || !r.board.length} onClick={() => send({ type: 'expeditionFight' })}>{r.round}라운드 전투</button>
                 <ConfirmButton label="포기" title="원정을 포기할까요?" description={`지금까지 ${r.wins}승 보상(정수 ${format(r.wins * perWin)})만 받고 오늘 원정을 마칩니다.`} disabled={busy} onConfirm={() => send({ type: 'expeditionQuit' })}/>
             </div>
-            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i}>{l}</li>)}</ul>}</div>}
+            {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{r.ghostPoints ? <small className="muted"> · 고스트 가산 +{r.ghostPoints}</small> : null}{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i} style={{ animationDelay: `${Math.min(i, 30) * 70}ms` }}>{l}</li>)}</ul>}</div>}
         </section>
         <section className="panel exp-bench-panel" aria-label="벤치">
             <div className="section-title"><h2>벤치</h2><span>{r.bench.length} / {EXPEDITION.bench}</span></div>
-            {r.bench.length ? <ul className="exp-bench">{r.bench.map((x, i) => { const def = unitById(x.unit)!; return <li key={i} className={`cost-${def.cost}`}><div><b>{def.name} <small>{stars(x.star)}</small></b><small>{tags(def)}</small></div><div className="button-row"><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:front` })}>앞줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:back` })}>뒷줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionSell', value: `bench:${i}` })}>판매 {sellPrice(def.cost, x.star)}</button></div></li>; })}</ul> : <p className="muted">상점에서 산 유닛이 여기 옵니다.</p>}
+            {r.bench.length ? <ul className="exp-bench">{r.bench.map((x, i) => { const def = unitById(x.unit)!; return <li key={i} className={`cost-${def.cost}`}><div className="exp-bench-unit"><UnitArt def={def} size={30}/><div><b>{def.name} <small>{stars(x.star)}</small></b><small>{tags(def)}</small></div></div><div className="button-row"><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:front` })}>앞줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:back` })}>뒷줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionSell', value: `bench:${i}` })}>판매 {sellPrice(def.cost, x.star)}</button></div></li>; })}</ul> : <p className="muted">상점에서 산 유닛이 여기 옵니다.</p>}
         </section>
         </div>
         <section className="panel exp-shop-panel" aria-label="상점">
             <div className="section-title"><h2>상점</h2><span><button className="secondary small" disabled={busy || r.gold < EXPEDITION.reroll} onClick={() => send({ type: 'expeditionReroll' })}>새로 고침 {EXPEDITION.reroll} G</button> <button className="secondary small" disabled={busy || r.gold < EXPEDITION.xp || r.level >= 8} onClick={() => send({ type: 'expeditionXp' })}>경험치 {EXPEDITION.xp} G</button></span></div>
-            <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); return <button type="button" key={i} className={`exp-card cost-${def.cost}`} disabled={busy || r.gold < def.cost || r.bench.length >= EXPEDITION.bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><b>{def.name}</b><small>{tags(def)}</small><em>{def.cost} G</em></button>; })}</div>
+            <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); return <button type="button" key={i} className={`exp-card cost-${def.cost}`} disabled={busy || r.gold < def.cost || r.bench.length >= EXPEDITION.bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><UnitArt def={def} size={34}/><b>{def.name}</b><small>{tags(def)}</small><em>{def.cost} G</em></button>; })}</div>
             <p className="footnote">같은 유닛 3개면 ★이 오릅니다(★2 → ★3도 3개). 판매는 산 값 그대로 돌려받습니다. 기술은 마나 100에 발동하고(기본 공격 +10 · 피격 +5), 카드를 길게 누르면 기술 설명이 보입니다.</p>
         </section>
     </>;

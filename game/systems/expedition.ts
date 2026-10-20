@@ -130,7 +130,7 @@ export function rollShop(level: number, rng: () => number, size = EXPEDITION.sho
     return out;
 }
 /** 라운드별 PvE 웨이브: 비용 예산 안에서 같은 풀의 유닛을 고르고, 뒤 라운드일수록 ★이 오릅니다. 수호 · 돌격은 앞줄, 나머지는 뒷줄. */
-export const WAVE_BUDGET = [0, 2, 5, 8, 12, 16, 21, 27, 33];
+export const WAVE_BUDGET = [0, 2, 5, 8, 12, 16, 21, 27, 38];
 export function rollWave(round: number, rng: () => number): Placed[] {
     let budget = WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)];
     const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 6 ? 3 : round <= 7 ? 4 : 5, slots = Math.min(8, 1 + round);
