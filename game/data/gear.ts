@@ -171,7 +171,8 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'hunterSense', name: '사냥꾼의 감', stat: 'accuracy', kind: 'percent', base: .02, stat2: 'critDamage', base2: .06, rollBoth: true, weight: .4, description: '명중과 치명 피해를 함께 올립니다.' },
     { id: 'greed', name: '탐욕', stat: 'goldBonus', kind: 'percent', base: .03, stat2: 'dropBonus', base2: .005, rollBoth: true, weight: .4, description: '골드와 드롭 확률을 함께 올립니다.' },
     { id: 'scholarly', name: '학구', stat: 'expBonus', kind: 'percent', base: .02, stat2: 'mana', base2: .09, rollBoth: true, weight: .4, description: '경험치와 최대 마나를 함께 올립니다.' },
-    { id: 'overclock', name: '과부하', stat: 'speed', kind: 'flat', base: 5, stat2: 'hp', base2: -1.2, weight: .4, description: '속도를 크게 올리지만 최대 체력이 줄어듭니다.' },
+    // v3.371 과부하는 v3.367에 flat(위력 비례)으로 들어가 속도가 +10000 가까이 붙었습니다. 속도는 신속 · 민첩 · 성벽의 손해처럼 고정 폭(percent) 수치라 percent로 바로잡고, 이미 붙은 줄은 migrations(overclockRescaled)가 같은 굴림 위치로 다시 환산합니다.
+    { id: 'overclock', name: '과부하', stat: 'speed', kind: 'percent', base: 5, stat2: 'hp', base2: -1.2, weight: .4, description: '속도를 크게 올리지만 최대 체력이 줄어듭니다. 속도 이득은 고정 폭, 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
     { id: 'reckless', name: '무모', stat: 'critDamage', kind: 'percent', base: .25, stat2: 'evasion', base2: -.04, weight: .4, description: '치명 피해를 크게 올리지만 회피가 줄어듭니다.' },
     { id: 'vampiric', name: '흡혈귀', stat: 'lifesteal', kind: 'percent', base: .045, stat2: 'hpRegen', base2: -20, uncapped: true, weight: .4, description: '흡혈을 크게 올리지만 턴당 회복이 멈춥니다.' },
     { id: 'siegeShell', name: '공성 외피', stat: 'defense', kind: 'flat', base: .81, stat2: 'accuracy', base2: -.06, weight: .4, description: '물리 방어를 크게 올리지만 명중이 줄어듭니다.' },
@@ -268,7 +269,7 @@ const refineEssence = (rarity: number) => Math.ceil(rerollEssence(rarity) / 2);
  */
 export const REFINE_GROWTH = 1.1, REROLL_GOLD = 20, GEAR_RESET_PEARLS = 999;
 export const refineEssenceAt = (rarity: number, refines = 0, rebirthFactor = 1) => Math.ceil(refineEssence(rarity) * rebirthFactor * Math.pow(REFINE_GROWTH, Math.max(0, Math.floor(refines))));
-const ROLL_MIN = .6, ROLL_SPAN = .8;
+export const ROLL_MIN = .6, ROLL_SPAN = .8;
 /**
  * v3.125 원시 고대 · 계승 태초 · 칠흑의 재련 상한: 보통 장비의 최고 굴림(수치 100%)을 1로 두고 그 1.5배 폭까지 굴립니다(수치 150%).
  * 계승 · 칠흑은 옵션이 최고 수치로 고정돼 재련할 이유가 없었습니다. 계승 · 비용 초기화는 그대로 100%에 놓고, 재련으로만 그 위를 노립니다.
