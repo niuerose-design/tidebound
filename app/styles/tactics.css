@@ -1,4 +1,4 @@
-/* 전기(戰記) 모드 — 독립 라우트 /tactics. 접두사 tx-. 본편 팔레트(theme.css)를 그대로 씁니다.
+/* 전기(戰記) 모드 — 독립 라우트 /tactics. 접두사 tx-. 본편 팔레트(theme.css)를 그대로 쓰고, 버튼 · 확인 창은 v3.409 부터 shadcn Button · ConfirmAction(토큰)입니다. 맵 · 칸 · 토큰 · 대사 창 같은 판 연출은 여기 tx- 규칙이 맡습니다.
    docs/ui-hig.md 기준: 글자 11px 이상, 글자색은 배경 대비 4.5:1 이상(#8d9fa4 이상의 밝기), 손가락 기기 44pt 터치, 초점 2px, 안전 영역. */
 .tx-root { min-height: 100vh; background: var(--background); color: var(--foreground); }
 .tx-app { max-width: 1480px; margin: 0 auto; padding: 18px 20px calc(48px + env(safe-area-inset-bottom)); }
@@ -7,12 +7,8 @@
 .tx-note { font-size: 12px; color: #8ea7a4; line-height: 1.6; }
 .tx-note.hl, .hl { color: #a4e9ba; }
 .tx-note.warn, .warn { color: #ef8c85; }
-.tx-app .small { font-size: 12px; padding: 5px 9px; }
-.tx-app .danger { background: #5c2626; border-color: #d46a6a; color: #ffe6e6; }
-.tx-app .danger:hover { background: #6e2e2e; }
-.tx-app .danger-text { color: #ef8c85; }
 .tx-table-wrap { overflow: auto; max-width: 100%; }
-.tx-app .eyebrow { font-size: 11px; letter-spacing: 2px; color: #8d9fa4; text-transform: uppercase; margin-bottom: 6px; }
+.tx-eyebrow { font-size: 11px; letter-spacing: 2px; color: #8d9fa4; text-transform: uppercase; margin-bottom: 6px; }
 .tx-lead { font-size: 14px; color: #aec0c2; max-width: 680px; line-height: 1.7; }
 
 /* ── 제목 · 엔딩 ── */
@@ -70,7 +66,7 @@
 .tx-order { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--border); font-size: 12px; display: grid; place-items: center; color: #8d9fa4; flex: none; }
 .tx-order.on { background: var(--primary); color: #092420; border-color: var(--primary); font-weight: 700; }
 .tx-row-actions { display: inline-flex; gap: 2px; }
-.tx-row-actions .text-button { font-size: 12px; padding: 2px 5px; }
+.tx-row-actions button { font-size: 12px; padding: 2px 5px; }
 .tx-detail { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
 .tx-detail h3 { font-size: 15px; display: flex; gap: 8px; align-items: baseline; }
 .tx-detail h3 small { font-size: 12px; color: #8d9fa4; font-weight: 400; }
@@ -127,8 +123,8 @@
 .tx-items li.empty { color: #8d9fa4; }
 .tx-items small { grid-column: 1; color: #8d9fa4; font-size: 11px; }
 .tx-items em { grid-column: 2; grid-row: 1; font-style: normal; font-size: 11px; color: #8fd3ef; }
-.tx-items li > .text-button, .tx-items li > .secondary, .tx-items li > .tx-row-actions { grid-column: 2; grid-row: 1 / span 2; }
-.tx-items li.equipped > .text-button, .tx-items li.equipped > .tx-row-actions { grid-row: 2; }
+.tx-items li > button, .tx-items li > .tx-row-actions { grid-column: 2; grid-row: 1 / span 2; }
+.tx-items li.equipped > button, .tx-items li.equipped > .tx-row-actions { grid-row: 2; }
 .tx-item-name { display: inline-flex; gap: 6px; align-items: center; }
 .wt { width: 10px; height: 10px; border-radius: 2px; display: inline-block; background: #8ea7a4; }
 .wt-sword { background: #c9d6dd; } .wt-lance { background: #7fb3e6; } .wt-axe { background: #d8a46b; } .wt-bow { background: #9ac77a; }
@@ -186,8 +182,7 @@
 .tx-menu { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: grid; gap: 6px; }
 .tx-menu > strong { font-size: 13px; color: #a2dcc6; }
 .tx-menu > strong small { color: #8d9fa4; font-weight: 400; margin-left: 6px; }
-.tx-menu .secondary { text-align: left; justify-content: flex-start; }
-.tx-menu .secondary small { color: #8ea7a4; margin-left: 6px; }
+.tx-menu > button small { color: #8ea7a4; margin-left: 6px; }
 .tx-unit-panel, .tx-help, .tx-forecast, .tx-log { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: grid; gap: 8px; font-size: 13px; }
 .tx-help p { color: #9fb4b5; line-height: 1.6; }
 .tx-forecast table { width: 100%; border-collapse: collapse; }
@@ -241,10 +236,7 @@
 
 /* HIG 터치 규칙(손가락 기기): 조작 요소 44×44pt. 본편 responsive.css의 전역 규칙과 같은 방식이며, 이 화면에만 있는 요소(목록 줄 · 칩 · 맵 칸)를 더합니다. */
 @media (pointer: coarse) {
-    .tx-root button:not(.text-button), .tx-root select, .tx-root summary, .tx-root [role=tab] { min-height: 44px; }
-    .tx-root button.primary, .tx-root button.secondary { min-width: 44px; }
+    .tx-root button, .tx-root select, .tx-root summary, .tx-root [role=tab] { min-height: 44px; }
     .tx-root .tx-items li[role=button], .tx-root .tx-roster li[role=button], .tx-root .tx-chips button, .tx-root .tx-tabs button { min-height: 44px; }
-    .tx-root .text-button { position: relative; }
-    .tx-root .text-button::after { content: ''; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); translate: -50% -50%; }
     .tx-root .tx-row-actions { gap: 6px; }
 }
