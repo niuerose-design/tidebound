@@ -14,8 +14,8 @@ export function FoldSection({ title, summary, extra, defaultOpen = false, level 
     return <Collapsible open={open} onOpenChange={setOpen} className={cn('rounded-l border border-line bg-surface-2 shadow-1', className)}>
         <CollapsibleTrigger className="flex min-h-11 w-full items-center gap-3 rounded-l px-4 py-2 text-left outline-none hover:bg-surface-3/60 focus-visible:ring-[3px] focus-visible:ring-accent/50">
             <ChevronDown size={18} className={cn('shrink-0 text-ink-3 transition-transform', open && 'rotate-180')} aria-hidden/>
-            <Tag className={cn('min-w-0 flex-1 font-semibold text-ink-1', level === 2 ? 'text-l' : 'text-m')}>{title}</Tag>
-            {summary && <span className="shrink-0 font-num text-xs tabular-nums text-ink-3">{summary}</span>}
+            <Tag className={cn('min-w-28 flex-1 font-semibold text-ink-1', level === 2 ? 'text-l' : 'text-m')}>{title}</Tag>
+            {summary && <span className="min-w-0 shrink text-right font-num text-xs tabular-nums text-ink-3">{summary}</span>}
         </CollapsibleTrigger>
         {extra && <div className="px-4 pb-2 text-xs text-ink-3">{extra}</div>}
         <CollapsibleContent className="grid gap-3 px-4 pb-4">{children}</CollapsibleContent>

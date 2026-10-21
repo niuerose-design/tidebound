@@ -1,4 +1,5 @@
 'use client';
+/** v3.384 보관함 화면은 components/features/inventory/inventory-screen.tsx(#inventory)로 교체되었습니다. 이 파일은 상점 강화 탭(ForgeHead · ForgeBench)과 환생 화면(BonusList)이 아직 써서 남겨 두며, 그 화면들이 새 토대로 옮겨지면 지웁니다. */
 import { isOnyxUnique } from '@/game/data/onyx';
 import { ConfirmButton } from './confirm-button';
 import { useEffect, useRef, useState } from 'react';
