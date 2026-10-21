@@ -9,10 +9,10 @@ import { plainCodexBook } from './progression';
 import { ownedOnyx, onyxCodexKey, isOnyxUnique } from '../data/onyx';
 import { grantOnyxMilestones } from './onyx-grant';
 import { syncAbyssCores } from './boss-loot';
-import { affixDef, GEAR_GUARD_SHARE, rollOption, refineOption } from '../data/gear';
+import { affixDef, GEAR_GUARD_SHARE, rollOption, refineOption, optionAtQuality, rarityQuality, HEIR_ROLL_TOP, ROLL_MIN, ROLL_SPAN } from '../data/gear';
 /** v3.303 체력 · 방어 · 마방 · 마나 몫이 첫째 수치(value)인 옵션 · 둘째 수치(value2)인 옵션. */
 const GUARD_FIRST = new Set(['vigor', 'plating', 'ward', 'guardian', 'flow', 'wellspring', 'bulwark']), GUARD_SECOND = new Set(['guardian', 'berserk', 'glassCannon', 'bloodPact']);
-import { SAVE_VERSION, PENETRATION } from '../data/balance';
+import { SAVE_VERSION, PENETRATION, RARITIES } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
@@ -404,6 +404,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     }
     // v3.367 코프룰루 사냥터 8곳이 BASE_STAGES 뒤(무리 서식지 앞)에 들어가 옛 서식지 index(14~22)가 8 밀렸습니다. 가장 멀리 간 사냥터가 서식지였던 세이브만 옮깁니다.
     if (!s.kopruluStagesShifted) { if ((s.bestStage || 0) >= 14) s.bestStage += 8; s.kopruluStagesShifted = true; }
+    if (!s.overclockRescaled) { fixOverclockSpeed(s); s.overclockRescaled = true; }
     if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
     const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;
@@ -517,6 +518,24 @@ function boostPenetrationAffixes(s: State) {
 }
 
 /** v3.119 마력(flow) 옵션: 둘째 수치(턴당 마나 회복)를 최대 마나와 같은 굴림의 위력 비례 값으로 다시 맞춥니다. 1 미만으로 붙은 줄만 고치므로 여러 번 불러도 같습니다. */
+/**
+ * v3.371 과부하(overclock) 줄의 속도 바로잡기: v3.367~370에는 flat(장비 위력 × 5)로 굴러 속도가 수천~1만으로 붙었습니다(속도는 신속처럼 고정 폭이어야 함).
+ * 옛 수치 ÷ 위력으로 굴림 위치(0~1.5)를 되찾아 percent 공식으로 다시 만듭니다. 체력 손해(value2)는 원래 위력 비례 고정이라 그대로 둡니다.
+ * 이미 고정 폭 범위 안(최고 굴림 이하)인 줄은 손대지 않습니다(한 번만, overclockRescaled).
+ */
+export function fixOverclockSpeed(s: State) {
+    const def = affixDef('overclock');
+    if (!def?.base) return;
+    const top = def.base * (ROLL_MIN + ROLL_SPAN * HEIR_ROLL_TOP) * rarityQuality(RARITIES.length - 1);
+    for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})])
+        for (const x of item?.affixes || []) {
+            if (x.id !== 'overclock' || x.rule || !(x.value > top + 1e-9)) continue;
+            const rarity = x.srcRarity ?? item!.rarity, power = Math.max(1, item!.power || 1);
+            const roll = x.value / (power * def.base * rarityQuality(rarity));
+            const quality = Math.min(HEIR_ROLL_TOP, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
+            x.value = optionAtQuality(def, power, rarity, item!.level || 1, quality).value;
+        }
+}
 export function fixFlowRegen(s: State) {
     const def = affixDef('flow');
     if (!def?.base || !def.base2) return;

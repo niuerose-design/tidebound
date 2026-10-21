@@ -5,7 +5,7 @@
     { "id": "lucky", "field": "id", "rule": 2, "note": "기존 옵션 lucky(행운)와 id 충돌 → goldenHand(황금 손)로 변경." },
     { "id": "medal", "field": "description", "rule": 2, "note": "태초 전용 옵션 3개의 첫 문장이 같아 문장 순서를 바꿈(overdrive·refinery도)." },
     { "id": "lineage", "field": "affix.kind", "rule": 6, "note": "masteryFlat·rankFlat은 기존 drill·valor처럼 fixed 고정값. kind를 percent로 둔 것은 flat이면 power를 곱해 버리기 때문(기존 코드와 같은 취급)." },
-    { "id": "overclock", "field": "affix", "rule": 6, "note": "양날 옵션의 손해 쪽(stat2)은 기존 berserk처럼 음수 고정값. speed는 flat 정수." }
+    { "id": "overclock", "field": "affix", "rule": 6, "note": "양날 옵션의 손해 쪽(stat2)은 기존 berserk처럼 음수 고정값. speed는 기존 swift·nimble·bulwark 손해처럼 고정 폭이라 kind는 percent(flat이면 위력을 곱해 +10000이 됨 → v3.371에서 바로잡음)." }
   ],
   "checks": {
     "1_ip": "해당 없음",

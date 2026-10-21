@@ -75,6 +75,7 @@ export function newState(now: number): State {
         losses: 0,
         bestStage: 0,
         kopruluStagesShifted: true,
+        overclockRescaled: true,
         lastOffline: null,
     };
     grantJobSkills(state);

@@ -4543,7 +4543,7 @@
     "effect_text": null,
     "affix": {
       "stat": "speed",
-      "kind": "flat",
+      "kind": "percent",
       "base": 5,
       "stat2": "hp",
       "base2": -1.2,

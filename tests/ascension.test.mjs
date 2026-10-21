@@ -981,3 +981,22 @@ test('v3.337 heir and relic gear can be dismantled once unprotected (bulk disman
     assert.throws(() => act(s, { type: 'dismantle', id: 'o1' }, 0), /칠흑/); assert.ok(s.inventory.some(i => i.id === 'o1'));
     assert.throws(() => act(s, { type: 'sell', id: 'o1' }, 0), /판매할 수 없/);
 });
+
+test('v3.371 overclock speed is a fixed-width (percent) roll, not power-scaled; old power-scaled lines are rescaled once to the same roll position', async () => {
+    const G = await L.load('data/gear'), M = await L.load('systems/migrations'), Eq = await L.load('systems/equipment');
+    const def = G.affixDef('overclock'); assert.equal(def.kind, 'percent'); assert.equal(def.stat, 'speed'); assert.equal(def.stat2, 'hp');
+    const lo = G.rollOption(def, 2000, 6, () => 0, 100), hi = G.rollOption(def, 2000, 6, () => 1, 100), small = G.rollOption(def, 10, 6, () => 1, 100);
+    assert.equal(lo.value, 6.6, 'min roll at primal: 5 × .6 × 2.2'); assert.equal(hi.value, 15.4, 'max roll at primal: 5 × 1.4 × 2.2');
+    assert.equal(hi.value, small.value, 'speed does not scale with power'); assert.equal(hi.value2, -2400, 'hp penalty is still power-scaled and fixed');
+    assert.ok(Eq.itemStats({ id: 'o', slot: 'rod', rarity: 6, power: 2000, level: 100, affixes: [hi] }).speed < 20, 'item speed stays in the fixed band');
+    // 옛 세이브: flat으로 굴러 5 × 2000 × 1.4 × 2.2 = 30800이던 줄은 같은 굴림 위치(최고)인 15.4로, 체력 손해는 그대로.
+    const s = newState(0); s.overclockRescaled = false;
+    const old = { id: 'x', name: 'x', slot: 'rod', style: 'balanced', rarity: 6, level: 100, power: 2000, affixes: [{ id: 'overclock', name: '과부하', stat: 'speed', value: 30800, stat2: 'hp', value2: -2400 }, { id: 'swift', name: '신속', stat: 'speed', value: 4 }] };
+    const mid = { ...old, id: 'y', rarity: 4, power: 800, affixes: [{ id: 'overclock', name: '과부하', stat: 'speed', value: Math.round(5 * 800 * 1 * 1.8), stat2: 'hp', value2: -960 }] };
+    const fresh = { ...old, id: 'z', affixes: [{ ...hi }] };
+    s.inventory = [old, mid]; s.equipment.rod = fresh; M.migrateState(s, 0);
+    assert.equal(old.affixes[0].value, 15.4); assert.equal(old.affixes[0].value2, -2400, 'hp penalty untouched'); assert.equal(old.affixes[1].value, 4, 'other speed lines untouched');
+    assert.equal(mid.affixes[0].value, 9, 'mid roll at myth: 5 × 1 × 1.8'); assert.equal(fresh.affixes[0].value, 15.4, 'already fixed-width lines untouched');
+    assert.equal(s.overclockRescaled, true); const once = JSON.stringify(old.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
+    assert.equal(newState(0).overclockRescaled, true, 'new saves start fixed');
+});
