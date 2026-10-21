@@ -52,6 +52,7 @@ type SetView = (v: string) => void;
  * 동기화 때만 바뀌는 구간(머리글 · 알림 · 지표 · 집중 사냥 · 전투 스킬)은 base를 받는 memo 컴포넌트라 프레임 · 연출 갱신에 다시 그리지 않고,
  * 스킬 연출 상태(useCombatFx)는 BattleArena 안에만 있어 타격마다 상대 카드 · 장면만 다시 그립니다.
  */
+/** v3.389 옛 자동 사냥 화면. 셸은 components/features/battle/BattleScreen 을 쓰고, 이 파일의 BattleArena(장면 · 조작 줄) · TargetStrip 만 아직 빌려 씁니다. 2차 PR 에서 옮긴 뒤 삭제. */
 export function BattleView({ s: base, frames, busy, send, setView, onSwitchSlot }: {
     onSwitchSlot?: (slot: number) => Promise<void>;
     s: State;
@@ -128,7 +129,7 @@ const SessionMetrics = memo(function SessionMetrics({ base: s }: { base: State }
 });
 
 /** 집중 사냥 대상 고르기(사냥터의 몬스터 탭). v3.218 사냥터 난이도 카드 안에 한 줄로 들어갑니다(inline). 난이도가 없는 첫 생에는 따로 한 줄. */
-const TargetStrip = memo(function TargetStrip({ base: s, busy, send, inline = false }: { base: State; busy: boolean; send: Send; inline?: boolean }) {
+export const TargetStrip = memo(function TargetStrip({ base: s, busy, send, inline = false }: { base: State; busy: boolean; send: Send; inline?: boolean }) {
     const st = stageById(s.stage)!, tier = encounterTier(s);
     return <div className={`battle-target-strip ${inline ? 'inline' : ''}`}><span><Target size={15}/> 집중 사냥</span><Tabs value={s.target || 'all'} onValueChange={id => send({ type: 'target', id })}><TabsList><TabsTrigger value="all" disabled={busy || !!s.dungeon}>무작위</TabsTrigger>{st.monsters.map(id => { const f = monsterById(id), need = f?.minTier || 0, locked = need > tier; return <TabsTrigger value={id} key={id} disabled={busy || !!s.dungeon || locked} title={locked ? `사냥터 난이도 ${need}부터 나타나는 몬스터입니다. 지금 난이도 ${tier}.` : undefined}>{f?.name}{locked ? ` · 난이도 ${need}+` : ''}</TabsTrigger>; })}</TabsList></Tabs></div>;
 });
@@ -190,7 +191,7 @@ function SkillHotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; set
  * v3.247 장면에는 나(왼쪽 아래) · 몬스터(오른쪽) · 연출 · 전투 기록 · 전용 HUD만 두고, 사냥터 이름 · 단계 · 출현 문구와 조작 버튼은 아래 카드로 옮겼습니다.
  * v3.250 아래 카드는 사냥터 이름과 조작만 남긴 얇은 줄. 몬스터 정보(성향 · 대응법 · 명중률 · 회피율)는 장면의 몬스터 이름을 눌러 봅니다.
  */
-function BattleArena({ s, playerStats, busy, send, setView }: { s: State; playerStats: CombatStats; busy: boolean; send: Send; setView: SetView }) {
+export function BattleArena({ s, playerStats, busy, send, setView }: { s: State; playerStats: CombatStats; busy: boolean; send: Send; setView: SetView }) {
     const st = stageById(s.stage)!, d = dungeonById(s.dungeon?.id);
     const enemy = s.enemy;
     const enemyStats = enemy ? normalizeStats(enemy.combatStats || { hp: enemy.maxHp, attack: enemy.attack, defense: enemy.defense, crit: 0 }) : null;
