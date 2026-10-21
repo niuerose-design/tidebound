@@ -681,9 +681,9 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-bar { margin-bottom:16px; }
 .exp-columns { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:16px; margin-bottom:16px; }
 .exp-board-panel, .exp-bench-panel, .exp-shop-panel { padding:18px; }
-.exp-board { display:grid; grid-template-columns:44px repeat(4,minmax(0,1fr)); gap:6px; align-items:stretch; }
+.exp-board { display:grid; grid-template-columns:44px repeat(4,minmax(0,1fr)); gap:6px; align-items:stretch; padding:6px; margin:-6px; border-radius:8px; background:var(--exp-board-bg, transparent); }
 .exp-row-label { font-size:12px; color:#8fa6a4; display:flex; align-items:center; }
-.exp-cell { min-height:58px; border:1px dashed #3a5250; border-radius:6px; background:#0f2227; display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:2px; color:inherit; min-width:0; }
+.exp-cell { min-height:58px; border:1px dashed var(--exp-cell-border, #3a5250); border-radius:6px; background:var(--exp-cell-bg, #0f2227); display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:2px; color:inherit; min-width:0; }
 .exp-cell.empty { cursor:default; }
 /* 6단계 아이템: 칸 안의 본체 버튼 + 아이템 배지 + 고른 아이템 장착 버튼. */
 .exp-cell { position:relative; padding:0; }
@@ -801,13 +801,13 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 /* 12단계 전투 재생 · ★ 광채 */
 .exp-cell.star-3, .exp-fighter.star-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
 .exp-cell.star-2, .exp-fighter.star-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; }
-.exp-arena { margin-top:12px; padding:10px; border-radius:8px; background:radial-gradient(ellipse at 50% 45%, #15302e 0%, #0b1a1f 70%); border:1px solid #2a4a46; position:relative; overflow:hidden; }
+.exp-arena { margin-top:12px; padding:10px; border-radius:8px; background:var(--exp-arena-bg, radial-gradient(ellipse at 50% 45%, #15302e 0%, #0b1a1f 70%)); border:1px solid var(--exp-arena-border, #2a4a46); position:relative; overflow:hidden; }
 .exp-arena.won { border-color:#7fc48f; } .exp-arena.lost { border-color:#e08a7a; }
 .exp-arena-head { display:flex; justify-content:space-between; font-size:12px; color:#9dadaf; margin-bottom:6px; } .exp-arena-head b { color:#d7dec9; }
 .exp-arena-row { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:4px; margin:3px 0; }
 .exp-arena-vs { text-align:center; font-size:12px; letter-spacing:.2em; color:#5a6f71; margin:4px 0; }
 .exp-arena.won .exp-arena-vs { color:#7fc48f; font-weight:700; } .exp-arena.lost .exp-arena-vs { color:#e08a7a; font-weight:700; }
-.exp-fighter { position:relative; min-height:62px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 2px 5px; min-width:0; transition:opacity .4s, filter .4s; }
+.exp-fighter { position:relative; min-height:62px; border-radius:6px; background:var(--exp-cell-bg, #0f2227); border:1px solid var(--exp-cell-border, #1f3a3b); border-left:3px solid var(--rarity, #5a6f71); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:4px 2px 5px; min-width:0; transition:opacity .4s, filter .4s; }
 .exp-fighter.empty { background:transparent; border:1px dashed #1f3a3b; border-left:1px dashed #1f3a3b; min-height:62px; }
 .exp-fighter b { font-size:11px; line-height:1.15; text-align:center; word-break:keep-all; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
 .exp-fighter .hp { display:block; width:88%; height:4px; border-radius:2px; background:#1b2f30; overflow:hidden; } .exp-fighter .hp i { display:block; height:100%; background:linear-gradient(90deg,#5fa37a,#8fe0ab); transition:width .35s ease; }
@@ -904,3 +904,24 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
     .exp-cell, .exp-cell-main { min-height:52px; } .exp-cell b { font-size:11px; } .exp-equip { position:static; margin:0 3px 3px; }
     .exp-bench li { flex-direction:column; align-items:stretch; }
 }
+
+/* 23단계 보드 테마: 변수만 바꿉니다(능력치 없음). 보드 · 전투 화면 · 테마 카드 미리보기가 같은 변수를 씁니다. */
+.theme-tide { --exp-board-bg:linear-gradient(160deg, #0b2a3d, #0d1e33); --exp-cell-bg:#0f2a3e; --exp-cell-border:#3a7aa0; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #124a66 0%, #081a2b 70%); --exp-arena-border:#2f6f8f; }
+.theme-ember { --exp-board-bg:linear-gradient(160deg, #3a1a10, #1f0e0a); --exp-cell-bg:#2b1410; --exp-cell-border:#a0552e; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #5a2a14 0%, #1a0b08 70%); --exp-arena-border:#8f4a2a; }
+.theme-aurora { --exp-board-bg:linear-gradient(160deg, #15203f, #2a1440 60%, #0e2a2e); --exp-cell-bg:#1b1f3f; --exp-cell-border:#7a62c8; --exp-arena-bg:radial-gradient(ellipse at 30% 30%, #3a2a6a 0%, #0e2a2e 50%, #0a1226 80%); --exp-arena-border:#5f5aa0; }
+.theme-coral { --exp-board-bg:linear-gradient(160deg, #2e1830, #3a1f2a); --exp-cell-bg:#301a2e; --exp-cell-border:#d06a8a; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #5a2a4a 0%, #1a0b16 70%); --exp-arena-border:#a05070; }
+.theme-crown { --exp-board-bg:linear-gradient(160deg, #3a2e10, #1f1a08); --exp-cell-bg:#2e2510; --exp-cell-border:#e0b36a; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #5a4a1a 0%, #1a1408 70%); --exp-arena-border:#b08a3a; }
+.theme-abyss { --exp-board-bg:linear-gradient(160deg, #06080f, #0a0714); --exp-cell-bg:#0b0a16; --exp-cell-border:#4a3a7a; --exp-arena-bg:radial-gradient(ellipse at 50% 60%, #1a1030 0%, #030308 75%); --exp-arena-border:#2e2650; }
+.theme-legend { --exp-board-bg:linear-gradient(160deg, #0f2a22, #2a2310); --exp-cell-bg:#122a24; --exp-cell-border:#e0d36a; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #2a4a2a 0%, #2a2310 50%, #0b1a14 80%); --exp-arena-border:#a0a03a; }
+.exp-themes > summary, .exp-share > summary { cursor:pointer; color:#c9b68a; font-weight:600; font-size:12px; margin:0 0 6px; }
+.exp-theme-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; margin-top:6px; }
+.exp-theme-card { display:flex; flex-direction:column; gap:4px; padding:8px; border:1px solid var(--exp-cell-border, #3a5250); border-radius:8px; background:var(--exp-board-bg, #0f2227); color:inherit; cursor:pointer; text-align:left; min-width:0; }
+.exp-theme-card i { display:block; height:22px; border-radius:5px; background:var(--exp-arena-bg, radial-gradient(ellipse at 50% 45%, #15302e 0%, #0b1a1f 70%)); border:1px solid var(--exp-arena-border, #2a4a46); }
+.exp-theme-card b { font-size:12px; } .exp-theme-card small { font-size:10px; color:#9fb3b1; }
+.exp-theme-card.on { outline:2px solid #e0b36a; } .exp-theme-card.locked { opacity:.55; cursor:default; filter:grayscale(.5); }
+.exp-share-input { display:flex; gap:6px; margin-top:6px; } .exp-share-input input { flex:1; min-width:0; font-size:12px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; background:#0f2227; color:inherit; }
+.exp-target-now { margin:6px 0; padding:8px 10px; border:1px solid #5fa37a66; border-radius:6px; background:#0f2a22; font-size:12px; } .exp-target-now small { color:#9fb3b1; } .exp-target-now .button-row { margin-top:6px; }
+.exp-target-line { margin:6px 0 0; font-size:12px; color:#c5d8d2; }
+.exp-card { position:relative; }
+.exp-card.target { border-color:#e0b36a; box-shadow:inset 0 0 0 1px #e0b36a44; } .exp-card .exp-target-badge { position:absolute; top:4px; right:6px; font-size:12px; }
+.exp-guild-board { margin-top:14px; } .exp-guild-board h3 { display:flex; align-items:center; gap:6px; font-size:14px; margin:0 0 4px; }

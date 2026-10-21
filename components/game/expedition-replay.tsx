@@ -13,7 +13,7 @@ import { OnyxArt } from './onyx-art';
 
 export const UnitArt = ({ def, size }: { def: UnitDef; size: number }) => def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>;
 
-type Props = { board: ExpeditionPlaced[]; foe: ExpeditionPlaced[]; frames: ReplayFrame[]; turns: number; won: boolean; opponent?: string; truncated?: boolean; onClose: () => void };
+type Props = { board: ExpeditionPlaced[]; foe: ExpeditionPlaced[]; frames: ReplayFrame[]; turns: number; won: boolean; opponent?: string; truncated?: boolean; /** 23단계: 보드 테마 id(색만 바꿈). */ theme?: string; onClose: () => void };
 const BASE_MS = 420;
 
 /** 프레임 step까지 적용한 체력 %(처음 100). */
@@ -31,7 +31,7 @@ function caption(f: ReplayFrame | undefined, name: (k: string) => string) {
     return `${f.t}턴 · ${name(f.a)} ${what} → ${name(f.d || '')}${f.v ? ` ${f.v}` : ''}${f.c ? ' 치명' : ''}${f.k ? ' · 처치' : ''}`;
 }
 
-export function BattleReplay({ board, foe, frames, turns, won, opponent, truncated, onClose }: Props) {
+export function BattleReplay({ board, foe, frames, turns, won, opponent, truncated, theme, onClose }: Props) {
     const reduce = useMemo(() => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
     const [step, setStep] = useState(() => reduce ? frames.length - 1 : -1);
     const [playing, setPlaying] = useState(!reduce);
@@ -62,7 +62,7 @@ export function BattleReplay({ board, foe, frames, turns, won, opponent, truncat
         </div>;
     };
     const grid = (side: 'a' | 'b', list: ExpeditionPlaced[], order: ('front' | 'back')[]) => order.map(row => <div key={row} className="exp-arena-row">{[0, 1, 2, 3].map(col => { const hit = list.map((p, i) => [p, i] as const).filter(([p]) => p.row === row)[col]; return hit ? cell(`${side}${hit[1]}`, hit[0]) : <div key={`${row}${col}`} className="exp-fighter empty"/>; })}</div>);
-    return <div className={`exp-arena${ended ? (won ? ' won' : ' lost') : ''}`} aria-label="전투 재생">
+    return <div className={`exp-arena theme-${theme || 'default'}${ended ? (won ? ' won' : ' lost') : ''}`} aria-label="전투 재생">
         <div className="exp-arena-head"><b>{opponent ? `${opponent}의 원정대` : '웨이브'}</b><span>{cur ? `${Math.max(1, cur.t)} / ${turns}턴` : `${turns}턴`}</span></div>
         <div className="exp-arena-side theirs">{grid('b', foe, ['back', 'front'])}</div>
         <div className="exp-arena-vs">{ended ? (won ? '승리' : '패배') : 'VS'}</div>

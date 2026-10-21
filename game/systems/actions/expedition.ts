@@ -6,7 +6,7 @@ import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOL
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
-    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue } from '../../data/expedition';
+    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
@@ -222,7 +222,8 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     // 15단계: 도전 기록 · 최근 판 요약.
     const feats = featsOf(r); for (const id of feats) (s.expeditionFeats ??= {})[id] = (s.expeditionFeats[id] || 0) + 1;
     const reached = Math.min(r.round, EXPEDITION.rounds + abyss + (r.last?.won === false && isAbyssRound(r.round) ? 1 : 0));
-    (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why, ...(diff.level > 1 ? { difficulty: diff.level } : {}) }); s.expeditionRecent.splice(8);
+    const code = r.board.length ? encodeBoard(r.board, { set: r.set, augments: r.augments, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins }) : '';
+    (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why, ...(diff.level > 1 ? { difficulty: diff.level } : {}), ...(code ? { code } : {}) }); s.expeditionRecent.splice(8);
     addLog(s, `원정대 ${why}${diff.level > 1 ? ` · ${diff.icon} ${diff.name}(보상 ×${diff.reward})` : ''} · ${r.wins}승 · 세계석 +${reward}${cleared ? ` (완주 +${EXPEDITION.clearPearls})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${actPearls})` : ''}${abyss ? ` (심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${abyssBonus}` : ''})` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
 }
 
@@ -385,6 +386,23 @@ export const expeditionActions: ActionHandlers = {
     },
     expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, r.cleared ? (r.abyss ? `심연 ${r.abyss}라운드 뒤 마침` : '완주 뒤 마침') : `${r.round}라운드에서 포기`); },
     /** 21단계 원정 명성: 숙련 50(최대)이고 진행 중인 판이 없을 때. 숙련을 1로 되돌리고 명성 +1(다음 주기 경험치 요구 +20%, 세계석 보상 +2%). */
+    /** 23단계: 공유 코드를 목표 보드로 삼기(빈 값이면 해제). 상점에 ‘목표’ 표시가 붙고 모은 수를 보여 줍니다. */
+    expeditionSetTarget(s, { a }) {
+        const code = String(a.value || '').trim();
+        if (!code) { delete s.expeditionTarget; return; }
+        const shared = decodeBoard(code);
+        if (!shared) throw new Error('알 수 없는 공유 코드입니다. TB1.로 시작하는 코드를 붙여 넣어 주세요.');
+        s.expeditionTarget = { code: encodeBoard(shared.units, { set: shared.set, augments: shared.augments, round: shared.round, wins: shared.wins }), units: shared.units, ...(shared.set ? { set: shared.set } : {}), ...(shared.augments.length ? { augments: shared.augments } : {}), ...(shared.wins ? { wins: shared.wins } : {}), ...(shared.round ? { round: shared.round } : {}) };
+        addLog(s, `🎯 목표 보드를 정했습니다 · ${shared.units.map(u => `${unitById(u.unit)?.name || u.unit}${u.star > 1 ? `★${u.star}` : ''}`).join(' · ')}`, 'system');
+    },
+    /** 23단계: 보드 테마 고르기(해금된 것만). */
+    expeditionTheme(s, { a }) {
+        const t = themeById(String(a.value || ''));
+        if (t.id !== String(a.value || '')) throw new Error('없는 테마입니다.');
+        if (!t.unlocked(s)) throw new Error(`${t.name} 테마는 아직 잠겨 있습니다: ${t.how}`);
+        s.expeditionTheme = t.id === 'default' ? undefined : t.id;
+        if (!s.expeditionTheme) delete s.expeditionTheme;
+    },
     expeditionRenown(s) {
         if (s.expedition && !s.expedition.done) throw Error('진행 중인 원정을 마친 뒤 올릴 수 있습니다.');
         const m = s.expeditionMastery; if (!m || m.level < MASTERY_MAX) throw Error(`원정 숙련 ${MASTERY_MAX}이 되어야 명성을 올릴 수 있습니다.`);
