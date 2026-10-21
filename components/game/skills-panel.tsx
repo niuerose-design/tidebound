@@ -1,4 +1,5 @@
 'use client';
+/** v3.385 새 스킬 화면(components/features/skills/skills-screen.tsx, #skills)으로 교체되어 더는 쓰지 않습니다. 브리프 9절 규칙대로 한 버전 뒤(v3.386)에 지웁니다. */
 import type { PanelProps } from './panel-props';
 import { ConfirmButton } from './confirm-button';
 import { PROGRESSION } from '@/game/data/progression';
