@@ -938,7 +938,7 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };
-    /** v3.210 LV1 모험가(테스트용)는 v3.375에 삭제됐습니다. 걸린 채 저장된 세이브를 되돌리는 migrations(restoreLv1Vow)만 읽습니다. */
+    /** v3.210 LV1 모험가(테스트용)는 v3.376에 삭제됐습니다. 걸린 채 저장된 세이브를 되돌리는 migrations(restoreLv1Vow)만 읽습니다. */
     lv1?: { level: number; exp: number; attributes: Record<Attribute, number>; statPoints: number } };
 /** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {

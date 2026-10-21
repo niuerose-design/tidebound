@@ -524,7 +524,7 @@ function boostPenetrationAffixes(s: State) {
  * 옛 수치 ÷ 위력으로 굴림 위치(0~1.5)를 되찾아 percent 공식으로 다시 만듭니다. 체력 손해(value2)는 원래 위력 비례 고정이라 그대로 둡니다.
  * 이미 고정 폭 범위 안(최고 굴림 이하)인 줄은 손대지 않습니다(한 번만, overclockRescaled).
  */
-/** v3.375 LV1 모험가(테스트용 서약, v3.210) 삭제: 걸린 채 저장된 세이브는 보관해 둔 레벨 · 경험치 · 능력치 배분으로 되돌리고, 기록 필드(lv1AbyssBest)는 지웁니다. */
+/** v3.376 LV1 모험가(테스트용 서약, v3.210) 삭제: 걸린 채 저장된 세이브는 보관해 둔 레벨 · 경험치 · 능력치 배분으로 되돌리고, 기록 필드(lv1AbyssBest)는 지웁니다. */
 export function restoreLv1Vow(s: State) {
     const saved = s.vows?.lv1;
     if (saved) {

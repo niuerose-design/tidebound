@@ -14,7 +14,7 @@ import type { Skill } from '../types';
  */
 type NewJob = Omit<Job, 'masteryTarget' | 'masteryBoost'> & Partial<Pick<Job, 'masteryTarget' | 'masteryBoost'>>;
 const neutral = { attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0 };
-/** v3.375 코프룰루 구역은 사냥터(환생 50회)와 전직 조건을 맞춥니다: 1~3차는 환생 50회부터, 4 · 5차는 보스 던전(함교 52 · 군체의 심장 62)과 같은 횟수. 환생 50회 전에는 계보를 미리 볼 수만 있습니다. */
+/** v3.376 코프룰루 구역은 사냥터(환생 50회)와 전직 조건을 맞춥니다: 1~3차는 환생 50회부터, 4 · 5차는 보스 던전(함교 52 · 군체의 심장 62)과 같은 횟수. 환생 50회 전에는 계보를 미리 볼 수만 있습니다. */
 export const KOPRULU_REBIRTH = 50, KOPRULU_T4_REBIRTH = 52, KOPRULU_T5_REBIRTH = 62;
 const T4 = { level: 55, rebirth: KOPRULU_T4_REBIRTH, mastery: 300, masteryTarget: 20000, masteryBoost: .32 };
 const T5 = { level: 70, rebirth: KOPRULU_T5_REBIRTH, mastery: 600, masteryTarget: 30000, masteryBoost: .35 };

@@ -132,6 +132,15 @@ export default function AdminPage() {
         if (d) { setEvents(d); setDone('이벤트를 저장했습니다. 유저 화면에는 최대 1분 안에 반영됩니다.'); setDraft({ name: '', from: '', until: '', exp: '1', gold: '1', drop: '1', mastery: '1', mimic: '1', nuri: '1' }); }
     };
     const removeEvent = async (id: string) => { if (!confirm('이 이벤트를 삭제할까요?')) return; const d = await call({ action: 'deleteEvent', id }); if (d) setEvents(d); };
+    // v3.375 세이브 익명 내보내기: JSON 파일로 내려받습니다(tests/fixtures/saves/ 에 두고 마이그레이션 · 골든 테스트의 입력으로 씀).
+    const [fxLimit, setFxLimit] = useState('20'), [fxMinLevel, setFxMinLevel] = useState('10');
+    const exportFixtures = async () => {
+        const d = await call({ action: 'exportFixtures', limit: Number(fxLimit) || 20, minLevel: Number(fxMinLevel) || 1 });
+        if (!d) return;
+        const blob = new Blob([JSON.stringify(d, null, 1)], { type: 'application/json' }), url = URL.createObjectURL(blob), a = document.createElement('a');
+        a.href = url; a.download = `saves-${d.build}-${d.exportedAt.slice(0, 10)}.json`; a.click(); URL.revokeObjectURL(url);
+        setDone(`세이브 ${d.count}개를 익명으로 내려받았습니다(이름 · 계정 · 길드 · 상대 기록 제거).`);
+    };
     const loadStats = async () => { const d = await call({ action: 'stats' }); if (d) setStats(d); const x = await call({ action: 'expedition' }); if (x) setExpedition(x); };
     const [expedition, setExpedition] = useState<{ players: number; runs: number; clears: number; wins: number; ghostFights: number; ghostWins: number; rounds: { round: number; plays: number; wins: number; rate: number }[]; units: { id: string; name: string; count: number }[]; comps?: { key: string; name: string; plays: number; wins: number; rate: number }[] } | null>(null);
     /** v27.69 제단 초기화: 공물(게이지 기여도) 또는 신(깨어난 신·신의 자리·몫). */
@@ -247,6 +256,13 @@ export default function AdminPage() {
         </>}
 
         {tab === 'stats' && stats && <>
+            <Fold title="세이브 익명 내보내기 (재설계 픽스처)" open={false} note="이름 · 계정 · 길드 · 상대 기록을 지운 JSON. tests/fixtures/saves/ 에 둡니다.">
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                    <label style={{ fontSize: 13 }}>최대 개수 <input value={fxLimit} onChange={e => setFxLimit(e.target.value)} inputMode="numeric" style={{ width: 70 }}/></label>
+                    <label style={{ fontSize: 13 }}>최소 레벨 <input value={fxMinLevel} onChange={e => setFxMinLevel(e.target.value)} inputMode="numeric" style={{ width: 70 }}/></label>
+                    <button className="primary" disabled={busy || !key} onClick={() => void exportFixtures()}>JSON 내려받기</button>
+                </div>
+            </Fold>
             {expedition && <Fold title="원정대(오토배틀러)" note={`${expedition.players}명 · ${format(expedition.runs)}판 · 완주 ${format(expedition.clears)} · 고스트 ${expedition.ghostFights ? `${Math.round(100 * expedition.ghostWins / expedition.ghostFights)}%(${expedition.ghostFights}전)` : '없음'}`} open={false}>
                 <div style={grid(150)}>
                     <Tile label="판 수" value={format(expedition.runs)} note={`완주율 ${expedition.runs ? Math.round(100 * expedition.clears / expedition.runs) : 0}% · 판당 ${expedition.runs ? (expedition.wins / expedition.runs).toFixed(1) : '0'}승`}/>
