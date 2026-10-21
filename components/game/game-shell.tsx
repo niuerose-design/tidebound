@@ -46,7 +46,8 @@ const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
 const SlotsPanel = lazyPanel(() => import('@/components/features/legacy').then(m => m.SlotsScreen));
 const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
 const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
-const UpdateLog = lazyPanel(() => import('./update-log-panel').then(m => m.UpdateLog));
+// v3.399 재설계 4단계: 통계 · 전투 기록 · 업데이트 내역(새 토대).
+const UpdateLog = lazyPanel(() => import('@/components/features/records').then(m => m.UpdatesScreen));
 // v3.384 재설계 4단계 세 번째 화면: 장비 보관함(새 토대). 옛 inventory-panel 은 상점 강화 탭 · 환생 화면이 아직 써서 남겨 둡니다.
 const Inventory = lazyPanel(() => import('@/components/features/inventory/inventory-screen').then(m => m.InventoryScreen));
 // v3.393 재설계 4단계: 상점 · 던전 주화 상점(새 토대).
@@ -67,9 +68,9 @@ const Character = lazyPanel(() => import('@/components/features/character').then
 const Cosmetics = lazyPanel(() => import('@/components/features/character').then(m => m.CosmeticsScreen));
 // v3.382 재설계 4단계 두 번째 화면: 도감(새 토대). 옛 collection-panel 은 다음 버전에 삭제.
 const Collection = lazyPanel(() => import('@/components/features/codex/codex-screen').then(m => m.CodexScreen));
-const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
+const Stats = lazyPanel(() => import('@/components/features/records').then(m => m.StatsScreen));
 const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
-const BattleRecordsPanel = lazyPanel(() => import('./battle-records-panel').then(m => m.BattleRecordsPanel));
+const BattleRecordsPanel = lazyPanel(() => import('@/components/features/records').then(m => m.RecordsScreen));
 // v3.381 재설계 4단계 첫 화면: 설정(토큰 · shadcn · 게임 범용 조각으로 새로 만든 화면).
 const SettingsScreen = lazyPanel(() => import('@/components/features/settings/settings-screen').then(m => m.SettingsScreen));
 export default function GameShell() {
