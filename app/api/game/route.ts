@@ -23,7 +23,7 @@ export async function POST(req: Request) { try {
     // v3.18 해킹 실행은 서버 공유 설정에 써야 해서 /api/hack에서만 받습니다.
     if (a.type === 'hackRun') throw new ApiError('해킹은 해킹 화면에서 실행하세요.');
     // 원정대 3단계: 고스트 상대는 서버가 고릅니다(화면이 보낸 value는 버림). 2라운드부터, 같은 라운드 보드를 가진 다른 플레이어 행에서.
-    if (a.type === 'expeditionFight') { const g = await pickGhosts(monthKey(Date.now()), id).catch(() => ({})); a.value = Object.keys(g).length ? JSON.stringify(g) : undefined; }
+    if (a.type === 'expeditionFight') { const g = await pickGhosts(monthKey(Date.now()), id).catch(() => ({} as Record<string, never>)); a.value = Object.keys(g).some(k => k !== 'pool') ? JSON.stringify(g) : undefined; }
     // 원정대 9단계: 출발 때 지난달 시즌 정산을 서버가 계산해 넣습니다(화면이 보낸 value는 버림). 이미 받은 시즌이면 핸들러가 건너뜁니다.
     // 21단계: 주간 리그 정산도 함께 묶어 보냅니다({ season, league }).
     if (a.type === 'expeditionStart') { const [settle, league] = await Promise.all([settleExpeditionSeason(id, Date.now()).catch(() => null), settleLeague(id, Date.now()).catch(() => null)]); a.value = settle || league ? JSON.stringify({ season: settle, league }) : undefined; }

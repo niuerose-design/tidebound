@@ -6,11 +6,11 @@ import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOL
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
-    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement } from '../../data/expedition';
+    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
-import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
+import { rollShop, rollWave, battle, frontRole, activeTraits, WAVE_BUDGET } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
 import type { ActionHandlers } from './types';
@@ -139,17 +139,21 @@ function gainMastery(s: State, r: ExpeditionRun, cleared: boolean) {
 }
 const statsOf = (s: State): ExpeditionStats => s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: Array(EXPEDITION.rounds + 1).fill(0), roundWins: Array(EXPEDITION.rounds + 1).fill(0), units: {}, ghostFights: 0, ghostWins: 0 };
 /** 3단계: 서버가 a.value에 실어 보낸 라운드별 고스트(다른 플레이어 보드)에서 이 라운드 것을 읽습니다. 모양이 맞지 않으면 무시. */
-export function parseGhost(value: string | undefined, round: number): ExpeditionGhost | null {
+export function parseGhost(value: string | undefined, round: number, seen?: Record<string, number>): ExpeditionGhost | null {
     if (!value) return null;
     try {
-        const g = (JSON.parse(value) as Record<number, ExpeditionGhost>)?.[round];
+        const parsed = JSON.parse(value) as Record<string, ExpeditionGhost | ExpeditionGhost[] | number>;
+        const pool = typeof parsed.pool === 'number' ? Math.max(0, Math.floor(parsed.pool)) : undefined;
+        // 22단계: 라운드마다 후보가 여럿이면 이 판에서 가장 적게 만난 계정을 고릅니다(같은 상대 반복 완화).
+        const raw = parsed[round], list = (Array.isArray(raw) ? raw : raw ? [raw] : []) as ExpeditionGhost[];
+        const g = [...list].sort((x, y) => (seen?.[x.account || x.name] || 0) - (seen?.[y.account || y.name] || 0))[0];
         if (!g || typeof g.name !== 'string' || !Array.isArray(g.board) || !g.board.length || g.board.length > 8) return null;
         if (!g.board.every(p => p && unitById(p.unit) && [1, 2, 3].includes(p.star) && (p.row === 'front' || p.row === 'back') && (p.item === undefined || itemById(p.item)))) return null;
         const wins = Number.isInteger(g.wins) && g.wins! >= 0 && g.wins! <= EXPEDITION.rounds + ABYSS.max ? g.wins : 0;
         // 17단계: 상대의 전투 보정(서버가 스냅샷의 증강 · 규칙 · 숙련으로 계산). 범위를 잘라 받고, 증강 id는 표시용으로 아는 것만.
         const mods = g.mods && typeof g.mods === 'object' ? combatMods(g.mods) : undefined;
         const augments = Array.isArray(g.augments) ? g.augments.filter(id => typeof id === 'string' && augmentById(id)).slice(0, 8) : [];
-        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins, ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) };
+        return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins, ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}), ...(typeof g.account === 'string' ? { account: g.account.slice(0, 64) } : {}), ...(pool !== undefined ? { pool } : {}) };
     } catch { return null; }
 }
 /** 19단계 보스 코어 조각: 보스를 이기면 확률로 조각, per개가 모이면 본편 보스 코어로(획득 · 각성). 돌려주는 값은 떨어진 코어 id. */
@@ -172,6 +176,19 @@ export function linkCodex(s: State, unitId: string) {
     s.expeditionCodexLinked[unitId] = tier; s.book[def.monster] = (s.book[def.monster] || 0) + added;
     addLog(s, `원정 도감 ${CODEX_TIERS[tier - 1].name} · ${def.name} → 본편 도감 ${def.name} 처치 +${added}(연구가 빨라집니다)`, 'reward');
     return added;
+}
+/** 22단계 고스트 보호: 상대 보드 가치가 그 라운드 웨이브 예산(난이도 반영) × capMult를 넘으면 ★을 낮추고, 그래도 넘으면 가치가 낮은 유닛부터 뺍니다(최소 1명). 바뀌었으면 scaled. */
+export function capGhostBoard(board: ExpeditionPlaced[], round: number, difficulty = 1): { board: ExpeditionPlaced[]; scaled: boolean } {
+    const cap = Math.round(WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)] * difficultyOf(difficulty).budget * GHOST_GUARD.capMult);
+    const out = board.map(p => ({ ...p })); let scaled = false;
+    const value = (p: ExpeditionPlaced) => (unitById(p.unit)?.cost || 0) * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1);
+    while (boardValue(out) > cap) {
+        const starred = out.filter(p => p.star > 1).sort((a, b) => value(b) - value(a))[0];
+        if (starred) { starred.star = (starred.star - 1) as 1 | 2; scaled = true; continue; }
+        if (out.length <= 1) break;
+        const weakest = [...out].sort((a, b) => value(a) - value(b))[0]; out.splice(out.indexOf(weakest), 1); scaled = true;
+    }
+    return { board: out, scaled };
 }
 /** 15단계 도전 기록: 완주 판의 12라운드 보드와 흐름으로 판정합니다. */
 export function featsOf(r: ExpeditionRun): string[] {
@@ -285,10 +302,16 @@ export const expeditionActions: ActionHandlers = {
         if (r.augmentOffer?.length) throw Error('증강을 하나 고른 뒤 전투하세요.');
         const mods = runMods(r);
         // 10단계: 막 보스 라운드(4 · 8 · 12)는 고스트 없이 보스 웨이브.
-        const boss = isBossRound(r.round), abyss = isAbyssRound(r.round), ghost = r.round >= 2 && !boss && !abyss ? parseGhost(a.value, r.round) : null, useGhost = !!ghost && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance);
-        const wave = useGhost ? ghost!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : undefined);
+        // 22단계 고스트 보호: 후보가 적으면 확률을 낮추고, 같은 상대는 한 판에 2번까지, 보드가 라운드 기준보다 세면 ★을 낮춥니다.
+        const boss = isBossRound(r.round), abyss = isAbyssRound(r.round), ghost = r.round >= 2 && !boss && !abyss ? parseGhost(a.value, r.round, r.ghostSeen) : null;
+        const ghostKey = ghost ? ghost.account || ghost.name : '', seenCount = ghostKey ? (r.ghostSeen?.[ghostKey] || 0) : 0;
+        const poolScale = ghost?.pool !== undefined ? Math.max(GHOST_GUARD.poolMinChance, Math.min(1, ghost.pool / GHOST_GUARD.poolFull)) : 1;
+        const useGhost = !!ghost && seenCount < GHOST_GUARD.maxSameRun && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance) * poolScale;
+        const capped = useGhost ? capGhostBoard(ghost!.board, r.round, r.difficulty || 1) : null;
+        if (useGhost) (r.ghostSeen ??= {})[ghostKey] = seenCount + 1;
+        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : undefined);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
-        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}), ...(capped?.scaled ? { scaled: true } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
         if (r.augments?.length) (r.augHistory ??= {})[r.round] = [...r.augments];
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
