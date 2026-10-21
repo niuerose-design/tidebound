@@ -1,7 +1,6 @@
 /* 전투 HUD와 전투 연출. */
 /* Battle HUD — the combat view is intentionally denser than the management screens. */
 .battle-workspace{max-width:1900px;padding-left:25px;padding-right:25px}
-.battle-character-column .player-column{padding-top:0}
 .battle-character-column .player-panel>.section-title{margin-bottom:20px}
 .battle-console>.tide-selector{margin:0 0 11px;padding:11px 14px}
 .battle-console>.tide-selector h3{font-size:13px}
@@ -19,8 +18,8 @@
 .battle-stage-button.locked,.battle-dungeon-button.locked{opacity:.47}
 .battle-place-tabs button.active{background:#233b34;color:#e1e7d2;box-shadow:inset 0 0 0 1px #718f6c}
 @media(max-width:1500px){.battle-console .battle-scene{height:250px}}
-@media(max-width:900px){.battle-character-column .player-column{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:0}.battle-character-column .player-panel>.section-title{margin-bottom:12px}}
-@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:405px}.battle-character-column .player-column{display:block}}
+@media(max-width:900px){.battle-character-column .player-panel>.section-title{margin-bottom:12px}}
+@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:405px}}
 
 /* Battle HUD scale pass: give the selectors the same visual weight as the combat console. */
 .battle-workspace{max-width:2040px;padding-left:30px;padding-right:30px}
@@ -327,15 +326,10 @@
 @media(max-width:767px){.bonus-grid{grid-template-columns:1fr}}
 /* v25.19 변종 표식 */
 .variant-badge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;vertical-align:middle}
-.variant-giant{background:#3a2a1a;color:#f0b26b}.variant-abyssal{background:#1f1a3a;color:#b9a6ff}.variant-starlit{background:#1a2f3a;color:#9fe2ff}.variant-swarm{background:#1f3a2e;color:#a4e9ba}
-/* v25.19 보관함 더 보기 */
-.gear-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin:10px 0 14px;padding:11px;border:1px dashed #4b7365;border-radius:8px;background:#0f1f25;color:#a4e9ba;font-size:13px;cursor:pointer}
-.gear-more:hover{background:#14302a}.gear-more.muted{border-style:solid;color:#8ea7a4}
+.variant-giant{background:#3a2a1a;color:#f0b26b}.variant-abyssal{background:#1f1a3a;color:#b9a6ff}.variant-starlit{background:#1a2f3a;color:#9fe2ff}.variant-swarm{background:#1f3a2e;color:#a4e9ba}.gear-more.muted{border-style:solid;color:#8ea7a4}
 /* v25.20 낚시터 화면의 해역 난이도 스테퍼: 숫자가 세로로 꺾이지 않게 */
 .main-content>.tide-selector .button-row,.workspace .tide-selector .button-row{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
 .main-content>.tide-selector .button-row span,.workspace .tide-selector .button-row span{white-space:nowrap;min-width:48px;text-align:center}
-/* v25.20 능력치 화면 위 띠를 다른 화면의 재화 띠와 같은 모양으로 */
-.build-resource-bar{margin-bottom:22px}
 /* v3.242 능력치 자동 배분 스위치. */
 .build-resource-bar .auto-attr { justify-content:space-between; }
 .build-resource-bar .auto-attr small { display:block; margin-top:4px; font-size:12px; color:var(--muted); }

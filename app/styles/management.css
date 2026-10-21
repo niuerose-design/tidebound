@@ -7,14 +7,6 @@
 .port-resource-bar strong { display:block; margin-top:5px; color:var(--gold); font-size:28px; line-height:1.3; font-variant-numeric:tabular-nums; }
 .port-resource-bar strong small { font-size:13px; color:#a7b9b1; font-weight:400; }
 .port-tabs.game-tabs { margin-bottom:22px; }
-.appraisal-odds { display:flex; align-items:center; flex-wrap:wrap; gap:12px 22px; padding:0 2px 18px; font-size:13px; }
-.appraisal-odds>span { color:var(--muted); }
-.appraisal-odds b { font-weight:500; }
-.gamble-icon { display:flex; align-items:center; justify-content:center; width:66px; height:66px; border:1px solid #507361; border-radius:14px; background:#203b36; color:#c3d3ad; margin-bottom:5px; }
-.gamble-guarantee { font-size:12px; color:#a8bcb4; }
-.forge-actions { display:flex; flex-direction:column; gap:10px; margin-top:auto; }
-.forge-actions>p { margin:0 0 2px; }
-.forge-actions>button { width:100%; font-size:13px; }
 /* v3.78 환생 유물 탭: 규칙 칩 + 4열 카드(보유 중이면 지금 상태). */
 .relic-facts { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
 .relic-facts span { padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:#0f1d21; font-size:12px; color:#9fb5b2; }
@@ -38,36 +30,12 @@
 .relic-card .equipment-numbers { margin:6px 0 0; gap:6px; }
 .relic-card .equipment-numbers>span { font-size:13px; }
 .relic-card>button { width:100%; }
-/* v3.76 장비 작업대: 상점 강화 탭(부위 고르기 + 작업대)과 착용 장비 상세가 같은 틀을 씁니다. */
-.forge-picker { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
-.forge-pick { display:flex; align-items:center; gap:10px; min-width:0; padding:10px 12px; border:1px solid var(--border); border-top:2px solid var(--rarity); border-radius:10px; background:#0f1d21; color:inherit; text-align:left; cursor:pointer; }
-.forge-pick svg { color:var(--rarity); flex:none; }
-.forge-pick span { display:grid; min-width:0; flex:1; }
-.forge-pick small { font-size:11px; color:#8fa6a4; }
-.forge-pick b { font-size:13px; color:var(--rarity); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.forge-pick em { font-style:normal; font-size:12px; flex:none; }
 .forge-pick.on { background:#16302f; border-color:var(--rarity); box-shadow:inset 0 0 0 1px var(--rarity); }
-.forge-panel, .gear-slot-open { padding:18px 20px; border-top:2px solid var(--rarity); margin-bottom:14px; }
-.forge-head { display:flex; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid #9ab4b51a; }
-.forge-head>div { min-width:0; }
-.forge-head h2 { margin:0; font-size:18px; line-height:1.4; color:var(--rarity); }
-.forge-head small { font-size:12px; color:#8fa6a4; }
 .forge-head .text-button { margin-left:auto; }
 .forge-bench { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; margin-top:14px; }
-.forge-bench-info, .forge-bench-work { min-width:0; }
-.forge-bench-info .equipment-numbers { margin:12px 0; }
-.forge-desc { margin:0; font-size:13px; color:#b8cbc5; }
-.forge-star { display:grid; grid-template-columns:minmax(0,1fr); gap:8px; padding:12px 14px; border:1px solid #9ab4b52a; border-radius:10px; background:#0f1d21; }
-.forge-star-head { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
-.forge-star-head b { font-size:14px; }
 .forge-star .star-row { flex-wrap:nowrap; margin:0; }
 .forge-star .star-row i { flex:1 1 0; min-width:0; text-align:center; font-size:clamp(10px,1.4vw,16px); }
 .forge-star .star-odds { margin:0; }
-.forge-star .relic-imprint { margin:4px 0 0; }
-.forge-note { margin:0; font-size:12px; color:#7f9596; }
-.forge-rules summary { cursor:pointer; font-size:12px; color:#8fa6a4; }
-.forge-rules p { margin:6px 0 0; font-size:12px; line-height:1.6; color:#9fb5b2; }
-.gear-slot-open .gear-detail { padding:0; border-top:0; }
 .gear-slot:has(.gear-slot-item.open) { box-shadow:inset 0 0 0 1px var(--rarity); }
 .legacy-resource-bar { grid-template-columns:.8fr .8fr 1fr 1.3fr; }
 .legacy-resource-bar>div:last-child strong small { display:block; margin-top:4px; line-height:1.5; }
@@ -186,8 +154,6 @@
     .relic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }}
 @media (max-width:1000px) {
     .forge-bench { grid-template-columns:minmax(0,1fr); }
-    .forge-bench-work { order:-1; }
-    .forge-picker { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .forge-star .star-row i { font-size:clamp(10px,3.6vw,16px); }}
 @media (max-width:767px) {
     .relic-grid { grid-template-columns:minmax(0,1fr); }
@@ -407,18 +373,12 @@
 .research-plan-actions { display:inline-flex; gap:4px; flex-shrink:0; }
 .research-plan-empty { font-size:13px; color:#8faead; margin:0 0 10px; }
 .automation-note { font-size:12px; color:#8faead; margin:8px 0 0; }
-/* v3.58 감정 천장 · 각인 감정 · 자동 감정 */
-.appraisal-pity { display:flex; flex-wrap:wrap; gap:8px 20px; align-items:center; padding:0 2px 14px; font-size:13px; }
 .appraisal-pity .muted { color:var(--muted); font-size:12px; }
 .imprint-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
 .imprint-row label { display:grid; gap:4px; font-size:12px; color:var(--muted); min-width:160px; max-width:100%; }
 .imprint-row select { max-width:100%; min-width:0; }
-.draw-pick-desc { flex-basis:100%; font-size:12px; color:#9fb5b2; line-height:1.5; }
 .imprint-row label.check { display:flex; align-items:center; gap:6px; }
 .imprint-row select, .imprint-row input:not([type=checkbox]) { min-height:34px; }
-/* v3.60 장비 감정 하나(모든 부위) */
-
-.gamble-icon-row { display:flex; gap:10px; }
 
 /* 운영 도구: 화살표로 접었다 펴는 칸 · 도움말. */
 .admin-tool .admin-fold > summary, .admin-tool .admin-help > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; flex-wrap:wrap; user-select:none }
@@ -433,14 +393,10 @@
 .admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
 /* v3.72 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
 .shop-body { min-height:620px; }
-.draw-card { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; padding:26px; }
-.draw-head { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
-.draw-head h2 { margin:4px 0 0; font-size:24px; }
 .draw-desc { margin:0; min-height:3.6em; line-height:1.8; }
-.draw-controls { min-height:64px; align-items:end; }
 .draw-cost { margin:0; min-height:1.6em; }
 .draw-actions { min-height:44px; }
-@media(max-width:767px){ .gamble-count-row { grid-template-columns:minmax(0,1fr); } .shop-body { min-height:0; } .draw-desc { min-height:7.2em; } .draw-card { padding:20px; min-height:560px; align-content:start; }}
+@media(max-width:767px){ .gamble-count-row { grid-template-columns:minmax(0,1fr); } .shop-body { min-height:0; } .draw-desc { min-height:7.2em; }}
 /* v3.79 접었다 펴는 구역(Fold): 제목 줄 전체가 누름 단추, 오른쪽 화살표가 접히면 돌아갑니다. */
 .fold>summary { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
 .fold>summary::-webkit-details-marker { display:none; }
@@ -476,13 +432,6 @@
 .dungeon-coin-link { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
 .dungeon-coin-link b { color:var(--gold); }
 @media(max-width:767px){ .dungeon-coin-link { padding:12px 14px; } .dungeon-coin-link button { flex:1 1 100%; } .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; }}
-/* v3.206 보스 코어 탭: 타일(고르기) · 상세 칸 · 상자 줄 */
-.core-tab { display:grid; gap:14px; margin-top:14px; }
-.core-tiles { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
-.core-tile { position:relative; display:grid; justify-items:center; gap:6px; padding:14px 6px 12px; border:1px solid var(--border); border-radius:10px; background:#11242a; color:#c5d8d2; cursor:pointer; min-width:0; }
-.core-tile svg { color:#8fb7a9; }
-.core-tile small { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
-.core-tile em { font-style:normal; font-size:11px; color:#6f8688; }
 .core-tile.locked { opacity:.5; }
 .core-tile.locked svg { color:#5a6f71; }
 .core-tile.worn svg { color:#d6b879; }
@@ -491,31 +440,10 @@
 .core-tile.onyx small { color:#d9ccf7; }
 .core-tile.onyx.on { border-color:#b48cff; box-shadow:0 0 0 1px #b48cff55 inset; }
 .core-slot .core-slot-body strong .onyx-art { vertical-align:middle; margin-right:6px; }
-.core-tile-badge { position:absolute; top:5px; right:6px; font-size:11px; color:#d6b879; font-weight:600; }
-.core-pips { display:inline-flex; gap:3px; }
-.core-pips i { width:7px; height:7px; border-radius:50%; background:#2a4045; display:block; }
 .core-pips i.on { background:#d6b879; }
-.core-detail { padding:22px; display:grid; gap:14px; border-top:2px solid #5a6f71; }
 .core-detail.worn { border-top-color:#d6b879; }
-.core-detail header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-.core-detail h2 { font-size:20px; margin-top:4px; }
 .core-detail.locked h2 { color:#8fa6a4; }
-.core-detail header button { min-width:96px; }
-.core-effect { margin:0; font-size:14px; line-height:1.7; color:#c5d8d2; }
-.core-awaken { display:flex; align-items:center; gap:10px; font-size:13px; color:#9bb3b0; }
-.core-awaken small { color:#8fa6a4; }
-.core-lines { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
-.core-line { display:grid; grid-template-columns:1fr auto; gap:2px 10px; text-align:left; padding:12px 14px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:#c5d8d2; cursor:pointer; }
-.core-line span { font-size:13px; color:#9bb3b0; }
-.core-line b { grid-row:span 2; align-self:center; font-size:20px; color:var(--gold); font-variant-numeric:tabular-nums; }
-.core-line small { font-size:12px; color:#7f9596; }
 .core-line.on { border-color:#8fb7a9; background:#14302f; }
-.core-forge { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:8px; }
-.core-forge button { padding:10px 8px; font-size:13px; }
-.core-box { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; }
-.core-box p { margin:4px 0 0; font-size:13px; color:#a5b7b4; line-height:1.6; }
-.core-box button { flex-shrink:0; }
-@media(max-width:767px){ .core-tiles { grid-template-columns:repeat(5,minmax(0,1fr)); } .core-tile { padding:10px 2px 8px; } .core-tile small { font-size:11px; } .core-tile-badge { top:2px; right:3px; font-size:11px; } .core-detail { padding:18px; } .core-lines { grid-template-columns:minmax(0,1fr); } .core-box { flex-direction:column; align-items:stretch; }}
 /* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
 .mkt-up { color:#e8746b; }
 .mkt-down { color:#6fa8e6; }

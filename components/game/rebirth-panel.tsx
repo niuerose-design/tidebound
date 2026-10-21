@@ -20,7 +20,7 @@ import { Heading, Meter, SlotIcon, format, Num } from './shared';
 import type { PanelProps } from './panel-props';
 import type { State, Action } from '@/game/types';
 import { VOW_IDS, VOW_NAMES, VOW_RESEARCH, LEVELED_VOWS, type VowId, vowUnlocked, vowBoost, breathBonus, ROUGH, RESTRAINT } from '@/game/systems/vows';
-import { BonusList } from './inventory-panel';
+import { BonusList } from '@/components/features/inventory/parts';
 import { SUPPORT_EFFECTS, supportText, supportOf, isStaff } from '@/game/systems/support';
 import { accountBonusRows, SLOT_COUNT, slotUnlocked, VAULT_PEARL_OUT_WEEKLY, VAULT_ONYX_CAP, type VaultInfo } from '@/game/data/account';
 import { ownedOnyx } from '@/game/data/onyx';
