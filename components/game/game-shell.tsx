@@ -45,7 +45,7 @@ const SlotsPanel = lazyPanel(() => import('./slots-panel').then(m => m.SlotsPane
 const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
 const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
 const UpdateLog = lazyPanel(() => import('./update-log-panel').then(m => m.UpdateLog));
-// v3.383 재설계 4단계 세 번째 화면: 장비 보관함(새 토대). 옛 inventory-panel 은 상점 강화 탭 · 환생 화면이 아직 써서 남겨 둡니다.
+// v3.384 재설계 4단계 세 번째 화면: 장비 보관함(새 토대). 옛 inventory-panel 은 상점 강화 탭 · 환생 화면이 아직 써서 남겨 둡니다.
 const Inventory = lazyPanel(() => import('@/components/features/inventory/inventory-screen').then(m => m.InventoryScreen));
 const Shop = lazyPanel(() => import('./shop-panel').then(m => m.Shop));
 const DungeonShop = lazyPanel(() => import('./dungeon-shop-panel').then(m => m.DungeonShop));

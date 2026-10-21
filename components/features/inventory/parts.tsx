@@ -1,5 +1,5 @@
 'use client';
-/** v3.383 보관함 공용 조각: 장비 이름 줄 · 등급/상태 배지 · 전투력 변화 · 능력치 목록 · 작은 상자. */
+/** v3.384 보관함 공용 조각: 장비 이름 줄 · 등급/상태 배지 · 전투력 변화 · 능력치 목록 · 작은 상자. */
 import type { ReactNode } from 'react';
 import { Gem, Lock, Sparkles } from 'lucide-react';
 import type { Item, Stats } from '@/game/types';

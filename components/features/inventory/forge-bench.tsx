@@ -1,6 +1,6 @@
 'use client';
 /**
- * v3.383 장비 작업대(새 토대): 왼쪽 능력치 · 옵션(재설정 · 재련), 오른쪽 스타포스 · 자동 강화 · 레벨 · 비용 초기화 · 이식 · 계승. 좁은 화면은 위아래로.
+ * v3.384 장비 작업대(새 토대): 왼쪽 능력치 · 옵션(재설정 · 재련), 오른쪽 스타포스 · 자동 강화 · 레벨 · 비용 초기화 · 이식 · 계승. 좁은 화면은 위아래로.
  * 서버 행동(enhance · autoEnhance · levelUp · gearReset · reforge · refine · imprintRelic · removeImprint · awaken · inheritPrimal)은 전과 같습니다.
  */
 import { useEffect, useRef, useState, type ReactNode } from 'react';

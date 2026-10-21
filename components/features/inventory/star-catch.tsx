@@ -4,7 +4,7 @@ import { starSound } from '@/components/game/star-catch-setting';
 import { cn } from '@/lib/utils';
 
 /**
- * v3.383 스타캐치 미니게임(새 토대): 별이 좌우로 오갑니다(한 번 건너는 데 SWEEP_MS). 가운데 구역(폭 ZONE)에 있을 때 누르면 ‘캐치’.
+ * v3.384 스타캐치 미니게임(새 토대): 별이 좌우로 오갑니다(한 번 건너는 데 SWEEP_MS). 가운데 구역(폭 ZONE)에 있을 때 누르면 ‘캐치’.
  * 결과는 onResult(caught)로 넘기고, 누르지 않으면 TIMEOUT_MS 뒤에 놓친 것으로 칩니다. 키보드는 스페이스 · 엔터. 별 위치는 프레임마다 DOM 에 바로 씁니다.
  */
 const SWEEP_MS = 1100, ZONE = .2, TIMEOUT_MS = 8000;

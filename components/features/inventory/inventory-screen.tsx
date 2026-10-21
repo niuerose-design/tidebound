@@ -1,6 +1,6 @@
 'use client';
 /**
- * v3.383 장비 보관함(재설계 4단계 세 번째 화면). 옛 components/game/inventory-panel.tsx 를 대신합니다(상점 강화 탭 · 환생 화면은 아직 옛 조각을 씀). 주소 #inventory.
+ * v3.384 장비 보관함(재설계 4단계 세 번째 화면). 옛 components/game/inventory-panel.tsx 를 대신합니다(상점 강화 탭 · 환생 화면은 아직 옛 조각을 씀). 주소 #inventory.
  * 착용 칸 요약 + 교체 추천 → 보스 코어 칸 → 선택한 장비 작업대 → 검색 · 부위 · 정렬 · 등급 · 상향 필터 → 가방 목록(12개씩) → 등급별 일괄 판매 · 분해.
  */
 import { useState } from 'react';
