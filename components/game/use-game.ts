@@ -24,11 +24,11 @@ export type AltarInfo = import('@/game/data/altar').AltarInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
-/** 동기화 주기(ms). v3.127 5초 → v3.371 10초(docs/performance.md 9단계, 요청 수 절반). 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다. */
+/** 동기화 주기(ms). v3.127 5초 → v3.373 10초(docs/performance.md 9단계, 요청 수 절반). 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다. */
 const SYNC_MS = 10000;
-/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다(v3.371 120초). 행동은 즉시 보내므로 체감 지연은 없습니다. */
+/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다(v3.373 120초). 행동은 즉시 보내므로 체감 지연은 없습니다. */
 const IDLE_SYNC_SKIP = 12;
-/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(v3.371 60초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
+/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(v3.373 60초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
 const BACKGROUND_SYNC_SKIP = 6;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
@@ -130,7 +130,7 @@ export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
-    /** v3.371 서버가 응답마다 붙이는 세이브 일련번호. 다음 요청에 보내면 서버는 바뀐 키만(patch) 보냅니다. 다른 경로에서 세이브를 통째로 받으면 모릅니다(undefined → 전체). */
+    /** v3.373 서버가 응답마다 붙이는 세이브 일련번호. 다음 요청에 보내면 서버는 바뀐 키만(patch) 보냅니다. 다른 경로에서 세이브를 통째로 받으면 모릅니다(undefined → 전체). */
     const svRef = useRef<number | undefined>(undefined);
     /** v27.62 지금 화면이 전투(사냥·던전)를 보여 주는지. 아니면 동기화를 늦춥니다. */
     const live = useRef(true);
@@ -146,9 +146,9 @@ export function useGame() {
         result?: DuelResult;
         rows: Ranking[];
         logDelta?: LogDelta;
-        /** v3.371 차분 응답: 바뀐 최상위 키만. state 대신 옵니다. */
+        /** v3.373 차분 응답: 바뀐 최상위 키만. state 대신 옵니다. */
         patch?: StatePatch;
-        /** v3.371 세이브 일련번호. */
+        /** v3.373 세이브 일련번호. */
         sv?: number;
         /** v3.43 정보 비공개 카탈로그(/api/game 응답). */
         catalog?: Catalog;
@@ -172,7 +172,7 @@ export function useGame() {
         if (data.marketStatus) ingestMarketStatus(data.marketStatus);
         // v3.44 카탈로그(문 상태·드러난 비밀 직업)를 상태보다 먼저 적용해, 이번 응답으로 그리는 화면이 같은 기준을 봅니다.
         if (data.catalog) { applyCatalog(data.catalog); setCatalog(data.catalog); }
-        // v3.371 차분 응답(patch)은 가진 세이브 위에 얹고, 전체(state)는 그대로 씁니다. 로그는 두 경우 모두 마지막 키 뒤의 줄만 와서 합칩니다.
+        // v3.373 차분 응답(patch)은 가진 세이브 위에 얹고, 전체(state)는 그대로 씁니다. 로그는 두 경우 모두 마지막 키 뒤의 줄만 와서 합칩니다.
         const prev = stateRef.current;
         const next: State | null = data.patch && prev ? applyStatePatch(prev, data.patch) : data.state ?? null;
         if (next) {
@@ -257,7 +257,7 @@ export function useGame() {
         if (document.visibilityState === 'visible' && (!s || (active && (live.current || ticks % BACKGROUND_SYNC_SKIP === 0)) || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
         send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible);
-        // v3.371 화면을 닫거나 숨길 때 마지막 동기화(final): 서버가 미뤄 둔 저장을 바로 씁니다. 응답은 쓰지 않습니다(keepalive).
+        // v3.373 화면을 닫거나 숨길 때 마지막 동기화(final): 서버가 미뤄 둔 저장을 바로 씁니다. 응답은 쓰지 않습니다(keepalive).
         const hide = () => { const s = stateRef.current; if (!s || document.visibilityState === 'visible') return; const known = s.logs.at(-1); fetch('/api/game', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'sync', final: true, ...(known ? { logKey: logKey(known) } : {}), ...(catalogNow().key ? { catalogKey: catalogNow().key } : {}) }) }).catch(() => { }); };
         document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', hide);
         return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', hide); }; }, [send]);

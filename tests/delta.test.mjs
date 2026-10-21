@@ -1,10 +1,10 @@
-// v3.371 B안 서버 비용: 세이브 차분(state-delta) · 저장 미루기(store.mutate PERSIST_MS) · 차분 응답용 사본(before · sv).
+// v3.373 B안 서버 비용: 세이브 차분(state-delta) · 저장 미루기(store.mutate PERSIST_MS) · 차분 응답용 사본(before · sv).
 import { assert, test, newState } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const L = loadGame();
 const { diffState, applyStatePatch } = await L.load('systems/state-delta');
 
-test('v3.371 state delta: only changed top-level keys travel, dropped keys are listed, logs are left to the log delta, untouched keys keep their object identity', () => {
+test('v3.373 state delta: only changed top-level keys travel, dropped keys are listed, logs are left to the log delta, untouched keys keep their object identity', () => {
     const prev = { ...newState(1000), gold: 100, book: { minnow: 3 }, lastOffline: { seconds: 10 }, logs: [{ id: 1, text: 'a', type: 'system' }] };
     const next = { ...prev, gold: 250, book: { minnow: 3 }, inventory: [{ id: 'x' }], logs: [{ id: 2, text: 'b', type: 'system' }] };
     delete next.lastOffline;
@@ -17,7 +17,7 @@ test('v3.371 state delta: only changed top-level keys travel, dropped keys are l
     assert.deepEqual(JSON.parse(JSON.stringify(roundtrip)), JSON.parse(JSON.stringify(next)), 'patch + log merge reproduces the next save');
 });
 
-test('v3.371 mutate defers sync-only saves for PERSIST_MS, writes at once for actions · final sync · after the interval, keeps unsaved progress across the recent TTL, and hands back the previous copy only for a matching sv', async () => {
+test('v3.373 mutate defers sync-only saves for PERSIST_MS, writes at once for actions · final sync · after the interval, keeps unsaved progress across the recent TTL, and hands back the previous copy only for a matching sv', async () => {
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const file = path.join(os.tmpdir(), `tb-persist-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     const St = await L.load('server/store'), D = await L.load('server/db');

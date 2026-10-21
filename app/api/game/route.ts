@@ -32,7 +32,7 @@ export async function POST(req: Request) { try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
         let news: NewsEvent[] = [];
-        // v3.371 화면이 가진 세이브의 일련번호(sv)가 기억한 사본과 같으면 바뀐 키만 보냅니다(차분 응답).
+        // v3.373 화면이 가진 세이브의 일련번호(sv)가 기억한 사본과 같으면 바뀐 키만 보냅니다(차분 응답).
         const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; news = collectNews(s, now); syncTraderPnl(s, now); if (a.type === 'ascend') { await afterAscend(id, now); await vaultAfterAscend(account, now); } await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
             // v3.32 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
             if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now);
@@ -52,7 +52,7 @@ export async function POST(req: Request) { try {
         const marketKnown = (a as { marketKnown?: unknown }).marketKnown, market = marketKnown !== undefined ? marketFeed(marketKnown, Date.now()) : null;
         const extra = { result: out.result, sv: out.sv, ...(catalog ? { catalog } : {}), ...(market ? { market } : {}), ...(marketKnown !== undefined ? { marketStatus: marketStatus(Date.now()) } : {}), ...(trimmed ? { logDelta: trimmed.delta } : {}) };
         const logs = trimmed ? trimmed.logs : out.state.logs;
-        // v3.371 차분 응답: 기억한 사본(before)과 비교해 바뀐 최상위 키만. 로그는 전처럼 마지막 키 뒤의 줄만(logDelta). 사본이 없으면 전체.
+        // v3.373 차분 응답: 기억한 사본(before)과 비교해 바뀐 최상위 키만. 로그는 전처럼 마지막 키 뒤의 줄만(logDelta). 사본이 없으면 전체.
         if (out.before) { const patch = diffState(out.before, out.state as unknown as Record<string, unknown>); return Response.json({ ...extra, patch: { set: { ...patch.set, logs }, drop: patch.drop } }, { headers: { 'Cache-Control': 'no-store', 'X-Game-Build': GAME_BUILD } }); }
         return Response.json({ ...extra, state: trimmed ? { ...out.state, logs } : out.state }, { headers: { 'Cache-Control': 'no-store', 'X-Game-Build': GAME_BUILD } });
     }
