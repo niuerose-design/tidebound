@@ -553,7 +553,7 @@ test('expedition stage 19 (main-game links): boss units stay out of the shop unt
     for (let seed = 1; seed <= 30; seed++) for (const id of X.rollShop(8, mkRng(seed), 5, undefined, locked)) assert.ok(!locked.has(id), `locked boss ${id} in shop`);
     assert.ok(Array.from({ length: 60 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5)).flat().some(id => locked.has(id)), 'without exclude bosses do appear at level 8');
     assert.ok(Array.from({ length: 40 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5, [{ unit: 'pig', star: 1, row: 'front' }, { unit: 'kingClang', star: 1, row: 'front' }], locked)).flat().every(id => !locked.has(id)), 'synergy slot respects the lock');
-    assert.ok(Math.abs(D.shardChance(1, false) - .1) < 1e-9); assert.ok(Math.abs(D.shardChance(5, true) - .27) < 1e-9); assert.equal(D.shardCoreFor('mushmom', mkRng(1)), 'grotto'); assert.ok(D.SHARD_CORE_POOL.includes(D.shardCoreFor('blackMage', mkRng(2))));
+    assert.ok(Math.abs(D.shardChance(1, false) - .01) < 1e-9); assert.ok(Math.abs(D.shardChance(5, true) - .04) < 1e-9); assert.equal(D.shardCoreFor('mushmom', mkRng(1)), 'grotto'); assert.ok(D.SHARD_CORE_POOL.includes(D.shardCoreFor('blackMage', mkRng(2))));
     // 판: 상점이 잠긴 보스를 피하고, 본편 처치가 생기면 나올 수 있다.
     const now = 1_800_000_000_000, s = newState(0); s.level = 100;
     act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];

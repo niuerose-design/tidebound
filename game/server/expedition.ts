@@ -18,8 +18,13 @@ export const runScore = (snap: Pick<ExpeditionSnapshot, 'wins' | 'cleared' | 'ro
 export const expeditionScore = (snap: Pick<ExpeditionSnapshot, 'wins' | 'cleared' | 'round' | 'ghostByRun' | 'abyss' | 'difficulty'>) => runScore(snap) + Object.values(snap.ghostByRun || {}).reduce((a, n) => a + (n || 0), 0);
 const GHOST_POOL = 60;
 /** 라운드(2~8)마다 그 라운드 보드를 가진 다른 플레이어 행 가운데 무작위 하나. 세이브를 읽기 전이라 모든 라운드 것을 한 번에 고릅니다(DB 조회 1번). 없는 라운드는 빠집니다. */
-export async function pickGhosts(key: string, me: string, rng = Math.random): Promise<Record<number, ExpeditionGhost>> {
-    const rows = await db().listRankings(expeditionSeason(key), GHOST_POOL);
+/** v3.356 고스트 후보 행을 60초 동안 기억합니다(같은 달 전투가 몰릴 때 DB 조회 절약). 행 갱신은 syncExpeditionRow가 비웁니다. */
+const GHOST_CACHE_MS = 60_000;
+let ghostCache: { key: string; at: number; rows: Awaited<ReturnType<ReturnType<typeof db>['listRankings']>> } | null = null;
+export const forgetGhosts = () => { ghostCache = null; };
+export async function pickGhosts(key: string, me: string, rng = Math.random, now = Date.now()): Promise<Record<number, ExpeditionGhost>> {
+    const rows = ghostCache && ghostCache.key === key && now - ghostCache.at < GHOST_CACHE_MS ? ghostCache.rows : await db().listRankings(expeditionSeason(key), GHOST_POOL);
+    ghostCache = { key, at: now, rows };
     const pools: Record<number, ExpeditionGhost[]> = {};
     for (const r of rows) {
         let snap: ExpeditionSnapshot; try { snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; } catch { continue; }
@@ -50,6 +55,7 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
     };
     next.score = expeditionScore(next);
     await db().upsertRanking({ id: rowId, snapshot: JSON.stringify(next), rating: next.score, power: next.round, updated_at: now });
+    forgetGhosts();
 }
 export async function listExpeditionBoard(key: string) {
     const rows = await db().listRankings(expeditionSeason(key), 50);
