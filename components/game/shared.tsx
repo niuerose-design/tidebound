@@ -163,7 +163,7 @@ export function useNow(ms = 1000) {
 export function WalletBar({ s, label, extra }: { s: State; label: string; extra?: ReactNode }) {
     return <section className="panel port-resource-bar" aria-label={label}>
         <div><Coins size={22}/><span>보유 골드<strong><Num n={s.gold}/> <small>G</small></strong></span></div>
-        <div><Gem size={22}/><span>보유 정수<strong>{format(s.essence || 0)}</strong></span></div>
+        <div><Gem size={22}/><span>보유 정수<strong><Num n={s.essence || 0}/></strong></span></div>
         <div><ShoppingBag size={22}/><span>장비 가방<strong>{s.inventory.length} <small>/ {inventoryCap()}</small></strong></span></div>
         {extra}
     </section>;

@@ -11,7 +11,7 @@ import { ONYX, ONYX_DROP_ITEMS, ONYX_CORE_ID, onyxById } from '@/game/data/onyx'
 import { OnyxArt } from './onyx-art';
 import { BOSS_CORES, BOSS_CORE_RULES, CORE_ATTRS, CORE_FORGE, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
 import { attrName } from '@/game/data/progression';
-import { Heading, format, useNow } from './shared';
+import { Heading, format, useNow, Num } from './shared';
 import type { PanelProps } from './panel-props';
 
 type Buy = (id: string, value?: string) => void;
@@ -36,7 +36,7 @@ export function DungeonShop({ s, send, busy }: PanelProps) {
         <section className="panel port-resource-bar" aria-label="던전 주화와 재화">
             <div><Coins size={22}/><span>보유 던전 주화<strong>{format(coins)}{bonus > 0 && <small> 보너스 +{Math.round(bonus * 100)}%</small>}</strong></span></div>
             <div><Swords size={22}/><span>오늘 보너스 정복<strong>{left} <small>/ {DAILY_BONUS.clears}회</small></strong></span></div>
-            <div><Gem size={22}/><span>보유 정수<strong>{format(s.essence || 0)}</strong></span></div>
+            <div><Gem size={22}/><span>보유 정수<strong><Num n={s.essence || 0}/></strong></span></div>
             <div><Sparkles size={22}/><span>보유 세계석<strong>{format(s.pearls)}</strong></span></div>
         </section>
         <Tabs value={tab} onValueChange={setTab}><TabsList className="game-tabs port-tabs"><TabsTrigger value="core">보스 코어</TabsTrigger><TabsTrigger value="onyx">칠흑 장신구</TabsTrigger><TabsTrigger value="growth">성장권</TabsTrigger><TabsTrigger value="gear">장비</TabsTrigger></TabsList></Tabs>
