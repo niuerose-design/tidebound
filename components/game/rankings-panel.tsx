@@ -1,5 +1,5 @@
 'use client';
-import { SEASON_REWARDS, difficultyOf } from '@/game/data/expedition';
+import { SEASON_REWARDS, difficultyOf, LEAGUE, leagueTierName } from '@/game/data/expedition';
 import { rebirthTitle } from '@/game/data/long-term';
 import { duelTier, recommendOpponents, RECOMMEND_RANGE, duelAllowance } from '@/game/systems/duel';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -93,11 +93,13 @@ export function Rankings({ s, send, busy, rows, rankError, loadRanking, abyss, l
     {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="hacker">해커 · 월간</TabsTrigger>}
     {(s.hacker || s.rebirths >= 3) && <TabsTrigger value="crew">조직 · 주간</TabsTrigger>}
     <TabsTrigger value="expedition">원정대 · 월간</TabsTrigger>
+    <TabsTrigger value="league">원정 · 주간 리그</TabsTrigger>
     </TabsList>
     <TabsContent value="abyss"><AbyssBoard s={s} abyss={abyss} reload={loadAbyss}/></TabsContent>
     <TabsContent value="hacker"><HackerBoard s={s} send={send} busy={busy}/></TabsContent>
     <TabsContent value="crew"><CrewBoard s={s}/></TabsContent>
     <TabsContent value="expedition"><ExpeditionBoard s={s}/></TabsContent>
+    <TabsContent value="league"><LeagueBoard s={s}/></TabsContent>
     <TabsContent value="ranking">
     {(() => { const picks = recommendOpponents(rows, s.rating); return picks.length ? <div className="panel ranking-panel recommend-panel">
         <div className="section-title"><h2>추천 상대</h2><span>내 점수 ±{RECOMMEND_RANGE} 안에서 가까운 순</span></div>
@@ -237,6 +239,25 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
 
 type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; abyss?: number; difficulty?: number; runs: number; score: number; ghostPoints: number; units: string[]; self: boolean };
 /** 원정대 3단계: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드). 다른 플레이어의 보드는 2라운드부터 고스트 상대로 나옵니다. */
+type LeagueRow = { rank: number; id: string; name: string; score: number; bestRun: number; wins: number; runs: number; self: boolean };
+/** 21단계 원정 주간 리그: 같은 등급 8명 조의 이번 주 순위. 점수 = 최고 판 점수 + 끝난 판들의 승리 합. 월요일(한국 시간) 뒤 첫 출발 때 정산. */
+function LeagueBoard({ s }: { s: State }) {
+    const [board, setBoard] = useState<{ week: string; tier: number; group: number | null; joined: boolean; rows: LeagueRow[] } | null>(null), [error, setError] = useState('');
+    const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1);
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/ranking?board=league', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || '불러오지 못했습니다.'); if (alive) { setBoard(d); setError(''); } }).catch(e => { if (alive) setError(e instanceof Error ? e.message : '불러오지 못했습니다.'); });
+        return () => { alive = false; };
+    }, [nonce]);
+    const tier = board?.tier || s.expeditionLeague?.tier || 1;
+    return <section className="panel ranking-panel abyss-board">
+        <div className="section-title"><h2><ArrowUpRight size={17}/> 원정 주간 리그 · {leagueTierName(tier)}{board ? ` · ${board.week}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
+        <p className="footnote">같은 등급의 모험가 {LEAGUE.size}명이 한 조(이번 주 첫 전투 순서). 점수 = 이번 주 최고 판 점수 + 끝난 판들의 승리 합. 한국 시간 월요일에 끝나고 다음 ‘원정 출발’ 때 정산: 1~{LEAGUE.promote}위 승급 · {LEAGUE.size - LEAGUE.demote + 1}~{LEAGUE.size}위({LEAGUE.demoteMin}명 이상인 조) 강등 · 세계석 {LEAGUE.rewards.join(' · ')}. 등급: {LEAGUE.tiers.map((t, i) => `${LEAGUE.icons[i]} ${t}`).join(' → ')}.{s.expeditionLeague?.best ? ` 내 최고 등급 ${leagueTierName(s.expeditionLeague.best)}.` : ''}</p>
+        {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.joined ? <Empty title="아직 조에 들어가지 않았습니다" description="이번 주 원정 전투를 한 번 하면 같은 등급 조에 들어갑니다."/> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>최고 판</TableHead><TableHead>승리</TableHead><TableHead>판</TableHead></TableRow></TableHeader>
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={`${r.self ? 'self' : ''}${r.rank <= LEAGUE.promote ? ' promote' : board.rows.length >= LEAGUE.demoteMin && r.rank > board.rows.length - LEAGUE.demote ? ' demote' : ''}`}><TableCell>{r.rank}{r.rank <= LEAGUE.promote ? ' ▲' : board.rows.length >= LEAGUE.demoteMin && r.rank > board.rows.length - LEAGUE.demote ? ' ▼' : ''}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.bestRun}</TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table>}
+    </section>;
+}
 function ExpeditionBoard({ s }: { s: State }) {
     const [board, setBoard] = useState<{ month: string; rows: ExpeditionRow[] } | null>(null), [error, setError] = useState('');
     const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1);

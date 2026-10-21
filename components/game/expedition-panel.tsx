@@ -2,7 +2,7 @@
 /** 원정대(오토배틀러) 화면: 8라운드 PvE · 고스트, 횟수 제한 없음(5단계). 상점 5장 → 벤치 → 보드(앞줄 · 뒷줄 4칸) → 전투. 드래그 없이 버튼만으로 390px에서도 쓰이게. */
 import { useState } from 'react';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
-import { EXPEDITION, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, activeSet, nextSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, quarterKey } from '@/game/data/expedition';
+import { EXPEDITION, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, activeSet, nextSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, quarterKey, RENOWN, renownRewardMult, leagueTierName } from '@/game/data/expedition';
 import { BOSS_CORES } from '@/game/data/boss-core';
 import { weekKey, dayKey } from '@/game/data/time';
 import { activeTraits, traitKeys, ACT_BOSSES, abyssBoss } from '@/game/systems/expedition';
@@ -40,9 +40,11 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const curSet = now ? activeSet(now) : setById(undefined), upcoming = now ? nextSet(now) : undefined, pool = setUnits(curSet.id);
     const sm = s.expeditionSetMastery && s.expeditionSetMastery.set === curSet.id ? s.expeditionSetMastery : { set: curSet.id, level: 1, xp: 0, claimed: [] as number[] };
     const mastery = s.expeditionMastery || { level: 1, xp: 0, total: 0 }, nextPerk = MASTERY_PERKS.find(p => p.level > mastery.level);
+    const renown = s.expeditionRenown || 0, canRenown = mastery.level >= MASTERY_MAX && (!s.expedition || !!s.expedition.done);
     const masteryBox = <div className="exp-mastery" aria-label="원정 숙련">
-        <div className="exp-mastery-head"><b>원정 숙련 {mastery.level}{mastery.level >= MASTERY_MAX ? ' (최대)' : ''}</b><small>{mastery.level < MASTERY_MAX ? `${mastery.xp} / ${masteryXpFor(mastery.level)}` : '완성'}</small></div>
-        <div className="exp-mastery-bar"><i style={{ width: `${mastery.level >= MASTERY_MAX ? 100 : Math.min(100, Math.round(100 * mastery.xp / masteryXpFor(mastery.level)))}%` }}/></div>
+        <div className="exp-mastery-head"><b>원정 숙련 {mastery.level}{mastery.level >= MASTERY_MAX ? ' (최대)' : ''}{renown ? <small className="exp-renown"> ✨ 명성 {renown}</small> : null}</b><small>{mastery.level < MASTERY_MAX ? `${mastery.xp} / ${masteryXpFor(mastery.level, renown)}` : '완성'}</small></div>
+        <div className="exp-mastery-bar"><i style={{ width: `${mastery.level >= MASTERY_MAX ? 100 : Math.min(100, Math.round(100 * mastery.xp / masteryXpFor(mastery.level, renown)))}%` }}/></div>
+        {canRenown ? <div className="exp-renown-box"><p>숙련이 최대입니다. <b>원정 명성</b>을 올리면 숙련이 1로 돌아가고(특전은 그대로) 다음 주기의 경험치 요구가 +{Math.round(RENOWN.xpGrowth * 100)}%, 세계석 보상이 +{Math.round(RENOWN.rewardPer * 100)}%(명성 {RENOWN.rewardCap}까지) 늘어납니다. 명성 {RENOWN.titles.join(' · ')}에 칭호.</p><ConfirmButton label={`✨ 원정 명성 ${renown + 1}로`} title="원정 명성을 올릴까요?" description={`숙련 ${MASTERY_MAX} → 1로 돌아갑니다. 특전 · 도감 · 기록은 그대로이고, 세계석 보상 ×${renownRewardMult(renown + 1).toFixed(2)}가 됩니다.`} disabled={busy} onConfirm={() => send({ type: 'expeditionRenown' })}/></div> : renown ? <small className="muted">명성 {renown} · 세계석 보상 ×{renownRewardMult(renown).toFixed(2)} · 경험치 요구 ×{(1 + RENOWN.xpGrowth * renown).toFixed(1)}</small> : null}
         <small className="muted">판이 끝나면 승리 × 10 · 막 보스 × 20 · 완주 50 경험치. {nextPerk ? `다음 특전 Lv.${nextPerk.level} ${nextPerk.name}: ${nextPerk.desc}` : '모든 특전을 얻었습니다.'}</small>
         <details><summary>특전 목록</summary><ul>{MASTERY_PERKS.map(p => <li key={p.id} className={p.level <= mastery.level ? 'on' : ''}>Lv.{p.level} <b>{p.name}</b> · {p.desc}</li>)}</ul></details>
     </div>;
@@ -81,6 +83,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const setBanner = <div className="exp-set" aria-label="분기 세트"><div className="exp-set-head"><b>{curSet.icon} {curSet.name} 세트</b><small>{now ? quarterKey(now) : ''}{upcoming ? ` · 다음: ${upcoming.icon} ${upcoming.name}(${upcoming.from})` : ''}</small></div><small className="muted">{curSet.desc}</small>
         <div className="exp-mastery-head" style={{ marginTop: 8 }}><b style={{ fontSize: 13 }}>세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small>{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
         <div className="exp-mastery-bar"><i className="set" style={{ width: `${sm.level >= SET_MASTERY.max ? 100 : Math.min(100, Math.round(100 * sm.xp / setMasteryXpFor(sm.level)))}%` }}/></div>
+        <p className="exp-league-line">주간 리그 · <b>{leagueTierName(s.expeditionLeague?.tier)}</b>{s.expeditionLeague?.last ? ` · 지난주 ${s.expeditionLeague.last.rank}위/${s.expeditionLeague.last.size}명 · 세계석 +${s.expeditionLeague.last.pearls}` : ' · 이번 주 첫 전투 때 같은 등급 8명 조에 들어갑니다'} <small className="muted">(순위 화면 ‘원정 · 주간 리그’ · 1~2위 승급 · 7~8위 강등)</small></p>
         <small className="muted">세트마다 처음부터. 숙련 경험치와 같이 오르고 {Object.entries(SET_MASTERY.rewards).map(([lv, p]) => `${lv}에 세계석 ${p}`).join(' · ')}, 20이면 칭호 {curSet.icon} {curSet.name}의 원정대.</small></div>;
     const weekBanner = weekRule ? <p className="exp-rule">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="muted">(매주 월요일 바뀜 · 판을 시작할 때 규칙이 붙어 끝까지 유지)</small></p> : null;
 

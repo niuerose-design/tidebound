@@ -790,6 +790,12 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-codex-unit { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); text-align:center; min-width:0; }
 .exp-codex-unit b { font-size:11px; word-break:keep-all; } .exp-codex-unit small { font-size:10px; color:#9dadaf; }
 .exp-codex-unit.unseen { opacity:.45; filter:grayscale(.6); }
+.exp-codex-unit.tier-4 { box-shadow:0 0 0 1px #cfe6ff, 0 0 12px #cfe6ff66; } .exp-codex-unit.tier-5 { box-shadow:0 0 0 1px #9ad8ff, 0 0 14px #9ad8ff99; }
+/* 21단계 명성 · 주간 리그 */
+.exp-renown { color:#f0dcae; font-weight:600; margin-left:6px; }
+.exp-renown-box { margin:8px 0 4px; padding:8px 10px; border-radius:6px; border:1px solid #e0b36a; background:#2b2a1d; } .exp-renown-box p { font-size:12px; color:#f0dcae; margin:0 0 8px; line-height:1.5; }
+.exp-league-line { margin:8px 0 2px; font-size:12px; color:#c7d6d2; } .exp-league-line b { color:#f0dcae; }
+.abyss-board tr.promote td:first-child { color:#8fe0ab; } .abyss-board tr.demote td:first-child { color:#e08a7a; }
 .exp-codex-unit.tier-1 { box-shadow:0 0 0 1px #b87333; } .exp-codex-unit.tier-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; } .exp-codex-unit.tier-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
 @media (max-width:480px) { .exp-quest-cols { grid-template-columns:1fr; } }
 /* 12단계 전투 재생 · ★ 광채 */

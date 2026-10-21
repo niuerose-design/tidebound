@@ -259,3 +259,9 @@
 - 세트 숙련: `expeditionSetMastery {set, level, xp, claimed}` — `addMasteryXp`가 같은 경험치를 `addSetMasteryXp(s, xp, run.set)`에도 넣는다. 세트가 다르면 처음부터. 5 · 10 · 15 · 20 세계석 10 · 20 · 30 · 50, 20이면 `expeditionSetDone[set]` → 명예 업적 `expSet:<id>` → 칭호 `<icon> <이름>의 원정대`.
 - 시뮬: `EXP_SET=deepTide node scripts/expedition-sim.mjs 100`로 세트 풀 균형을 본다(의도 조합은 풀에 모두 있는 것만).
 - **세트 추가 체크리스트**(분기마다): ① `EXTRA_UNITS`에 유닛(본편 몬스터 id · 기존 적 기술 id, 비용 분포 유지) ② `SETS`에 항목(from · remove · add) ③ 보스면 `SHARD_CORE_OF`에 코어 매핑 ④ 전용 증강 · 아이템에 `set` ⑤ `EXP_SET=<id>`로 시뮬 → 완성 편성 승률 55~85% 안 ⑥ 테스트 `expedition data` · `stage 20` 통과 ⑦ 업데이트 내역에 예고. 그림은 본편 몬스터 그림을 그대로 쓰므로 추가 작업 없음.
+
+## 26. 21단계 (2026-10-21, v3.358): 주간 리그 · 원정 명성 · 장기 이정표
+- 주간 리그(서버 `syncLeagueRow` · `listLeague` · `settleLeague`): rankings 표에 `league:<주>:<모험가>` 행(season 40,000,000 + 주 번호). 조 배정은 그 주에 처음 전투한 순서로 같은 등급 8명씩(`group = floor(같은 등급 행 수 / 8)`), 한 번 정해지면 그대로. 점수 = `runScore` 최고 + 끝난 판 승리 합. 정산은 시즌 정산과 같은 ‘당겨 받기’: `expeditionStart` 때 라우트가 `{ season, league }`를 `a.value`에 묶고(옛 모양도 파서가 받음) 핸들러가 `expeditionLeague.claimed`로 한 번만 지급 · 등급 변경. 서버 비용: 전투마다 행 1 읽기/쓰기, 첫 진입 때 주간 행 목록 1번(2000행).
+- 명성(`expeditionRenown`): 숙련 50 + 진행 중 판 없음 → 숙련 1, 명성 +1. `masteryXpFor(level, renown)` = 기본 × (1 + .2 × 명성), 세계석 보상 × (1 + .02 × min(25, 명성)). 특전 · 도감 · 세트 숙련 · 기록은 그대로. 주기 길이: 명성 0 → 66k xp(약 290판), 명성 5 → 132k, 명성 10 → 198k. 명성 10까지 누적 약 1.3M xp ≈ 5,700판 ≈ 1,400시간.
+- 이정표: 도감 백금 1,000 · 다이아 5,000승(링크는 금까지), 누적 승리 1,000 · 10,000 · 100,000, 판 100 · 1,000 · 10,000 → 명예 업적 · 칭호. 100,000승은 완주 판 기준 8,000판이 넘는 ‘수십 년 급’ 목표.
+- 방치형 장르 사례와의 대응은 `docs/expedition-review.md` §5.

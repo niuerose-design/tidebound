@@ -5,7 +5,7 @@
  */
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
-import { FEATS, SETS } from './expedition';
+import { FEATS, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS } from './expedition';
 
 type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
@@ -22,6 +22,10 @@ export const TITLES: TitleDef[] = [
     { id: 'expSeasonTop:3', name: '🥇 시즌 3위 안의 원정대', desc: '월간 원정대 순위 3위 안', group: '모험', achievement: 'expSeasonTop:3' },
     { id: 'expCodex:30', name: '📘 원정 도감 완성', desc: '유닛 30종 모두 승리', group: '모험', achievement: 'expCodex:30' },
     { id: 'expCodexGold:5', name: '🏅 다섯 유닛의 주인', desc: '유닛 5종 도감 금', group: '모험', achievement: 'expCodexGold:5' },
+    ...RENOWN.titles.map((n, i) => ({ id: `expRenown:${n}`, name: `${['✨', '🌠', '💫', '🌌', '🪐'][i]} 명성 ${n}의 원정대장`, desc: `원정 명성 ${n}`, group: '모험' as const, achievement: `expRenown:${n}` })),
+    ...[3, 4, 5].map(t => ({ id: `expLeague:${t}`, name: `${LEAGUE.icons[t - 1]} ${LEAGUE.tiers[t - 1]} 리그 원정대`, desc: `원정 주간 리그 ${LEAGUE.tiers[t - 1]}`, group: '모험' as const, achievement: `expLeague:${t}` })),
+    ...MILESTONE_WINS.map((n, i) => ({ id: `expTotalWins:${n}`, name: `${['🏆', '🏵', '🎖'][i]} ${n.toLocaleString()}승의 원정대`, desc: `원정대 누적 ${n.toLocaleString()}승`, group: '모험' as const, achievement: `expTotalWins:${n}` })),
+    ...MILESTONE_RUNS.map((n, i) => ({ id: `expRuns:${n}`, name: `${['🥾', '🧳', '🗺'][i]} ${n.toLocaleString()}판의 원정대`, desc: `원정대 누적 ${n.toLocaleString()}판`, group: '모험' as const, achievement: `expRuns:${n}` })),
     ...SETS.map(set => ({ id: `expSet:${set.id}`, name: `${set.icon} ${set.name}의 원정대`, desc: `원정대 ${set.name} 세트 숙련 20`, group: '모험' as const, achievement: `expSet:${set.id}` })),
     { id: 'expDiff:3', name: '⚔ 정예 원정대', desc: '난이도 정예 완주', group: '모험', achievement: 'expDiff:3' },
     { id: 'expDiff:4', name: '🔥 악몽을 넘은 원정대', desc: '난이도 악몽 완주', group: '모험', achievement: 'expDiff:4' },
