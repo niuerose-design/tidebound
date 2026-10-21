@@ -164,36 +164,18 @@
 .tx-battle-body { display: grid; grid-template-columns: 1fr minmax(260px, 340px); gap: 12px; align-items: start; }
 .tx-map-scroll { overflow: auto; max-height: calc(100vh - 140px); border: 1px solid var(--border); border-radius: 10px; background: #0b1a1e; padding: 10px; touch-action: pan-x pan-y; }
 .tx-map { position: relative; display: grid; grid-auto-rows: var(--tile); margin: 0 auto; }
-.tx-cell { width: var(--tile); height: var(--tile); box-shadow: inset 0 0 0 1px #0b1a1e55; position: relative; cursor: pointer; }
-.tx-cell.nogrid { box-shadow: none; }
+/* 캔버스 두 겹 사이에 DOM 칸이 놓입니다: 지형(아래) · 칸(초점 · 범위 색) · 유닛과 연출(위, 포인터 없음). */
+.tx-map canvas { position: absolute; left: 0; top: 0; }
+.tx-canvas-terrain { z-index: 0; }
+.tx-canvas-units { z-index: 2; pointer-events: none; }
+.tx-cell { width: var(--tile); height: var(--tile); position: relative; z-index: 1; cursor: pointer; background: transparent; }
 .tx-cell:focus-visible { outline: 2px solid var(--primary); outline-offset: -3px; z-index: 3; }
 .tx-cell.r-move::after, .tx-cell.r-attack::after, .tx-cell.r-threat::after, .tx-cell.r-target::after { content: ''; position: absolute; inset: 0; pointer-events: none; }
-.tx-cell.r-move::after { background: #4fa3c77a; box-shadow: inset 0 0 0 1px #8fd3ef; }
-.tx-cell.r-attack::after { background: #e0545477; }
+.tx-cell.r-move::after { background: #4fa3c766; box-shadow: inset 0 0 0 1px #8fd3ef; }
+.tx-cell.r-attack::after { background: #e0545466; }
 .tx-cell.r-threat::after { background: #e0545444; box-shadow: inset 0 0 0 1px #e05454aa; }
-.tx-cell.r-target::after { background: #ffd56677; box-shadow: inset 0 0 0 2px #ffd566; animation: tx-blink 1s infinite; }
-.tx-cell.goal { box-shadow: inset 0 0 0 2px var(--gold); }
-.tx-cell.used { filter: saturate(.3) brightness(.8); }
+.tx-cell.r-target::after { background: #ffd56666; box-shadow: inset 0 0 0 2px #ffd566; animation: tx-blink 1s infinite; }
 @keyframes tx-blink { 50% { opacity: .5; } }
-.tx-unit { position: absolute; left: 0; top: 0; width: var(--tile); height: var(--tile); display: grid; place-items: center; transition: transform .28s ease; pointer-events: auto; cursor: pointer; z-index: 2; }
-.tx-glyph { width: calc(var(--tile) * .68); height: calc(var(--tile) * .68); border-radius: 22%; display: grid; place-items: center; font-weight: 700; font-size: calc(var(--tile) * .38); border: 2px solid; box-shadow: 0 2px 6px #0008; }
-/* 편은 색과 모양으로 함께 구분합니다(HIG: 색만으로 뜻을 전하지 않음): 아군 네모, 적 동그라미, 중립 겹테두리. */
-.tx-unit.side-player .tx-glyph { background: #1d4a5e; border-color: #4fa3c7; color: #e6f6ff; }
-.tx-unit.side-enemy .tx-glyph { background: #5c2626; border-color: #d46a6a; color: #ffe6e6; border-radius: 50%; }
-.tx-unit.side-ally .tx-glyph { background: #2f5a30; border-color: #7ad57a; color: #e9ffe9; border-style: double; border-width: 4px; }
-.tx-unit.boss .tx-glyph { box-shadow: 0 0 0 2px #d4b579, 0 2px 6px #0008; }
-.tx-unit.recruitable .tx-glyph { border-style: dashed; border-color: #ffd566; }
-.tx-unit.acted .tx-glyph { filter: grayscale(.8) brightness(.55); }
-.tx-unit.selected .tx-glyph { outline: 2px solid #fff; outline-offset: 2px; }
-.tx-unit.inspected .tx-glyph { outline: 2px dashed #ffd566; outline-offset: 2px; }
-.tx-unit.acting .tx-glyph { outline: 2px solid #ff8a8a; outline-offset: 2px; transform: scale(1.08); }
-.tx-unit-hp { position: absolute; left: 12%; right: 12%; bottom: 6%; height: 4px; background: #0b1a1e; border-radius: 2px; overflow: hidden; }
-.tx-unit-hp b { display: block; height: 100%; background: #6fcf97; }
-.tx-unit.side-enemy .tx-unit-hp b { background: #ef8c85; }
-.tx-pop { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; z-index: 5; pointer-events: none; animation: tx-pop 1.4s forwards; }
-.tx-pop em { font-style: normal; font-weight: 700; font-size: 13px; color: #fff; background: #000a; padding: 1px 5px; border-radius: 4px; white-space: nowrap; }
-.tx-pop em.crit { color: #ffd566; } .tx-pop em.miss { color: #9fb4b5; } .tx-pop.heal em { color: #a4e9ba; }
-@keyframes tx-pop { 0% { opacity: 0; transform: translate(-50%, 6px); } 15% { opacity: 1; transform: translate(-50%, -6px); } 80% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -18px); } }
 .tx-side { display: grid; gap: 10px; position: sticky; top: 70px; }
 .tx-menu { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; display: grid; gap: 6px; }
 .tx-menu > strong { font-size: 13px; color: #a2dcc6; }
