@@ -76,33 +76,62 @@ export function checkOrigin(req: Request) {
  * 저장은 revision 조건(UPDATE … WHERE revision=)이 있어, 다른 인스턴스 · 다른 창 · 관리자 수정이 먼저 썼으면 실패하고 DB에서 다시 읽어 그 위에 적용하므로 결과는 전과 같습니다.
  */
 const RECENT_TTL = 90_000, RECENT_MAX = 300;
-const recent = new Map<string, { state: string; revision: number; at: number }>();
-function rememberRecent(id: string, state: string, revision: number, at: number) {
-    recent.delete(id); recent.set(id, { state, revision, at });
-    if (recent.size > RECENT_MAX) recent.delete(recent.keys().next().value!);
+/**
+ * v3.371 저장 미루기(B안 서버 비용): 동기화만의 세이브는 이 간격마다 한 번만 DB에 씁니다. 그 사이의 동기화는 인스턴스 메모리 사본(recent)에만 적고
+ * 응답합니다. 행동(sync 아님) · 긴 정산(catchUpLeft) · 마지막 동기화(final, 화면을 닫을 때) · 2분 넘게 밀린 정산은 바로 씁니다.
+ * 같은 모험가가 다른 인스턴스 · 다른 창에 먼저 닿으면 DB의 옛 lastTick부터 다시 돌리므로 게임 시간은 잃지 않고(결과만 다시 굴림), 이쪽 사본은 revision 충돌로 버려집니다.
+ */
+export const PERSIST_MS = 60_000;
+type Recent = { state: string; revision: number; at: number; /** 마지막으로 DB에 쓴 시각(at > persistedAt 이면 아직 안 쓴 진행이 있음). */ persistedAt: number; /** 응답마다 붙이는 일련번호: 화면이 가진 세이브가 이 사본과 같은지 확인(차분 응답). */ sv: number };
+const recent = new Map<string, Recent>();
+let serial = 0;
+function rememberRecent(id: string, state: string, revision: number, at: number, persistedAt = at) {
+    const sv = ++serial;
+    recent.delete(id); recent.set(id, { state, revision, at, persistedAt, sv });
+    if (recent.size > RECENT_MAX) {
+        // 가장 오래된 사본을 밀어냅니다. 아직 DB에 쓰지 않은 진행이면 밀어내면서 씁니다(revision 조건으로 안전).
+        const [oldId, old] = recent.entries().next().value!;
+        recent.delete(oldId);
+        if (old.at > old.persistedAt) db().updatePlayer(oldId, old.state, old.at, old.revision).catch(e => console.error('recent flush', e instanceof Error ? e.message : e));
+    }
+    return sv;
 }
 /** 테스트 · 관리자 경로용: 기억한 세이브를 지웁니다(id가 없으면 전부). */
 export function forgetRecent(id?: string) { if (id === undefined) recent.clear(); else recent.delete(id); }
-export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>) {
+/** 테스트용: 기억한 사본의 요약. */
+export function recentOf(id: string) { const r = recent.get(id); return r ? { revision: r.revision, sv: r.sv, pending: r.at > r.persistedAt } : null; }
+export type MutateOptions = {
+    /** v3.371 화면이 가진 세이브의 일련번호(응답 sv). 기억한 사본과 같으면 그 사본(before)을 함께 돌려 라우트가 차분 응답을 만듭니다. */
+    since?: unknown;
+};
+export async function mutate(id: string, action: Action, extra?: (s: State) => Promise<unknown>, opts: MutateOptions = {}) {
     const database = db(), now = Date.now();
     // v3.18 침투 작전 정답 키(인스턴스마다 한 번). v3.25 해킹 효과(이벤트 변조·서버 다운)도 30초 캐시로 반영합니다.
     // v3.92 이벤트 · 정답 키 · 해킹 설정과 첫 세이브 읽기는 서로 기다릴 필요가 없어 함께 읽습니다(DB 왕복 최대 4번 → 1번).
-    const kept = recent.get(id), fresh = kept && now - kept.at < RECENT_TTL ? kept : null;
+    // v3.371 아직 DB에 쓰지 않은 진행이 있는 사본은 오래됐어도 씁니다(버리면 그 진행을 다시 굴려야 함).
+    const kept = recent.get(id), fresh = kept && (now - kept.at < RECENT_TTL || kept.at > kept.persistedAt) ? kept : null;
     const [, , , first] = await Promise.all([refreshEvents(now), ensurePuzzleKey(now), readHacks(now), fresh ? Promise.resolve({ state: fresh.state, revision: fresh.revision }) : database.getPlayer(id)]);
+    const isSync = action.type === 'sync', final = (action as { final?: unknown }).final === true;
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = attempt === 0 ? first : await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
         if (!row) { await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now); row = await database.getPlayer(id); }
         if (!row)
             throw new ApiError('저장 데이터를 불러오지 못했습니다.', 503);
+        // 차분 응답: 화면이 가진 세이브(sv)가 기억한 사본과 같을 때만 그 사본을 before로 돌려줍니다(사본은 직전 응답으로 보낸 것과 같음).
+        const before = attempt === 0 && fresh && opts.since === fresh.sv ? JSON.parse(row.state) as Record<string, unknown> : null;
         const s = migrateState(JSON.parse(row.state) as State, now);
+        const lastTickBefore = s.lastTick;
         advance(s, now);
         act(s, action, now);
         const result = extra ? await extra(s) : null;
         // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
         await syncHackerBoard(id, s, now);
         const json = JSON.stringify(s);
-        if (await database.updatePlayer(id, json, now, row.revision)) { rememberRecent(id, json, row.revision + 1, now); return { state: s, result }; }
+        // v3.371 동기화만의 저장은 PERSIST_MS 마다 한 번: 그 사이는 메모리 사본에만 적습니다.
+        const defer = isSync && !final && attempt === 0 && !!fresh && now - fresh.persistedAt < PERSIST_MS && !s.catchUpLeft && now - lastTickBefore < PERSIST_MS * 2;
+        if (defer) { const sv = rememberRecent(id, json, row.revision, now, fresh!.persistedAt); return { state: s, result, sv, before }; }
+        if (await database.updatePlayer(id, json, now, row.revision)) { const sv = rememberRecent(id, json, row.revision + 1, now); return { state: s, result, sv, before }; }
         // 다른 곳이 먼저 저장했음: 기억한 사본은 버리고 DB에서 다시 읽습니다.
         recent.delete(id);
     }

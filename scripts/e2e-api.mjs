@@ -31,6 +31,13 @@ assert.ok(data.catalog.odds?.drop?.chance > 0, 'v3.52 drop odds come through the
 assert.ok(Object.keys(data.catalog.stageAvg || {}).length > 10, 'v3.55 per-stage reward averages ride with the catalog');
 ({ data } = await call('/api/game', { type: 'start' }, { expect: 200 }));
 assert.equal(data.state.running, true);
+// v3.371 차분 응답: 가진 세이브의 일련번호(sv)를 보내면 바뀐 키만(patch) 오고, 모르는 sv면 전체(state)가 옵니다.
+assert.equal(typeof data.sv, 'number', 'v3.371 every /api/game response carries the save serial');
+let sv = data.sv;
+({ data } = await call('/api/game', { type: 'sync', sv }, { expect: 200 }));
+assert.ok(data.patch && !data.state, 'v3.371 matching sv → patch only'); assert.ok(Array.isArray(data.patch.set.logs), 'logs ride inside the patch'); assert.ok(data.sv > sv, 'serial grows'); sv = data.sv;
+({ data } = await call('/api/game', { type: 'sync', sv: 1 }, { expect: 200 }));
+assert.ok(data.state && !data.patch, 'v3.371 unknown sv → full state');
 await call('/api/game', { type: 'upgrade', id: 'attack' }, { expect: 400 });
 await call('/api/ranking', {}, { expect: 200 });
 ({ data } = await call('/api/ranking', undefined, { expect: 200 }));

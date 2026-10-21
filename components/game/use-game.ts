@@ -5,6 +5,7 @@ import { BALANCE } from '@/game/data/balance';
 import { stats } from '@/game/systems/stats';
 import { buildCombatReplay, type ReplayFrame } from '@/game/systems/combat-feedback';
 import { logKey, mergeLogs, type LogDelta } from '@/game/systems/log-delta';
+import { applyStatePatch, type StatePatch } from '@/game/systems/state-delta';
 import type { MarketFeed } from '@/game/data/market';
 import { marketKnown, ingestMarket, ingestMarketStatus, type MarketStatus } from './market-records';
 import { OPEN_CATALOG, applyCatalog, catalogNow, type Catalog } from '@/game/data/catalog';
@@ -23,12 +24,12 @@ export type AltarInfo = import('@/game/data/altar').AltarInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
-/** 동기화 주기(ms). v3.127 5초(docs/performance.md 6단계). 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다. */
-const SYNC_MS = 5000;
-/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다(60초). */
+/** 동기화 주기(ms). v3.127 5초 → v3.371 10초(docs/performance.md 9단계, 요청 수 절반). 턴 재생은 REPLAY_LAG_MS만큼 늦게 보일 뿐 결과는 같습니다. */
+const SYNC_MS = 10000;
+/** 대기 중(자동 사냥 꺼짐) 동기화는 SYNC_MS × 이 값마다(v3.371 120초). 행동은 즉시 보내므로 체감 지연은 없습니다. */
 const IDLE_SYNC_SKIP = 12;
-/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(15초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
-const BACKGROUND_SYNC_SKIP = 3;
+/** v27.62 전투를 보지 않는 화면(스킬·상점 등)에서는 자동 사냥 중에도 SYNC_MS × 이 값마다(v3.371 60초). 전투 재생이 필요 없어 데이터·서버 부하를 줄입니다. */
+const BACKGROUND_SYNC_SKIP = 6;
 /** 턴이 서버에서 계산된 뒤 다음 동기화로 도착할 때까지의 여유. 이만큼 늦게 재생해야 턴 간격이 고르게 유지됩니다. */
 const REPLAY_LAG_MS = SYNC_MS + 500;
 /** 이보다 많은 턴이 밀리면(탭 복귀 등) 밀린 분은 건너뛰고 최신 상태로 맞춥니다. */
@@ -129,6 +130,8 @@ export function useGame() {
     const [state, setState] = useState<State | null>(null), [error, setError] = useState(''), [busy, setBusy] = useState(false), [saved, setSaved] = useState(false), [rows, setRows] = useState<Ranking[]>([]), [rankError, setRankError] = useState(''), [duel, setDuel] = useState<DuelResult | null>(null);
     const [needsLogin, setNeedsLogin] = useState(false);
     const lock = useRef(false), queue = useRef<Promise<unknown>>(Promise.resolve()), stateRef = useRef<State | null>(null);
+    /** v3.371 서버가 응답마다 붙이는 세이브 일련번호. 다음 요청에 보내면 서버는 바뀐 키만(patch) 보냅니다. 다른 경로에서 세이브를 통째로 받으면 모릅니다(undefined → 전체). */
+    const svRef = useRef<number | undefined>(undefined);
     /** v27.62 지금 화면이 전투(사냥·던전)를 보여 주는지. 아니면 동기화를 늦춥니다. */
     const live = useRef(true);
     /** v3.43 정보 비공개 카탈로그(docs/concept.md 10장). 받기 전에는 오픈 베타와 같은 전체 공개. */
@@ -143,6 +146,10 @@ export function useGame() {
         result?: DuelResult;
         rows: Ranking[];
         logDelta?: LogDelta;
+        /** v3.371 차분 응답: 바뀐 최상위 키만. state 대신 옵니다. */
+        patch?: StatePatch;
+        /** v3.371 세이브 일련번호. */
+        sv?: number;
         /** v3.43 정보 비공개 카탈로그(/api/game 응답). */
         catalog?: Catalog;
         /** v3.213 증권거래소 시세 조각(/api/game 응답, 거래소 화면을 볼 때만). */
@@ -160,20 +167,23 @@ export function useGame() {
         // v3.44 가진 카탈로그 키를 붙이면, 서버는 바뀌었을 때만 카탈로그를 보냅니다.
         // v3.213 증권거래소 화면을 보는 동안만 가진 시세 위치(marketKnown)를 붙여, 서버가 새 틱만 얹게 합니다.
         const market = path === '/api/game' ? marketKnown() : undefined;
-        const data = await request(path, { ...a, ...(known ? { logKey: logKey(known) } : {}), ...(catalogKey && path === '/api/game' ? { catalogKey } : {}), ...(market !== undefined ? { marketKnown: market } : {}) });
+        const data = await request(path, { ...a, ...(known ? { logKey: logKey(known) } : {}), ...(catalogKey && path === '/api/game' ? { catalogKey } : {}), ...(market !== undefined ? { marketKnown: market } : {}), ...(path === '/api/game' && svRef.current !== undefined ? { sv: svRef.current } : {}) });
         if (data.market) ingestMarket(data.market);
         if (data.marketStatus) ingestMarketStatus(data.marketStatus);
         // v3.44 카탈로그(문 상태·드러난 비밀 직업)를 상태보다 먼저 적용해, 이번 응답으로 그리는 화면이 같은 기준을 봅니다.
         if (data.catalog) { applyCatalog(data.catalog); setCatalog(data.catalog); }
-        if (data.state) {
-            const prev = stateRef.current;
-            if (data.logDelta) data.state.logs = mergeLogs(prev?.logs, data.state.logs, data.logDelta);
-            stateRef.current = data.state;
-            setState(data.state);
+        // v3.371 차분 응답(patch)은 가진 세이브 위에 얹고, 전체(state)는 그대로 씁니다. 로그는 두 경우 모두 마지막 키 뒤의 줄만 와서 합칩니다.
+        const prev = stateRef.current;
+        const next: State | null = data.patch && prev ? applyStatePatch(prev, data.patch) : data.state ?? null;
+        if (next) {
+            if (data.logDelta) next.logs = mergeLogs(prev?.logs, next.logs, data.logDelta);
+            svRef.current = path === '/api/game' ? data.sv : undefined;
+            stateRef.current = next;
+            setState(next);
             // 동기화만 턴 단위로 재생합니다. 직접 한 행동과 오프라인 정산 결과는 지금처럼 바로 보여 줍니다.
-            const settled = !!data.state.lastOffline && JSON.stringify(data.state.lastOffline) !== JSON.stringify(prev?.lastOffline);
-            // 전투를 보지 않는 화면은 15초마다 동기화해 어차피 밀린 턴을 건너뛰므로 재생 계산을 하지 않습니다.
-            if (a.type === 'sync' && prev && !settled && live.current) replay.push(prev, data.state, Date.now());
+            const settled = !!next.lastOffline && JSON.stringify(next.lastOffline) !== JSON.stringify(prev?.lastOffline);
+            // 전투를 보지 않는 화면은 60초마다 동기화해 어차피 밀린 턴을 건너뛰므로 재생 계산을 하지 않습니다.
+            if (a.type === 'sync' && prev && !settled && live.current) replay.push(prev, next, Date.now());
             else replay.reset();
         }
         if (data.result)
@@ -208,7 +218,7 @@ export function useGame() {
         setRankError((e as Error).message);
     } }, [request]);
     /** 공유 정보 화면(길드·조직·제단·금고)이 받은 세이브를 반영합니다. */
-    const adopt = useCallback((next: State) => { stateRef.current = next; setState(next); replay.reset(); setSaved(true); }, [replay]);
+    const adopt = useCallback((next: State) => { svRef.current = undefined; stateRef.current = next; setState(next); replay.reset(); setSaved(true); }, [replay]);
     const shared = { request, lockRef: lock, setBusy, adopt };
     /** v25.11 공유 길드: 정보는 길드 화면을 열 때 읽고, 행동은 세이브와 함께 저장됩니다. */
     const { info: guild, error: guildError, load: loadGuild, act: guildAct } = useSharedInfo<GuildInfo>('/api/guild', shared);
@@ -225,6 +235,7 @@ export function useGame() {
     const register = useCallback(async () => { if (lock.current)
         return; lock.current = true; setBusy(true); try {
         const d = await request('/api/ranking', {});
+        svRef.current = undefined;
         stateRef.current = d.state;
         setState(d.state);
         replay.reset();
@@ -240,12 +251,16 @@ export function useGame() {
         setBusy(false);
     } }, [request, loadRanking, replay]);
     useEffect(() => { const first = setTimeout(() => send({ type: 'sync' }), 0); let ticks = 0; const timer = setInterval(() => { const s = stateRef.current; ticks++;
-        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 IDLE_SYNC_SKIP번에 한 번(60초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
-        // v27.62 진행 중이어도 전투를 보지 않는 화면이면 BACKGROUND_SYNC_SKIP번에 한 번(15초)만 동기화합니다.
+        // v25.21 자동 사냥이 꺼져 있고 던전도 아니면 IDLE_SYNC_SKIP번에 한 번(120초)만 동기화합니다. 행동은 즉시 보내므로 체감 지연은 없습니다.
+        // v27.62 진행 중이어도 전투를 보지 않는 화면이면 BACKGROUND_SYNC_SKIP번에 한 번(60초)만 동기화합니다.
         const active = !!s && (s.running || !!s.dungeon);
         if (document.visibilityState === 'visible' && (!s || (active && (live.current || ticks % BACKGROUND_SYNC_SKIP === 0)) || ticks % IDLE_SYNC_SKIP === 0))
         send({ type: 'sync' }); }, SYNC_MS); const visible = () => { if (document.visibilityState === 'visible')
-        send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible); return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); }; }, [send]);
+        send({ type: 'sync' }); }; document.addEventListener('visibilitychange', visible);
+        // v3.371 화면을 닫거나 숨길 때 마지막 동기화(final): 서버가 미뤄 둔 저장을 바로 씁니다. 응답은 쓰지 않습니다(keepalive).
+        const hide = () => { const s = stateRef.current; if (!s || document.visibilityState === 'visible') return; const known = s.logs.at(-1); fetch('/api/game', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'sync', final: true, ...(known ? { logKey: logKey(known) } : {}), ...(catalogNow().key ? { catalogKey: catalogNow().key } : {}) }) }).catch(() => { }); };
+        document.addEventListener('visibilitychange', hide); window.addEventListener('pagehide', hide);
+        return () => { clearTimeout(first); clearInterval(timer); document.removeEventListener('visibilitychange', visible); document.removeEventListener('visibilitychange', hide); window.removeEventListener('pagehide', hide); }; }, [send]);
     useEffect(() => {
         const context = (document as Document & {
             modelContext?: {
@@ -283,6 +298,7 @@ export function useGame() {
         const res = await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'slot', slot }) });
         const data = await res.json().catch(() => ({})) as { error?: string };
         if (!res.ok) throw Error(data.error || '슬롯을 바꾸지 못했습니다.');
+        svRef.current = undefined;
         stateRef.current = null;
         setState(null);
         replay.reset();
@@ -296,6 +312,7 @@ export function useGame() {
     }, [action, replay]);
     const logout = useCallback(async () => {
         await fetch('/api/auth', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }) }).catch(() => { });
+        svRef.current = undefined;
         stateRef.current = null;
         setState(null);
         replay.reset();
