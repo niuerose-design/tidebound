@@ -42,7 +42,8 @@ const Skills = lazyPanel(() => import('@/components/features/skills/skills-scree
 const Classes = lazyPanel(() => import('@/components/features/jobs').then(m => m.ClassesScreen));
 const VoyageLog = lazyPanel(() => import('./guidance-panels').then(m => m.VoyageLog));
 const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
-const SlotsPanel = lazyPanel(() => import('./slots-panel').then(m => m.SlotsPanel));
+// v3.398 재설계 4단계: 환생 · 분신(새 토대).
+const SlotsPanel = lazyPanel(() => import('@/components/features/legacy').then(m => m.SlotsScreen));
 const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
 const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
 const UpdateLog = lazyPanel(() => import('./update-log-panel').then(m => m.UpdateLog));
@@ -54,7 +55,7 @@ const DungeonShop = lazyPanel(() => import('@/components/features/shop').then(m 
 const Expedition = lazyPanel(() => import('./expedition-panel').then(m => m.Expedition));
 const MarketPanel = lazyPanel(() => import('./market-panel').then(m => m.MarketPanel));
 const StoryPanel = lazyPanel(() => import('./story-panel').then(m => m.StoryPanel));
-const Rebirth = lazyPanel(() => import('./rebirth-panel').then(m => m.Rebirth));
+const Rebirth = lazyPanel(() => import('@/components/features/legacy').then(m => m.RebirthScreen));
 // v3.395 재설계 4단계: 사냥터 · 던전(새 토대).
 const Stages = lazyPanel(() => import('@/components/features/world').then(m => m.StagesScreen));
 const Dungeons = lazyPanel(() => import('@/components/features/world').then(m => m.DungeonsScreen));

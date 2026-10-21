@@ -2,7 +2,7 @@
 /** v27.88 통계: 세이브에 쌓인 기록을 한 화면에 모아 보여 줍니다(계산만, 상태는 바꾸지 않음). */
 import type { State } from '@/game/types';
 import { Heading, Fold, format, formatDuration } from './shared';
-import { RebirthHistory } from './rebirth-history';
+import { RebirthHistory } from '@/components/features/legacy';
 import { MONSTERS, BASE_STAGES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookStage } from '@/game/systems/book';
