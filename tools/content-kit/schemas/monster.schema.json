@@ -39,7 +39,7 @@
     "level": {
       "type": "integer",
       "minimum": 1,
-      "maximum": 120,
+      "maximum": 140,
       "description": "몬스터 레벨. 체력 35+12L+0.65L², 공격 3+2.2L, 방어 ⌊0.8L⌋, 경험치·골드는 world.ts 곡선(STYLE_GUIDE 6절). 사냥터 입장 레벨 ~ +6 범위에 둔다."
     },
     "tier": {
@@ -48,7 +48,7 @@
         "null"
       ],
       "minimum": 1,
-      "maximum": 12,
+      "maximum": 14,
       "description": "[미사용] 키트 편의용 10레벨 단위 티어 = ⌈level/10⌉. 게임에는 없음(게임의 ‘난이도(tide/tier)’는 사냥터 난이도라 다른 개념)."
     },
     "rarity": {

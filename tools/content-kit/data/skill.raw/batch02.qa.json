@@ -1,0 +1,19 @@
+{
+  "verdict": "fix",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "hvSporeSense", "field": "desc", "rule": 2, "note": "기존 패시브와 첫 문장이 같아 문장을 고침(hvThickHide·hvArchitectEye도)." },
+    { "id": "hvRegrow", "field": "multiplier", "rule": 6, "note": "순수 회복(healOnly)은 배율 0, healRatio .2(기본 .22보다 조금 낮게, 2차 기준)." },
+    { "id": "hvNestQuake", "field": "damageType", "rule": 6, "note": "복합 피해 1개를 넣어 물리·마법 방어 한쪽만 높은 적에 대응. 마나는 다른 4차 마법과 같은 범위." }
+  ],
+  "checks": {
+    "1_ip": "원작 종족·유닛·스킬명 없음",
+    "2_dup": "첫 문장 3건 수정 후 0",
+    "3_length": "이름 2~7자, 패시브 desc 17~44자",
+    "4_style": "합쇼체, 당신·이모지 없음",
+    "5_content": "해당 없음",
+    "6_logic": "콤보 쌍: 독 포자(poison) → 포자 폭발·대파열(statuses) + 독샘·포자 구름·완성된 균주(poisonBonus·중첩) / 신경 자극(weaken) → 산성 비(weakened +50%) / 신경 지배(silence) + 시냅스 그물(controlBonus). 마법 액티브 chance .45~.5, manaCost 원값 8~52(게임 ×4), 상태이상 전용 chance .3, AP 2/3/4/5/6, 패시브 2/2/3/3/3",
+    "7_schema": "validate 30/30"
+  },
+  "fixed_items": []
+}

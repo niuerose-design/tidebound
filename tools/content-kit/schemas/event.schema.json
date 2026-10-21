@@ -23,8 +23,8 @@
     "chapter": {
       "type": "integer",
       "minimum": 0,
-      "maximum": 9,
-      "description": "STORY_CHAPTERS 인덱스. 0 제1장 · 판게아의 문(시작~빅토리아) · 1 제2장 · 생을 거듭하는 자(환생·던전 보스) · 2 제3장 · 시간의 끝에서(고레벨 지역·칠흑·검은 마법사) · 3 제4장 · 두 번째 바다(2부: 결투·길드·분신) · 4 제5장 · 숫자의 그림자(해커·시장·계급) · 5 제6장 · 판게아 너머(승천). 6 이상은 새 장(STORY_CHAPTERS·STORY_PARTS에 추가 필요)."
+      "maximum": 30,
+      "description": "STORY_CHAPTERS 인덱스. 0~5 = 1부·2부(기존). 6부터 3부 ‘별의 바다를 건너는 자’(코프룰루 구역, data/story-chapters.json에 장 제목). 새 장은 STORY_CHAPTERS·STORY_PARTS에 추가 필요."
     },
     "title": {
       "type": "string",

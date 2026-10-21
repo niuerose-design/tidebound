@@ -1,0 +1,476 @@
+{
+  "items": [
+    {
+      "id": "derelictHangar",
+      "kind": "stage",
+      "region": "잿빛 궤도",
+      "place": "폐선 격납고",
+      "name": "잿빛 궤도 · 폐선 격납고",
+      "subtitle": "ASH ORBIT · DERELICT HANGAR",
+      "level": 104,
+      "rebirth": 25,
+      "fit": null,
+      "tier": 11,
+      "terrain": null,
+      "climate": null,
+      "description": "바다 끝 하늘에 걸린 부서진 정거장. 멈춘 격납고 안에서 녹슨 기계와 떠도는 생물이 스무 번의 생을 건넌 모험가를 맞는다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "aoScrapDrone",
+        "aoRustSentry",
+        "aoHangarSpore",
+        "aoDriftJelly",
+        "aoCargoSpider",
+        "aoWeldHound",
+        "aoCoreLeech",
+        "aoBlackBoxWarden",
+        "aoGhostDrone"
+      ],
+      "monster_hints": [
+        "정비 드론(소형 기계, 무리)",
+        "녹슨 경비 기계(단단한 단독 포식자)",
+        "격납고에 둥지 튼 포자 생물",
+        "폐선 사이를 떠다니는 해파리형 생물",
+        "버려진 화물을 지키는 기계 거미"
+      ],
+      "tone": "#7f8a99",
+      "habitat": {
+        "id": "ashOrbitSwarm",
+        "subtitle": "ASH ORBIT · SWARM DOCK",
+        "description": "정거장 부두를 메운 드론과 포자의 떼. 경보가 울리면 격납고 전체가 한꺼번에 덮친다.",
+        "tone": "#6f7a89",
+        "rebirth": 27,
+        "signature": [
+          "swarm"
+        ]
+      },
+      "boss": null,
+      "neighbor_hint": "궤도 바깥쪽, 갑판이 반으로 갈라진 구역",
+      "tags": [
+        "잿빛 궤도",
+        "사냥터",
+        "기계"
+      ]
+    },
+    {
+      "id": "fracturedDeck",
+      "kind": "stage",
+      "region": "잿빛 궤도",
+      "place": "균열 갑판",
+      "name": "잿빛 궤도 · 균열 갑판",
+      "subtitle": "ASH ORBIT · FRACTURED DECK",
+      "level": 108,
+      "rebirth": 25,
+      "fit": null,
+      "tier": 11,
+      "terrain": null,
+      "climate": null,
+      "description": "반으로 갈라진 정거장 외벽 갑판. 중력이 끊긴 틈마다 유령 같은 선원과 별빛을 먹는 생물이 떠다닌다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "aoDeckWraith",
+        "aoStarMoth",
+        "aoPatrolUnit",
+        "aoHullBarnacle",
+        "aoRiftLurker",
+        "aoSignalEel",
+        "aoVoidCrab",
+        "aoStarEater",
+        "aoEclipseMoth"
+      ],
+      "monster_hints": [
+        "중력이 끊긴 틈에서 나오는 선원 망령",
+        "별빛을 먹고 빛나는 부유 생물",
+        "갑판을 순찰하는 전투 기계",
+        "외벽에 붙어 사는 갑각 생물",
+        "갑판 틈에 숨어 덮치는 함정형 포식자"
+      ],
+      "tone": "#8b93a6",
+      "habitat": null,
+      "boss": null,
+      "neighbor_hint": "궤도 아래로 떨어지는 결정 광맥 행성",
+      "tags": [
+        "잿빛 궤도",
+        "사냥터",
+        "우주"
+      ]
+    },
+    {
+      "id": "orbitBridge",
+      "kind": "dungeon",
+      "region": "잿빛 궤도",
+      "place": "함교",
+      "name": "잿빛 궤도 · 함교",
+      "subtitle": "DUNGEON",
+      "level": 110,
+      "rebirth": 28,
+      "fit": null,
+      "tier": 11,
+      "terrain": null,
+      "climate": null,
+      "description": "정거장 가장 높은 곳의 함교. 마지막 선장은 아직도 자리에 앉아 항로를 바꾸려 든다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "aoBridgeGuard"
+      ],
+      "monster_hints": [
+        "함교 중장갑 경비 기계(전용)",
+        "녹슨 제독(보스)"
+      ],
+      "tone": "#888888",
+      "habitat": null,
+      "boss": {
+        "monster": "aoRustAdmiral",
+        "title": "함교의 마지막 선장 · 녹슨 제독",
+        "gold": 120000,
+        "pearls": 14
+      },
+      "neighbor_hint": null,
+      "tags": [
+        "잿빛 궤도",
+        "던전"
+      ]
+    },
+    {
+      "id": "crystalQuarry",
+      "kind": "stage",
+      "region": "광맥 황야",
+      "place": "결정 채굴장",
+      "name": "광맥 황야 · 결정 채굴장",
+      "subtitle": "VEIN WASTES · CRYSTAL QUARRY",
+      "level": 112,
+      "rebirth": 30,
+      "fit": null,
+      "tier": 12,
+      "terrain": null,
+      "climate": null,
+      "description": "보랏빛 결정이 지층째 드러난 채굴장. 결정을 먹고 자란 갑각 생물과 멈추지 않는 채굴 기계가 서른 번의 생을 건넌 모험가를 가로막는다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "vwShardBeetle",
+        "vwDigger",
+        "vwDustWing",
+        "vwQuarryWorm",
+        "vwPrismLizard",
+        "vwOreGolem",
+        "vwVeinSpirit",
+        "vwCrystalTitan",
+        "vwHollowShard"
+      ],
+      "monster_hints": [
+        "결정 갑각을 두른 벌레(단단함)",
+        "멈추지 않는 채굴 기계(무리)",
+        "결정 가루를 뿜는 비행 생물",
+        "채굴장 바닥의 거대 지렁이(포식자)",
+        "결정 속에 숨은 희귀 광물 생물"
+      ],
+      "tone": "#a784c9",
+      "habitat": {
+        "id": "veinSwarm",
+        "subtitle": "VEIN WASTES · SWARM PIT",
+        "description": "채굴 갱도를 가득 메운 결정 벌레의 떼. 한 덩어리로 밀려오는 보랏빛 파도.",
+        "tone": "#9470b8",
+        "rebirth": 32,
+        "signature": [
+          "giant"
+        ]
+      },
+      "boss": null,
+      "neighbor_hint": "황야 너머 노란 가스가 끓는 분화구",
+      "tags": [
+        "광맥 황야",
+        "사냥터",
+        "결정"
+      ]
+    },
+    {
+      "id": "gasCaldera",
+      "kind": "stage",
+      "region": "광맥 황야",
+      "place": "가스 분화구",
+      "name": "광맥 황야 · 가스 분화구",
+      "subtitle": "VEIN WASTES · GAS CALDERA",
+      "level": 116,
+      "rebirth": 30,
+      "fit": null,
+      "tier": 12,
+      "terrain": null,
+      "climate": null,
+      "description": "노란 가스가 끓어오르는 분화구. 가스를 들이마신 생물은 몸집이 커지고, 숨을 쉴 때마다 독이 번진다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "vwGasToad",
+        "vwStingWisp",
+        "vwSulfurCrab",
+        "vwPipeKeeper",
+        "vwBloatHound",
+        "vwCinderWasp",
+        "vwFumeSerpent",
+        "vwCalderaMaw",
+        "vwYellowTitan"
+      ],
+      "monster_hints": [
+        "가스로 부풀어 오른 두꺼비",
+        "가스 구름 속을 나는 독침 생물",
+        "분화구 바닥의 유황 갑각류",
+        "가스관을 지키는 채굴 기계",
+        "가스에 중독된 거대 포식자"
+      ],
+      "tone": "#c9b24f",
+      "habitat": null,
+      "boss": null,
+      "neighbor_hint": "황야 지평선 끝, 보라색 안개가 깔린 늪",
+      "tags": [
+        "광맥 황야",
+        "사냥터",
+        "독"
+      ]
+    },
+    {
+      "id": "spawningMarsh",
+      "kind": "stage",
+      "region": "군체 늪지",
+      "place": "산란 늪",
+      "name": "군체 늪지 · 산란 늪",
+      "subtitle": "HIVE MARSH · SPAWNING MARSH",
+      "level": 120,
+      "rebirth": 35,
+      "fit": null,
+      "tier": 12,
+      "terrain": null,
+      "climate": null,
+      "description": "행성 표면을 뒤덮은 보라색 생체 늪. 알주머니마다 새 군체가 깨어나고, 서른다섯 번의 생을 건넌 모험가의 발소리에 늪이 반응한다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "hmLarva",
+        "hmMarshSlider",
+        "hmAcidHound",
+        "hmEggSac",
+        "hmSpineCrawler",
+        "hmBroodWatcher",
+        "hmSpawner",
+        "hmMarshTyrant",
+        "hmBlackLarva"
+      ],
+      "monster_hints": [
+        "알주머니에서 깨어나는 유충(무리)",
+        "늪 위를 미끄러지는 촉수 생물",
+        "산성 침을 뱉는 사냥개형 군체",
+        "늪 바닥에 숨은 거대 산란체",
+        "군체를 지휘하는 비행 감시자"
+      ],
+      "tone": "#8e5fa8",
+      "habitat": {
+        "id": "hiveSwarm",
+        "subtitle": "HIVE MARSH · SWARM NEST",
+        "description": "산란 늪 전체가 하나의 군체다. 알이 한꺼번에 깨어나 늪이 통째로 일어선다.",
+        "tone": "#7d4f99",
+        "rebirth": 37,
+        "signature": [
+          "abyssal"
+        ]
+      },
+      "boss": null,
+      "neighbor_hint": "늪 아래로 이어지는 신경 다발의 회랑",
+      "tags": [
+        "군체 늪지",
+        "사냥터",
+        "생체"
+      ]
+    },
+    {
+      "id": "nerveCorridor",
+      "kind": "stage",
+      "region": "군체 늪지",
+      "place": "신경 회랑",
+      "name": "군체 늪지 · 신경 회랑",
+      "subtitle": "HIVE MARSH · NERVE CORRIDOR",
+      "level": 124,
+      "rebirth": 35,
+      "fit": null,
+      "tier": 13,
+      "terrain": null,
+      "climate": null,
+      "description": "늪 아래 신경 다발로 이어진 회랑. 벽이 숨을 쉬고, 군체의 뜻을 받은 지배종이 침입자를 조용히 기다린다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "hmNerveRunner",
+        "hmSpinePillar",
+        "hmMindEye",
+        "hmPlateBrute",
+        "hmSynapseHound",
+        "hmVeinLeech",
+        "hmOverseer",
+        "hmCorridorKing",
+        "hmPaleOverseer"
+      ],
+      "monster_hints": [
+        "신경 다발을 타고 달리는 날쌘 군체",
+        "벽에서 자라는 가시 기둥(함정)",
+        "정신을 흔드는 감시 눈알",
+        "회랑을 지키는 중장갑 군체",
+        "신경을 조종하는 지배종(희귀)"
+      ],
+      "tone": "#6e4a8c",
+      "habitat": null,
+      "boss": null,
+      "neighbor_hint": "늪의 하늘 위, 고요하게 빛나는 성단",
+      "tags": [
+        "군체 늪지",
+        "사냥터",
+        "생체"
+      ]
+    },
+    {
+      "id": "hiveHeart",
+      "kind": "dungeon",
+      "region": "군체 늪지",
+      "place": "군체의 심장",
+      "name": "군체 늪지 · 군체의 심장",
+      "subtitle": "DUNGEON",
+      "level": 126,
+      "rebirth": 38,
+      "fit": null,
+      "tier": 13,
+      "terrain": null,
+      "climate": null,
+      "description": "늪 가장 깊은 곳에서 뛰는 군체의 심장. 심장이 멈추기 전에는 늪의 알이 깨어나기를 멈추지 않는다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "hmMuscleWall"
+      ],
+      "monster_hints": [
+        "심장을 감싼 근육 벽(전용)",
+        "모체(보스)"
+      ],
+      "tone": "#888888",
+      "habitat": null,
+      "boss": {
+        "monster": "hmHiveMother",
+        "title": "군체의 심장 · 모체",
+        "gold": 190000,
+        "pearls": 18
+      },
+      "neighbor_hint": null,
+      "tags": [
+        "군체 늪지",
+        "던전"
+      ]
+    },
+    {
+      "id": "lightSpire",
+      "kind": "stage",
+      "region": "고요한 성단",
+      "place": "빛의 첨탑",
+      "name": "고요한 성단 · 빛의 첨탑",
+      "subtitle": "SILENT CLUSTER · LIGHT SPIRE",
+      "level": 128,
+      "rebirth": 40,
+      "fit": null,
+      "tier": 13,
+      "terrain": null,
+      "climate": null,
+      "description": "별들 사이에 멈춰 선 고대 문명의 첨탑. 빛으로 짜인 수호자가 마흔 번의 생을 건넌 모험가의 기억을 비춰 본다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "scLightWeaver",
+        "scGlimmer",
+        "scMemoryLens",
+        "scStairStatue",
+        "scPrismGuard",
+        "scHaloWisp",
+        "scShadowEater",
+        "scSpireKeeper",
+        "scDawnWeaver"
+      ],
+      "monster_hints": [
+        "빛으로 짜인 수호자(마법 평타)",
+        "첨탑을 떠도는 빛의 조각(무리)",
+        "기억을 읽는 고대 감시 장치",
+        "첨탑 계단을 지키는 결정 석상",
+        "빛을 삼키는 그림자 생물(희귀)"
+      ],
+      "tone": "#e0c878",
+      "habitat": {
+        "id": "clusterSwarm",
+        "subtitle": "SILENT CLUSTER · SWARM HALO",
+        "description": "성단의 빛이 한꺼번에 몰려든다. 수호자들이 하나의 빛이 되어 쏟아지는 곳.",
+        "tone": "#c9b062",
+        "rebirth": 42,
+        "signature": [
+          "starlit"
+        ]
+      },
+      "boss": null,
+      "neighbor_hint": "첨탑 꼭대기 너머, 별빛이 닿지 않는 회랑",
+      "tags": [
+        "고요한 성단",
+        "사냥터",
+        "빛"
+      ]
+    },
+    {
+      "id": "voidGallery",
+      "kind": "stage",
+      "region": "고요한 성단",
+      "place": "공허 회랑",
+      "name": "고요한 성단 · 공허 회랑",
+      "subtitle": "SILENT CLUSTER · VOID GALLERY",
+      "level": 132,
+      "rebirth": 40,
+      "fit": null,
+      "tier": 14,
+      "terrain": null,
+      "climate": null,
+      "description": "별빛이 닿지 않는 성단의 뒷면. 고대 문명이 봉인한 것들이 회랑을 떠돌고, 바다 너머의 끝이 여기서 보인다.",
+      "flavor": null,
+      "lore": null,
+      "ambient_lines": null,
+      "monsters": [
+        "scUnsealed",
+        "scVoidJelly",
+        "scDimStatue",
+        "scReverser",
+        "scHollowSentinel",
+        "scGravityMaw",
+        "scEchoOfEnd",
+        "scLastWarden",
+        "scStillReverser"
+      ],
+      "monster_hints": [
+        "봉인에서 풀려난 그림자 수호자",
+        "회랑을 떠도는 공허의 해파리",
+        "별빛을 잃은 결정 석상(단단함)",
+        "시간을 거꾸로 사는 고대 생물",
+        "회랑 끝의 전설적 포식자"
+      ],
+      "tone": "#5a5b8a",
+      "habitat": null,
+      "boss": null,
+      "neighbor_hint": "(세계의 끝. 다음 세계는 운영자 결정)",
+      "tags": [
+        "고요한 성단",
+        "사냥터",
+        "공허"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "verdict": "pass",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "onyxVesper", "field": "profile", "rule": 6, "note": "새 칠흑 보스는 전용 성향이 코드에 없어 기존 보스 성향(boss)을 임시로 씀. 코드에 onyxVesper 성향을 추가하면 바꿀 것." },
+    { "id": "onyxHalder", "field": "profile", "rule": 6, "note": "같은 이유로 zakum 성향(여러 팔 석상)을 임시로 씀." },
+    { "id": "aoRustAdmiral", "field": "profile", "rule": 6, "note": "시간을 되감는 컨셉에 맞춰 papulatus 성향을 씀. lore와 일치." }
+  ],
+  "checks": {
+    "1_ip": "스타크래프트 유닛·종족·인물명 없음(드론·골렘·거인은 일반 명사)",
+    "2_dup": "이름·첫 문장 중복 없음(validate), 기존 81종과 겹치는 컨셉 없음",
+    "3_length": "이름 2~8자, lore 24~50자",
+    "4_style": "‘~다’ 평서체, 이모지·영어·당신 없음",
+    "5_content": "고어 없음. 기계·드론·가스관은 결정 Q4(현대·SF 어휘 허용)",
+    "6_logic": "성향 ↔ lore 일치(단단함→armored, 전격→stormEel, 함정→controller/frenzy, 독→venom, 불→blaze, 빛·전기→arcane). 레벨은 사냥터 입장 +0~6, 변종 epic은 minTier 30/40",
+    "7_schema": "validate 40/40, 수치는 6.3 표 범위(rare .11~.16/1.35~1.55, epic .06~.07/1.85~2.0, legendary .02~.025/1.8~2.0, 변종 2.6~2.7, 던전 보스 6.5, 칠흑 4)"
+  },
+  "fixed_items": []
+}

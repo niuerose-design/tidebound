@@ -31,7 +31,18 @@ pangaea-content-kit/
 | skill | `skills.ts` SKILLS(+확장 표, `maple-skills.ts` 이름, 서버 전용 `secret/skills.ts`) | 550개(비밀 45개는 tags에 ‘비밀’) |
 | event | `story.ts` STORY(모험 일지 장면) — 선택지형 랜덤 이벤트 시스템은 게임에 없음 | 39장면, when 함수는 `trigger` 종류로 환산 |
 
-기존 데이터를 다시 뽑으려면 `node scripts/export-game-data.mjs`(저장소 루트 `pnpm install` 필요). 내보낸 파일을 스키마로 점검: `node scripts/kit.mjs validate monster data/monster.json --fresh`.
+기존 데이터를 다시 뽑으려면 `node scripts/export-game-data.mjs`(저장소 루트 `pnpm install` 필요). 게임에서 온 항목만 새로 쓰고 키트로 생성·병합한 항목은 보존합니다. 내보낸 파일을 스키마로 점검: `node scripts/kit.mjs validate monster data/monster.json --fresh`.
+
+### 생성된 콘텐츠(코프룰루 구역, 1차 배치)
+`data/<type>.raw/batchNN.json`(원본) · `batchNN.qa.json`(자체 검수 기록) → `data/<type>.json`에 병합됨. 게임에는 아직 넣지 않았습니다(STYLE_GUIDE 8절 표대로 코드 작업 필요).
+| type | 생성 | 내용 |
+|---|---|---|
+| area | 10 | 지역 4곳(잿빛 궤도 · 광맥 황야 · 군체 늪지 · 고요한 성단) = 사냥터 8(Lv.104~132, 환생 25~40) + 던전 2(함교 · 군체의 심장) |
+| monster | 80 | 사냥터마다 9종(common 4 · rare 2 · epic 1 · legendary 1 · 난이도 변종 epic 1) + 던전 잡몹 2 · 던전 보스 2 · 칠흑 보스 4 |
+| item | 150 | 장비 이름 풀 84(기계 계열 · 생체 계열 7등급 × 6부위, Q6 보류라 게임 미적용) · 옵션 56 · 칠흑 장신구 4 · 유물 6 |
+| skill | 60 | 강철 보병 계보(물리, `ir*`) 5직업 × 6 + 군체 조율사 계보(마법·상태이상, `hv*`) 5직업 × 6. 직업 정의(classes.ts)는 따로 만들어야 함 |
+| event | 40 | 3부 ‘별의 바다를 건너는 자’ 제7~19장(장 제목 `data/story-chapters.json`), 장당 2~4장면 |
+기존 게임 데이터 자체의 규칙 위반(특별 몬스터 lore 길이, 패시브 첫 문장 중복 38건, 폐기 옵션 3건, 스토리 ‘당신’ 1건)은 생성분과 무관하며 `validate --fresh` 결과에 그대로 남습니다.
 
 ## 0. 먼저 할 일
 1. `STYLE_GUIDE.md` 9절의 `[확인 필요]` 항목(IP 정책, 다음 세계, 새 지역 자리 등)을 정하고 2·4절의 기본값을 고친다. 2절 세계관과 6절 밸런스는 코드에서 채워져 있습니다.

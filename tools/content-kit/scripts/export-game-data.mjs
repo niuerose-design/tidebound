@@ -201,8 +201,12 @@ for (const list of [monsters, areas, items, skills, events]) for (const it of li
 const out = { monster: monsters, area: areas, item: items, skill: skills, event: events };
 fs.mkdirSync(path.join(KIT, 'data'), { recursive: true });
 for (const [type, list] of Object.entries(out)) {
-    fs.writeFileSync(path.join(KIT, 'data', `${type}.json`), JSON.stringify(list, null, 2) + '\n');
-    console.error(`[export] data/${type}.json ${list.length}개`);
+    // 게임에서 온 항목은 새 값으로 바꾸고, 키트로 생성·병합한 항목(게임에 아직 없는 id)은 그대로 보존합니다.
+    const file = path.join(KIT, 'data', `${type}.json`);
+    const gameIds = new Set(list.map(it => it.id));
+    const kept = (fs.existsSync(file) ? JSON.parse(fs.readFileSync(file, 'utf8')) : []).filter(it => !gameIds.has(it.id));
+    fs.writeFileSync(file, JSON.stringify([...list, ...kept], null, 2) + '\n');
+    console.error(`[export] data/${type}.json 게임 ${list.length}개 + 보존 ${kept.length}개`);
 }
 fs.writeFileSync(path.join(KIT, 'data', 'balance-reference.json'), JSON.stringify(balance, null, 2) + '\n');
 console.error('[export] data/balance-reference.json');
