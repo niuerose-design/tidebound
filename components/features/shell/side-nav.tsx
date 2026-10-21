@@ -17,12 +17,12 @@ export function SideNav({ view, setView, s, onLogout }: { view: string; setView:
         <SidebarHeader className="px-4 pt-5 pb-3">
             <button type="button" className="flex items-center gap-3 rounded-m text-left" onClick={() => go('battle')} aria-label="자동 사냥 화면으로">
                 <Leaf size={28} className="shrink-0 text-accent"/>
-                <span className="grid leading-tight"><strong className="text-m font-bold text-ink-1">판게아 RPG</strong><small className="text-xs tracking-[.12em] text-ink-3">PANGAEA RPG</small></span>
+                <span className="grid leading-tight"><strong className="font-display text-l font-bold tracking-wide text-gold-ink">판게아 RPG</strong><small className="font-display text-xs tracking-[.18em] text-ink-3">PANGAEA RPG</small></span>
             </button>
         </SidebarHeader>
         {/* v3.106 기록을 불러오기 전(로딩 · 로그인 화면)에는 메뉴를 숨깁니다. 눌러도 열 화면이 없습니다. */}
         <SidebarContent className="px-2">{!s ? <p className="px-3 text-xs leading-relaxed text-ink-3">모험가의 기록을 불러오면 메뉴가 열립니다.</p> : NAV.map(group => <SidebarGroup key={group.label} className="py-1">
-            <SidebarGroupLabel className="text-xs tracking-wide text-ink-3">{group.label}</SidebarGroupLabel>
+            <SidebarGroupLabel className="font-display text-xs tracking-[.14em] text-ink-3">{group.label}</SidebarGroupLabel>
             <SidebarMenu>{group.items.filter(item => !item.hidden?.(s)).map(({ id, name, Icon, unlock, views }) => { const lock = unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
                 <SidebarMenuButton isActive={active} aria-current={active ? 'page' : undefined} className={cn('h-10 gap-3 rounded-m px-3 text-s text-ink-2 hover:bg-surface-3 hover:text-ink-1 data-[active=true]:bg-accent-soft data-[active=true]:font-semibold data-[active=true]:text-accent', lock && 'text-ink-3')} title={lock ? `${lock}부터 쓸 수 있는 화면입니다. 미리 볼 수는 있습니다.` : undefined} onClick={() => go(id)}>
                     <Icon size={17}/><span className="truncate">{name}</span>{lock ? <small className="ml-auto inline-flex items-center gap-0.5 text-xs text-ink-3"><Lock size={11}/>{lock}</small> : active && <ChevronRight size={14} className="ml-auto opacity-70"/>}

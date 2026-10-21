@@ -48,3 +48,5 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
+tools/fonts/.venv
+tools/fonts/work

@@ -48,8 +48,14 @@
   --duration-fast: 120ms;
   --duration-base: 220ms;
   --ease-out: cubic-bezier(.2, .7, .2, 1);
-  --font-ui: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-num: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* v3.387 글꼴: 본문 나눔스퀘어 · 제목 마루 부리(자체 호스팅, fonts.css). 기호는 시스템 기호 글꼴로 떨어집니다. */
+  --font-stack-ui: 'NanumSquare', 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif, 'Segoe UI Symbol', 'Apple Color Emoji';
+  --font-stack-display: 'MaruBuri', 'Noto Serif KR', 'Nanum Myeongjo', 'Apple Myungjo', Georgia, serif;
+  --font-stack-num: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  /* 화면 CSS 는 아래 셋을 씁니다. Tailwind 테마(@theme inline)가 같은 이름을 :root 에 다시 내보내므로 원시 스택과 이름을 나눠 순환(var 가 자기 자신)을 막습니다. */
+  --font-ui: var(--font-stack-ui);
+  --font-display: var(--font-stack-display);
+  --font-num: var(--font-stack-num);
   --text-xs: 11px;
   --text-s: 13px;
   --text-m: 15px;
@@ -107,6 +113,7 @@
   --radius-l: var(--radius-l);
   --shadow-1: var(--shadow-1);
   --shadow-2: var(--shadow-2);
-  --font-ui: var(--font-ui);
-  --font-num: var(--font-num);
+  --font-ui: var(--font-stack-ui);
+  --font-num: var(--font-stack-num);
+  --font-display: var(--font-stack-display);
 }

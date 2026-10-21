@@ -15,7 +15,7 @@
 | 상태 4 | `--ok · warn · danger · info` | `text-danger` |
 | 글자 크기 | `--text-xs 11 · s 13 · m 15 · l 18 · xl 22 · 2xl 28` | `text-s` |
 | 간격 · 둥글기 · 그림자 · 모션 | `--space-1~8`(4px 단위) · `--radius-s/m/l` · `--shadow-1/2` · `--duration-fast/base` · `--ease-out` | `rounded-m`, `shadow-2` |
-| 글꼴 | `--font-ui`(Pretendard 계열) · `--font-num`(고정폭 숫자, `tabular-nums`) | `font-num` |
+| 글꼴 | `--font-ui`(나눔스퀘어, v3.387 자체 호스팅) · `--font-display`(마루 부리, 제목 · 눈썹 글) · `--font-num`(고정폭 숫자, `tabular-nums`) | `font-display` · `font-num` |
 
 - 기존 변수(`--background` · `--card` · `--primary` · `--muted` · `--border` · `--gold`)는 그대로 두었고, 토큰이 같은 값을 가리킵니다(`tests/unit/tokens.test.ts`).
 - 다크가 기본, 라이트는 `:root[data-theme="light"]`에 값만 정의(스위치는 아직 없음).

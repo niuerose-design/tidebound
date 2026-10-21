@@ -3,12 +3,12 @@
  * v3.218 화면 배율: 넓은 화면일수록 글자 · 칸 · 사이드바가 함께 커집니다(최하단 문구 줄은 없앰).
  * 화면 전체를 브라우저 확대처럼 키우므로 칸 비율은 그대로이고, 대화창 · 툴팁(본문 밖에 그림)은 원래 크기입니다. 모바일(767px 이하)은 1.
  */
+/* v3.387 배율을 한 단계씩 낮췄습니다(100% 기준 화면이 크다는 의견). 1600px 미만은 1. */
 :root { --ui-scale:1 }
-@media (min-width:1360px) { :root { --ui-scale:1.05 } }
-@media (min-width:1600px) { :root { --ui-scale:1.1 } }
-@media (min-width:1850px) { :root { --ui-scale:1.16 } }
-@media (min-width:2200px) { :root { --ui-scale:1.25 } }
-@media (min-width:2600px) { :root { --ui-scale:1.4 } }
+@media (min-width:1600px) { :root { --ui-scale:1.04 } }
+@media (min-width:1850px) { :root { --ui-scale:1.08 } }
+@media (min-width:2200px) { :root { --ui-scale:1.15 } }
+@media (min-width:2600px) { :root { --ui-scale:1.25 } }
 .app-body {
   flex:1;
   min-width:0;
@@ -33,7 +33,7 @@
 
 .brand strong {
   display:block;
-  font-family:Georgia,serif;
+  font-family:var(--font-display);
   letter-spacing:2px;
   font-size:19px
 }
@@ -315,7 +315,7 @@
   font-size:34px;
   letter-spacing:-1px;
   color:#f0f3e9;
-  font-family:Georgia,'Noto Serif KR',serif;
+  font-family:var(--font-display);
   text-shadow:0 2px 20px #0006
 }
 

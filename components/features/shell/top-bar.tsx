@@ -13,7 +13,7 @@ export function TopBar({ view, s, saved, setView }: { view: string; s?: State | 
         <SidebarTrigger className="size-11 shrink-0 text-ink-2 hover:bg-surface-3 hover:text-ink-1 md:hidden" aria-label="메뉴 열기" title="메뉴"/>
         <div className="min-w-0 flex-1 px-1">
             <span className="hidden text-xs text-ink-3 sm:block">모험 기록</span>
-            <span className="block truncate text-s font-semibold text-ink-1 md:text-m">{viewTitle(view)}</span>
+            <span className="block truncate font-display text-m font-bold text-ink-1 md:text-l">{viewTitle(view)}</span>
         </div>
         {s && <ResourceBar s={s}/>}
         <span className={cn('hidden items-center gap-1 px-2 text-xs sm:inline-flex', saved ? 'text-ink-3' : 'text-warn')} role="status">{saved ? <Check size={13}/> : <RefreshCw size={13} className="animate-spin motion-reduce:animate-none"/>}{saved ? '저장됨' : '연결 중'}</span>
