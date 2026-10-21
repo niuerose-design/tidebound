@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 /** v3.204 보스 코어 칸: 장비 보관함의 착용 장비 아래에 보입니다(던전 주화 상점 보스 코어 탭은 v3.206부터 타일 · 상세 칸). */
 import { Hexagon } from 'lucide-react';
 import { BOSS_CORES, BOSS_CORE_RULES, ownedCores, coreEntry, coreAwaken } from '@/game/data/boss-core';
@@ -23,7 +24,7 @@ export function CoreSlot({ s, send, busy }: Pick<PanelProps, 's' | 'send' | 'bus
     // v3.279 칠흑 보스코어(저주받은 마도서)는 칠흑 장신구와 같은 테두리 · 이름 색으로 구분합니다.
     const onyx = !!core?.onyx;
     return <article className={`panel gear-slot core-slot${onyx ? ' onyx-frame' : ''}`} style={{ '--rarity': core ? CORE_COLOR : '#5a6f71' } as React.CSSProperties} aria-label="보스 코어 칸">
-        <div className="gear-slot-head"><Hexagon size={18}/><span>보스 코어 · 보유 {owned.length}/{Object.keys(BOSS_CORES).length}종</span>{core && <button type="button" className="text-button" disabled={busy} onClick={() => send({ type: 'equipCore', id: '' })}>해제</button>}</div>
+        <div className="gear-slot-head"><Hexagon size={18}/><span>보스 코어 · 보유 {owned.length}/{Object.keys(BOSS_CORES).length}종</span>{core && <Button type="button" size="xs" variant="ghost" className="ml-auto h-auto px-1.5 py-1 text-xs text-accent pointer-coarse:min-h-11" disabled={busy} onClick={() => send({ type: 'equipCore', id: '' })}>해제</Button>}</div>
         {core && e ? <div className="core-slot-body">
             <strong>{onyx ? <OnyxArt id={id} size={22}/> : null}<span className={onyx ? 'onyx-name' : ''}>{core.name}</span> <span className="gold-text">각성 {e.rank}/{BOSS_CORE_RULES.awakenMax}</span></strong>
             <small>{onyx ? `칠흑 보스코어 · ${core.boss} 격파 보상 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종 · ` : ''}{core.desc}</small>

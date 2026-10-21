@@ -5,6 +5,8 @@ import { jobById } from '@/game/data/classes';
 import { skillById } from '@/game/data/skills';
 import type { State, Action } from '@/game/types';
 import { format } from './shared';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type Send = (action: Action) => void;
 const PNL_POINTS = 40;
@@ -35,8 +37,8 @@ export function OtherworldHud({ s, send, part = 'all' }: { s: State; send: Send;
         </span>;
     }
     const actions = <span className="ow-hud-actions">
-            {[10, 100, 1000].map(n => <button key={n} type="button" className="secondary small" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })} title={`세계석 ${format(n)}개 → 연료 ${format(n * FUEL.perPearl)}`}>+{format(n)}</button>)}
-            <button type="button" className={`secondary small ${auto ? 'on' : ''}`} onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })} title={auto ? `세계석 ${format(s.fuelAuto!)}개는 남깁니다` : '연료가 떨어지면 세계석으로 자동 충전'}>자동 {auto ? 'ON' : 'OFF'}</button>
+            {[10, 100, 1000].map(n => <Button key={n} type="button" size="xs" variant="outline" className="pointer-coarse:min-h-11" disabled={(s.pearls || 0) < 1 || fuel >= FUEL.cap} onClick={() => send({ type: 'fuelCharge', value: String(n) })} title={`세계석 ${format(n)}개 → 연료 ${format(n * FUEL.perPearl)}`}>+{format(n)}</Button>)}
+            <Button type="button" size="xs" variant="outline" className={cn('pointer-coarse:min-h-11', auto && 'on')} aria-pressed={auto} onClick={() => send({ type: 'fuelAuto', value: auto ? '' : '1000' })} title={auto ? `세계석 ${format(s.fuelAuto!)}개는 남깁니다` : '연료가 떨어지면 세계석으로 자동 충전'}>자동 {auto ? 'ON' : 'OFF'}</Button>
         </span>;
     if (part === 'actions') return <div className="ow-fuel-actions"><span>연료 충전</span>{actions}</div>;
     return <div className={`ow-hud ${part === 'scene' ? 'scene-job-hud' : ''} ${empty ? 'saving' : ''}`} role="status">
