@@ -493,18 +493,14 @@ test('v3.208 abyss cores: gained/awakened by first clearing floors (best record)
  const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
 });
 
-test('v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
+test('v3.373 LV1 adventurer vow removed: no action, no level-gate bypass, saves stuck in the vow are restored once on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
- const s=newState(0);s.level=60;s.exp=1234;s.rebirths=0;s.attributes={...s.attributes,str:80};s.statPoints=7;s.running=false;
- act(s,{type:'lv1Vow',id:'start'},0);assert.equal(s.level,1);assert.equal(s.exp,0);assert.equal(s.attributes.str,newState(0).attributes.str);assert.ok(s.vows.lv1);
- assert.throws(()=>act(s,{type:'lv1Vow',id:'start'},0),/이미/);
- const E=await L.load('systems/encounter');s.exp=99999;E.gainLevels(s);assert.equal(s.level,1);assert.equal(s.exp,0);
- assert.equal(expMultiplier(s),0);
- const M=await L.load('systems/meta');assert.equal(M.levelGateOk(s,90),true,'level gates ignored');
- assert.throws(()=>act(s,{type:'rebirth'},0),/LV1 모험가/);
- act(s,{type:'lv1Vow',id:'quit'},0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);
- const t=newState(0);t.vows={rough:1};assert.throws(()=>act(t,{type:'lv1Vow',id:'start'},0),/다른 서약/);
- const u=newState(0);act(u,{type:'lv1Vow',id:'start'},0);u.lv1AbyssBest=7;const {restartLife}=await L.load('systems/actions/lifecycle');act(u,{type:'lv1Vow',id:'quit'},0);restartLife(u,10);assert.equal(u.lv1AbyssBest,7,'record kept across lives');
+ assert.throws(()=>act(newState(0),{type:'lv1Vow',id:'start'},0),'action is gone');
+ const M=await L.load('systems/meta');const g=newState(0);g.vows={lv1:{level:60,exp:0,attributes:{...g.attributes},statPoints:0}};assert.equal(M.levelGateOk(g,90),false,'vow no longer bypasses level gates');
+ const Mi=await L.load('systems/migrations');
+ const s=newState(0);s.level=1;s.exp=0;s.statPoints=0;s.lv1AbyssBest=7;s.vows={lv1:{level:60,exp:1234,attributes:{...s.attributes,str:80},statPoints:7}};
+ Mi.migrateState(s,0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);assert.equal(s.lv1AbyssBest,undefined);
+ const t=newState(0);t.vows={rough:1,lv1:{level:30,exp:5,attributes:{...t.attributes},statPoints:2}};Mi.migrateState(t,0);assert.deepEqual(t.vows,{rough:1},'other vows kept');assert.equal(t.level,30);
 });
 
 test('v3.227 tailwind lasts until the previous life\'s top level (rebirth log), not the current rebirth level; old saves fall back to the previous life\'s required level',()=>{
