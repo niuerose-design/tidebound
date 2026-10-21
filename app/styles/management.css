@@ -938,3 +938,15 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-skin-card { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 6px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:inherit; cursor:pointer; min-width:0; text-align:center; }
 .exp-skin-card b { font-size:12px; } .exp-skin-card small { font-size:10px; color:#9fb3b1; }
 .exp-skin-card.on { outline:2px solid #e0b36a; } .exp-skin-card.locked { opacity:.55; cursor:default; }
+
+/* 24단계 원정대 탭: 원정 · 과제 · 성장 · 기록 · 꾸미기. 좁은 화면에서는 한 줄에 다섯 칸. */
+.exp-tabs.game-tabs { width:100%; display:flex; margin-bottom:12px; }
+.exp-tabs [data-slot=tabs-trigger] { flex:1 1 0; min-width:0; white-space:nowrap; }
+.exp-tabs [data-slot=tabs-trigger].has-todo::after { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#e0b36a; margin-left:5px; vertical-align:middle; }
+.exp-tab-panel { gap:10px; }
+.exp-tab-panel > details { margin:0; }
+.exp-tab-panel .exp-mastery, .exp-tab-panel .exp-set, .exp-tab-panel .exp-quest-box, .exp-tab-panel .exp-codex, .exp-tab-panel .exp-feats, .exp-tab-panel .exp-link { margin:0; }
+.exp-set-growth { background:#0f2227; }
+@media (max-width:480px) { .exp-tabs [data-slot=tabs-trigger] { padding:10px 2px; font-size:12px; } }
+.exp-set-head { flex-wrap:wrap; } .exp-set-head b { white-space:nowrap; flex-shrink:0; }
+.exp-mastery > small, .exp-set > small, .exp-set > p.exp-league-line { display:block; margin-top:6px; }

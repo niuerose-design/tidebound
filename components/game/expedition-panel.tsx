@@ -1,6 +1,7 @@
 'use client';
 /** 원정대(오토배틀러) 화면: 8라운드 PvE · 고스트, 횟수 제한 없음(5단계). 상점 5장 → 벤치 → 보드(앞줄 · 뒷줄 4칸) → 전투. 드래그 없이 버튼만으로 390px에서도 쓰이게. */
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
 import { EXPEDITION, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, activeSet, nextSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, quarterKey, RENOWN, renownRewardMult, leagueTierName, encodeBoard, decodeBoard, targetProgress, EXP_THEMES, activeTheme, UNIT_SKINS, activeSkin, skinUnlocked, setMasteryBest } from '@/game/data/expedition';
 import { BOSS_CORES } from '@/game/data/boss-core';
@@ -22,13 +23,16 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const [showLog, setShowLog] = useState(false);
     // 12단계: 전투 재생. 새 결과가 오면 자동으로 열리고, 닫으면 그 결과 키를 기억합니다.
     const [closedReplay, setClosedReplay] = useState('');
+    // 24단계: 화면을 탭으로 나눕니다(원정 · 과제 · 성장 · 기록 · 꾸미기). 고른 탭은 기기에 기억.
+    const [tab, setTabState] = useState(() => { try { const v = localStorage.getItem('exp-tab') || 'play'; return ['play', 'quests', 'growth', 'records', 'style'].includes(v) ? v : 'play'; } catch { return 'play'; } });
+    const setTab = (v: string) => { setTabState(v); try { localStorage.setItem('exp-tab', v); } catch { /* 저장 불가 */ } };
     // 23단계 소셜: 보드 공유 코드 복사 · 목표 보드 코드 입력. 연출 보상: 보드 테마.
     const [copied, setCopied] = useState(''), [codeInput, setCodeInput] = useState('');
     const copy = async (key: string, text: string) => { try { await navigator.clipboard.writeText(text); setCopied(key); setTimeout(() => setCopied(c => c === key ? '' : c), 1500); } catch { /* 클립보드 없음 */ } };
     const theme = activeTheme(s), skin = activeSkin(s), target = s.expeditionTarget;
     const peek = codeInput.trim() ? decodeBoard(codeInput) : null;
     const unitLine = (list: { unit: string; star: number }[]) => list.map(u => `${unitById(u.unit)?.name || u.unit}${u.star > 1 ? `★${u.star}` : ''}`).join(' · ');
-    const shareBox = <details className="exp-share" aria-label="보드 공유"><summary>보드 공유 · {target ? `목표 ${unitLine(target.units).slice(0, 24)}${unitLine(target.units).length > 24 ? '…' : ''}` : '코드로 목표 보드 정하기'}</summary>
+    const shareBox = <details className="exp-share" aria-label="보드 공유" open><summary>보드 공유 · {target ? `목표 ${unitLine(target.units).slice(0, 24)}${unitLine(target.units).length > 24 ? '…' : ''}` : '코드로 목표 보드 정하기'}</summary>
         <p className="footnote">판 중에 ‘코드 복사’를 누르면 지금 보드가 한 줄 코드가 됩니다. 다른 모험가가 그 코드를 여기에 붙여 넣고 ‘목표로 삼기’를 누르면 상점에 그 유닛마다 🎯 표시가 붙고, 모은 수가 보드 아래에 나옵니다. 순위표의 ‘코드’ 버튼으로 상위 보드를 가져올 수도 있습니다.</p>
         {target ? <div className="exp-target-now"><b>🎯 지금 목표</b> · {unitLine(target.units)}{target.augments?.length ? <small> · 증강 {target.augments.map(a => augmentName(a)).join(' · ')}</small> : null}{target.wins ? <small> · {target.wins}승 보드</small> : null}<div className="button-row"><button className="secondary small" disabled={busy} onClick={() => copy('target', target.code)}>{copied === 'target' ? '복사됨' : '코드 복사'}</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionSetTarget', value: '' })}>목표 해제</button></div></div> : null}
         <div className="exp-share-input"><input value={codeInput} onChange={e => setCodeInput(e.target.value)} placeholder="TB1. 로 시작하는 코드 붙여 넣기" aria-label="공유 코드" spellCheck={false}/><button className="secondary small" disabled={busy || !peek} onClick={() => { send({ type: 'expeditionSetTarget', value: codeInput.trim() }); setCodeInput(''); }}>목표로 삼기</button></div>
@@ -51,7 +55,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     // 20단계 분기 세트: 지금 세트 · 다음 세트 · 유닛 풀 · 세트 숙련(세트가 다르면 처음부터).
     const curSet = now ? activeSet(now) : setById(undefined), upcoming = now ? nextSet(now) : undefined, pool = setUnits(curSet.id);
     const sm = s.expeditionSetMastery && s.expeditionSetMastery.set === curSet.id ? s.expeditionSetMastery : { set: curSet.id, level: 1, xp: 0, claimed: [] as number[] };
-    const themeBox = <details className="exp-themes" aria-label="보드 테마"><summary>보드 테마 · {theme.icon} {theme.name} · 유닛 피부 · {skin.icon} {skin.name}</summary>
+    const themeBox = <details className="exp-themes" aria-label="보드 테마" open><summary>보드 테마 · {theme.icon} {theme.name} · 유닛 피부 · {skin.icon} {skin.name}</summary>
         <p className="footnote">보드 테마는 보드와 전투 화면의 색을, 유닛 피부는 내 유닛 그림의 색과 빛을 바꿉니다. 둘 다 능력치에는 영향이 없습니다. 테마는 명성 · 세트 숙련 · 리그 · 심연 · 난이도 기록으로, 피부는 세트 숙련으로 열립니다(어느 세트든 가장 높이 올린 숙련 {setMasteryBest(s)} 기준). 테마 {EXP_THEMES.filter(x => x.unlocked(s)).length}/{EXP_THEMES.length} · 피부 {UNIT_SKINS.filter(x => skinUnlocked(x, s)).length}/{UNIT_SKINS.length} 해금.</p>
         <div className="exp-theme-list">{EXP_THEMES.map(x => { const open = x.unlocked(s); return <button type="button" key={x.id} className={`exp-theme-card theme-${x.id}${theme.id === x.id ? ' on' : ''}${open ? '' : ' locked'}`} disabled={busy || !open || theme.id === x.id} title={open ? `${x.name} 테마로 바꿉니다` : `잠김 · ${x.how}`} onClick={() => send({ type: 'expeditionTheme', value: x.id })}><i aria-hidden/><b>{x.icon} {x.name}</b><small>{open ? (theme.id === x.id ? '사용 중' : '누르면 적용') : `🔒 ${x.how}`}</small></button>; })}</div>
         <div className="exp-skin-list" aria-label="유닛 피부">{UNIT_SKINS.map(k => { const open = skinUnlocked(k, s), sample = pool[0]; return <button type="button" key={k.id} className={`exp-skin-card${skin.id === k.id ? ' on' : ''}${open ? '' : ' locked'}`} disabled={busy || !open || skin.id === k.id} title={open ? `${k.name} 피부로 바꿉니다` : `잠김 · ${k.how}`} onClick={() => send({ type: 'expeditionSkin', value: k.id })}>{sample ? <UnitArt def={sample} size={30} skin={k.id}/> : null}<b>{k.icon} {k.name}</b><small>{open ? (skin.id === k.id ? '사용 중' : '누르면 적용') : `🔒 ${k.how}`}</small></button>; })}</div>
@@ -74,31 +78,30 @@ export function Expedition({ s, send, busy }: PanelProps) {
         {q ? <div className="exp-quest-cols"><div><h3>오늘</h3>{questList(q.daily)}</div><div><h3>이번 주</h3>{questList(q.weekly)}</div></div> : <p className="muted">원정을 출발하면 오늘 · 이번 주 과제가 생깁니다. 완료하면 바로 세계석과 숙련 경험치를 받습니다.</p>}
     </div>;
     const questDone = q ? [...q.daily, ...q.weekly].filter(x => x.done).length : 0, questAll = q ? q.daily.length + q.weekly.length : 0;
-    const questDetails = <details className="exp-quest-fold" open={!!q && questDone < questAll}><summary>과제 · {q ? `${questDone}/${questAll} 완료` : '출발하면 생깁니다'}</summary>{questBox}</details>;
     const unitWins = s.expeditionStats?.unitWins || {}, unitUse = s.expeditionStats?.units || {};
     // 15단계: 최근 판 요약(몇 라운드까지 갔는지) · 도전 기록.
     const recent = s.expeditionRecent || [];
     const fmtAt = (t: number) => { const d = new Date(t + 9 * 3600_000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
-    const recentBox = recent.length ? <details className="exp-recent" aria-label="최근 판"><summary>최근 판 · {recent[0].cleared ? `완주${recent[0].abyss ? ` · 심연 ${recent[0].abyss}` : ''}` : `${Math.min(recent[0].round, EXPEDITION.rounds)}라운드까지`} · {recent[0].wins}승{s.expeditionAbyssBest ? ` · 심연 최고 ${s.expeditionAbyssBest}` : ''} · 최고 {s.expeditionBest || 0}승</summary>
+    const recentBox = recent.length ? <details className="exp-recent" aria-label="최근 판" open><summary>최근 판 · {recent[0].cleared ? `완주${recent[0].abyss ? ` · 심연 ${recent[0].abyss}` : ''}` : `${Math.min(recent[0].round, EXPEDITION.rounds)}라운드까지`} · {recent[0].wins}승{s.expeditionAbyssBest ? ` · 심연 최고 ${s.expeditionAbyssBest}` : ''} · 최고 {s.expeditionBest || 0}승</summary>
         <ul>{recent.slice(0, 5).map((x, i) => <li key={i} className={x.cleared ? 'cleared' : ''}><span className="when">{fmtAt(x.at)}</span><b>{x.difficulty && x.difficulty > 1 ? `${difficultyOf(x.difficulty).icon} ` : ''}{x.cleared ? `완주${x.abyss ? ` · 심연 ${x.abyss}` : ''}` : `${Math.min(x.round, EXPEDITION.rounds)}라운드까지`}</b><span>{x.wins}승 · 세계석 +{x.reward}{x.code ? <> · <button type="button" className="text-button" onClick={() => copy(`recent${i}`, x.code!)}>{copied === `recent${i}` ? '복사됨' : '코드 복사'}</button></> : null}</span><small className="muted">{x.why}</small></li>)}</ul></details> : null;
     const feats = s.expeditionFeats || {};
-    const featBox = <details className="exp-feats"><summary>도전 기록 · {FEATS.filter(f => feats[f.id]).length}/{FEATS.length}</summary><ul>{FEATS.map(f => <li key={f.id} className={feats[f.id] ? 'on' : ''}><b>{f.name}</b> · {f.desc}{feats[f.id] ? <small> · {feats[f.id]}회 · 칭호 {f.title}</small> : <small className="muted"> · 칭호 {f.title}</small>}</li>)}</ul></details>;
+    const featBox = <details className="exp-feats" open><summary>도전 기록 · {FEATS.filter(f => feats[f.id]).length}/{FEATS.length}</summary><ul>{FEATS.map(f => <li key={f.id} className={feats[f.id] ? 'on' : ''}><b>{f.name}</b> · {f.desc}{feats[f.id] ? <small> · {feats[f.id]}회 · 칭호 {f.title}</small> : <small className="muted"> · 칭호 {f.title}</small>}</li>)}</ul></details>;
     // 19단계 본편 연결: 잠긴 보스 유닛 · 코어 조각 · 도감 연결.
     const locked = lockedBossUnits(s.book), shards = s.expeditionShards || {};
-    const linkBox = <details className="exp-link"><summary>본편 연결 · 보스 유닛 {bossUnits(pool).length - locked.size}/{bossUnits(pool).length} 해금 · 코어 조각 {Object.values(shards).reduce((a, n) => a + n, 0)}</summary>
+    const linkBox = <details className="exp-link" open><summary>본편 연결 · 보스 유닛 {bossUnits(pool).length - locked.size}/{bossUnits(pool).length} 해금 · 코어 조각 {Object.values(shards).reduce((a, n) => a + n, 0)}</summary>
         <ul>
             <li><b>보스 유닛 해금</b> · 본편에서 그 보스를 {BOSS_UNLOCK_KILLS}번 이상 잡아야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). {bossUnits(pool).map(u => <span key={u.id} className={`exp-link-chip${locked.has(u.id) ? ' locked' : ''}`} title={locked.has(u.id) ? `본편 ${u.name} 처치 ${s.book[u.monster] || 0}/${BOSS_UNLOCK_KILLS}` : `본편 처치 ${s.book[u.monster] || 0}`}>{locked.has(u.id) ? '🔒 ' : '✓ '}{u.name}</span>)}</li>
             <li><b>보스 코어 조각</b> · 막 보스 · 심연 보스를 이기면 {Math.round(shardChance(chosenDiff, false) * 100)}%(심연 +{Math.round(CORE_SHARD.abyssBonus * 100)}%p, 난이도마다 +{Math.round(CORE_SHARD.perDifficulty * 100)}%p)로 조각. {CORE_SHARD.per}개면 본편 보스 코어(없으면 획득 · 있으면 각성). 머쉬맘 → {BOSS_CORES.grotto.name}, 자쿰 → {BOSS_CORES.ventCathedral.name}, 칠흑 보스 → 던전 코어 7종 중 무작위. {Object.keys(shards).length ? Object.entries(shards).filter(([, n]) => n > 0).map(([id, n]) => <span key={id} className="exp-link-chip">{BOSS_CORES[id]?.name || id} {n}/{CORE_SHARD.per}</span>) : <small className="muted">아직 조각 없음</small>}</li>
             <li><b>도감 연결</b> · 유닛 도감이 동 · 은 · 금에 닿으면 그 유닛의 본편 몬스터 처치 수 +{CODEX_LINK_KILLS.join(' · +')}(연구 단계가 빨라집니다). 지금까지 {Object.keys(s.expeditionCodexLinked || {}).length}종 연결.</li>
         </ul>
     </details>;
-    const codexBox = <details className="exp-codex"><summary>유닛 도감 · {curSet.icon} {curSet.name} {pool.filter(u => unitWins[u.id] > 0).length}/{pool.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
+    const codexBox = <details className="exp-codex" open><summary>유닛 도감 · {curSet.icon} {curSet.name} {pool.filter(u => unitWins[u.id] > 0).length}/{pool.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
         <p className="footnote">보드에 두고 이긴 라운드 수로 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}. 30종 모두 이기면 칭호 📘, 금 5종이면 🏅. 동 · 은 · 금마다 본편 도감 처치 +{CODEX_LINK_KILLS.join(' · +')}.{setById(curSet.id).remove?.length ? ` 이번 세트에서 쉬는 유닛: ${setById(curSet.id).remove!.map(id => unitById(id)?.name).join(' · ')}(기록은 남고 다음 세트에 돌아올 수 있음).` : ''}</p>
         <div className="exp-codex-grid">{[...pool].sort((a, b) => a.cost - b.cost).map(def => { const w = unitWins[def.id] || 0, tier = codexTier(w); return <div key={def.id} className={`exp-codex-unit cost-${def.cost} tier-${tier}${w ? '' : ' unseen'}`} title={`${def.name} · ${tags(def)} · 배치 ${unitUse[def.id] || 0} · 승리 ${w}`}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{w ? `${w}승${tier ? ` · ${CODEX_TIERS[tier - 1].name}` : ''}` : unitUse[def.id] ? '아직 승리 없음' : '미등록'}</small></div>; })}</div>
     </details>;
     // 20단계 분기 세트: 지금 세트(출발 화면) · 다음 세트 예고 · 세트 숙련.
-    const setBanner = <div className="exp-set" aria-label="분기 세트"><div className="exp-set-head"><b>{curSet.icon} {curSet.name} 세트</b><small>{now ? quarterKey(now) : ''}{upcoming ? ` · 다음: ${upcoming.icon} ${upcoming.name}(${upcoming.from})` : ''}</small></div><small className="muted">{curSet.desc}</small>
-        <div className="exp-mastery-head" style={{ marginTop: 8 }}><b style={{ fontSize: 13 }}>세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small>{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
+    const setBanner = <div className="exp-set" aria-label="분기 세트"><div className="exp-set-head"><b>{curSet.icon} {curSet.name} 세트</b><small>{now ? quarterKey(now) : ''}{upcoming ? ` · 다음: ${upcoming.icon} ${upcoming.name}(${upcoming.from})` : ''}</small></div><small className="muted">{curSet.desc}</small></div>;
+    const setMasteryBox = <div className="exp-set exp-set-growth" aria-label="세트 숙련"><div className="exp-set-head"><b>{curSet.icon} {curSet.name} 세트</b><small>{now ? quarterKey(now) : ''}</small></div><div className="exp-mastery-head"><b style={{ fontSize: 13 }}>세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small>{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
         <div className="exp-mastery-bar"><i className="set" style={{ width: `${sm.level >= SET_MASTERY.max ? 100 : Math.min(100, Math.round(100 * sm.xp / setMasteryXpFor(sm.level)))}%` }}/></div>
         <p className="exp-league-line">주간 리그 · <b>{leagueTierName(s.expeditionLeague?.tier)}</b>{s.expeditionLeague?.last ? ` · 지난주 ${s.expeditionLeague.last.rank}위/${s.expeditionLeague.last.size}명 · 세계석 +${s.expeditionLeague.last.pearls}` : ' · 이번 주 첫 전투 때 같은 등급 8명 조에 들어갑니다'} <small className="muted">(순위 화면 ‘원정 · 주간 리그’ · 1~2위 승급 · 7~8위 강등)</small></p>
         <small className="muted">세트마다 처음부터. 숙련 경험치와 같이 오르고 {Object.entries(SET_MASTERY.rewards).map(([lv, p]) => `${lv}에 세계석 ${p}`).join(' · ')}, 20이면 칭호 {curSet.icon} {curSet.name}의 원정대.</small></div>;
@@ -110,19 +113,34 @@ export function Expedition({ s, send, busy }: PanelProps) {
     // 9단계: 지난 시즌 정산 내역과 시즌 보상표.
     const season = s.expeditionSeasonLast ? <p className="exp-season">지난 시즌 {s.expeditionSeasonLast.season} · {s.expeditionSeasonLast.rank ? `${s.expeditionSeasonLast.rank}위` : '순위 밖'} / {s.expeditionSeasonLast.total}명 · 최고 {s.expeditionSeasonLast.wins}승 · 세계석 +{s.expeditionSeasonLast.pearls} 받음</p> : null;
     const rewardTable = <p className="footnote">월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>;
-    if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
+    const questLabel = q ? `과제 ${questDone}/${questAll}` : '과제';
+    const shell = (main: ReactNode) => <>{intro}
+        <Tabs value={tab} onValueChange={setTab}>
+            <TabsList className="game-tabs exp-tabs" aria-label="원정대 화면">
+                <TabsTrigger value="play">{r && !r.done ? `원정 · ${r.round}R` : '원정'}</TabsTrigger>
+                <TabsTrigger value="quests" className={q && questDone < questAll ? 'has-todo' : ''}>{questLabel}</TabsTrigger>
+                <TabsTrigger value="growth">성장</TabsTrigger>
+                <TabsTrigger value="records">기록</TabsTrigger>
+                <TabsTrigger value="style">꾸미기</TabsTrigger>
+            </TabsList>
+            <TabsContent value="play">{main}</TabsContent>
+            <TabsContent value="quests"><section className="panel exp-start exp-tab-panel" aria-label="과제">{questBox}{weekBanner}</section></TabsContent>
+            <TabsContent value="growth"><section className="panel exp-start exp-tab-panel" aria-label="성장"><div className="section-title"><h2>성장</h2><span>숙련 · 특전 · 명성 · 세트 숙련 · 리그 · 본편 연결</span></div>{masteryBox}{setMasteryBox}{linkBox}</section></TabsContent>
+            <TabsContent value="records"><section className="panel exp-start exp-tab-panel" aria-label="기록"><div className="section-title"><h2>기록</h2><span>최근 판 · 도전 · 도감 · 시즌</span></div>{recentBox || <p className="muted">아직 마친 판이 없습니다.</p>}{featBox}{codexBox}{season}{rewardTable}</section></TabsContent>
+            <TabsContent value="style"><section className="panel exp-start exp-tab-panel" aria-label="꾸미기"><div className="section-title"><h2>꾸미기 · 공유</h2><span>보드 공유 코드 · 테마 · 유닛 피부</span></div>{shareBox}{themeBox}</section></TabsContent>
+        </Tabs></>;
+    if (!r || (r.done && !r.reward && r.reward !== 0)) return shell(<section className="panel exp-start">
         {season}{weekBanner}
         {setBanner}{diffPicker}
         <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
-        {recentBox}{masteryBox}{questDetails}{shareBox}{themeBox}{linkBox}{featBox}{codexBox}
         <p className="footnote">유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
         {rewardTable}
-    </section></>;
-    if (r.done) return <>{intro}<section className="panel exp-start">
+    </section>);
+    if (r.done) return shell(<section className="panel exp-start">
         <h2>원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
         <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>바로 다시 출발 · {difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name}</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
-        {setBanner}{diffPicker}{recentBox}{masteryBox}{questDetails}{shareBox}{themeBox}{linkBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
-    </section></>;
+        {setBanner}{diffPicker}{recentBox}{weekBanner}
+    </section>);
     const mods = runMods(r), runRule = weeklyRuleById(r.rule), bench = benchCap(r);
     const targetIds = new Set((target?.units || []).map(u => u.unit));
     const traits = activeTraits(r.board, mods), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
@@ -137,7 +155,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const equipButton = (where: 'board' | 'bench', i: number) => picking === null ? null : <button type="button" className="primary small exp-equip" disabled={busy} onClick={e => { e.stopPropagation(); send({ type: 'expeditionEquip', value: `${where}:${i}:${picking}` }); setPick(null); }}>장착</button>;
     const itemBadge = (where: 'board' | 'bench', i: number, item?: string) => item ? <button type="button" className={`exp-item-badge${itemById(item)?.tier === 'emblem' ? ' emblem' : itemById(item)?.tier === 2 ? ' tier2' : ''}`} title={`${itemById(item)?.name}: ${itemById(item)?.desc} · 누르면 장착을 풉니다`} disabled={busy} onClick={e => { e.stopPropagation(); send({ type: 'expeditionUnequip', value: `${where}:${i}` }); }}>{itemById(item)?.tier === 'emblem' ? `+${itemById(item)!.name.replace('의 문장', '')}` : itemById(item)?.name}</button> : null;
     const cell = (row: 'front' | 'back', col: number) => { const list = r.board.map((x, i) => [x, i] as const).filter(([x]) => x.row === row); const hit = list[col]; if (!hit) return <div className="exp-cell empty" key={`${row}${col}`}/>; const [x, i] = hit, def = unitById(x.unit)!; return <div className={`exp-cell cost-${def.cost} star-${x.star}${x.item ? ' has-item' : ''}`} key={`${row}${col}`}><button type="button" className="exp-cell-main" title={`${def.name} · ${tags(def)}${x.item && itemById(x.item)?.emblem ? ` (+${itemById(x.item)!.name})` : ''} · 누르면 벤치로 내립니다`} disabled={busy || picking !== null} onClick={() => send({ type: 'expeditionPlace', value: `board:${i}` })}><UnitArt def={def} size={26} skin={skin.id}/><b>{def.name}</b><small>{stars(x.star)}</small></button>{itemBadge('board', i, x.item)}{equipButton('board', i)}</div>; };
-    return <>{intro}
+    return shell(<>
         <section className="panel port-resource-bar exp-bar" aria-label="원정 상태">
             <div><Flag size={22}/><span>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{inAbyss ? '심연 · 라운드' : `${actOf(r.round)}막 · 라운드`}<strong>{r.round} <small>{inAbyss ? `· 심연 ${depth} / ${ABYSS.max}` : `/ ${EXPEDITION.rounds}`}</small></strong></span></div>
             <div><Heart size={22}/><span>원정 체력<strong>{r.hp}<i className="exp-hpbar" aria-hidden><b style={{ width: `${Math.max(0, Math.min(100, r.hp))}%` }}/></i></strong></span></div>
@@ -179,6 +197,5 @@ export function Expedition({ s, send, busy }: PanelProps) {
             <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); const own = ownedCount(id), plus = onBoard.has(id) ? [] : traitKeys({ unit: id, star: 1, row: 'front' }, def).filter(k => boardKeys.has(k)).map(k => (ORIGIN_NAMES as Record<string, string>)[k] || (ROLE_NAMES as Record<string, string>)[k] || (SPECIAL_NAMES as Record<string, string>)[k]); return <button type="button" key={i} className={`exp-card cost-${def.cost}${plus.length ? ' synergy' : ''}${targetIds.has(id) ? ' target' : ''}`} disabled={busy || r.gold < def.cost || r.bench.length >= bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><UnitArt def={def} size={34} skin={skin.id}/>{targetIds.has(id) ? <span className="exp-target-badge" aria-label="목표 보드 유닛">🎯</span> : null}<b>{def.name}</b><small>{tags(def)}</small>{plus.length ? <span className="exp-plus">시너지 +{plus.map(n => n.split(' ')[0]).join(' · ')}</span> : null}{own ? <span className="exp-own">{own >= 9 ? '★3 보유' : `합치기 ${own % 3 || 3}/3${own >= 3 ? ' → ★3' : ''}`}</span> : null}<em>{def.cost} G</em></button>; })}</div>
             <details className="exp-shop-help"><summary>상점 · 승급 규칙</summary><p className="footnote">같은 유닛을 3개 모으면 ★이 하나 오릅니다(★2 셋이면 ★3). 합칠 때 아이템은 첫 유닛 것만 남고 나머지는 가진 칸으로 돌아옵니다. 유닛을 팔면 산 값을 그대로 돌려받고 아이템도 돌아옵니다. {EXPEDITION.synergySlotRound}라운드부터 상점 마지막 칸에는 지금 보드의 시너지를 채워 주는 유닛이 나옵니다. 유닛은 마나가 100이 되면 기술을 씁니다(공격할 때 +10, 맞을 때 +5). 상점 카드를 길게 누르면 기술 설명이 보입니다.</p></details>
         </section>
-        <section className="panel" aria-label="과제">{questBox}</section>
-    </>;
+    </>);
 }
