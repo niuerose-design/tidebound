@@ -1,0 +1,18 @@
+import type { ChapterDef, DeploymentDef } from '../../engine/types';
+import * as c1 from './ch01';
+import * as c2 from './ch02';
+import * as c3 from './ch03';
+import * as c4 from './ch04';
+import * as c5 from './ch05';
+import * as c6 from './ch06';
+import * as c7 from './ch07';
+import * as c8 from './ch08';
+import * as c9 from './ch09';
+import * as c10 from './ch10';
+const ALL = [c1, c2, c3, c4, c5, c6, c7, c8, c9, c10];
+export const CHAPTERS: ChapterDef[] = ALL.map(m => m.chapter);
+export const DEPLOYMENTS: DeploymentDef[] = ALL.map(m => m.deployment);
+export const CHAPTER_MAP: Record<string, ChapterDef> = Object.fromEntries(CHAPTERS.map(c => [c.id, c]));
+export const DEPLOYMENT_MAP: Record<string, DeploymentDef> = Object.fromEntries(DEPLOYMENTS.map(d => [d.chapter_id, d]));
+export const chapterDef = (id: string): ChapterDef => { const c = CHAPTER_MAP[id]; if (!c) throw Error(`unknown chapter ${id}`); return c; };
+export const chapterByNumber = (n: number): ChapterDef | undefined => CHAPTERS.find(c => c.number === n);

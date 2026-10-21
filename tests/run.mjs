@@ -29,5 +29,6 @@ await import('./story.test.mjs');
 await import('./otherworld.test.mjs');
 await import('./azeroth.test.mjs');
 await import('./tier6.test.mjs');
+await import('./tactics.test.mjs');
 await settled();
 console.log(`${results.passed} gameplay tests passed.`);
