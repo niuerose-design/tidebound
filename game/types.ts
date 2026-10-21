@@ -629,7 +629,9 @@ export type State = {
     expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
     expeditionSetDone?: Record<string, number>;
     /** 23단계: 공유 코드로 불러온 목표 보드(상점에 ‘목표’ 표시 · 모은 수 표시). */
-    expeditionTarget?: { code: string; units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments?: string[]; wins?: number; round?: number };
+    expeditionTarget?: { code: string; units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments?: string[]; wins?: number; round?: number; author?: string; memo?: string };
+    /** 23단계(3): 내 공유 코드에 붙는 한 줄 메모(판 중 복사 · 최근 판 · 순위표 코드 모두). */
+    expeditionShareMemo?: string;
     /** 23단계: 고른 보드 테마 id(EXP_THEMES, 잠기면 기본). 유닛 피부 id(UNIT_SKINS) · 지금까지 가장 높이 올린 세트 숙련(피부 해금 기준, 세트가 바뀌어도 남음). */
     expeditionTheme?: string;
     expeditionSkin?: string;

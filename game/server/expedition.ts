@@ -6,12 +6,12 @@ import 'server-only';
  */
 import { db } from './db';
 import { monthKey, previousMonthKey, weekKey, weekSeason } from '../data/time';
-import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement, encodeBoard } from '../data/expedition';
+import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement, encodeBoard, cleanShareText, SHARE_MEMO_MAX } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
 export const expeditionRowId = (key: string, id: string) => `expedition:${key}:${id}`;
-export type ExpeditionSnapshot = { season: number; account: string; name: string; wins: number; cleared: boolean; round: number; runs: number; boards: Record<number, ExpeditionPlaced[]>; updated: number; /** 4단계: 판(startedAt)별 고스트 가산점. 합이 시즌 점수에 더해집니다. */ ghostByRun?: Record<string, number>; score?: number; /** 15단계: 그 달 최고 심연 라운드. 16단계: 최고 판의 난이도. */ abyss?: number; difficulty?: number; /** 17단계: 최고 판의 라운드별 증강 · 주간 규칙 · 숙련(고스트 보정). */ augs?: Record<number, string[]>; rule?: string; mastery?: number; };
+export type ExpeditionSnapshot = { season: number; account: string; name: string; wins: number; cleared: boolean; round: number; runs: number; boards: Record<number, ExpeditionPlaced[]>; updated: number; /** 4단계: 판(startedAt)별 고스트 가산점. 합이 시즌 점수에 더해집니다. */ ghostByRun?: Record<string, number>; score?: number; /** 15단계: 그 달 최고 심연 라운드. 16단계: 최고 판의 난이도. */ abyss?: number; difficulty?: number; /** 17단계: 최고 판의 라운드별 증강 · 주간 규칙 · 숙련(고스트 보정). */ augs?: Record<number, string[]>; rule?: string; mastery?: number; /** 23단계(3): 공유 코드에 붙는 작성자 메모. */ memo?: string };
 /** 4단계 시즌 점수: 최고 판 승수 × 100 + 완주 50 + 닿은 라운드 + 이번 달 고스트 가산점 합. */
 /** 판 자체의 점수(고스트 가산 제외): 승수 × 100 + 완주 50 + 라운드 + 난이도 가산 + 심연 × 20. 최고 판 비교에도 씁니다. */
 export const runScore = (snap: Pick<ExpeditionSnapshot, 'wins' | 'cleared' | 'round' | 'abyss' | 'difficulty'>) => snap.wins * 100 + (snap.cleared ? 50 : 0) + snap.round + difficultyOf(snap.difficulty).score + (snap.abyss || 0) * ABYSS.scorePerRound;
@@ -56,6 +56,7 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
     const ghostByRun = { ...(snap?.ghostByRun || {}), [String(r.startedAt)]: r.ghostPoints || 0 };
     const next: ExpeditionSnapshot = {
         season, account: id, name: s.name, updated: now,
+        ...(s.expeditionShareMemo ? { memo: cleanShareText(s.expeditionShareMemo, SHARE_MEMO_MAX) } : {}),
         runs: (snap?.runs || 0) + (r.done && r.last ? 1 : 0),
         wins: better ? r.wins : snap!.wins, cleared: better ? mine.cleared : snap!.cleared, round: better ? mine.round : snap!.round, difficulty: better ? mine.difficulty : (snap!.difficulty || 1),
         boards: better ? r.history : snap!.boards, ghostByRun, ...(abyss ? { abyss } : {}),
@@ -73,7 +74,7 @@ export async function listExpeditionBoard(key: string) {
 function shareCodeOf(snap: ExpeditionSnapshot) {
     const rounds = Object.keys(snap.boards || {}).map(Number).sort((a, b) => a - b), last = rounds.at(-1);
     const board = last !== undefined ? snap.boards[last] : undefined;
-    return board?.length ? encodeBoard(board, { augments: snap.augs?.[last!] || [], round: snap.round, wins: snap.wins }) : '';
+    return board?.length ? encodeBoard(board, { augments: snap.augs?.[last!] || [], round: snap.round, wins: snap.wins, author: snap.name, memo: snap.memo }) : '';
 }
 const SETTLE_POOL = 500;
 /** 9단계 시즌 말 정산: 지난달(한국 시간) 행이 있으면 그 달 순위(상위 500 안, 밖이면 0)와 보상을 돌려줍니다. 지급 · 중복 방지는 expeditionStart 핸들러가 세이브의 expeditionSeasonClaimed로 합니다. */

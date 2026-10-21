@@ -753,3 +753,32 @@ test('expedition stage 23-2 (unit skins): skins unlock by the best set mastery e
     s.expeditionSkin = 'radiant'; assert.equal(D.activeSkin(s).id, 'default', 'locked pick falls back'); s.expeditionSetDone = { x: 1 }; assert.equal(D.activeSkin(s).id, 'radiant');
     act(s, { type: 'expeditionSkin', value: 'default' }, now, mkRng(1)); assert.equal(s.expeditionSkin, undefined);
 });
+
+test('expedition stage 23-3 (author memo): codes carry a UTF-8 author name and a 40-char memo, control characters are stripped, the memo action stores and clears, finished runs and server rows embed name + memo, and a target keeps the byline', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const D = await L.load('data/expedition');
+    const board = [{ unit: 'pig', star: 2, row: 'front' }];
+    const code = D.encodeBoard(board, { author: '원정대장', memo: '초원 4 · 돌격 중심 ✨' });
+    assert.ok(/^TB1\.[A-Za-z0-9_-]+$/.test(code), 'still base64url'); const back = D.decodeBoard(code); assert.equal(back.author, '원정대장'); assert.equal(back.memo, '초원 4 · 돌격 중심 ✨'); assert.deepEqual(back.units, board);
+    const long = D.decodeBoard(D.encodeBoard(board, { author: 'a'.repeat(30), memo: 'ㄱ'.repeat(60) + '\u0007x' })); assert.equal(long.author.length, 16); assert.equal(long.memo.length, 40); assert.ok(!long.memo.includes('\u0007'));
+    assert.equal(D.decodeBoard(D.encodeBoard(board)).author, undefined, 'no byline without author');
+    assert.equal(D.cleanShareText('  a\n\tb  ', 40), 'a b');
+    // 옛 코드(ASCII btoa)도 그대로 읽힌다.
+    assert.deepEqual(D.decodeBoard('TB1.' + btoa(JSON.stringify({ v: 1, u: [['slime', 1, 'b']] }))).units, [{ unit: 'slime', star: 1, row: 'back' }]);
+    // 액션: 메모 저장 · 정리 · 지움, 목표에 작성자 · 메모 유지.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.name = '나';
+    act(s, { type: 'expeditionShareMemo', value: '  8라운드까지 버팀  ' }, now, mkRng(1)); assert.equal(s.expeditionShareMemo, '8라운드까지 버팀');
+    act(s, { type: 'expeditionSetTarget', value: code }, now, mkRng(1)); assert.equal(s.expeditionTarget.author, '원정대장'); assert.equal(s.expeditionTarget.memo, '초원 4 · 돌격 중심 ✨'); assert.equal(D.decodeBoard(s.expeditionTarget.code).memo, '초원 4 · 돌격 중심 ✨', 're-encoded code keeps the memo');
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = [{ unit: 'pig', star: 1, row: 'front' }]; act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1));
+    const rc = D.decodeBoard(s.expeditionRecent[0].code); assert.equal(rc.author, '나'); assert.equal(rc.memo, '8라운드까지 버팀');
+    act(s, { type: 'expeditionShareMemo', value: '' }, now, mkRng(1)); assert.equal(s.expeditionShareMemo, undefined);
+    // 서버 행: 이름 + 메모가 코드에 들어간다.
+    const file = path.join(os.tmpdir(), `tb-exp23c-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 400 * 86_400_000, key = T.monthKey(now2);
+        await E.syncExpeditionRow('m1', { name: '메모왕', expeditionShareMemo: '뒷줄 마력 셋', expedition: { round: 4, wins: 3, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }] }, startedAt: 1 } }, now2);
+        const row = (await E.listExpeditionBoard(key)).find(x => x.id === 'm1'); const dec = D.decodeBoard(row.code); assert.equal(dec.author, '메모왕'); assert.equal(dec.memo, '뒷줄 마력 셋');
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});

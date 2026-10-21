@@ -432,19 +432,26 @@ export const boardValue = (board: { unit: string; star: number }[]) => board.red
 
 /** 23단계 보드 공유 코드: 보드(유닛 · ★ · 줄 · 아이템) · 증강 · 세트 · 라운드 · 승수를 'TB1.' + base64url(JSON) 한 줄로 만듭니다. 영문 id만 들어가므로 btoa로 충분합니다. */
 export const SHARE_PREFIX = 'TB1.';
-export type SharedBoard = { units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments: string[]; round?: number; wins?: number };
-type ShareJson = { v: 1; s?: string; u: [string, number, 'f' | 'b', string?][]; a?: string[]; r?: number; w?: number };
-export function encodeBoard(board: { unit: string; star: number; row: string; item?: string }[], opts: { set?: string; augments?: string[]; round?: number; wins?: number } = {}): string {
+export type SharedBoard = { units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments: string[]; round?: number; wins?: number; /** 23단계(3): 작성자 이름 · 한 줄 메모. */ author?: string; memo?: string };
+type ShareJson = { v: 1; s?: string; u: [string, number, 'f' | 'b', string?][]; a?: string[]; r?: number; w?: number; n?: string; m?: string };
+/** 작성자 메모 최대 길이(글자) · 이름 최대 길이. 제어 문자는 지우고 공백은 하나로 모읍니다. */
+export const SHARE_MEMO_MAX = 40, SHARE_NAME_MAX = 16;
+export const cleanShareText = (v: unknown, max: number) => String(v ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, max);
+/** 한글 메모가 들어가므로 UTF-8 바이트를 base64로. 브라우저 · Node 모두 TextEncoder가 있습니다. */
+const b64 = (s: string) => btoa(Array.from(new TextEncoder().encode(s), b => String.fromCharCode(b)).join(''));
+const unb64 = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s), c => c.charCodeAt(0)));
+export function encodeBoard(board: { unit: string; star: number; row: string; item?: string }[], opts: { set?: string; augments?: string[]; round?: number; wins?: number; author?: string; memo?: string } = {}): string {
     const json: ShareJson = { v: 1, u: board.slice(0, 12).map(p => { const t: [string, number, 'f' | 'b', string?] = [p.unit, p.star, p.row === 'back' ? 'b' : 'f']; if (p.item) t.push(p.item); return t; }) };
     if (opts.set) json.s = opts.set; if (opts.augments?.length) json.a = opts.augments.slice(0, 6); if (opts.round) json.r = opts.round; if (opts.wins) json.w = opts.wins;
-    try { return SHARE_PREFIX + btoa(JSON.stringify(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch { return ''; }
+    const author = cleanShareText(opts.author, SHARE_NAME_MAX), memo = cleanShareText(opts.memo, SHARE_MEMO_MAX); if (author) json.n = author; if (memo) json.m = memo;
+    try { return SHARE_PREFIX + b64(JSON.stringify(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch { return ''; }
 }
 /** 코드 → 보드. 모르는 유닛 · 잘못된 ★ · 줄은 버리고, 유닛이 하나도 없으면 null. 앞뒤 공백 · 따옴표는 무시합니다. */
 export function decodeBoard(code: string): SharedBoard | null {
     const raw = String(code || '').trim().replace(/^["'`]+|["'`]+$/g, '');
     if (!raw.startsWith(SHARE_PREFIX)) return null;
     let json: ShareJson;
-    try { const b64 = raw.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/'); json = JSON.parse(atob(b64 + '='.repeat((4 - b64.length % 4) % 4))) as ShareJson; } catch { return null; }
+    try { const body = raw.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/'); json = JSON.parse(unb64(body + '='.repeat((4 - body.length % 4) % 4))) as ShareJson; } catch { return null; }
     if (!json || json.v !== 1 || !Array.isArray(json.u)) return null;
     const units: SharedBoard['units'] = [];
     for (const t of json.u.slice(0, 12)) {
@@ -455,7 +462,8 @@ export function decodeBoard(code: string): SharedBoard | null {
     }
     if (!units.length) return null;
     const augments = Array.isArray(json.a) ? json.a.filter(a => typeof a === 'string').slice(0, 6) : [];
-    return { units, augments, ...(json.s && SETS.some(x => x.id === json.s) ? { set: json.s } : {}), ...(Number(json.r) > 0 ? { round: Math.min(99, Math.floor(Number(json.r))) } : {}), ...(Number(json.w) > 0 ? { wins: Math.min(99, Math.floor(Number(json.w))) } : {}) };
+    const author = cleanShareText(json.n, SHARE_NAME_MAX), memo = cleanShareText(json.m, SHARE_MEMO_MAX);
+    return { units, augments, ...(author ? { author } : {}), ...(memo ? { memo } : {}), ...(json.s && SETS.some(x => x.id === json.s) ? { set: json.s } : {}), ...(Number(json.r) > 0 ? { round: Math.min(99, Math.floor(Number(json.r))) } : {}), ...(Number(json.w) > 0 ? { wins: Math.min(99, Math.floor(Number(json.w))) } : {}) };
 }
 /** 목표 보드 진행: 보드 · 벤치에서 목표 유닛을 몇 개(★ 이상) 갖췄는지. 같은 유닛이 여러 개면 하나씩 짝지웁니다. */
 export function targetProgress(target: { unit: string; star: number }[], owned: { unit: string; star: number }[]) {
