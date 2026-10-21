@@ -3,7 +3,7 @@
 import type { State } from '@/game/types';
 import { SectionHeader, FoldSection, KeyValueList, formatExact } from '@/components/ui/game';
 import { formatDuration } from '@/components/game/shared';
-import { LiveRatesCard } from '@/components/game/live-rates-card';
+import { LiveRatesCard } from './live-rates-card';
 import { RebirthHistory } from '@/components/features/legacy';
 import { MONSTERS, BASE_STAGES, PLAIN_DUNGEONS } from '@/game/data/world';
 import { PROGRESSION } from '@/game/data/progression';
