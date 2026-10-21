@@ -168,7 +168,7 @@
 2. 서버 비용 선행 처리(브리프 9절 순서와 별개로 비용이 급하므로): 비활성 탭 동기화 0, 전투 화면 외 폴링 제거, 저장 디바운스 60초, 응답 델타(키별 얕은 병합). 배포 뒤 Active CPU 전후 기록.
 3. 코어 추출: `game/systems/turn.ts` 중심으로 "서버와 화면이 같은 `tick`을 쓰는" 경계 확정, 시드 난수 주입(`mutate`에 rng 전달) → 골든 테스트. **(v3.377 진행)** `game/server/rng.ts requestRng(id, revision, lastTick, salt)`를 `mutate`가 `advance` · `act`에 넘기고, `tests/golden.test.mjs`가 기준 몸 3개의 1시간 세이브 해시를 `tests/fixtures/golden.json`과 비교합니다(갱신: `node scripts/golden-update.mjs`).
 4. 세이브 v2 마이그레이션 체인 + 운영 세이브 익명 픽스처 10개. **(v3.375 진행)** 운영 페이지 통계 탭의 내보내기 버튼(`exportFixtures`)이 `tests/fixtures/saves/` 용 익명 JSON을 내려줍니다. **(v3.378 진행)** `game/save/` 봉투 v2 + 체인(`docs/save-format.md`), `TIDEBOUND_SAVE_V2` 플래그 뒤. 픽스처 로드 테스트는 파일이 들어오면 자동으로 돕니다.
-5. 셸 교체 → 화면 순차 교체(설정 → 도감 → 보관함 → 스킬 → 사냥 메인). **(v3.381 진행)** 설정 화면을 먼저 새 토대로 만들었습니다(`components/features/settings/`, 주소 `#settings`). 메뉴 화면의 해시 주소(`components/game/view-route.ts`)도 이때 넣었고, 셸(사이드바 · 상단바 · 모바일 탭) 교체는 다음 PR. **(v3.382 진행)** 도감 화면(`components/features/codex/`): 접는 구역 `FoldSection`은 닫힌 내용을 마운트하지 않아 161종 카드를 한 번에 그리지 않습니다.
+5. 셸 교체 → 화면 순차 교체(설정 → 도감 → 보관함 → 스킬 → 사냥 메인). **(v3.381 진행)** 설정 화면을 먼저 새 토대로 만들었습니다(`components/features/settings/`, 주소 `#settings`). 메뉴 화면의 해시 주소(`components/game/view-route.ts`)도 이때 넣었고, 셸(사이드바 · 상단바 · 모바일 탭) 교체는 다음 PR. **(v3.382 진행)** 도감 화면(`components/features/codex/`): 접는 구역 `FoldSection`은 닫힌 내용을 마운트하지 않아 161종 카드를 한 번에 그리지 않습니다. **(v3.383 진행)** 장비 보관함(`components/features/inventory/`): 작업대 · 스타캐치를 새 토대로 옮겼고, 상점 강화 탭 · 환생 화면은 옛 조각을 아직 씁니다.
 
 ---
 
