@@ -363,3 +363,18 @@ export const DIFFICULTIES: DifficultyDef[] = [
 export const difficultyOf = (level?: number) => DIFFICULTIES.find(d => d.level === (level || 1)) || DIFFICULTIES[0];
 /** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 5). */
 export const difficultyUnlocked = (clears?: Record<number, number>) => Math.min(DIFFICULTIES.length, 1 + Math.max(0, ...Object.entries(clears || {}).filter(([, n]) => n > 0).map(([d]) => Number(d))));
+
+// ───────────── 19단계: 본편 연결(보스 유닛 해금 · 보스 코어 조각 · 도감 → 본편 도감) ─────────────
+/** 보스 유닛(special boss)은 본편에서 그 몬스터를 BOSS_UNLOCK_KILLS번 이상 처치해야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). */
+export const BOSS_UNLOCK_KILLS = 1;
+export const bossUnits = () => UNITS.filter(u => u.special?.includes('boss'));
+export const lockedBossUnits = (book: Record<string, number> | undefined) => new Set(bossUnits().filter(u => (book?.[u.monster] || 0) < BOSS_UNLOCK_KILLS).map(u => u.id));
+/** 보스 코어 조각: 막 보스 · 심연 보스를 이기면 확률로 그 보스의 코어 조각. 조각이 per개 모이면 본편 보스 코어(없으면 획득 · 있으면 각성). */
+export const CORE_SHARD = { per: 10, base: .1, perDifficulty: .03, abyssBonus: .05 };
+export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.base + CORE_SHARD.perDifficulty * (Math.max(1, difficulty) - 1) + (abyss ? CORE_SHARD.abyssBonus : 0);
+/** 유닛 → 본편 던전 코어 id. 없는 보스(칠흑 보스)는 던전 코어 7종 중 무작위(‘고대의 조각’). */
+export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral' };
+export const SHARD_CORE_POOL = ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum'];
+export const shardCoreFor = (unitId: string, rng: () => number) => SHARD_CORE_OF[unitId] || SHARD_CORE_POOL[Math.floor(rng() * SHARD_CORE_POOL.length)];
+/** 도감 연결: 유닛 도감이 동 · 은 · 금에 닿을 때마다 그 유닛의 본편 몬스터 처치 수를 더해 줍니다(연구 단계가 빨라짐). */
+export const CODEX_LINK_KILLS = [50, 200, 500];

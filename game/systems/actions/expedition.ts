@@ -4,7 +4,10 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods } from '../../data/expedition';
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
+    lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier } from '../../data/expedition';
+import { grantBossCore } from '../boss-loot';
+import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
 import { rollShop, rollWave, battle, frontRole, activeTraits } from '../expedition';
 import { addLog } from '../state';
@@ -118,6 +121,27 @@ export function parseGhost(value: string | undefined, round: number): Expedition
         return { name: g.name.slice(0, 16), board: g.board.map(p => ({ unit: p.unit, star: p.star, row: p.row, ...(p.item ? { item: p.item } : {}) })), wins, ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) };
     } catch { return null; }
 }
+/** 19단계 보스 코어 조각: 보스를 이기면 확률로 조각, per개가 모이면 본편 보스 코어로(획득 · 각성). 돌려주는 값은 떨어진 코어 id. */
+export function rollShard(s: State, r: ExpeditionRun, bossUnit: string, abyss: boolean, rng: () => number): string | null {
+    if (rng() >= shardChance(r.difficulty || 1, abyss)) return null;
+    const core = shardCoreFor(bossUnit, rng), shards = s.expeditionShards ??= {};
+    shards[core] = (shards[core] || 0) + 1;
+    const name = BOSS_CORES[core]?.name || core;
+    if (shards[core] >= CORE_SHARD.per) { shards[core] -= CORE_SHARD.per; grantBossCore(s, core, rng, '원정대 조각 10개'); }
+    else addLog(s, `원정대 · 보스 코어 조각 · ${name} ${shards[core]}/${CORE_SHARD.per}`, 'reward');
+    return core;
+}
+/** 19단계 도감 연결: 유닛 도감이 동 · 은 · 금에 닿으면 그 유닛의 본편 몬스터 처치 수를 더합니다(한 단계에 한 번). */
+export function linkCodex(s: State, unitId: string) {
+    const def = unitById(unitId); if (!def) return 0;
+    const tier = codexTier(s.expeditionStats?.unitWins?.[unitId] || 0), given = (s.expeditionCodexLinked ??= {})[unitId] || 0;
+    let added = 0;
+    for (let t = given + 1; t <= tier; t++) added += CODEX_LINK_KILLS[t - 1] || 0;
+    if (!added) return 0;
+    s.expeditionCodexLinked[unitId] = tier; s.book[def.monster] = (s.book[def.monster] || 0) + added;
+    addLog(s, `원정 도감 ${CODEX_TIERS[tier - 1].name} · ${def.name} → 본편 도감 ${def.name} 처치 +${added}(연구가 빨라집니다)`, 'reward');
+    return added;
+}
 /** 15단계 도전 기록: 완주 판의 12라운드 보드와 흐름으로 판정합니다. */
 export function featsOf(r: ExpeditionRun): string[] {
     const out: string[] = [];
@@ -170,7 +194,7 @@ export const expeditionActions: ActionHandlers = {
         if (difficulty > difficultyUnlocked(s.expeditionDiffClears)) throw Error(`난이도 ${difficultyOf(difficulty).name}은(는) 아래 단계를 완주해야 열립니다.`);
         const mastery = s.expeditionMastery?.level || 1, rule = weeklyRule(weekKey(now));
         const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1), augments: [], rule: rule.id, mastery, ...(difficulty > 1 ? { difficulty } : {}) };
-        r.gold = income(r) + masteryPerks(mastery).reduce((n, p) => n + (p.startGold || 0), 0); r.shop = rollShop(r.level, rng);
+        r.gold = income(r) + masteryPerks(mastery).reduce((n, p) => n + (p.startGold || 0), 0); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, undefined, lockedBossUnits(s.book));
         s.expedition = r;
         addLog(s, `원정대 출발 · 1라운드${difficulty > 1 ? ` · 난이도 ${difficultyOf(difficulty).icon} ${difficultyOf(difficulty).name}` : ''} · 이번 주 규칙: ${rule.name}(${rule.desc})`, 'system');
     },
@@ -192,7 +216,7 @@ export const expeditionActions: ActionHandlers = {
     },
     expeditionReroll(s, { rng }) {
         const r = run(s), cost = runMods(r).rerollCost ?? EXPEDITION.reroll; if (r.gold < cost) throw Error('골드가 부족합니다.');
-        r.gold -= cost; r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
+        r.gold -= cost; r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined, lockedBossUnits(s.book));
     },
     expeditionXp(s) {
         const r = run(s); if (r.level >= 8) throw Error('최대 레벨입니다.'); if (r.gold < EXPEDITION.xp) throw Error('골드가 부족합니다.');
@@ -230,7 +254,7 @@ export const expeditionActions: ActionHandlers = {
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
         if (r.augments?.length) (r.augHistory ??= {})[r.round] = [...r.augments];
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
-        for (const p of r.board) { st.units[p.unit] = (st.units[p.unit] || 0) + 1; if (won) (st.unitWins ??= {})[p.unit] = (st.unitWins[p.unit] || 0) + 1; }
+        for (const p of r.board) { st.units[p.unit] = (st.units[p.unit] || 0) + 1; if (won) { (st.unitWins ??= {})[p.unit] = (st.unitWins[p.unit] || 0) + 1; linkCodex(s, p.unit); } }
         // 13단계 조합 집계(관리자): 켜진 시너지 조합 키별 전투 · 승. 키가 40개를 넘으면 가장 적게 쓴 키를 버립니다.
         { const active = activeTraits(r.board, mods), key = compKey(active); const comps = st.comps ??= {}, cw = st.compWins ??= {}; comps[key] = (comps[key] || 0) + 1; if (won) cw[key] = (cw[key] || 0) + 1;
           const keys = Object.keys(comps).filter(k => k !== key); if (keys.length >= COMP_KEYS_MAX) { const drop = keys.sort((x, y) => comps[x] - comps[y])[0]; delete comps[drop]; delete cw[drop]; }
@@ -239,6 +263,7 @@ export const expeditionActions: ActionHandlers = {
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
         if (won && boss && !abyss) r.acts = (r.acts || 0) + 1;
+        if (won && boss && wave[0]) rollShard(s, r, wave[0].unit, abyss, rng);
         if (won && abyss) r.abyss = (r.abyss || 0) + 1;
         if (!won) r.losses = (r.losses || 0) + 1;
         if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS()], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
@@ -247,7 +272,7 @@ export const expeditionActions: ActionHandlers = {
         // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).
         if (r.round === EXPEDITION.rounds) { if (won) { r.cleared = true; r.abyssChoice = true; r.round++; addLog(s, `원정대 완주 · 심연으로 계속 갈 수 있습니다(라운드마다 더 세지고 고스트 없음 · ${ABYSS.bonusEvery}라운드마다 세계석 +${ABYSS.bonus})`, 'reward'); return; } r.round++; finish(s, r, now, '완주'); return; }
         if (abyss && (r.abyss || 0) >= ABYSS.max) { r.round++; finish(s, r, now, '심연 끝'); return; }
-        r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined);
+        r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined, lockedBossUnits(s.book));
         if (r.round === 9) questProgress(s, now, 'reach8');
         // 11단계: 2 · 5 · 8라운드 시작 때 증강 선택지. 15단계: 심연에서는 14 · 18 · 22…(4라운드마다) 3등급.
         if (AUGMENT_ROUNDS.includes(r.round) || (isAbyssRound(r.round) && (r.round - EXPEDITION.rounds) % EXPEDITION.actLength === 2)) { const offer = rollAugments(r, rng); if (offer.length) r.augmentOffer = offer; }
@@ -301,7 +326,7 @@ export const expeditionActions: ActionHandlers = {
     /** 15단계: 완주 뒤 심연으로 계속(13라운드 시작: 수입 · 상점). */
     expeditionAbyss(s, { rng }) {
         const r = run(s); if (!r.abyssChoice) throw Error('지금은 심연으로 갈 수 없습니다.');
-        delete r.abyssChoice; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.board);
+        delete r.abyssChoice; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.board, lockedBossUnits(s.book));
         addLog(s, '원정대 심연 진입 · 13라운드', 'system');
     },
     /** 15단계: 완주 뒤 보상 받고 마치기. */

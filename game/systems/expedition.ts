@@ -167,7 +167,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
 }
 /** 상점 5장: 판 레벨의 비용 비중대로 뽑습니다(풀 소진은 2단계). */
 /** 10단계 시너지 슬롯: 보드의 시너지 가운데 다음 단계에 가장 가까운 것(같으면 머릿수 큰 쪽)을 늘리는, 보드에 없는 유닛. 없으면 null. */
-export function synergyPick(board: Placed[], cost: number, rng: () => number): string | null {
+export function synergyPick(board: Placed[], cost: number, rng: () => number, exclude?: Set<string>): string | null {
     const active = activeTraits(board).filter(t => t.tier < t.trait.tiers.length);
     if (!active.length) return null;
     const gap = (t: ActiveTrait) => t.trait.tiers[t.tier].count - t.count;
@@ -175,21 +175,23 @@ export function synergyPick(board: Placed[], cost: number, rng: () => number): s
     const onBoard = new Set(board.map(p => p.unit));
     for (const t of active) {
         const want = t.trait.id as string;
-        let pool = UNITS.filter(u => u.cost === cost && !onBoard.has(u.id) && (u.origin === want || (u.roles as string[]).includes(want) || (u.special as string[] | undefined)?.includes(want)));
-        if (!pool.length) pool = UNITS.filter(u => !onBoard.has(u.id) && Math.abs(u.cost - cost) <= 1 && (u.origin === want || (u.roles as string[]).includes(want)));
+        let pool = UNITS.filter(u => u.cost === cost && !onBoard.has(u.id) && !exclude?.has(u.id) && (u.origin === want || (u.roles as string[]).includes(want) || (u.special as string[] | undefined)?.includes(want)));
+        if (!pool.length) pool = UNITS.filter(u => !onBoard.has(u.id) && !exclude?.has(u.id) && Math.abs(u.cost - cost) <= 1 && (u.origin === want || (u.roles as string[]).includes(want)));
         if (pool.length) return pool[Math.floor(rng() * pool.length)].id;
     }
     return null;
 }
-export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize, board?: Placed[]): string[] {
+/** 19단계: exclude(본편에서 아직 안 잡은 보스 유닛)는 상점에 나오지 않습니다. 그 비용 풀이 비면(비용 5는 모두 보스) 한 단계 아래 비용으로 채웁니다. */
+export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize, board?: Placed[], exclude?: Set<string>): string[] {
     const odds = EXPEDITION.shopOdds[Math.min(EXPEDITION.shopOdds.length - 1, Math.max(2, level))];
     const out: string[] = [];
     for (let i = 0; i < size; i++) {
         let r = rng(), cost = 1; for (let c = 0; c < odds.length; c++) { r -= odds[c]; if (r <= 0) { cost = c + 1; break; } }
         // 마지막 칸은 시너지 슬롯(보드가 주어졌을 때).
-        const pick = board && i === size - 1 ? synergyPick(board, cost, rng) : null;
+        const pick = board && i === size - 1 ? synergyPick(board, cost, rng, exclude) : null;
         if (pick) { out.push(pick); continue; }
-        const pool = UNITS.filter(u => u.cost === cost); out.push(pool[Math.floor(rng() * pool.length)].id);
+        // 그 비용에 열린 유닛이 없으면(비용 5는 모두 보스) 한 단계 아래 비용으로 내려갑니다.
+        let c = cost, pool = UNITS.filter(u => u.cost === c && !exclude?.has(u.id)); while (!pool.length && c > 1) { c--; pool = UNITS.filter(u => u.cost === c && !exclude?.has(u.id)); } if (!pool.length) pool = UNITS.filter(u => u.cost === cost); out.push(pool[Math.floor(rng() * pool.length)].id);
     }
     return out;
 }

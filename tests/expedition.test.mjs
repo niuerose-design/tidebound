@@ -544,3 +544,37 @@ test('expedition stage 17: ghost boards carry the opponent run mods (augments ·
         assert.ok(Math.abs(ghosts[3].mods.frontHp - 1.15 * 1.05) < 1e-9); assert.equal(ghosts[3].mods.starPower, 1.08); assert.deepEqual(ghosts[3].mods.traitPlus, { meadow: 1 }); assert.equal(ghosts[3].mods.goldPlus, undefined);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('expedition stage 19 (main-game links): boss units stay out of the shop until the boss is killed in the main game, boss wins roll core shards that forge a boss core at 10, codex tiers add main-game book kills once per tier', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
+    assert.deepEqual([...D.lockedBossUnits({})].sort(), ['blackMage', 'lucid', 'mushmom', 'zakum']); assert.deepEqual([...D.lockedBossUnits({ grottoWarden: 1, ventColossus: 3 })].sort(), ['blackMage', 'lucid']);
+    const locked = D.lockedBossUnits({});
+    for (let seed = 1; seed <= 30; seed++) for (const id of X.rollShop(8, mkRng(seed), 5, undefined, locked)) assert.ok(!locked.has(id), `locked boss ${id} in shop`);
+    assert.ok(Array.from({ length: 60 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5)).flat().some(id => locked.has(id)), 'without exclude bosses do appear at level 8');
+    assert.ok(Array.from({ length: 40 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5, [{ unit: 'pig', star: 1, row: 'front' }, { unit: 'kingClang', star: 1, row: 'front' }], locked)).flat().every(id => !locked.has(id)), 'synergy slot respects the lock');
+    assert.ok(Math.abs(D.shardChance(1, false) - .1) < 1e-9); assert.ok(Math.abs(D.shardChance(5, true) - .27) < 1e-9); assert.equal(D.shardCoreFor('mushmom', mkRng(1)), 'grotto'); assert.ok(D.SHARD_CORE_POOL.includes(D.shardCoreFor('blackMage', mkRng(2))));
+    // 판: 상점이 잠긴 보스를 피하고, 본편 처치가 생기면 나올 수 있다.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.level = 8; for (let k = 0; k < 20; k++) { r.gold = 10; act(s, { type: 'expeditionReroll' }, now, mkRng(k + 3)); assert.ok(r.shop.every(id => !locked.has(id))); }
+    s.book.ventColossus = 1; let seen = false; for (let k = 0; k < 80 && !seen; k++) { r.gold = 10; act(s, { type: 'expeditionReroll' }, now, mkRng(k + 100)); if (r.shop.includes('zakum')) seen = true; }
+    assert.ok(seen, 'zakum appears once the main-game boss is killed');
+    // 조각: 확률을 강제로 맞춰(rng 0) 보스 승리마다 조각, 10개면 코어 획득 → 각성.
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'blackMage', star: 3, row: 'back' }, { unit: 'lucid', star: 3, row: 'back' }, { unit: 'seaGuard', star: 3, row: 'front' }];
+    const zero = () => 0;
+    assert.equal(A.rollShard(s, r, 'mushmom', false, zero), 'grotto'); assert.equal(s.expeditionShards.grotto, 1);
+    for (let k = 0; k < 8; k++) A.rollShard(s, r, 'mushmom', false, zero); assert.equal(s.expeditionShards.grotto, 9); assert.equal(s.bossCores?.grotto, undefined);
+    A.rollShard(s, r, 'mushmom', false, zero); assert.equal(s.expeditionShards.grotto, 0); assert.ok(s.bossCores.grotto, 'core granted at 10 shards'); assert.equal(s.bossCores.grotto.rank, 0);
+    for (let k = 0; k < 10; k++) A.rollShard(s, r, 'mushmom', false, zero); assert.equal(s.bossCores.grotto.rank, 1, 'second 10 shards awaken the core');
+    assert.equal(A.rollShard(s, r, 'mushmom', false, () => .99), null, 'no drop above the chance');
+    // 막 보스 승리가 조각을 굴린다(rng를 0으로 고정한 전투는 결정적이지 않으니 함수 훅만 확인) → 실제 판에서 4라운드 보스 승리 뒤 조각 또는 없음.
+    r.round = 4; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 1, mkRng(4)); assert.ok(r.last.won); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    // 도감 연결: 돼지 승리 10 → 동(+50), 50 → 은(+200), 200 → 금(+500); 한 단계에 한 번.
+    s.book.ray = 0; s.expeditionStats.unitWins = { pig: 10 }; const pigMonster = D.unitById('pig').monster; s.book[pigMonster] = 0;
+    assert.equal(A.linkCodex(s, 'pig'), 50); assert.equal(s.book[pigMonster], 50); assert.equal(A.linkCodex(s, 'pig'), 0, 'same tier pays once');
+    s.expeditionStats.unitWins.pig = 200; assert.equal(A.linkCodex(s, 'pig'), 700, 'silver + gold together'); assert.equal(s.book[pigMonster], 750); assert.equal(s.expeditionCodexLinked.pig, 3);
+    // 전투 승리 경로에서도 불린다.
+    s.expeditionStats.unitWins = { seaGuard: 9 }; const sgMonster = D.unitById('seaGuard').monster; s.book[sgMonster] = 0; delete s.expeditionCodexLinked.seaGuard;
+    r.round = 2; r.board = [{ unit: 'seaGuard', star: 3, row: 'front' }, { unit: 'zakum', star: 3, row: 'front' }]; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 2, mkRng(6)); assert.ok(r.last.won); assert.equal(s.expeditionStats.unitWins.seaGuard, 10); assert.equal(s.book[sgMonster], 50);
+});

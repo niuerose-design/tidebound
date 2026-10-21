@@ -622,6 +622,9 @@ export type State = {
     expeditionAbyssBest?: number;
     expeditionFeats?: Record<string, number>;
     expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number }[];
+    /** 19단계: 보스 코어 조각(코어 id → 개수) · 도감 연결로 이미 준 단계(유닛 id → 1~3). */
+    expeditionShards?: Record<string, number>;
+    expeditionCodexLinked?: Record<string, number>;
     /** 16단계: 난이도별 완주 횟수 · 난이도별 최고 기록(승 · 심연). */
     expeditionDiffClears?: Record<number, number>;
     expeditionDiffBest?: Record<number, { wins: number; abyss: number }>;
