@@ -924,4 +924,17 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-target-line { margin:6px 0 0; font-size:12px; color:#c5d8d2; }
 .exp-card { position:relative; }
 .exp-card.target { border-color:#e0b36a; box-shadow:inset 0 0 0 1px #e0b36a44; } .exp-card .exp-target-badge { position:absolute; top:4px; right:6px; font-size:12px; }
-.exp-guild-board { margin-top:14px; } .exp-guild-board h3 { display:flex; align-items:center; gap:6px; font-size:14px; margin:0 0 4px; }
+
+/* 23단계(2) 유닛 피부: 그림 겉싸개의 filter만 바꿉니다. 동작 줄이기 설정이면 애니메이션 없이 고정 색. */
+.exp-skin { display:inline-flex; line-height:0; }
+.exp-skin-silver { filter:saturate(.45) brightness(1.25) drop-shadow(0 0 3px #d8e0e4); }
+.exp-skin-gold { filter:sepia(.7) saturate(1.9) hue-rotate(-12deg) brightness(1.12) drop-shadow(0 0 4px #e0b36a); }
+.exp-skin-prism { filter:saturate(1.5) drop-shadow(0 0 4px #9ad0ff); animation:exp-prism 6s linear infinite; }
+.exp-skin-radiant { filter:brightness(1.2) drop-shadow(0 0 6px #fff1b0); animation:exp-radiant 2.4s ease-in-out infinite; }
+@keyframes exp-prism { from { filter:hue-rotate(0deg) saturate(1.5) drop-shadow(0 0 4px #9ad0ff); } to { filter:hue-rotate(360deg) saturate(1.5) drop-shadow(0 0 4px #9ad0ff); } }
+@keyframes exp-radiant { 0%, 100% { filter:brightness(1.1) drop-shadow(0 0 3px #fff1b0); } 50% { filter:brightness(1.4) drop-shadow(0 0 9px #ffe680); } }
+@media (prefers-reduced-motion: reduce) { .exp-skin-prism, .exp-skin-radiant { animation:none; } }
+.exp-skin-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:8px; margin-top:10px; }
+.exp-skin-card { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 6px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:inherit; cursor:pointer; min-width:0; text-align:center; }
+.exp-skin-card b { font-size:12px; } .exp-skin-card small { font-size:10px; color:#9fb3b1; }
+.exp-skin-card.on { outline:2px solid #e0b36a; } .exp-skin-card.locked { opacity:.55; cursor:default; }

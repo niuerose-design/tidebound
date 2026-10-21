@@ -11,7 +11,7 @@ import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
 export const expeditionRowId = (key: string, id: string) => `expedition:${key}:${id}`;
-export type ExpeditionSnapshot = { season: number; account: string; name: string; wins: number; cleared: boolean; round: number; runs: number; boards: Record<number, ExpeditionPlaced[]>; updated: number; /** 4단계: 판(startedAt)별 고스트 가산점. 합이 시즌 점수에 더해집니다. */ ghostByRun?: Record<string, number>; score?: number; /** 15단계: 그 달 최고 심연 라운드. 16단계: 최고 판의 난이도. */ abyss?: number; difficulty?: number; /** 17단계: 최고 판의 라운드별 증강 · 주간 규칙 · 숙련(고스트 보정). */ augs?: Record<number, string[]>; rule?: string; mastery?: number; /** 23단계: 갱신 때의 길드(길드 원정 점수 집계용). */ guild?: { id: string; name: string } };
+export type ExpeditionSnapshot = { season: number; account: string; name: string; wins: number; cleared: boolean; round: number; runs: number; boards: Record<number, ExpeditionPlaced[]>; updated: number; /** 4단계: 판(startedAt)별 고스트 가산점. 합이 시즌 점수에 더해집니다. */ ghostByRun?: Record<string, number>; score?: number; /** 15단계: 그 달 최고 심연 라운드. 16단계: 최고 판의 난이도. */ abyss?: number; difficulty?: number; /** 17단계: 최고 판의 라운드별 증강 · 주간 규칙 · 숙련(고스트 보정). */ augs?: Record<number, string[]>; rule?: string; mastery?: number; };
 /** 4단계 시즌 점수: 최고 판 승수 × 100 + 완주 50 + 닿은 라운드 + 이번 달 고스트 가산점 합. */
 /** 판 자체의 점수(고스트 가산 제외): 승수 × 100 + 완주 50 + 라운드 + 난이도 가산 + 심연 × 20. 최고 판 비교에도 씁니다. */
 export const runScore = (snap: Pick<ExpeditionSnapshot, 'wins' | 'cleared' | 'round' | 'abyss' | 'difficulty'>) => snap.wins * 100 + (snap.cleared ? 50 : 0) + snap.round + difficultyOf(snap.difficulty).score + (snap.abyss || 0) * ABYSS.scorePerRound;
@@ -56,7 +56,6 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
     const ghostByRun = { ...(snap?.ghostByRun || {}), [String(r.startedAt)]: r.ghostPoints || 0 };
     const next: ExpeditionSnapshot = {
         season, account: id, name: s.name, updated: now,
-        ...(s.guildMember ? { guild: { id: s.guildMember.id, name: s.guildMember.name } } : {}),
         runs: (snap?.runs || 0) + (r.done && r.last ? 1 : 0),
         wins: better ? r.wins : snap!.wins, cleared: better ? mine.cleared : snap!.cleared, round: better ? mine.round : snap!.round, difficulty: better ? mine.difficulty : (snap!.difficulty || 1),
         boards: better ? r.history : snap!.boards, ghostByRun, ...(abyss ? { abyss } : {}),
@@ -68,7 +67,7 @@ export async function syncExpeditionRow(id: string, s: State, now: number) {
 }
 export async function listExpeditionBoard(key: string) {
     const rows = await db().listRankings(expeditionSeason(key), 50);
-    return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; return { rank: i + 1, id: snap.account, name: snap.name, wins: snap.wins, cleared: snap.cleared, round: snap.round, abyss: snap.abyss || 0, difficulty: snap.difficulty || 1, runs: snap.runs, score: snap.score ?? expeditionScore(snap), ghostPoints: Object.values(snap.ghostByRun || {}).reduce((a, n) => a + (n || 0), 0), units: Object.values(snap.boards || {}).at(-1)?.map(p => `${p.unit}:${p.star}`) || [], code: shareCodeOf(snap), guild: snap.guild?.name }; });
+    return rows.map((r, i) => { const snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; return { rank: i + 1, id: snap.account, name: snap.name, wins: snap.wins, cleared: snap.cleared, round: snap.round, abyss: snap.abyss || 0, difficulty: snap.difficulty || 1, runs: snap.runs, score: snap.score ?? expeditionScore(snap), ghostPoints: Object.values(snap.ghostByRun || {}).reduce((a, n) => a + (n || 0), 0), units: Object.values(snap.boards || {}).at(-1)?.map(p => `${p.unit}:${p.star}`) || [], code: shareCodeOf(snap) }; });
 }
 /** 23단계: 행의 마지막 보드를 공유 코드로(순위표 ‘코드 복사’). */
 function shareCodeOf(snap: ExpeditionSnapshot) {
@@ -76,20 +75,6 @@ function shareCodeOf(snap: ExpeditionSnapshot) {
     const board = last !== undefined ? snap.boards[last] : undefined;
     return board?.length ? encodeBoard(board, { augments: snap.augs?.[last!] || [], round: snap.round, wins: snap.wins }) : '';
 }
-/** 23단계 길드 원정 점수: 이번 달 행(상위 200)을 길드별로 모아 점수 합 · 인원 · 최고 모험가. 길드가 없는 행은 빠집니다. */
-export async function listExpeditionGuilds(key: string) {
-    const rows = await db().listRankings(expeditionSeason(key), GUILD_POOL);
-    const by = new Map<string, { id: string; name: string; members: number; score: number; best: { name: string; score: number } }>();
-    for (const r of rows) {
-        let snap: ExpeditionSnapshot; try { snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; } catch { continue; }
-        if (!snap.guild?.id) continue;
-        const score = snap.score ?? expeditionScore(snap), g = by.get(snap.guild.id) || { id: snap.guild.id, name: snap.guild.name, members: 0, score: 0, best: { name: snap.name, score } };
-        g.members++; g.score += score; if (score > g.best.score) g.best = { name: snap.name, score }; g.name = snap.guild.name;
-        by.set(snap.guild.id, g);
-    }
-    return [...by.values()].sort((a, b) => b.score - a.score || b.members - a.members).slice(0, 30).map((g, i) => ({ rank: i + 1, ...g }));
-}
-const GUILD_POOL = 200;
 const SETTLE_POOL = 500;
 /** 9단계 시즌 말 정산: 지난달(한국 시간) 행이 있으면 그 달 순위(상위 500 안, 밖이면 0)와 보상을 돌려줍니다. 지급 · 중복 방지는 expeditionStart 핸들러가 세이브의 expeditionSeasonClaimed로 합니다. */
 export async function settleExpeditionSeason(id: string, now: number): Promise<SeasonSettlement | null> {

@@ -480,3 +480,19 @@ export const EXP_THEMES: ThemeDef[] = [
 export const themeById = (id?: string) => EXP_THEMES.find(t => t.id === id) || EXP_THEMES[0];
 /** 지금 골라 둔 테마가 잠겨 있으면(세이브를 옮겼거나 데이터가 바뀜) 기본으로. */
 export const activeTheme = (s: ThemeProgress & { expeditionTheme?: string }) => { const t = themeById(s.expeditionTheme); return t.unlocked(s) ? t : EXP_THEMES[0]; };
+
+/** 23단계(2) 유닛 피부: 세트 숙련 보상. 내 유닛 그림의 색 · 빛만 바꾸고(상대 쪽은 그대로) 능력치는 없습니다. 어느 세트든 가장 높이 올린 세트 숙련(`setMasteryBest`) 기준. */
+export type SkinDef = { id: string; name: string; icon: string; how: string; level: number };
+export const UNIT_SKINS: SkinDef[] = [
+    { id: 'default', name: '기본', icon: '🐾', how: '처음부터', level: 0 },
+    { id: 'silver', name: '은빛', icon: '🩶', how: '세트 숙련 5', level: 5 },
+    { id: 'gold', name: '금빛', icon: '💛', how: '세트 숙련 10', level: 10 },
+    { id: 'prism', name: '무지개', icon: '🌈', how: '세트 숙련 15', level: 15 },
+    { id: 'radiant', name: '찬란', icon: '💫', how: `세트 숙련 ${SET_MASTERY.max}(세트 완성)`, level: SET_MASTERY.max },
+];
+export type SkinProgress = { expeditionSetBest?: number; expeditionSetMastery?: { level: number }; expeditionSetDone?: Record<string, number> };
+/** 지금까지 어느 세트든 가장 높이 올린 세트 숙련(지난 세트 기록은 expeditionSetBest, 완성한 세트는 최대로 칩니다). */
+export const setMasteryBest = (s: SkinProgress) => Math.max(s.expeditionSetBest || 0, s.expeditionSetMastery?.level || 0, Object.values(s.expeditionSetDone || {}).some(n => n > 0) ? SET_MASTERY.max : 0);
+export const skinUnlocked = (skin: SkinDef, s: SkinProgress) => setMasteryBest(s) >= skin.level;
+export const skinById = (id?: string) => UNIT_SKINS.find(x => x.id === id) || UNIT_SKINS[0];
+export const activeSkin = (s: SkinProgress & { expeditionSkin?: string }) => { const k = skinById(s.expeditionSkin); return skinUnlocked(k, s) ? k : UNIT_SKINS[0]; };

@@ -275,6 +275,11 @@
 ## 28. 23단계 (2026-10-21, v3.360): 소셜 공유 · 길드 원정 점수 · 연출 보상
 - **보드 공유 코드**: `encodeBoard(board, {set, augments, round, wins})` → `TB1.` + base64url(JSON `{v:1,u:[[unit,star,'f'|'b',item?]],s,a,r,w}`). `decodeBoard`는 접두어 · JSON · 유닛 id · ★ · 아이템 id를 검사해 모르는 것은 버리고, 유닛이 없으면 null. 코드는 영문 id만 담으므로 `btoa/atob`로 충분하고 한글 이름은 화면에서 붙입니다. 얻는 곳: 판 중 보드 제목 ‘코드 복사’, 최근 판 목록(`expeditionRecent[].code`, 판이 끝날 때 마지막 보드), 월간 순위표 ‘복사’(서버 `shareCodeOf`: 행의 마지막 라운드 보드 + 그 라운드 증강).
 - **목표 보드**: 출발 화면 ‘보드 공유’에 코드를 붙여 넣으면 미리보기(유닛 · 세트 · 승수)가 뜨고 `expeditionSetTarget`이 `s.expeditionTarget`에 저장합니다(코드는 다시 인코딩해 정규화). 판 중에는 상점 카드에 🎯 배지, 보드 아래 `targetProgress`(같은 유닛은 하나씩 짝지어 ★ 이상이면 모음, ★ 부족은 따로 셈). 빈 값으로 해제.
-- **길드 원정 점수**: `syncExpeditionRow`가 `s.guildMember`(길드 캐시)의 id · 이름을 스냅샷에 넣고, `listExpeditionGuilds(key)`가 상위 200행을 길드별로 합산(점수 합 · 인원 · 최고 모험가, 상위 30). 경로 `?board=expeditionGuild`, 월간 순위 탭 아래 표. 보상은 아직 없음(길드 보상 체계와 묶어 뒤에).
+- ~~길드 원정 점수~~: v3.360에 넣었다가 **v3.361에서 제거**(§29). 길드 단위 경쟁은 유저 수가 적을 때 의미가 없다는 운영 판단.
 - **보드 테마(연출 보상)**: `EXP_THEMES` 8종(기본 + 7). 해금은 명성 1 · 5 · 10, 어느 세트든 세트 숙련 20(`expeditionSetDone`), 리그 최고 등급 다이아 이상(`expeditionLeague.best ≥ 4`), 심연 20(`expeditionAbyssBest`), 전설 완주(`expeditionDiffClears[5]`). `expeditionTheme` 액션이 해금을 검사하고 `s.expeditionTheme`에 저장, `activeTheme`은 잠긴 테마면 기본으로 되돌립니다. CSS는 `.theme-<id>`가 변수(`--exp-board-bg · --exp-cell-bg · --exp-cell-border · --exp-arena-bg · --exp-arena-border`)만 바꾸고 `.exp-board` · `.exp-cell` · `.exp-arena` · `.exp-fighter`가 그 변수를 씁니다. 테마 카드도 같은 변수를 써서 미리보기가 실제 색과 같습니다.
-- 검토 문서(`docs/expedition-review.md` §5)의 ‘소셜 · 공유’ · ‘연출 보상’ 두 줄이 채워졌습니다. 남은 후보: 유닛 피부(세트 숙련 보상), 길드 원정 점수 보상, 코드에 ‘작성자 한 줄 메모’.
+- 검토 문서(`docs/expedition-review.md` §5)의 ‘소셜 · 공유’ · ‘연출 보상’ 두 줄이 채워졌습니다. 남은 후보: 코드에 ‘작성자 한 줄 메모’.
+
+## 29. 23단계(2) (2026-10-21, v3.361): 유닛 피부 · 길드 원정 점수 제거
+- **유닛 피부**: `UNIT_SKINS` 5종(기본 + 은빛 5 · 금빛 10 · 무지개 15 · 찬란 20). 해금 기준은 `setMasteryBest(s)` = max(`expeditionSetBest`, 지금 세트 숙련, 완성한 세트가 있으면 20). `expeditionSetBest`는 `addSetMasteryXp`가 레벨이 오를 때 기록하므로 분기 세트가 바뀌어 숙련이 1로 돌아가도 피부는 남습니다(세트 숙련 보상이 ‘사라지지 않는 보상’이 되는 장치). 레벨업 로그에 새로 열린 피부 이름이 붙습니다.
+- 적용: `UnitArt`에 `skin` prop → `<span class="exp-skin exp-skin-<id>">` 겉싸개, CSS `filter`(은빛 채도↓ 밝기↑, 금빛 세피아 + 채도, 무지개 hue-rotate 6초 순환, 찬란 밝기 맥동)만 씁니다. 보드 · 벤치 · 상점 · 전투 재생의 **내 쪽**에만 씌우고 상대 보드는 그대로라 누가 누군지 헷갈리지 않습니다. 동작 줄이기면 애니메이션 없음. `expeditionSkin` 액션이 해금을 검사하고 `activeSkin`은 잠기면 기본.
+- **길드 원정 점수 제거**: 스냅샷 `guild` 필드 · `listExpeditionGuilds` · `?board=expeditionGuild` · 순위 탭의 표 · 테스트를 모두 뺐습니다. 이미 저장된 행에 `guild`가 남아 있어도 읽는 쪽이 없으니 무해합니다.
