@@ -3,7 +3,8 @@ import { UPDATE_LOG } from '@/game/data/update-log';
 import { ChevronRight, Lock, LogOut, Leaf, Swords } from 'lucide-react';
 import type { State } from '@/game/types';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
-import { NAV } from './game-shell';
+import { NAV } from '@/components/features/shell/nav';
+// v3.386 옛 사이드바. 새 셸(components/features/shell/side-nav.tsx)로 바뀌어 더는 쓰지 않습니다. 다음 버전에 삭제.
 export function Navigation({ view, setView, s, onLogout }: {
     onLogout?: () => void;
     view: string;

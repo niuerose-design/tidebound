@@ -1,4 +1,5 @@
 'use client';
+// v3.386 옛 모바일 탭. 새 셸(components/features/shell/tab-bar.tsx)로 바뀌어 더는 쓰지 않습니다. 다음 버전에 삭제.
 import { Menu, Swords, Target, Terminal, Zap } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 
