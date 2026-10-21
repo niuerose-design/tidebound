@@ -54,8 +54,9 @@ const Expedition = lazyPanel(() => import('./expedition-panel').then(m => m.Expe
 const MarketPanel = lazyPanel(() => import('./market-panel').then(m => m.MarketPanel));
 const StoryPanel = lazyPanel(() => import('./story-panel').then(m => m.StoryPanel));
 const Rebirth = lazyPanel(() => import('./rebirth-panel').then(m => m.Rebirth));
-const Stages = lazyPanel(() => import('./stages-panel').then(m => m.Stages));
-const Dungeons = lazyPanel(() => import('./dungeons-panel').then(m => m.Dungeons));
+// v3.395 재설계 4단계: 사냥터 · 던전(새 토대).
+const Stages = lazyPanel(() => import('@/components/features/world').then(m => m.StagesScreen));
+const Dungeons = lazyPanel(() => import('@/components/features/world').then(m => m.DungeonsScreen));
 const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
 const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
 // v3.392 재설계 4단계: 능력치 · 치장(새 토대).

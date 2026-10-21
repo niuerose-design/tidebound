@@ -1,12 +1,12 @@
 'use client';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import type { State, Action } from '@/game/types';
-import { MONSTERS, SWARM_SIZES, SWARM_UNLOCK, stageById } from '@/game/data/world';
+import { MONSTERS, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
 import { BALANCE } from '@/game/data/balance';
 import { PROGRESSION } from '@/game/data/progression';
 import { bookPending, bookTierReq } from '@/game/systems/progression';
-import { bookStage, regionResearchStage } from '@/game/systems/book';
-import { BOOK_ECOLOGY, REGION_RESEARCH, REGION_RESEARCH_FROM, REGION_RESEARCH_MAX } from '@/game/data/book-traits';
+import { bookStage } from '@/game/systems/book';
+import { BOOK_ECOLOGY } from '@/game/data/book-traits';
 import { Meter } from './shared';
 
 const MILESTONES = BALANCE.bookMilestones;
@@ -47,24 +47,4 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
     </section>;
 }
 
-/** 한 장소(사냥터)의 연구 진행도와 장소 완성 보상. 사냥터 카드와 도감 장소 제목에서 같이 씁니다. */
-function regionResearch(s: State, stageId: string) {
-    const st = stageById(stageId)!;
-    const done = st.monsters.filter(id => (s.book[id] || 0) >= PROGRESSION.monsterComplete).length;
-    const pending = st.monsters.reduce((a, id) => a + bookPending(s, id).ranks.length, 0);
-    return { done, total: st.monsters.length, complete: done === st.monsters.length, pending, reward: '업적 장착 AP +1' };
-}
-
 export function pendingBookCount(s: State) { return MONSTERS.reduce((a, f) => a + bookPending(s, f.id).ranks.length, 0); }
-
-export function RegionProgress({ s, id }: { s: State; id: string }) {
-    const r = regionResearch(s, id);
-    return <span className="region-research">{r.complete ? `장소 연구 완료 · ${r.reward} 적용 중` : `장소 연구 ${r.done} / ${r.total}종 완성 · 완성 보상 ${r.reward}`}{r.pending > 0 && <b className="positive"> · 미수령 {r.pending}단계</b>}</span>;
-}
-
-/** v27.80 지역 연구 단계(0~3)와 효과. 지역 몬스터 전부가 연구 4·5·6단계 이상이면 1·2·3단계. */
-export function RegionResearchLine({ s, region }: { s: State; region: string }) {
-    const n = regionResearchStage(s, region), r = REGION_RESEARCH[region];
-    if (!r) return null;
-    return <span className="region-research">{n ? <b className="positive">지역 연구 {n} / {REGION_RESEARCH_MAX}단계 · {r.first.label} · {r.label} ×{n} 적용 중</b> : `지역 연구 0 / ${REGION_RESEARCH_MAX}단계`}{n < REGION_RESEARCH_MAX && ` · 다음: 지역 몬스터 전부 연구 ${REGION_RESEARCH_FROM + n}단계 → ${n ? `${r.label} 한 번 더` : `첫 보너스 ${r.first.label} · ${r.label}`}`}</span>;
-}
