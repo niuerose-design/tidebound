@@ -953,3 +953,10 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 
 .exp-share-memo { margin-top:8px; }
 .exp-share-byline { margin:4px 0 0; font-size:12px; color:#c9b68a; }
+
+/* 24단계(2) 모바일 점검: 순위 탭이 다섯 개를 넘어 화면 밖으로 나가지 않게 줄바꿈, 전투 재생은 보드 위(할 일 줄 아래)에 두어 전투 직후 바로 보입니다. */
+.ranking-tabs.game-tabs { flex-wrap:wrap; height:auto; width:100%; display:flex; }
+.ranking-tabs [data-slot=tabs-trigger] { white-space:nowrap; }
+.exp-arena.above { margin:0 0 12px; }
+.ranking-tabs.game-tabs { height:auto !important; row-gap:6px; margin-bottom:14px; }
+.abyss-board .section-title { flex-wrap:wrap; row-gap:4px; } .abyss-board .section-title h2 { min-width:0; }
