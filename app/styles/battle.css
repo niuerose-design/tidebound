@@ -30,15 +30,15 @@
 .opponent-card{padding:11px 12px;border:1px solid #304c4d;border-radius:6px;background:#13262c;min-width:0}
 .opponent-card.player-opponent{border-color:#3d675a}
 .opponent-card.enemy-opponent{border-color:#674d46}
-.opponent-card .eyebrow{font-size:9px;letter-spacing:1px}
+.opponent-card .eyebrow{font-size:11px;letter-spacing:1px}
 .opponent-card>strong{display:block;margin:5px 0 9px;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.opponent-card .meter-label{font-size:10px;margin-bottom:5px}
+.opponent-card .meter-label{font-size:11px;margin-bottom:5px}
 .opponent-card .meter [data-slot=progress]{height:5px}
-.opponent-card>small{display:block;color:#8fa8a8;font-size:10px;line-height:1.5;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opponent-card>small{display:block;color:#8fa8a8;font-size:11px;line-height:1.5;margin-top:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .opponent-vs{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#c9ae76}
 .opponent-vs svg{color:#8ca9a0}
 .opponent-vs strong{font:600 13px/1 monospace;letter-spacing:1px}
-.opponent-vs small{font:9px/1 monospace;color:#789395}
+.opponent-vs small{font:11px/1 monospace;color:#789395}
 .battle-console .battle-scene{margin-bottom:11px;height:250px}
 .battle-console .scene-copy{top:52px}
 .battle-console .scene-copy h2{font-size:31px}
@@ -48,13 +48,13 @@
 .battle-console .battle-skill-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
 .battle-console .battle-skill{padding:9px 8px;gap:8px}
 .battle-console .battle-skill strong{font-size:12px}
-.battle-console .battle-skill small{font-size:10px}
+.battle-console .battle-skill small{font-size:11px}
 .battle-utility-rail{display:flex;flex-direction:column;gap:12px}
 .battle-rail-panel{padding:14px 13px;background:#112329}
 .battle-rail-panel .section-title{margin-bottom:10px}
 .battle-rail-panel .section-title h2{font-size:13px;gap:7px}
 .battle-rail-panel .section-title h2 svg{color:#8bb6a7}
-.battle-rail-panel .section-title .text-button{font-size:10px;gap:2px}
+.battle-rail-panel .section-title .text-button{font-size:11px;gap:2px}
 
 .battle-stage-list,.battle-dungeon-list{display:flex;flex-direction:column;gap:4px;max-height:248px;overflow:auto;scrollbar-width:thin;scrollbar-color:#395454 transparent}
 .battle-stage-button,.battle-dungeon-button{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px 7px;text-align:left;border:1px solid transparent;border-radius:5px;background:#0e2026;color:#a9c3bb}
@@ -68,19 +68,19 @@
 .battle-place-tabs button:focus-visible{outline:2px solid #8fb39a;outline-offset:1px}
 .battle-place-live{width:6px;height:6px;border-radius:50%;background:#e0b062}
 .battle-place-note{margin:8px 0 0;font-size:11px;color:#718c90}
-.battle-stage-index{width:22px;flex:none;color:#678785;font:10px/1 monospace}
+.battle-stage-index{width:22px;flex:none;color:#93aeab;font:11px/1 monospace}
 .battle-stage-button>span:nth-child(2),.battle-dungeon-button>span:first-child{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
 .battle-stage-button strong,.battle-dungeon-button strong{font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.battle-stage-button small,.battle-dungeon-button small{font-size:9px;color:#759193}
+.battle-stage-button small,.battle-dungeon-button small{font-size:11px;color:#8fa8a8}
 .battle-stage-button>svg,.battle-dungeon-button>svg{flex:none;color:#728c8c}
 .battle-selected-dot{width:6px;height:6px;flex:none;border-radius:50%;background:#8cd4aa;box-shadow:0 0 8px #8cd4aa88}
-.battle-dungeon-wave{flex:none;padding:3px 5px;border:1px solid #8a7049;border-radius:3px;color:#d8ba7d;font:9px/1 monospace}
+.battle-dungeon-wave{flex:none;padding:3px 5px;border:1px solid #8a7049;border-radius:3px;color:#d8ba7d;font:11px/1 monospace}
 
 .battle-hud button:focus-visible{outline:2px solid #d4b876;outline-offset:2px}
 @media(max-width:1500px){.battle-hud{grid-template-columns:222px minmax(0,1fr) 238px;gap:14px}.battle-character-column .player-panel{padding:16px 14px 12px}.battle-character-column .stat-grid{gap:11px 7px}.battle-rail-panel{padding:12px 10px}.battle-console .battle-scene{height:250px}.battle-console .scene-copy h2{font-size:26px}}
 @media(max-width:1180px){.battle-hud{grid-template-columns:220px minmax(0,1fr)}.battle-utility-rail{grid-column:1/-1;display:grid;grid-template-columns:1.1fr 1fr;align-items:start}.battle-stage-list,.battle-dungeon-list{max-height:180px}}
 @media(max-width:900px){.battle-hud{display:flex;flex-direction:column}.battle-console{order:1;width:100%}.battle-utility-rail{order:2;width:100%;display:grid;grid-template-columns:1fr 1fr}.battle-character-column{order:3;width:100%}.battle-character-column .player-column{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-top:0}.battle-character-column .player-avatar{display:none}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:left}.battle-character-column .player-panel>h3{margin-top:0}.battle-character-column .player-panel>.section-title{margin-bottom:12px}.battle-character-column .mini-equipment{display:flex;gap:10px}.battle-character-column .mini-equipment button{width:auto}.battle-character-column .player-panel .stat-grid{grid-template-columns:repeat(4,1fr)}}
-@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console>.session-metrics{grid-template-columns:repeat(3,1fr)}.battle-console>.session-metrics>div{padding:0 9px}.battle-console>.session-metrics strong{font-size:16px}.battle-console>.session-metrics span{font-size:10px}.battle-console>.session-metrics svg{display:none}.battle-opponent-strip{grid-template-columns:1fr;gap:6px}.opponent-vs{flex-direction:row;gap:7px;height:22px}.opponent-vs svg{width:14px}.battle-console .battle-scene{height:405px}.battle-console .scene-copy{top:86px}.battle-console .scene-copy h2{font-size:28px}.battle-utility-rail{display:flex}.battle-stage-list,.battle-dungeon-list{max-height:210px}.battle-character-column .player-column{display:block}.battle-character-column .player-avatar{display:flex}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:center}.battle-character-column .player-panel>h3{margin-top:18px}.battle-character-column .mini-equipment{display:block}.battle-character-column .mini-equipment button{width:100%}}
+@media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console>.session-metrics{grid-template-columns:repeat(3,1fr)}.battle-console>.session-metrics>div{padding:0 9px}.battle-console>.session-metrics strong{font-size:16px}.battle-console>.session-metrics span{font-size:11px}.battle-console>.session-metrics svg{display:none}.battle-opponent-strip{grid-template-columns:1fr;gap:6px}.opponent-vs{flex-direction:row;gap:7px;height:22px}.opponent-vs svg{width:14px}.battle-console .battle-scene{height:405px}.battle-console .scene-copy{top:86px}.battle-console .scene-copy h2{font-size:28px}.battle-utility-rail{display:flex}.battle-stage-list,.battle-dungeon-list{max-height:210px}.battle-character-column .player-column{display:block}.battle-character-column .player-avatar{display:flex}.battle-character-column .player-panel>h3,.battle-character-column .job-label{text-align:center}.battle-character-column .player-panel>h3{margin-top:18px}.battle-character-column .mini-equipment{display:block}.battle-character-column .mini-equipment button{width:100%}}
 
 /* Battle HUD scale pass: give the selectors the same visual weight as the combat console. */
 .battle-workspace{max-width:2040px;padding-left:30px;padding-right:30px}
@@ -121,13 +121,13 @@
 .battle-stage-button,.battle-dungeon-button{gap:8px;padding:6px 9px}
 .battle-stage-index{width:27px;font-size:11px}
 .battle-stage-button strong,.battle-dungeon-button strong{font-size:12px}
-.battle-stage-button small,.battle-dungeon-button small{font-size:10px}
+.battle-stage-button small,.battle-dungeon-button small{font-size:11px}
 .battle-stage-button>span:nth-child(2),.battle-dungeon-button>span:first-child{flex-direction:row;align-items:baseline;gap:7px}
 .battle-stage-button small,.battle-dungeon-button small{flex:none;white-space:nowrap}
 .battle-selected-dot{width:7px;height:7px}
-.battle-dungeon-wave{padding:4px 6px;font-size:10px}
+.battle-dungeon-wave{padding:4px 6px;font-size:11px}
 
-@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-stage-button,.battle-dungeon-button{padding:6px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:11px}.battle-stage-button small,.battle-dungeon-button small{font-size:10px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
+@media(max-width:1500px){.battle-hud{grid-template-columns:248px minmax(0,1fr) 294px;gap:17px}.battle-rail-panel{padding:16px 14px}.battle-stage-button,.battle-dungeon-button{padding:6px 8px}.battle-stage-button strong,.battle-dungeon-button strong{font-size:11px}.battle-stage-button small,.battle-dungeon-button small{font-size:11px}.battle-console .battle-scene{height:260px}.battle-console .scene-copy h2{font-size:29px}}
 @media(max-width:1180px){.battle-workspace{padding-left:22px;padding-right:22px}.battle-hud{grid-template-columns:236px minmax(0,1fr);gap:17px}.battle-utility-rail{gap:13px}.battle-rail-panel{padding:16px 14px}.battle-stage-list,.battle-dungeon-list{max-height:230px}}
 @media(max-width:767px){.battle-workspace{padding-left:16px;padding-right:16px}.battle-console .battle-scene{height:420px}.battle-console .scene-copy h2{font-size:30px}.battle-console .scene-copy p{font-size:13px}.battle-rail-panel{padding:16px 14px}.battle-stage-list,.battle-dungeon-list{max-height:250px}}
 
@@ -161,12 +161,12 @@
 @media(max-width:767px){
   .scene-top{align-items:flex-start;gap:10px;padding:16px 17px}
   .scene-actions{gap:5px}
-  .scene-actions .scene-control{font-size:10px;padding:7px 8px}
+  .scene-actions .scene-control{font-size:11px;padding:7px 8px}
   .scene-actions .scene-control.primary,.scene-actions .scene-control.pause-button{font-size:11px;padding:8px 11px}
-  .scene-actions .scene-link{font-size:10px;padding:6px 7px}
+  .scene-actions .scene-link{font-size:11px;padding:6px 7px}
 }
 
-@media(max-width:767px){.battle-target-strip{align-items:flex-start;flex-direction:column;gap:7px}.battle-target-strip [data-slot=tabs-list]{width:100%;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:3px}.battle-target-strip [data-slot=tabs-trigger]{font-size:10px;padding:5px 7px}}
+@media(max-width:767px){.battle-target-strip{align-items:flex-start;flex-direction:column;gap:7px}.battle-target-strip [data-slot=tabs-list]{width:100%;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:3px}.battle-target-strip [data-slot=tabs-trigger]{font-size:11px;padding:5px 7px}}
 .player-hp-anchor{position:relative;isolation:isolate}
 
 /* Battle view uses the first row for navigation context instead of a second
@@ -259,7 +259,7 @@
   .battle-console>.session-metrics{grid-template-columns:repeat(3,minmax(0,1fr));padding:11px 0}
   .battle-console>.session-metrics>div{padding:0 8px;gap:6px}
   .battle-console>.session-metrics strong,.battle-console>.session-metrics .session-currency strong{font-size:15px}
-  .battle-console>.session-metrics span{font-size:10px}
+  .battle-console>.session-metrics span{font-size:11px}
 }
 
 /* 전투 재생 템포: 밀린 타격 카운터와 회복 대기 카운트다운. */
@@ -295,13 +295,13 @@
 
 .mobile-player-bar{position:relative;display:block;height:16px;border-radius:4px;background:#0a171b;overflow:hidden}
 .mobile-player-bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
-.mobile-player-bar small{position:relative;display:block;padding:0 6px;font:600 10px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mobile-player-bar small{position:relative;display:block;padding:0 6px;font:600 11px/16px monospace;color:#eef3ea;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mobile-player-bar.exp i{background:linear-gradient(90deg,#8a6b2f,#d1a752)}
 .mobile-player-bar.hp i{background:#3f8b6c}
 .mobile-player-bar.mana i{background:#4b6fa0}
 .mobile-player-mini{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .mobile-player-mini .mobile-player-bar{height:13px}
-.mobile-player-mini .mobile-player-bar small{font-size:9px;line-height:13px}
+.mobile-player-mini .mobile-player-bar small{font-size:11px;line-height:13px}
 .mobile-player-chevron{flex:none;color:#7f9c98}
 /* 모바일 순서: 요약 → 장면(시작·정지) → 대결 → 스킬 → 기록 → 지표·해역·집중 사냥 */
 .battle-console>.mobile-player-strip{order:0}
@@ -315,7 +315,7 @@
 .battle-console .battle-opponent-strip{grid-template-columns:1fr 1fr;gap:8px}
 .battle-console .battle-opponent-strip .opponent-vs{display:none}
 .battle-console .battle-opponent-strip .opponent-card{padding:9px 10px}
-.battle-console .battle-opponent-strip .opponent-card small{font-size:10px;line-height:1.45}
+.battle-console .battle-opponent-strip .opponent-card small{font-size:11px;line-height:1.45}
 .battle-utility-rail>*{width:100%}
 .battle-utility-rail>.battle-feed:not(.feed-chat) .section-title{margin-bottom:0}
 }
@@ -343,7 +343,7 @@
 .battle-top-tutorial{order:-1;margin-bottom:12px}.battle-top-tutorial .tutorial-card{margin:0}
 
 /* v25.3 연속 행동 카운터는 연속으로 행동한 쪽 카드에 붙습니다(데스크톱: 플레이어 왼쪽·상대 오른쪽, 모바일: 위·아래). */
-.tide-fx-combo small{display:block;width:100%;font-size:10px;letter-spacing:.5px;color:#9cb3af;margin-bottom:1px}
+.tide-fx-combo small{display:block;width:100%;font-size:11px;letter-spacing:.5px;color:#9cb3af;margin-bottom:1px}
 .tide-fx-combo{flex-wrap:wrap;max-width:150px}
 .tide-fx-combo-player{right:auto;left:14px;border-bottom-color:#8fd9b966}.tide-fx-combo-player strong{color:#a4e9ba}
 .tide-fx-combo-enemy{border-bottom-color:#f0a59066}.tide-fx-combo-enemy strong{color:#f0b59a}
@@ -432,11 +432,11 @@
 /* v3.26 해커 전직 알림 */
 .chat-line.hacker-alert .chat-name,.chat-line.hacker-alert .chat-text{color:#ff6b6b;font-weight:600}
 .chat-line.self .chat-name{color:#a4e9ba}
-.chat-time{font:9px/1.5 monospace;color:#5d7e7e;flex:none}.chat-name{color:#e8d39a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chat-text{word-break:break-word;overflow-wrap:anywhere}
+.chat-time{font:11px/1.5 monospace;color:#5d7e7e;flex:none}.chat-name{color:#e8d39a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.chat-text{word-break:break-word;overflow-wrap:anywhere}
 .chat-empty{display:flex;align-items:center;gap:6px;color:#718c90;font-size:11px;padding:18px 0}
 .chat-error{font-size:11px;color:#e39b8d;margin:0}
 .chat-form{display:flex;gap:6px}.chat-form input{flex:1;min-width:0;background:#0e2026;border:1px solid #9ab4b544;color:#e1eeeb;border-radius:8px;padding:8px 10px;font:inherit;font-size:12px}.chat-form input:focus{outline:none;border-color:#8fd9b9}.chat-form button{padding:6px 10px}
-.chat-note{font-size:10px;color:#6f8a8c}
+.chat-note{font-size:11px;color:#6f8a8c}
 @media(max-width:900px){.battle-feed.feed-chat{grid-column:1/-1}}
 
 .chat-channels{display:flex;gap:6px}.chat-channels button{flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:#101c20;color:#9bb3b0;font-size:12px;cursor:pointer}.chat-channels button.active{border-color:#3d675a;background:#13262c;color:#c5d8d2}
@@ -449,7 +449,7 @@
 .slot-chip{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#101c20;color:#c5d8d2;cursor:pointer;text-align:left}
 .slot-chip:disabled{cursor:default}.slot-chip.current{border-color:#d5b36c;background:#223329}.slot-chip.locked{opacity:.55}
 .slot-chip-index{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:#1a2d33;font-size:11px;font-weight:700}
-.slot-chip-text{display:grid;line-height:1.2}.slot-chip-text strong{font-size:12px}.slot-chip-text small{font-size:10px;color:#8ea7a4}
+.slot-chip-text{display:grid;line-height:1.2}.slot-chip-text strong{font-size:12px}.slot-chip-text small{font-size:11px;color:#8ea7a4}
 @media(max-width:767px){.slot-chips{gap:6px}.slot-chip{padding:5px 8px}.slot-chip-text strong{font-size:11px}}
 
 /* v25.15 세 열 아래쪽 맞춤: 가장 긴 열에 맞춰 왼쪽 패널·모험 일지·전투 기록이 늘어납니다. */
@@ -665,10 +665,10 @@
 @media(prefers-reduced-motion:reduce){.tide-fx-big,.scene-fx-tier4 .scene-fx-dark,.scene-fx-tier5 .scene-fx-dark,.scene-fx-tier5 .scene-fx-slash{display:none}.battle-scene:has(.scene-fx-tier5) .ocean-art{animation:none}}
 /* v25.21 도감: 어종 이름 옆 변종 아이콘 줄 · ‘모두 받기’ 알림 정렬 */
 .variant-marks{display:inline-flex;align-items:center;gap:4px;margin-left:8px;vertical-align:middle}
-.variant-mark{position:relative;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #9ab4b52e;background:#0f1f25;color:#3f5658;font:700 12px/1 ui-monospace,monospace;font-style:normal;cursor:default}
+.variant-mark{position:relative;display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid #9ab4b52e;background:#0f1f25;color:#5f7a7c;font:700 12px/1 ui-monospace,monospace;font-style:normal;cursor:default}
 .variant-mark.lit{color:var(--mark,#e8d39a);border-color:color-mix(in srgb,var(--mark,#e8d39a) 55%,transparent);background:color-mix(in srgb,var(--mark,#e8d39a) 14%,#0f1f25);box-shadow:0 0 8px color-mix(in srgb,var(--mark,#e8d39a) 35%,transparent)}
 .variant-mark.variant-golden{--mark:#f3d27a}.variant-mark.variant-swarm{--mark:#a4e9ba}.variant-mark.variant-giant{--mark:#f0b26b}.variant-mark.variant-abyssal{--mark:#b9a6ff}.variant-mark.variant-starlit{--mark:#9fe2ff}
-.variant-mark b{position:absolute;right:-6px;top:-6px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--mark,#e8d39a);color:#0b1a1f;font-size:9px;line-height:14px;text-align:center}
+.variant-mark b{position:absolute;right:-7px;top:-7px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;background:var(--mark,#e8d39a);color:#0b1a1f;font-size:11px;line-height:14px;text-align:center}
 .book-card h3{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
 .book-claim-all{display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:14px}
 .book-claim-all>svg{flex:none;color:var(--gold)}
@@ -1308,7 +1308,7 @@
 .whistle-pop .whistle-why{margin:0 0 8px;color:var(--gold);font-size:12px;line-height:1.5}
 .whistle-options{display:flex;gap:6px}
 .whistle-options button{flex:1 1 0;white-space:nowrap;padding:7px 10px;text-align:center}
-@media(max-width:767px){.scene-whistle{right:10px;bottom:10px;font-size:10px;padding:4px 8px}}
+@media(max-width:767px){.scene-whistle{right:10px;bottom:10px;font-size:11px;padding:4px 8px}}
 
 /* ── v3.183 보스 몬스터 스킬 배경 연출(.scene-fx-foe · game/data/foe-fx.ts) ──
    기준점 --ox/--oy는 몬스터 그림 바로 왼쪽, 목표점 --tx는 거기서 320px 왼쪽(플레이어 방향). 내 스킬(62% · 48% 중심)과 반대 방향으로 흐릅니다. */
@@ -1707,10 +1707,10 @@
 .scene-foe-hud.boss{width:140px}
 .scene-foe-hud .meter-label,.scene-me-hud .meter-label{display:flex;justify-content:space-between;gap:6px}
 .scene-foe-hud .meter-label span:first-child{display:none}
-.scene-foe-hud .meter-label{white-space:nowrap;justify-content:center;font:600 10px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-bottom:3px;color:#f3e7d5;text-shadow:0 1px 3px #041219}
+.scene-foe-hud .meter-label{white-space:nowrap;justify-content:center;font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-bottom:3px;color:#f3e7d5;text-shadow:0 1px 3px #041219}
 .scene-foe-hud .meter [data-slot=progress]{height:5px;box-shadow:0 0 0 1px #0008}
 .scene-me-hud{position:absolute;left:14px;bottom:12px;width:min(190px,44%);z-index:4;pointer-events:none}
-.scene-me-hud .meter-label{font:600 10.5px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-bottom:3px;color:#e5efe9;text-shadow:0 1px 3px #041219;white-space:nowrap}
+.scene-me-hud .meter-label{font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;margin-bottom:3px;color:#e5efe9;text-shadow:0 1px 3px #041219;white-space:nowrap}
 .scene-me-hud .meter-label span:first-child{overflow:hidden;text-overflow:ellipsis}
 .scene-me-hud .meter [data-slot=progress]{height:5px;box-shadow:0 0 0 1px #0008}
 /* 피해 숫자: 몬스터 머리 위로 떠오릅니다(체력바 기준 위쪽, 가운데 정렬). 내 숫자는 내 체력바 위. */
@@ -1742,12 +1742,12 @@
 .xen-fx .scene-fx-dark{inset:0;background:radial-gradient(ellipse at 20% 70%,#0a1d2a,#03070c 70%);animation:xenDark 2.5s ease-in-out var(--fx-delay) both}
 .xen-grid{inset:0;background:repeating-linear-gradient(0deg,#5ff4ff10 0 1px,transparent 1px 18px),repeating-linear-gradient(90deg,#5ff4ff0c 0 1px,transparent 1px 18px);mix-blend-mode:screen;animation:xenDark 2.5s ease-in-out var(--fx-delay) both}
 /* ① 충전 게이지 */
-.xen-gauge{position:absolute;left:3%;top:7%;padding:7px 10px 8px;border:1px solid #5ff4ff66;border-radius:6px;background:linear-gradient(135deg,#061722ee,#120a1aee);box-shadow:0 0 18px #5ff4ff33,inset 0 0 12px #5ff4ff1a;font:700 10px/1 ui-monospace,monospace;letter-spacing:.12em;color:var(--xc);animation:xenGauge 1.5s ease-out var(--fx-delay) both}
-.xen-gauge small{display:block;margin-bottom:6px;font-size:9.5px;opacity:.85}
+.xen-gauge{position:absolute;left:3%;top:7%;padding:7px 10px 8px;border:1px solid #5ff4ff66;border-radius:6px;background:linear-gradient(135deg,#061722ee,#120a1aee);box-shadow:0 0 18px #5ff4ff33,inset 0 0 12px #5ff4ff1a;font:700 11px/1 ui-monospace,monospace;letter-spacing:.12em;color:var(--xc);animation:xenGauge 1.5s ease-out var(--fx-delay) both}
+.xen-gauge small{display:block;margin-bottom:6px;font-size:11px;opacity:.85}
 .xen-cells{display:flex;gap:3px}
 .xen-cells b{position:relative;width:30px;height:16px;border:1px solid #5ff4ff55;clip-path:polygon(18% 0,100% 0,82% 100%,0 100%);background:#5ff4ff12;overflow:hidden}
 .xen-cells b::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,var(--xc),var(--xm));transform-origin:0 50%;animation:xenCell .14s linear calc(var(--fx-delay) + 80ms + var(--i) * 120ms) both}
-.xen-cells b span{position:relative;display:block;text-align:center;font-size:8px;line-height:15px;color:#e8fbff;text-shadow:0 0 4px #000}
+.xen-cells b span{position:relative;display:block;text-align:center;font-size:11px;line-height:15px;color:#e8fbff;text-shadow:0 0 4px #000}
 .xen-pct{display:block;margin-top:6px;font-size:15px;color:#fff;text-shadow:0 0 10px var(--xc);--xen-pct:0;counter-reset:xp var(--xen-pct);animation:xenPct .85s linear var(--fx-delay) both,xenFull .3s steps(2) calc(var(--fx-delay) + .85s) 2}
 .xen-pct::before{content:counter(xp) "%"}
 /* 코어와 모이는 입자 */
@@ -1757,7 +1757,7 @@
 /* ② 육각 포신 · 표적 잠금 */
 .xen-barrel{left:var(--sx);top:var(--sy);width:64px;height:64px;margin:-32px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%,50% 0,50% 8%,7% 29%,7% 71%,50% 92%,93% 71%,93% 29%,50% 8%);background:linear-gradient(135deg,var(--xc),var(--xm));filter:drop-shadow(0 0 6px var(--xc));translate:calc(cos(var(--aim)) * (20px + var(--i) * 34px)) calc(sin(var(--aim)) * (20px + var(--i) * 34px));animation:xenBarrel 1.15s cubic-bezier(.2,.8,.2,1) calc(var(--fx-delay) + .8s + var(--i) * 70ms) both}
 .xen-lock{left:var(--tx);top:var(--ty);width:120px;height:120px;margin:-60px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%,50% 0,50% 4%,4% 27%,4% 73%,50% 96%,96% 73%,96% 27%,50% 4%);background:var(--xm);filter:drop-shadow(0 0 8px var(--xm));animation:xenLock 1.5s ease-out calc(var(--fx-delay) + .45s) both}
-.xen-lock b{left:50%;top:-22px;translate:-50% 0;font:800 10px/1 ui-monospace,monospace;letter-spacing:.2em;color:var(--xm);white-space:nowrap}
+.xen-lock b{left:50%;top:-22px;translate:-50% 0;font:800 11px/1 ui-monospace,monospace;letter-spacing:.2em;color:var(--xm);white-space:nowrap}
 /* ③ 대형 빔 */
 .xen-beam{left:var(--sx);top:var(--sy);width:calc(var(--len) + 40cqw);height:var(--beam);margin-top:calc(var(--beam) / -2);transform-origin:0 50%;rotate:var(--aim);border-radius:0 40% 40% 0/0 50% 50% 0;background:linear-gradient(90deg,#5ff4ff00,var(--xc) 6%,#bffaff 40%,var(--xc) 85%,#5ff4ff00);animation:xenBeam 1s cubic-bezier(.3,0,.2,1) calc(var(--fx-delay) + 1.15s) both}
 .xen-beam.glow{--beam:84px;background:linear-gradient(90deg,#ff4fd800,#ff4fd866 8%,#5ff4ff55 50%,#ff4fd800);filter:blur(6px);mix-blend-mode:screen}
@@ -1866,7 +1866,7 @@
 @keyframes mechDebris{0%{translate:0 0;opacity:1;rotate:0deg}100%{translate:calc(cos(var(--ang)) * 130px) calc(sin(var(--ang)) * 90px + 26px);opacity:0;rotate:300deg}}
 @keyframes mechTitle{0%{opacity:0;scale:3.2}18%{opacity:1;scale:1}24%{scale:1.08}30%{scale:1}86%{opacity:1}100%{opacity:0}}
 @keyframes mechRumble{0%{translate:-3px 1px}25%{translate:3px -2px}50%{translate:-2px 2px}75%{translate:2px -1px}100%{translate:0 0}}
-@media(max-width:767px){.mech-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:8cqw;--sy:84cqh}.mech-fx.mech-boss{--tx:calc(100cqw - 66px)}.mech-card strong{font-size:44px}.mech-title{font-size:30px;-webkit-text-stroke-width:2px}.mech-alert{height:24px}.mech-alert b{font-size:10px}.mech-cross.h{width:160px;left:calc(var(--tx) - 80px)}}
+@media(max-width:767px){.mech-fx{--tx:calc(100cqw - 56px);--ty:calc(50cqh + 22px);--sx:8cqw;--sy:84cqh}.mech-fx.mech-boss{--tx:calc(100cqw - 66px)}.mech-card strong{font-size:44px}.mech-title{font-size:30px;-webkit-text-stroke-width:2px}.mech-alert{height:24px}.mech-alert b{font-size:11px}.mech-cross.h{width:160px;left:calc(var(--tx) - 80px)}}
 .fx-no-glow .mech-fx .scene-fx-dark,.fx-no-glow .mech-impact,.fx-no-glow .mech-cross{display:none}
 @media(prefers-reduced-motion:reduce){.mech-fx i,.mech-card{display:none}.mech-title{animation-name:tideReduced}.battle-scene:has(.mech-fx) .ocean-art{animation:none}}
 /* v3.246 아제로스 정수 포식자 · 세계석 광부 연출(이계 연출과 같은 좌표: 몬스터 --tx · --ty, 시전자 --sx · --sy). */
@@ -1927,7 +1927,7 @@
 .scene-foe-wrap.dying .scene-foe{animation:foeDie .75s ease-in forwards}
 @keyframes foeDie{0%{filter:brightness(3) saturate(0)}25%{scale:1.08 .92}100%{opacity:0;translate:0 18px;scale:1.15 .25;filter:brightness(2) saturate(0)}}
 .scene-foe-name{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px 5px;margin-top:4px;font-size:11.5px;font-weight:700;color:#f3ede2;text-shadow:0 1px 3px #041219,0 0 6px #041219;white-space:nowrap;line-height:1.3}
-.scene-foe-name small{font-size:10px;font-weight:700;color:#ffd76a}
+.scene-foe-name small{font-size:11px;font-weight:700;color:#ffd76a}
 .scene-foe-name small.boss{color:#ff8f7a;letter-spacing:.08em}
 /* v3.294 대왕: 👑 KING 표시 · 보라~금 그라데이션 이름 · 보라 체력바, 몸에는 보라 오라와 머리 위 왕관. */
 .scene-foe-name small.king{color:#e2c2ff;letter-spacing:.08em;text-shadow:0 0 6px #a35cff}
@@ -1956,9 +1956,9 @@
 .scene-me-name{display:flex;align-items:center;gap:4px;min-width:0}
 .scene-me-name .name-statuses{position:absolute;left:0;bottom:calc(100% + 4px);display:flex;flex-wrap:wrap;gap:3px;max-width:100%}
 .scene-me-name b{font-size:12.5px;color:#eef5ef;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.scene-me-name b small{display:block;font-size:9.5px;color:#f0c46a;font-weight:600}
-.scene-me-sub{display:block;font-size:10.5px;color:#9db3ab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
-.scene-me-plate .meter-label{display:flex;justify-content:space-between;font:600 10px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#dbe8e1;margin-bottom:2px}
+.scene-me-name b small{display:block;font-size:11px;color:#f0c46a;font-weight:600}
+.scene-me-sub{display:block;font-size:11px;color:#9db3ab;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+.scene-me-plate .meter-label{display:flex;justify-content:space-between;font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#dbe8e1;margin-bottom:2px}
 .scene-me-plate .meter [data-slot=progress]{height:6px}
 .scene-me-mana{height:4px;margin-top:4px;border-radius:2px;background:#ffffff14;overflow:hidden}
 .scene-me-mana i{display:block;height:100%;background:#5aa8f0;transition:width .3s}
@@ -1986,15 +1986,15 @@
 .ow-hud.scene-job-hud .ow-hud-pnl svg{display:block}
 .az-hud{display:grid;gap:4px;padding:7px 10px;border-radius:10px;background:#06100fcc;border:1px solid var(--azc);backdrop-filter:blur(3px);font-size:11.5px;color:#d6e3dc;min-width:150px}
 .az-hud.devour{--azc:#a96bff}.az-hud.mine{--azc:#d79a4a}
-.az-hud .t{font-size:9.5px;letter-spacing:.14em;font-weight:700;color:var(--azc)}
+.az-hud .t{font-size:11px;letter-spacing:.14em;font-weight:700;color:var(--azc)}
 .az-hud .row{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
 .az-hud .row b{color:#fff}
-.az-hud .attrs{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:10.5px;color:#9db3ab}
+.az-hud .attrs{display:flex;flex-wrap:wrap;gap:2px 8px;font-size:11px;color:#9db3ab}
 .az-hud .attrs b{color:#5ef2c8}
 .az-hud .gauge{height:5px;border-radius:3px;background:#ffffff14;overflow:hidden}
 .az-hud .gauge i{display:block;height:100%;background:var(--azc)}
-.az-hud small{font-size:10px;color:#9db3ab}
-.az-hud .warn{font-size:10.5px;color:#ff9d8a}
+.az-hud small{font-size:11px;color:#9db3ab}
+.az-hud .warn{font-size:11px;color:#ff9d8a}
 .scene-idle{position:absolute;left:50%;top:44%;translate:-50% -50%;z-index:3;padding:6px 14px;border-radius:999px;background:#06100fb3;font-size:12.5px;color:#c9dbd2;white-space:nowrap;pointer-events:none}
 .scene-idle.recovery{color:#f0c46a}
 .scene-wave{position:absolute;right:12px;top:10px;z-index:5;padding:3px 10px;border-radius:999px;background:#06100fcc;font-size:11px;font-weight:700;color:#e6efe9}
@@ -2126,7 +2126,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .scene-dmg{position:absolute;translate:-50% 0;white-space:nowrap;text-align:center;font:800 22px/1 ui-sans-serif,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 2px 0 #000,0 0 6px #000;opacity:0;animation:sceneDmg 1s ease-out var(--fx-delay) both}
 .scene-dmg.foe{left:calc(var(--foe-x) + var(--dx,0px));top:calc(var(--foe-y) - 62px + var(--dy,0px))}
 .scene-dmg.me{left:calc(var(--me-x) + var(--dx,0px));top:calc(var(--me-y) - 76px + var(--dy,0px))}
-.scene-dmg small{display:block;font-size:10.5px;letter-spacing:.14em;margin-bottom:2px}
+.scene-dmg small{display:block;font-size:11px;letter-spacing:.14em;margin-bottom:2px}
 .scene-dmg.crit{font-size:30px;color:#ffcf4d;text-shadow:0 2px 0 #6b3b00,0 0 12px #ff9d00aa}
 .scene-dmg.super{font-size:34px;color:#ff9a6a;text-shadow:0 2px 0 #5a1600,0 0 16px #ff5a2aaa}
 .scene-dmg.miss{font-size:16px;color:#bcd6e6}
@@ -2161,7 +2161,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .hotbar-slot.awaken{border-color:#e0b84a}
 .hotbar-slot.vacant{width:46px;font-size:18px;color:#7f9c98;border-style:dashed}
 .hotbar-slot svg,.hotbar-slot img{width:20px;height:20px}
-.hotbar-name{display:block;max-width:100%;font-size:10px;line-height:1.15;color:#c9dbd2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hotbar-name{display:block;max-width:100%;font-size:11px;line-height:1.15;color:#c9dbd2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .hotbar-cd{position:absolute;top:2px;right:3px;min-width:15px;padding:1px 3px;border-radius:5px;background:#000c;font:800 11px/1.2 ui-monospace,monospace;color:#ffd76a;text-align:center}
 .hotbar-slot.cooling svg,.hotbar-slot.cooling img,.hotbar-slot.cooling .hotbar-name{opacity:.45}
 .hotbar-fire{position:absolute;inset:-1px;border-radius:8px;border:2px solid #fff6c8;box-shadow:0 0 12px #f0c46a,inset 0 0 10px #f0c46a;pointer-events:none;animation:hotbarFire .6s ease-out both}
@@ -2205,7 +2205,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @container (max-width:560px){.scene-log,.dungeon-scene .scene-log{bottom:116px;height:auto}}
 /* v3.256 몬스터 HP 숫자: 짧은 단위(만 · 억)로 바 아래에. */
 .scene-foe-hud .player-hp-anchor{display:flex;flex-direction:column-reverse}
-.scene-foe-hp{display:block;margin-top:3px;text-align:center;font:600 10.5px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#f3e7d5;text-shadow:0 1px 3px #041219;white-space:nowrap;pointer-events:auto}
+.scene-foe-hp{display:block;margin-top:3px;text-align:center;font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#f3e7d5;text-shadow:0 1px 3px #041219;white-space:nowrap;pointer-events:auto}
 /* v3.257 던전 진행: 장면 아래 웨이브는 작은 칩 한 줄(그림 · W번호 · 이름), 머리 줄은 촘촘하게. */
 .dungeon-run-panel .dungeon-run-header{margin-bottom:10px}
 .dungeon-run-panel .dungeon-run-header p:empty{display:none}
@@ -2260,7 +2260,7 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 .heading-metrics{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-left:auto;min-width:0}
 .metric-chip{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:999px;border:1px solid #2c4744;background:#0f2224;color:#dfeee8;font:600 12px/1 ui-monospace,monospace;font-variant-numeric:tabular-nums;white-space:nowrap;cursor:default}
 .metric-chip svg{color:#8fb3a8;flex:none}
-.metric-chip small{color:#7f9c98;font-size:10.5px}
+.metric-chip small{color:#7f9c98;font-size:11px}
 .metric-chip.gold svg{color:#ffd36b}.metric-chip.pearl svg{color:#8fe7ff}.metric-chip.essence svg{color:#7dffb0}
 @media(max-width:767px){.heading-metrics{order:3;flex:1 1 100%;margin-left:0;gap:4px}.metric-chip{height:26px;padding:0 8px;font-size:11px}}
 
@@ -2443,13 +2443,13 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 @container (max-width:560px){
   .scene-job-slot{scale:.86;transform-origin:0 0;max-width:72%}
   .battle-scene .scene-foe-hud{width:132px;padding:2px 5px 3px}
-  .battle-scene .scene-foe-name{font-size:10.5px;gap:0 4px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;line-height:1.3}
+  .battle-scene .scene-foe-name{font-size:11px;gap:0 4px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;line-height:1.3}
   .battle-scene .scene-foe-name>*{flex:none}
   .battle-scene .scene-foe-name .scene-foe-label{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
   .battle-scene .scene-foe-name .vname{display:none}
   .battle-scene .scene-idle{left:auto;right:10px;top:auto;bottom:40px;translate:0 0;max-width:118px;white-space:normal;text-align:center;line-height:1.35;font-size:11px;padding:5px 10px;border-radius:12px}
-  .battle-scene .scene-foe-name small{font-size:9.5px}
-  .battle-scene .scene-foe-hp{font-size:10px}
+  .battle-scene .scene-foe-name small{font-size:11px}
+  .battle-scene .scene-foe-hp{font-size:11px}
 }
 
 /* v3.269 장면 섬광의 중심을 옛 몬스터 자리(62% · 48%)에서 지금 몬스터 자리(--foe-x · --foe-y, 같은 지면)로 옮깁니다. 색 · 크기는 그대로. */

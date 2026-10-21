@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,6 +12,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.svg",
   },
 };
+
+// v3.370 HIG: 화면 끝(노치 · 홈 표시줄)까지 그리되 safe-area 여백을 쓰고, 확대(핀치 줌)는 막지 않습니다.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#0e191f" };
 
 export default function RootLayout({
   children,

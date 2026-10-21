@@ -1,11 +1,11 @@
 /**
  * v27.11 외부 생성 이미지 자리와 실루엣 폴백.
- * 이미지는 public/art/{monsters|jobs}/{id}.webp 에 두면 자동으로 쓰이고, 없으면 실루엣이 그대로 남습니다.
+ * 이미지는 public/art/{monsters|jobs}/{id}.png|webp|svg 에 두고 node scripts/art-manifest.mjs 를 돌리면 쓰이고, 없으면 실루엣이 그대로 남습니다.
  * 파일 이름은 몬스터 id / 계보 id와 같습니다(docs/art/README.md).
  */
 import { MONSTERS } from './world';
 
-import { MONSTER_ART, JOB_ART, ONYX_ART, STORY_ART } from './art-manifest';
+import { MONSTER_ART, JOB_ART, ONYX_ART, STORY_ART, SKILL_ART } from './art-manifest';
 /** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
 export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/monsters/${id}.${MONSTER_ART[id]}` : null;
 export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
@@ -13,8 +13,8 @@ export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/
 export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bossId}.${ONYX_ART[bossId]}` : null;
 /** v3.216 스토리 삽화(public/art/story/{chapter-N | 장면 id}.png|webp). 없으면 null. */
 export const storyArtSrc = (key: string) => STORY_ART[key] ? `/art/story/${key}.${STORY_ART[key]}` : null;
-/** v27.40 스킬 아이콘(원작 도트 아이콘을 그대로 쓰려고 PNG). 있는 파일 목록은 art-manifest.ts. */
-export const skillArtSrc = (skillId: string) => `/art/skills/${skillId}.png`;
+/** v27.40 스킬 아이콘(public/art/skills/{id}.png|svg). 목록에 없으면 null(기본 아이콘). v3.369 svg 도 받습니다. */
+export const skillArtSrc = (skillId: string) => SKILL_ART[skillId] ? `/art/skills/${skillId}.${SKILL_ART[skillId]}` : null;
 
 /** 실루엣 모양. 몬스터마다 하나를 고정해 두어 이미지가 없어도 책·장면에서 종류를 구분할 수 있게 합니다. */
 export type MonsterShape = 'snail' | 'mushroom' | 'slime' | 'pig' | 'boar' | 'golem' | 'eye' | 'monkey' | 'drake' | 'ghost' | 'skeleton' | 'octopus' | 'bat' | 'crab' | 'croc' | 'snake' | 'bubble' | 'chest' | 'demon' | 'mage' | 'fighter' | 'statue' | 'clock' | 'swoo' | 'damien' | 'dusk' | 'dunkel' | 'will' | 'lucid' | 'hilla' | 'seren' | 'blackmage';

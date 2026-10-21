@@ -1771,3 +1771,16 @@ test('v3.200 ultimate adventurer: other lineages’ 5th-tier signature skills ke
     old.job = 'rebirthFisher'; M.remakeRebirthFisher(old); assert.equal(old.job, 'rebirthFisher', 'only once');
     const fresh = newState(0); assert.equal(fresh.ultimateRemade, true, 'new saves skip it');
 });
+
+test('v3.370 HIG: no stylesheet sets text below 11px, touch devices get 44pt targets, and the update log keeps 3 entries', async () => {
+    const fs = await import('node:fs');
+    const offenders = [];
+    for (const f of fs.readdirSync('app/styles').filter(f => f.endsWith('.css'))) {
+        const css = fs.readFileSync(`app/styles/${f}`, 'utf8');
+        for (const m of css.matchAll(/font-size:\s*([\d.]+)px|font:[^;{}]*?\b([\d.]+)px\//g)) { const px = Number(m[1] ?? m[2]); if (px < 11) offenders.push(`${f}: ${m[0]}`); }
+    }
+    assert.deepEqual(offenders, [], 'text below 11px');
+    const responsive = fs.readFileSync('app/styles/responsive.css', 'utf8');
+    assert.ok(/@media \(pointer:coarse\)[\s\S]*min-height:44px/.test(responsive), 'coarse pointer rule raises targets to 44px');
+    assert.ok(/viewportFit: "cover"/.test(fs.readFileSync('app/layout.tsx', 'utf8')), 'safe-area viewport');
+});

@@ -9,7 +9,6 @@ import { fxVariantOf } from '@/game/systems/combat-feedback';
 import type { Skill, State } from '@/game/types';
 import { inventoryCap } from '@/game/data/economy';
 import { skillArtSrc } from '@/game/data/art';
-import { SKILL_ART } from '@/game/data/art-manifest';
 export function Meter({ value, max, label, color = 'teal' }: {
     value: number;
     max: number;
@@ -106,8 +105,10 @@ export function SkillIcon({ id, size = 24 }: {
 }) {
     // v27.40 아이콘 이미지가 있으면 도트를 살려 그리고, 없거나 못 불러오면 기본 아이콘을 씁니다.
     const [broken, setBroken] = useState(false);
+    const art = skillArtSrc(id);
+    // v3.369 벡터(svg) 아이콘은 도트 확대 규칙을 빼고 매끈하게 그립니다.
     // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일(목록에 있는 것만 요청)
-    if (SKILL_ART.has(id) && !broken) return <img className="skill-art" src={skillArtSrc(id)} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
+    if (art && !broken) return <img className={`skill-art${art.endsWith('.svg') ? ' vector' : ''}`} src={art} alt="" width={size} height={size} loading="lazy" decoding="async" onError={() => setBroken(true)}/>;
     const Icon = id === 'breath' || id === 'spring' || id === 'innerBreath' ? Heart : id === 'temperedSkin' ? Shield : id === 'wave' ? Waves : id === 'focus' ? Target : id === 'anchor' ? Anchor : id === 'hook' || id === 'pierce' ? Swords : null;
     // v3.258 따로 정한 아이콘이 없으면 스킬 갈래(연출과 같은 기준)로 아이콘 · 색을 고릅니다(전에는 모두 번개).
     // v3.258 이계 무기 · 시장 기술은 id로 따로 고릅니다(갈래로는 모두 충격이 되어 구분이 안 됨).

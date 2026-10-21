@@ -1,4 +1,4 @@
-# 스킬 아이콘 체크리스트 (0 / 548)
+# 스킬 아이콘 체크리스트 (60 / 610)
 
 `public/art/skills/{스킬 id}.png` 로 넣고 `node scripts/art-manifest.mjs` 를 실행하면 화면에 나옵니다. 원작 도트 아이콘(32×32 등)은 확대해도 흐려지지 않게 그립니다.
 이 문서는 같은 스크립트가 다시 씁니다.
@@ -16,6 +16,8 @@
 |---|---|---|---|---|
 | ⬜ | `breath` | 회복 | 초보자 | 액티브 |
 | ⬜ | `ultimateLegacy` | 궁극의 유산 | 궁극의 모험가 | 패시브 |
+| ⬜ | `chainAwaken` | 연계 각성 | 초월자 | 액티브 |
+| ⬜ | `fusion` | 융합 | 초월자 | 패시브 |
 
 ## 아처 계보
 
@@ -671,6 +673,76 @@
 | ⬜ | `glassHeart` | 유리 심장 | 유리 대포 | 패시브 |
 | ⬜ | `graveHook` | 무덤파기 | 망인 | 액티브 |
 | ⬜ | `boneLegacy` | 죽지않은 영혼 | 망인 | 패시브 |
+
+## 강철 보병 계보
+
+| 있음 | 스킬 id | 이름 | 직업 | 종류 |
+|---|---|---|---|---|
+| ✅ | `irRifleShot` | 소총 사격 | 강철 보병 | 액티브 |
+| ✅ | `irBayonet` | 총검 찌르기 | 강철 보병 | 액티브 |
+| ✅ | `irDigIn` | 참호 파기 | 강철 보병 | 액티브 |
+| ✅ | `irDrill` | 기초 훈련 | 강철 보병 | 패시브 |
+| ✅ | `irFieldKit` | 야전 구급낭 | 강철 보병 | 패시브 |
+| ✅ | `irSteadyAim` | 거치 사격 | 강철 보병 | 패시브 |
+| ✅ | `irLongShot` | 장거리 사격 | 궤도 저격수 | 액티브 |
+| ✅ | `irWoundShot` | 상처 조준 | 궤도 저격수 | 액티브 |
+| ✅ | `irFlashRound` | 궤도 섬광 | 궤도 저격수 | 액티브 |
+| ✅ | `irScope` | 궤도 조준경 | 궤도 저격수 | 패시브 |
+| ✅ | `irBloodTrail` | 핏자국 추적 | 궤도 저격수 | 패시브 |
+| ✅ | `irStillBreath` | 멈춘 숨 | 궤도 저격수 | 패시브 |
+| ✅ | `irBurstFire` | 점사 | 강습 대장 | 액티브 |
+| ✅ | `irSuppress` | 제압 연사 | 강습 대장 | 액티브 |
+| ✅ | `irBreach` | 돌파 돌격 | 강습 대장 | 액티브 |
+| ✅ | `irSquadLead` | 분대 지휘 | 강습 대장 | 패시브 |
+| ✅ | `irHeavyPlate` | 중장갑 판 | 강습 대장 | 패시브 |
+| ✅ | `irAdrenaline` | 전투 각성제 | 강습 대장 | 패시브 |
+| ✅ | `irArtillery` | 지원 포격 | 전선 사령관 | 액티브 |
+| ✅ | `irMarkTarget` | 표적 지정 | 전선 사령관 | 액티브 |
+| ✅ | `irExecuteOrder` | 처형 명령 | 전선 사령관 | 액티브 |
+| ✅ | `irWarRoom` | 작전실 | 전선 사령관 | 패시브 |
+| ✅ | `irIronWill` | 강철 의지 | 전선 사령관 | 패시브 |
+| ✅ | `irVeteran` | 고참병 | 전선 사령관 | 패시브 |
+| ✅ | `irOrbitalStrike` | 궤도 타격 | 성단 원수 | 액티브 |
+| ✅ | `irLastCharge` | 최후의 돌격 | 성단 원수 | 액티브 |
+| ✅ | `irScorchedEarth` | 초토화 | 성단 원수 | 액티브 |
+| ✅ | `irMarshalBaton` | 원수의 지휘봉 | 성단 원수 | 패시브 |
+| ✅ | `irStarBanner` | 성단 깃발 | 성단 원수 | 패시브 |
+| ✅ | `irUnbroken` | 꺾이지 않는 전선 | 성단 원수 | 패시브 |
+
+## 군체 조율사 계보
+
+| 있음 | 스킬 id | 이름 | 직업 | 종류 |
+|---|---|---|---|---|
+| ✅ | `hvSporeShot` | 포자 발사 | 포자 수집가 | 액티브 |
+| ✅ | `hvToxicSpore` | 독 포자 | 포자 수집가 | 액티브 |
+| ✅ | `hvSlimeCoat` | 점액 외피 | 포자 수집가 | 액티브 |
+| ✅ | `hvSporeSense` | 포자 감각 | 포자 수집가 | 패시브 |
+| ✅ | `hvVenomGland` | 독샘 | 포자 수집가 | 패시브 |
+| ✅ | `hvThickHide` | 두꺼운 피막 | 포자 수집가 | 패시브 |
+| ✅ | `hvNerveJolt` | 신경 자극 | 군체 조율사 | 액티브 |
+| ✅ | `hvSporeBurst` | 포자 폭발 | 군체 조율사 | 액티브 |
+| ✅ | `hvRegrow` | 흡수 점액 | 군체 조율사 | 액티브 |
+| ✅ | `hvTuningFork` | 조율 촉각 | 군체 조율사 | 패시브 |
+| ✅ | `hvLingerToxin` | 잔류 독 | 군체 조율사 | 패시브 |
+| ✅ | `hvHiveMind` | 군체 의식 | 군체 조율사 | 패시브 |
+| ✅ | `hvDominate` | 신경 지배 | 신경 지배자 | 액티브 |
+| ✅ | `hvSwarmCall` | 군체 소집 | 신경 지배자 | 액티브 |
+| ✅ | `hvAcidRain` | 산성 비 | 신경 지배자 | 액티브 |
+| ✅ | `hvSynapseWeb` | 시냅스 그물 | 신경 지배자 | 패시브 |
+| ✅ | `hvSporeCloud` | 포자 구름 | 신경 지배자 | 패시브 |
+| ✅ | `hvCarapace` | 지배종의 갑각 | 신경 지배자 | 패시브 |
+| ✅ | `hvSpawnFeast` | 산란의 포식 | 둥지 군주 | 액티브 |
+| ✅ | `hvCorrosiveSting` | 부식 독침 | 둥지 군주 | 액티브 |
+| ✅ | `hvNestQuake` | 둥지 진동 | 둥지 군주 | 액티브 |
+| ✅ | `hvBroodCrown` | 둥지의 관 | 둥지 군주 | 패시브 |
+| ✅ | `hvEvolvedGland` | 진화한 독샘 | 둥지 군주 | 패시브 |
+| ✅ | `hvNestWard` | 둥지 결계 | 둥지 군주 | 패시브 |
+| ✅ | `hvGreatRupture` | 대파열 | 진화 설계자 | 액티브 |
+| ✅ | `hvEvolve` | 진화 | 진화 설계자 | 액티브 |
+| ✅ | `hvApexToxin` | 정점 독소 | 진화 설계자 | 액티브 |
+| ✅ | `hvArchitectEye` | 설계자의 눈 | 진화 설계자 | 패시브 |
+| ✅ | `hvPerfectStrain` | 완성된 균주 | 진화 설계자 | 패시브 |
+| ✅ | `hvLivingArmor` | 살아 있는 갑주 | 진화 설계자 | 패시브 |
 
 ## 참모 계보
 
