@@ -4,6 +4,7 @@ import { defineConfig } from 'vitest/config';
 import { fileURLToPath } from 'node:url';
 
 export default defineConfig({
-    resolve: { alias: { '@': fileURLToPath(new URL('.', import.meta.url)) } },
+    // 'server-only'(Next 빌드 표식)는 빈 모듈로: 엔진(game/secret/register)을 vitest에서도 불러올 수 있게.
+    resolve: { alias: { '@': fileURLToPath(new URL('.', import.meta.url)), 'server-only': fileURLToPath(new URL('./tests/unit/stubs/server-only.ts', import.meta.url)) } },
     test: { include: ['tests/unit/**/*.test.ts'], environment: 'node', passWithNoTests: false },
 });

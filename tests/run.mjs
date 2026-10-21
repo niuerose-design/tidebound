@@ -29,6 +29,7 @@ await import('./story.test.mjs');
 await import('./otherworld.test.mjs');
 await import('./azeroth.test.mjs');
 await import('./delta.test.mjs');
+await import('./save.test.mjs');
 await import('./tier6.test.mjs');
 await import('./tactics.test.mjs');
 await import('./golden.test.mjs');
