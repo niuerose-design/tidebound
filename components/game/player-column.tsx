@@ -4,6 +4,7 @@ import { rankTitle, rankIndex, rankState } from '@/game/data/rank';
 import { RankInsignia } from './rank-insignia';
 import { ChevronRight, Heart, Shield, Swords, Target, Users, Zap, Leaf } from 'lucide-react';
 import { Meter, SlotIcon, format } from './shared';
+import { GearArt } from './gear-art';
 import { OnyxArt } from './onyx-art';
 import { xpNeeded, SLOTS, RARITIES } from '@/game/data/balance';
 import { jobById } from '@/game/data/classes';
@@ -80,7 +81,7 @@ export function Player({ s, a = stats(s), setView }: {
             const item = s.equipment[id];
             return <button key={id} onClick={() => setView('inventory')}>
             <div className="mini-slot" style={{ color: item ? RARITIES[item.rarity].color : undefined }}>
-            {item?.onyx ? <OnyxArt id={item.onyx} size={24}/> : <SlotIcon slot={id} size={19}/>}
+            {item?.onyx ? <OnyxArt id={item.onyx} size={24}/> : item ? <GearArt slot={id} rarity={item.rarity} style={item.style} size={26}/> : <SlotIcon slot={id} size={19}/>}
             </div>
             <span>
             <small>{label}</small>

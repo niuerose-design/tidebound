@@ -56,6 +56,10 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 코프룰루 구역의 그림 146장(`public/art/monsters/{ao|vw|hm|sc}*.svg` · 칠흑 `onyx{Vesper,Halder,Mirren,Solenne}.svg` 80장, `public/art/skills/{ir|hv}*.svg` 60장, `public/art/jobs/{irTrooper,hvSporeGatherer}.svg`, `public/art/onyx/onyx{Vesper,Halder,Mirren,Solenne}.svg`)은 `tools/art-svg/`가 만든 SVG입니다. 원작 이미지를 쓰지 않고 몸체 원형(`archetypes.mjs`) · 지역 팔레트 · 종마다 다른 장식(`monsters.mjs`)으로 그립니다.
 고치려면 명세를 바꾸고 `node tools/art-svg/make.mjs`(폴더별: `monsters skills jobs onyx`) → `node scripts/art-manifest.mjs`. 그린 그림으로 바꿀 때는 같은 id의 `.png`/`.webp`를 넣으면 그쪽이 우선합니다.
 
+## 블렌더 렌더 그림 (v3.388)
+
+메이플 구역 · 보스 몬스터 77종(`public/art/monsters/*.webp`)과 장비 42종(`public/art/items/{coat|cape|charm}-{0~6}.webp` · `rod-{physical|magic|balanced}-{0~6}.webp`)은 `tools/monster-art/render.py` · `tools/item-art/render.py`가 블렌더(`bpy`)로 로우폴리 도형을 세워 같은 카메라로 렌더한 것입니다. 몬스터는 실루엣 모양(`MONSTER_SHAPES`)별 모델 + 이름에서 고른 팔레트, 장비는 등급별 재질 묶음(나무 → 강철 → 금 → 빛)입니다. 바꾸려면 각 폴더의 README 대로 다시 렌더하고 `node scripts/art-manifest.mjs`. 장비 그림은 `components/game/gear-art.tsx`(`GearArt`)가 보여 주고, 없으면 부위 아이콘이 남습니다.
+
 ## 계보 문장(엠블럼) 그림 (v3.223)
 
 `public/art/jobs/`의 계보 그림 53장은 모두 임시 문장(엠블럼) 그림입니다. 원형 배지(테두리는 계열 색: 물리 · 마법 · 방어 · 상태이상 · 복합 · 보조 · ???) 안에 계보의 상징을 SVG로 그려 512×512 WebP로 뽑았습니다. 수련 계보 6개는 계열 색만 다른 두루마리를 함께 씁니다.

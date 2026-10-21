@@ -29,6 +29,9 @@ const { ONYX_ITEMS } = await load('game/data/onyx.js');
 const { STORY, STORY_CHAPTERS } = await load('game/data/story.js');
 const storyArt = scan('public/art/story', new Set([...STORY.map(x => x.id), ...STORY_CHAPTERS.map((_, i) => `chapter-${i}`)]));
 const monsterArt = scan('public/art/monsters', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set([...ONYX_ITEMS.map(d => d.id), 'onyxGrimoire']));
+// v3.388 장비 그림(public/art/items): {slot}-{rarity} · rod-{style}-{rarity}. tools/item-art/render.py 가 만듭니다.
+const ITEM_KEYS = new Set(['coat', 'cape', 'charm'].flatMap(s => [0, 1, 2, 3, 4, 5, 6].map(r => `${s}-${r}`)).concat(['physical', 'magic', 'balanced'].flatMap(st => [0, 1, 2, 3, 4, 5, 6].map(r => `rod-${st}-${r}`))));
+const itemArt = scan('public/art/items', ITEM_KEYS);
 writeFileSync('game/data/art-manifest.ts', `// 자동 생성 파일: node scripts/art-manifest.mjs 가 public/art/{skills,monsters,jobs,onyx,story} 를 훑어 다시 씁니다. 손으로 고치지 마세요.
 /** 아이콘 이미지가 있는 스킬 id → 확장자(png · svg). 없는 스킬은 기본 아이콘을 씁니다(없는 파일을 요청하지 않음). */
 export const SKILL_ART: Readonly<Record<string, 'png' | 'svg'>> = ${JSON.stringify(skillArt)};
@@ -38,6 +41,8 @@ export const MONSTER_ART: Readonly<Record<string, 'png' | 'webp' | 'svg'>> = ${J
 export const JOB_ART: Readonly<Record<string, 'png' | 'webp' | 'svg'>> = ${JSON.stringify(jobArt)};
 /** v3.14 그림이 있는 칠흑 장신구(보스 id) → 확장자. 없으면 SVG 그림. */
 export const ONYX_ART: Readonly<Record<string, 'png' | 'webp' | 'svg'>> = ${JSON.stringify(onyxArt)};
+/** v3.388 장비 그림({slot}-{rarity} · rod-{style}-{rarity}) → 확장자. 없으면 부위 아이콘. */
+export const ITEM_ART: Readonly<Record<string, 'png' | 'webp' | 'svg'>> = ${JSON.stringify(itemArt)};
 /** v3.216 그림이 있는 스토리 삽화(장 배너 chapter-N · 장면 id) → 확장자. 없으면 장 배너는 SVG, 장면은 그림 없이. */
 export const STORY_ART: Readonly<Record<string, 'png' | 'webp' | 'svg'>> = ${JSON.stringify(storyArt)};
 `);
