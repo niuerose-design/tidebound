@@ -436,6 +436,9 @@ M = {
     'onyxBlackMage': ('blackmage', dict(body=(0.1, 0.08, 0.14), trim=C['purple'], eye=C['purple'], eyeGlow=2.5)), 'starfallSeraph': ('clock', dict(body=(0.6, 0.55, 0.7), face=C['cream'], wing=(0.8, 0.85, 0.95))),
 }
 
+# v3.393 보스 전용 모양(칠흑 보스 · 던전 보스): 낮은 카메라 · 제단 무대 · 큰 몸. SHAPES · M 을 덮어씁니다.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import bosses; bosses.install(sys.modules[__name__])
+
 def center_and_scale():
     """물체 전체를 프레임에 맞춥니다: 바닥을 0에 두고 가로 · 세로가 1.9 안에 들어가게 줄이거나 키웁니다."""
     bpy.context.view_layer.update()

@@ -24,6 +24,7 @@ export const PAL = {
 const P = (name, over = {}) => ({ ...PAL[name], ...over });
 
 // kind: archetypes.mjs의 함수 이름. o: 옵션. extra: 그 종만의 추가 장식(SVG 조각). boss: 금빛 고리.
+// v3.394 칠흑 보스 4종(Vesper · Halder · Mirren · Solenne)은 블렌더 보스 그림(tools/monster-art/bosses.py)을 쓰므로 여기서 뺐습니다.
 export const MONSTERS = [
     // ── 잿빛 궤도: 폐기된 격납고 ──
     { id: 'aoScrapDrone', kind: 'drone', pal: P('steel'), o: { rust: true, antenna: true } },
@@ -48,7 +49,6 @@ export const MONSTERS = [
     // ── 잿빛 궤도: 던전 · 보스 ──
     { id: 'aoBridgeGuard', kind: 'mech', pal: P('steel', { base: '#5a6573', light: '#95a2b1' }), o: { lamp: true }, extra: (p) => path('M46 58h36l-2 6h-32z', p.accent, 'opacity=".8"') },
     { id: 'aoRustAdmiral', kind: 'clockwork', pal: P('rust', { base: '#6b4a3a', dark: '#3b2418', light: '#d9b48f', eye: '#ffd27a', glow: '#ffb347' }), o: { figure: true, cap: true, rust: true, reverse: true }, boss: true },
-    { id: 'onyxVesper', kind: 'vesper', pal: P('onyx'), o: {}, boss: true },
     // ── 광맥 황야: 결정 채굴장 ──
     { id: 'vwShardBeetle', kind: 'beetle', pal: P('crystal', { base: '#6d4bc4', accent: '#d8c7ff' }), o: { crystals: true } },
     { id: 'vwDigger', kind: 'mech', pal: P('rock', { base: '#8c6a3a', light: '#c9a46a', glow: '#fde047', eye: '#ffe27a' }), o: { drill: true, lamp: true } },
@@ -69,7 +69,6 @@ export const MONSTERS = [
     { id: 'vwFumeSerpent', kind: 'serpent', pal: P('gas', { base: '#7f7a2a', light: '#d6cf6a', glow: '#e9e27a', accent: '#f0e36a' }), o: { smoke: true, stripes: true } },
     { id: 'vwCalderaMaw', kind: 'drake', pal: P('ember', { base: '#7a2a12', light: '#d35a2a' }), o: { fire: true, crown: true } },
     { id: 'vwYellowTitan', kind: 'golem', pal: P('gas', { base: '#a9a040', dark: '#6b6218', light: '#e6e07a', accent: '#f5e76b' }), o: { gas: true, scale: 1.12 } },
-    { id: 'onyxHalder', kind: 'halder', pal: P('onyx', { accent: '#c4b5fd', glow: '#a78bfa' }), o: {}, boss: true },
     // ── 군체 늪지: 산란 늪 ──
     { id: 'hmLarva', kind: 'larva', pal: P('flesh', { base: '#b06a8a', light: '#e0a4c0' }), o: { spots: true } },
     { id: 'hmMarshSlider', kind: 'kraken', pal: P('bile', { base: '#5f8a1c' }), o: { slime: true, eyes: true } },
@@ -93,7 +92,6 @@ export const MONSTERS = [
     // ── 군체 늪지: 던전 · 보스 ──
     { id: 'hmMuscleWall', kind: 'wall', pal: P('flesh', { base: '#8a2a3a', dark: '#4a1020', light: '#c2546a', accent: '#d92a4a', glow: '#ff6b7a' }), o: { heal: true } },
     { id: 'hmHiveMother', kind: 'broodmother', pal: P('flesh', { base: '#5a1f3a', dark: '#2e0a1c', light: '#b06a8a', accent: '#a3e635' }), o: { crown: true, tentacles: true, aura: true }, boss: true },
-    { id: 'onyxMirren', kind: 'mirren', pal: P('onyx', { base: '#7a2a86', glow: '#b05fc0', accent: '#b3001b' }), o: {}, boss: true },
     // ── 고요한 성단: 빛의 첨탑 ──
     { id: 'scLightWeaver', kind: 'weaver', pal: P('light'), o: { threads: true, faceless: true } },
     { id: 'scGlimmer', kind: 'wisp', pal: P('light', { base: '#fde68a', light: '#fff' }), o: { stars: true }, extra: (p) => `${circle(26, 100, 6, p.base, ink(p.ink, 2))}${circle(104, 96, 5, p.base, ink(p.ink, 2))}` },
@@ -114,7 +112,6 @@ export const MONSTERS = [
     { id: 'scEchoOfEnd', kind: 'wraith', pal: P('void', { base: '#3b3270', glow: '#c4b5fd' }), o: { rings: true } },
     { id: 'scLastWarden', kind: 'statue', pal: P('marble', { base: '#9aa6c2', accent: '#ffd166', glow: '#ffd166' }), o: { crown: true, crystals: true }, extra: (p) => `${path('M20 112v-70q22 -16 44 -16t44 16v70', 'none', ink(p.dark, 3))}${path('M20 60h88', 'none', ink(p.dark, 2) + ' opacity=".6"')}` },
     { id: 'scStillReverser', kind: 'clockwork', pal: P('marble', { base: '#8fa3c7', dark: '#4e5f80', glow: '#bfdbfe', eye: '#dbeafe' }), o: { figure: true, frozen: true } },
-    { id: 'onyxSolenne', kind: 'solenne', pal: P('onyx', { glow: '#ffe9a0', accent: '#d4af37' }), o: {}, boss: true },
 ];
 
 export const renderMonster = (m) => {

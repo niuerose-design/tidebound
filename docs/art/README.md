@@ -58,7 +58,7 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 
 ## 블렌더 렌더 그림 (v3.388)
 
-메이플 구역 · 보스 몬스터 77종(`public/art/monsters/*.webp`)과 장비 42종(`public/art/items/{coat|cape|charm}-{0~6}.webp` · `rod-{physical|magic|balanced}-{0~6}.webp`)은 `tools/monster-art/render.py` · `tools/item-art/render.py`가 블렌더(`bpy`)로 로우폴리 도형을 세워 같은 카메라로 렌더한 것입니다. 몬스터는 실루엣 모양(`MONSTER_SHAPES`)별 모델 + 이름에서 고른 팔레트, 장비는 등급별 재질 묶음(나무 → 강철 → 금 → 빛)입니다. 바꾸려면 각 폴더의 README 대로 다시 렌더하고 `node scripts/art-manifest.mjs`. 장비 그림은 `components/game/gear-art.tsx`(`GearArt`)가 보여 주고, 없으면 부위 아이콘이 남습니다.
+메이플 구역 · 보스 몬스터 77종(`public/art/monsters/*.webp`)과 장비 42종(`public/art/items/{coat|cape|charm}-{0~6}.webp` · `rod-{physical|magic|balanced}-{0~6}.webp`)은 `tools/monster-art/render.py` · `tools/item-art/render.py`가 블렌더(`bpy`)로 로우폴리 도형을 세워 같은 카메라로 렌더한 것입니다. 몬스터는 실루엣 모양(`MONSTER_SHAPES`)별 모델 + 이름에서 고른 팔레트, 장비는 등급별 재질 묶음(나무 → 강철 → 금 → 빛)입니다. 바꾸려면 각 폴더의 README 대로 다시 렌더하고 `node scripts/art-manifest.mjs`. 장비 그림은 `components/game/gear-art.tsx`(`GearArt`)가 보여 주고, 없으면 부위 아이콘이 남습니다. 칠흑 보스 13종 · 던전 보스 8종(v3.394)은 `tools/monster-art/bosses.py`의 보스 전용 모양(낮은 카메라 · 제단 무대 · 보스 색 조명 · 큰 몸과 날개 · 무기 · 오라)으로 따로 렌더합니다.
 
 ## 계보 문장(엠블럼) 그림 (v3.223)
 

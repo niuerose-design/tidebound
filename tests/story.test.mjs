@@ -89,7 +89,11 @@ test('v3.369 svg art: every koprulu monster · skill · lineage · onyx charm ha
         assert.ok(src.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '), `${id} svg root`);
         assert.ok(!/<script|href=|url\((?!#)/.test(src), `${id} has no script or external reference`);
     };
-    for (const m of koprulu) { check('monsters', m.id, MONSTER_ART[m.id]); assert.equal(monsterArtSrc(m.id), `/art/monsters/${m.id}.svg`); }
+    // v3.394 코프룰루 칠흑 보스 4종은 블렌더 보스 그림(webp, tools/monster-art/bosses.py)을 씁니다. 나머지 코프룰루 몬스터는 SVG.
+    for (const m of koprulu) {
+        if (/^onyx/.test(m.id)) { assert.equal(MONSTER_ART[m.id], 'webp', `${m.id} is a blender boss render`); assert.equal(monsterArtSrc(m.id), `/art/monsters/${m.id}.webp`); continue; }
+        check('monsters', m.id, MONSTER_ART[m.id]); assert.equal(monsterArtSrc(m.id), `/art/monsters/${m.id}.svg`);
+    }
     for (const s of KOPRULU_SKILLS) { check('skills', s.id, SKILL_ART[s.id]); assert.equal(skillArtSrc(s.id), `/art/skills/${s.id}.svg`); }
     for (const l of KOPRULU_LINEAGES) check('jobs', l.id, JOB_ART[l.id]);
     for (const b of ONYX_BOSSES.filter(b => /^onyx(Vesper|Halder|Mirren|Solenne)$/.test(b.id))) check('onyx', b.id, ONYX_ART[b.id]);

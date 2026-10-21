@@ -53,3 +53,4 @@ tools/fonts/work
 tools/monster-art/.venv
 tools/item-art/.venv
 tools/css-prune/removed.txt
+__pycache__/
