@@ -1,7 +1,6 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, db } from '@/game/server/store';
 import { CREW } from '@/game/data/crew';
-import { migrateState } from '@/game/systems/migrations';
-import type { State } from '@/game/types';
+import { readRow } from '@/game/server/save';
 import { crewInfo, syncCrew, createCrew, joinCrew, leaveCrew, leaderAct, depositCrew, type CrewApply } from '@/game/server/crews';
 import { syncHackFeed } from '@/game/server/hacks';
 import { allow } from '@/game/server/throttle';
@@ -11,7 +10,7 @@ const headers = { 'Cache-Control': 'no-store' };
 export async function GET(req: Request) { try {
     const { id } = await session(req), now = Date.now();
     // v3.94 조회는 저장된 세이브로 답합니다(게임 동기화가 이미 syncCrew를 돌림). 소속 확인 주기가 지났을 때만 저장 경로로 맞춥니다.
-    const row = await db().getPlayer(id), saved = row ? migrateState(JSON.parse(row.state) as State, now) : null, cached = saved?.hacker?.crew;
+    const row = await db().getPlayer(id), saved = row ? readRow(row.state, now) : null, cached = saved?.hacker?.crew;
     const state = saved && (!cached || now - cached.syncedAt < CREW.refreshMs) ? saved : (await mutate(id, { type: 'sync' }, async s => { await syncCrew(id, s, Date.now()); })).state;
     return Response.json(await crewInfo(id, state, now), { headers });
 }

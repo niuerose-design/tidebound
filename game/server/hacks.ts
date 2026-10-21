@@ -6,6 +6,7 @@
  */
 import { randomBytes } from 'node:crypto';
 import { db } from './db';
+import { peekRow } from './save';
 import type { State, Snapshot } from '../types';
 import { setMarketKey } from '../systems/market';
 import { setPuzzleKey, gainHacker, isHacker, seasonScore, programOn } from '../systems/hacker';
@@ -149,7 +150,7 @@ export async function applyPendingHack(s: State, id: string, now: number) {
         const target = playerOfRow(pending.value);
         if (!target || target === id) throw Error('크래킹할 대상을 확인하세요.');
         // v3.25 화이트 해커 패시브 방화벽은 하루 한 번 크래킹을 막아 냅니다(비트·횟수는 그대로 씀).
-        const row = await database.getPlayer(target), victim = row ? JSON.parse(row.state) as State : null;
+        const row = await database.getPlayer(target), victim = row ? peekRow(row.state, Date.now()) : null;
         sameCrew(s, victim);
         if (victim?.skills?.includes(FIREWALL_ID) && h.shielded[target] !== dayKey(now)) {
             h.shielded[target] = dayKey(now);
@@ -174,7 +175,7 @@ export async function applyPendingHack(s: State, id: string, now: number) {
     else if (pending.kind === 'trace' || pending.kind === 'overload') {
         const target = playerOfRow(pending.value);
         if (!target || target === id) throw Error('다른 해커를 고르세요.');
-        const row = await database.getPlayer(target), victim = row ? JSON.parse(row.state) as State : null;
+        const row = await database.getPlayer(target), victim = row ? peekRow(row.state, Date.now()) : null;
         if (!victim?.hacker) throw Error('해커 기록이 있는 모험가만 견제할 수 있습니다.');
         const today = dayKey(now), r = h.rival[target] ??= {}, vc = victim.hacker.crew;
         sameCrew(s, victim);

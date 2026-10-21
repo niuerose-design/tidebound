@@ -6,7 +6,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { db } from './db';
 import { ApiError, forgetRecent } from './store';
 import { allow, clientIp } from './throttle';
-import { migrateState } from '../systems/migrations';
+import { readRow, peekRow, packSave } from './save';
 import { restartLife } from '../systems/actions/lifecycle';
 import { jobById } from '../data/classes';
 import { RANKS, RANK_PERKS, rankIndex, rankTitle, rankState, rankPerkLevel, rankPointsFree } from '../data/rank';
@@ -67,7 +67,7 @@ export async function searchPlayers(query: string) {
     const accounts = new Map((await database.listAccounts()).map(a => [a.id, a.username]));
     const lower = q.toLowerCase(), out: AdminPlayer[] = [];
     for (const row of await database.listPlayers()) {
-        let s: State; try { s = JSON.parse(row.state); } catch { continue; }
+        let s: State; try { s = peekRow(row.state, row.updated_at); } catch { continue; }
         const username = accounts.get(row.id.split('#')[0]) || '';
         if (username === lower || (typeof s.name === 'string' && s.name.toLowerCase().includes(lower))) out.push(view(row.id, username, row.revision, row.updated_at, s));
     }
@@ -85,7 +85,7 @@ const usernameOf = async (id: string) => (await db().listAccounts()).find(a => a
 /** 이번 생 초기화 미리 보기: 저장하지 않고 전/후만 돌려줍니다. */
 export async function previewRestart(id: string) {
     const row = await load(id), now = Date.now(), username = await usernameOf(id);
-    const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
+    const s = readRow(row.state, now), before = view(id, username, row.revision, now, s);
     restartLife(s, now);
     return { before, after: view(id, username, row.revision, now, s) };
 }
@@ -94,10 +94,10 @@ export async function previewRestart(id: string) {
 export async function applyRestart(id: string, revision: number) {
     const row = await load(id), now = Date.now(), username = await usernameOf(id);
     if (!Number.isInteger(revision) || row.revision !== revision) throw new ApiError('미리 본 뒤에 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
-    const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
+    const s = readRow(row.state, now), before = view(id, username, row.revision, now, s);
     restartLife(s, now);
     forgetRecent(id);
-    if (!await db().updatePlayer(id, JSON.stringify(s), now, revision)) throw new ApiError('그사이 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
+    if (!await db().updatePlayer(id, packSave(s, now), now, revision)) throw new ApiError('그사이 게임이 저장되었습니다. 미리 보기를 다시 눌러 주세요.', 409);
     console.info('admin restartLife', { id, username, from: before.level });
     return { before, after: view(id, username, revision + 1, now, s) };
 }
@@ -117,11 +117,11 @@ export async function adjustCurrency(id: string, input: { gold?: unknown; pearls
     const username = await usernameOf(id);
     for (let attempt = 0; attempt < 3; attempt++) {
         const row = await load(id), now = Date.now();
-        const s = migrateState(JSON.parse(row.state) as State, now), before = view(id, username, row.revision, now, s);
+        const s = readRow(row.state, now), before = view(id, username, row.revision, now, s);
         if (gold !== undefined) s.gold = gold;
         if (pearls !== undefined) s.pearls = pearls;
         forgetRecent(id);
-        if (await db().updatePlayer(id, JSON.stringify(s), now, row.revision)) {
+        if (await db().updatePlayer(id, packSave(s, now), now, row.revision)) {
             console.info('admin adjustCurrency', { id, username, gold: [before.gold, s.gold], pearls: [before.pearls, s.pearls] });
             return { before, after: view(id, username, row.revision + 1, now, s) };
         }
@@ -276,7 +276,7 @@ export async function adminExpedition(): Promise<ExpeditionAdmin> {
     const R = EXPEDITION.rounds, plays = Array(R + 1).fill(0) as number[], winsBy = Array(R + 1).fill(0) as number[], units = new Map<string, number>();
     for (const row of rows) {
         let st: State['expeditionStats'] | undefined;
-        try { st = (JSON.parse(row.state) as State).expeditionStats; } catch { continue; }
+        try { st = peekRow(row.state, row.updated_at).expeditionStats; } catch { continue; }
         if (!st) continue;
         out.players++; out.runs += st.runs || 0; out.clears += st.clears || 0; out.wins += st.wins || 0; out.ghostFights += st.ghostFights || 0; out.ghostWins += st.ghostWins || 0;
         for (let r = 1; r <= R; r++) { plays[r] += st.roundPlays?.[r] || 0; winsBy[r] += st.roundWins?.[r] || 0; }
@@ -293,7 +293,7 @@ export async function adminExpedition(): Promise<ExpeditionAdmin> {
 export async function adminStats(now = Date.now()): Promise<AdminStats> {
     const database = db(), [accounts, rows, altar] = await Promise.all([database.listAccounts(), database.listPlayers(), database.getAltar()]);
     const saves: { s: State; at: number }[] = [];
-    for (const row of rows) { try { const s = JSON.parse(row.state) as State; if (s && typeof s.level === 'number') saves.push({ s, at: row.updated_at }); } catch { /* 깨진 세이브는 건너뜀 */ } }
+    for (const row of rows) { try { const s = peekRow(row.state, row.updated_at); if (s && typeof s.level === 'number') saves.push({ s, at: row.updated_at }); } catch { /* 깨진 세이브는 건너뜀 */ } }
     const list = saves.map(x => x.s), levels = list.map(s => s.level || 1), rebirths = list.map(s => s.rebirths || 0);
     const since = (ms: number) => saves.filter(x => now - x.at <= ms).length;
     const sum = (f: (s: State) => number) => list.reduce((a, s) => a + (Number.isFinite(f(s)) ? f(s) : 0), 0);
@@ -362,7 +362,7 @@ export async function adminIncome(query = '', now = Date.now()) {
     const database = db(), accounts = new Map((await database.listAccounts()).map(a => [a.id, a.username]));
     const rows: IncomeRow[] = [], q = query.trim().toLowerCase(), picked: (IncomeRow & { log: IncomeLog[] })[] = [];
     for (const row of await database.listPlayers()) {
-        let s: State; try { s = JSON.parse(row.state); } catch { continue; }
+        let s: State; try { s = peekRow(row.state, row.updated_at); } catch { continue; }
         if (!s || typeof s.level !== 'number') continue;
         const username = accounts.get(row.id.split('#')[0]) || '', rate = incomeRate(s);
         const place = s.dungeon ? dungeonById(s.dungeon!.id)?.name || s.dungeon.id : stageById(s.stage)?.name || s.stage;
@@ -397,7 +397,7 @@ export async function exportFixtures({ limit = 20, minLevel = 1 }: { limit?: num
     const saves: SaveFixtureFile['saves'] = [];
     for (const row of rows) {
         if (saves.length >= n) break;
-        let s: State; try { s = JSON.parse(row.state); } catch { continue; }
+        let s: State; try { s = peekRow(row.state, row.updated_at); } catch { continue; }
         if (typeof s.level !== 'number' || s.level < lv) continue;
         const [account, slot] = row.id.split('#');
         saves.push({ id: 'fx_' + createHash('sha1').update(account).digest('hex').slice(0, 8), slot: Number(slot || 1), revision: row.revision, updatedAt: row.updated_at, level: s.level, rebirths: s.rebirths || 0, job: s.job, state: anonymizeState(s, saves.length + 1) });

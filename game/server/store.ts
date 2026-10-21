@@ -1,6 +1,6 @@
 import type { State, Action, Snapshot } from '../types';
 import { newState, advance, act } from '../systems/engine';
-import { migrateState } from '../systems/migrations';
+import { readRow, peekRow, packSave } from './save';
 import { duelSnapshot } from '../systems/stats';
 import { SAVE_VERSION } from '../data/balance';
 import { db, ConfigError, type SlotRow } from './db';
@@ -116,12 +116,12 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
     for (let attempt = 0; attempt < 3; attempt++) {
         let row = attempt === 0 ? first : await database.getPlayer(id);
         // v25.10 처음 보는 모험가일 때만 만듭니다(매 동기화마다 INSERT ON CONFLICT를 날리지 않음).
-        if (!row) { await database.createPlayerIfMissing(id, JSON.stringify(newState(now)), now); row = await database.getPlayer(id); }
+        if (!row) { await database.createPlayerIfMissing(id, packSave(newState(now), now), now); row = await database.getPlayer(id); }
         if (!row)
             throw new ApiError('저장 데이터를 불러오지 못했습니다.', 503);
         // 차분 응답: 화면이 가진 세이브(sv)가 기억한 사본과 같을 때만 그 사본을 before로 돌려줍니다(사본은 직전 응답으로 보낸 것과 같음).
-        const before = attempt === 0 && fresh && opts.since === fresh.sv ? JSON.parse(row.state) as Record<string, unknown> : null;
-        const s = migrateState(JSON.parse(row.state) as State, now);
+        const before = attempt === 0 && fresh && opts.since === fresh.sv ? peekRow(row.state, now) as unknown as Record<string, unknown> : null;
+        const s = readRow(row.state, now);
         const lastTickBefore = s.lastTick;
         // v3.377 요청 단위 시드 난수: 같은 (모험가 · revision · lastTick)이면 같은 결과(저장 충돌 재시도 · 다른 인스턴스 재계산 · 골든 테스트).
         const rng = requestRng(id, row.revision, s.lastTick);
@@ -130,7 +130,7 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         const result = extra ? await extra(s) : null;
         // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
         await syncHackerBoard(id, s, now);
-        const json = JSON.stringify(s);
+        const json = packSave(s, now);
         // v3.373 동기화만의 저장은 PERSIST_MS 마다 한 번: 그 사이는 메모리 사본에만 적습니다.
         const defer = isSync && !final && attempt === 0 && !!fresh && now - fresh.persistedAt < PERSIST_MS && !s.catchUpLeft && now - lastTickBefore < PERSIST_MS * 2;
         if (defer) { const sv = rememberRecent(id, json, row.revision, now, fresh!.persistedAt); return { state: s, result, sv, before }; }
