@@ -198,7 +198,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...honor(series('marketProfit', '도전', n => `실현 수익 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 수익이 누적 ${n.toLocaleString()} G를 넘습니다.`, [1e6, 1e8, 1e10], s => Math.max(0, s.market?.realized || 0), () => ({}))),
     ...honor(series('marketLoss', '도전', n => `손절의 미학 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 손실이 누적 ${n.toLocaleString()} G에 이릅니다.`, [1e6, 1e8], s => Math.max(0, -(s.market?.realized || 0)), () => ({}))),
     { id: 'ascension:1', honor: true, group: '환생', title: '첫 승천', desc: '처음으로 승천합니다.', reward: {}, progress: s => Math.min(1, s.ascension || 0), target: 1 },
-    ...honor(series('story', '모험', n => `이야기 ${n}장면`, n => `스토리 장면 ${n}개를 엽니다.`, [10, 20, STORY.length], s => Object.keys(s.story || {}).length, () => ({}))),
+    ...honor(series('story', '모험', n => `이야기 ${n}장면`, n => `스토리 장면 ${n}개를 엽니다.`, [10, 20, 39, STORY.length], s => Object.keys(s.story || {}).length, () => ({}))),
     ...honor(series('rating', '사냥', n => `결투 레이팅 ${n.toLocaleString()}`, n => `랭크 결투 레이팅 ${n.toLocaleString()}에 오릅니다.`, [1500, 2000, 2500], s => s.rating || 0, () => ({}))),
     ...honor(series('chant', '숙련', n => `사중 영창 ${n.toLocaleString()}회`, n => `동시 시전으로 주문 4개 이상을 한 행동에 ${n.toLocaleString()}번 함께 냅니다.`, [1, 100, 1000], s => s.chantFull || 0, () => ({}))),
     { id: 'star:25', honor: true, group: '강화', title: '25성 달성', desc: '장비 하나를 25성까지 강화합니다(가방 · 착용 장비 기준).', reward: {}, progress: bestStar, target: 25 },

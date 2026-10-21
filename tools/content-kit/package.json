@@ -1,0 +1,16 @@
+{
+  "name": "pangaea-content-kit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node scripts/kit.mjs render",
+    "gen": "node scripts/kit.mjs run",
+    "validate": "node scripts/kit.mjs validate",
+    "merge": "node scripts/kit.mjs merge",
+    "qa": "node scripts/kit.mjs qa"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest"
+  }
+}

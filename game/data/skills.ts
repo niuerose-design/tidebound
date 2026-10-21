@@ -14,6 +14,7 @@ import { INVERSION_SKILLS } from './expansion-inversion';
 import { MONOSTAT_SKILLS } from './expansion-monostat';
 import { SUPPORT_SKILLS, SUPPORT_PASSIVES } from './support-rework';
 import { V25_SKILLS } from './expansion-v25';
+import { KOPRULU_SKILLS } from './expansion-koprulu';
 import { SPECIAL_SKILLS } from './specials';
 import { OTHERWORLD_SKILLS, OTHERWORLD_COMBAT_SKILLS } from './otherworld';
 import { STAT_TRAINING_SKILLS } from './stat-training';
@@ -143,6 +144,8 @@ SKILLS.push(...MONOSTAT_SKILLS);
 SKILLS.push(...SUPPORT_SKILLS);
 // v25 ??? 특수 직업 기술.
 SKILLS.push(...V25_SKILLS);
+// v3.367 코프룰루 구역 60개(액티브 30 · 패시브 30). 밸런스 표는 KOPRULU_BALANCE(skill-balance.ts).
+SKILLS.push(...KOPRULU_SKILLS);
 for (const sk of SKILLS) if (SUPPORT_PASSIVES[sk.id]) Object.assign(sk, SUPPORT_PASSIVES[sk.id]);
 // v21 회복 기술은 체력 조건 없이 시도합니다. 회복이 필요 없을 때의 피해 감소는 combat.ts에서 처리합니다.
 for (const sk of SKILLS) if (sk.effect === 'heal') delete sk.condition;

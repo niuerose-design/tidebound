@@ -8,6 +8,7 @@ import { INVERSION_BALANCE } from './expansion-inversion';
 import { MONOSTAT_BALANCE } from './expansion-monostat';
 import { SUPPORT_BALANCE } from './support-rework';
 import { V25_BALANCE, V25_STATUS_ONLY } from './expansion-v25';
+import { KOPRULU_BALANCE, KOPRULU_STATUS_ONLY } from './expansion-koprulu';
 import { ATTRIBUTE_NAMES, PROGRESSION, STAT_LABELS } from './progression';
 
 /** 플레이어 기술의 최종 수치. 적 기술은 data/encounters.ts에서 따로 조정합니다. */
@@ -57,6 +58,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     ...DEFENSE_BALANCE,
     ...INVERSION_BALANCE,
     ...MONOSTAT_BALANCE,
+    ...KOPRULU_BALANCE,
 };
 // v24.2 보조 계열 개편은 기존 값 위에 덮어씁니다(필드 단위 병합).
 for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE })) ACTIVE_SKILL_BALANCE[id] = { ...ACTIVE_SKILL_BALANCE[id], ...tuning };
@@ -72,7 +74,7 @@ for (const [id, tuning] of Object.entries({ ...SUPPORT_BALANCE, ...V25_BALANCE }
  */
 const STATUS_ONLY_SKILLS = ['anchor', 'curseBolt', 'gashHook', 'inkTrick', 'palmStrike', 'rippleGlyph', 'runeHammer', 'venomDart',
     'crush', 'discord', 'dragonDive', 'hagglingHook', 'redWaltz', 'runeCurrent', 'saltCatalyst', 'sovereignSilence', 'toxicFang', 'razor', 'hexChain', 'needleStep',
-    'quakeStep', 'sealHex', ...V25_STATUS_ONLY];
+    'quakeStep', 'sealHex', ...V25_STATUS_ONLY, ...KOPRULU_STATUS_ONLY];
 const STATUS_ONLY_MAX_CHANCE = .3;
 const STATUS_DEFAULT_TURNS: Record<string, number> = { stun: 1, bleed: 3, poison: 4, burn: 3, weaken: 3, silence: 2, slow: 3, corrode: STATUS_TUNING.corrodeTurns };
 /** 상태이상 전용 전환과 초반 배율 제한. 밸런스 표 적용 직후, 설명을 쓰기 전에 실행합니다. tier는 기술 주인 직업의 차수(공용 0). */

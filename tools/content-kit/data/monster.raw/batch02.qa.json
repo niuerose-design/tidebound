@@ -1,0 +1,19 @@
+{
+  "verdict": "pass",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "onyxMirren", "field": "profile", "rule": 6, "note": "새 칠흑 보스 전용 성향이 없어 arcaneBoss를 임시로 씀(눈·마법 컨셉과 일치)." },
+    { "id": "onyxSolenne", "field": "profile", "rule": 6, "note": "boss(고대 보스) 성향 임시 사용. 코드에 전용 성향 추가 권장." },
+    { "id": "hmPlateBrute", "field": "name", "rule": 2, "note": "‘갑판’이 잿빛 궤도 어휘와 겹쳐 보일 수 있으나 ‘등판’ 뜻으로 썼고 id·컨셉은 다름. 유지." }
+  ],
+  "checks": {
+    "1_ip": "원작 종족·유닛·인물명 없음(군체·지배종·모체는 일반 명사)",
+    "2_dup": "이름·첫 문장 중복 없음, batch01·기존과 겹침 없음",
+    "3_length": "이름 2~8자, lore 25~50자",
+    "4_style": "‘~다’ 평서체, 이모지·영어·당신 없음",
+    "5_content": "고어 없음(혈관 거머리·근육 벽은 생체 묘사 수준)",
+    "6_logic": "성향 ↔ lore 일치. 레벨 120~139, 변종 minTier 40/50(뒤 지역일수록 높게)",
+    "7_schema": "validate 40/40, 수치 6.3 표 범위"
+  },
+  "fixed_items": []
+}

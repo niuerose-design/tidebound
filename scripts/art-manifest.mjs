@@ -22,7 +22,7 @@ const scan = (folder, valid) => {
     return out;
 };
 const { ONYX_ITEMS } = await load('game/data/onyx.js');
-// v3.216 스토리 삽화(public/art/story): 장 배너는 chapter-{0~5}, 장면은 장면 id.
+// v3.216 스토리 삽화(public/art/story): 장 배너는 chapter-{0~18}, 장면은 장면 id.
 const { STORY, STORY_CHAPTERS } = await load('game/data/story.js');
 const storyArt = scan('public/art/story', new Set([...STORY.map(x => x.id), ...STORY_CHAPTERS.map((_, i) => `chapter-${i}`)]));
 const monsterArt = scan('public/art/monsters', new Set(MONSTERS.map(f => f.id))), jobArt = scan('public/art/jobs', new Set(LINEAGES.map(l => l.id))), onyxArt = scan('public/art/onyx', new Set([...ONYX_ITEMS.map(d => d.id), 'onyxGrimoire']));

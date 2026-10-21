@@ -1,0 +1,1872 @@
+[
+  {
+    "id": "awake",
+    "chapter": 0,
+    "title": "선착장에서 눈을 뜨다",
+    "lines": [
+      "파도 소리에 눈을 떴다. 낯선 선착장, 낯선 하늘. 손에 쥔 것은 낡은 무기 하나뿐이었다.",
+      "“또 한 명이 왔군.” 그물을 손질하던 노인이 고개도 들지 않고 말했다. “여긴 리스항구. 세상의 끝이자, 판게아의 문이지.”",
+      "여러 세계가 하나의 대륙으로 이어진 날 이후로, 바다는 기억을 잃은 모험가들을 이 항구에 내려놓는다고 했다.",
+      "선착장 끝에서 무언가가 꿈틀거렸다. 생각할 틈도 없이 몸이 먼저 움직였다."
+    ],
+    "hint": "몬스터를 처음 처치한다",
+    "trigger": {
+      "kind": "first_kill",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "first_kill"
+    ]
+  },
+  {
+    "id": "shell",
+    "chapter": 0,
+    "title": "조개 해안의 소문",
+    "lines": [
+      "조개껍데기가 발밑에서 바스락거렸다. 해안의 슬라임들은 겁도 없이 통통 튀어올랐다.",
+      "모닥불가의 상인이 말했다. “빅토리아 아일랜드 너머엔 다른 세계가 붙어 있대. 용이 사는 땅, 시간이 멈춘 신전…”",
+      "믿기 어려운 이야기였지만, 이 섬에 온 것부터가 믿기 어려운 일이었다."
+    ],
+    "hint": "리스항구 · 조개 해안에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "bay"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "henesys",
+    "chapter": 0,
+    "title": "버섯 마을 헤네시스",
+    "lines": [
+      "언덕 위로 커다란 버섯 지붕들이 보였다. 아이들이 나무칼을 휘두르며 모험가 흉내를 냈다.",
+      "“요즘 버섯들이 이상해요.” 마을 사람은 걱정스러운 얼굴이었다. “숲 깊은 곳에서 엄청나게 큰 버섯을 봤다는 사람도 있고요.”",
+      "그 말을 듣는 순간, 이상하게도 처음 듣는 이야기가 아닌 것 같았다."
+    ],
+    "hint": "헤네시스 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "헤네시스"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "firstJob",
+    "chapter": 0,
+    "title": "첫 번째 길",
+    "lines": [
+      "전직관은 오래 내 눈을 들여다보았다. “너는 이미 이 길을 걸어 본 적이 있구나.”",
+      "무슨 뜻인지 묻기도 전에 그는 증표를 건넸다. 손에 닿자 온몸에 익숙한 힘이 퍼졌다.",
+      "처음 배우는 기술인데, 몸은 이미 다음 동작을 알고 있었다."
+    ],
+    "hint": "첫 전직을 한다",
+    "trigger": {
+      "kind": "job_tier",
+      "value": 1
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "job_tier"
+    ]
+  },
+  {
+    "id": "mushmom",
+    "chapter": 0,
+    "title": "숲의 거대한 그림자",
+    "lines": [
+      "버섯 동산 깊은 곳, 나무보다 큰 버섯이 땅을 울리며 다가왔다. 머쉬맘이었다.",
+      "쓰러진 머쉬맘의 갓 아래에서 희미하게 빛나는 돌 하나가 굴러 나왔다. 세계석이라고, 누군가 그렇게 불렀다.",
+      "돌을 쥐자 머릿속에 장면이 스쳤다. 같은 숲, 같은 버섯, 그리고 지금과 다른 얼굴의 나."
+    ],
+    "hint": "머쉬맘을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "grottoWarden"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "perion",
+    "chapter": 0,
+    "title": "바위산의 전사들",
+    "lines": [
+      "붉은 바위산 페리온. 발굴지의 석상들은 이 대륙이 생기기 전의 문자로 뒤덮여 있었다.",
+      "고고학자가 탁본을 내밀었다. “‘세계는 하나가 되고, 모험가는 끝없이 돌아오리라.’ 무슨 뜻일까요?”",
+      "대답하지 못했다. 다만 그 문장을 어디선가 직접 새긴 것 같은 기분이 들었다."
+    ],
+    "hint": "페리온 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "페리온"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "ellinia",
+    "chapter": 0,
+    "title": "마법 숲의 속삭임",
+    "lines": [
+      "엘리니아의 나무들은 하늘을 가릴 만큼 높았다. 달빛 호수에 비친 내 모습이 잠시 흔들렸다.",
+      "“세계석을 모으고 있군요.” 요정 마법사가 말했다. “그건 지나간 생의 조각이에요. 충분히 모으면, 다시 태어나도 잃지 않죠.”"
+    ],
+    "hint": "엘리니아 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "엘리니아"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "kerning",
+    "chapter": 0,
+    "title": "네온 아래의 거래",
+    "lines": [
+      "커닝시티의 밤은 낮보다 밝았다. 골목마다 정보가 사고팔렸다.",
+      "후드를 쓴 남자가 속삭였다. “요즘 이상한 놈들이 많아. 대륙 밖에서 온 것 같은 놈들. 칼 대신 숫자를 다루지.”",
+      "그는 동전을 튕기며 웃었다. “너도 언젠가 그쪽에 관심이 생길걸.”"
+    ],
+    "hint": "커닝시티 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "커닝시티"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "secondJob",
+    "chapter": 0,
+    "title": "갈림길",
+    "lines": [
+      "두 번째 증표를 받았다. 이번에는 전직관이 아무 말도 하지 않았다. 그럴 필요가 없다는 듯이.",
+      "길은 여러 갈래였고, 어느 길을 골라도 언젠가 다른 길과 다시 만날 것 같았다."
+    ],
+    "hint": "2차 전직을 한다",
+    "trigger": {
+      "kind": "job_tier",
+      "value": 2
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제1장",
+      "job_tier"
+    ]
+  },
+  {
+    "id": "rebirth1",
+    "chapter": 1,
+    "title": "다시 눈을 뜨다",
+    "lines": [
+      "파도 소리에 눈을 떴다. 같은 선착장, 같은 하늘. 그런데 이번에는 모든 것을 기억하고 있었다.",
+      "노인이 그물에서 고개를 들었다. “돌아왔군. 이번엔 조금 빨랐어.”",
+      "손안의 세계석이 따뜻했다. 지난 생에서 얻은 것들이 그 안에 고스란히 남아 있었다.",
+      "판게아는 모험가를 죽게 두지 않는다. 다만 처음으로 돌려보낼 뿐이다."
+    ],
+    "hint": "첫 환생을 한다",
+    "trigger": {
+      "kind": "rebirths",
+      "value": 1
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "rebirths"
+    ]
+  },
+  {
+    "id": "balrog",
+    "chapter": 1,
+    "title": "불의 제단",
+    "lines": [
+      "페리온 불의 제단. 주니어 발록의 날개가 열기를 뿜었다.",
+      "쓰러지며 그것은 낮게 웃었다. “너도… 몇 번째냐… 우리 주인은… 끝을 기다린다…”",
+      "주인. 끝. 그 말이 오래 귓가에 남았다."
+    ],
+    "hint": "주니어 발록을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "magmaKraken"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "thirdJob",
+    "chapter": 1,
+    "title": "세 번째 시련",
+    "lines": [
+      "시련의 공간에서 나는 나 자신과 싸웠다. 그림자는 지난 생의 기술을 모두 쓰고 있었다.",
+      "그림자를 이긴 순간 알았다. 지난 생의 나는 적이 아니라 스승이었다."
+    ],
+    "hint": "3차 전직을 한다",
+    "trigger": {
+      "kind": "job_tier",
+      "value": 3
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "job_tier"
+    ]
+  },
+  {
+    "id": "rebirth5",
+    "chapter": 1,
+    "title": "익숙한 얼굴들",
+    "lines": [
+      "다섯 번째 선착장. 이제 노인과 나는 서로의 이름을 부른다.",
+      "항구에는 나처럼 돌아오는 모험가들이 늘었다. 채팅 너머 낯선 이름들도, 어쩌면 같은 바다를 건너온 사람들일 것이다."
+    ],
+    "hint": "환생 5회를 달성한다",
+    "trigger": {
+      "kind": "rebirths",
+      "value": 5
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "rebirths"
+    ]
+  },
+  {
+    "id": "zakum",
+    "chapter": 1,
+    "title": "엘나스의 불꽃",
+    "lines": [
+      "눈 덮인 엘나스 아래, 자쿰의 제단은 끓어올랐다. 여덟 개의 팔이 동시에 내려꽂혔다.",
+      "마지막 팔이 무너질 때, 제단 벽에 새겨진 문양이 빛났다. 페리온 석상의 문자와 똑같은 문양이었다.",
+      "이 대륙의 모든 것이 하나의 이야기로 이어져 있었다."
+    ],
+    "hint": "자쿰을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "ventColossus"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "aquaroad",
+    "chapter": 1,
+    "title": "깊은 바다의 길",
+    "lines": [
+      "아쿠아로드의 산호 숲은 조용했다. 물결 사이로 아주 오래된 바다의 노래가 들렸다.",
+      "“이 아래에는 더 깊은 바다가 있어.” 인어가 말했다. “판게아가 생기기 전, 모든 모험가가 처음 낚싯줄을 던진 곳.”",
+      "왠지 손이 낚싯대를 쥔 감각을 기억하는 것 같았다."
+    ],
+    "hint": "아쿠아로드 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "아쿠아로드"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "rebirth10",
+    "chapter": 1,
+    "title": "열 번의 생",
+    "lines": [
+      "열 번 태어나 열 번 같은 길을 걸었다. 같은 길이지만 한 번도 같은 걸음은 아니었다.",
+      "세계석은 이제 손바닥을 가득 채웠다. 그 빛 속에서, 나는 처음으로 끝이 어디인지 궁금해졌다."
+    ],
+    "hint": "환생 10회를 달성한다",
+    "trigger": {
+      "kind": "rebirths",
+      "value": 10
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "rebirths"
+    ]
+  },
+  {
+    "id": "fourthJob",
+    "chapter": 1,
+    "title": "이름을 얻다",
+    "lines": [
+      "네 번째 증표에는 내 이름이 새겨져 있었다. 직업의 이름이 아니라, 내 이름이.",
+      "전직관이 처음으로 웃었다. “이제야 너를 알아보겠군.”"
+    ],
+    "hint": "4차 전직을 한다",
+    "trigger": {
+      "kind": "job_tier",
+      "value": 4
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "job_tier"
+    ]
+  },
+  {
+    "id": "leafre",
+    "chapter": 1,
+    "title": "용의 둥지",
+    "lines": [
+      "리프레의 하늘에는 용들이 날았다. 둥지의 알 하나가 내 발소리에 금이 갔다.",
+      "하프링 장로가 말했다. “용은 시간의 신전을 지키는 종족이었다. 신전이 무너진 뒤로, 시간은 제멋대로 흐른다.”",
+      "그래서 모험가들이 돌아오는 것일까. 시간이 끝을 잃어버려서."
+    ],
+    "hint": "리프레 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "리프레"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "papulatus",
+    "chapter": 1,
+    "title": "멈춘 시계탑",
+    "lines": [
+      "루디브리엄 시계탑 꼭대기, 파풀라투스는 시간의 균열을 먹고 자라 있었다.",
+      "균열이 닫히는 순간, 아주 짧게 모든 시계가 같은 시각을 가리켰다. 그리고 다시 제각각 흘렀다.",
+      "시간을 고칠 수는 없었다. 하지만 시간이 어디서 망가졌는지는 알 것 같았다."
+    ],
+    "hint": "파풀라투스를 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "starfallSeraph"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제2장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "temple",
+    "chapter": 2,
+    "title": "시간의 신전",
+    "lines": [
+      "기억의 길에는 내가 걸어온 생들이 그림자로 서 있었다. 첫 번째 나는 낡은 무기 하나만 들고 있었다.",
+      "그림자들은 아무 말 없이 한 방향을 가리켰다. 신전보다 더 깊은 곳, 빛이 닿지 않는 강."
+    ],
+    "hint": "시간의 신전 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "시간의 신전"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "abyss50",
+    "chapter": 2,
+    "title": "무릉의 오십 층",
+    "lines": [
+      "무릉도장 오십 층. 무공은 팔짱을 낀 채 나를 내려다보았다.",
+      "“강해지는 것만으로는 끝에 닿지 못한다. 돌아오는 법을 아는 자만이 계속 오른다.”",
+      "그는 위층을 가리켰다. 계단은 끝이 보이지 않았다."
+    ],
+    "hint": "무릉도장 50층을 돌파한다",
+    "trigger": {
+      "kind": "abyss_floor",
+      "value": 50
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "abyss_floor"
+    ]
+  },
+  {
+    "id": "onyx",
+    "chapter": 2,
+    "title": "칠흑의 조각",
+    "lines": [
+      "칠흑의 군단장이 쓰러지며 검은 장신구 하나를 남겼다. 손에 쥐자 차갑고 무거웠다.",
+      "장신구 안쪽에서 낮은 목소리가 울렸다. “모든 세계를 하나로 묶은 것은 나다. 그리고 그것을 끝낼 것도 나다.”",
+      "검은 마법사. 처음 듣는 이름인데, 오래 미워해 온 이름 같았다."
+    ],
+    "hint": "칠흑 보스를 처음 처치한다",
+    "trigger": {
+      "kind": "onyx_first",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "onyx_first"
+    ]
+  },
+  {
+    "id": "arcane",
+    "chapter": 2,
+    "title": "소멸의 여로",
+    "lines": [
+      "아케인 리버의 물은 색이 없었다. 비친 것을 지워 버리는 물이었다.",
+      "강가의 정령이 말했다. “여기서부터는 기억이 사라져요. 하지만 당신은 몇 번이고 다시 기억해 냈죠.”",
+      "정령은 강 건너를 가리켰다. 그곳에 검은 성이 있었다."
+    ],
+    "hint": "아케인 리버 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "아케인 리버"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "fifthJob",
+    "chapter": 2,
+    "title": "다섯 번째 문",
+    "lines": [
+      "다섯 번째 증표는 증표가 아니었다. 빛나는 문이었다.",
+      "문 너머로 다른 세계의 바람이 불어왔다. 성기사의 기도, 흑마법사의 주문, 이 대륙에 없는 기술들의 냄새.",
+      "판게아는 아직 다 이어지지 않았다."
+    ],
+    "hint": "5차 전직을 한다",
+    "trigger": {
+      "kind": "job_tier",
+      "value": 5
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "job_tier"
+    ]
+  },
+  {
+    "id": "rebirth50",
+    "chapter": 2,
+    "title": "오십 번의 바다",
+    "lines": [
+      "노인의 그물은 해졌고 머리는 더 희어졌다. 나는 그대로였다.",
+      "“네가 처음 왔을 때를 기억해.” 노인이 말했다. “아무것도 모르는 눈이었지. 지금은 너무 많이 아는 눈이야.”"
+    ],
+    "hint": "환생 50회를 달성한다",
+    "trigger": {
+      "kind": "rebirths",
+      "value": 50
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "rebirths"
+    ]
+  },
+  {
+    "id": "blackMage",
+    "chapter": 2,
+    "title": "검은 마법사",
+    "lines": [
+      "검은 성의 꼭대기. 검은 마법사는 기다렸다는 듯 일어섰다. “또 왔구나. 이번이 몇 번째인지 너는 아느냐.”",
+      "싸움은 길었다. 지난 모든 생의 기술이 한꺼번에 손끝에서 쏟아졌다.",
+      "그가 무너지며 말했다. “나를 쓰러뜨려도 세계는 갈라지지 않는다. 이제 판게아는 너희의 것이다.”",
+      "성이 무너지고, 처음으로 시간이 한 방향으로 흐르기 시작했다."
+    ],
+    "hint": "검은 마법사를 처치한다",
+    "trigger": {
+      "kind": "onyx_boss",
+      "value": "onyxBlackMage"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제3장",
+      "onyx_boss"
+    ]
+  },
+  {
+    "id": "core",
+    "chapter": 3,
+    "title": "보스의 심장",
+    "lines": [
+      "쓰러진 보스의 가슴에서 맥박이 뛰는 돌이 굴러 나왔다. 아직 따뜻했다.",
+      "코어를 쥐자 그 보스의 기술이 손끝에 스며들었다. 싸웠던 상대가 이제는 내 일부가 되었다.",
+      "“판게아는 아무것도 버리지 않아.” 대장장이가 말했다. “적의 힘조차도.”"
+    ],
+    "hint": "보스 코어를 처음 얻는다",
+    "trigger": {
+      "kind": "core",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제4장",
+      "core"
+    ]
+  },
+  {
+    "id": "coreFull",
+    "chapter": 3,
+    "title": "깨어난 심장",
+    "lines": [
+      "다섯 번째 각성. 코어 속에서 낮은 목소리가 들렸다. 쓰러뜨린 보스의 목소리였다.",
+      "“우리도 한때는 모험가였다. 끝에 닿지 못하고 돌아오기를 멈춘 자들.”",
+      "그 말이 무서웠다. 그리고 조금은 슬펐다."
+    ],
+    "hint": "보스 코어 하나를 5단계까지 각성한다",
+    "trigger": {
+      "kind": "core_full",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제4장",
+      "core_full"
+    ]
+  },
+  {
+    "id": "star22",
+    "chapter": 3,
+    "title": "스물두 개의 별",
+    "lines": [
+      "스물두 번째 별이 박히는 순간 대장간의 불이 파랗게 변했다.",
+      "대장장이는 망치를 내려놓았다. “내 평생 이런 건 처음 봐. 이건 무기가 아니라 하늘 조각이야.”"
+    ],
+    "hint": "장비를 22성까지 강화한다",
+    "trigger": {
+      "kind": "star",
+      "value": 22
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제4장",
+      "star"
+    ]
+  },
+  {
+    "id": "abyss100",
+    "chapter": 3,
+    "title": "무릉의 백 층",
+    "lines": [
+      "백 층. 무공이 처음으로 팔짱을 풀었다.",
+      "“오십 층의 너는 강해지려 했지. 지금의 너는 무엇을 위해 오르느냐.”",
+      "대답 대신 다음 계단에 발을 올렸다. 무공은 그것으로 충분하다는 듯 고개를 끄덕였다."
+    ],
+    "hint": "무릉도장 100층을 돌파한다",
+    "trigger": {
+      "kind": "abyss_floor",
+      "value": 100
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제4장",
+      "abyss_floor"
+    ]
+  },
+  {
+    "id": "duel",
+    "chapter": 4,
+    "title": "거울 속 모험가",
+    "lines": [
+      "결투장의 상대는 나와 같은 바다를 건너온 모험가였다. 기술도, 버릇도 어딘가 닮아 있었다.",
+      "이긴 뒤 그가 손을 내밀었다. “다음 생에도 여기서 보자.” 우리는 그게 농담이 아니라는 걸 알았다."
+    ],
+    "hint": "결투에서 처음 이긴다",
+    "trigger": {
+      "kind": "duel_win",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "duel_win"
+    ]
+  },
+  {
+    "id": "guild",
+    "chapter": 4,
+    "title": "같은 깃발 아래",
+    "lines": [
+      "길드 깃발 아래 낯선 이름들이 모였다. 모두 몇 번씩 선착장에서 눈을 뜬 사람들이었다.",
+      "“혼자 돌아오는 건 외롭잖아.” 길드장이 웃었다. 그날 밤, 항구에는 처음으로 여러 개의 모닥불이 피었다."
+    ],
+    "hint": "길드에 가입한다",
+    "trigger": {
+      "kind": "guild",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "guild"
+    ]
+  },
+  {
+    "id": "market",
+    "chapter": 4,
+    "title": "주화가 흐르는 곳",
+    "lines": [
+      "커닝시티 뒷골목의 거래소. 던전 주화가 숫자가 되어 전광판 위를 흘렀다.",
+      "“칼로 버는 것보다 빠르지.” 중개인이 말했다. “물론 칼보다 빨리 잃기도 하고.”",
+      "전광판의 숫자들이 오르내리는 모양이, 어쩐지 세계석의 빛과 닮아 있었다."
+    ],
+    "hint": "증권거래소에서 처음 매수한다",
+    "trigger": {
+      "kind": "market",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "market"
+    ]
+  },
+  {
+    "id": "officer",
+    "chapter": 4,
+    "title": "소위의 견장",
+    "lines": [
+      "수없이 쓰러뜨린 몬스터의 수가 계급이 되었다. 어깨에 처음으로 견장이 달렸다.",
+      "“판게아 방위군은 기억이 없는 군대야.” 교관이 말했다. “모두가 돌아오니까, 기록만이 남지.”"
+    ],
+    "hint": "소위로 진급한다",
+    "trigger": {
+      "kind": "rank",
+      "value": "lt2"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "rank"
+    ]
+  },
+  {
+    "id": "hacker",
+    "chapter": 4,
+    "title": "숫자를 다루는 자",
+    "lines": [
+      "커닝시티의 후드 쓴 남자가 옳았다. 칼 대신 숫자를 다루는 길이 정말 있었다.",
+      "화면 속에서 판게아는 거대한 계산식처럼 보였다. 몬스터도, 보스도, 심지어 나도.",
+      "“세계를 고칠 수는 없어도, 세계가 어떻게 돌아가는지는 볼 수 있지.” 그가 말했다. 그 눈빛이 조금 무서웠다."
+    ],
+    "hint": "해커의 길에 들어선다",
+    "trigger": {
+      "kind": "hacker",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "hacker"
+    ]
+  },
+  {
+    "id": "general",
+    "chapter": 4,
+    "title": "별을 단 사람",
+    "lines": [
+      "견장에 별이 달렸다. 연병장의 신병들이 일제히 경례했다. 그중 몇은 지난 생의 나와 같은 눈을 하고 있었다.",
+      "별을 단 사람의 일은 싸우는 것이 아니라 기억하는 것이었다. 돌아오지 못한 자들의 이름까지."
+    ],
+    "hint": "준장으로 진급한다",
+    "trigger": {
+      "kind": "rank",
+      "value": "bg"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제5장",
+      "rank"
+    ]
+  },
+  {
+    "id": "onyxAll",
+    "chapter": 5,
+    "title": "아홉 개의 칠흑",
+    "lines": [
+      "아홉 번째 칠흑이 손에 들어왔다. 장신구와 마도서를 나란히 놓자 서로를 끌어당겼다.",
+      "하나로 맞물린 칠흑은 열쇠 모양이었다. 검은 마법사가 세계를 묶을 때 쓴 바로 그 열쇠.",
+      "열쇠는 문을 잠그는 데도, 여는 데도 쓰인다."
+    ],
+    "hint": "칠흑 9종(장신구 8 · 저주받은 마도서)을 모두 모은다",
+    "trigger": {
+      "kind": "onyx_all",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제6장",
+      "onyx_all"
+    ]
+  },
+  {
+    "id": "clone",
+    "chapter": 5,
+    "title": "또 다른 나",
+    "lines": [
+      "선착장에 나와 똑같은 얼굴이 서 있었다. 같은 바다를 건너온 또 다른 나, 분신이었다.",
+      "우리는 서로에게 말을 걸지 않았다. 말하지 않아도 무엇을 해야 할지 알았으니까.",
+      "한 사람이 걸을 수 없는 길이라면, 둘이 나눠 걸으면 된다."
+    ],
+    "hint": "분신(두 번째 모험가)을 만든다",
+    "trigger": {
+      "kind": "clone",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제6장",
+      "clone"
+    ]
+  },
+  {
+    "id": "ascend",
+    "chapter": 5,
+    "title": "승천",
+    "lines": [
+      "모든 세계석이 한꺼번에 빛났다. 칠흑의 열쇠가 저절로 돌아가고, 지난 생들의 그림자가 하나씩 내 안으로 녹아들었다.",
+      "눈을 떴을 때, 다시 선착장이었다. 하지만 이번에는 바다가 끝없이 넓어 보였다.",
+      "노인이 그물을 내려놓았다. “이제 넌 돌아오는 자가 아니야. 떠나는 자지.”",
+      "수평선 너머에서 문이 열리는 소리가 들렸다. 빛의 망치를 든 기사, 초록빛 불꽃을 다루는 술사들. “아제로스라고 하더군. 판게아에 붙을 다음 세계.”",
+      "배는 이미 선착장에 묶여 있었다. 이야기는, 다음 세계에서 계속된다."
+    ],
+    "hint": "처음으로 승천한다",
+    "trigger": {
+      "kind": "ascend",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제6장",
+      "ascend"
+    ]
+  },
+  {
+    "id": "skyGate",
+    "chapter": 6,
+    "title": "하늘로 난 문",
+    "lines": [
+      "쉰 번째 생의 아침, 소멸의 여로 끝에서 하늘이 갈라졌다. 갈라진 틈 너머로 별이 아니라 바다가 보였다.",
+      "“바다는 위에도 있어.” 노인은 그물을 접으며 말했다. “판게아로 이어진 세계는 땅만이 아니었거든.”",
+      "별의 바다라고 했다. 그 위에 떠 있는 구역의 이름은 코프룰루. 아무도 돌아오지 않은 곳이라고도 했다."
+    ],
+    "hint": "환생 50회를 달성한다",
+    "trigger": {
+      "kind": "custom",
+      "value": 50
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제7장",
+      "custom"
+    ]
+  },
+  {
+    "id": "firstAscentOrbit",
+    "chapter": 6,
+    "title": "첫 궤도",
+    "lines": [
+      "발이 땅에서 떨어졌다. 떨어진 것이 아니라 떠오른 것이었다. 바다가 아래로, 별이 옆으로 흘렀다.",
+      "부서진 정거장이 눈앞에 걸려 있었다. 누군가 지은 것이고, 누군가 버린 것이다. 격납고 문은 반쯤 열려 있었다.",
+      "안에서 기계가 아직 움직이고 있었다. 정비할 것이 없는데도 정비하고, 지킬 것이 없는데도 지키면서."
+    ],
+    "hint": "잿빛 궤도 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "잿빛 궤도"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제7장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "scrapDroneLesson",
+    "chapter": 6,
+    "title": "고철의 명령",
+    "lines": [
+      "고철 드론 하나가 집요하게 따라붙었다. 쓰러뜨리고 나서야 알았다. 그 드론은 모험가를 고장 난 부품으로 보고 고치려던 것이었다.",
+      "정거장의 명령 체계는 아직 살아 있었다. 명령을 내린 사람만 없을 뿐."
+    ],
+    "hint": "잿빛 궤도 · 폐선 격납고에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "derelictHangar"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제7장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "fracturedSky",
+    "chapter": 7,
+    "title": "갈라진 갑판",
+    "lines": [
+      "갑판이 반으로 갈라진 자리에는 중력도 반으로 갈라져 있었다. 한 걸음은 무겁고 다음 걸음은 떠올랐다.",
+      "선원들이 거기 있었다. 몸은 없고 자리만 남은 채로, 각자의 위치에서 각자의 일을 하고 있었다.",
+      "그들은 모험가를 보지 않았다. 갑판이 갈라지던 그 순간만을 되풀이해 보고 있었다."
+    ],
+    "hint": "잿빛 궤도 · 균열 갑판에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "fracturedDeck"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제8장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "starEaterSeen",
+    "chapter": 7,
+    "title": "별을 먹는 것",
+    "lines": [
+      "갑판 바깥에서 별 하나가 꺼졌다. 꺼진 것이 아니라 먹힌 것이었다.",
+      "별 포식자가 지나간 자리는 한동안 어두웠다. 어둠 속에서 모험가는 처음으로 별의 바다의 넓이를 짐작했다.",
+      "이 바다에는 등대가 없다. 길은 스스로 밝혀야 했다."
+    ],
+    "hint": "잿빛 궤도 몬스터 100종을 처치한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "regionKills(s, '잿빛 궤도') >= 100"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제8장",
+      "custom"
+    ]
+  },
+  {
+    "id": "blackBoxFound",
+    "chapter": 7,
+    "title": "마지막 기록",
+    "lines": [
+      "수호기가 지키던 것은 기록 장치 하나였다. 정거장의 마지막 날이 거기 들어 있었다.",
+      "“항로를 바꿔야 한다.” 기록 속 목소리는 그렇게 반복했다. “바다 너머의 끝이 다가오고 있다. 항로를 바꿔야 한다.”",
+      "어디로 바꾸려 했는지는 끝내 나오지 않았다. 기록은 거기서 끊겼다."
+    ],
+    "hint": "잿빛 궤도에서 블랙박스 수호기를 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "aoBlackBoxWarden"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제8장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "bridgeDoor",
+    "chapter": 8,
+    "title": "함교의 문",
+    "lines": [
+      "함교 문 앞에는 중장갑 경비기가 서 있었다. 선장의 허락 없이는 아무도 들여보내지 말라는 명령이 아직 유효했다.",
+      "선장은 이미 없었다. 경비기는 그 사실을 모르거나, 알면서도 명령을 지키고 있었다."
+    ],
+    "hint": "잿빛 궤도 · 함교에 들어간다",
+    "trigger": {
+      "kind": "custom",
+      "value": "(s.clears?.orbitBridge || 0) > 0"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제9장",
+      "custom"
+    ]
+  },
+  {
+    "id": "rustAdmiralFall",
+    "chapter": 8,
+    "title": "녹슨 제독",
+    "lines": [
+      "제독은 자리에 앉은 채 시간을 되감고 있었다. 되감을 때마다 정거장은 갈라지기 직전으로 돌아갔고, 그 직전에서 다시 갈라졌다.",
+      "쓰러뜨리자 되감기가 멈췄다. 제독의 손에는 항로 하나가 쥐여 있었다. 광맥 황야 쪽이었다.",
+      "“거기엔 내려갈 수 있는 땅이 있다.” 멈추기 직전, 그가 남긴 말은 그것뿐이었다."
+    ],
+    "hint": "녹슨 제독을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "aoRustAdmiral"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제9장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "vesperSilence",
+    "chapter": 8,
+    "title": "정적",
+    "lines": [
+      "부두에 경보가 울렸다. 울렸을 텐데 소리가 없었다. 소리가 사라진 자리에 베스퍼가 내려앉아 있었다.",
+      "형체가 없는데 눈이 많았다. 리스항구의 더스크를 닮았지만, 이것은 바다가 아니라 별 사이에서 온 것이었다.",
+      "쓰러뜨리자 소리가 한꺼번에 돌아왔다. 경보와 기계 소리와, 모험가 자신의 숨소리까지."
+    ],
+    "hint": "잿빛 궤도에서 베스퍼를 처치한다",
+    "trigger": {
+      "kind": "onyx_boss",
+      "value": "onyxVesper"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제9장",
+      "onyx_boss"
+    ]
+  },
+  {
+    "id": "descentToVein",
+    "chapter": 9,
+    "title": "보랏빛 땅",
+    "lines": [
+      "정거장에서 내려다본 땅은 보라색이었다. 가까이 가니 보라색은 결정이었고, 결정은 지층째 드러나 있었다.",
+      "채굴 기지는 버려져 있었다. 기계들은 아직 땅을 파고 있었다. 누구를 위해 파는지는 기계도 몰랐다.",
+      "쉰다섯 번째 생. 모험가는 결정 가루가 날리는 황야에 첫발을 디뎠다."
+    ],
+    "hint": "광맥 황야 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "광맥 황야"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제10장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "quarrySong",
+    "chapter": 9,
+    "title": "채굴장의 노래",
+    "lines": [
+      "결정이 바람에 울렸다. 높고 낮은 소리가 겹쳐 노래처럼 들렸다.",
+      "광맥 정령이 그 소리를 따라 나왔다. 결정 속에 갇혀 있던 빛이 풀려나면서 가장 먼저 한 일은 노래를 멈추는 것이었다."
+    ],
+    "hint": "광맥 황야 · 결정 채굴장에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "crystalQuarry"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제10장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "crystalTitanFall",
+    "chapter": 9,
+    "title": "결정 거인",
+    "lines": [
+      "채굴장 바닥이 통째로 일어섰다. 거인은 결정으로 되어 있었고, 걸음마다 땅이 갈라졌다.",
+      "쓰러뜨린 자리에서 결정 하나가 굴러 나왔다. 안이 비어 있었다. 비어 있는 결정은 황야 어디에나 있었다.",
+      "무언가가 결정을 비우고 있었다. 황야 너머 분화구 쪽에서 노란 연기가 올라오고 있었다."
+    ],
+    "hint": "결정 거인을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "vwCrystalTitan"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제10장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "calderaBreath",
+    "chapter": 10,
+    "title": "노란 숨결",
+    "lines": [
+      "분화구에서 노란 가스가 끓어올랐다. 가스를 마신 것들은 몸집이 커졌고, 커진 만큼 숨이 독해졌다.",
+      "가스 두꺼비 하나가 터졌다. 모험가는 숨을 참고 그 자리를 지나갔다. 황야의 생물들은 숨을 참지 못했다."
+    ],
+    "hint": "광맥 황야 · 가스 분화구에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "gasCaldera"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제11장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "calderaMawFall",
+    "chapter": 10,
+    "title": "분화구의 입",
+    "lines": [
+      "분화구 바닥의 입이 가스를 삼키고 불을 뱉었다. 황야의 결정이 비는 이유가 거기 있었다. 입은 결정 속의 빛을 먹고 있었다.",
+      "쓰러뜨리자 가스가 잦아들었다. 잦아든 가스 너머로 보라색 안개가 깔린 땅이 보였다. 늪이었다."
+    ],
+    "hint": "분화구 아가리를 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "vwCalderaMaw"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제11장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "halderSeal",
+    "chapter": 10,
+    "title": "여섯 팔의 석상",
+    "lines": [
+      "갱도 깊은 곳에 석상이 봉인되어 있었다. 팔이 여섯이었고, 하나하나가 채굴기였다.",
+      "엘나스 폐광의 자쿰을 닮았다고 생각했다. 석상도 같은 생각을 했는지, 여섯 팔이 동시에 움직였다.",
+      "쓰러뜨린 뒤 모험가는 결정 반지 하나를 손에 넣었다. 반지는 여섯 팔의 박자를 기억하고 있었다."
+    ],
+    "hint": "광맥 황야에서 할더를 처치한다",
+    "trigger": {
+      "kind": "onyx_boss",
+      "value": "onyxHalder"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제11장",
+      "onyx_boss"
+    ]
+  },
+  {
+    "id": "marshArrival",
+    "chapter": 11,
+    "title": "늪이 반응한다",
+    "lines": [
+      "발을 디디자 늪이 움찔했다. 늪 전체가 하나의 생물이었고, 모험가의 발소리는 그 생물의 피부 위에 떨어진 것이었다.",
+      "알주머니마다 무언가 꿈틀댔다. 예순 번째 생에 모험가는 처음으로, 자신이 사냥꾼이 아니라 먹이일 수도 있다고 생각했다."
+    ],
+    "hint": "군체 늪지 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "군체 늪지"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제12장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "spawningTide",
+    "chapter": 11,
+    "title": "산란의 때",
+    "lines": [
+      "산란 감시자가 알들 위를 맴돌았다. 소리를 지워 알이 깨어나는 때를 숨기고 있었다.",
+      "한 번에 수백 마리가 깨어났다. 유충은 작았지만 한 방향으로만 달렸다. 모험가 쪽이었다.",
+      "그날 모험가는 무리와 싸우는 법을 다시 배웠다. 한 마리씩이 아니라 한 덩어리로."
+    ],
+    "hint": "군체 늪지 · 산란 늪에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "spawningMarsh"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제12장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "marshTyrantFall",
+    "chapter": 11,
+    "title": "늪의 폭군",
+    "lines": [
+      "늪에서 가장 오래 산 개체가 길을 막았다. 새 군체가 깨어날 때마다 가장 먼저 먹던 폭군이었다.",
+      "쓰러뜨리자 늪이 조용해졌다. 조용한 늪 아래에서 무언가가 뛰고 있었다. 심장 소리였다."
+    ],
+    "hint": "늪의 폭군을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "hmMarshTyrant"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제12장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "nerveDescent",
+    "chapter": 12,
+    "title": "신경 회랑",
+    "lines": [
+      "늪 아래는 회랑이었다. 벽이 숨을 쉬었고, 신경 다발이 바닥을 가로질러 뛰었다.",
+      "지배종이 회랑 끝에서 기다리고 있었다. 군체의 뜻을 받은 것이었다. 군체의 뜻은 하나였다. 심장을 지키라."
+    ],
+    "hint": "군체 늪지 · 신경 회랑에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "nerveCorridor"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제13장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "hiveMotherFall",
+    "chapter": 12,
+    "title": "모체",
+    "lines": [
+      "군체의 심장은 심장이 아니라 모체였다. 늪의 모든 알이 그 박동에 맞춰 깨어났다.",
+      "박동이 멈추자 늪 전체가 한 번 크게 떨리고 조용해졌다. 알들은 깨어나지 않았다. 깨어날 신호가 없었다.",
+      "모험가는 처음으로 늪이 아름답다고 생각했다. 조용한 보라색 늪 위로 성단의 빛이 내려오고 있었다."
+    ],
+    "hint": "모체를 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "hmHiveMother"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제13장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "mirrenClosed",
+    "chapter": 12,
+    "title": "감긴 눈",
+    "lines": [
+      "늪 위에 거대한 눈이 떠 있었다. 눈이 감기면 늪의 모든 것이 함께 잠들었다. 모험가도 예외가 아니었다.",
+      "잠들지 않으려 싸웠다. 눈이 완전히 감기기 직전에 쓰러뜨렸다.",
+      "눈꺼풀 하나가 떨어졌다. 그것으로 만든 목걸이는 독을 오래 남겼다."
+    ],
+    "hint": "군체 늪지에서 미렌을 처치한다",
+    "trigger": {
+      "kind": "onyx_boss",
+      "value": "onyxMirren"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제13장",
+      "onyx_boss"
+    ]
+  },
+  {
+    "id": "clusterSilence",
+    "chapter": 13,
+    "title": "고요",
+    "lines": [
+      "소리가 없었다. 베스퍼의 정적과는 달랐다. 이곳의 고요는 누군가 모든 소리를 빛으로 바꿔 놓은 고요였다.",
+      "별들 사이에 첨탑이 서 있었다. 고대 문명의 것이었다. 문명은 사라졌고 첨탑과 수호자만 남았다.",
+      "예순다섯 번째 생. 수호자가 모험가의 지나온 생을 비춰 보고 있었다."
+    ],
+    "hint": "고요한 성단 사냥터에 간다",
+    "trigger": {
+      "kind": "region_visit",
+      "value": "고요한 성단"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제14장",
+      "region_visit"
+    ]
+  },
+  {
+    "id": "spireMemory",
+    "chapter": 13,
+    "title": "비친 기억",
+    "lines": [
+      "기억 렌즈가 모험가를 비췄다. 렌즈 안에서 리스항구의 선착장이 보였다. 첫 번째 생의 첫 번째 아침이었다.",
+      "“또 한 명이 왔군.” 그물을 손질하던 노인이 고개도 들지 않고 말하던 그 장면.",
+      "렌즈는 그 장면을 수백 번 되풀이해 보여 주었다. 모험가는 수백 번 다시 눈을 떴다."
+    ],
+    "hint": "고요한 성단 · 빛의 첨탑에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "lightSpire"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제14장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "spireKeeperFall",
+    "chapter": 13,
+    "title": "첨탑 수호장",
+    "lines": [
+      "첨탑 꼭대기를 지키던 마지막 병사가 빛의 갑주를 세웠다. 갑주에는 금이 하나도 가지 않았다.",
+      "쓰러뜨리자 갑주가 빛으로 풀어졌다. 풀어진 빛 사이로 첨탑 너머가 보였다. 별빛이 닿지 않는 곳이었다."
+    ],
+    "hint": "첨탑 수호장을 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "scSpireKeeper"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제14장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "voidGalleryEnter",
+    "chapter": 14,
+    "title": "별빛이 닿지 않는 곳",
+    "lines": [
+      "성단의 뒷면은 어두웠다. 고대 문명이 봉인한 것들이 회랑을 떠돌고 있었다.",
+      "역행자 하나가 시간을 거꾸로 살며 지나갔다. 공격이 닿기 전에 이미 피해 있었고, 쓰러지기 전에 이미 일어나 있었다.",
+      "회랑 끝에 문이 있었다. 바다 너머의 끝이 그 문 뒤라고, 기록 장치의 목소리가 말하던 바로 그 끝."
+    ],
+    "hint": "고요한 성단 · 공허 회랑에 간다",
+    "trigger": {
+      "kind": "stage_visit",
+      "value": "voidGallery"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제15장",
+      "stage_visit"
+    ]
+  },
+  {
+    "id": "lastWardenFall",
+    "chapter": 14,
+    "title": "최후의 관문지기",
+    "lines": [
+      "문 앞에 관문지기가 서 있었다. 고대 문명이 바다 너머에 세운 마지막 문의 지기였다.",
+      "쓰러뜨렸지만 문은 열리지 않았다. 문에는 자물쇠가 없었다. 열쇠가 없는 것이 아니라 열 때가 아니었다.",
+      "“문 뒤는 아직 아무도 보지 못했다.” 관문지기가 남긴 마지막 말은 경고가 아니라 약속처럼 들렸다."
+    ],
+    "hint": "최후의 관문지기를 처치한다",
+    "trigger": {
+      "kind": "boss_kill",
+      "value": "scLastWarden"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제15장",
+      "boss_kill"
+    ]
+  },
+  {
+    "id": "solenneWeave",
+    "chapter": 14,
+    "title": "첫 직조자",
+    "lines": [
+      "성단의 빛을 처음 짠 직조자가 내려왔다. 성단이 고요한 것은 그가 모든 소리를 빛으로 바꿨기 때문이었다.",
+      "싸우는 동안 모험가의 외침도 빛이 되어 흩어졌다. 소리 없는 싸움이 끝나자 실타래 하나가 남았다.",
+      "실을 당기자 빛이 소리로 돌아왔다. 성단이 처음으로 울렸다."
+    ],
+    "hint": "고요한 성단에서 솔렌을 처치한다",
+    "trigger": {
+      "kind": "onyx_boss",
+      "value": "onyxSolenne"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제15장",
+      "onyx_boss"
+    ]
+  },
+  {
+    "id": "fourOnyxOrbit",
+    "chapter": 15,
+    "title": "네 개의 증표",
+    "lines": [
+      "정적의 귀마개, 여섯 팔의 반지, 감긴 눈의 목걸이, 첫 직조의 실타래. 네 개의 증표가 손에 모였다.",
+      "네 보스는 서로 몰랐다. 그러나 넷 다 같은 쪽을 보고 있었다. 공허 회랑 끝의 문이었다."
+    ],
+    "hint": "코프룰루 구역 칠흑 보스 4종을 모두 처치한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "KOPRULU_ONYX.every(id => (s.onyxBook?.[id] || 0) > 0)"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제16장",
+      "custom"
+    ]
+  },
+  {
+    "id": "abyss150",
+    "chapter": 15,
+    "title": "백오십 층",
+    "lines": [
+      "무공은 더 이상 다음 도전자를 기다리지 않았다. 백오십 층 위에서 그는 모험가와 함께 하늘을 올려다보았다.",
+      "“도장은 여기까지다.” 그가 말했다. “그 위는 네가 지어야 해.”"
+    ],
+    "hint": "무릉도장 150층을 돌파한다",
+    "trigger": {
+      "kind": "abyss_floor",
+      "value": 150
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제16장",
+      "abyss_floor"
+    ]
+  },
+  {
+    "id": "star25",
+    "chapter": 15,
+    "title": "스물다섯 번째 별",
+    "lines": [
+      "스물다섯 번째 별이 장비에 새겨졌다. 더는 새길 자리가 없었다.",
+      "대장간 주인은 망치를 내려놓고 말했다. “이제 장비가 아니라 네가 강해질 차례야.”"
+    ],
+    "hint": "장비를 25성까지 강화한다",
+    "trigger": {
+      "kind": "star",
+      "value": 25
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제16장",
+      "star"
+    ]
+  },
+  {
+    "id": "ironLineage",
+    "chapter": 16,
+    "title": "강철 보병",
+    "lines": [
+      "잿빛 궤도의 폐선에서 교범 한 권을 주웠다. 보병의 첫 번째 교범. 소총과 총검과 참호에 대한 것이었다.",
+      "판게아의 어느 세계에도 없던 싸움의 방식이었다. 모험가는 그것을 익히기로 했다."
+    ],
+    "hint": "강철 보병 계보 1차 직업으로 전직한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "hasJob(s, 'irTrooper')"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제17장",
+      "custom"
+    ]
+  },
+  {
+    "id": "hiveLineage",
+    "chapter": 16,
+    "title": "포자 수집가",
+    "lines": [
+      "군체 늪지의 포자가 손에 붙었다. 떼어 내려다 그만두었다. 포자는 모험가의 뜻을 조금 따르고 있었다.",
+      "군체를 조율하는 법은 누구도 가르쳐 주지 않았다. 늪이 직접 가르쳤다."
+    ],
+    "hint": "군체 조율사 계보 1차 직업으로 전직한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "hasJob(s, 'hvSporeGatherer')"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제17장",
+      "custom"
+    ]
+  },
+  {
+    "id": "marshalAndArchitect",
+    "chapter": 16,
+    "title": "원수와 설계자",
+    "lines": [
+      "성단 원수의 지휘봉, 진화 설계자의 눈. 두 계보의 끝은 서로 달랐지만 닿는 곳은 같았다.",
+      "별의 바다를 건너는 자. 코프룰루의 기록에는 그 이름만 남아 있었다. 누구를 가리키는지는 적혀 있지 않았다.",
+      "모험가는 그것이 자신의 이름이 될 수도 있다고 생각했다."
+    ],
+    "hint": "코프룰루 계보 5차 직업으로 전직한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "hasJob(s, 'irClusterMarshal') || hasJob(s, 'hvEvoArchitect')"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제17장",
+      "custom"
+    ]
+  },
+  {
+    "id": "rebirth40Sky",
+    "chapter": 17,
+    "title": "일흔 번째 하늘",
+    "lines": [
+      "일흔 번째 생. 하늘로 난 문은 이제 낯설지 않았다. 선착장 노인은 그물을 손질하다 처음으로 고개를 들었다.",
+      "“위에서 뭘 봤니.” 모험가는 대답하지 않았다. 대답할 말이 너무 많았다."
+    ],
+    "hint": "환생 70회를 달성한다",
+    "trigger": {
+      "kind": "custom",
+      "value": 70
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제18장",
+      "custom"
+    ]
+  },
+  {
+    "id": "rebirth50Sky",
+    "chapter": 17,
+    "title": "여든 번째 생의 약속",
+    "lines": [
+      "여든 번째 생에 모험가는 공허 회랑의 문 앞에 다시 섰다. 문은 여전히 닫혀 있었다.",
+      "“열 때가 아니다.” 관문지기의 말이 떠올랐다. 모험가는 문에 손을 대고 약속했다. 돌아오겠다고.",
+      "문 너머에서 무언가가 손을 마주 댔다. 아주 희미하게."
+    ],
+    "hint": "환생 50회를 달성한다",
+    "trigger": {
+      "kind": "custom",
+      "value": 80
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제18장",
+      "custom"
+    ]
+  },
+  {
+    "id": "nightmareHeart",
+    "chapter": 17,
+    "title": "악몽의 심장",
+    "lines": [
+      "악몽 속의 모체는 박동이 두 배로 빨랐다. 알이 두 배로 깨어났고, 늪이 두 배로 일어섰다.",
+      "그래도 쓰러뜨렸다. 모험가는 이제 늪이 자신을 먹이로 보지 않는다는 것을 알았다. 늪은 모험가를 두려워하고 있었다."
+    ],
+    "hint": "군체의 심장을 나이트메어 난이도로 정복한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "(s.modeClears?.nightmare?.hiveHeart || 0) > 0"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제18장",
+      "custom"
+    ]
+  },
+  {
+    "id": "clusterComplete",
+    "chapter": 18,
+    "title": "성단 도감",
+    "lines": [
+      "고철 드론부터 최후의 관문지기까지. 별의 바다에 사는 것들의 이름을 모험가는 모두 알게 되었다.",
+      "이름을 안다는 것은 더 이상 낯설지 않다는 뜻이었다. 별의 바다는 이제 바다였다. 판게아의 바다와 같은."
+    ],
+    "hint": "코프룰루 구역 몬스터 80종을 모두 처치한다",
+    "trigger": {
+      "kind": "custom",
+      "value": "kopruluSpecies(s) >= KOPRULU_MONSTERS.length"
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제19장",
+      "custom"
+    ]
+  },
+  {
+    "id": "oldManSky",
+    "chapter": 18,
+    "title": "노인의 그물",
+    "lines": [
+      "아흔 번째 생의 아침, 선착장 노인이 그물을 건넸다. “위에서도 쓸 데가 있을 거다.”",
+      "그물은 낡았지만 튼튼했다. 첫 번째 생에 모험가가 쥐었던 낡은 무기처럼.",
+      "노인은 다시 고개를 숙였다. “또 한 명이 왔군.” 모험가 뒤에 누군가 서 있었다."
+    ],
+    "hint": "환생 90회를 달성한다",
+    "trigger": {
+      "kind": "custom",
+      "value": 90
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제19장",
+      "custom"
+    ]
+  },
+  {
+    "id": "duelTen",
+    "chapter": 18,
+    "title": "열 번의 결투",
+    "lines": [
+      "열 번째 상대는 코프룰루에서 돌아온 모험가였다. 둘은 서로의 장비를 보고 웃었다. 같은 별 아래서 주운 것들이었다.",
+      "결투가 끝나고 둘은 선착장에 앉아 하늘을 올려다보았다. 바다가 위에도 있다는 것을 아는 사람끼리."
+    ],
+    "hint": "결투에서 10승을 거둔다",
+    "trigger": {
+      "kind": "duel_win",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제19장",
+      "duel_win"
+    ]
+  },
+  {
+    "id": "ascendTwice",
+    "chapter": 18,
+    "title": "두 번째 승천",
+    "lines": [
+      "두 번째로 승천하던 날, 모험가는 공허 회랑의 문이 열리는 소리를 들었다. 아주 멀리서, 아주 작게.",
+      "아직은 소리뿐이었다. 그러나 소리는 빛이 되고, 빛은 길이 된다. 성단에서 배운 것이었다.",
+      "판게아 너머. 다음 이야기는 그 문 뒤에서 시작될 것이다."
+    ],
+    "hint": "승천 2회를 달성한다",
+    "trigger": {
+      "kind": "ascend",
+      "value": null
+    },
+    "area_filter": null,
+    "weight": null,
+    "body": null,
+    "choices": null,
+    "art_hint": null,
+    "tags": [
+      "제19장",
+      "ascend"
+    ]
+  }
+]

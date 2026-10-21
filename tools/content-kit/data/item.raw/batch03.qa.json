@@ -1,0 +1,20 @@
+{
+  "verdict": "fix",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "lucky", "field": "id", "rule": 2, "note": "기존 옵션 lucky(행운)와 id 충돌 → goldenHand(황금 손)로 변경." },
+    { "id": "medal", "field": "description", "rule": 2, "note": "태초 전용 옵션 3개의 첫 문장이 같아 문장 순서를 바꿈(overdrive·refinery도)." },
+    { "id": "lineage", "field": "affix.kind", "rule": 6, "note": "masteryFlat·rankFlat은 기존 drill·valor처럼 fixed 고정값. kind를 percent로 둔 것은 flat이면 power를 곱해 버리기 때문(기존 코드와 같은 취급)." },
+    { "id": "overclock", "field": "affix", "rule": 6, "note": "양날 옵션의 손해 쪽(stat2)은 기존 berserk처럼 음수 고정값. speed는 flat 정수." }
+  ],
+  "checks": {
+    "1_ip": "해당 없음",
+    "2_dup": "id 1건·첫 문장 3건 수정 후 0",
+    "3_length": "이름 2~6자, 설명 9~38자",
+    "4_style": "‘~올립니다/~줄어듭니다’ 합쇼체(기존 옵션 설명과 동일)",
+    "5_content": "해당 없음",
+    "6_logic": "base는 6.4 표의 같은 stat 기존값 ±30%(hp .81→.54~.6, attack .27→.33, crit .015→.02, lifesteal .015→.012, penetration .05→.04, expBonus .03→.025…). 고대 전용은 weight .2~.4, 태초 전용 rare, 규칙 옵션 minRarity 3",
+    "7_schema": "validate 56/56"
+  },
+  "fixed_items": []
+}

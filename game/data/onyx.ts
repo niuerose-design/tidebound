@@ -35,6 +35,11 @@ export const ONYX_ITEMS: OnyxItemDef[] = [
     { id: 'onyxPain', boss: 'onyxHilla', region: '커닝시티', name: '고통의 근원', desc: '진 힐라가 품은 고통의 결정. 준 피해로 체력을 빼앗고 빈사의 적을 더 쉽게 끝냅니다.', affix: { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', value: .05, stat2: 'executeBonus', value2: .05, rule: true } },
     { id: 'onyxSeren', boss: 'onyxSeren', region: '시간의 신전', name: '미트라의 분노', desc: '세렌의 증표. 보스·사냥감에게 주는 피해가 오릅니다.', affix: { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', value: .15, rule: true } },
     { id: 'onyxBlackMage', boss: 'onyxBlackMage', region: '아케인 리버', name: '창세의 뱃지', desc: '검은 마법사의 뱃지. 체력·마나·공격·방어가 모두 오릅니다.', affix: { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', value: .05, rule: true } },
+    // v3.367 코프룰루 칠흑 장신구 4종.
+    { id: 'onyxVesper', boss: 'onyxVesper', region: '잿빛 궤도', name: '정적의 귀마개', desc: '베스퍼를 쓰러뜨린 증표. 상태이상 저항이 오르고 연속 행동 확률이 붙습니다.', affix: { id: 'onyxQuiet', name: '정적의 박자', stat: 'statusResist', value: .15, stat2: 'chainBonus', value2: .05, rule: true } },
+    { id: 'onyxHalder', boss: 'onyxHalder', region: '광맥 황야', name: '여섯 팔의 결정 반지', desc: '할더의 결정을 깎아 만든 반지. 추가타 위력이 오르고 방어 관통이 붙습니다.', affix: { id: 'onyxSixArms', name: '여섯 팔의 박자', stat: 'followUpBonus', value: .1, stat2: 'penetration', value2: .05, rule: true } },
+    { id: 'onyxMirren', boss: 'onyxMirren', region: '군체 늪지', name: '감긴 눈의 목걸이', desc: '미렌의 눈꺼풀로 만든 목걸이. 출혈·중독·화상 지속 피해가 커지고 한 턴 더 이어집니다.', affix: { id: 'onyxClosedEye', name: '감긴 눈의 독', stat: 'dotBonus', value: .12, stat2: 'dotTurnsBonus', value2: 1, rule: true } },
+    { id: 'onyxSolenne', boss: 'onyxSolenne', region: '고요한 성단', name: '첫 직조의 실타래', desc: '솔렌이 빛을 짜던 실. 마력 평타 확률과 치명 피해가 함께 오릅니다.', affix: { id: 'onyxFirstWeave', name: '첫 직조의 빛', stat: 'arcaneStrike', value: .1, stat2: 'critDamage', value2: .1, rule: true } },
 ];
 /** v3.276 칠흑 보스코어(윌 · 저주받은 마도서). 장신구가 아니라 보스 코어 칸에 끼며 data/boss-core BOSS_CORES에 있습니다. */
 export const ONYX_CORE_ID = 'onyxGrimoire';
@@ -52,6 +57,11 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxDamien', hpMul: 120, name: '데미안', region: '리프레', drop: { charm: 'onyxHilla' } },
     { id: 'onyxSeren', hpMul: 70, name: '세렌', region: '시간의 신전', drop: { charm: 'onyxSeren' } },
     { id: 'onyxBlackMage', hpMul: 80, name: '검은 마법사', region: '아케인 리버', drop: { charm: 'onyxBlackMage' } },
+    // v3.367 코프룰루 칠흑 보스(v3.367 check-bosses.mjs --only onyx 측정): 서식지 적정 몸(환생 52 · 57 · 62 · 67, 빌림) 난이도 0에서 13 · 11 · 11 · 10턴, 난이도 5에서 15 · 12 · 13 · 12턴, 환생 100 몸 7~10턴 · 승률 100%. 기존 C안 목표(적정 빌림 몸 9~16턴) 안.
+    { id: 'onyxVesper', hpMul: 380, name: '베스퍼', region: '잿빛 궤도', drop: { charm: 'onyxVesper' } },
+    { id: 'onyxHalder', hpMul: 320, name: '할더', region: '광맥 황야', drop: { charm: 'onyxHalder' } },
+    { id: 'onyxMirren', hpMul: 330, name: '미렌', region: '군체 늪지', drop: { charm: 'onyxMirren' } },
+    { id: 'onyxSolenne', hpMul: 330, name: '솔렌', region: '고요한 성단', drop: { charm: 'onyxSolenne' } },
 ];
 export const onyxItemById = (id: string) => ONYX_ITEMS.find(i => i.id === id);
 /** 지금 칠흑 보스에게서 얻을 수 있는 장신구(상점 · 환생 이정표 후보). */
@@ -90,6 +100,9 @@ export const ONYX_SET: { count: number; label: string; bossDamage?: number; habi
     { count: 6, label: '상태이상 저항 +10%p', statusResist: .1 },
     { count: 7, label: '체력·마나·공격·방어 +3%', allStats: .03 },
     { count: 9, label: '보스·사냥감 피해 +10%', bossDamage: .1 },
+    // v3.367 코프룰루 칠흑 4종이 더해져 13종.
+    { count: 11, label: '무리 서식지 골드·경험치 +10%', habitatReward: .1 },
+    { count: 13, label: '체력·마나·공격·방어 +3%', allStats: .03 },
 ];
 export const onyxSetBonus = (owned: number) => ONYX_SET.filter(b => owned >= b.count).reduce((a, b) => ({ bossDamage: a.bossDamage + (b.bossDamage || 0), habitatReward: a.habitatReward + (b.habitatReward || 0), statusResist: a.statusResist + (b.statusResist || 0), allStats: a.allStats + (b.allStats || 0) }), { bossDamage: 0, habitatReward: 0, statusResist: 0, allStats: 0 });
 /** v3.299 칠흑 출현 천장: 세계석 연구 ‘칠흑 추적’(onyxTrack) 단계의 천장(ODDS.onyx.trackPity), 없으면 기본 ONYX.pity. */

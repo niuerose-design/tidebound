@@ -819,6 +819,8 @@ export type State = {
     manaRegenRescaled?: boolean;
     /** v3.303 이미 붙은 체력 · 방어 · 마방 · 마나 옵션을 ×0.6으로 맞췄는지(한 번만). */
     guardAffixRescaled?: boolean;
+    /** v3.367 코프룰루 사냥터 8곳이 무리 서식지 앞에 끼어 서식지의 STAGES index가 8 밀렸음을 bestStage에 반영했는지. */
+    kopruluStagesShifted?: boolean;
     /** v3.332 운영 보정: 칠흑 창세의 뱃지의 ‘고통’ 줄을 ‘파멸’로 바꾼 적이 있음(한 번만). */
     genesisVenomSwapped?: boolean;
     /** v3.302 이미 붙은 주 능력치 · 방어 옵션(맹공 · 신비 · 위력 · 생명 · 철갑 · 정신 · 수호)을 −10%로 맞췄는지(한 번만). */

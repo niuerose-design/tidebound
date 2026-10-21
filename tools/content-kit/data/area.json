@@ -1,0 +1,1243 @@
+[
+  {
+    "id": "brook",
+    "kind": "stage",
+    "region": "리스항구",
+    "place": "선착장",
+    "name": "리스항구 · 선착장",
+    "subtitle": "LITH HARBOR · PIER",
+    "level": 1,
+    "rebirth": 0,
+    "fit": 0,
+    "tier": 1,
+    "terrain": null,
+    "climate": null,
+    "description": "빅토리아 아일랜드의 관문. 선착장 끝에서 첫 몬스터가 찾아온다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "minnow",
+      "carp",
+      "perch"
+    ],
+    "monster_hints": null,
+    "tone": "#79bca8",
+    "habitat": {
+      "id": "lithSwarm",
+      "subtitle": "LITH HARBOR · SWARM NEST",
+      "description": "항구 뒤편 갯바위. 첫 바다의 몬스터들이 떼로 몰려와 한 덩어리로 덤빈다.",
+      "tone": "#5fa8a0",
+      "rebirth": 2,
+      "signature": [
+        "swarm"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "리스항구",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "bay",
+    "kind": "stage",
+    "region": "리스항구",
+    "place": "조개 해안",
+    "name": "리스항구 · 조개 해안",
+    "subtitle": "LITH HARBOR · SHELL COAST",
+    "level": 5,
+    "rebirth": 0,
+    "fit": 0,
+    "tier": 1,
+    "terrain": null,
+    "climate": null,
+    "description": "항구 뒤 조개껍데기가 깔린 해안. 버섯과 슬라임이 파도 소리에 맞춰 통통 튄다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "mackerel",
+      "ray",
+      "puffer"
+    ],
+    "monster_hints": null,
+    "tone": "#68b6ce",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "리스항구",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "reef",
+    "kind": "stage",
+    "region": "헤네시스",
+    "place": "돼지의 해변",
+    "name": "헤네시스 · 돼지의 해변",
+    "subtitle": "HENESYS · PIG BEACH",
+    "level": 10,
+    "rebirth": 0,
+    "fit": 0,
+    "tier": 1,
+    "terrain": null,
+    "climate": null,
+    "description": "헤네시스 남쪽 해변. 돼지 떼가 모래밭을 뛰놀고, 버섯이 그늘에서 덮칠 틈을 노린다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "lionfish",
+      "eel",
+      "barracuda",
+      "stormBarracuda"
+    ],
+    "monster_hints": null,
+    "tone": "#d49081",
+    "habitat": {
+      "id": "henesysSwarm",
+      "subtitle": "HENESYS · SWARM MEADOW",
+      "description": "돼지와 버섯이 끝없이 몰려드는 들판. 한 번 휩쓸면 도감이 백 장씩 넘어간다.",
+      "tone": "#c98a6a",
+      "rebirth": 2,
+      "signature": [
+        "giant"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "헤네시스",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "kelp",
+    "kind": "stage",
+    "region": "헤네시스",
+    "place": "버섯숲 연못",
+    "name": "헤네시스 · 버섯숲 연못",
+    "subtitle": "HENESYS · MUSHROOM POND",
+    "level": 14,
+    "rebirth": 0,
+    "fit": 0,
+    "tier": 2,
+    "terrain": null,
+    "climate": null,
+    "description": "버섯 마을 숲속의 연못. 연못가 그늘마다 색이 다른 버섯들이 자란다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "seahorse",
+      "needlefish",
+      "tidejelly"
+    ],
+    "monster_hints": null,
+    "tone": "#72b89b",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "헤네시스",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "wreck",
+    "kind": "stage",
+    "region": "페리온",
+    "place": "유적 발굴지 수로",
+    "name": "페리온 · 유적 발굴지 수로",
+    "subtitle": "PERION · EXCAVATION CANAL",
+    "level": 18,
+    "rebirth": 0,
+    "fit": 2,
+    "tier": 2,
+    "terrain": null,
+    "climate": null,
+    "description": "발굴지 아래로 흐르는 수로. 멧돼지가 내달리고, 깨어난 해골 병사와 돌거인이 유물을 지킨다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ghost",
+      "angler",
+      "shark"
+    ],
+    "monster_hints": null,
+    "tone": "#9e96c8",
+    "habitat": {
+      "id": "perionSwarm",
+      "subtitle": "PERION · SWARM CANYON",
+      "description": "바위 협곡을 메운 멧돼지와 골렘 떼. 버티지 못하면 한꺼번에 밀려난다.",
+      "tone": "#b9744f",
+      "rebirth": 2,
+      "signature": [
+        "abyssal"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "페리온",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "volcanic",
+    "kind": "stage",
+    "region": "페리온",
+    "place": "불타는 땅 화구호",
+    "name": "페리온 · 불타는 땅 화구호",
+    "subtitle": "PERION · BURNING CRATER",
+    "level": 24,
+    "rebirth": 0,
+    "fit": 5,
+    "tier": 3,
+    "terrain": null,
+    "climate": null,
+    "description": "바위산 너머 불타는 땅. 끓는 화구호 곁에서 불씨를 품은 골렘과 드레이크가 깨어난다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "emberEel",
+      "ashRay",
+      "magmaPuffer",
+      "cinderKoi"
+    ],
+    "monster_hints": null,
+    "tone": "#d17c62",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "페리온",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "trench",
+    "kind": "stage",
+    "region": "엘리니아",
+    "place": "깊은 숲 늪",
+    "name": "엘리니아 · 깊은 숲 늪",
+    "subtitle": "ELLINIA · DEEP FOREST BOG",
+    "level": 26,
+    "rebirth": 0,
+    "fit": 5,
+    "tier": 3,
+    "terrain": null,
+    "climate": null,
+    "description": "빛이 닿지 않는 숲 깊은 곳의 늪. 어둠 속에서 커다란 눈들이 모험가를 지켜본다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "viper",
+      "squid",
+      "leviathan"
+    ],
+    "monster_hints": null,
+    "tone": "#5c9dba",
+    "habitat": {
+      "id": "elliniaSwarm",
+      "subtitle": "ELLINIA · SWARM HOLLOW",
+      "description": "숲의 그림자마다 몬스터가 겹겹이 숨어 있다. 망령까지 떼를 지어 떠오른다.",
+      "tone": "#8f88c4",
+      "rebirth": 3,
+      "signature": [
+        "starlit"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "엘리니아",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "moon",
+    "kind": "stage",
+    "region": "엘리니아",
+    "place": "달빛 마법 호수",
+    "name": "엘리니아 · 달빛 마법 호수",
+    "subtitle": "ELLINIA · MOONLIT LAKE",
+    "level": 34,
+    "rebirth": 1,
+    "fit": 5,
+    "tier": 4,
+    "terrain": null,
+    "climate": null,
+    "description": "마법사의 마을 위 달빛 호수. 나무 위의 루팡과 떠도는 망령 너머, 한 번의 생을 넘어선 모험가만 닿는다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "moonfish",
+      "dragon",
+      "ancient",
+      "eclipseMoonfish"
+    ],
+    "monster_hints": null,
+    "tone": "#b4afd6",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "엘리니아",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "starfall",
+    "kind": "stage",
+    "region": "커닝시티",
+    "place": "네온 수로",
+    "name": "커닝시티 · 네온 수로",
+    "subtitle": "KERNING CITY · NEON CANAL",
+    "level": 46,
+    "rebirth": 2,
+    "fit": 10,
+    "tier": 5,
+    "terrain": null,
+    "climate": null,
+    "description": "네온이 별비처럼 쏟아지는 도시의 수로. 거품과 박쥐, 비룡이 밤하늘을 가른다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "starKoi",
+      "prismRay",
+      "voidGuppy",
+      "abyssManta",
+      "novaManta"
+    ],
+    "monster_hints": null,
+    "tone": "#9c8ed4",
+    "habitat": {
+      "id": "kerningSwarm",
+      "subtitle": "KERNING CITY · SWARM SEWER",
+      "description": "배수로 가득 차오른 몬스터의 물결. 다섯 번의 생으로도 모자란 곳.",
+      "tone": "#6d7fb0",
+      "rebirth": 7,
+      "signature": [
+        "swarm",
+        "abyssal"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "커닝시티",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "duskVents",
+    "kind": "stage",
+    "region": "커닝시티",
+    "place": "지하 배수로",
+    "name": "커닝시티 · 지하 배수로",
+    "subtitle": "KERNING CITY · UNDERGROUND DRAIN",
+    "level": 55,
+    "rebirth": 5,
+    "fit": 10,
+    "tier": 6,
+    "terrain": null,
+    "climate": null,
+    "description": "도시 아래 끓어오르는 배수로. 다섯 번의 생을 건넌 모험가만 이 열기를 견딘다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ventCrab",
+      "glassSquid",
+      "sulfurEel",
+      "blindShark",
+      "cinderAngler",
+      "ventLeviathan"
+    ],
+    "monster_hints": null,
+    "tone": "#d88a5a",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "커닝시티",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "coralForest",
+    "kind": "stage",
+    "region": "아쿠아로드",
+    "place": "산호 숲",
+    "name": "아쿠아로드 · 산호 숲",
+    "subtitle": "AQUA ROAD · CORAL FOREST",
+    "level": 70,
+    "rebirth": 10,
+    "fit": 10,
+    "tier": 7,
+    "terrain": null,
+    "climate": null,
+    "description": "빛이 산호 사이로 부서지는 바다 밑 숲. 씨코와 상어가 물결을 가르고, 수호병이 깊은 곳을 지킨다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "aqSeaco",
+      "aqShark",
+      "aqSquid",
+      "aqFlower",
+      "aqGuard"
+    ],
+    "monster_hints": null,
+    "tone": "#4fa3c7",
+    "habitat": {
+      "id": "aquaSwarm",
+      "subtitle": "AQUA ROAD · SWARM REEF",
+      "description": "산호초를 뒤덮은 바다 몬스터의 떼. 물결이 통째로 덤벼든다.",
+      "tone": "#3f8fb5",
+      "rebirth": 14,
+      "signature": [
+        "swarm"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "아쿠아로드",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "dragonNest",
+    "kind": "stage",
+    "region": "리프레",
+    "place": "용의 둥지",
+    "name": "리프레 · 용의 둥지",
+    "subtitle": "LEAFRE · DRAGON NEST",
+    "level": 80,
+    "rebirth": 15,
+    "fit": 15,
+    "tier": 8,
+    "terrain": null,
+    "climate": null,
+    "description": "용의 숲 깊은 곳의 둥지. 드래곤 터틀이 바위처럼 엎드려 있고 와이번이 절벽을 돈다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "lfBlueTurtle",
+      "lfRedTurtle",
+      "lfWyvern",
+      "lfSkelegon",
+      "lfManticore"
+    ],
+    "monster_hints": null,
+    "tone": "#7fb069",
+    "habitat": {
+      "id": "leafreSwarm",
+      "subtitle": "LEAFRE · SWARM VALLEY",
+      "description": "용의 숲 골짜기를 메운 비룡과 터틀의 무리. 날개 소리만으로 땅이 울린다.",
+      "tone": "#6b9d58",
+      "rebirth": 15,
+      "signature": [
+        "giant"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "리프레",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "memoryLane",
+    "kind": "stage",
+    "region": "시간의 신전",
+    "place": "기억의 길",
+    "name": "시간의 신전 · 기억의 길",
+    "subtitle": "TEMPLE OF TIME · MEMORY LANE",
+    "level": 90,
+    "rebirth": 15,
+    "fit": 15,
+    "tier": 9,
+    "terrain": null,
+    "climate": null,
+    "description": "시간이 멈춘 신전의 회랑. 기억의 수호병과 키메라가 지나온 생을 묻는다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ttMonitor",
+      "ttGuardian",
+      "ttChimera",
+      "ttDodo",
+      "ttLyka"
+    ],
+    "monster_hints": null,
+    "tone": "#c9a85c",
+    "habitat": {
+      "id": "templeSwarm",
+      "subtitle": "TEMPLE OF TIME · SWARM HALL",
+      "description": "신전의 대회랑에 줄지어 선 수호병과 키메라. 한 번의 생이 통째로 몰려온다.",
+      "tone": "#b8944a",
+      "rebirth": 15,
+      "signature": [
+        "starlit"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "시간의 신전",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "vanishingJourney",
+    "kind": "stage",
+    "region": "아케인 리버",
+    "place": "소멸의 여로",
+    "name": "아케인 리버 · 소멸의 여로",
+    "subtitle": "ARCANE RIVER · VANISHING JOURNEY",
+    "level": 100,
+    "rebirth": 20,
+    "fit": 20,
+    "tier": 10,
+    "terrain": null,
+    "climate": null,
+    "description": "세계의 끝에서 흐르는 강. 에르다가 영혼이 되어 떠돌고, 쉰 번의 생을 건넌 모험가만 이 강을 거슬러 오른다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "arErdaSpirit",
+      "arMemoryGuard",
+      "arMysticErda",
+      "arVanishSoul",
+      "arTrueErda"
+    ],
+    "monster_hints": null,
+    "tone": "#8b7fd6",
+    "habitat": {
+      "id": "arcaneSwarm",
+      "subtitle": "ARCANE RIVER · SWARM CURRENT",
+      "description": "에르다의 급류. 소멸한 영혼들이 강 전체가 되어 밀려온다.",
+      "tone": "#7a6fc4",
+      "rebirth": 20,
+      "signature": [
+        "swarm",
+        "abyssal"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "아케인 리버",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "derelictHangar",
+    "kind": "stage",
+    "region": "잿빛 궤도",
+    "place": "폐선 격납고",
+    "name": "잿빛 궤도 · 폐선 격납고",
+    "subtitle": "ASH ORBIT · DERELICT HANGAR",
+    "level": 100,
+    "rebirth": 50,
+    "fit": 50,
+    "tier": 10,
+    "terrain": null,
+    "climate": null,
+    "description": "바다 끝 하늘에 걸린 부서진 정거장. 멈춘 격납고 안에서 녹슨 기계와 떠도는 생물이 쉰 번의 생을 건넌 모험가를 맞는다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "aoScrapDrone",
+      "aoRustSentry",
+      "aoHangarSpore",
+      "aoDriftJelly",
+      "aoCargoSpider",
+      "aoWeldHound",
+      "aoCoreLeech",
+      "aoBlackBoxWarden",
+      "aoGhostDrone"
+    ],
+    "monster_hints": null,
+    "tone": "#7f8a99",
+    "habitat": {
+      "id": "ashOrbitSwarm",
+      "subtitle": "ASH ORBIT · SWARM DOCK",
+      "description": "정거장 부두를 메운 드론과 포자의 떼. 경보가 울리면 격납고 전체가 한꺼번에 덮친다.",
+      "tone": "#6f7a89",
+      "rebirth": 52,
+      "signature": [
+        "swarm"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "잿빛 궤도",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "fracturedDeck",
+    "kind": "stage",
+    "region": "잿빛 궤도",
+    "place": "균열 갑판",
+    "name": "잿빛 궤도 · 균열 갑판",
+    "subtitle": "ASH ORBIT · FRACTURED DECK",
+    "level": 101,
+    "rebirth": 50,
+    "fit": 50,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "반으로 갈라진 정거장 외벽 갑판. 중력이 끊긴 틈마다 유령 같은 선원과 별빛을 먹는 생물이 떠다닌다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "aoDeckWraith",
+      "aoStarMoth",
+      "aoPatrolUnit",
+      "aoHullBarnacle",
+      "aoRiftLurker",
+      "aoSignalEel",
+      "aoVoidCrab",
+      "aoStarEater",
+      "aoEclipseMoth"
+    ],
+    "monster_hints": null,
+    "tone": "#8b93a6",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "잿빛 궤도",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "crystalQuarry",
+    "kind": "stage",
+    "region": "광맥 황야",
+    "place": "결정 채굴장",
+    "name": "광맥 황야 · 결정 채굴장",
+    "subtitle": "VEIN WASTES · CRYSTAL QUARRY",
+    "level": 102,
+    "rebirth": 55,
+    "fit": 55,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "보랏빛 결정이 지층째 드러난 채굴장. 결정을 먹고 자란 갑각 생물과 멈추지 않는 채굴 기계가 쉰다섯 번의 생을 건넌 모험가를 가로막는다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "vwShardBeetle",
+      "vwDigger",
+      "vwDustWing",
+      "vwQuarryWorm",
+      "vwPrismLizard",
+      "vwOreGolem",
+      "vwVeinSpirit",
+      "vwCrystalTitan",
+      "vwHollowShard"
+    ],
+    "monster_hints": null,
+    "tone": "#a784c9",
+    "habitat": {
+      "id": "veinSwarm",
+      "subtitle": "VEIN WASTES · SWARM PIT",
+      "description": "채굴 갱도를 가득 메운 결정 벌레의 떼. 한 덩어리로 밀려오는 보랏빛 파도.",
+      "tone": "#9470b8",
+      "rebirth": 57,
+      "signature": [
+        "giant"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "광맥 황야",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "gasCaldera",
+    "kind": "stage",
+    "region": "광맥 황야",
+    "place": "가스 분화구",
+    "name": "광맥 황야 · 가스 분화구",
+    "subtitle": "VEIN WASTES · GAS CALDERA",
+    "level": 103,
+    "rebirth": 55,
+    "fit": 55,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "노란 가스가 끓어오르는 분화구. 가스를 들이마신 생물은 몸집이 커지고, 숨을 쉴 때마다 독이 번진다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "vwGasToad",
+      "vwStingWisp",
+      "vwSulfurCrab",
+      "vwPipeKeeper",
+      "vwBloatHound",
+      "vwCinderWasp",
+      "vwFumeSerpent",
+      "vwCalderaMaw",
+      "vwYellowTitan"
+    ],
+    "monster_hints": null,
+    "tone": "#c9b24f",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "광맥 황야",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "spawningMarsh",
+    "kind": "stage",
+    "region": "군체 늪지",
+    "place": "산란 늪",
+    "name": "군체 늪지 · 산란 늪",
+    "subtitle": "HIVE MARSH · SPAWNING MARSH",
+    "level": 104,
+    "rebirth": 60,
+    "fit": 60,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "행성 표면을 뒤덮은 보라색 생체 늪. 알주머니마다 새 군체가 깨어나고, 예순 번의 생을 건넌 모험가의 발소리에 늪이 반응한다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "hmLarva",
+      "hmMarshSlider",
+      "hmAcidHound",
+      "hmEggSac",
+      "hmSpineCrawler",
+      "hmBroodWatcher",
+      "hmSpawner",
+      "hmMarshTyrant",
+      "hmBlackLarva"
+    ],
+    "monster_hints": null,
+    "tone": "#8e5fa8",
+    "habitat": {
+      "id": "hiveSwarm",
+      "subtitle": "HIVE MARSH · SWARM NEST",
+      "description": "산란 늪 전체가 하나의 군체다. 알이 한꺼번에 깨어나 늪이 통째로 일어선다.",
+      "tone": "#7d4f99",
+      "rebirth": 62,
+      "signature": [
+        "abyssal"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "군체 늪지",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "nerveCorridor",
+    "kind": "stage",
+    "region": "군체 늪지",
+    "place": "신경 회랑",
+    "name": "군체 늪지 · 신경 회랑",
+    "subtitle": "HIVE MARSH · NERVE CORRIDOR",
+    "level": 105,
+    "rebirth": 60,
+    "fit": 60,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "늪 아래 신경 다발로 이어진 회랑. 벽이 숨을 쉬고, 군체의 뜻을 받은 지배종이 침입자를 조용히 기다린다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "hmNerveRunner",
+      "hmSpinePillar",
+      "hmMindEye",
+      "hmPlateBrute",
+      "hmSynapseHound",
+      "hmVeinLeech",
+      "hmOverseer",
+      "hmCorridorKing",
+      "hmPaleOverseer"
+    ],
+    "monster_hints": null,
+    "tone": "#6e4a8c",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "군체 늪지",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "lightSpire",
+    "kind": "stage",
+    "region": "고요한 성단",
+    "place": "빛의 첨탑",
+    "name": "고요한 성단 · 빛의 첨탑",
+    "subtitle": "SILENT CLUSTER · LIGHT SPIRE",
+    "level": 105,
+    "rebirth": 65,
+    "fit": 65,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "별들 사이에 멈춰 선 고대 문명의 첨탑. 빛으로 짜인 수호자가 예순다섯 번의 생을 건넌 모험가의 기억을 비춰 본다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "scLightWeaver",
+      "scGlimmer",
+      "scMemoryLens",
+      "scStairStatue",
+      "scPrismGuard",
+      "scHaloWisp",
+      "scShadowEater",
+      "scSpireKeeper",
+      "scDawnWeaver"
+    ],
+    "monster_hints": null,
+    "tone": "#e0c878",
+    "habitat": {
+      "id": "clusterSwarm",
+      "subtitle": "SILENT CLUSTER · SWARM HALO",
+      "description": "성단의 빛이 한꺼번에 몰려든다. 수호자들이 하나의 빛이 되어 쏟아지는 곳.",
+      "tone": "#c9b062",
+      "rebirth": 67,
+      "signature": [
+        "starlit"
+      ]
+    },
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "고요한 성단",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "voidGallery",
+    "kind": "stage",
+    "region": "고요한 성단",
+    "place": "공허 회랑",
+    "name": "고요한 성단 · 공허 회랑",
+    "subtitle": "SILENT CLUSTER · VOID GALLERY",
+    "level": 106,
+    "rebirth": 65,
+    "fit": 65,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "별빛이 닿지 않는 성단의 뒷면. 고대 문명이 봉인한 것들이 회랑을 떠돌고, 바다 너머의 끝이 여기서 보인다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "scUnsealed",
+      "scVoidJelly",
+      "scDimStatue",
+      "scReverser",
+      "scHollowSentinel",
+      "scGravityMaw",
+      "scEchoOfEnd",
+      "scLastWarden",
+      "scStillReverser"
+    ],
+    "monster_hints": null,
+    "tone": "#5a5b8a",
+    "habitat": null,
+    "boss": null,
+    "neighbor_hint": null,
+    "tags": [
+      "고요한 성단",
+      "사냥터"
+    ]
+  },
+  {
+    "id": "abyss",
+    "kind": "dungeon",
+    "region": "무릉도장",
+    "place": "무릉도장",
+    "name": "무릉도장",
+    "subtitle": "DUNGEON",
+    "level": 40,
+    "rebirth": 3,
+    "fit": null,
+    "tier": 4,
+    "terrain": null,
+    "climate": null,
+    "description": "오를 때마다 다음 층이 열립니다. 높을수록 층마다 더 많은 세계석을 얻고, 10·25·50·100층을 처음 돌파하면 SP 1을 받습니다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "moonfish",
+      "dragon",
+      "ancient",
+      "dragon",
+      "ancient"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "abyssSovereign",
+      "title": "도장의 주인 · 무공",
+      "gold": 12000,
+      "pearls": 1
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "무릉도장",
+      "던전"
+    ]
+  },
+  {
+    "id": "grotto",
+    "kind": "dungeon",
+    "region": "헤네시스",
+    "place": "버섯 동산",
+    "name": "헤네시스 · 버섯 동산",
+    "subtitle": "DUNGEON",
+    "level": 8,
+    "rebirth": 0,
+    "fit": null,
+    "tier": 1,
+    "terrain": null,
+    "climate": null,
+    "description": "숲의 몬스터를 물리치면 거대한 버섯이 눈을 뜬다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ray"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "grottoWarden",
+      "title": "버섯 동산의 주인 · 머쉬맘",
+      "gold": 350,
+      "pearls": 1
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "헤네시스",
+      "던전"
+    ]
+  },
+  {
+    "id": "kelpCatacomb",
+    "kind": "dungeon",
+    "region": "커닝시티",
+    "place": "지하 수로",
+    "name": "커닝시티 · 지하 수로",
+    "subtitle": "DUNGEON",
+    "level": 14,
+    "rebirth": 0,
+    "fit": null,
+    "tier": 2,
+    "terrain": null,
+    "climate": null,
+    "description": "갈라지고 또 갈라지는 슬라임들이 도시 아래 수로를 메웠다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "seahorse"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "kelpHydra",
+      "title": "수로의 왕 · 킹 슬라임",
+      "gold": 950,
+      "pearls": 1
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "커닝시티",
+      "던전"
+    ]
+  },
+  {
+    "id": "cemetery",
+    "kind": "dungeon",
+    "region": "슬리피우드",
+    "place": "개미굴",
+    "name": "슬리피우드 · 개미굴",
+    "subtitle": "DUNGEON",
+    "level": 18,
+    "rebirth": 0,
+    "fit": null,
+    "tier": 2,
+    "terrain": null,
+    "climate": null,
+    "description": "깊은 개미굴 아래, 썩지 않는 버섯이 마지막 보물을 지킨다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ghost"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "anchorWraith",
+      "title": "개미굴의 망령 · 좀비 머쉬맘",
+      "gold": 1600,
+      "pearls": 2
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "슬리피우드",
+      "던전"
+    ]
+  },
+  {
+    "id": "caldera",
+    "kind": "dungeon",
+    "region": "페리온",
+    "place": "불의 제단",
+    "name": "페리온 · 불의 제단",
+    "subtitle": "DUNGEON",
+    "level": 26,
+    "rebirth": 2,
+    "fit": null,
+    "tier": 3,
+    "terrain": null,
+    "climate": null,
+    "description": "뜨거운 불길이 장비와 골드를 녹여 새로운 형태로 만든다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "emberEel"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "magmaKraken",
+      "title": "불꽃의 마족 · 주니어 발록",
+      "gold": 4200,
+      "pearls": 3
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "페리온",
+      "던전"
+    ]
+  },
+  {
+    "id": "temple",
+    "kind": "dungeon",
+    "region": "엘리니아",
+    "place": "잊힌 마법 사원",
+    "name": "엘리니아 · 잊힌 마법 사원",
+    "subtitle": "DUNGEON",
+    "level": 30,
+    "rebirth": 2,
+    "fit": null,
+    "tier": 3,
+    "terrain": null,
+    "climate": null,
+    "description": "환생의 기억을 지닌 자에게만 열리는 문.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "viper"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "templeOracle",
+      "title": "하늘의 마녀 · 엘리쟈",
+      "gold": 6000,
+      "pearls": 5
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "엘리니아",
+      "던전"
+    ]
+  },
+  {
+    "id": "ventCathedral",
+    "kind": "dungeon",
+    "region": "엘나스",
+    "place": "자쿰의 제단",
+    "name": "엘나스 · 자쿰의 제단",
+    "subtitle": "DUNGEON",
+    "level": 60,
+    "rebirth": 8,
+    "fit": null,
+    "tier": 6,
+    "terrain": null,
+    "climate": null,
+    "description": "엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "ventCrab"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "ventColossus",
+      "title": "폐광의 거대 석상 · 자쿰",
+      "gold": 30000,
+      "pearls": 12
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "엘나스",
+      "던전"
+    ]
+  },
+  {
+    "id": "starSanctum",
+    "kind": "dungeon",
+    "region": "루디브리엄",
+    "place": "시계탑",
+    "name": "루디브리엄 · 시계탑",
+    "subtitle": "DUNGEON",
+    "level": 48,
+    "rebirth": 6,
+    "fit": null,
+    "tier": 5,
+    "terrain": null,
+    "climate": null,
+    "description": "장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 차원의 침략자와 맞서는 후반 탐험지.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "starKoi"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "starfallSeraph",
+      "title": "시계탑의 주인 · 파풀라투스",
+      "gold": 18000,
+      "pearls": 8
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "루디브리엄",
+      "던전"
+    ]
+  },
+  {
+    "id": "orbitBridge",
+    "kind": "dungeon",
+    "region": "잿빛 궤도",
+    "place": "함교",
+    "name": "잿빛 궤도 · 함교",
+    "subtitle": "DUNGEON",
+    "level": 102,
+    "rebirth": 52,
+    "fit": null,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "정거장 가장 높은 곳의 함교. 마지막 선장은 아직도 자리에 앉아 항로를 바꾸려 든다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "aoBridgeGuard"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "aoRustAdmiral",
+      "title": "함교의 마지막 선장 · 녹슨 제독",
+      "gold": 120000,
+      "pearls": 14
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "잿빛 궤도",
+      "던전"
+    ]
+  },
+  {
+    "id": "hiveHeart",
+    "kind": "dungeon",
+    "region": "군체 늪지",
+    "place": "군체의 심장",
+    "name": "군체 늪지 · 군체의 심장",
+    "subtitle": "DUNGEON",
+    "level": 106,
+    "rebirth": 62,
+    "fit": null,
+    "tier": 11,
+    "terrain": null,
+    "climate": null,
+    "description": "늪 가장 깊은 곳에서 뛰는 군체의 심장. 심장이 멈추기 전에는 늪의 알이 깨어나기를 멈추지 않는다.",
+    "flavor": null,
+    "lore": null,
+    "ambient_lines": null,
+    "monsters": [
+      "hmMuscleWall"
+    ],
+    "monster_hints": null,
+    "tone": "#888888",
+    "habitat": null,
+    "boss": {
+      "monster": "hmHiveMother",
+      "title": "군체의 심장 · 모체",
+      "gold": 190000,
+      "pearls": 18
+    },
+    "neighbor_hint": null,
+    "tags": [
+      "군체 늪지",
+      "던전"
+    ]
+  }
+]

@@ -38,7 +38,8 @@ const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     // v3.220 아제로스 히든 계보: 까미 100 · 누리 100 · 지역 던전마다 정복 100(무릉도장 제외) · 칠흑 보스 처치 합계 100.
     { job: 'kkamiHunter', test: s => (s.book?.masteryMimic || 0) >= 100 },
     { job: 'nuriTracker', test: s => (s.book?.expNuri || 0) >= 100 },
-    { job: 'darkFollower', test: s => DUNGEONS.every(d => d.id === 'abyss' || (s.clears?.[d.id] || 0) >= 100) },
+    // v3.367 코프룰루 던전(world: 'koprulu')은 제외: 어둠의 추종자는 메이플 지역 던전 7곳 기준 그대로.
+    { job: 'darkFollower', test: s => DUNGEONS.every(d => d.id === 'abyss' || ('world' in d && d.world === 'koprulu') || (s.clears?.[d.id] || 0) >= 100) },
     { job: 'onyxAvatar', test: s => Object.values(s.onyxBook || {}).reduce((x, n) => x + (n || 0), 0) >= 100 },
     // v3.230 무릉도장 50층 · 변종 · 황금 개체 1,000마리 · 신 도전 100번.
     { job: 'abyssAscetic', test: s => (s.abyssBest || 0) >= 50 },

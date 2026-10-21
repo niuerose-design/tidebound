@@ -799,7 +799,7 @@ test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by
     const cap = Math.max(...W.STAGES.map(st => st.level)) + W.STAGE_ENEMY_LEVEL_OVER;
     assert.equal(W.tideLiftLevel(1, 0, 90), 1, 'no tide → no lift');
     assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS, 200), cap, 'reaches the top-stage level at the lift tier');
-    assert.equal(W.tideLiftLevel(1, 40, 200), cap, 'never past the top stage'); assert.equal(cap, 106, 'v3.10 cap = Lv.100 stage + 6');
+    assert.equal(W.tideLiftLevel(1, 40, 200), cap, 'never past the top stage'); assert.equal(cap, 112, 'v3.367 cap = Lv.106 stage(공허 회랑) + 6; 플레이어 Lv.100이 상한이라 실제 목표 레벨은 그대로');
     assert.equal(W.tideLiftLevel(1, 40, 20), 20, 'never past the player level');
     assert.equal(W.tideLiftLevel(50, 40, 20), 50, 'never lowers a monster');
     assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 200), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');
@@ -1027,7 +1027,7 @@ test('v27.80 regional variants and swarm habitats: signature variant ×2.5, habi
     const lith = at('brook'), hen = at('reef'), base = V.VARIANTS.find(v => v.id === 'swarm').chance;
     assert.ok(Math.abs(lith.swarm - base * 2.5) < 1e-9 && Math.abs(hen.swarm - base * .8) < 1e-9, 'Lith Harbor favours swarms');
     assert.ok(hen.giant > lith.giant * 3, 'Henesys favours giants');
-    assert.equal(W.REGIONS.length, 9); assert.equal(W.STAGES.filter(st => st.habitat).length, 9); assert.equal(W.BASE_STAGES.length, W.STAGES.length - 9);
+    assert.equal(W.REGIONS.length, 13); assert.equal(W.STAGES.filter(st => st.habitat).length, 13); assert.equal(W.BASE_STAGES.length, W.STAGES.length - 13);
     const hab = W.STAGES.find(st => st.id === 'lithSwarm');
     assert.deepEqual(hab.monsters, W.regionMonsters('리스항구')); assert.ok(hab.rebirth >= W.HABITAT.minRebirth);
     const s = newState(0); s.level = 60; s.rebirths = 10; s.kills = 5000; s.stage = 'lithSwarm'; s.tide = 20; s.running = true;
@@ -1328,7 +1328,7 @@ test('v3.11 monster exp curve knee: unchanged up to Lv.66, dropped and slower-gr
 test('v3.12 onyx bosses: habitat-only rare spawn with pity, 80-turn departure, 0.3% accessory drop with 300-kill pity (then pearls), unique skills, kept through rebirth, set bonuses and guards', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), W = await L.load('data/world'), Enc = await L.load('systems/encounter'), Meta = await L.load('systems/meta'), T = await L.load('systems/turn');
-    assert.equal(O.ONYX_BOSSES.length, 9, 'v3.278 스우 · 데미안'); assert.ok(O.onyxBossFor('리스항구') && O.onyxBossFor('아쿠아로드')?.id === 'onyxSwoo' && !O.onyxBossFor('루디브리엄'));
+    assert.equal(O.ONYX_BOSSES.length, 13, 'v3.278 스우 · 데미안, v3.367 코프룰루 4종'); assert.ok(O.onyxBossFor('리스항구') && O.onyxBossFor('아쿠아로드')?.id === 'onyxSwoo' && !O.onyxBossFor('루디브리엄'));
     assert.equal(O.onyxChance(0, 0), .003); assert.ok(Math.abs(O.onyxChance(50, 0) - .006) < 1e-9); assert.equal(O.onyxChance(0, O.ONYX.pity), 1, 'pity guarantees');
     for (const b of O.ONYX_BOSSES) assert.ok(W.MONSTERS.find(f => f.id === b.id)?.boss, `${b.id} is a boss monster`);
     // 서식지에서만 나옵니다. 첫 난수(까미·누리 없음 → 칠흑 판정)가 0이면 출현.
@@ -1382,7 +1382,7 @@ test('v3.299 research 칠흑 추적: pearls 300 · 500 · 1,000 from rebirth 30,
 test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고통의 근원, old 마크 · 안대 stay, nine-piece set', async () => {
     const L = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const O = await L.load('data/onyx'), BC = await L.load('data/boss-core'), Enc = await L.load('systems/encounter'), DC = await L.load('systems/dungeon-coins'), G = await L.load('systems/onyx-grant');
-    assert.equal(O.ONYX_TOTAL, 9); assert.equal(O.ONYX_ITEMS.length, 8); assert.ok(BC.BOSS_CORES[O.ONYX_CORE_ID]?.onyx === 'onyxWill');
+    assert.equal(O.ONYX_TOTAL, 13); assert.equal(O.ONYX_ITEMS.length, 12); // v3.367 코프룰루 4종 assert.ok(BC.BOSS_CORES[O.ONYX_CORE_ID]?.onyx === 'onyxWill');
     assert.ok(!BC.REGION_CORE_IDS.includes(O.ONYX_CORE_ID) && !BC.ABYSS_CORE_IDS.includes(O.ONYX_CORE_ID), 'the grimoire is not in chests or Mu Lung');
     const hunt = (stage, roll) => { const s = newState(0); s.level = 90; s.rebirths = 10; s.kills = 5000; s.stage = stage; s.tide = 0; Enc.spawn(s, () => 0); s.enemy.hp = 0; Enc.reward(s, () => roll); return s; };
     // 윌: 같은 확률 · 천장으로 보스코어(장신구 아님). 처음 얻으면 비어 있던 코어 칸에 낍니다.
@@ -1417,8 +1417,8 @@ test('v3.276 onyx rework: Will drops the grimoire boss core, Jin Hilla drops 고
     assert.match(DC.onyxOffer(shop, O.ONYX_CORE_ID, 0).reason, /하루/, 'shares the daily onyx limit'); assert.equal(DC.onyxOffer(shop, O.ONYX_CORE_ID).price, DS.DUNGEON_SHOP.onyxAwaken);
     // 9종: 장신구 8 + 마도서. 9종 세트는 보스 피해 +10%가 더 붙습니다.
     const all = newState(0); for (const d of O.ONYX_ITEMS) all.inventory.push({ id: 'a-' + d.id, name: d.name, slot: 'charm', rarity: 6, power: 1, level: 1, onyx: d.id, affixes: [] });
-    assert.equal(O.onyxCollected(all), 8); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
-    assert.equal(O.onyxCollected(all), 9); assert.ok(Math.abs(O.onyxSetBonus(9).bossDamage - b8 - .1) < 1e-9);
+    assert.equal(O.onyxCollected(all), 12); const b8 = O.onyxSetBonus(8).bossDamage; all.bossCores = { [O.ONYX_CORE_ID]: { rank: 0, attrs: [] } };
+    assert.equal(O.onyxCollected(all), 13); assert.ok(Math.abs(O.onyxSetBonus(9).bossDamage - b8 - .1) < 1e-9); assert.ok(Math.abs(O.onyxSetBonus(13).allStats - O.onyxSetBonus(9).allStats - .03) < 1e-9, 'v3.367 13종 세트');
 });
 
 test('v3.284 onyx accessories carry 7 lines (unique + 6 random); old 6-line ones fill the missing line at its best roll, the same on every load', async () => {

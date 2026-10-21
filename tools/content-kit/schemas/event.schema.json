@@ -1,0 +1,199 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pangaea/event",
+  "title": "StoryScene",
+  "description": "게임에 ‘선택지가 있는 랜덤 이벤트’ 시스템은 없다. game/data/events.ts의 ServerEvent는 운영자가 거는 기간 한정 배율(경험치 ×2 등)이라 글이 없다. 글이 있는 콘텐츠는 모험 일지(스토리) 장면 game/data/story.ts StoryScene {id, chapter, title, lines[], hint, when}뿐이라 이 스키마는 스토리 장면에 맞췄다. 조건(when)은 코드 함수이므로 trigger로 종류·값을 적고 사람이 옮긴다. 선택지·보상(choices)은 미사용으로 남겨 둔다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "chapter",
+    "title",
+    "lines",
+    "hint",
+    "trigger",
+    "tags"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "camelCase(awake, rebirth5, onyxAll). 세이브(State.story)와 삽화 파일 public/art/story/{id}에 쓰인다."
+    },
+    "chapter": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 30,
+      "description": "STORY_CHAPTERS 인덱스. 0~5 = 1부·2부(기존). 6부터 3부 ‘별의 바다를 건너는 자’(코프룰루 구역, data/story-chapters.json에 장 제목). 새 장은 STORY_CHAPTERS·STORY_PARTS에 추가 필요."
+    },
+    "title": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 12,
+      "description": "장면 제목. 기존 2~11자(선착장에서 눈을 뜨다 · 조개 해안의 소문 · 승천)."
+    },
+    "lines": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 15,
+        "maxLength": 90
+      },
+      "description": "본문. 한 줄이 한 문단. 기존 2~5줄, 줄당 19~83자(평균 46), 장면당 74~271자. 1인칭 회상체 ‘~다’, 대사는 “ ” 큰따옴표. 2인칭 ‘당신’ 금지. 기존 글에 ‘당신’이 1회 있으나(arcane) 새 글에서는 피한다."
+    },
+    "hint": {
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 32,
+      "description": "잠겨 있을 때 보이는 열림 조건 문장(‘헤네시스 사냥터에 간다’, ‘환생 5회를 달성한다’). 기존 8~31자, 동사 ‘~한다’로 끝냄. 정확한 수치는 괜찮다(스토리는 비공개 대상 아님)."
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "first_kill",
+            "stage_visit",
+            "region_visit",
+            "job_tier",
+            "boss_kill",
+            "rebirths",
+            "abyss_floor",
+            "onyx_first",
+            "onyx_boss",
+            "onyx_all",
+            "core",
+            "core_full",
+            "star",
+            "duel_win",
+            "guild",
+            "market",
+            "rank",
+            "hacker",
+            "clone",
+            "ascend",
+            "custom"
+          ],
+          "description": "story.ts의 when 도우미에 대응: first_kill(s.kills>0) · stage_visit(visitedStage, value=사냥터 id) · region_visit(visited, value=지역 이름) · job_tier(reachedTier, value=차수 1~5) · boss_kill(slain, value=몬스터 id) · rebirths(lives ≥ value) · abyss_floor(abyssBest ≥ value) · onyx_first/onyx_boss(value=보스 id)/onyx_all · core/core_full(보스 코어) · star(bestStar ≥ value) · duel_win · guild · market · rank(value=계급 id: lt2, bg…) · hacker · clone(두 번째 분신) · ascend · custom(value에 조건 설명, 코드 작업 필요). 플레이어 레벨 트리거는 없다(환생하면 레벨이 초기화)."
+        },
+        "value": {
+          "type": [
+            "string",
+            "integer",
+            "null"
+          ],
+          "description": "kind가 요구하는 값."
+        }
+      }
+    },
+    "area_filter": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 30,
+      "description": "[미사용] stage_visit/region_visit trigger로 대신한다."
+    },
+    "weight": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 100,
+      "description": "[미사용] 장면은 조건을 만족하면 확정 해금이라 가중치가 없다."
+    },
+    "body": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 50,
+      "maxLength": 150,
+      "description": "[미사용] lines로 대신한다."
+    },
+    "choices": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "text",
+          "outcome_text",
+          "effect"
+        ],
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 14
+          },
+          "outcome_text": {
+            "type": "string",
+            "minLength": 15,
+            "maxLength": 90
+          },
+          "effect": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "gold",
+                  "exp",
+                  "pearls",
+                  "essence",
+                  "sp",
+                  "mastery",
+                  "nothing"
+                ],
+                "description": "게임 재화 키: gold 골드 · exp 경험치 · pearls 세계석 · essence 정수 · sp SP · mastery 숙련."
+              },
+              "value": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "description": "[미사용] 선택지 시스템이 없다. 나중에 systems/engine.ts act() → syncStory 옆에 syncEvents를 붙일 때를 위해 모양만 둔다(보상 로그는 addLog(s, text, 'reward'), 접두 ✦)."
+    },
+    "art_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 60,
+      "description": "[키트 전용] 삽화(public/art/story/{id}.webp) 생성용 한 줄 프롬프트 메모(docs/art/story-prompts.md 형식)."
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 12
+      },
+      "description": "[미사용] 키트 내부용."
+    }
+  }
+}

@@ -4,7 +4,8 @@
  * 장면 글은 보상 · 수치와 무관합니다. 새 장면은 표에 줄만 더하면 되고, 이미 조건을 넘긴 세이브는 다음 동기화 때 한꺼번에 열립니다.
  */
 import type { State } from '../types';
-import { STAGES } from './world';
+import { STAGES, DUNGEONS, MONSTERS } from './world';
+import { ONYX_BOSSES } from './onyx';
 import { jobById } from './classes';
 import { isHackerJob } from './hacker';
 import { ONYX_TOTAL, onyxCollected } from './onyx';
@@ -23,21 +24,36 @@ type StoryScene = {
     hint: string;
     when: (s: State) => boolean;
 };
-export const STORY_CHAPTERS = ['제1장 · 판게아의 문', '제2장 · 생을 거듭하는 자', '제3장 · 시간의 끝에서', '제4장 · 두 번째 바다', '제5장 · 숫자의 그림자', '제6장 · 판게아 너머'];
+export const STORY_CHAPTERS = ['제1장 · 판게아의 문', '제2장 · 생을 거듭하는 자', '제3장 · 시간의 끝에서', '제4장 · 두 번째 바다', '제5장 · 숫자의 그림자', '제6장 · 판게아 너머',
+    // v3.367 3부 · 별의 바다를 건너는 자(코프룰루 구역, tools/content-kit 1차 생성).
+    '제7장 · 바다 너머의 하늘', '제8장 · 잿빛 궤도', '제9장 · 멈춘 항로', '제10장 · 광맥 황야', '제11장 · 노란 숨결', '제12장 · 군체 늪지', '제13장 · 심장 소리', '제14장 · 고요한 성단', '제15장 · 공허의 뒷면', '제16장 · 정적의 보스들', '제17장 · 두 계보', '제18장 · 별의 바다를 건너는 자', '제19장 · 다시, 선착장'];
 /** v3.215 부(部): 장 묶음. v3.216 1부는 검은 마법사까지, 2부는 그 뒤의 이야기이고 승천(1회)은 2부 마지막 장면에만 씁니다. */
 export const STORY_PARTS: { title: string; subtitle: string; chapters: number[] }[] = [
     { title: '1부', subtitle: '돌아오는 자', chapters: [0, 1, 2] },
     { title: '2부', subtitle: '떠나는 자', chapters: [3, 4, 5] },
+    { title: '3부', subtitle: '별의 바다를 건너는 자', chapters: [6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18] },
 ];
 
 /** 그 지역 사냥터에 가 본 적이 있는지(지금 있는 곳 · 모험 기록 · 가장 멀리 간 사냥터). */
-const visitedStage = (s: State, id: string) => { const i = STAGES.findIndex(st => st.id === id); return i >= 0 && (s.stage === id || !!s.voyage?.[`stage:${id}`] || (s.bestStage || 0) >= i); };
+/** v3.367 가장 멀리 간 사냥터(bestStage, STAGES index)는 입장 레벨로 비교합니다: 무리 서식지가 표 뒤에 있고 코프룰루 사냥터가 그 앞에 끼어 index 비교가 맞지 않습니다. */
+const visitedStage = (s: State, id: string) => { const st = STAGES.find(x => x.id === id), best = STAGES[s.bestStage || 0]; return !!st && (s.stage === id || !!s.voyage?.[`stage:${id}`] || (!!best && (s.bestStage || 0) > 0 && best.level >= st.level)); };
 const visited = (s: State, region: string) => STAGES.some(st => st.region === region && visitedStage(s, st.id));
 /** 이 차수 이상의 직업을 연 적이 있는지(지금 직업 포함). */
 const reachedTier = (s: State, tier: number) => [s.job, ...(s.unlockedJobs || [])].some(id => (jobById(id)?.tier ?? 0) >= tier);
 const slain = (s: State, monster: string) => (s.book?.[monster] || 0) > 0;
 const rankAtLeast = (s: State, id: string) => rankIndex(rankState(s).exp) >= RANKS.findIndex(r => r.id === id) || (rankState(s).reenlist || 0) > 0;
 const cores = (s: State) => Object.entries(s.bossCores || {}).filter(([id]) => BOSS_CORES[id]).map(([, v]) => coreEntry(v)?.rank || 0);
+/** v3.367 코프룰루 구역 도우미: 지역 처치 합계 · 직업 보유 · 네 칠흑 보스 · 80종 도감. */
+const KOPRULU_REGIONS = new Set(['잿빛 궤도', '광맥 황야', '군체 늪지', '고요한 성단']);
+const KOPRULU_ONYX = ONYX_BOSSES.filter(b => KOPRULU_REGIONS.has(b.region)).map(b => b.id);
+const KOPRULU_MONSTERS = [...new Set([
+    ...STAGES.filter(st => KOPRULU_REGIONS.has(st.region)).flatMap(st => st.monsters),
+    ...DUNGEONS.filter(d => 'world' in d && d.world === 'koprulu').flatMap(d => [d.monsters[0], d.bossMonster]),
+    ...KOPRULU_ONYX,
+])].filter(id => MONSTERS.some(f => f.id === id));
+const regionKills = (s: State, region: string) => [...new Set(STAGES.filter(st => st.region === region).flatMap(st => st.monsters))].reduce((n, id) => n + (s.book?.[id] || 0), 0);
+const hasJob = (s: State, id: string) => s.job === id || (s.unlockedJobs || []).includes(id);
+const kopruluSpecies = (s: State) => KOPRULU_MONSTERS.filter(id => (s.book?.[id] || 0) > 0 || (s.onyxBook?.[id] || 0) > 0).length;
 /** 승천 뒤에도 앞선 생의 기록으로 열린 것으로 봅니다(환생 횟수는 승천하면 0부터). */
 const lives = (s: State) => (s.rebirths || 0) + (s.ascension || 0) * 100;
 
@@ -239,5 +255,200 @@ export const STORY: StoryScene[] = [
         '노인이 그물을 내려놓았다. “이제 넌 돌아오는 자가 아니야. 떠나는 자지.”',
         '수평선 너머에서 문이 열리는 소리가 들렸다. 빛의 망치를 든 기사, 초록빛 불꽃을 다루는 술사들. “아제로스라고 하더군. 판게아에 붙을 다음 세계.”',
         '배는 이미 선착장에 묶여 있었다. 이야기는, 다음 세계에서 계속된다.',
+    ] },
+    // ── 3부 · 제7장 · 바다 너머의 하늘 ────────────────────────
+    { id: 'skyGate', chapter: 6, title: '하늘로 난 문', hint: '환생 50회를 달성한다', when: s => (s.rebirths || 0) >= 50, lines: [
+        '쉰 번째 생의 아침, 소멸의 여로 끝에서 하늘이 갈라졌다. 갈라진 틈 너머로 별이 아니라 바다가 보였다.',
+        '“바다는 위에도 있어.” 노인은 그물을 접으며 말했다. “판게아로 이어진 세계는 땅만이 아니었거든.”',
+        '별의 바다라고 했다. 그 위에 떠 있는 구역의 이름은 코프룰루. 아무도 돌아오지 않은 곳이라고도 했다.',
+    ] },
+    { id: 'firstAscentOrbit', chapter: 6, title: '첫 궤도', hint: '잿빛 궤도 사냥터에 간다', when: s => visited(s, '잿빛 궤도'), lines: [
+        '발이 땅에서 떨어졌다. 떨어진 것이 아니라 떠오른 것이었다. 바다가 아래로, 별이 옆으로 흘렀다.',
+        '부서진 정거장이 눈앞에 걸려 있었다. 누군가 지은 것이고, 누군가 버린 것이다. 격납고 문은 반쯤 열려 있었다.',
+        '안에서 기계가 아직 움직이고 있었다. 정비할 것이 없는데도 정비하고, 지킬 것이 없는데도 지키면서.',
+    ] },
+    { id: 'scrapDroneLesson', chapter: 6, title: '고철의 명령', hint: '잿빛 궤도 · 폐선 격납고에 간다', when: s => visitedStage(s, 'derelictHangar'), lines: [
+        '고철 드론 하나가 집요하게 따라붙었다. 쓰러뜨리고 나서야 알았다. 그 드론은 모험가를 고장 난 부품으로 보고 고치려던 것이었다.',
+        '정거장의 명령 체계는 아직 살아 있었다. 명령을 내린 사람만 없을 뿐.',
+    ] },
+    // ── 3부 · 제8장 · 잿빛 궤도 ────────────────────────
+    { id: 'fracturedSky', chapter: 7, title: '갈라진 갑판', hint: '잿빛 궤도 · 균열 갑판에 간다', when: s => visitedStage(s, 'fracturedDeck'), lines: [
+        '갑판이 반으로 갈라진 자리에는 중력도 반으로 갈라져 있었다. 한 걸음은 무겁고 다음 걸음은 떠올랐다.',
+        '선원들이 거기 있었다. 몸은 없고 자리만 남은 채로, 각자의 위치에서 각자의 일을 하고 있었다.',
+        '그들은 모험가를 보지 않았다. 갑판이 갈라지던 그 순간만을 되풀이해 보고 있었다.',
+    ] },
+    { id: 'starEaterSeen', chapter: 7, title: '별을 먹는 것', hint: '잿빛 궤도 몬스터 100종을 처치한다', when: s => regionKills(s, '잿빛 궤도') >= 100, lines: [
+        '갑판 바깥에서 별 하나가 꺼졌다. 꺼진 것이 아니라 먹힌 것이었다.',
+        '별 포식자가 지나간 자리는 한동안 어두웠다. 어둠 속에서 모험가는 처음으로 별의 바다의 넓이를 짐작했다.',
+        '이 바다에는 등대가 없다. 길은 스스로 밝혀야 했다.',
+    ] },
+    { id: 'blackBoxFound', chapter: 7, title: '마지막 기록', hint: '잿빛 궤도에서 블랙박스 수호기를 처치한다', when: s => slain(s, 'aoBlackBoxWarden'), lines: [
+        '수호기가 지키던 것은 기록 장치 하나였다. 정거장의 마지막 날이 거기 들어 있었다.',
+        '“항로를 바꿔야 한다.” 기록 속 목소리는 그렇게 반복했다. “바다 너머의 끝이 다가오고 있다. 항로를 바꿔야 한다.”',
+        '어디로 바꾸려 했는지는 끝내 나오지 않았다. 기록은 거기서 끊겼다.',
+    ] },
+    // ── 3부 · 제9장 · 멈춘 항로 ────────────────────────
+    { id: 'bridgeDoor', chapter: 8, title: '함교의 문', hint: '잿빛 궤도 · 함교에 들어간다', when: s => (s.clears?.orbitBridge || 0) > 0, lines: [
+        '함교 문 앞에는 중장갑 경비기가 서 있었다. 선장의 허락 없이는 아무도 들여보내지 말라는 명령이 아직 유효했다.',
+        '선장은 이미 없었다. 경비기는 그 사실을 모르거나, 알면서도 명령을 지키고 있었다.',
+    ] },
+    { id: 'rustAdmiralFall', chapter: 8, title: '녹슨 제독', hint: '녹슨 제독을 처치한다', when: s => slain(s, 'aoRustAdmiral'), lines: [
+        '제독은 자리에 앉은 채 시간을 되감고 있었다. 되감을 때마다 정거장은 갈라지기 직전으로 돌아갔고, 그 직전에서 다시 갈라졌다.',
+        '쓰러뜨리자 되감기가 멈췄다. 제독의 손에는 항로 하나가 쥐여 있었다. 광맥 황야 쪽이었다.',
+        '“거기엔 내려갈 수 있는 땅이 있다.” 멈추기 직전, 그가 남긴 말은 그것뿐이었다.',
+    ] },
+    { id: 'vesperSilence', chapter: 8, title: '정적', hint: '잿빛 궤도에서 베스퍼를 처치한다', when: s => (s.onyxBook?.onyxVesper || 0) > 0, lines: [
+        '부두에 경보가 울렸다. 울렸을 텐데 소리가 없었다. 소리가 사라진 자리에 베스퍼가 내려앉아 있었다.',
+        '형체가 없는데 눈이 많았다. 리스항구의 더스크를 닮았지만, 이것은 바다가 아니라 별 사이에서 온 것이었다.',
+        '쓰러뜨리자 소리가 한꺼번에 돌아왔다. 경보와 기계 소리와, 모험가 자신의 숨소리까지.',
+    ] },
+    // ── 3부 · 제10장 · 광맥 황야 ────────────────────────
+    { id: 'descentToVein', chapter: 9, title: '보랏빛 땅', hint: '광맥 황야 사냥터에 간다', when: s => visited(s, '광맥 황야'), lines: [
+        '정거장에서 내려다본 땅은 보라색이었다. 가까이 가니 보라색은 결정이었고, 결정은 지층째 드러나 있었다.',
+        '채굴 기지는 버려져 있었다. 기계들은 아직 땅을 파고 있었다. 누구를 위해 파는지는 기계도 몰랐다.',
+        '쉰다섯 번째 생. 모험가는 결정 가루가 날리는 황야에 첫발을 디뎠다.',
+    ] },
+    { id: 'quarrySong', chapter: 9, title: '채굴장의 노래', hint: '광맥 황야 · 결정 채굴장에 간다', when: s => visitedStage(s, 'crystalQuarry'), lines: [
+        '결정이 바람에 울렸다. 높고 낮은 소리가 겹쳐 노래처럼 들렸다.',
+        '광맥 정령이 그 소리를 따라 나왔다. 결정 속에 갇혀 있던 빛이 풀려나면서 가장 먼저 한 일은 노래를 멈추는 것이었다.',
+    ] },
+    { id: 'crystalTitanFall', chapter: 9, title: '결정 거인', hint: '결정 거인을 처치한다', when: s => slain(s, 'vwCrystalTitan'), lines: [
+        '채굴장 바닥이 통째로 일어섰다. 거인은 결정으로 되어 있었고, 걸음마다 땅이 갈라졌다.',
+        '쓰러뜨린 자리에서 결정 하나가 굴러 나왔다. 안이 비어 있었다. 비어 있는 결정은 황야 어디에나 있었다.',
+        '무언가가 결정을 비우고 있었다. 황야 너머 분화구 쪽에서 노란 연기가 올라오고 있었다.',
+    ] },
+    // ── 3부 · 제11장 · 노란 숨결 ────────────────────────
+    { id: 'calderaBreath', chapter: 10, title: '노란 숨결', hint: '광맥 황야 · 가스 분화구에 간다', when: s => visitedStage(s, 'gasCaldera'), lines: [
+        '분화구에서 노란 가스가 끓어올랐다. 가스를 마신 것들은 몸집이 커졌고, 커진 만큼 숨이 독해졌다.',
+        '가스 두꺼비 하나가 터졌다. 모험가는 숨을 참고 그 자리를 지나갔다. 황야의 생물들은 숨을 참지 못했다.',
+    ] },
+    { id: 'calderaMawFall', chapter: 10, title: '분화구의 입', hint: '분화구 아가리를 처치한다', when: s => slain(s, 'vwCalderaMaw'), lines: [
+        '분화구 바닥의 입이 가스를 삼키고 불을 뱉었다. 황야의 결정이 비는 이유가 거기 있었다. 입은 결정 속의 빛을 먹고 있었다.',
+        '쓰러뜨리자 가스가 잦아들었다. 잦아든 가스 너머로 보라색 안개가 깔린 땅이 보였다. 늪이었다.',
+    ] },
+    { id: 'halderSeal', chapter: 10, title: '여섯 팔의 석상', hint: '광맥 황야에서 할더를 처치한다', when: s => (s.onyxBook?.onyxHalder || 0) > 0, lines: [
+        '갱도 깊은 곳에 석상이 봉인되어 있었다. 팔이 여섯이었고, 하나하나가 채굴기였다.',
+        '엘나스 폐광의 자쿰을 닮았다고 생각했다. 석상도 같은 생각을 했는지, 여섯 팔이 동시에 움직였다.',
+        '쓰러뜨린 뒤 모험가는 결정 반지 하나를 손에 넣었다. 반지는 여섯 팔의 박자를 기억하고 있었다.',
+    ] },
+    // ── 3부 · 제12장 · 군체 늪지 ────────────────────────
+    { id: 'marshArrival', chapter: 11, title: '늪이 반응한다', hint: '군체 늪지 사냥터에 간다', when: s => visited(s, '군체 늪지'), lines: [
+        '발을 디디자 늪이 움찔했다. 늪 전체가 하나의 생물이었고, 모험가의 발소리는 그 생물의 피부 위에 떨어진 것이었다.',
+        '알주머니마다 무언가 꿈틀댔다. 예순 번째 생에 모험가는 처음으로, 자신이 사냥꾼이 아니라 먹이일 수도 있다고 생각했다.',
+    ] },
+    { id: 'spawningTide', chapter: 11, title: '산란의 때', hint: '군체 늪지 · 산란 늪에 간다', when: s => visitedStage(s, 'spawningMarsh'), lines: [
+        '산란 감시자가 알들 위를 맴돌았다. 소리를 지워 알이 깨어나는 때를 숨기고 있었다.',
+        '한 번에 수백 마리가 깨어났다. 유충은 작았지만 한 방향으로만 달렸다. 모험가 쪽이었다.',
+        '그날 모험가는 무리와 싸우는 법을 다시 배웠다. 한 마리씩이 아니라 한 덩어리로.',
+    ] },
+    { id: 'marshTyrantFall', chapter: 11, title: '늪의 폭군', hint: '늪의 폭군을 처치한다', when: s => slain(s, 'hmMarshTyrant'), lines: [
+        '늪에서 가장 오래 산 개체가 길을 막았다. 새 군체가 깨어날 때마다 가장 먼저 먹던 폭군이었다.',
+        '쓰러뜨리자 늪이 조용해졌다. 조용한 늪 아래에서 무언가가 뛰고 있었다. 심장 소리였다.',
+    ] },
+    // ── 3부 · 제13장 · 심장 소리 ────────────────────────
+    { id: 'nerveDescent', chapter: 12, title: '신경 회랑', hint: '군체 늪지 · 신경 회랑에 간다', when: s => visitedStage(s, 'nerveCorridor'), lines: [
+        '늪 아래는 회랑이었다. 벽이 숨을 쉬었고, 신경 다발이 바닥을 가로질러 뛰었다.',
+        '지배종이 회랑 끝에서 기다리고 있었다. 군체의 뜻을 받은 것이었다. 군체의 뜻은 하나였다. 심장을 지키라.',
+    ] },
+    { id: 'hiveMotherFall', chapter: 12, title: '모체', hint: '모체를 처치한다', when: s => slain(s, 'hmHiveMother'), lines: [
+        '군체의 심장은 심장이 아니라 모체였다. 늪의 모든 알이 그 박동에 맞춰 깨어났다.',
+        '박동이 멈추자 늪 전체가 한 번 크게 떨리고 조용해졌다. 알들은 깨어나지 않았다. 깨어날 신호가 없었다.',
+        '모험가는 처음으로 늪이 아름답다고 생각했다. 조용한 보라색 늪 위로 성단의 빛이 내려오고 있었다.',
+    ] },
+    { id: 'mirrenClosed', chapter: 12, title: '감긴 눈', hint: '군체 늪지에서 미렌을 처치한다', when: s => (s.onyxBook?.onyxMirren || 0) > 0, lines: [
+        '늪 위에 거대한 눈이 떠 있었다. 눈이 감기면 늪의 모든 것이 함께 잠들었다. 모험가도 예외가 아니었다.',
+        '잠들지 않으려 싸웠다. 눈이 완전히 감기기 직전에 쓰러뜨렸다.',
+        '눈꺼풀 하나가 떨어졌다. 그것으로 만든 목걸이는 독을 오래 남겼다.',
+    ] },
+    // ── 3부 · 제14장 · 고요한 성단 ────────────────────────
+    { id: 'clusterSilence', chapter: 13, title: '고요', hint: '고요한 성단 사냥터에 간다', when: s => visited(s, '고요한 성단'), lines: [
+        '소리가 없었다. 베스퍼의 정적과는 달랐다. 이곳의 고요는 누군가 모든 소리를 빛으로 바꿔 놓은 고요였다.',
+        '별들 사이에 첨탑이 서 있었다. 고대 문명의 것이었다. 문명은 사라졌고 첨탑과 수호자만 남았다.',
+        '예순다섯 번째 생. 수호자가 모험가의 지나온 생을 비춰 보고 있었다.',
+    ] },
+    { id: 'spireMemory', chapter: 13, title: '비친 기억', hint: '고요한 성단 · 빛의 첨탑에 간다', when: s => visitedStage(s, 'lightSpire'), lines: [
+        '기억 렌즈가 모험가를 비췄다. 렌즈 안에서 리스항구의 선착장이 보였다. 첫 번째 생의 첫 번째 아침이었다.',
+        '“또 한 명이 왔군.” 그물을 손질하던 노인이 고개도 들지 않고 말하던 그 장면.',
+        '렌즈는 그 장면을 수백 번 되풀이해 보여 주었다. 모험가는 수백 번 다시 눈을 떴다.',
+    ] },
+    { id: 'spireKeeperFall', chapter: 13, title: '첨탑 수호장', hint: '첨탑 수호장을 처치한다', when: s => slain(s, 'scSpireKeeper'), lines: [
+        '첨탑 꼭대기를 지키던 마지막 병사가 빛의 갑주를 세웠다. 갑주에는 금이 하나도 가지 않았다.',
+        '쓰러뜨리자 갑주가 빛으로 풀어졌다. 풀어진 빛 사이로 첨탑 너머가 보였다. 별빛이 닿지 않는 곳이었다.',
+    ] },
+    // ── 3부 · 제15장 · 공허의 뒷면 ────────────────────────
+    { id: 'voidGalleryEnter', chapter: 14, title: '별빛이 닿지 않는 곳', hint: '고요한 성단 · 공허 회랑에 간다', when: s => visitedStage(s, 'voidGallery'), lines: [
+        '성단의 뒷면은 어두웠다. 고대 문명이 봉인한 것들이 회랑을 떠돌고 있었다.',
+        '역행자 하나가 시간을 거꾸로 살며 지나갔다. 공격이 닿기 전에 이미 피해 있었고, 쓰러지기 전에 이미 일어나 있었다.',
+        '회랑 끝에 문이 있었다. 바다 너머의 끝이 그 문 뒤라고, 기록 장치의 목소리가 말하던 바로 그 끝.',
+    ] },
+    { id: 'lastWardenFall', chapter: 14, title: '최후의 관문지기', hint: '최후의 관문지기를 처치한다', when: s => slain(s, 'scLastWarden'), lines: [
+        '문 앞에 관문지기가 서 있었다. 고대 문명이 바다 너머에 세운 마지막 문의 지기였다.',
+        '쓰러뜨렸지만 문은 열리지 않았다. 문에는 자물쇠가 없었다. 열쇠가 없는 것이 아니라 열 때가 아니었다.',
+        '“문 뒤는 아직 아무도 보지 못했다.” 관문지기가 남긴 마지막 말은 경고가 아니라 약속처럼 들렸다.',
+    ] },
+    { id: 'solenneWeave', chapter: 14, title: '첫 직조자', hint: '고요한 성단에서 솔렌을 처치한다', when: s => (s.onyxBook?.onyxSolenne || 0) > 0, lines: [
+        '성단의 빛을 처음 짠 직조자가 내려왔다. 성단이 고요한 것은 그가 모든 소리를 빛으로 바꿨기 때문이었다.',
+        '싸우는 동안 모험가의 외침도 빛이 되어 흩어졌다. 소리 없는 싸움이 끝나자 실타래 하나가 남았다.',
+        '실을 당기자 빛이 소리로 돌아왔다. 성단이 처음으로 울렸다.',
+    ] },
+    // ── 3부 · 제16장 · 정적의 보스들 ────────────────────────
+    { id: 'fourOnyxOrbit', chapter: 15, title: '네 개의 증표', hint: '코프룰루 구역 칠흑 보스 4종을 모두 처치한다', when: s => KOPRULU_ONYX.every(id => (s.onyxBook?.[id] || 0) > 0), lines: [
+        '정적의 귀마개, 여섯 팔의 반지, 감긴 눈의 목걸이, 첫 직조의 실타래. 네 개의 증표가 손에 모였다.',
+        '네 보스는 서로 몰랐다. 그러나 넷 다 같은 쪽을 보고 있었다. 공허 회랑 끝의 문이었다.',
+    ] },
+    { id: 'abyss150', chapter: 15, title: '백오십 층', hint: '무릉도장 150층을 돌파한다', when: s => (s.abyssBest || 0) >= 150, lines: [
+        '무공은 더 이상 다음 도전자를 기다리지 않았다. 백오십 층 위에서 그는 모험가와 함께 하늘을 올려다보았다.',
+        '“도장은 여기까지다.” 그가 말했다. “그 위는 네가 지어야 해.”',
+    ] },
+    { id: 'star25', chapter: 15, title: '스물다섯 번째 별', hint: '장비를 25성까지 강화한다', when: s => bestStar(s) >= 25, lines: [
+        '스물다섯 번째 별이 장비에 새겨졌다. 더는 새길 자리가 없었다.',
+        '대장간 주인은 망치를 내려놓고 말했다. “이제 장비가 아니라 네가 강해질 차례야.”',
+    ] },
+    // ── 3부 · 제17장 · 두 계보 ────────────────────────
+    { id: 'ironLineage', chapter: 16, title: '강철 보병', hint: '강철 보병 계보 1차 직업으로 전직한다', when: s => hasJob(s, 'irTrooper'), lines: [
+        '잿빛 궤도의 폐선에서 교범 한 권을 주웠다. 보병의 첫 번째 교범. 소총과 총검과 참호에 대한 것이었다.',
+        '판게아의 어느 세계에도 없던 싸움의 방식이었다. 모험가는 그것을 익히기로 했다.',
+    ] },
+    { id: 'hiveLineage', chapter: 16, title: '포자 수집가', hint: '군체 조율사 계보 1차 직업으로 전직한다', when: s => hasJob(s, 'hvSporeGatherer'), lines: [
+        '군체 늪지의 포자가 손에 붙었다. 떼어 내려다 그만두었다. 포자는 모험가의 뜻을 조금 따르고 있었다.',
+        '군체를 조율하는 법은 누구도 가르쳐 주지 않았다. 늪이 직접 가르쳤다.',
+    ] },
+    { id: 'marshalAndArchitect', chapter: 16, title: '원수와 설계자', hint: '코프룰루 계보 5차 직업으로 전직한다', when: s => hasJob(s, 'irClusterMarshal') || hasJob(s, 'hvEvoArchitect'), lines: [
+        '성단 원수의 지휘봉, 진화 설계자의 눈. 두 계보의 끝은 서로 달랐지만 닿는 곳은 같았다.',
+        '별의 바다를 건너는 자. 코프룰루의 기록에는 그 이름만 남아 있었다. 누구를 가리키는지는 적혀 있지 않았다.',
+        '모험가는 그것이 자신의 이름이 될 수도 있다고 생각했다.',
+    ] },
+    // ── 3부 · 제18장 · 별의 바다를 건너는 자 ────────────────────────
+    { id: 'rebirth40Sky', chapter: 17, title: '일흔 번째 하늘', hint: '환생 70회를 달성한다', when: s => (s.rebirths || 0) >= 70, lines: [
+        '일흔 번째 생. 하늘로 난 문은 이제 낯설지 않았다. 선착장 노인은 그물을 손질하다 처음으로 고개를 들었다.',
+        '“위에서 뭘 봤니.” 모험가는 대답하지 않았다. 대답할 말이 너무 많았다.',
+    ] },
+    { id: 'rebirth50Sky', chapter: 17, title: '여든 번째 생의 약속', hint: '환생 50회를 달성한다', when: s => (s.rebirths || 0) >= 80, lines: [
+        '여든 번째 생에 모험가는 공허 회랑의 문 앞에 다시 섰다. 문은 여전히 닫혀 있었다.',
+        '“열 때가 아니다.” 관문지기의 말이 떠올랐다. 모험가는 문에 손을 대고 약속했다. 돌아오겠다고.',
+        '문 너머에서 무언가가 손을 마주 댔다. 아주 희미하게.',
+    ] },
+    { id: 'nightmareHeart', chapter: 17, title: '악몽의 심장', hint: '군체의 심장을 나이트메어 난이도로 정복한다', when: s => (s.modeClears?.nightmare?.hiveHeart || 0) > 0, lines: [
+        '악몽 속의 모체는 박동이 두 배로 빨랐다. 알이 두 배로 깨어났고, 늪이 두 배로 일어섰다.',
+        '그래도 쓰러뜨렸다. 모험가는 이제 늪이 자신을 먹이로 보지 않는다는 것을 알았다. 늪은 모험가를 두려워하고 있었다.',
+    ] },
+    // ── 3부 · 제19장 · 다시, 선착장 ────────────────────────
+    { id: 'clusterComplete', chapter: 18, title: '성단 도감', hint: '코프룰루 구역 몬스터 80종을 모두 처치한다', when: s => kopruluSpecies(s) >= KOPRULU_MONSTERS.length, lines: [
+        '고철 드론부터 최후의 관문지기까지. 별의 바다에 사는 것들의 이름을 모험가는 모두 알게 되었다.',
+        '이름을 안다는 것은 더 이상 낯설지 않다는 뜻이었다. 별의 바다는 이제 바다였다. 판게아의 바다와 같은.',
+    ] },
+    { id: 'oldManSky', chapter: 18, title: '노인의 그물', hint: '환생 90회를 달성한다', when: s => (s.rebirths || 0) >= 90, lines: [
+        '아흔 번째 생의 아침, 선착장 노인이 그물을 건넸다. “위에서도 쓸 데가 있을 거다.”',
+        '그물은 낡았지만 튼튼했다. 첫 번째 생에 모험가가 쥐었던 낡은 무기처럼.',
+        '노인은 다시 고개를 숙였다. “또 한 명이 왔군.” 모험가 뒤에 누군가 서 있었다.',
+    ] },
+    { id: 'duelTen', chapter: 18, title: '열 번의 결투', hint: '결투에서 10승을 거둔다', when: s => (s.wins || 0) >= 10, lines: [
+        '열 번째 상대는 코프룰루에서 돌아온 모험가였다. 둘은 서로의 장비를 보고 웃었다. 같은 별 아래서 주운 것들이었다.',
+        '결투가 끝나고 둘은 선착장에 앉아 하늘을 올려다보았다. 바다가 위에도 있다는 것을 아는 사람끼리.',
+    ] },
+    { id: 'ascendTwice', chapter: 18, title: '두 번째 승천', hint: '승천 2회를 달성한다', when: s => (s.ascension || 0) >= 2, lines: [
+        '두 번째로 승천하던 날, 모험가는 공허 회랑의 문이 열리는 소리를 들었다. 아주 멀리서, 아주 작게.',
+        '아직은 소리뿐이었다. 그러나 소리는 빛이 되고, 빛은 길이 된다. 성단에서 배운 것이었다.',
+        '판게아 너머. 다음 이야기는 그 문 뒤에서 시작될 것이다.',
     ] },
 ];
