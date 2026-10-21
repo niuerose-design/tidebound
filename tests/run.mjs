@@ -31,5 +31,6 @@ await import('./azeroth.test.mjs');
 await import('./delta.test.mjs');
 await import('./tier6.test.mjs');
 await import('./tactics.test.mjs');
+await import('./golden.test.mjs');
 await settled();
 console.log(`${results.passed} gameplay tests passed.`);

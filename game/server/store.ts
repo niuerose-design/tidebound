@@ -8,6 +8,7 @@ import { ascended, ascensionOf, lifetimeRebirths } from '../data/ascension';
 import type { RankingRow } from './db';
 import { abyssWeeklyPearls } from '../systems/progress';
 import { addLog } from '../systems/state';
+import { requestRng } from './rng';
 import { refreshEvents } from './events-config';
 import { ensurePuzzleKey, readHacks, syncHackerBoard } from './hacks';
 import { isHacker } from '../systems/hacker';
@@ -122,8 +123,10 @@ export async function mutate(id: string, action: Action, extra?: (s: State) => P
         const before = attempt === 0 && fresh && opts.since === fresh.sv ? JSON.parse(row.state) as Record<string, unknown> : null;
         const s = migrateState(JSON.parse(row.state) as State, now);
         const lastTickBefore = s.lastTick;
-        advance(s, now);
-        act(s, action, now);
+        // v3.376 요청 단위 시드 난수: 같은 (모험가 · revision · lastTick)이면 같은 결과(저장 충돌 재시도 · 다른 인스턴스 재계산 · 골든 테스트).
+        const rng = requestRng(id, row.revision, s.lastTick);
+        advance(s, now, rng);
+        act(s, action, now, rng);
         const result = extra ? await extra(s) : null;
         // v3.25 해커 순위(월): 기록이 바뀌었을 때만 한 번 씁니다.
         await syncHackerBoard(id, s, now);

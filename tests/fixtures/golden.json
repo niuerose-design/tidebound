@@ -1,0 +1,38 @@
+{
+ "build": "3.376",
+ "hours": 1,
+ "seed": 20261021,
+ "updatedAt": "2026-10-21",
+ "bodies": {
+  "r3-hero": {
+   "hash": "6e21bf1ec9cca1ed",
+   "level": 45,
+   "kills": 4914,
+   "gold": 42109,
+   "exp": 243623,
+   "deaths": 0,
+   "inventory": 11,
+   "logs": 120
+  },
+  "r30-hero": {
+   "hash": "2c0d572cea1b3184",
+   "level": 84,
+   "kills": 9134,
+   "gold": 180031,
+   "exp": 922795,
+   "deaths": 0,
+   "inventory": 37,
+   "logs": 120
+  },
+  "r80-hero": {
+   "hash": "adf24a9c67bb435c",
+   "level": 100,
+   "kills": 17113,
+   "gold": 334282,
+   "exp": 1989928,
+   "deaths": 0,
+   "inventory": 35,
+   "logs": 120
+  }
+ }
+}
