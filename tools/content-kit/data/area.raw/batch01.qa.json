@@ -1,0 +1,18 @@
+{
+  "verdict": "pass",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "voidGallery", "field": "neighbor_hint", "rule": 6, "note": "다음 세계가 미정이라 힌트 대신 운영자 결정 메모를 둠. 게임에 넣지 않는 칸이라 문제 없음." },
+    { "id": "orbitBridge", "field": "subtitle", "rule": 7, "note": "던전은 subtitle이 없어 자리표시 'DUNGEON'. 게임에 넣을 때 버림(스키마 설명과 일치)." }
+  ],
+  "checks": {
+    "1_ip": "스타크래프트 고유명사·종족명·유닛명 없음(코프룰루 구역은 docs/concept.md의 세계 이름으로 유지)",
+    "2_dup": "지역·장소·첫 문장 모두 서로 다름, 기존 22곳과 id·장소 겹침 없음",
+    "3_length": "description 47~61자(권장 25~55자를 4곳이 5자 안팎 넘김: 환생 조건 문장을 넣느라. 기존 최장 76자 안)",
+    "4_style": "‘~다’ 평서체, 이모지·영어 병기·당신 없음, subtitle만 영문",
+    "5_content": "과금·고어 없음. SF 어휘(드론·기계·가스)는 결정 Q4로 허용",
+    "6_logic": "레벨 104→132 단조 증가, 환생 25/30/35/40, 서식지 환생은 지역 최고 환생 +2, 던전 gold·pearls는 Lv.110·126 몬스터 골드 × 6~8",
+    "7_schema": "validate 통과 10/10"
+  },
+  "fixed_items": []
+}

@@ -6,6 +6,7 @@ import { V24_JOBS, V24_HINTS } from './expansion-v24';
 import { SUPPORT_JOBS, SUPPORT_JOB_DESC, SUPPORT_HINTS } from './support-rework';
 import { V25_JOBS, V25_HINTS } from './expansion-v25';
 import { DEFENSE_JOBS, DEFENSE_HINTS, DEFENSE_LINEAGES } from './expansion-defense';
+import { KOPRULU_JOBS, KOPRULU_LINEAGES } from './expansion-koprulu';
 import { INVERSION_JOBS, INVERSION_LINEAGES } from './expansion-inversion';
 import { MONOSTAT_JOBS, MONOSTAT_LINEAGES } from './expansion-monostat';
 import { mapleJobNames, MAPLE_LINEAGE_NAMES } from './maple-names';
@@ -257,6 +258,8 @@ JOBS.push(...(SUPPORT_JOBS as Job[]));
 JOBS.push(...(V25_JOBS as Job[]));
 // v25.14 방어 계열 보강: 종거북·루미너스 (2차) 갈래 5차까지, 새 호영 (1차)(마법 방어) 계보. 자세한 설계는 expansion-defense.ts.
 JOBS.push(...(DEFENSE_JOBS as Job[]));
+// v3.367 코프룰루 구역(제4장 세계) 계보 2개 · 직업 10개.
+JOBS.push(...(KOPRULU_JOBS as Job[]));
 // v25.24 역전 계보(아크 (1차)): 물리 계수 마법 피해 · 마법 계수 물리 피해. 자세한 설계는 expansion-inversion.ts.
 JOBS.push(...(INVERSION_JOBS as Job[]));
 // v25.26 외길 계보: 능력치 하나만으로 전직하는 1~3차. 자세한 설계는 expansion-monostat.ts.
@@ -375,12 +378,14 @@ export function upsertJobs(list: Job[]) {
  * v3.220 세계: 계보 위의 한 단계 묶음. 전직 화면은 세계(책의 장)를 먼저 고르고, 그 세계의 계보만 보여 줍니다.
  * world가 없는 계보는 메이플 월드입니다. 아제로스는 처치 기록으로 드러나는 히든 계보의 세계입니다.
  */
-export type WorldId = 'maple' | 'azeroth' | 'otherworld';
+export type WorldId = 'maple' | 'azeroth' | 'otherworld' | 'koprulu';
 export const WORLDS: { id: WorldId; name: string; subtitle: string; description: string; accent: string }[] = [
     { id: 'maple', name: '메이플 월드', subtitle: '모험이 시작된 세계', description: '지금까지의 모든 계열과 계보가 있는 세계입니다.', accent: '#e0a24f' },
     { id: 'azeroth', name: '아제로스', subtitle: '사냥 기록이 여는 세계', description: '특별한 몬스터와 보스를 오래 사냥했거나 계급장을 단 모험가에게 길이 열리는 세계입니다. 히든 계보와 참모 계보가 있습니다.', accent: '#7f8fd8' },
     // v3.231 제3장 이계: 세계석만 내면 들어오는 세계(Job.pearlCost). 기존과 다른 규칙으로 움직이는 계보들.
     { id: 'otherworld', name: '이계', subtitle: '세계석이 여는 세계', description: '세계석을 내면 다른 조건 없이 들어오는 세계입니다. 이계의 직업은 기존과 전혀 다른 규칙으로 움직이고, 전투 직업은 세계석을 연료로 태웁니다. 해커 · 요원 · 트레이더 계보가 있습니다.', accent: '#3fc7c0' },
+    // v3.367 제4장 코프룰루 구역: 판게아 바다 너머 별의 바다. 판게아 고유 이름의 계보 2개(강철 보병 · 군체 조율사).
+    { id: 'koprulu', name: '코프룰루 구역', subtitle: '별의 바다 너머', description: '바다 위에도 바다가 있습니다. 부서진 궤도 정거장에서 주운 교범과 늪의 포자로 싸우는 두 계보가 있는 세계입니다.', accent: '#a784c9' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
@@ -408,6 +413,7 @@ export const LINEAGES: Lineage[] = [
     { id: 'warden', name: '산호 수호자 계보', tree: 'defense', summary: '방어·기절·회복·반격과 복합 흡혈로 갈라지는 수호 계보입니다.' },
     { id: 'seagrassKeeper', name: '해초 돌봄꾼 계보', tree: 'defense', summary: '회복과 흡혈로 편성을 지탱하는 보조 방어 계보입니다.' },
     ...DEFENSE_LINEAGES,
+    ...KOPRULU_LINEAGES,
     independent('defense'),
     { id: 'poisoner', name: '독술사 계보', tree: 'status', summary: '중독·역병을 쌓아 5차 아크메이지(불,독) (5차)에 이르는 계보입니다.' },
     { id: 'shaman', name: '주술사 계보', tree: 'status', summary: '약화 · 감속 · 침묵 · 저주를 걸어 두고, 적에게 걸린 상태이상 종류 수만큼 세지는 헥스로 베는 계보입니다.' },

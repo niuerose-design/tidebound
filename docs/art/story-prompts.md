@@ -1,4 +1,4 @@
-# 스토리 삽화 프롬프트 (장 배너 6 · 장면 39)
+# 스토리 삽화 프롬프트 (장 배너 19 · 장면 79)
 
 > 그림 파일이 없어도 장 배너 · 장면 모두 SVG 그림이 보입니다. 아래 프롬프트로 만든 그림을 넣으면 그 자리가 그림으로 바뀝니다.
 
@@ -6,7 +6,7 @@
 
 | 종류 | 파일 이름 | 권장 크기 | 그림이 없을 때 |
 |---|---|---|---|
-| 장 배너 | `chapter-0.webp` ~ `chapter-5.webp` (장 번호 0부터) | 1600×400 (4:1). 모바일은 3:1로 가운데가 잘리므로 주인공 요소는 가운데에 | 장마다 그린 SVG 풍경 |
+| 장 배너 | `chapter-0.webp` ~ `chapter-18.webp` (장 번호 0부터) | 1600×400 (4:1). 모바일은 3:1로 가운데가 잘리므로 주인공 요소는 가운데에 | 장마다 그린 SVG 풍경 |
 | 장면 그림 | `{장면 id}.webp` (예: `awake.webp`, `blackMage.webp`) | 1200×400 (3:1). 모바일은 12:5로 양옆이 조금 잘림 | 장면마다 그린 SVG(`components/game/story-scenes.tsx`) |
 
 - png · webp 둘 다 되고, 둘 다 있으면 png를 씁니다. 용량은 장당 100KB 안쪽(webp 품질 80 정도)을 권장합니다. 스토리 탭을 열 때만, 화면에 보일 때만 불러옵니다.
@@ -104,3 +104,113 @@ cohesive series style, no text, no letters, no watermark, no border, no UI
 | `onyxAll` | 일곱 개의 칠흑 | Seven black accessories levitating and interlocking into the shape of a key, dark purple glow, cinematic still, 16:9 |
 | `clone` | 또 다른 나 | Two identical adventurers standing back to back on the pier, facing different paths, cinematic still, 16:9 |
 | `ascend` | 승천 | The adventurer on the pier at dawn, glowing world-stones rising, a giant gate opening on the horizon with holy light and green flames, the old fisherman setting down his nets, a ship waiting, cinematic still, 16:9 |
+
+## 3부 · 별의 바다를 건너는 자 (v3.367, 코프룰루 구역)
+
+장 배너 `chapter-6` ~ `chapter-18`: 각 장 제목의 풍경(바다 너머의 하늘 · 잿빛 궤도 정거장 · 함교 · 보랏빛 결정 황야 · 노란 가스 분화구 · 보라색 생체 늪 · 심장 · 빛의 첨탑 · 공허의 문 · 네 칠흑 증표 · 교범과 포자 · 별 바다의 배 · 새벽 선착장), wide panoramic banner, 4:1. 원작 그림 없이 실루엣 풍경.
+
+### 3부 · 제7장 바다 너머의 하늘
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `skyGate` | 하늘로 난 문 | 갈라진 하늘 틈으로 거꾸로 걸린 바다, 선착장 노인의 뒷모습, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `firstAscentOrbit` | 첫 궤도 | 거대한 부서진 정거장 격납고, 열린 문 틈의 빛, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `scrapDroneLesson` | 고철의 명령 | 모험가 어깨에 매달린 작은 드론, 용접 불꽃, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제8장 잿빛 궤도
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `fracturedSky` | 갈라진 갑판 | 반으로 갈라진 우주 정거장 갑판, 떠다니는 반투명한 선원들, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `starEaterSeen` | 별을 먹는 것 | 별 하나가 삼켜지는 순간, 검은 날개 실루엣, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `blackBoxFound` | 마지막 기록 | 검은 기록 장치에서 흘러나오는 빛의 파형, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제9장 멈춘 항로
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `bridgeDoor` | 함교의 문 | 육중한 함교 문 앞의 경비 기계, 붉은 경고등, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `rustAdmiralFall` | 녹슨 제독 | 시계 문자판 같은 함교, 의자에 앉은 녹슨 선장의 실루엣, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `vesperSilence` | 정적 | 소리가 지워진 부두, 수많은 눈이 박힌 안개 형체, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제10장 광맥 황야
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `descentToVein` | 보랏빛 땅 | 보랏빛 결정이 드러난 사막 지층, 멀리 버려진 채굴 기지, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `quarrySong` | 채굴장의 노래 | 보라색 결정 사이를 떠도는 작은 빛 덩어리, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `crystalTitanFall` | 결정 거인 | 무너지는 결정 거인, 바닥에 구르는 속 빈 결정, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제11장 노란 숨결
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `calderaBreath` | 노란 숨결 | 노란 가스 구름 속 부풀어 오른 두꺼비형 생물, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `calderaMawFall` | 분화구의 입 | 거대한 아가리가 불을 뱉는 분화구, 멀리 보라색 안개, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `halderSeal` | 여섯 팔의 석상 | 보랏빛 갱도에 봉인된 여섯 팔의 결정 석상, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제12장 군체 늪지
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `marshArrival` | 늪이 반응한다 | 보라색 생체 늪 위를 걷는 모험가, 사방의 알주머니, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `spawningTide` | 산란의 때 | 한꺼번에 깨어나는 알주머니, 쏟아지는 유충 떼, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `marshTyrantFall` | 늪의 폭군 | 늪 위에 솟은 거대한 날개 달린 포식자, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제13장 심장 소리
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `nerveDescent` | 신경 회랑 | 숨 쉬는 살벽으로 된 회랑, 바닥을 가로지르는 신경 다발, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `hiveMotherFall` | 모체 | 거대한 심장 모양의 모체, 멈추는 박동의 빛, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `mirrenClosed` | 감긴 눈 | 늪 위에 떠 있는 거대한 눈, 감기는 눈꺼풀, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제14장 고요한 성단
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `clusterSilence` | 고요 | 별들 사이 멈춰 선 빛의 첨탑, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `spireMemory` | 비친 기억 | 빛의 렌즈에 비친 작은 선착장 풍경, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `spireKeeperFall` | 첨탑 수호장 | 빛으로 풀어지는 고대 갑주, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제15장 공허의 뒷면
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `voidGalleryEnter` | 별빛이 닿지 않는 곳 | 검은 회랑 끝의 빛나는 문, 거꾸로 걷는 실루엣, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `lastWardenFall` | 최후의 관문지기 | 닫힌 거대한 문 앞에 무너진 석상, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `solenneWeave` | 첫 직조자 | 빛의 실을 짜는 고대 직조자, 흩어지는 빛의 소리, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제16장 정적의 보스들
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `fourOnyxOrbit` | 네 개의 증표 | 네 개의 칠흑 장신구가 놓인 탁자, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `abyss150` | 백오십 층 | 무릉도장 꼭대기에서 하늘을 보는 두 사람, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `star25` | 스물다섯 번째 별 | 25개의 별이 박힌 무기, 내려놓은 망치, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제17장 두 계보
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `ironLineage` | 강철 보병 | 낡은 교범과 녹슨 소총, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `hiveLineage` | 포자 수집가 | 손바닥 위에서 빛나는 보라색 포자, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `marshalAndArchitect` | 원수와 설계자 | 지휘봉과 빛나는 눈, 그 사이의 별 바다, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제18장 별의 바다를 건너는 자
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `rebirth40Sky` | 마흔 번째 하늘 | 처음으로 고개를 든 노인, 하늘을 가리키는 모험가, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `rebirth50Sky` | 쉰 번째 생의 약속 | 닫힌 문에 손을 댄 모험가, 문 너머의 희미한 손, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `nightmareHeart` | 악몽의 심장 | 붉게 뛰는 심장과 그 앞에 선 작은 모험가, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+
+### 3부 · 제19장 다시, 선착장
+
+| 파일 | 장면 | 프롬프트(한국어 메모, 영문 프롬프트로 옮겨 쓰기) |
+|---|---|---|
+| `clusterComplete` | 성단 도감 | 별 사이에 펼쳐진 도감 페이지, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `oldManSky` | 노인의 그물 | 건네지는 낡은 그물, 뒤에 선 새 모험가의 그림자, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `duelTen` | 열 번의 결투 | 선착장에 나란히 앉은 두 모험가, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+| `ascendTwice` | 두 번째 승천 | 멀리서 열리기 시작하는 빛의 문, 모험가는 뒷모습 실루엣, cinematic still, 16:9 |
+

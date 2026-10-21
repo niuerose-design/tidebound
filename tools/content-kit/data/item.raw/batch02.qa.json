@@ -1,0 +1,18 @@
+{
+  "verdict": "pass",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "larvaKpSword", "field": "kind", "rule": 7, "note": "batch01과 같이 결정 Q6(보류)에 따라 이름 풀로만 보관." },
+    { "id": "genesisKpSword", "field": "set_name", "rule": 1, "note": "세트명 ‘첫 생명’은 기존 6등급 세트 ‘제네시스’와 뜻이 겹치지만 표기가 다르고 원작 이름이 아님. 유지." }
+  ],
+  "checks": {
+    "1_ip": "원작 장비명 없음",
+    "2_dup": "이름 중복 없음(batch01 기계 계열·기존 42개와 비교)",
+    "3_length": "이름 4~11자",
+    "4_style": "이름만 있어 문체 해당 없음",
+    "5_content": "생체 묘사(혈관·심장·태막)는 고어 아님",
+    "6_logic": "등급 순서 유충→껍질→독침→시냅스→지배종→모체→첫 생명: 몬스터 배치의 성장 단계와 일치",
+    "7_schema": "validate 42/42"
+  },
+  "fixed_items": []
+}

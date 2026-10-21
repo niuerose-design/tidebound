@@ -296,9 +296,9 @@ test('v3.201 dungeons pay no kill rewards and a fixed dungeon coin per clear; th
  s.dungeonCoins=100;act(s,{type:'dungeonShop',id:'gearBox'},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(s.inventory.at(-1).rarity>=3,true,'v3.201 legendary or better');
  const P=(await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('data/dungeon-shop')).DUNGEON_SHOP;assert.deepEqual([P.gearBox,P.quality100,P.hunterImprint,P.quality120,P.onyxAwaken,P.onyxCraft],[100,300,2400,3600,12000,24000],'v3.201 price ladder');
  s.dungeonCoins=P.onyxCraft+P.onyxAwaken+P.hunterImprint;assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0),/처치해야/);
- s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5);assert.equal(s.dungeonCoins,P.onyxAwaken+P.hunterImprint);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
+ s.onyxBook={onyxDusk:1};act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.4);/* v3.367 옵션 풀이 커져 .5는 포식자 줄을 굴림 */assert.equal(s.dungeonCoins,P.onyxAwaken+P.hunterImprint);const onyx=s.inventory.find(i=>i.onyx==='onyxDusk');assert.ok(onyx,'crafted');
  assert.throws(()=>act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},0,()=>.5),/하루 1번/,'v3.201 onyx goods once per KST day');
- act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},86400000,()=>.5);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
+ act(s,{type:'dungeonShop',id:'onyx:onyxDusk'},86400000,()=>.4);assert.equal(s.dungeonCoins,P.hunterImprint);assert.equal(onyx.onyxRank,1,'second purchase awakens');
  const line=onyx.affixes.findIndex(a=>!a.rule);act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0,()=>.5);assert.equal(s.dungeonCoins,0);assert.equal(onyx.affixes[line].id,'hunter');
  s.dungeonCoins=5000;assert.throws(()=>act(s,{type:'dungeonShop',id:'hunter',value:`${onyx.id}|${line}`},0),/이미 포식자/);
  const rule=onyx.affixes.findIndex(a=>a.rule);assert.ok(rule>=0);
@@ -483,7 +483,7 @@ test('v3.205 boss core honor achievements (no reward) unlock dungeon titles',asy
 
 test('v3.208 abyss cores: gained/awakened by first clearing floors (best record), never from the box; retro grant on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame(),C=await L.load('data/boss-core'),BL=await L.load('systems/boss-loot'),D=await L.load('data/dungeon-shop'),M=await L.load('systems/migrations');
- assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong','abyssGrandmaster']);assert.equal(C.REGION_CORE_IDS.length,7);
+ assert.deepEqual(C.ABYSS_CORE_IDS,['abyssTrainee','abyssMaster','abyssMugong','abyssGrandmaster']);assert.equal(C.REGION_CORE_IDS.length,9);
  assert.equal(C.BOSS_CORES.abyssMugong.bonus.bossDamage,.08);assert.equal(C.BOSS_CORES.abyssMugong.bonus.penetration,.15);
  const s=newState(0);s.abyssBest=24;BL.syncAbyssCores(s);assert.equal(s.bossCores,undefined);
  s.abyssBest=25;BL.syncAbyssCores(s);assert.equal(s.bossCores.abyssTrainee.rank,0);assert.equal(s.bossCores.abyssTrainee.attrs.length,2);
@@ -557,7 +557,7 @@ test('v3.310 nightmare stages: value parsing and gating, hp/attack scaling with 
 test('v3.313 tide challenge bonus: nightmare stages (max +50) and Mu Lung floors (max +20) lift the hunting-ground tide cap above rebirths', async () => {
     const { load } = (await import('../scripts/lib/game-modules.mjs')).loadGame();
     const { tideLimit, tideChallengeBonus, TIDE_CHALLENGE } = await load('systems/meta'), { ECONOMY } = await load('data/economy'), { PLAIN_DUNGEONS } = await load('data/world');
-    const ids = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss').map(d => d.id); assert.equal(ids.length, 7);
+    const ids = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && d.world !== 'koprulu').map(d => d.id); assert.equal(ids.length, 7, 'v3.367 Koprulu dungeons do not count');
     assert.deepEqual(tideChallengeBonus({}), { nightmare: 0, abyss: 0, total: 0 }); assert.equal(tideLimit({ rebirths: 30 }), 30, 'no records: rebirths as before');
     const three = Object.fromEntries(ids.map(id => [id, 3]));
     assert.deepEqual(tideChallengeBonus({ nightmareBest: three, abyssBest: 45 }), { nightmare: 15, abyss: 9, total: 24 }); assert.equal(tideLimit({ rebirths: 30, nightmareBest: three, abyssBest: 45 }), 54);

@@ -1,0 +1,20 @@
+{
+  "verdict": "fix",
+  "reviewer": "자체 검수(90_qa.md 체크리스트)",
+  "issues": [
+    { "id": "irFlashRound", "field": "name", "rule": 2, "note": "기존 스킬 ‘섬광탄’과 이름 중복 → ‘궤도 섬광’." },
+    { "id": "irSuppress", "field": "name", "rule": 2, "note": "기존 ‘제압 사격’과 중복 → ‘제압 연사’." },
+    { "id": "irArtillery", "field": "manaCost", "rule": 6, "note": "복합(split) 피해는 게임 규칙상 마나를 쓰므로 물리 계보라도 manaCost 20(×4 = 80)을 둠." },
+    { "id": "irOrbitalStrike", "field": "chance", "rule": 7, "note": "5차 액티브는 각성 보정 전 값(chance .5, cooldown 5, 배율 3.0~4.4)으로 적음. awakenSkill이 재사용 10턴·배율 재계산을 함." }
+  ],
+  "checks": {
+    "1_ip": "원작 유닛·스킬명 없음(소총·총검·포격은 일반 명사, 결정 Q4로 허용)",
+    "2_dup": "이름 2건 수정 후 0",
+    "3_length": "이름 2~9자, 패시브 desc 17~56자",
+    "4_style": "패시브 desc 합쇼체, 액티브 desc null(자동 생성)",
+    "5_content": "해당 없음",
+    "6_logic": "콤보 쌍: 총검 찌르기(bleed) → 상처 조준(bleeding +60%) + 핏자국 추적(bleedBonus) / 제압 연사·궤도 섬광(slow·stun) → 돌파 돌격(controlled +50%) / 표적 지정(weaken) → 처형 명령(weakened +50%). 물리 액티브 chance ≤ .30, AP 2/3/4/5/6, 패시브 2/2/3/3/3, 배율 1~2차 1.0~1.7, 3차 1.4~2.2, 4차 1.2~2.6, 5차 3.0~4.4",
+    "7_schema": "validate 30/30"
+  },
+  "fixed_items": []
+}

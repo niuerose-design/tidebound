@@ -408,3 +408,34 @@
 .rank-reenlist-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; background: transparent; }
 .rank-reenlist-button svg { flex: none; }
 @media (max-width: 767px) { .rank-reenlist-button { padding: 6px 10px; font-size: 12px; } }
+
+/* v3.368 사냥터 월드맵(components/game/world-map.tsx): 세계 탭 · SVG 지도 · 고른 사냥터 안내 줄. */
+.world-map { margin:0 0 18px; border:1px solid var(--border); border-radius:10px; background:var(--card); overflow:hidden; }
+.world-map-tabs { display:flex; border-bottom:1px solid var(--border); }
+.world-tab { flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 14px; background:transparent; border:0; border-bottom:2px solid transparent; color:var(--muted); text-align:left; cursor:pointer; position:relative; }
+.world-tab small { font-size:9px; letter-spacing:.12em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.world-tab b { font-size:14px; color:var(--foreground); }
+.world-tab svg { position:absolute; right:12px; top:12px; color:var(--world-accent); }
+.world-tab.on { border-bottom-color:var(--world-accent); background:color-mix(in srgb, var(--world-accent) 10%, transparent); }
+.world-tab.on small { color:var(--world-accent); }
+.world-map-svg { display:block; width:100%; height:auto; aspect-ratio:480/300; }
+.world-map-svg .map-label { font-size:12px; font-weight:600; fill:#dfe7e3; paint-order:stroke; stroke:#0b1522; stroke-width:3px; stroke-linejoin:round; }
+.world-map-svg .map-node { cursor:pointer; outline:none; }
+.world-map-svg .map-node:focus-visible circle:first-of-type { stroke:var(--world-accent); stroke-width:1.5; fill:color-mix(in srgb, var(--world-accent) 25%, transparent); }
+.world-map-svg .map-node.locked > circle:not(:first-of-type), .world-map-svg .map-node.locked > path { opacity:.45; }
+.world-map-svg .map-node.picked > circle:not(:first-of-type), .world-map-svg .map-node.picked > path:not(:last-child) { filter:drop-shadow(0 0 4px var(--world-accent)); }
+.world-map-svg .map-region.here .map-label { fill:#fff3c4; }
+.world-map-svg .map-pulse { animation:map-pulse 1.8s ease-out infinite; transform-origin:center; transform-box:fill-box; }
+@keyframes map-pulse { 0% { opacity:.9; transform:scale(.6); } 100% { opacity:0; transform:scale(1.8); } }
+.world-map-info { display:flex; align-items:center; gap:10px; padding:10px 14px; border-top:1px solid var(--border); min-height:52px; }
+.world-map-info .map-dot { width:10px; height:10px; border-radius:50%; flex:none; }
+.world-map-info .map-info-text { flex:1; min-width:0; display:flex; flex-direction:column; font-size:12px; color:var(--muted); }
+.world-map-info .map-info-text b { font-size:14px; color:var(--foreground); }
+.world-map-info button { display:inline-flex; align-items:center; gap:4px; flex:none; }
+@media (max-width:640px) {
+  .world-tab { padding:8px 10px; }
+  .world-tab b { font-size:13px; }
+  .world-tab small { letter-spacing:.06em; }
+  .world-tab svg { right:8px; top:9px; }
+  .world-map-info { flex-wrap:wrap; }
+}

@@ -1,0 +1,50 @@
+{
+  "items": [
+    {
+      "id": "thornShellCrab",
+      "name": "가시등갑 게",
+      "name_en": null,
+      "level": 3,
+      "tier": 1,
+      "rarity": "common",
+      "boss": false,
+      "spawnWeight": null,
+      "rewardMultiplier": null,
+      "minTier": null,
+      "profile": "armored",
+      "shape": "crab",
+      "stage": "brook",
+      "dungeon": null,
+      "lore": "밀물이 들면 바위처럼 숨을 죽인다. 짐까지 끌고 가는 바람에 사냥 대상이 되었다.",
+      "description": "선착장 바위 틈에 무리 지어 산다. 썰물 때 떠밀려 온 것은 무엇이든 집어 먹는다. 모험가의 짐까지 끌고 가는 바람에 사냥 대상이 되었다.",
+      "behavior": "등갑을 세워 다음 피해를 절반으로 줄인다(기존 성향 armored의 돌진·기절 패턴으로 대체).",
+      "weakness": "마법 공격과 방어 관통에 약하다(armored 성향 힌트와 같음).",
+      "stats": null,
+      "drops": null,
+      "tags": ["리스항구", "갑각", "무리"]
+    },
+    {
+      "id": "fogMarshToad",
+      "name": "안개늪 두꺼비",
+      "name_en": null,
+      "level": 28,
+      "tier": 3,
+      "rarity": "rare",
+      "boss": false,
+      "spawnWeight": 0.12,
+      "rewardMultiplier": 1.45,
+      "minTier": null,
+      "profile": "venom",
+      "shape": "slime",
+      "stage": "trench",
+      "dungeon": null,
+      "lore": "울음소리가 멎으면 이미 늦었다. 혀의 점액은 늪물보다 무겁다.",
+      "description": null,
+      "behavior": null,
+      "weakness": null,
+      "stats": null,
+      "drops": null,
+      "tags": ["엘리니아", "양서류", "함정형"]
+    }
+  ]
+}

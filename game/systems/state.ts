@@ -74,6 +74,7 @@ export function newState(now: number): State {
         wins: 0,
         losses: 0,
         bestStage: 0,
+        kopruluStagesShifted: true,
         lastOffline: null,
     };
     grantJobSkills(state);

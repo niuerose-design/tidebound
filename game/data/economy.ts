@@ -184,6 +184,13 @@ export const RELICS = [
     { id: 'soulCoat', name: '영혼의 갑주', slot: 'coat', style: 'balanced', cost: 18, rebirth: 2, description: '강화와 옵션까지 다음 생에 이어지는 생존 유물.', affix: { stat: 'evasion', name: '영혼 회피', value: .12 } },
     { id: 'abyssCharm', name: '심연의 눈', slot: 'charm', style: 'balanced', cost: 28, rebirth: 3, description: '깊은 심연에 도전하는 모험가의 정밀 유물.', affix: { stat: 'accuracy', name: '심연 통찰', value: .2 } },
     { id: 'tideCape', name: '조류의 망토', slot: 'cape', style: 'balanced', cost: 36, rebirth: 4, description: '조류를 타고 환생을 건너는 유물. 상태이상 저항은 이식으로 새깁니다.', affix: { stat: 'dropBonus', name: '조류의 흐름', value: .1 } },
+    // v3.367 코프룰루 유물 6종(환생 5~10회).
+    { id: 'relicHangarKey', name: '격납고의 열쇠', slot: 'rod', style: 'balanced', cost: 44, rebirth: 5, description: '환생해도 녹슬지 않는 열쇠 모양의 무기. 잠긴 문이 열릴 때마다 손에 익는다.', affix: { stat: 'penetration', name: '격납고의 관통', value: .08 } },
+    { id: 'relicVeinCoat', name: '광맥 결정 갑주', slot: 'coat', style: 'balanced', cost: 52, rebirth: 6, description: '결정이 깨져도 다음 생에 다시 자라는 갑주. 생을 거듭할수록 단단해진다.', affix: { stat: 'statusResist', name: '광맥 저항', value: .1 } },
+    { id: 'relicHiveEye', name: '군체의 눈', slot: 'charm', style: 'balanced', cost: 60, rebirth: 7, description: '군체와 이어진 눈. 쓰러뜨린 것의 수를 기억해 다음 생에 되돌려준다.', affix: { stat: 'bossDamage', name: '군체의 사냥', value: .06 } },
+    { id: 'relicHaloCape', name: '꺼지지 않는 후광', slot: 'cape', style: 'balanced', cost: 68, rebirth: 8, description: '성단의 빛을 한 가닥 짜 넣은 망토. 환생의 바다를 건너도 빛이 꺼지지 않는다.', affix: { stat: 'expBonus', name: '꺼지지 기억', value: .08 } },
+    { id: 'relicSignalRod', name: '끊긴 신호의 지팡이', slot: 'rod', style: 'magic', cost: 74, rebirth: 9, description: '정거장의 마지막 신호를 품은 지팡이. 마력 평타가 신호처럼 잦아진다.', affix: { stat: 'arcaneStrike', name: '끊긴 신호', value: .08 } },
+    { id: 'relicReverserGear', name: '역행자의 톱니', slot: 'charm', style: 'balanced', cost: 80, rebirth: 10, description: '시간을 거꾸로 사는 생물의 톱니. 쓰러진 뒤 일어서는 시간이 한 박자 짧아진다.', affix: { stat: 'chainBonus', name: '역행자의 박자', value: .04 } },
 ] as const;
 /** v3.3 성장하는 유물: 같은 부위 장비를 소비해 옵션을 imprintSlots줄까지 이식(비용 = 그 장비 옵션 재설정 골드 × imprintCost). 성은 레벨이 정하는 상한(starBase + 레벨 ÷ 10)까지. */
 export const RELIC_GROWTH = { imprintSlots: 3, imprintCost: 5, starBase: 12 };

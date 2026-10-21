@@ -21,6 +21,9 @@ export const BOSS_CORES: Record<string, BossCore> = {
     temple: { name: '엘리쟈의 바람 코어', boss: '엘리쟈', desc: '보스 · 사냥감 피해 +5%, 방어 관통 +10%p(관통 상한 안).', bonus: { bossDamage: .05, penetration: .1 } },
     ventCathedral: { name: '자쿰의 팔 코어', boss: '자쿰', desc: '보스 · 사냥감 피해 +5%, 추가타 위력 +10%p.', bonus: { bossDamage: .05, followUpBonus: .1 } },
     starSanctum: { name: '파풀라투스의 시계 코어', boss: '파풀라투스', desc: '보스 · 사냥감 피해 +5%, 연속 행동 확률 +3%p.', bonus: { bossDamage: .05, chainBonus: .03 } },
+    // v3.367 코프룰루 지역 던전 코어.
+    orbitBridge: { name: '녹슨 제독의 항로 코어', boss: '녹슨 제독', desc: '보스 · 사냥감 피해 +5%, 상태이상 저항 +10%p.', bonus: { bossDamage: .05, statusResist: .1 } },
+    hiveHeart: { name: '모체의 박동 코어', boss: '모체', desc: '보스 · 사냥감 피해 +5%, 흡혈 +3%p.', bonus: { bossDamage: .05, lifesteal: .03 } },
     // v3.208 무릉도장 코어(기획안 2차안 H): 층 첫 돌파로 확정 획득 · 각성(최고 기록 기준). 상자 · 보너스 정복에서는 나오지 않습니다.
     // 층은 기준 몸 측정(check-bosses --abyss-max, 중앙값 R10 32 · R30 41 · R50 48 · R100 53층)으로 정했습니다.
     abyssTrainee: { name: '수련생의 띠 코어', boss: '무릉 수련생', desc: '보스 · 사냥감 피해 +5%, 명중 +10%.', bonus: { bossDamage: .05, accuracy: .1 }, floors: [25, 28, 31, 34, 37, 40] },

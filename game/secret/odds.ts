@@ -81,6 +81,10 @@ export const SERVER_ODDS: Odds = {
             '리프레': { giant: 2.5, swarm: .8, abyssal: .8, starlit: .8 },
             '시간의 신전': { starlit: 2.5, swarm: .8, giant: .8, abyssal: .8 },
             '아케인 리버': { abyssal: 1.8, swarm: 1.8, giant: .8, starlit: .8 },
+            '잿빛 궤도': { swarm: 2.5, giant: .8, abyssal: .8, starlit: .8 },
+            '광맥 황야': { giant: 2.5, swarm: .8, abyssal: .8, starlit: .8 },
+            '군체 늪지': { abyssal: 2.5, swarm: .8, giant: .8, starlit: .8 },
+            '고요한 성단': { starlit: 2.5, swarm: .8, giant: .8, abyssal: .8 },
         },
         /** 무리 규모 추첨 가중치 ×5 : ×100 : ×500. */
         swarmWeights: [8, 3, 1],
@@ -98,6 +102,8 @@ export const SERVER_ODDS: Odds = {
         seahorse: .18, needlefish: .12, tidejelly: .07, emberEel: .14, ashRay: .1, magmaPuffer: .06, cinderKoi: .045,
         starKoi: .1, prismRay: .065, voidGuppy: .04, stormBarracuda: .08, eclipseMoonfish: .06, novaManta: .03,
         cinderAngler: .6, ventLeviathan: .3, abyssManta: .018,
+        // v3.367 코프룰루 구역(rare .11~.16 · epic .06~.07 · legendary .02~.025).
+        aoCargoSpider: .16, aoWeldHound: .12, aoCoreLeech: .07, aoBlackBoxWarden: .025, aoGhostDrone: .06, aoRiftLurker: .15, aoSignalEel: .11, aoVoidCrab: .06, aoStarEater: .022, aoEclipseMoth: .06, vwPrismLizard: .15, vwOreGolem: .11, vwVeinSpirit: .07, vwCrystalTitan: .025, vwHollowShard: .06, vwBloatHound: .16, vwCinderWasp: .12, vwFumeSerpent: .06, vwCalderaMaw: .02, vwYellowTitan: .06, hmSpineCrawler: .16, hmBroodWatcher: .12, hmSpawner: .06, hmMarshTyrant: .022, hmBlackLarva: .06, hmSynapseHound: .15, hmVeinLeech: .11, hmOverseer: .06, hmCorridorKing: .02, hmPaleOverseer: .06, scPrismGuard: .15, scHaloWisp: .12, scShadowEater: .06, scSpireKeeper: .025, scDawnWeaver: .06, scHollowSentinel: .14, scGravityMaw: .11, scEchoOfEnd: .06, scLastWarden: .02, scStillReverser: .06,
     },
     /**
      * v3.75 장비 옵션. rare: 태초 · 칠흑 전용 희귀 옵션(수련 · 전공 · 극치명 · 정수) 각각의 뽑힐 가중치(일반 옵션 1).
