@@ -429,3 +429,54 @@ export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: 1.3, candidates: 3 };
 /** 보드 가치 = Σ 비용 × ★ 배수(1 · 2 · 4), 웨이브 예산과 같은 단위. */
 export const boardValue = (board: { unit: string; star: number }[]) => board.reduce((n, p) => n + (unitById(p.unit)?.cost || 0) * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
+
+/** 23단계 보드 공유 코드: 보드(유닛 · ★ · 줄 · 아이템) · 증강 · 세트 · 라운드 · 승수를 'TB1.' + base64url(JSON) 한 줄로 만듭니다. 영문 id만 들어가므로 btoa로 충분합니다. */
+export const SHARE_PREFIX = 'TB1.';
+export type SharedBoard = { units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments: string[]; round?: number; wins?: number };
+type ShareJson = { v: 1; s?: string; u: [string, number, 'f' | 'b', string?][]; a?: string[]; r?: number; w?: number };
+export function encodeBoard(board: { unit: string; star: number; row: string; item?: string }[], opts: { set?: string; augments?: string[]; round?: number; wins?: number } = {}): string {
+    const json: ShareJson = { v: 1, u: board.slice(0, 12).map(p => { const t: [string, number, 'f' | 'b', string?] = [p.unit, p.star, p.row === 'back' ? 'b' : 'f']; if (p.item) t.push(p.item); return t; }) };
+    if (opts.set) json.s = opts.set; if (opts.augments?.length) json.a = opts.augments.slice(0, 6); if (opts.round) json.r = opts.round; if (opts.wins) json.w = opts.wins;
+    try { return SHARE_PREFIX + btoa(JSON.stringify(json)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); } catch { return ''; }
+}
+/** 코드 → 보드. 모르는 유닛 · 잘못된 ★ · 줄은 버리고, 유닛이 하나도 없으면 null. 앞뒤 공백 · 따옴표는 무시합니다. */
+export function decodeBoard(code: string): SharedBoard | null {
+    const raw = String(code || '').trim().replace(/^["'`]+|["'`]+$/g, '');
+    if (!raw.startsWith(SHARE_PREFIX)) return null;
+    let json: ShareJson;
+    try { const b64 = raw.slice(SHARE_PREFIX.length).replace(/-/g, '+').replace(/_/g, '/'); json = JSON.parse(atob(b64 + '='.repeat((4 - b64.length % 4) % 4))) as ShareJson; } catch { return null; }
+    if (!json || json.v !== 1 || !Array.isArray(json.u)) return null;
+    const units: SharedBoard['units'] = [];
+    for (const t of json.u.slice(0, 12)) {
+        if (!Array.isArray(t) || !unitById(String(t[0]))) continue;
+        const star = Number(t[1]), row = t[2] === 'b' ? 'back' : 'front', item = t[3] && itemById(String(t[3])) ? String(t[3]) : undefined;
+        if (star !== 1 && star !== 2 && star !== 3) continue;
+        units.push({ unit: String(t[0]), star, row, ...(item ? { item } : {}) });
+    }
+    if (!units.length) return null;
+    const augments = Array.isArray(json.a) ? json.a.filter(a => typeof a === 'string').slice(0, 6) : [];
+    return { units, augments, ...(json.s && SETS.some(x => x.id === json.s) ? { set: json.s } : {}), ...(Number(json.r) > 0 ? { round: Math.min(99, Math.floor(Number(json.r))) } : {}), ...(Number(json.w) > 0 ? { wins: Math.min(99, Math.floor(Number(json.w))) } : {}) };
+}
+/** 목표 보드 진행: 보드 · 벤치에서 목표 유닛을 몇 개(★ 이상) 갖췄는지. 같은 유닛이 여러 개면 하나씩 짝지웁니다. */
+export function targetProgress(target: { unit: string; star: number }[], owned: { unit: string; star: number }[]) {
+    const left = owned.map(o => ({ ...o, used: false })); let have = 0, partial = 0;
+    for (const t of target) { const exact = left.find(o => !o.used && o.unit === t.unit && o.star >= t.star); if (exact) { exact.used = true; have++; continue; } const weak = left.find(o => !o.used && o.unit === t.unit); if (weak) { weak.used = true; partial++; } }
+    return { have, partial, total: target.length };
+}
+
+/** 23단계 연출 보상: 보드 · 전투 화면 테마. 능력치 없음, 해금 조건은 명성 · 세트 숙련 · 리그 · 심연 · 난이도. */
+export type ThemeDef = { id: string; name: string; icon: string; how: string; unlocked: (s: ThemeProgress) => boolean };
+export type ThemeProgress = { expeditionRenown?: number; expeditionSetDone?: Record<string, number>; expeditionLeague?: { best?: number }; expeditionAbyssBest?: number; expeditionDiffClears?: Record<number, number> };
+export const EXP_THEMES: ThemeDef[] = [
+    { id: 'default', name: '기본', icon: '🟩', how: '처음부터', unlocked: () => true },
+    { id: 'tide', name: '푸른 조류', icon: '🌊', how: '원정 명성 1', unlocked: s => (s.expeditionRenown || 0) >= 1 },
+    { id: 'ember', name: '잿불', icon: '🔥', how: '원정 명성 5', unlocked: s => (s.expeditionRenown || 0) >= 5 },
+    { id: 'aurora', name: '오로라', icon: '🌌', how: '원정 명성 10', unlocked: s => (s.expeditionRenown || 0) >= 10 },
+    { id: 'coral', name: '산호초', icon: '🪸', how: '어느 세트든 세트 숙련 20', unlocked: s => Object.values(s.expeditionSetDone || {}).some(n => n > 0) },
+    { id: 'crown', name: '왕관', icon: '👑', how: '주간 리그 💎 다이아 이상 도달', unlocked: s => (s.expeditionLeague?.best || 0) >= 4 },
+    { id: 'abyss', name: '심연', icon: '🕳️', how: `심연 ${ABYSS.max}라운드 도달`, unlocked: s => (s.expeditionAbyssBest || 0) >= ABYSS.max },
+    { id: 'legend', name: '전설', icon: '🏆', how: '🏆 전설 난이도 완주', unlocked: s => (s.expeditionDiffClears?.[5] || 0) >= 1 },
+];
+export const themeById = (id?: string) => EXP_THEMES.find(t => t.id === id) || EXP_THEMES[0];
+/** 지금 골라 둔 테마가 잠겨 있으면(세이브를 옮겼거나 데이터가 바뀜) 기본으로. */
+export const activeTheme = (s: ThemeProgress & { expeditionTheme?: string }) => { const t = themeById(s.expeditionTheme); return t.unlocked(s) ? t : EXP_THEMES[0]; };

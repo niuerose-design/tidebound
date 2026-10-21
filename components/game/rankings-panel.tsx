@@ -237,7 +237,8 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
     </section>;
 }
 
-type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; abyss?: number; difficulty?: number; runs: number; score: number; ghostPoints: number; units: string[]; self: boolean };
+type ExpeditionRow = { rank: number; id: string; name: string; wins: number; cleared: boolean; round: number; abyss?: number; difficulty?: number; runs: number; score: number; ghostPoints: number; units: string[]; self: boolean; /** 23단계: 마지막 보드의 공유 코드 · 길드 이름. */ code?: string; guild?: string };
+type ExpeditionGuildRow = { rank: number; id: string; name: string; members: number; score: number; best: { name: string; score: number } };
 /** 원정대 3단계: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드). 다른 플레이어의 보드는 2라운드부터 고스트 상대로 나옵니다. */
 type LeagueRow = { rank: number; id: string; name: string; score: number; bestRun: number; wins: number; runs: number; self: boolean };
 /** 21단계 원정 주간 리그: 같은 등급 8명 조의 이번 주 순위. 점수 = 최고 판 점수 + 끝난 판들의 승리 합. 월요일(한국 시간) 뒤 첫 출발 때 정산. */
@@ -261,6 +262,7 @@ function LeagueBoard({ s }: { s: State }) {
 function ExpeditionBoard({ s }: { s: State }) {
     const [board, setBoard] = useState<{ month: string; rows: ExpeditionRow[] } | null>(null), [error, setError] = useState('');
     const [nonce, setNonce] = useState(0), load = () => setNonce(n => n + 1);
+    const [copied, setCopied] = useState(''), copy = async (id: string, code: string) => { try { await navigator.clipboard.writeText(code); setCopied(id); setTimeout(() => setCopied(c => c === id ? '' : c), 1500); } catch { /* 클립보드 없음 */ } };
     useEffect(() => {
         let alive = true;
         fetch('/api/ranking?board=expedition', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (!r.ok) throw Error(d.error || '불러오지 못했습니다.'); if (alive) { setBoard(d); setError(''); } }).catch(e => { if (alive) setError(e instanceof Error ? e.message : '불러오지 못했습니다.'); });
@@ -270,9 +272,27 @@ function ExpeditionBoard({ s }: { s: State }) {
         <div className="section-title"><h2><ArrowUpRight size={17}/> 이번 달 원정대 순위{board ? ` · ${board.month}` : ''}</h2><button className="text-button" onClick={load}><RefreshCw size={13}/> 새로고침</button></div>
         <p className="footnote">점수는 이번 달에 가장 잘한 판으로 셉니다: 승리 1번에 100점, 완주 50점, 닿은 라운드만큼 1점씩, 난이도 보너스(숙련 60 · 정예 120 · 악몽 180 · 전설 240), 심연 1라운드마다 20점. 여기에 다른 모험가의 원정대를 이길 때마다 받는 점수(상대 승수 × 10)가 이번 달 내내 쌓입니다. 한국 시간 매월 1일에 처음부터 다시 셉니다. 순위에 오른 보드는 다른 모험가의 원정에 2라운드부터 상대로 나옵니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''} 월말 순위 보상(세계석, 다음 달 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>
         {error ? <p className="footnote negative">{error}</p> : !board ? <p className="footnote">불러오는 중…</p> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 원정을 다녀온 모험가가 없습니다."/> :
-        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>승</TableHead><TableHead>완주</TableHead><TableHead>라운드</TableHead><TableHead>고스트</TableHead><TableHead>판</TableHead></TableRow></TableHeader>
-        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}</TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}{r.abyss ? <small> +심연 {r.abyss}</small> : null}</TableCell><TableCell>{r.ghostPoints ? `+${r.ghostPoints}` : '-'}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table>}
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>승</TableHead><TableHead>완주</TableHead><TableHead>라운드</TableHead><TableHead>고스트</TableHead><TableHead>판</TableHead><TableHead>코드</TableHead></TableRow></TableHeader>
+        <TableBody>{board.rows.map(r => <TableRow key={r.id} className={r.self ? 'self' : ''}><TableCell>{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''}{r.guild ? <small className="muted"> · {r.guild}</small> : null}</TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}{r.abyss ? <small> +심연 {r.abyss}</small> : null}</TableCell><TableCell>{r.ghostPoints ? `+${r.ghostPoints}` : '-'}</TableCell><TableCell>{r.runs}</TableCell><TableCell>{r.code ? <button type="button" className="text-button" title="이 보드의 공유 코드를 복사합니다(원정대 출발 화면의 ‘보드 공유’에 붙여 넣으면 목표 보드가 됩니다)" onClick={() => copy(r.id, r.code!)}>{copied === r.id ? '복사됨' : '복사'}</button> : '-'}</TableCell></TableRow>)}</TableBody></Table>}
+        <ExpeditionGuildBoard s={s} nonce={nonce}/>
     </section>;
+}
+/** 23단계 길드 원정 점수: 이번 달 길드원 점수 합(상위 200행 기준). */
+function ExpeditionGuildBoard({ s, nonce }: { s: State; nonce: number }) {
+    const [rows, setRows] = useState<ExpeditionGuildRow[] | null>(null);
+    useEffect(() => {
+        let alive = true;
+        fetch('/api/ranking?board=expeditionGuild', { cache: 'no-store' }).then(async r => { const d = await r.json(); if (r.ok && alive) setRows(d.rows || []); }).catch(() => { if (alive) setRows([]); });
+        return () => { alive = false; };
+    }, [nonce]);
+    const mine = s.guildMember?.id;
+    return <div className="exp-guild-board">
+        <h3><Users size={15}/> 길드 원정 점수</h3>
+        <p className="footnote">같은 길드 모험가들의 이번 달 원정 점수를 더한 값입니다(순위표 상위 200행 기준). 길드에 들어가 있으면 내 점수가 자동으로 더해집니다.{mine && rows && !rows.some(g => g.id === mine) ? ' 내 길드는 아직 점수가 없습니다: 원정을 한 번 다녀오면 올라갑니다.' : ''}</p>
+        {!rows ? <p className="footnote">불러오는 중…</p> : !rows.length ? <p className="footnote muted">아직 길드 점수가 없습니다.</p> :
+        <Table><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>길드</TableHead><TableHead>점수 합</TableHead><TableHead>인원</TableHead><TableHead>최고 모험가</TableHead></TableRow></TableHeader>
+        <TableBody>{rows.map(g => <TableRow key={g.id} className={g.id === mine ? 'self' : ''}><TableCell>{g.rank}</TableCell><TableCell>{g.name}{g.id === mine ? ' (내 길드)' : ''}</TableCell><TableCell><b>{g.score}</b></TableCell><TableCell>{g.members}</TableCell><TableCell>{g.best.name} <small className="muted">{g.best.score}</small></TableCell></TableRow>)}</TableBody></Table>}
+    </div>;
 }
 type CrewRow = { rank: number; id: string; name: string; side: string; members: number; grade: number; nodes: number; hacks: number; score: number };
 const SIDE_NAME: Record<string, string> = { gray: '회색', white: '화이트', black: '블랙' };

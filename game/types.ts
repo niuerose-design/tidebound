@@ -621,13 +621,17 @@ export type State = {
     /** 15단계: 심연 최고 라운드 · 도전 기록 횟수 · 최근 판 요약(최대 8개, 최신이 앞). */
     expeditionAbyssBest?: number;
     expeditionFeats?: Record<string, number>;
-    expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number }[];
+    expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number; /** 23단계: 그 판 마지막 보드의 공유 코드. */ code?: string }[];
     /** 21단계: 원정 명성(숙련 50 초기화 횟수) · 주간 리그(등급 · 정산한 주 · 지난 정산 · 최고 등급). */
     expeditionRenown?: number;
     expeditionLeague?: { tier: number; claimed?: string; last?: import('./data/expedition').LeagueSettlement; best?: number };
     /** 20단계: 세트 숙련(세트가 바뀌면 처음부터) · 세트 숙련 20을 찍은 세트 id. */
     expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
     expeditionSetDone?: Record<string, number>;
+    /** 23단계: 공유 코드로 불러온 목표 보드(상점에 ‘목표’ 표시 · 모은 수 표시). */
+    expeditionTarget?: { code: string; units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments?: string[]; wins?: number; round?: number };
+    /** 23단계: 고른 보드 테마 id(EXP_THEMES, 잠기면 기본). */
+    expeditionTheme?: string;
     /** 19단계: 보스 코어 조각(코어 id → 개수) · 도감 연결로 이미 준 단계(유닛 id → 1~3). */
     expeditionShards?: Record<string, number>;
     expeditionCodexLinked?: Record<string, number>;

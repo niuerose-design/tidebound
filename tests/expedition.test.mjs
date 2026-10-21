@@ -692,3 +692,49 @@ test('expedition stage 22 (small ghost pool): candidates per round pick the leas
         const g = await E.pickGhosts(key, 'me', () => 0, now2 + 100_000); assert.equal(g.pool, 5); assert.equal(g[2].length, 3); assert.deepEqual(g[2].map(x => x.account), ['g3', 'g2', 'g1'], 'nearest to my score (3 wins) first'); assert.ok(g[2].every(x => x.score === undefined));
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry code + guild and guild scores aggregate', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const D = await L.load('data/expedition');
+    // 코드: 왕복 · 접두어 · 깨진 입력 · 모르는 유닛 제거.
+    const board = [{ unit: 'zakum', star: 3, row: 'front', item: D.ITEMS[0].id }, { unit: 'pig', star: 2, row: 'back' }];
+    const code = D.encodeBoard(board, { set: D.SETS[0].id, augments: ['x1'], round: 9, wins: 7 });
+    assert.ok(code.startsWith('TB1.') && /^[A-Za-z0-9._-]+$/.test(code), code);
+    const back = D.decodeBoard(` "${code}" `); assert.deepEqual(back.units, board); assert.equal(back.set, D.SETS[0].id); assert.deepEqual(back.augments, ['x1']); assert.equal(back.round, 9); assert.equal(back.wins, 7);
+    assert.equal(D.decodeBoard('hello'), null); assert.equal(D.decodeBoard('TB1.!!!'), null); assert.equal(D.decodeBoard(''), null);
+    const junk = 'TB1.' + btoa(JSON.stringify({ v: 1, u: [['nope', 1, 'f'], ['pig', 9, 'f'], ['slime', 2, 'b', 'ghostitem']] }));
+    const j = D.decodeBoard(junk); assert.deepEqual(j.units, [{ unit: 'slime', star: 2, row: 'back' }], 'unknown unit, bad star and unknown item dropped');
+    assert.equal(D.decodeBoard('TB1.' + btoa(JSON.stringify({ v: 1, u: [['nope', 1, 'f']] }))), null, 'no valid unit → null');
+    // 목표 진행: 같은 유닛은 하나씩 짝, ★ 부족은 partial.
+    assert.deepEqual(D.targetProgress([{ unit: 'pig', star: 2 }, { unit: 'pig', star: 1 }, { unit: 'slime', star: 3 }], [{ unit: 'pig', star: 1 }, { unit: 'pig', star: 1 }, { unit: 'slime', star: 1 }]), { have: 1, partial: 2, total: 3 });
+    // 액션: 목표 설정 · 해제 · 잘못된 코드.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    act(s, { type: 'expeditionSetTarget', value: code }, now, mkRng(1)); assert.equal(s.expeditionTarget.units.length, 2); assert.equal(s.expeditionTarget.wins, 7); assert.ok(s.expeditionTarget.code.startsWith('TB1.'));
+    assert.throws(() => act(s, { type: 'expeditionSetTarget', value: 'garbage' }, now, mkRng(1)), /공유 코드/);
+    act(s, { type: 'expeditionSetTarget', value: '' }, now, mkRng(1)); assert.equal(s.expeditionTarget, undefined);
+    // 판을 마치면 최근 판에 코드가 남는다.
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = [{ unit: 'pig', star: 1, row: 'front' }]; act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1));
+    assert.ok(s.expeditionRecent[0].code?.startsWith('TB1.')); assert.deepEqual(D.decodeBoard(s.expeditionRecent[0].code).units, [{ unit: 'pig', star: 1, row: 'front' }]);
+    // 테마: 기본만 열림 → 조건별 해금 → 액션 · 잠긴 테마 거부 · 잠기면 기본으로 복귀.
+    assert.equal(D.EXP_THEMES.length, 8); assert.equal(D.EXP_THEMES.filter(t => t.unlocked({})).length, 1);
+    assert.throws(() => act(s, { type: 'expeditionTheme', value: 'tide' }, now, mkRng(1)), /잠겨/); assert.throws(() => act(s, { type: 'expeditionTheme', value: 'nope' }, now, mkRng(1)), /없는 테마/);
+    s.expeditionRenown = 5; act(s, { type: 'expeditionTheme', value: 'ember' }, now, mkRng(1)); assert.equal(s.expeditionTheme, 'ember'); assert.equal(D.activeTheme(s).id, 'ember');
+    s.expeditionRenown = 0; assert.equal(D.activeTheme(s).id, 'default', 'locked theme falls back');
+    assert.ok(D.themeById('coral').unlocked({ expeditionSetDone: { a: 1 } })); assert.ok(D.themeById('crown').unlocked({ expeditionLeague: { best: 4 } })); assert.ok(!D.themeById('crown').unlocked({ expeditionLeague: { best: 3 } }));
+    assert.ok(D.themeById('abyss').unlocked({ expeditionAbyssBest: D.ABYSS.max })); assert.ok(D.themeById('legend').unlocked({ expeditionDiffClears: { 5: 1 } })); assert.ok(D.themeById('aurora').unlocked({ expeditionRenown: 10 }));
+    act(s, { type: 'expeditionTheme', value: 'default' }, now, mkRng(1)); assert.equal(s.expeditionTheme, undefined);
+    // 서버: 행에 코드 · 길드, 길드 점수 합.
+    const file = path.join(os.tmpdir(), `tb-exp23-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 300 * 86_400_000, key = T.monthKey(now2);
+        const mk = (name, wins, guild) => ({ name, ...(guild ? { guildMember: { id: guild, name: `길드${guild}`, leader: false, syncedAt: 0 } } : {}), expedition: { round: 4, wins, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }], 3: [{ unit: 'pig', star: 2, row: 'front' }] }, augHistory: { 3: ['x1'] }, startedAt: 1 } });
+        await E.syncExpeditionRow('a1', mk('A1', 3, 'g1'), now2); await E.syncExpeditionRow('a2', mk('A2', 2, 'g1'), now2 + 1); await E.syncExpeditionRow('b1', mk('B1', 4, 'g2'), now2 + 2); await E.syncExpeditionRow('solo', mk('솔로', 9), now2 + 3);
+        const rows = await E.listExpeditionBoard(key); const a1 = rows.find(x => x.id === 'a1');
+        assert.equal(a1.guild, '길드g1'); assert.ok(a1.code.startsWith('TB1.')); const dec = D.decodeBoard(a1.code); assert.deepEqual(dec.units, [{ unit: 'pig', star: 2, row: 'front' }], 'last round board'); assert.deepEqual(dec.augments, ['x1']); assert.equal(dec.wins, 3);
+        assert.equal(rows.find(x => x.id === 'solo').guild, undefined);
+        const guilds = await E.listExpeditionGuilds(key); assert.deepEqual(guilds.map(g => [g.id, g.members]), [['g1', 2], ['g2', 1]]);
+        assert.equal(guilds[0].score, a1.score + rows.find(x => x.id === 'a2').score); assert.equal(guilds[0].best.name, 'A1'); assert.equal(guilds[0].rank, 1);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
