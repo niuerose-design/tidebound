@@ -57,7 +57,8 @@ const Rebirth = lazyPanel(() => import('./rebirth-panel').then(m => m.Rebirth));
 // v3.395 재설계 4단계: 사냥터 · 던전(새 토대).
 const Stages = lazyPanel(() => import('@/components/features/world').then(m => m.StagesScreen));
 const Dungeons = lazyPanel(() => import('@/components/features/world').then(m => m.DungeonsScreen));
-const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
+// v3.396 재설계 4단계: 세계의 제단(새 토대).
+const Altar = lazyPanel(() => import('@/components/features/altar').then(m => m.AltarScreen));
 const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
 // v3.392 재설계 4단계: 능력치 · 치장(새 토대).
 const Character = lazyPanel(() => import('@/components/features/character').then(m => m.CharacterScreen));
