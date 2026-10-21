@@ -13,6 +13,25 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // v3.374 의존 방향(재설계 브리프 3절): app → components → game → (data · types). 게임 코어는 React · Next · 화면을 모르고, 화면은 서버 전용 모듈을 모릅니다.
+  {
+    files: ["game/**/*.{ts,tsx}"],
+    ignores: ["game/server/**", "game/secret/**"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        paths: [{ name: "react", message: "game/ 은 순수 TS입니다. React 를 가져오지 마세요." }, { name: "react-dom", message: "game/ 은 순수 TS입니다." }, { name: "next", message: "game/ 은 Next 를 모릅니다." }],
+        patterns: [{ group: ["next/*", "@/components/*", "@/app/*", "**/components/**", "**/app/**", "@/game/server/*", "@/game/secret/*", "**/game/server/**", "**/game/secret/**"], message: "game/ 코어는 화면 · 서버 전용 모듈을 가져오지 않습니다(의존 방향 app → components → game)." }],
+      }],
+    },
+  },
+  {
+    files: ["components/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [{ group: ["@/game/server/*", "@/game/secret/*", "**/game/server/**", "**/game/secret/**", "@/app/api/*", "**/app/api/**"], message: "화면은 서버 전용 모듈(game/server · game/secret · app/api)을 가져오지 않습니다." }],
+      }],
+    },
+  },
   {
     files: ["components/ui/**/*.{ts,tsx}"],
     rules: {

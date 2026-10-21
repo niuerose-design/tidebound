@@ -1,0 +1,1854 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "판게아 RPG 세이브(State) vundefined — 실제 상태 표본 3개(fresh · mid · late)에서 추론",
+ "description": "재설계 1단계 산출물. required 는 표본 3개 모두에 있던 키(= newState 가 만드는 키), 나머지는 선택. 숫자 범위 · 의미는 game/types.ts 주석을 따릅니다. 생성: scratchpad/save-schema.mjs",
+ "x-sizes": {
+  "fresh": 2534,
+  "mid": 6160,
+  "late": 26880
+ },
+ "x-topLevelKeys": 96,
+ "type": "object",
+ "required": [
+  "abyssBest",
+  "abyssMilestones",
+  "achievementClaims",
+  "achievements",
+  "attributes",
+  "autoStarRefunded",
+  "bestStage",
+  "book",
+  "bookClaims",
+  "clears",
+  "cooldowns",
+  "daily",
+  "deaths",
+  "dungeon",
+  "effects",
+  "enemy",
+  "equipment",
+  "essence",
+  "exp",
+  "genesisVenomSwapped",
+  "gold",
+  "guardAffixRescaled",
+  "hp",
+  "inventory",
+  "itemBook",
+  "job",
+  "jobMastery",
+  "kills",
+  "kopruluStagesShifted",
+  "lastDuel",
+  "lastOffline",
+  "lastTick",
+  "learned",
+  "level",
+  "lifeStart",
+  "logId",
+  "logs",
+  "losses",
+  "mainAffixRescaled",
+  "mana",
+  "manaRegenRescaled",
+  "masteryAligned",
+  "masteryRescaled",
+  "name",
+  "offlineRescaled",
+  "peakLevel",
+  "pearls",
+  "penetrationBoosted",
+  "permanent",
+  "placeApMoved",
+  "plainCodex",
+  "playerStun",
+  "presets",
+  "rankRescaled",
+  "rating",
+  "rebirths",
+  "recovery",
+  "relicRefunded",
+  "relicRule",
+  "researchGranted",
+  "researchLegacy",
+  "running",
+  "shopSerial",
+  "skillInheritances",
+  "skillPractice",
+  "skillSpent",
+  "skills",
+  "sp",
+  "stage",
+  "statPoints",
+  "statRate",
+  "target",
+  "tide",
+  "trainingRescaled",
+  "turn",
+  "tutorial",
+  "ultimateRemade",
+  "unlockedJobs",
+  "version",
+  "voyage",
+  "weekly",
+  "wins"
+ ],
+ "properties": {
+  "abyssBest": {
+   "type": "number",
+   "examples": [
+    0,
+    12
+   ]
+  },
+  "abyssMilestones": {
+   "type": "array"
+  },
+  "achievementClaims": {
+   "type": "object",
+   "properties": {
+    "story:10": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    },
+    "story:20": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    }
+   }
+  },
+  "achievements": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number",
+    "examples": [
+     0
+    ]
+   },
+   "x-keys": "동적 키(예: codex:10, mastered:1, abyss:5, abyss:10 …)"
+  },
+  "appraisal": {
+   "type": "object",
+   "properties": {
+    "byRarity": {
+     "type": "array",
+     "items": {
+      "type": "number",
+      "examples": [
+       0,
+       1,
+       2
+      ]
+     }
+    },
+    "count": {
+     "type": "number",
+     "examples": [
+      4
+     ]
+    },
+    "pity": {
+     "type": "object",
+     "properties": {
+      "ancient": {
+       "type": "number",
+       "examples": [
+        4
+       ]
+      },
+      "myth": {
+       "type": "number",
+       "examples": [
+        4
+       ]
+      },
+      "primal": {
+       "type": "number",
+       "examples": [
+        4
+       ]
+      }
+     },
+     "required": [
+      "ancient",
+      "myth",
+      "primal"
+     ]
+    }
+   },
+   "required": [
+    "byRarity",
+    "count",
+    "pity"
+   ]
+  },
+  "attributes": {
+   "type": "object",
+   "properties": {
+    "dex": {
+     "type": "number",
+     "examples": [
+      0,
+      28,
+      110
+     ]
+    },
+    "int": {
+     "type": "number",
+     "examples": [
+      0,
+      26,
+      60
+     ]
+    },
+    "luk": {
+     "type": "number",
+     "examples": [
+      0,
+      20,
+      60
+     ]
+    },
+    "str": {
+     "type": "number",
+     "examples": [
+      0,
+      30,
+      120
+     ]
+    },
+    "vit": {
+     "type": "number",
+     "examples": [
+      0,
+      30,
+      120
+     ]
+    },
+    "wis": {
+     "type": "number",
+     "examples": [
+      0,
+      22,
+      60
+     ]
+    }
+   },
+   "required": [
+    "dex",
+    "int",
+    "luk",
+    "str",
+    "vit",
+    "wis"
+   ]
+  },
+  "autoStarRefunded": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "bestStage": {
+   "type": "number",
+   "examples": [
+    0,
+    2,
+    14
+   ]
+  },
+  "book": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number",
+    "examples": [
+     168,
+     193,
+     245
+    ]
+   },
+   "x-keys": "동적 키(예: minnow, carp, perch, mackerel …)"
+  },
+  "bookClaims": {
+   "type": "object",
+   "properties": {}
+  },
+  "clears": {
+   "type": "object",
+   "properties": {}
+  },
+  "closed": {
+   "type": "object",
+   "properties": {
+    "dungeons": {
+     "type": "array",
+     "items": {
+      "type": "string",
+      "examples": [
+       "abyss"
+      ]
+     }
+    },
+    "stages": {
+     "type": "array"
+    }
+   },
+   "required": [
+    "dungeons",
+    "stages"
+   ]
+  },
+  "cooldowns": {
+   "type": "object",
+   "properties": {
+    "hook": {
+     "type": "number",
+     "examples": [
+      3
+     ]
+    }
+   }
+  },
+  "daily": {
+   "type": "object",
+   "properties": {
+    "goals": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "examples": [
+         "catch",
+         "species",
+         "dungeon"
+        ]
+       },
+       "kind": {
+        "type": "string",
+        "examples": [
+         "catch",
+         "species",
+         "dungeon"
+        ]
+       },
+       "optional": {
+        "type": "boolean",
+        "examples": [
+         true
+        ]
+       },
+       "pearls": {
+        "type": "number",
+        "examples": [
+         1,
+         2
+        ]
+       },
+       "progress": {
+        "type": "number",
+        "examples": [
+         0,
+         3
+        ]
+       },
+       "subject": {
+        "type": "string",
+        "examples": [
+         "stormBarracuda",
+         "grotto"
+        ]
+       },
+       "target": {
+        "type": "number",
+        "examples": [
+         60,
+         25,
+         1
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "kind",
+       "pearls",
+       "progress",
+       "target"
+      ]
+     }
+    },
+    "key": {
+     "type": "string",
+     "examples": [
+      "2026-10-21"
+     ]
+    }
+   },
+   "required": [
+    "goals",
+    "key"
+   ]
+  },
+  "deaths": {
+   "type": "number",
+   "examples": [
+    0,
+    1
+   ]
+  },
+  "dungeon": {
+   "type": "null"
+  },
+  "effects": {
+   "type": "object",
+   "properties": {}
+  },
+  "enemy": {
+   "type": "null"
+  },
+  "equipment": {
+   "type": "object",
+   "properties": {
+    "cape": {
+     "type": "null"
+    },
+    "charm": {
+     "type": "null"
+    },
+    "coat": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "examples": [
+        "starter-coat"
+       ]
+      },
+      "level": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "name": {
+       "type": "string",
+       "examples": [
+        "하얀 반팔 면티"
+       ]
+      },
+      "power": {
+       "type": "number",
+       "examples": [
+        2
+       ]
+      },
+      "rarity": {
+       "type": "number",
+       "examples": [
+        0
+       ]
+      },
+      "slot": {
+       "type": "string",
+       "examples": [
+        "coat"
+       ]
+      }
+     },
+     "required": [
+      "id",
+      "level",
+      "name",
+      "power",
+      "rarity",
+      "slot"
+     ]
+    },
+    "rod": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "examples": [
+        "starter"
+       ]
+      },
+      "level": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "name": {
+       "type": "string",
+       "examples": [
+        "목검"
+       ]
+      },
+      "power": {
+       "type": "number",
+       "examples": [
+        2
+       ]
+      },
+      "rarity": {
+       "type": "number",
+       "examples": [
+        0
+       ]
+      },
+      "slot": {
+       "type": "string",
+       "examples": [
+        "rod"
+       ]
+      }
+     },
+     "required": [
+      "id",
+      "level",
+      "name",
+      "power",
+      "rarity",
+      "slot"
+     ]
+    }
+   },
+   "required": [
+    "cape",
+    "charm",
+    "coat",
+    "rod"
+   ]
+  },
+  "essence": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "event": {
+   "type": "null"
+  },
+  "exp": {
+   "type": "number",
+   "examples": [
+    0,
+    64912942
+   ]
+  },
+  "expEarned": {
+   "type": "number",
+   "examples": [
+    64912942
+   ]
+  },
+  "expLog": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "g": {
+      "type": "number",
+      "examples": [
+       64912942
+      ]
+     },
+     "h": {
+      "type": "number",
+      "examples": [
+       0
+      ]
+     }
+    },
+    "required": [
+     "g",
+     "h"
+    ]
+   }
+  },
+  "genesisVenomSwapped": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "gold": {
+   "type": "number",
+   "examples": [
+    100,
+    24000,
+    9373507
+   ]
+  },
+  "goldEarned": {
+   "type": "number",
+   "examples": [
+    373507
+   ]
+  },
+  "goldLog": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "g": {
+      "type": "number",
+      "examples": [
+       373507
+      ]
+     },
+     "h": {
+      "type": "number",
+      "examples": [
+       0
+      ]
+     }
+    },
+    "required": [
+     "g",
+     "h"
+    ]
+   }
+  },
+  "guardAffixRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "guildStats": {
+   "type": "object",
+   "properties": {
+    "abyss": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "bosses": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "catches": {
+     "type": "number",
+     "examples": [
+      3
+     ]
+    },
+    "clears": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "key": {
+     "type": "string",
+     "examples": [
+      "2026-W43"
+     ]
+    },
+    "sentAbyss": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "sentAt": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "sentBosses": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "sentCatches": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "sentClears": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    }
+   },
+   "required": [
+    "abyss",
+    "bosses",
+    "catches",
+    "clears",
+    "key",
+    "sentAbyss",
+    "sentAt",
+    "sentBosses",
+    "sentCatches",
+    "sentClears"
+   ]
+  },
+  "hp": {
+   "type": "number",
+   "examples": [
+    203,
+    6463
+   ]
+  },
+  "inventory": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "affixes": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "examples": [
+          "berserk",
+          "ward",
+          "festering"
+         ]
+        },
+        "name": {
+         "type": "string",
+         "examples": [
+          "광전사",
+          "정신",
+          "화농"
+         ]
+        },
+        "stat": {
+         "type": "string",
+         "examples": [
+          "attack",
+          "resist",
+          "poisonBonus"
+         ]
+        },
+        "stat2": {
+         "type": "string",
+         "examples": [
+          "defense",
+          "hpRegen"
+         ]
+        },
+        "value": {
+         "type": "number",
+         "examples": [
+          217,
+          27,
+          14
+         ]
+        },
+        "value2": {
+         "type": "number",
+         "examples": [
+          -41,
+          -20
+         ]
+        }
+       },
+       "required": [
+        "id",
+        "name",
+        "stat",
+        "value"
+       ]
+      }
+     },
+     "description": {
+      "type": "string",
+      "examples": [
+       "치명타와 체력 · 두 방어를 높이고 정밀 옵션으로 명중을 보강합니다.",
+       "회피와 체력 · 마나를 보강합니다.",
+       "물리 공격에 집중한 무기."
+      ]
+     },
+     "id": {
+      "type": "string",
+      "examples": [
+       "shop-1",
+       "shop-2",
+       "shop-3"
+      ]
+     },
+     "level": {
+      "type": "number",
+      "examples": [
+       44
+      ]
+     },
+     "name": {
+      "type": "string",
+      "examples": [
+       "혼테일의 목걸이",
+       "메이플 케이프",
+       "파프니르 소드"
+      ]
+     },
+     "paid": {
+      "type": "number",
+      "examples": [
+       56500
+      ]
+     },
+     "power": {
+      "type": "number",
+      "examples": [
+       101,
+       69,
+       152
+      ]
+     },
+     "rarity": {
+      "type": "number",
+      "examples": [
+       2,
+       1,
+       3
+      ]
+     },
+     "slot": {
+      "type": "string",
+      "examples": [
+       "charm",
+       "cape",
+       "rod"
+      ]
+     },
+     "style": {
+      "type": "string",
+      "examples": [
+       "balanced",
+       "physical"
+      ]
+     }
+    },
+    "required": [
+     "affixes",
+     "description",
+     "id",
+     "level",
+     "name",
+     "paid",
+     "power",
+     "rarity",
+     "slot",
+     "style"
+    ]
+   }
+  },
+  "itemBook": {
+   "type": "object",
+   "properties": {
+    "cape:0": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    },
+    "charm:0": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    },
+    "coat:0": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    },
+    "rod:0": {
+     "type": "boolean",
+     "examples": [
+      true
+     ]
+    }
+   },
+   "required": [
+    "cape:0",
+    "charm:0",
+    "coat:0",
+    "rod:0"
+   ]
+  },
+  "job": {
+   "type": "string",
+   "examples": [
+    "fisher",
+    "wanderer",
+    "irOrbitSniper"
+   ]
+  },
+  "jobMastery": {
+   "type": "object",
+   "properties": {
+    "fisher": {
+     "type": "number",
+     "examples": [
+      900,
+      9000
+     ]
+    },
+    "harpoon": {
+     "type": "number",
+     "examples": [
+      400,
+      4000
+     ]
+    },
+    "irOrbitSniper": {
+     "type": "number",
+     "examples": [
+      503
+     ]
+    },
+    "irTrooper": {
+     "type": "number",
+     "examples": [
+      3000
+     ]
+    },
+    "wanderer": {
+     "type": "number",
+     "examples": [
+      2600,
+      26000
+     ]
+    }
+   }
+  },
+  "kills": {
+   "type": "number",
+   "examples": [
+    0,
+    3
+   ]
+  },
+  "kopruluStagesShifted": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "lastDuel": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "lastOffline": {
+   "type": [
+    "null",
+    "object"
+   ],
+   "properties": {
+    "exp": {
+     "type": "number",
+     "examples": [
+      64912942
+     ]
+    },
+    "gold": {
+     "type": "number",
+     "examples": [
+      373507
+     ]
+    },
+    "kills": {
+     "type": "number",
+     "examples": [
+      3
+     ]
+    },
+    "seconds": {
+     "type": "number",
+     "examples": [
+      600
+     ]
+    }
+   },
+   "required": [
+    "exp",
+    "gold",
+    "kills",
+    "seconds"
+   ]
+  },
+  "lastTick": {
+   "type": "number",
+   "examples": [
+    1792569684260,
+    1792570284260
+   ]
+  },
+  "learned": {
+   "type": "object",
+   "properties": {
+    "firstAid": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "hook": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irBloodTrail": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irFlashRound": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irLongShot": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irScope": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irStillBreath": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "irWoundShot": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    },
+    "precision": {
+     "type": "number",
+     "examples": [
+      1
+     ]
+    }
+   },
+   "required": [
+    "hook"
+   ]
+  },
+  "level": {
+   "type": "number",
+   "examples": [
+    1,
+    44,
+    104
+   ]
+  },
+  "lifeStart": {
+   "type": "object",
+   "properties": {
+    "at": {
+     "type": "number",
+     "examples": [
+      1792569684260,
+      1792558884260
+     ]
+    },
+    "playMs": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    }
+   },
+   "required": [
+    "at",
+    "playMs"
+   ]
+  },
+  "logId": {
+   "type": "number",
+   "examples": [
+    1,
+    21,
+    662
+   ]
+  },
+  "logs": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "event": {
+      "type": "object",
+      "properties": {
+       "actor": {
+        "type": "string",
+        "examples": [
+         "표본2",
+         "표류 해파리"
+        ]
+       },
+       "chain": {
+        "type": "number",
+        "examples": [
+         2,
+         3,
+         4
+        ]
+       },
+       "damageType": {
+        "type": "string",
+        "examples": [
+         "physical",
+         "magic"
+        ]
+       },
+       "drained": {
+        "type": "number",
+        "examples": [
+         0
+        ]
+       },
+       "healed": {
+        "type": "number",
+        "examples": [
+         0
+        ]
+       },
+       "hits": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "critical": {
+           "type": "boolean",
+           "examples": [
+            false,
+            true
+           ]
+          },
+          "kind": {
+           "type": "string",
+           "examples": [
+            "main"
+           ]
+          },
+          "miss": {
+           "type": "boolean",
+           "examples": [
+            false
+           ]
+          },
+          "raw": {
+           "type": "number",
+           "examples": [
+            2853
+           ]
+          },
+          "value": {
+           "type": "number",
+           "examples": [
+            1445,
+            133,
+            2282
+           ]
+          }
+         },
+         "required": [
+          "critical",
+          "kind",
+          "miss",
+          "value"
+         ]
+        }
+       },
+       "regen": {
+        "type": "number",
+        "examples": [
+         37
+        ]
+       },
+       "skillId": {
+        "type": "string",
+        "examples": [
+         "hook",
+         "foeShock"
+        ]
+       },
+       "skillName": {
+        "type": "string",
+        "examples": [
+         "달팽이 세마리",
+         "기본 공격",
+         "마력 방출"
+        ]
+       },
+       "statuses": {
+        "type": "array"
+       },
+       "total": {
+        "type": "number",
+        "examples": [
+         1445,
+         133,
+         2282
+        ]
+       }
+      },
+      "required": [
+       "actor",
+       "damageType",
+       "drained",
+       "healed",
+       "hits",
+       "skillId",
+       "skillName",
+       "statuses",
+       "total"
+      ]
+     },
+     "id": {
+      "type": "number",
+      "examples": [
+       1,
+       2,
+       3
+      ]
+     },
+     "text": {
+      "type": "string",
+      "examples": [
+       "리스항구 · 선착장에 도착했습니다. 사냥을 시작하세요.",
+       "랜덤 뽑기 · 혼테일의 목걸이 · 옵션 2개 · -56500 G",
+       "✦ 모험 안내 ‘능력치 배분’ 완료 · 세계석 +1"
+      ]
+     },
+     "turn": {
+      "type": "number",
+      "examples": [
+       0,
+       122,
+       239
+      ]
+     },
+     "type": {
+      "type": "string",
+      "examples": [
+       "system",
+       "reward",
+       "battle"
+      ]
+     }
+    },
+    "required": [
+     "id",
+     "text",
+     "type"
+    ]
+   }
+  },
+  "losses": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "mainAffixRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "mana": {
+   "type": "number",
+   "examples": [
+    58,
+    820
+   ]
+  },
+  "manaRegenRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "masteryAligned": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "masteryEarned": {
+   "type": "number",
+   "examples": [
+    3
+   ]
+  },
+  "masteryLog": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "properties": {
+     "g": {
+      "type": "number",
+      "examples": [
+       3
+      ]
+     },
+     "h": {
+      "type": "number",
+      "examples": [
+       0
+      ]
+     }
+    },
+    "required": [
+     "g",
+     "h"
+    ]
+   }
+  },
+  "masteryRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "name": {
+   "type": "string",
+   "examples": [
+    "초보 모험가",
+    "표본",
+    "표본2"
+   ]
+  },
+  "offlineRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "onyxCollected": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "examples": [
+     "onyxVesper",
+     "onyxHalder"
+    ]
+   }
+  },
+  "peakLevel": {
+   "type": "number",
+   "examples": [
+    1
+   ]
+  },
+  "pearls": {
+   "type": "number",
+   "examples": [
+    0,
+    188,
+    909
+   ]
+  },
+  "penetrationBoosted": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "permanent": {
+   "type": "object",
+   "properties": {
+    "ap": {
+     "type": "number",
+     "examples": [
+      2,
+      6
+     ]
+    },
+    "attack": {
+     "type": "number",
+     "examples": [
+      0,
+      8,
+      60
+     ]
+    },
+    "gold": {
+     "type": "number",
+     "examples": [
+      0,
+      2,
+      10
+     ]
+    },
+    "guard": {
+     "type": "number",
+     "examples": [
+      3,
+      30
+     ]
+    },
+    "hp": {
+     "type": "number",
+     "examples": [
+      0,
+      6,
+      60
+     ]
+    }
+   },
+   "required": [
+    "attack",
+    "gold",
+    "hp"
+   ]
+  },
+  "placeApMoved": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "plainCodex": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "playMs": {
+   "type": "number",
+   "examples": [
+    600000
+   ]
+  },
+  "playerStun": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "presets": {
+   "type": "object",
+   "properties": {}
+  },
+  "rank": {
+   "type": "object",
+   "properties": {
+    "exp": {
+     "type": "number",
+     "examples": [
+      3
+     ]
+    },
+    "perks": {
+     "type": "object",
+     "properties": {}
+    }
+   },
+   "required": [
+    "exp",
+    "perks"
+   ]
+  },
+  "rankRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "rating": {
+   "type": "number",
+   "examples": [
+    1000
+   ]
+  },
+  "rebirths": {
+   "type": "number",
+   "examples": [
+    0,
+    3,
+    56
+   ]
+  },
+  "recovery": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "relicRefunded": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "relicRule": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "researchGranted": {
+   "type": "object",
+   "properties": {
+    "limitBreak": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    }
+   },
+   "required": [
+    "limitBreak"
+   ]
+  },
+  "researchLegacy": {
+   "type": "object",
+   "properties": {}
+  },
+  "running": {
+   "type": "boolean",
+   "examples": [
+    false,
+    true
+   ]
+  },
+  "shopSerial": {
+   "type": "number",
+   "examples": [
+    0,
+    4
+   ]
+  },
+  "skillInheritances": {
+   "type": "object",
+   "properties": {}
+  },
+  "skillPractice": {
+   "type": "object",
+   "properties": {
+    "hook": {
+     "type": "number",
+     "examples": [
+      3
+     ]
+    }
+   }
+  },
+  "skillSpent": {
+   "type": "object",
+   "properties": {}
+  },
+  "skills": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "examples": [
+     "hook"
+    ]
+   }
+  },
+  "sp": {
+   "type": "number",
+   "examples": [
+    0,
+    4,
+    31
+   ]
+  },
+  "stage": {
+   "type": "string",
+   "examples": [
+    "brook",
+    "reef",
+    "derelictHangar"
+   ]
+  },
+  "statPoints": {
+   "type": "number",
+   "examples": [
+    5,
+    16
+   ]
+  },
+  "statRate": {
+   "type": "number",
+   "examples": [
+    5
+   ]
+  },
+  "story": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number",
+    "examples": [
+     1792569684260
+    ]
+   },
+   "x-keys": "동적 키(예: awake, shell, henesys, firstJob …)"
+  },
+  "target": {
+   "type": "null"
+  },
+  "tide": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  },
+  "trainingRescaled": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "turn": {
+   "type": "number",
+   "examples": [
+    0,
+    300
+   ]
+  },
+  "tutorial": {
+   "type": "object",
+   "properties": {
+    "done": {
+     "type": "object",
+     "properties": {
+      "achievement": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "altar": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "attribute": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "book": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "catch": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "dungeon": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "enhance": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "job": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "rebirth": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "research": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "skill": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      },
+      "stage": {
+       "type": "number",
+       "examples": [
+        1
+       ]
+      }
+     }
+    }
+   },
+   "required": [
+    "done"
+   ]
+  },
+  "ultimateRemade": {
+   "type": "boolean",
+   "examples": [
+    true
+   ]
+  },
+  "unlockedJobs": {
+   "type": "array",
+   "items": {
+    "type": "string",
+    "examples": [
+     "fisher",
+     "wanderer",
+     "harpoon"
+    ]
+   }
+  },
+  "version": {
+   "type": "number",
+   "examples": [
+    8
+   ]
+  },
+  "voyage": {
+   "type": "object",
+   "properties": {
+    "stage:derelictHangar": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    },
+    "stage:reef": {
+     "type": "number",
+     "examples": [
+      0
+     ]
+    }
+   }
+  },
+  "weekly": {
+   "type": "object",
+   "properties": {
+    "goals": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "examples": [
+         "catch",
+         "species",
+         "dungeon"
+        ]
+       },
+       "kind": {
+        "type": "string",
+        "examples": [
+         "catch",
+         "species",
+         "dungeon"
+        ]
+       },
+       "optional": {
+        "type": "boolean",
+        "examples": [
+         true
+        ]
+       },
+       "pearls": {
+        "type": "number",
+        "examples": [
+         4,
+         5,
+         7
+        ]
+       },
+       "progress": {
+        "type": "number",
+        "examples": [
+         0,
+         3
+        ]
+       },
+       "subject": {
+        "type": "string",
+        "examples": [
+         "puffer",
+         "grotto"
+        ]
+       },
+       "target": {
+        "type": "number",
+        "examples": [
+         360,
+         150,
+         5
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "kind",
+       "pearls",
+       "progress",
+       "target"
+      ]
+     }
+    },
+    "key": {
+     "type": "string",
+     "examples": [
+      "2026-W43"
+     ]
+    }
+   },
+   "required": [
+    "goals",
+    "key"
+   ]
+  },
+  "wins": {
+   "type": "number",
+   "examples": [
+    0
+   ]
+  }
+ }
+}

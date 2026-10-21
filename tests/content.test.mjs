@@ -493,7 +493,7 @@ test('v3.208 abyss cores: gained/awakened by first clearing floors (best record)
  const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
 });
 
-test('v3.373 LV1 adventurer vow removed: no action, no level-gate bypass, saves stuck in the vow are restored once on load',async()=>{
+test('v3.375 LV1 adventurer vow removed: no action, no level-gate bypass, saves stuck in the vow are restored once on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
  assert.throws(()=>act(newState(0),{type:'lv1Vow',id:'start'},0),'action is gone');
  const M=await L.load('systems/meta');const g=newState(0);g.vows={lv1:{level:60,exp:0,attributes:{...g.attributes},statPoints:0}};assert.equal(M.levelGateOk(g,90),false,'vow no longer bypasses level gates');
@@ -625,7 +625,7 @@ test('v3.332 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) li
     const before = JSON.stringify([bag.affixes, s.logs.length]); migrateState(s, 0); assert.equal(JSON.stringify([bag.affixes, s.logs.length]), before, 'runs once');
 });
 
-test('v3.373 koprulu jobs gate on rebirths like the zone: tier 1~3 need 50, tier 4 52, tier 5 62; requirement row shows and clears',async()=>{
+test('v3.375 koprulu jobs gate on rebirths like the zone: tier 1~3 need 50, tier 4 52, tier 5 62; requirement row shows and clears',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
  const K=await L.load('data/expansion-koprulu');const C=await L.load('data/classes');const P=await L.load('systems/progression');
  assert.equal(K.KOPRULU_REBIRTH,50);
