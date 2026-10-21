@@ -679,8 +679,8 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-start { padding:22px; display:flex; flex-direction:column; gap:14px; }
 .exp-start h2 { font-size:20px; margin:0; }
 .exp-bar { margin-bottom:16px; }
-.exp-columns { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(0,1fr); gap:16px; margin-bottom:16px; }
-.exp-board-panel, .exp-bench-panel, .exp-shop-panel { padding:18px; }
+.exp-board-panel { margin-bottom:16px; }
+.exp-board-panel { padding:18px; }
 .exp-board { display:grid; grid-template-columns:44px repeat(4,minmax(0,1fr)); gap:6px; align-items:stretch; padding:6px; margin:-6px; border-radius:8px; background:var(--exp-board-bg, transparent); }
 .exp-row-label { font-size:12px; color:#8fa6a4; display:flex; align-items:center; }
 .exp-cell { min-height:58px; border:1px dashed var(--exp-cell-border, #3a5250); border-radius:6px; background:var(--exp-cell-bg, #0f2227); display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:2px; color:inherit; min-width:0; }
@@ -735,7 +735,7 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
     .exp-bar.port-resource-bar svg { width:16px; height:16px; }
     .exp-bar.port-resource-bar span { font-size:11px; }
     .exp-bar.port-resource-bar strong { font-size:20px; margin-top:0; line-height:1.2; } .exp-bar.port-resource-bar strong small { font-size:11px; }
-    .exp-board-panel, .exp-bench-panel, .exp-shop-panel, .exp-start { padding:14px 12px; }
+    .exp-board-panel, .exp-start { padding:14px 12px; } .exp-drawer-head { padding:12px; } .exp-drawer-body { padding:0 12px 14px; grid-template-columns:1fr; gap:12px; } .exp-drawer-hint { padding:0 12px 12px; }
     .exp-row-label { font-size:11px; }
     .exp-actions { position:sticky; bottom:calc(58px + env(safe-area-inset-bottom) + 8px); z-index:30; margin:8px -12px -14px; padding:10px 12px 12px; background:#0f1f24f2; backdrop-filter:blur(6px); border-top:1px solid #1f3a3b; border-radius:0 0 10px 10px; }
     .exp-actions .primary, .exp-actions button { min-height:44px; }
@@ -898,7 +898,6 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-card.sold { color:#5a6f71; justify-content:center; cursor:default; }
 .exp-card:disabled { opacity:.55; cursor:default; }
 @media (max-width:767px) {
-    .exp-columns { grid-template-columns:1fr; }
     .exp-shop { grid-template-columns:repeat(3,minmax(0,1fr)); }
     .exp-board { grid-template-columns:36px repeat(4,minmax(0,1fr)); gap:4px; }
     .exp-cell, .exp-cell-main { min-height:52px; } .exp-cell b { font-size:11px; } .exp-equip { position:static; margin:0 3px 3px; }
@@ -960,3 +959,14 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-arena.above { margin:0 0 12px; }
 .ranking-tabs.game-tabs { height:auto !important; row-gap:6px; margin-bottom:14px; }
 .abyss-board .section-title { flex-wrap:wrap; row-gap:4px; } .abyss-board .section-title h2 { min-width:0; }
+
+/* 24단계(3) 상점 · 벤치 서랍: 보드 아래 한 패널, 머리줄을 누르면 접힘(기기에 기억). 넓은 화면에서는 벤치 | 상점 두 칸. */
+.exp-drawer { padding:0; }
+.exp-drawer-head { all:unset; display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; box-sizing:border-box; padding:14px 18px; cursor:pointer; color:inherit; }
+.exp-drawer-head b { font-size:15px; } .exp-drawer-head > span { display:flex; align-items:center; gap:8px; font-size:13px; color:#c9b68a; }
+.exp-drawer-head i { font-style:normal; color:#8fa6a4; } .exp-drawer-badge { font-style:normal; font-size:11px; padding:2px 7px; border-radius:10px; background:#5fa37a33; color:#a4e9ba; }
+.exp-drawer:not(.open) .exp-drawer-head { padding-bottom:6px; }
+.exp-drawer-hint { margin:0; padding:0 18px 14px; font-size:12px; }
+.exp-drawer-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:16px; padding:0 18px 18px; }
+.exp-drawer-body > div { min-width:0; }
+@media (max-width:767px) { .exp-drawer-body { grid-template-columns:1fr; gap:12px; padding:0 12px 14px; } .exp-drawer-head { padding:12px; } .exp-drawer-hint { padding:0 12px 12px; } }
