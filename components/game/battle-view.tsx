@@ -15,7 +15,7 @@ import { isSpecialId } from '@/game/data/king';
 import { WHISTLE, WHISTLE_TARGETS, whistleOk, whistleTarget } from '@/game/data/whistle';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { rebirthLevel, encounterTier, tideLimit } from '@/game/systems/meta';
-import { BookOpen, Check, ChevronRight, ScrollText, Coins, Fish, Pause, Play, RefreshCw, Sparkles, Target, Leaf, Gem, Megaphone } from 'lucide-react';
+import { BookOpen, Check, ChevronRight, ScrollText, Coins, Fish, Pause, Play, RefreshCw, Sparkles, Target, Leaf, Gem, Megaphone, Settings } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Heading, SkillIcon, format, Num } from './shared';
@@ -37,7 +37,6 @@ import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDam
 import type { State, Action, CombatStats } from '@/game/types';
 import type { CombatFx } from '@/game/systems/combat-feedback';
 import { TideSelector } from './tide-selector';
-import { SettingsDialog } from './settings-dialog';
 import { SlotChips } from './slot-chips';
 import { NoticeStack } from './notice-stack';
 import { Player } from './player-column';
@@ -54,7 +53,7 @@ type SetView = (v: string) => void;
  * 동기화 때만 바뀌는 구간(머리글 · 알림 · 지표 · 집중 사냥 · 전투 스킬)은 base를 받는 memo 컴포넌트라 프레임 · 연출 갱신에 다시 그리지 않고,
  * 스킬 연출 상태(useCombatFx)는 BattleArena 안에만 있어 타격마다 상대 카드 · 장면만 다시 그립니다.
  */
-export function BattleView({ s: base, frames, busy, send, setView, saved, settings, setSettings, name, setName, onSwitchSlot }: {
+export function BattleView({ s: base, frames, busy, send, setView, saved, onSwitchSlot }: {
     onSwitchSlot?: (slot: number) => Promise<void>;
     s: State;
     frames: FrameStore;
@@ -62,10 +61,6 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     send: Send;
     setView: SetView;
     saved: boolean;
-    settings: boolean;
-    setSettings: (open: boolean) => void;
-    name: string;
-    setName: (value: string) => void;
 }) {
     // v27.62 재생 프레임은 전투 화면만 구독합니다(다른 화면은 동기화 때만 다시 그림).
     const s = useReplayView(base, frames);
@@ -79,7 +74,7 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
     // v3.228 사냥터 난이도 카드에 넣는 집중 사냥 줄은 동기화 상태로만 다시 만들어, 재생 프레임마다 난이도 카드(memo)가 다시 그려지지 않게 합니다.
     const targetStrip = useMemo(() => <TargetStrip base={base} busy={busy} send={send} inline/>, [base, busy, send]);
     return <>
-    <BattleHeading base={base} saved={saved} settings={settings} setSettings={setSettings} name={name} setName={setName} busy={busy} send={send} setView={setView} onSwitchSlot={onSwitchSlot}/>
+    <BattleHeading base={base} saved={saved} setView={setView}/>
     <BattleNotices base={base} send={send} setView={setView}/>
     {show('slots') && <SlotChips s={base} busy={busy} onSwitch={onSwitchSlot}/>}
     <div className="battle-hud" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
@@ -98,10 +93,8 @@ export function BattleView({ s: base, frames, busy, send, setView, saved, settin
 }
 
 /** 도구 줄(업데이트 내역 · 저장 상태 · 설정). 동기화 상태만 봅니다. v3.218 제목 문구(오늘도, 더 깊은 곳으로.)는 없애고 도구만 얇은 한 줄로 둡니다. */
-const BattleHeading = memo(function BattleHeading({ base, saved, settings, setSettings, name, setName, busy, send, setView, onSwitchSlot }: {
-    base: State; saved: boolean; settings: boolean; setSettings: (open: boolean) => void; name: string; setName: (value: string) => void; busy: boolean; send: Send; setView: SetView; onSwitchSlot?: (slot: number) => Promise<void>;
-}) {
-    return <Heading eyebrow="THE ENDLESS ADVENTURE"><SessionMetrics base={base}/><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><SettingsDialog open={settings} onOpenChange={open => { setSettings(open); setName(base.name); }} s={base} busy={busy} send={send} name={name} setName={setName} onSwitchSlot={onSwitchSlot}/></div></Heading>;
+const BattleHeading = memo(function BattleHeading({ base, saved, setView }: { base: State; saved: boolean; setView: SetView }) {
+    return <Heading eyebrow="THE ENDLESS ADVENTURE"><SessionMetrics base={base}/><div className="battle-heading-tools"><button type="button" className="secondary small battle-updates-link" title="업데이트 내역 바로 보기" onClick={() => setView('updates')}><ScrollText size={14}/><span>업데이트 내역</span><small>v{UPDATE_LOG[0].version}</small></button><span className="save-status battle-save-status">{saved ? <Check size={13}/> : <RefreshCw size={13}/>}<span>{saved ? '저장됨' : '연결 중'}</span></span><SidebarTrigger className="mobile-menu battle-mobile-menu"/><button type="button" className="icon-button settings-button" aria-label="설정" title="설정" onClick={() => setView('settings')}><Settings size={20}/><span>설정</span></button></div></Heading>;
 });
 
 /** v27.88 알림은 한 묶음: 부재중 정산이 있으면 맨 앞, 그다음 이벤트 → 제단 → 안내 팁. 모바일에서는 첫 줄만 보이고 나머지는 펼칩니다. */
