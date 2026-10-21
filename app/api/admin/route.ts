@@ -5,6 +5,7 @@ import { postNewsSample, recentNews, clearChatScope } from '@/game/server/news';
 import { secrecyOn, setSecrecy } from '@/game/server/secrecy';
 import { adminMarket, setAdminMarket } from '@/game/server/market-config';
 import { serverRegions } from '@/game/server/region';
+import { exportFixtures } from '@/game/server/admin';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
 /** v27.26 운영자 도구. 헤더 x-admin-key 필요. POST { action: 'search', query } | 'preview' | 'apply' | v27.27 'events' | 'saveEvent' { event } | 'deleteEvent' { id } | 'toggleEvent' { id, disabled } | 'adjust' { id, gold?, pearls? } | v27.31 'closures' | 'setClosed' { kind: 'stages'|'dungeons', id, closed } | v27.32 'stats' | 소식 테스트 'news' | 'newsTest' { kind, name?, text?, tag? } | v3.190 'clearChat' { scope: 'news'|'global'|'guild'|'all' }. */
@@ -33,6 +34,8 @@ export async function POST(req: Request) { try {
     if (body.action === 'secrecy') return Response.json(body.on === undefined ? { on: await secrecyOn(Date.now()), env: process.env.TIDEBOUND_SECRECY || null } : await setSecrecy(!!body.on, Date.now()), { headers });
     // v3.333 서버 리전 점검: 함수 리전 · DB 리전 · 권장 vercel.json regions.
     if (body.action === 'region') return Response.json(serverRegions(), { headers });
+    // v3.375 세이브 익명 내보내기(재설계 3단계 픽스처): { limit, minLevel } → tests/fixtures/saves 형식 JSON.
+    if (body.action === 'exportFixtures') return Response.json(await exportFixtures({ limit: Number(body.limit) || 20, minLevel: Number(body.minLevel) || 1 }), { headers });
     if (body.action === 'clearBroadcast') { await clearBroadcast(Date.now()); return Response.json({ ok: true }, { headers }); }
     if (body.action === 'setBlessing') return Response.json(await setAltarBlessingLevel(String(body.id ?? ''), Number(body.level), body.minutes === undefined ? undefined : Number(body.minutes)), { headers });
     // 운영 페이지 소식 테스트: 종류별 예시 줄을 실제와 같은 문장·발신자로 올리고 최근 20줄을 돌려줍니다.

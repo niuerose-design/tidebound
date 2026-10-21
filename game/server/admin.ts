@@ -15,6 +15,9 @@ import { DUNGEONS, STAGES, stageById, dungeonById } from '../data/world';
 import { PROGRESSION } from '../data/progression';
 import { skillById } from '../data/skills';
 import type { State } from '../types';
+import { anonymizeState, type SaveFixtureFile } from '../systems/anonymize';
+import { GAME_BUILD } from '../data/update-log';
+import { SAVE_VERSION } from '../data/balance';
 import { ALTAR, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, blessingLevelMs } from '../data/altar';
 import { refreshAltarEvents } from './events-config';
 import { offlineCapSeconds } from '../data/economy';
@@ -382,4 +385,22 @@ export async function adminIncome(query = '', now = Date.now()) {
         top: [...recent].sort((a, b) => b.perHour - a.perHour).slice(0, 30),
         picked: picked.sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 10),
     };
+}
+
+/**
+ * v3.375 세이브 익명 내보내기(재설계 3단계 픽스처). 최근에 저장된 순으로 limit 개, 레벨 minLevel 이상만.
+ * id 는 계정 id 의 SHA-1 앞 8자리라 원래 계정을 되짚을 수 없고, 상태는 anonymizeState 로 이름 · 계정 · 길드 · 상대 기록을 지웁니다.
+ */
+export async function exportFixtures({ limit = 20, minLevel = 1 }: { limit?: number; minLevel?: number } = {}): Promise<SaveFixtureFile> {
+    const n = Math.max(1, Math.min(200, Math.floor(limit))), lv = Math.max(1, Math.floor(minLevel));
+    const rows = (await db().listPlayers()).sort((a, b) => b.updated_at - a.updated_at);
+    const saves: SaveFixtureFile['saves'] = [];
+    for (const row of rows) {
+        if (saves.length >= n) break;
+        let s: State; try { s = JSON.parse(row.state); } catch { continue; }
+        if (typeof s.level !== 'number' || s.level < lv) continue;
+        const [account, slot] = row.id.split('#');
+        saves.push({ id: 'fx_' + createHash('sha1').update(account).digest('hex').slice(0, 8), slot: Number(slot || 1), revision: row.revision, updatedAt: row.updated_at, level: s.level, rebirths: s.rebirths || 0, job: s.job, state: anonymizeState(s, saves.length + 1) });
+    }
+    return { kind: 'tidebound-save-fixtures', build: GAME_BUILD, saveVersion: SAVE_VERSION, exportedAt: new Date().toISOString(), count: saves.length, saves };
 }
