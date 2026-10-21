@@ -70,8 +70,8 @@ export const STAGE_FIT: Record<string, number> = {
     brook: 0, bay: 0, reef: 0, kelp: 0, wreck: 2, volcanic: 5, trench: 5, moon: 5, starfall: 10, duskVents: 10,
     coralForest: 10, dragonNest: 15, memoryLane: 15, vanishingJourney: 20,
     lithSwarm: 10, henesysSwarm: 10, perionSwarm: 10, elliniaSwarm: 20, kerningSwarm: 20, aquaSwarm: 15, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20,
-    // v3.367 코프룰루: 아직 측정 전이라 입장 환생과 같음(check-stages.mjs로 재측정 뒤 갱신).
-    derelictHangar: 25, fracturedDeck: 25, crystalQuarry: 30, gasCaldera: 30, spawningMarsh: 35, nerveCorridor: 35, lightSpire: 40, voidGallery: 40, ashOrbitSwarm: 27, veinSwarm: 32, hiveSwarm: 37, clusterSwarm: 42,
+    // v3.367 코프룰루(check-stages.mjs --rebirths 25~50 · 0.15시간 측정): 사망 0 · 평균 처치 1턴. 결정 채굴장 · 산란 늪은 ‘앞 사냥터 이상 경험치’ 조건을 못 채워(Lv.110 위 몬스터 경험치는 EXP_LEVEL_GAP으로 같음) 입장 환생을 둠.
+    derelictHangar: 25, fracturedDeck: 25, crystalQuarry: 30, gasCaldera: 25, spawningMarsh: 35, nerveCorridor: 35, lightSpire: 25, voidGallery: 40, ashOrbitSwarm: 25, veinSwarm: 30, hiveSwarm: 30, clusterSwarm: 35,
 };
 const HABITAT_REBIRTH: Record<string, number> = { lithSwarm: 2, henesysSwarm: 2, perionSwarm: 2, elliniaSwarm: 3, kerningSwarm: 7, aquaSwarm: 14, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20, ashOrbitSwarm: 27, veinSwarm: 32, hiveSwarm: 37, clusterSwarm: 42 };
 for (const st of BASE_STAGES) st.fit = STAGE_FIT[st.id];
