@@ -5,11 +5,13 @@
  *  - 위(units): 유닛 토큰 · 이동 경로 · 초점 고리 · 타격 · 회복 · 피해 숫자 · 쓰러짐 연출. 포인터 이벤트를 받지 않습니다.
  * 그 사이에 DOM 칸(접근성 · 초점 · 범위 색)이 놓입니다(battle-screen.tsx). 좌표는 geometry.ts가 정합니다.
  * 보기: flat(정사각 격자) · iso(2:1 아이소메트릭, 지형 높이 · 옆면 · 그림자로 입체감). 엔진 상태는 바꾸지 않고 보여 주기만 합니다.
+ * iso 보기는 블렌더로 미리 렌더한 스프라이트(sprites.ts, public/art/tactics)가 있으면 그것을 쓰고, 아직 안 왔거나 없는 지형 · 클래스는 절차적으로 그립니다.
  */
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import type { BattleUnit, CombatResult, Pos } from '@/game/srpg/engine/types';
 import { classDef } from '@/game/srpg/data/classes';
 import type { Geometry } from './geometry';
+import { getSprites, onSpritesReady, type SpriteSet } from './sprites';
 export type MapAnim = { kind: 'move'; uid: string; path: Pos[] } | { kind: 'combat'; result: CombatResult } | { kind: 'event'; x: number; y: number; text: string; color?: string };
 export interface MapCanvasHandle { play: (anims: MapAnim[]) => Promise<void>; busy: () => boolean }
 interface Props { tiles: string[]; units: BattleUnit[]; geo: Geometry; goal: Pos | null; used: Set<string>; path: Pos[] | null; focusCell: Pos | null; selectedUid: string | null; inspectedUid: string | null; actingUid: string | null; showGrid: boolean; speed: 'normal' | 'fast'; reducedMotion: boolean }
@@ -17,8 +19,8 @@ type Disp = { x: number; y: number; alpha: number; flash: number; shake: number;
 type Popup = { x: number; y: number; text: string; color: string; t0: number; dur: number; big: boolean };
 type Ring = { x: number; y: number; t0: number; dur: number; color: string };
 const SIDE = { player: { body: '#1d4a5e', edge: '#4fa3c7', text: '#e6f6ff', hp: '#6fcf97' }, enemy: { body: '#5c2626', edge: '#d46a6a', text: '#ffe6e6', hp: '#ef8c85' }, ally: { body: '#2f5a30', edge: '#7ad57a', text: '#e9ffe9', hp: '#a4e9ba' } } as const;
-/** 지형 높이(단위: geometry.unit). 물은 낮고 벽 · 산은 높습니다. */
-const HEIGHT: Record<string, number> = { '.': 0, F: 0, M: .9, '^': 1.3, '~': -.18, '=': .02, '#': .8, D: .8, T: .12, S: .45, H: 0, R: .05, C: 0, X: .04 };
+/** 지형 높이(단위: geometry.unit). 물은 낮고 벽 · 산은 높습니다. 블렌더 타일(tools/tactics-art)의 윗면 높이와 같습니다. */
+export const HEIGHT: Record<string, number> = { '.': 0, F: 0, M: .9, '^': 1.3, '~': -.18, '=': .02, '#': .8, D: .8, T: .12, S: .45, H: 0, R: .05, C: 0, X: .04 };
 const TOP: Record<string, string> = { '.': '#2c4a3e', F: '#2a473c', M: '#5a4f3f', '^': '#7f7f72', '~': '#1b4a66', '=': '#8b6b3f', '#': '#2a2f35', D: '#2a2f35', T: '#4a4a52', S: '#4a4a52', H: '#2c4a3e', R: '#3f4a44', C: '#2c4a3e', X: '#3a2f2a' };
 const hash = (x: number, y: number, s = 0) => { let h = (x * 374761393 + y * 668265263 + s * 2246822519) >>> 0; h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 const ease = (t: number) => t < .5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
@@ -41,7 +43,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(p
     const drawTerrain = useCallback(() => {
         const c = terrainRef.current; if (!c) return;
         const { tiles, geo, showGrid } = propsRef.current;
-        const k = `${tiles.join('|')}:${geo.view}:${geo.tw}:${showGrid}:${Math.min(2, window.devicePixelRatio || 1)}`;
+        const sp = geo.view === 'iso' ? getSprites() : null;
+        const k = `${tiles.join('|')}:${geo.view}:${geo.tw}:${showGrid}:${Math.min(2, window.devicePixelRatio || 1)}:${sp ? 'sprite' : 'proc'}`;
         if (terrainKey.current === k) return; terrainKey.current = k;
         const g = setup(c, geo);
         g.clearRect(0, 0, geo.width, geo.height);
@@ -50,12 +53,13 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(p
         if (geo.view === 'flat') { for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) drawFlatTile(g, at, x, y, geo.tw); if (showGrid) { g.strokeStyle = '#0b1a1e55'; g.lineWidth = 1; for (let x = 0; x <= w; x++) { g.beginPath(); g.moveTo(x * geo.tw + .5, 0); g.lineTo(x * geo.tw + .5, h * geo.tw); g.stroke(); } for (let y = 0; y <= h; y++) { g.beginPath(); g.moveTo(0, y * geo.tw + .5); g.lineTo(w * geo.tw, y * geo.tw + .5); g.stroke(); } } return; }
         // iso: 뒤(x+y 작음)부터 앞으로 그려 앞 칸이 뒤 칸을 가립니다.
         g.fillStyle = '#0b1a1e'; g.fillRect(0, 0, geo.width, geo.height);
-        for (let s = 0; s <= w + h - 2; s++) for (let x = Math.max(0, s - h + 1); x <= Math.min(w - 1, s); x++) drawIsoTile(g, at, x, s - x, geo, showGrid);
+        for (let s = 0; s <= w + h - 2; s++) for (let x = Math.max(0, s - h + 1); x <= Math.min(w - 1, s); x++) drawIsoTile(g, at, x, s - x, geo, showGrid, sp);
     }, []);
     // ── 유닛 · 연출 ──
     const drawUnits = useCallback(() => {
         const c = unitsRef.current; if (!c) return;
         const p = propsRef.current; const { geo, units, tiles } = p;
+        const sp = geo.view === 'iso' ? getSprites() : null;
         const g = setup(c, geo); g.clearRect(0, 0, geo.width, geo.height);
         const t = now();
         const liftOf = (x: number, y: number) => (HEIGHT[tiles[y]?.[x] ?? '.'] ?? 0) * (geo.view === 'iso' ? geo.unit : 0);
@@ -69,26 +73,27 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(p
         if (p.focusCell) { g.save(); g.strokeStyle = '#81cbb4'; g.lineWidth = 2; poly(g, geo.polygon(p.focusCell[0], p.focusCell[1], liftOf(p.focusCell[0], p.focusCell[1]))); g.stroke(); g.restore(); }
         if (p.path && p.path.length > 1) drawPath(g, p.path, geo, liftOf);
         const opts = (d: Disp, u: BattleUnit, extra: Partial<TokenOpts> = {}): TokenOpts => ({ alpha: d.alpha, lift: d.lift, flash: d.flash, shake: d.shake, fall: d.fall, acted: u.acted && u.side === 'player', selected: p.selectedUid === u.uid, inspected: p.inspectedUid === u.uid, acting: p.actingUid === u.uid, ...extra });
-        for (const [uid, gh] of ghosts.current) { const k = p.reducedMotion ? 1 : Math.min(1, (t - gh.t0) / 560); if (k >= 1) { ghosts.current.delete(uid); disp.current.delete(uid); continue; } drawToken(g, gh.u, gh.d.x, gh.d.y, geo, liftOf, opts(gh.d, gh.u, { alpha: 1 - k, fall: k, acted: false, selected: false, inspected: false, acting: false })); }
+        for (const [uid, gh] of ghosts.current) { const k = p.reducedMotion ? 1 : Math.min(1, (t - gh.t0) / 560); if (k >= 1) { ghosts.current.delete(uid); disp.current.delete(uid); continue; } drawToken(g, gh.u, gh.d.x, gh.d.y, geo, liftOf, opts(gh.d, gh.u, { alpha: 1 - k, fall: k, acted: false, selected: false, inspected: false, acting: false }), sp); }
         const sorted = [...units].filter(u => u.hp > 0 && u.x >= 0).sort((a, b) => (a.x + a.y) - (b.x + b.y) || a.y - b.y);
         for (const u of sorted) {
             let d = disp.current.get(u.uid);
             if (!d) { d = { x: u.x, y: u.y, alpha: 1, flash: 0, shake: 0, lift: 0, fall: 0 }; disp.current.set(u.uid, d); }
             if (!tweens.current.has(u.uid)) { d.x = u.x; d.y = u.y; }
-            drawToken(g, u, d.x, d.y, geo, liftOf, opts(d, u));
+            drawToken(g, u, d.x, d.y, geo, liftOf, opts(d, u), sp);
             d.flash = Math.max(0, d.flash - .08); d.shake = Math.max(0, d.shake - .6);
         }
         rings.current = rings.current.filter(r => t - r.t0 < r.dur);
         for (const r of rings.current) { const k = (t - r.t0) / r.dur; const c0 = geo.center(r.x, r.y); const cy = c0.cy - liftOf(Math.round(r.x), Math.round(r.y)); g.save(); g.globalAlpha = 1 - k; g.strokeStyle = r.color; g.lineWidth = 2; g.beginPath(); g.ellipse(c0.cx, cy, geo.tw * (.18 + k * .3), geo.th * (.18 + k * .3), 0, 0, Math.PI * 2); g.stroke(); g.restore(); }
-        if (geo.view === 'iso') occlude(g, tiles, geo, [...sorted.map(u => ({ u, d: disp.current.get(u.uid)! })), ...[...ghosts.current.values()].map(gh => ({ u: gh.u, d: gh.d }))]);
+        if (geo.view === 'iso') occlude(g, tiles, geo, [...sorted.map(u => ({ u, d: disp.current.get(u.uid)! })), ...[...ghosts.current.values()].map(gh => ({ u: gh.u, d: gh.d }))], sp);
         popups.current = popups.current.filter(pp => t - pp.t0 < pp.dur);
-        for (const pp of popups.current) { const k = (t - pp.t0) / pp.dur; const a = k < .15 ? k / .15 : k > .8 ? (1 - k) / .2 : 1; const c0 = geo.center(pp.x, pp.y); const fs = Math.round(geo.th * (pp.big ? .42 : .34)); g.save(); g.globalAlpha = a; g.font = `700 ${fs}px Pretendard, 'Noto Sans KR', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; const cx = c0.cx, cy = c0.cy - liftOf(Math.round(pp.x), Math.round(pp.y)) - geo.th * (geo.view === 'iso' ? 1.2 : .4) - k * geo.th * .6; const tw = g.measureText(pp.text).width + 10, th = fs + 6; g.fillStyle = '#000000aa'; roundRect(g, cx - tw / 2, cy - th / 2, tw, th, 4); g.fill(); g.fillStyle = pp.color; g.fillText(pp.text, cx, cy + 1); g.restore(); }
+        for (const pp of popups.current) { const k = (t - pp.t0) / pp.dur; const a = k < .15 ? k / .15 : k > .8 ? (1 - k) / .2 : 1; const c0 = geo.center(pp.x, pp.y); const fs = Math.round(geo.th * (pp.big ? .42 : .34)); g.save(); g.globalAlpha = a; g.font = `700 ${fs}px Pretendard, 'Noto Sans KR', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; const cx = c0.cx, cy = c0.cy - liftOf(Math.round(pp.x), Math.round(pp.y)) - (geo.view === 'iso' ? geo.unit * 1.15 : geo.th * .4) - k * geo.th * .6; const tw = g.measureText(pp.text).width + 10, th = fs + 6; g.fillStyle = '#000000aa'; roundRect(g, cx - tw / 2, cy - th / 2, tw, th, 4); g.fill(); g.fillStyle = pp.color; g.fillText(pp.text, cx, cy + 1); g.restore(); }
     }, []);
     const active = () => tweens.current.size > 0 || popups.current.length > 0 || rings.current.length > 0 || ghosts.current.size > 0 || [...disp.current.values()].some(d => d.flash > 0 || d.shake > 0);
     const loop = useCallback(() => { drawUnits(); if (active()) raf.current = requestAnimationFrame(loop); else running.current = false; }, [drawUnits]);
     const kick = useCallback(() => { if (running.current) return; running.current = true; raf.current = requestAnimationFrame(loop); }, [loop]);
     useEffect(() => { drawTerrain(); drawUnits(); if (active()) kick(); });
     useEffect(() => () => cancelAnimationFrame(raf.current), []);
+    useEffect(() => onSpritesReady(() => { drawTerrain(); drawUnits(); }), [drawTerrain, drawUnits]);
     const dur = (ms: number) => propsRef.current.reducedMotion ? 0 : propsRef.current.speed === 'fast' ? ms * .4 : ms;
     const wait = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
     const moveAlong = async (uid: string, path: Pos[]) => {
@@ -142,17 +147,22 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(p
 /** 지형 중 유닛을 가릴 만큼 솟은 것(벽 · 문 · 산 · 봉우리 · 요새 · 민가 · 숲 · 폐허). */
 const TALL = new Set(['#', 'D', 'M', '^', 'S', 'H', 'F', 'R', 'T']);
 /** 유닛보다 앞에 있는 높은 칸을 유닛 위에 다시 그립니다(앞 블록이 뒤 유닛을 가림). 유닛 카드와 칸이 화면에서 겹칠 때만. */
-function occlude(g: CanvasRenderingContext2D, tiles: string[], geo: Geometry, units: { u: BattleUnit; d: Disp }[]) {
+function occlude(g: CanvasRenderingContext2D, tiles: string[], geo: Geometry, units: { u: BattleUnit; d: Disp }[], sp: SpriteSet | null) {
     if (!units.length) return;
     const at = (x: number, y: number) => tiles[y]?.[x] ?? '#';
     const w = tiles[0].length, h = tiles.length;
-    const cards = units.map(({ d }) => { const c = geo.center(d.x, d.y); return { depth: d.x + d.y, x0: c.cx - geo.tw * .25, x1: c.cx + geo.tw * .25, y0: c.cy - geo.th * 1.9, y1: c.cy + geo.th * .4 }; });
+    const cards = units.map(({ d }) => { const c = geo.center(d.x, d.y); return { depth: d.x + d.y, x0: c.cx - geo.tw * .3, x1: c.cx + geo.tw * .3, y0: c.cy - geo.unit * 1.6, y1: c.cy + geo.th * .4 }; });
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const ch = at(x, y); if (!TALL.has(ch)) continue;
-        const c = geo.center(x, y); const top = c.cy - geo.th * 1.6, bottom = c.cy + geo.th * .5, left = c.cx - geo.tw / 2, right = c.cx + geo.tw / 2;
+        const c = geo.center(x, y); const top = c.cy - geo.unit * 1.5, bottom = c.cy + geo.th * .5, left = c.cx - geo.tw / 2, right = c.cx + geo.tw / 2;
         const depth = x + y;
-        if (cards.some(k => depth > k.depth + .5 && k.x1 > left && k.x0 < right && k.y1 > top && k.y0 < bottom)) drawIsoTile(g, at, x, y, geo, false);
+        if (cards.some(k => depth > k.depth + .5 && k.x1 > left && k.x0 < right && k.y1 > top && k.y0 < bottom)) drawIsoTile(g, at, x, y, geo, false, sp);
     }
+}
+/** 스프라이트 한 장을 칸 바닥 중심(cx, cy)에 맞춰 그립니다. 배율은 마름모 가로 기준. */
+function drawSprite(g: CanvasRenderingContext2D, sp: SpriteSet, img: HTMLImageElement, geo: Geometry, cx: number, cy: number) {
+    const s = geo.tw / sp.diamond;
+    g.drawImage(img, cx - sp.anchor[0] * s, cy - sp.anchor[1] * s, sp.frame[0] * s, sp.frame[1] * s);
 }
 type TokenOpts = { alpha: number; lift: number; flash: number; shake: number; fall: number; acted: boolean; selected: boolean; inspected: boolean; acting: boolean };
 // ───────────────────────── iso 지형 ─────────────────────────
@@ -167,10 +177,16 @@ function isoBlock(g: CanvasRenderingContext2D, geo: Geometry, x: number, y: numb
     }
     g.fillStyle = top; poly(g, [n, e, s, wst]); g.fill();
 }
-function drawIsoTile(g: CanvasRenderingContext2D, at: (x: number, y: number) => string, x: number, y: number, geo: Geometry, grid: boolean) {
+function drawIsoTile(g: CanvasRenderingContext2D, at: (x: number, y: number) => string, x: number, y: number, geo: Geometry, grid: boolean, sp: SpriteSet | null) {
     const ch = at(x, y), top = TOP[ch] ?? TOP['.'], hgt = HEIGHT[ch] ?? 0, r = (s: number) => hash(x, y, s);
     const { cx, cy } = geo.center(x, y); const U = geo.unit, tw = geo.tw, th = geo.th;
     const lift = hgt * U, topY = cy - lift;
+    const img = sp?.tiles.get(ch === '=' ? (at(x, y - 1) === '~' || at(x, y + 1) === '~' ? '=v' : '=h') : ch);
+    if (sp && img) {
+        drawSprite(g, sp, img, geo, cx, cy);
+        if (grid) { g.strokeStyle = '#0b1a1e66'; g.lineWidth = 1; poly(g, geo.polygon(x, y, Math.max(0, lift))); g.stroke(); }
+        return;
+    }
     // 물은 바닥 아래로 내려가므로 이웃 땅의 옆면이 보이게 땅(0)을 먼저 깔고 물을 파냅니다.
     if (ch === '~') { isoBlock(g, geo, x, y, 0, '#1f3a46'); isoBlock(g, geo, x, y, hgt, top); g.strokeStyle = '#2f7aa0'; g.lineWidth = 1.5; for (let i = 0; i < 2; i++) { const wy = topY + (i - .5) * th * .3 + (r(30 + i) - .5) * 4, wx = cx - tw * .25 + r(40 + i) * tw * .25; g.beginPath(); g.moveTo(wx, wy); g.quadraticCurveTo(wx + tw * .1, wy - 3, wx + tw * .2, wy); g.stroke(); } }
     else if (ch === '=') { isoBlock(g, geo, x, y, -.18, '#1b4a66'); const vertical = at(x, y - 1) === '~' || at(x, y + 1) === '~'; g.fillStyle = top; const [n, e, s, wst] = geo.polygon(x, y, hgt * U); poly(g, vertical ? [[n[0] - tw * .12, n[1] + th * .06], [e[0] - tw * .12, e[1] - th * .06], [s[0] + tw * .12, s[1] - th * .06], [wst[0] + tw * .12, wst[1] + th * .06]] : [[n[0] + tw * .12, n[1] + th * .06], [e[0] - tw * .12, e[1] + th * .06], [s[0] - tw * .12, s[1] - th * .06], [wst[0] + tw * .12, wst[1] - th * .06]]); g.fill(); g.strokeStyle = '#5a3f22'; g.lineWidth = 1; for (let i = 1; i < 5; i++) { const k = i / 5; g.beginPath(); if (vertical) { g.moveTo(wst[0] + (n[0] - wst[0]) * k + tw * .1, wst[1] + (n[1] - wst[1]) * k); g.lineTo(s[0] + (e[0] - s[0]) * k - tw * .1, s[1] + (e[1] - s[1]) * k); } else { g.moveTo(wst[0] + (s[0] - wst[0]) * k + tw * .1, wst[1] + (s[1] - wst[1]) * k); g.lineTo(n[0] + (e[0] - n[0]) * k - tw * .1, n[1] + (e[1] - n[1]) * k); } g.stroke(); } }
@@ -220,14 +236,40 @@ function drawPath(g: CanvasRenderingContext2D, path: Pos[], geo: Geometry, liftO
     const [lx, ly] = pts[pts.length - 1], [px, py] = pts[pts.length - 2]; const ang = Math.atan2(ly - py, lx - px), s = geo.th * .22;
     g.fillStyle = '#8fd3ef'; g.beginPath(); g.moveTo(lx + Math.cos(ang) * s, ly + Math.sin(ang) * s); g.lineTo(lx + Math.cos(ang + 2.5) * s, ly + Math.sin(ang + 2.5) * s); g.lineTo(lx + Math.cos(ang - 2.5) * s, ly + Math.sin(ang - 2.5) * s); g.closePath(); g.fill(); g.restore();
 }
+/** iso 스프라이트 유닛: 블렌더 그림 + 발밑 고리(선택 · 조사 · 행동 중 · 설득 가능) + 체력 막대 + 클래스 글자 배지(편 색). 행동을 마친 아군은 회색. */
+function drawSpriteToken(g: CanvasRenderingContext2D, u: BattleUnit, glyph: string, col: (typeof SIDE)[keyof typeof SIDE], geo: Geometry, sp: SpriteSet, img: HTMLImageElement, cx: number, baseX: number, baseY: number, o: TokenOpts) {
+    const s = geo.tw / sp.diamond, tw = geo.tw, th = geo.th;
+    g.save(); g.globalAlpha = o.alpha;
+    // 발밑 고리(바닥 마름돌 위의 타원)
+    const ringR = tw * .2;
+    if (u.recruitableAs || o.selected || o.inspected || o.acting) { g.lineWidth = 2.5; g.strokeStyle = o.acting ? '#ff8a8a' : o.selected ? '#ffffff' : u.recruitableAs ? '#ffd566' : '#ffd566'; if ((o.inspected && !o.selected) || u.recruitableAs) g.setLineDash([5, 4]); g.beginPath(); g.ellipse(cx, baseY, ringR, ringR * .5, 0, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+    if (u.side === 'ally') { g.lineWidth = 1.5; g.strokeStyle = col.edge; g.beginPath(); g.ellipse(cx, baseY, ringR * .8, ringR * .4, 0, 0, Math.PI * 2); g.stroke(); }
+    if (o.fall > 0) { g.translate(baseX, baseY); g.rotate(o.fall * 1.2); g.translate(-baseX, -baseY); }
+    if (o.acted) g.filter = 'grayscale(.85) brightness(.6)';
+    const top = baseY - sp.anchor[1] * s - o.lift, left = baseX - sp.anchor[0] * s;
+    g.drawImage(img, left, top, sp.frame[0] * s, sp.frame[1] * s);
+    if (o.flash > 0) { g.globalAlpha = o.alpha * o.flash; g.filter = 'brightness(4)'; g.drawImage(img, left, top, sp.frame[0] * s, sp.frame[1] * s); g.globalAlpha = o.alpha; }
+    g.filter = 'none';
+    // 체력 막대(발밑 앞)
+    const bw = tw * .34, bh = Math.max(3, th * .08), bx = baseX - bw / 2, by = baseY + th * .22 - o.lift;
+    g.fillStyle = '#0b1a1e'; roundRect(g, bx, by, bw, bh, 2); g.fill(); g.fillStyle = col.hp; roundRect(g, bx, by, bw * Math.max(0, Math.min(1, u.hp / u.stats.hp)), bh, 2); g.fill();
+    // 클래스 글자 배지(편 색 원): 그림이 작아도 무엇인지 읽히게. 글자는 11px 이상(HIG).
+    const br = Math.max(9, th * .2), bcx = baseX - tw * .19, bcy = baseY - geo.unit * .95 - o.lift;
+    g.fillStyle = col.body; g.strokeStyle = u.boss ? '#d4b579' : col.edge; g.lineWidth = u.boss ? 2 : 1.5; g.beginPath(); g.arc(bcx, bcy, br, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.fillStyle = col.text; g.font = `700 ${Math.round(br * 1.25)}px Pretendard, 'Noto Sans KR', sans-serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(glyph, bcx, bcy + 1);
+    if (u.boss) { g.fillStyle = '#d4b579'; const cw = br * 1.1, cy0 = bcy - br - 1; g.beginPath(); g.moveTo(bcx - cw / 2, cy0); g.lineTo(bcx - cw / 2, cy0 - br * .5); g.lineTo(bcx - cw / 6, cy0 - br * .2); g.lineTo(bcx, cy0 - br * .65); g.lineTo(bcx + cw / 6, cy0 - br * .2); g.lineTo(bcx + cw / 2, cy0 - br * .5); g.lineTo(bcx + cw / 2, cy0); g.closePath(); g.fill(); }
+    g.restore();
+}
 /** 유닛 토큰. flat: 바닥에 놓인 패, iso: 칸 위에 세운 카드. 편은 색과 모양으로 함께 구분합니다(아군 네모 · 적 둥근 · 중립 겹테두리). */
-function drawToken(g: CanvasRenderingContext2D, u: BattleUnit, x: number, y: number, geo: Geometry, liftOf: (x: number, y: number) => number, o: TokenOpts) {
+function drawToken(g: CanvasRenderingContext2D, u: BattleUnit, x: number, y: number, geo: Geometry, liftOf: (x: number, y: number) => number, o: TokenOpts, sp: SpriteSet | null) {
     const cls = classDef(u.classId), col = SIDE[u.side], iso = geo.view === 'iso';
     const sx = o.shake ? (Math.random() - .5) * o.shake : 0, sy = o.shake ? (Math.random() - .5) * o.shake : 0;
     // 이동 중에는 두 칸 사이의 높이를 보간합니다.
     const fx = Math.floor(x), fy = Math.floor(y), cx1 = Math.ceil(x), cy1 = Math.ceil(y);
     const ground = (liftOf(fx, fy) + liftOf(cx1, cy1)) / 2;
     const c = geo.center(x, y); const baseX = c.cx + sx, baseY = c.cy - ground + sy;
+    const img = iso && sp ? sp.units.get(`${u.classId}:${u.side}`) : undefined;
+    if (sp && img) { drawSpriteToken(g, u, cls.glyph, col, geo, sp, img, c.cx, baseX, baseY, o); return; }
     const cw = iso ? geo.tw * .36 : geo.tw * .68, chh = iso ? geo.th * 1.25 : geo.tw * .68;
     const top = iso ? baseY - chh - o.lift + geo.th * .1 : baseY - chh / 2 - o.lift;
     g.save(); g.globalAlpha = o.alpha;

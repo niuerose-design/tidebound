@@ -23,8 +23,10 @@ export interface Geometry {
     /** 마름모 가로 · 세로(iso) 또는 칸 한 변(flat). */
     tw: number; th: number;
 }
-/** iso 보기에서 높은 지형(봉우리 1.3단)이 맵 위로 삐져나오지 않게 두는 위 여백(높이 단위). */
-const ISO_TOP_PAD = 1.6;
+/** iso 보기에서 높은 지형(봉우리 1.3단)과 그 위 유닛이 맵 위로 삐져나오지 않게 두는 위 여백(높이 단위). */
+const ISO_TOP_PAD = 1.3;
+/** 아래 여백: 맨 앞 칸의 옆면(땅 두께 0.5단)이 보이게. */
+const ISO_BOTTOM_PAD = .5;
 export function makeGeometry(view: View, tile: number, w: number, h: number): Geometry {
     if (view === 'flat') {
         return {
@@ -35,11 +37,12 @@ export function makeGeometry(view: View, tile: number, w: number, h: number): Ge
             polygon: (x, y) => [[x * tile, y * tile], [x * tile + tile, y * tile], [x * tile + tile, y * tile + tile], [x * tile, y * tile + tile]],
         };
     }
-    const tw = tile * 2, th = tile, unit = tile * .55, pad = unit * ISO_TOP_PAD;
+    // 높이 1단 = 칸 한 변(세계 단위 1)을 30° 위에서 본 세로 픽셀 = cos30° · tw/√2 ≈ .612·tw. 블렌더 스프라이트(tools/tactics-art)와 같은 비율입니다.
+    const tw = tile * 2, th = tile, unit = tw * .612, pad = unit * ISO_TOP_PAD;
     const ox = (h - 1) * tw / 2; // x=0,y=h-1 칸이 가장 왼쪽
     const center = (x: number, y: number) => ({ cx: ox + (x - y) * tw / 2 + tw / 2, cy: pad + (x + y) * th / 2 + th / 2 });
     return {
-        view, width: (w + h) * tw / 2, height: pad + (w + h) * th / 2, tw, th, unit,
+        view, width: (w + h) * tw / 2, height: pad + (w + h) * th / 2 + unit * ISO_BOTTOM_PAD, tw, th, unit,
         center,
         cellRect: (x, y) => { const c = center(x, y); return { left: c.cx - tw / 2, top: c.cy - th / 2, width: tw, height: th }; },
         unproject: (px, py) => { const a = (px - ox - tw / 2) / (tw / 2), b = (py - pad - th / 2) / (th / 2); const x = Math.round((a + b) / 2), y = Math.round((b - a) / 2); return x >= 0 && y >= 0 && x < w && y < h ? [x, y] : null; },

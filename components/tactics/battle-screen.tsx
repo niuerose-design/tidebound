@@ -14,7 +14,7 @@ import * as B from '@/game/srpg/engine/battle';
 import { enemyStep } from '@/game/srpg/engine/ai';
 import { saveSession, loadPrefs, savePrefs, tileSizes, type Session, type Prefs } from './storage';
 import { ConfirmButton } from '@/components/game/confirm-button';
-import { MapCanvas, type MapCanvasHandle, type MapAnim } from './map-canvas';
+import { MapCanvas, HEIGHT, type MapCanvasHandle, type MapAnim } from './map-canvas';
 import { makeGeometry } from './geometry';
 import { StatGrid, UnitHeader, ItemList } from './unit-sheet';
 import { DialogueBox } from './dialogue';
@@ -236,6 +236,8 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
         if (ui.kind === 'door') return ui.doors.some(d => d[0] === x && d[1] === y);
         return false;
     };
+    /** iso DOM 칸을 지형 윗면 높이로 올립니다(요새 · 왕좌 위 유닛을 제자리에서 누르게). 벽 · 문은 올리면 뒤 칸을 가리므로 바닥에 둡니다. */
+    const cellLift = (ch: string) => ch === '#' || ch === 'D' ? 0 : (HEIGHT[ch] ?? 0);
     const cellLabel = (x: number, y: number) => { const here = unitAt(battle, x, y); const t = terrainAt(battle.tiles, x, y).name; return here ? `${x},${y} ${t}, ${here.name} 체력 ${here.hp}/${here.stats.hp}${here.side === 'enemy' ? ' (적)' : here.side === 'ally' ? ' (중립)' : ''}` : `${x},${y} ${t}`; };
     const cellClass = (x: number, y: number) => {
         const k = key(x, y);
@@ -266,7 +268,7 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
             <div className="tx-map-scroll" ref={scrollBox}>
                 <div className={`tx-map ${geo.view}`} style={{ width: geo.width, height: geo.height, ['--tile' as string]: `${tile}px`, gridTemplateColumns: geo.view === 'flat' ? `repeat(${w}, ${tile}px)` : undefined }} onMouseMove={onMapHover} onMouseLeave={() => { if (hoverPath) setHoverPath(null); }}>
                     <MapCanvas ref={canvas} tiles={battle.tiles} units={battle.units} geo={geo} goal={ch.objective.target_pos} used={usedSet} path={hoverPath} focusCell={focusCell} selectedUid={sel?.uid ?? null} inspectedUid={inspected?.uid ?? null} actingUid={acting} showGrid={prefs.showGrid} speed={prefs.speed} reducedMotion={reducedMotion}/>
-                    {battle.tiles.map((row, y) => [...row].map((_, x) => { const focusable = cellFocusable(x, y); const rc = geo.view === 'iso' ? geo.cellRect(x, y) : null; return <div key={`${x},${y}`} className={cellClass(x, y)} style={rc ? { left: rc.left, top: rc.top, width: rc.width, height: rc.height } : undefined} onClick={() => onCell(x, y)} role="button" tabIndex={focusable ? 0 : -1} aria-label={cellLabel(x, y)} onFocus={() => setFocusCell([x, y])} onBlur={() => setFocusCell(f => f && f[0] === x && f[1] === y ? null : f)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCell(x, y); } }}/>; }))}
+                    {battle.tiles.map((row, y) => [...row].map((_, x) => { const focusable = cellFocusable(x, y); const rc = geo.view === 'iso' ? geo.cellRect(x, y) : null; return <div key={`${x},${y}`} className={cellClass(x, y)} style={rc ? { left: rc.left, top: rc.top - cellLift(row[x]) * geo.unit, width: rc.width, height: rc.height } : undefined} onClick={() => onCell(x, y)} role="button" tabIndex={focusable ? 0 : -1} aria-label={cellLabel(x, y)} onFocus={() => setFocusCell([x, y])} onBlur={() => setFocusCell(f => f && f[0] === x && f[1] === y ? null : f)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCell(x, y); } }}/>; }))}
                 </div>
             </div>
             <aside className="tx-side">
