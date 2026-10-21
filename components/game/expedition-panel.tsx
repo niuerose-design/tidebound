@@ -51,12 +51,14 @@ export function Expedition({ s, send, busy }: PanelProps) {
         <div className="section-title"><h2>과제</h2><span>{stale ? '새 과제는 다음 행동 때 바뀝니다' : '한국 시간 자정 · 월요일에 새로'}</span></div>
         {q ? <div className="exp-quest-cols"><div><h3>오늘</h3>{questList(q.daily)}</div><div><h3>이번 주</h3>{questList(q.weekly)}</div></div> : <p className="muted">원정을 출발하면 오늘 · 이번 주 과제가 생깁니다. 완료하면 바로 세계석과 숙련 경험치를 받습니다.</p>}
     </div>;
+    const questDone = q ? [...q.daily, ...q.weekly].filter(x => x.done).length : 0, questAll = q ? q.daily.length + q.weekly.length : 0;
+    const questDetails = <details className="exp-quest-fold" open={!!q && questDone < questAll}><summary>과제 · {q ? `${questDone}/${questAll} 완료` : '출발하면 생깁니다'}</summary>{questBox}</details>;
     const unitWins = s.expeditionStats?.unitWins || {}, unitUse = s.expeditionStats?.units || {};
     // 15단계: 최근 판 요약(몇 라운드까지 갔는지) · 도전 기록.
     const recent = s.expeditionRecent || [];
     const fmtAt = (t: number) => { const d = new Date(t + 9 * 3600_000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()} ${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`; };
-    const recentBox = recent.length ? <div className="exp-recent" aria-label="최근 판"><div className="section-title"><h2>최근 판</h2><span>{s.expeditionAbyssBest ? `심연 최고 ${s.expeditionAbyssBest}라운드 · ` : ''}최고 {s.expeditionBest || 0}승</span></div>
-        <ul>{recent.slice(0, 5).map((x, i) => <li key={i} className={x.cleared ? 'cleared' : ''}><span className="when">{fmtAt(x.at)}</span><b>{x.difficulty && x.difficulty > 1 ? `${difficultyOf(x.difficulty).icon} ` : ''}{x.cleared ? `완주${x.abyss ? ` · 심연 ${x.abyss}` : ''}` : `${Math.min(x.round, EXPEDITION.rounds)}라운드까지`}</b><span>{x.wins}승 · 세계석 +{x.reward}</span><small className="muted">{x.why}</small></li>)}</ul></div> : null;
+    const recentBox = recent.length ? <details className="exp-recent" aria-label="최근 판"><summary>최근 판 · {recent[0].cleared ? `완주${recent[0].abyss ? ` · 심연 ${recent[0].abyss}` : ''}` : `${Math.min(recent[0].round, EXPEDITION.rounds)}라운드까지`} · {recent[0].wins}승{s.expeditionAbyssBest ? ` · 심연 최고 ${s.expeditionAbyssBest}` : ''} · 최고 {s.expeditionBest || 0}승</summary>
+        <ul>{recent.slice(0, 5).map((x, i) => <li key={i} className={x.cleared ? 'cleared' : ''}><span className="when">{fmtAt(x.at)}</span><b>{x.difficulty && x.difficulty > 1 ? `${difficultyOf(x.difficulty).icon} ` : ''}{x.cleared ? `완주${x.abyss ? ` · 심연 ${x.abyss}` : ''}` : `${Math.min(x.round, EXPEDITION.rounds)}라운드까지`}</b><span>{x.wins}승 · 세계석 +{x.reward}</span><small className="muted">{x.why}</small></li>)}</ul></details> : null;
     const feats = s.expeditionFeats || {};
     const featBox = <details className="exp-feats"><summary>도전 기록 · {FEATS.filter(f => feats[f.id]).length}/{FEATS.length}</summary><ul>{FEATS.map(f => <li key={f.id} className={feats[f.id] ? 'on' : ''}><b>{f.name}</b> · {f.desc}{feats[f.id] ? <small> · {feats[f.id]}회 · 칭호 {f.title}</small> : <small className="muted"> · 칭호 {f.title}</small>}</li>)}</ul></details>;
     // 19단계 본편 연결: 잠긴 보스 유닛 · 코어 조각 · 도감 연결.
@@ -82,16 +84,16 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const rewardTable = <p className="footnote">월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>;
     if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
         {season}{weekBanner}
-        {diffPicker}{linkBox}
+        {diffPicker}
         <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
-        {recentBox}{masteryBox}{questBox}{featBox}{codexBox}
+        {recentBox}{masteryBox}{questDetails}{linkBox}{featBox}{codexBox}
         <p className="footnote">유닛 {UNITS.length}종 · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
         {rewardTable}
     </section></>;
     if (r.done) return <>{intro}<section className="panel exp-start">
         <h2>원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
         <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>바로 다시 출발 · {difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name}</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
-        {diffPicker}{linkBox}{recentBox}{masteryBox}{questBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
+        {diffPicker}{recentBox}{masteryBox}{questDetails}{linkBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
     </section></>;
     const mods = runMods(r), runRule = weeklyRuleById(r.rule), bench = benchCap(r);
     const traits = activeTraits(r.board, mods), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];

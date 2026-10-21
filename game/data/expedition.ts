@@ -370,7 +370,8 @@ export const BOSS_UNLOCK_KILLS = 1;
 export const bossUnits = () => UNITS.filter(u => u.special?.includes('boss'));
 export const lockedBossUnits = (book: Record<string, number> | undefined) => new Set(bossUnits().filter(u => (book?.[u.monster] || 0) < BOSS_UNLOCK_KILLS).map(u => u.id));
 /** 보스 코어 조각: 막 보스 · 심연 보스를 이기면 확률로 그 보스의 코어 조각. 조각이 per개 모이면 본편 보스 코어(없으면 획득 · 있으면 각성). */
-export const CORE_SHARD = { per: 10, base: .1, perDifficulty: .03, abyssBonus: .05 };
+/** 운영 결정(v3.356): 칠흑 · 본편 드롭 경제를 흔들지 않도록 1%에서 시작해 난이도마다 +0.5%p, 심연 +1%p(최대 4%). 운영 집계를 보고 조금씩 올립니다. */
+export const CORE_SHARD = { per: 10, base: .01, perDifficulty: .005, abyssBonus: .01 };
 export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.base + CORE_SHARD.perDifficulty * (Math.max(1, difficulty) - 1) + (abyss ? CORE_SHARD.abyssBonus : 0);
 /** 유닛 → 본편 던전 코어 id. 없는 보스(칠흑 보스)는 던전 코어 7종 중 무작위(‘고대의 조각’). */
 export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral' };
