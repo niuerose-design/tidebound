@@ -511,6 +511,7 @@
 @media(max-width:767px){.settings-button{padding:0 9px}.settings-button span{display:none}}
 @media(max-width:767px){.slot-chip.locked{display:none}}
 .sidebar-logout{margin-top:10px;font-size:12px;color:#8ea7a4}
+.sidebar-tactics{display:inline-flex;align-items:center;gap:5px;margin-top:12px;font-size:12px;color:#a2dcc6;text-decoration:none;border:1px solid #34524c;border-radius:6px;padding:5px 9px;background:#17302e}.sidebar-tactics:hover{background:#203733}
 /* v25.16 전투 화면 높이 축소 */
 @media(min-width:901px){
 .battle-console>.session-metrics{padding:10px 0;margin-bottom:11px}

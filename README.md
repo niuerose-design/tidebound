@@ -41,6 +41,20 @@ pnpm dev               # http://localhost:5173
 - `node scripts/e2e-api.mjs <주소>`: 가입·로그인·게임·랭킹 API 흐름
 - GitHub Actions: `main` 푸시와 PR마다 린트·테스트·빌드(타입 검사 포함)·비밀 유출 검사·API 흐름을 실행합니다. `screens-request` 브랜치에 푸시하면 화면 스크린샷을 `screenshots` 브랜치에 저장합니다.
 
+## 판게아 전기 — 턴제 전술 모드 (`/tactics`)
+
+본편과 별개로 돌아가는 턴제 전술 RPG입니다(설계 입력: `pangaea-srpg-kit` 브리프). 10개 장 · 동료 14명 · 클래스 28종, 캐주얼/클래식 영구 사망 선택, 장당 되감기, 전투 중 새로고침 복구를 갖추고 있으며 기록은 브라우저 `localStorage`에만 저장됩니다(서버 · 본편 세이브와 분리).
+
+| 경로 | 내용 |
+| --- | --- |
+| `game/srpg/engine/` | 순수 함수 엔진: 난수(`rng.ts`), 지형(`terrain.ts`), 이동 범위(`grid.ts`), 유닛 생성 · 레벨업 · 승급(`unit.ts`), 전투 계산(`combat.ts`), 상태 전이(`battle.ts`), 적 AI(`ai.ts`) |
+| `game/srpg/data/` | 클래스 · 아이템 · 유닛 · 장(맵 · 대사 · 이벤트 · 증원)과 적 배치(`chapters/ch01~ch10.ts`) |
+| `game/srpg/state/campaign.ts` | 세이브(로스터 · 창고 · 골드 · 클리어 기록)와 베이스 행동(상점 · 장비 · 승급) |
+| `components/tactics/` | 제목 · 베이스 · 출격 준비 · 전투 · 결과 화면. 스타일은 `app/styles/tactics.css` |
+| `tests/tactics.test.mjs` | 엔진 공식 · AI 태세 · 승패 · 캠페인 · 10개 장 자동 플레이(결정론) 테스트 |
+
+새 장을 추가하려면 `game/srpg/data/chapters/`에 파일을 만들고 `index.ts`에 등록합니다. `tests/tactics.test.mjs`가 맵 치수 · 경로 · 민가/상자 이벤트 · 적 좌표 · 증원 그룹 대응을 검사합니다.
+
 ## 주요 폴더
 
 | 경로 | 내용 |

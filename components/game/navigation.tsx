@@ -1,6 +1,6 @@
 'use client';
 import { UPDATE_LOG } from '@/game/data/update-log';
-import { ChevronRight, Lock, LogOut, Leaf } from 'lucide-react';
+import { ChevronRight, Lock, LogOut, Leaf, Swords } from 'lucide-react';
 import type { State } from '@/game/types';
 import { Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { NAV } from './game-shell';
@@ -33,6 +33,8 @@ export function Navigation({ view, setView, s, onLogout }: {
     <SidebarFooter>
     <div className="sidebar-quote">
     <small>OPEN BETA · v{UPDATE_LOG[0].version}</small>
+    {/* v3.367 전기(턴제 전술) 모드는 독립 화면(/tactics)입니다. 본편 세이브와 섞이지 않습니다. */}
+    {s && <a className="sidebar-tactics" href="/tactics"><Swords size={13}/> 판게아 전기 (턴제 전술) 열기</a>}
     {onLogout && <button type="button" className="text-button sidebar-logout" onClick={onLogout}><LogOut size={13}/> 로그아웃</button>}
     </div>
     </SidebarFooter>
