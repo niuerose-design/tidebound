@@ -21,7 +21,7 @@
     min-height:44px
   }
 
-  button.secondary,button.primary,[data-sidebar=trigger] {
+  button.secondary,button.primary,[data-sidebar=trigger],.job-sheet-close,.tide-selector .button-row button {
     min-width:44px
   }
 
