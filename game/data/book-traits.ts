@@ -35,4 +35,9 @@ export const REGION_RESEARCH: Record<string, RegionBonus & { first: RegionBonus 
     '리프레': { label: '물리·마법 공격 +3%', scale: { attack: .03, magic: .03 }, first: { label: '물리 공격 +3% · 물리 방어 +2%', scale: { attack: .03, defense: .02 } } },
     '시간의 신전': { label: '경험치 +3% · 턴당 마나 회복 +0.5', add: { expBonus: .03, manaRegen: .5 }, first: { label: '경험치 +4%', add: { expBonus: .04 } } },
     '아케인 리버': { label: '체력·공격·방어 +2%', scale: { hp: .02, attack: .02, magic: .02, defense: .02, resist: .02 }, first: { label: '체력·공격·방어 +3%', scale: { hp: .03, attack: .03, magic: .03, defense: .03, resist: .03 } } },
+    // v3.367 코프룰루 구역.
+    '잿빛 궤도': { label: '속도 +1 · 연속 행동 확률 +0.5%p', add: { speed: 1, chainBonus: .005 }, first: { label: '속도 +2 · 치명 피해 +3%p', add: { speed: 2, critDamage: .03 } } },
+    '광맥 황야': { label: '물리 방어 +3% · 방어 관통 +1%p', add: { penetration: .01 }, scale: { defense: .03 }, first: { label: '장비 드롭 확률 +5% · 분해 정수 +5%', add: { dropBonus: .005, essenceBonus: .05 } } },
+    '군체 늪지': { label: '지속 피해 +3% · 흡혈 +0.5%p', add: { dotBonus: .03, lifesteal: .005 }, first: { label: '지속 피해 +5% · 변종 출현 +10%', add: { dotBonus: .05 }, rareSpawn: .1 } },
+    '고요한 성단': { label: '마법 공격 +3% · 상태이상 저항 +1%p', add: { statusResist: .01 }, scale: { magic: .03 }, first: { label: '경험치 +4% · 마나 회복 +0.5', add: { expBonus: .04, manaRegen: .5 } } },
 };

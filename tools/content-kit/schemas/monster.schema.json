@@ -120,7 +120,11 @@
         "onyxSwoo",
         "onyxDamien",
         "onyxSeren",
-        "onyxBlackMage"
+        "onyxBlackMage",
+        "onyxVesper",
+        "onyxHalder",
+        "onyxMirren",
+        "onyxSolenne"
       ],
       "description": "전투 성향(game/data/encounters.ts PROFILES → profileIds). 기술 세트·방어/마방/회피/속도 배율이 여기서 정해진다. swift 날쌘 개체(출혈) · armored 단단한 껍질(기절·돌진) · arcane 마력 생물(마법 평타) · venom 독성(중독·출혈) · silencer 침묵(마법 평타) · controller 대지 제어자(감속·기절·복합) · blaze 불꽃(화상·추가타) · frenzy 광폭(추가타·가속) · tidal 혼돈(복합 평타·약화) · stormEel 전격(귀참·침묵). 보스용: venomBoss · arcaneBoss · boss(고대 보스) · zakum · papulatus. 칠흑 보스(onyx*)는 보스마다 전용 성향을 코드로 추가해야 한다. 월드보스 pinkBean, 칠흑 onyx*(9종)도 enum에 있으나 보스 전용이라 일반 몬스터에는 쓰지 않는다."
     },

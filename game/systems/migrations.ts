@@ -402,6 +402,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
         }
         s.guardAffixRescaled = true;
     }
+    // v3.367 코프룰루 사냥터 8곳이 BASE_STAGES 뒤(무리 서식지 앞)에 들어가 옛 서식지 index(14~22)가 8 밀렸습니다. 가장 멀리 간 사냥터가 서식지였던 세이브만 옮깁니다.
+    if (!s.kopruluStagesShifted) { if ((s.bestStage || 0) >= 14) s.bestStage += 8; s.kopruluStagesShifted = true; }
     if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
     const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;

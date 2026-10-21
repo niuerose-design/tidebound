@@ -425,7 +425,7 @@ test('v3.71 options: quality 1 + 0.2 × rarity, ancient+ only options (not on lo
     const G = await L.load('data/gear'), Co = await L.load('systems/commerce');
     assert.equal(G.rarityQuality(6), 2.2); assert.equal(G.rarityQuality(4), 1.8);
     const ancientOnly = G.AFFIX_POOL.filter(a => a.minRarity === 5).map(a => a.id).sort();
-    assert.deepEqual(ancientOnly, ['bounty', 'hunter', 'ruin', 'tempo', 'transcend']);
+    assert.deepEqual(ancientOnly, ['apexHunter', 'bounty', 'cascade', 'eternity', 'executioner', 'harvest', 'hunter', 'ruin', 'tempo', 'transcend', 'warden']);
     for (let i = 0; i < 60; i++) {
         const r = (i % 6) / 6 + .01;
         assert.ok(!G.rollAffixes(4, 400, undefined, () => r, [], 'rod', 100).some(a => ancientOnly.includes(a.id)), 'never on myth');
@@ -733,7 +733,8 @@ test('v3.125 primal gauge fills on every exit path, rare foes are never golden, 
     Eq.applyLevelUp(old, 110, o); assert.equal(old.power, O.onyxPower(110), 'level up uses the onyx formula');
     // 계승 · 칠흑의 재련 상한 150%: 보통 장비는 1(100%)에서 멈춥니다.
     const h = gear('h1', 6); h.heir = 'primal'; h.locked = true; const n = gear('n1', 6);
-    const idx = h.affixes.findIndex(x => G.affixQuality(x, h.power, 6, 100) !== null); assert.ok(idx >= 0);
+    // v3.367 옵션 풀이 커져 같은 난수로 뽑히는 줄이 바뀜: 정수 반올림이 없는 비율 옵션 줄로 비교합니다.
+    const idx = h.affixes.findIndex((x, i) => G.affixQuality(x, h.power, 6, 100) !== null && G.affixDef(x.id)?.kind === 'percent' && G.affixDef(n.affixes[i]?.id)?.kind === 'percent'); assert.ok(idx >= 0, 'a percent line on both');
     assert.equal(Eq.refineTopOf(h), G.HEIR_ROLL_TOP); assert.equal(Eq.refineTopOf(n), 1); assert.equal(Eq.refineTopOf({ onyx: 'x' }), G.HEIR_ROLL_TOP);
     const top = G.refineOption(h.affixes[idx], h.power, 6, () => 1, 100, G.HEIR_ROLL_TOP), plain = G.refineOption(n.affixes[idx], n.power, 6, () => 1, 100);
     assert.ok(G.affixQuality(top, h.power, 6, 100, G.HEIR_ROLL_TOP) > 1.45, 'heir refine reaches 150%'); assert.ok(top.value > plain.value, 'above the normal ceiling');

@@ -41,7 +41,8 @@ export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths
  */
 export const TIDE_CHALLENGE = { nightmareMax: 50, abyssMax: 20, abyssPerFloor: .2 } as const;
 export function tideChallengeBonus(s: Pick<State, 'nightmareBest' | 'abyssBest'>) {
-    const dungeons = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss');
+    // v3.367 코프룰루 던전(환생 28 · 38)은 제외: 메이플 지역 던전 7곳 기준 +50을 그대로 두어 중반 모험가의 상한이 줄지 않게.
+    const dungeons = PLAIN_DUNGEONS.filter(d => d.id !== 'abyss' && !('world' in d && d.world === 'koprulu'));
     const sum = dungeons.reduce((n, d) => n + Math.min(DUNGEON_STAGE.max, s.nightmareBest?.[d.id] || 0), 0);
     const nightmare = Math.min(TIDE_CHALLENGE.nightmareMax, Math.floor(sum * TIDE_CHALLENGE.nightmareMax / (dungeons.length * DUNGEON_STAGE.max)));
     const abyss = Math.min(TIDE_CHALLENGE.abyssMax, Math.floor((s.abyssBest || 0) * TIDE_CHALLENGE.abyssPerFloor));

@@ -21,6 +21,15 @@ export const BASE_STAGES: StageDef[] = [
     { id: 'dragonNest', region: '리프레', place: '용의 둥지', name: '리프레 · 용의 둥지', subtitle: 'LEAFRE · DRAGON NEST', level: 80, rebirth: 15, description: '용의 숲 깊은 곳의 둥지. 드래곤 터틀이 바위처럼 엎드려 있고 와이번이 절벽을 돈다.', monsters: ['lfBlueTurtle', 'lfRedTurtle', 'lfWyvern', 'lfSkelegon', 'lfManticore'], tone: '#7fb069' },
     { id: 'memoryLane', region: '시간의 신전', place: '기억의 길', name: '시간의 신전 · 기억의 길', subtitle: 'TEMPLE OF TIME · MEMORY LANE', level: 90, rebirth: 15, description: '시간이 멈춘 신전의 회랑. 기억의 수호병과 키메라가 지나온 생을 묻는다.', monsters: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo', 'ttLyka'], tone: '#c9a85c' },
     { id: 'vanishingJourney', region: '아케인 리버', place: '소멸의 여로', name: '아케인 리버 · 소멸의 여로', subtitle: 'ARCANE RIVER · VANISHING JOURNEY', level: 100, rebirth: 20, description: '세계의 끝에서 흐르는 강. 에르다가 영혼이 되어 떠돌고, 쉰 번의 생을 건넌 모험가만 이 강을 거슬러 오른다.', monsters: ['arErdaSpirit', 'arMemoryGuard', 'arMysticErda', 'arVanishSoul', 'arTrueErda'], tone: '#8b7fd6' },
+    // v3.367 코프룰루 구역(판게아 바다 너머 별의 바다, tools/content-kit 1차 생성): 사냥터 8곳 Lv.104~132 · 환생 25~40. 이름은 판게아 고유(원작 고유명사 없음).
+    { id: 'derelictHangar', region: '잿빛 궤도', place: '폐선 격납고', name: '잿빛 궤도 · 폐선 격납고', subtitle: 'ASH ORBIT · DERELICT HANGAR', level: 104, rebirth: 25, description: '바다 끝 하늘에 걸린 부서진 정거장. 멈춘 격납고 안에서 녹슨 기계와 떠도는 생물이 스무 번의 생을 건넌 모험가를 맞는다.', monsters: ['aoScrapDrone', 'aoRustSentry', 'aoHangarSpore', 'aoDriftJelly', 'aoCargoSpider', 'aoWeldHound', 'aoCoreLeech', 'aoBlackBoxWarden', 'aoGhostDrone'], tone: '#7f8a99' },
+    { id: 'fracturedDeck', region: '잿빛 궤도', place: '균열 갑판', name: '잿빛 궤도 · 균열 갑판', subtitle: 'ASH ORBIT · FRACTURED DECK', level: 108, rebirth: 25, description: '반으로 갈라진 정거장 외벽 갑판. 중력이 끊긴 틈마다 유령 같은 선원과 별빛을 먹는 생물이 떠다닌다.', monsters: ['aoDeckWraith', 'aoStarMoth', 'aoPatrolUnit', 'aoHullBarnacle', 'aoRiftLurker', 'aoSignalEel', 'aoVoidCrab', 'aoStarEater', 'aoEclipseMoth'], tone: '#8b93a6' },
+    { id: 'crystalQuarry', region: '광맥 황야', place: '결정 채굴장', name: '광맥 황야 · 결정 채굴장', subtitle: 'VEIN WASTES · CRYSTAL QUARRY', level: 112, rebirth: 30, description: '보랏빛 결정이 지층째 드러난 채굴장. 결정을 먹고 자란 갑각 생물과 멈추지 않는 채굴 기계가 서른 번의 생을 건넌 모험가를 가로막는다.', monsters: ['vwShardBeetle', 'vwDigger', 'vwDustWing', 'vwQuarryWorm', 'vwPrismLizard', 'vwOreGolem', 'vwVeinSpirit', 'vwCrystalTitan', 'vwHollowShard'], tone: '#a784c9' },
+    { id: 'gasCaldera', region: '광맥 황야', place: '가스 분화구', name: '광맥 황야 · 가스 분화구', subtitle: 'VEIN WASTES · GAS CALDERA', level: 116, rebirth: 30, description: '노란 가스가 끓어오르는 분화구. 가스를 들이마신 생물은 몸집이 커지고, 숨을 쉴 때마다 독이 번진다.', monsters: ['vwGasToad', 'vwStingWisp', 'vwSulfurCrab', 'vwPipeKeeper', 'vwBloatHound', 'vwCinderWasp', 'vwFumeSerpent', 'vwCalderaMaw', 'vwYellowTitan'], tone: '#c9b24f' },
+    { id: 'spawningMarsh', region: '군체 늪지', place: '산란 늪', name: '군체 늪지 · 산란 늪', subtitle: 'HIVE MARSH · SPAWNING MARSH', level: 120, rebirth: 35, description: '행성 표면을 뒤덮은 보라색 생체 늪. 알주머니마다 새 군체가 깨어나고, 서른다섯 번의 생을 건넌 모험가의 발소리에 늪이 반응한다.', monsters: ['hmLarva', 'hmMarshSlider', 'hmAcidHound', 'hmEggSac', 'hmSpineCrawler', 'hmBroodWatcher', 'hmSpawner', 'hmMarshTyrant', 'hmBlackLarva'], tone: '#8e5fa8' },
+    { id: 'nerveCorridor', region: '군체 늪지', place: '신경 회랑', name: '군체 늪지 · 신경 회랑', subtitle: 'HIVE MARSH · NERVE CORRIDOR', level: 124, rebirth: 35, description: '늪 아래 신경 다발로 이어진 회랑. 벽이 숨을 쉬고, 군체의 뜻을 받은 지배종이 침입자를 조용히 기다린다.', monsters: ['hmNerveRunner', 'hmSpinePillar', 'hmMindEye', 'hmPlateBrute', 'hmSynapseHound', 'hmVeinLeech', 'hmOverseer', 'hmCorridorKing', 'hmPaleOverseer'], tone: '#6e4a8c' },
+    { id: 'lightSpire', region: '고요한 성단', place: '빛의 첨탑', name: '고요한 성단 · 빛의 첨탑', subtitle: 'SILENT CLUSTER · LIGHT SPIRE', level: 128, rebirth: 40, description: '별들 사이에 멈춰 선 고대 문명의 첨탑. 빛으로 짜인 수호자가 마흔 번의 생을 건넌 모험가의 기억을 비춰 본다.', monsters: ['scLightWeaver', 'scGlimmer', 'scMemoryLens', 'scStairStatue', 'scPrismGuard', 'scHaloWisp', 'scShadowEater', 'scSpireKeeper', 'scDawnWeaver'], tone: '#e0c878' },
+    { id: 'voidGallery', region: '고요한 성단', place: '공허 회랑', name: '고요한 성단 · 공허 회랑', subtitle: 'SILENT CLUSTER · VOID GALLERY', level: 132, rebirth: 40, description: '별빛이 닿지 않는 성단의 뒷면. 고대 문명이 봉인한 것들이 회랑을 떠돌고, 바다 너머의 끝이 여기서 보인다.', monsters: ['scUnsealed', 'scVoidJelly', 'scDimStatue', 'scReverser', 'scHollowSentinel', 'scGravityMaw', 'scEchoOfEnd', 'scLastWarden', 'scStillReverser'], tone: '#5a5b8a' },
 ];
 /**
  * v27.80 무리 서식지: 지역마다 하나. 그 지역 몬스터가 전부 무리로만 나옵니다(×100 75% · ×500 25%, 도감·패시브 조건 없음).
@@ -39,6 +48,10 @@ const HABITAT_META: Record<string, { id: string; subtitle: string; description: 
     '리프레': { id: 'leafreSwarm', subtitle: 'LEAFRE · SWARM VALLEY', description: '용의 숲 골짜기를 메운 비룡과 터틀의 무리. 날개 소리만으로 땅이 울린다.', tone: '#6b9d58' },
     '시간의 신전': { id: 'templeSwarm', subtitle: 'TEMPLE OF TIME · SWARM HALL', description: '신전의 대회랑에 줄지어 선 수호병과 키메라. 한 번의 생이 통째로 몰려온다.', tone: '#b8944a' },
     '아케인 리버': { id: 'arcaneSwarm', subtitle: 'ARCANE RIVER · SWARM CURRENT', description: '에르다의 급류. 소멸한 영혼들이 강 전체가 되어 밀려온다.', tone: '#7a6fc4' },
+    '잿빛 궤도': { id: 'ashOrbitSwarm', subtitle: 'ASH ORBIT · SWARM DOCK', description: '정거장 부두를 메운 드론과 포자의 떼. 경보가 울리면 격납고 전체가 한꺼번에 덮친다.', tone: '#6f7a89' },
+    '광맥 황야': { id: 'veinSwarm', subtitle: 'VEIN WASTES · SWARM PIT', description: '채굴 갱도를 가득 메운 결정 벌레의 떼. 한 덩어리로 밀려오는 보랏빛 파도.', tone: '#9470b8' },
+    '군체 늪지': { id: 'hiveSwarm', subtitle: 'HIVE MARSH · SWARM NEST', description: '산란 늪 전체가 하나의 군체다. 알이 한꺼번에 깨어나 늪이 통째로 일어선다.', tone: '#7d4f99' },
+    '고요한 성단': { id: 'clusterSwarm', subtitle: 'SILENT CLUSTER · SWARM HALO', description: '성단의 빛이 한꺼번에 몰려든다. 수호자들이 하나의 빛이 되어 쏟아지는 곳.', tone: '#c9b062' },
 };
 /** 지역 이름 목록(사냥터 순서). */
 export const REGIONS = [...new Set(BASE_STAGES.map(st => st.region))];
@@ -57,8 +70,10 @@ export const STAGE_FIT: Record<string, number> = {
     brook: 0, bay: 0, reef: 0, kelp: 0, wreck: 2, volcanic: 5, trench: 5, moon: 5, starfall: 10, duskVents: 10,
     coralForest: 10, dragonNest: 15, memoryLane: 15, vanishingJourney: 20,
     lithSwarm: 10, henesysSwarm: 10, perionSwarm: 10, elliniaSwarm: 20, kerningSwarm: 20, aquaSwarm: 15, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20,
+    // v3.367 코프룰루: 아직 측정 전이라 입장 환생과 같음(check-stages.mjs로 재측정 뒤 갱신).
+    derelictHangar: 25, fracturedDeck: 25, crystalQuarry: 30, gasCaldera: 30, spawningMarsh: 35, nerveCorridor: 35, lightSpire: 40, voidGallery: 40, ashOrbitSwarm: 27, veinSwarm: 32, hiveSwarm: 37, clusterSwarm: 42,
 };
-const HABITAT_REBIRTH: Record<string, number> = { lithSwarm: 2, henesysSwarm: 2, perionSwarm: 2, elliniaSwarm: 3, kerningSwarm: 7, aquaSwarm: 14, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20 };
+const HABITAT_REBIRTH: Record<string, number> = { lithSwarm: 2, henesysSwarm: 2, perionSwarm: 2, elliniaSwarm: 3, kerningSwarm: 7, aquaSwarm: 14, leafreSwarm: 15, templeSwarm: 15, arcaneSwarm: 20, ashOrbitSwarm: 27, veinSwarm: 32, hiveSwarm: 37, clusterSwarm: 42 };
 for (const st of BASE_STAGES) st.fit = STAGE_FIT[st.id];
 const HABITATS: StageDef[] = REGIONS.map(region => {
     const places = regionPlaces(region), meta = HABITAT_META[region];
@@ -133,6 +148,41 @@ const rows: [
     ['ttMonitor', '메모리 모니터', 88, '기억을 지키는 파수꾼.'], ['ttGuardian', '기억의 수호병', 90, '회랑을 지키는 병사.'], ['ttChimera', '키메라', 91, '여러 짐승이 합쳐진 괴물.'], ['ttDodo', '도도', 92, '시간을 잊은 새.'], ['ttLyka', '릴리노우흐', 94, '신전의 늑대.'],
     ['arErdaSpirit', '에르다 스피릿', 98, '에르다가 뭉친 영혼.'], ['arMemoryGuard', '추억의 수호병', 100, '잊힌 기억의 병사.'], ['arMysticErda', '신비한 에르다', 101, '빛나는 에르다.'], ['arVanishSoul', '소멸의 영혼', 102, '강에 흩어지는 영혼.'], ['arTrueErda', '트루 에르다', 104, '순수한 에르다의 결정.'],
     ['ventCrab', '열수 게', 55, '끓는 물줄기 옆에서 집게를 벼린다. 껍데기가 쇠처럼 울린다.'], ['glassSquid', '유리 오징어', 57, '몸이 투명해 심장의 박동만 보인다.'], ['sulfurEel', '유황 곰치', 59, '숨을 쉴 때마다 노란 연기가 물을 흐린다.'], ['blindShark', '눈먼 상어', 61, '빛을 잃은 대신 물살의 떨림으로 모든 것을 본다.'],
+    // v3.367 코프룰루 구역(Lv.104~138). 이름·설명은 판게아 고유라 maple-monsters.ts 덮어쓰기 없음.
+    ['aoScrapDrone', '고철 드론', 104, '멈춘 정거장을 아직도 정비한다. 모험가를 고장 난 부품으로 본다.'],
+    ['aoRustSentry', '녹슨 경비기', 105, '경보가 꺼진 지 오래지만 명령은 남아 있다. 침입자는 막는다.'],
+    ['aoHangarSpore', '격납고 포자', 106, '화물 틈에 뿌리내린 포자. 기름 냄새를 맡고 모여든다.'],
+    ['aoDriftJelly', '표류 해파리', 107, '중력이 없는 격납고를 느리게 떠돈다. 촉수에 전기가 흐른다.'],
+    ['aoDeckWraith', '갑판 망령', 108, '갑판이 갈라지던 날의 선원들. 아직도 자기 자리를 지킨다.'],
+    ['aoStarMoth', '별빛 나방', 109, '별빛을 먹고 날개가 빛난다. 빛을 들고 있으면 먼저 달려든다.'],
+    ['aoPatrolUnit', '순찰 기계', 110, '갑판을 정해진 길로만 돈다. 길을 막으면 밀어낸다.'],
+    ['aoHullBarnacle', '외벽 따개비', 111, '외벽에 붙어 별바람을 견딘다. 떼어 내려면 껍질부터 깨야 한다.'],
+    ['aoBridgeGuard', '함교 경비기', 110, '함교 문을 지키는 중장갑 기계. 선장의 명령 없이는 비키지 않는다.'],
+    ['vwShardBeetle', '결정 딱정벌레', 112, '결정을 먹고 등갑이 결정이 되었다. 햇빛에 보랏빛으로 반짝인다.'],
+    ['vwDigger', '채굴 기계', 113, '기지가 버려진 뒤에도 땅을 판다. 앞을 막는 것도 광석으로 친다.'],
+    ['vwDustWing', '결정 가루 날개', 114, '날개에서 결정 가루가 떨어진다. 가루를 마시면 눈이 따갑다.'],
+    ['vwQuarryWorm', '채굴장 지렁이', 115, '갱도를 통째로 삼키며 자란다. 입 안에 결정 이빨이 겹겹이 났다.'],
+    ['vwGasToad', '가스 두꺼비', 116, '노란 가스를 마셔 몸이 부풀었다. 터지기 전에 잡아야 한다.'],
+    ['vwStingWisp', '독침 안개', 117, '가스 구름 속을 날며 독침을 떨어뜨린다. 보이지 않을 때가 더 위험하다.'],
+    ['vwSulfurCrab', '유황 게', 118, '분화구 바닥의 유황을 먹고 산다. 집게에서 노란 연기가 난다.'],
+    ['vwPipeKeeper', '가스관 관리기', 119, '가스관을 지키라는 명령만 남았다. 가까이 가면 밸브를 돌려 가스를 뿜는다.'],
+    ['hmLarva', '군체 유충', 120, '알주머니에서 막 깨어났다. 작지만 수백 마리가 한 방향으로 달린다.'],
+    ['hmMarshSlider', '늪 미끄럼이', 121, '촉수로 늪 위를 미끄러진다. 닿는 것마다 늪 아래로 끌어 내린다.'],
+    ['hmAcidHound', '산성 사냥개', 122, '침이 늪보다 독하다. 무리로 사냥하고 먹이를 나누지 않는다.'],
+    ['hmEggSac', '알주머니', 123, '늪 바닥에 박힌 알주머니. 건드리면 껍질이 굳고 안에서 무언가 꿈틀댄다.'],
+    ['hmNerveRunner', '신경 주자', 124, '신경 다발 위를 달린다. 벽이 움찔할 때마다 속도가 붙는다.'],
+    ['hmSpinePillar', '가시 기둥', 125, '벽에서 자라는 기둥. 움직이지 않지만 지나가는 것을 꿰뚫는다.'],
+    ['hmMindEye', '정신 눈알', 126, '회랑 천장에서 내려다본다. 눈이 마주치면 머리가 울린다.'],
+    ['hmPlateBrute', '갑판 군체', 127, '등에 갑판 같은 판을 두른 중장갑 군체. 길을 막고 밀어낸다.'],
+    ['hmMuscleWall', '근육 벽', 126, '심장을 감싼 근육. 베면 아물고, 아물수록 두꺼워진다.'],
+    ['scLightWeaver', '빛의 직조자', 128, '빛으로 짜인 수호자. 공격도 방어도 빛으로 한다.'],
+    ['scGlimmer', '반짝임', 129, '첨탑을 떠도는 빛의 조각. 혼자서는 약하지만 늘 떼로 다닌다.'],
+    ['scMemoryLens', '기억 렌즈', 130, '모험가의 지나온 생을 비춰 본다. 비친 기억은 잠시 말을 잃는다.'],
+    ['scStairStatue', '계단 석상', 131, '첨탑 계단마다 선 결정 석상. 허락 없이 오르면 깨어난다.'],
+    ['scUnsealed', '풀려난 수호자', 132, '봉인이 풀린 고대 수호자. 명령은 잊었고 적의만 남았다.'],
+    ['scVoidJelly', '공허 해파리', 133, '별빛이 닿지 않는 곳을 떠돈다. 촉수가 닿으면 체온이 사라진다.'],
+    ['scDimStatue', '빛 잃은 석상', 134, '빛을 잃고 검게 굳은 석상. 빛이 없으니 깨뜨릴 틈도 없다.'],
+    ['scReverser', '역행자', 135, '시간을 거꾸로 산다. 공격이 닿기 전에 이미 피해 있다.'],
 ];
 /** 레벨별 몬스터 기본 골드. 장비 판매가도 이 곡선을 따릅니다. */
 /** v27.30 몬스터 골드 곡선: Lv.40까지 레벨당 12% 복리, 그 뒤로는 6.5%. 후반 골드가 사용처 비용을 크게 앞지르던 인플레이션을 줄입니다. */
@@ -259,6 +309,53 @@ const specialMonsters: Array<{
     { id: 'onyxSeren', name: '세렌', level: 96, lore: '시간의 신전에 내려온 태양의 수호자. 미트라의 분노가 회랑을 태운다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'onyxBlackMage', name: '검은 마법사', level: 106, lore: '아케인 리버의 끝에서 세계를 다시 쓰려는 초월자. 그의 뒤에는 창세의 빛이 있다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
     { id: 'starfallSeraph', name: '파풀라투스', level: 62, lore: '루디브리엄 시계탑의 시간을 멈춘 차원의 침략자.', rarity: 'legendary' as const, rewardMultiplier: 5.5, boss: true },
+    // v3.367 코프룰루 구역: 희귀~전설(출현 가중치는 secret/odds.ts ODDS.spawn), 난이도 변종(minTier 30~50), 던전 보스 2, 칠흑 보스 4(베스퍼 · 할더 · 미렌 · 솔렌).
+    { id: 'aoCargoSpider', name: '화물 거미', level: 106, lore: '버려진 화물에 실을 치고 기다린다. 짐을 든 모험가부터 노린다.', rarity: 'rare' as const, rewardMultiplier: 1.4 },
+    { id: 'aoWeldHound', name: '용접 사냥개', level: 108, lore: '턱에 달린 용접기가 아직 뜨겁다. 물면 불이 붙는다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'aoCoreLeech', name: '동력 거머리', level: 109, lore: '정거장의 남은 동력을 빨아먹고 자랐다. 닿은 것의 힘을 끊는다.', rarity: 'epic' as const, rewardMultiplier: 1.85 },
+    { id: 'aoBlackBoxWarden', name: '블랙박스 수호기', level: 110, lore: '정거장의 마지막 기록을 품은 기계. 기록을 지키려 모든 것을 막는다.', rarity: 'legendary' as const, rewardMultiplier: 1.9 },
+    { id: 'aoGhostDrone', name: '유령 드론', level: 108, lore: '격납고가 가장 어두울 때만 깨어난다. 몸은 없고 명령만 남았다.', rarity: 'epic' as const, rewardMultiplier: 2.6, minTier: 30 },
+    { id: 'aoRiftLurker', name: '틈새 잠복자', level: 110, lore: '중력이 끊긴 틈에 숨어 지나가는 것을 덮친다. 한 번 잡으면 놓지 않는다.', rarity: 'rare' as const, rewardMultiplier: 1.4 },
+    { id: 'aoSignalEel', name: '신호 장어', level: 112, lore: '끊긴 통신선을 타고 다닌다. 몸에 남은 신호가 전격이 되었다.', rarity: 'rare' as const, rewardMultiplier: 1.55 },
+    { id: 'aoVoidCrab', name: '공허 게', level: 113, lore: '갑판 바깥의 어둠에서 왔다. 집게가 물리와 마법을 반씩 가른다.', rarity: 'epic' as const, rewardMultiplier: 2 },
+    { id: 'aoStarEater', name: '별 포식자', level: 114, lore: '별빛을 먹어 치우는 비행 생물. 지나간 자리는 한동안 어둡다.', rarity: 'legendary' as const, rewardMultiplier: 2 },
+    { id: 'aoEclipseMoth', name: '일식 나방', level: 112, lore: '별이 가려진 순간에만 나타나는 검은 나방. 날갯짓이 소리를 지운다.', rarity: 'epic' as const, rewardMultiplier: 2.7, minTier: 30 },
+    { id: 'aoRustAdmiral', name: '녹슨 제독', level: 112, lore: '정거장의 마지막 선장. 멈춘 항로를 되살리려 시간을 되감는다. 잿빛 궤도의 전설.', rarity: 'legendary' as const, rewardMultiplier: 6.5, boss: true },
+    { id: 'onyxVesper', name: '베스퍼', level: 115, lore: '잿빛 궤도 부두에 내려앉은 정적. 경보가 울려도 소리는 나지 않고, 소리 없이 모든 것이 멈춘다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'vwPrismLizard', name: '프리즘 도마뱀', level: 114, lore: '비늘이 빛을 일곱 갈래로 쪼갠다. 쪼개진 빛마다 뜨겁다.', rarity: 'rare' as const, rewardMultiplier: 1.4 },
+    { id: 'vwOreGolem', name: '광석 골렘', level: 116, lore: '채굴 기계가 버린 광석이 뭉쳐 일어섰다. 느리지만 바위보다 단단하다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'vwVeinSpirit', name: '광맥 정령', level: 117, lore: '결정 속에 갇혀 있던 빛. 풀려나자 소리부터 빼앗는다.', rarity: 'epic' as const, rewardMultiplier: 1.9 },
+    { id: 'vwCrystalTitan', name: '결정 거인', level: 118, lore: '채굴장 바닥에서 일어난 결정 덩어리. 걸음마다 땅이 갈라진다.', rarity: 'legendary' as const, rewardMultiplier: 1.8 },
+    { id: 'vwHollowShard', name: '속 빈 결정', level: 116, lore: '안이 텅 빈 결정 생물. 깨지는 소리가 물리와 마법으로 동시에 울린다.', rarity: 'epic' as const, rewardMultiplier: 2.6, minTier: 40 },
+    { id: 'vwBloatHound', name: '부푼 사냥개', level: 118, lore: '가스에 중독된 뒤로 쉬지 않고 달린다. 숨소리가 들리면 이미 가깝다.', rarity: 'rare' as const, rewardMultiplier: 1.35 },
+    { id: 'vwCinderWasp', name: '잿불 말벌', level: 120, lore: '가스에 불이 붙은 채 난다. 쏘인 자리가 오래 탄다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'vwFumeSerpent', name: '연기 뱀', level: 121, lore: '가스 구름이 뱀의 모양을 얻었다. 물린 자리에 독이 겹겹이 쌓인다.', rarity: 'epic' as const, rewardMultiplier: 2 },
+    { id: 'vwCalderaMaw', name: '분화구 아가리', level: 122, lore: '분화구 바닥에서 입을 벌린 거대 생물. 가스를 삼켜 불로 뱉는다.', rarity: 'legendary' as const, rewardMultiplier: 2 },
+    { id: 'vwYellowTitan', name: '황색 거인', level: 120, lore: '가스를 오래 마신 골렘. 몸이 세 배로 부풀어 느리지만 한 걸음이 무겁다.', rarity: 'epic' as const, rewardMultiplier: 2.7, minTier: 40 },
+    { id: 'onyxHalder', name: '할더', level: 123, lore: '광맥 황야 갱도에 봉인된 결정의 석상. 팔이 여섯이고, 하나하나가 결정 채굴기다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'hmSpineCrawler', name: '가시 기는 것', level: 122, lore: '늪 바닥을 기며 등의 가시를 세운다. 밟히면 늪째 굳는다.', rarity: 'rare' as const, rewardMultiplier: 1.4 },
+    { id: 'hmBroodWatcher', name: '산란 감시자', level: 124, lore: '알들 위를 맴도는 눈. 소리를 지워 알이 깨어나는 때를 숨긴다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'hmSpawner', name: '산란체', level: 125, lore: '늪 바닥에 숨은 거대한 산란 기관. 쓰러질 때까지 유충을 토해 낸다.', rarity: 'epic' as const, rewardMultiplier: 1.95 },
+    { id: 'hmMarshTyrant', name: '늪의 폭군', level: 126, lore: '산란 늪에서 가장 오래 산 개체. 새 군체가 깨어나면 가장 먼저 먹는다.', rarity: 'legendary' as const, rewardMultiplier: 1.9 },
+    { id: 'hmBlackLarva', name: '검은 유충', level: 124, lore: '늪이 가장 깊은 난이도에서만 깨어나는 검은 알의 유충. 형제보다 세 배 빠르다.', rarity: 'epic' as const, rewardMultiplier: 2.6, minTier: 40 },
+    { id: 'hmSynapseHound', name: '시냅스 사냥개', level: 126, lore: '신경을 물면 전기가 흐른다. 한 번 물린 자리는 한동안 저리다.', rarity: 'rare' as const, rewardMultiplier: 1.45 },
+    { id: 'hmVeinLeech', name: '혈관 거머리', level: 128, lore: '회랑 벽의 혈관에 붙어 산다. 떨어지면 다음 먹이를 찾는다.', rarity: 'rare' as const, rewardMultiplier: 1.55 },
+    { id: 'hmOverseer', name: '지배종', level: 129, lore: '군체의 뜻을 받아 회랑을 다스린다. 말을 끊고 생각을 끊는다.', rarity: 'epic' as const, rewardMultiplier: 2.1 },
+    { id: 'hmCorridorKing', name: '회랑의 왕', level: 130, lore: '신경 회랑 끝에 앉은 거대 군체. 벽을 조여 회랑 전체를 무기로 쓴다.', rarity: 'legendary' as const, rewardMultiplier: 2 },
+    { id: 'hmPaleOverseer', name: '창백한 지배종', level: 128, lore: '군체와 연결이 끊긴 지배종. 빛을 잃은 대신 자기 뜻으로 마법을 쓴다.', rarity: 'epic' as const, rewardMultiplier: 2.8, minTier: 50 },
+    { id: 'hmHiveMother', name: '모체', level: 128, lore: '군체의 심장 그 자체. 늪의 모든 알이 이 심장의 박동에 맞춰 깨어난다. 군체 늪지의 전설.', rarity: 'legendary' as const, rewardMultiplier: 7, boss: true },
+    { id: 'onyxMirren', name: '미렌', level: 131, lore: '군체 늪지 위를 떠도는 거대한 눈. 눈이 감기면 늪의 모든 것이 함께 잠든다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
+    { id: 'scPrismGuard', name: '프리즘 수호자', level: 130, lore: '빛을 물리와 마법으로 갈라 쓴다. 어느 쪽 방어든 한쪽만으로는 모자라다.', rarity: 'rare' as const, rewardMultiplier: 1.4 },
+    { id: 'scHaloWisp', name: '후광 요정', level: 132, lore: '후광이 뜨겁다. 가까이 선 것은 빛에 그을린다.', rarity: 'rare' as const, rewardMultiplier: 1.5 },
+    { id: 'scShadowEater', name: '그림자 포식자', level: 133, lore: '첨탑의 빛이 만든 그림자를 먹고 자랐다. 빛이 셀수록 커진다.', rarity: 'epic' as const, rewardMultiplier: 2 },
+    { id: 'scSpireKeeper', name: '첨탑 수호장', level: 134, lore: '첨탑 꼭대기를 지키는 고대 문명의 마지막 병사. 빛의 갑주는 아직 금이 가지 않았다.', rarity: 'legendary' as const, rewardMultiplier: 1.8 },
+    { id: 'scDawnWeaver', name: '새벽 직조자', level: 132, lore: '첫 빛을 짜는 직조자. 가장 높은 난이도에서만 첨탑에 내려온다.', rarity: 'epic' as const, rewardMultiplier: 2.7, minTier: 50 },
+    { id: 'scHollowSentinel', name: '텅 빈 파수꾼', level: 134, lore: '갑주 안이 비어 있다. 비어 있는 곳에서 소리를 지우는 바람이 분다.', rarity: 'rare' as const, rewardMultiplier: 1.45 },
+    { id: 'scGravityMaw', name: '중력 아가리', level: 136, lore: '회랑 바닥의 입. 가까운 것을 끌어당겨 연달아 씹는다.', rarity: 'rare' as const, rewardMultiplier: 1.55 },
+    { id: 'scEchoOfEnd', name: '끝의 메아리', level: 137, lore: '세계의 끝에서 되돌아온 소리가 형체를 얻었다. 물리와 마법을 동시에 울린다.', rarity: 'epic' as const, rewardMultiplier: 2.1 },
+    { id: 'scLastWarden', name: '최후의 관문지기', level: 138, lore: '고대 문명이 바다 너머에 세운 마지막 문의 지기. 문 뒤는 아직 아무도 보지 못했다.', rarity: 'legendary' as const, rewardMultiplier: 2 },
+    { id: 'scStillReverser', name: '멈춘 역행자', level: 136, lore: '시간이 멈춘 역행자. 가장 높은 난이도에서만 회랑 끝에 서 있다.', rarity: 'epic' as const, rewardMultiplier: 2.8, minTier: 50 },
+    { id: 'onyxSolenne', name: '솔렌', level: 139, lore: '고요한 성단의 빛을 짠 첫 직조자. 성단이 고요한 것은 그가 모든 소리를 빛으로 바꿨기 때문이다.', rarity: 'legendary' as const, rewardMultiplier: 4, boss: true },
 ];
 for (const f of specialMonsters)
     MONSTERS.push({ id: f.id, name: f.name, level: f.level, hp: Math.round(35 + f.level * 12 + f.level * f.level * .65), attack: Math.round(3 + f.level * 2.2), defense: Math.floor(f.level * .8), exp: monsterExpAt(f.level), gold: monsterGoldAt(f.level), lore: f.lore, rarity: f.rarity, /** v3.55 출현 가중치는 서버 전용(ODDS.spawn). */ get spawnWeight() { return ODDS.spawn[f.id]; }, rewardMultiplier: f.rewardMultiplier, boss: f.boss, ...(f.minTier ? { minTier: f.minTier } : {}) });
@@ -310,6 +407,9 @@ export const DUNGEONS = [
     { id: 'temple', name: '엘리니아 · 잊힌 마법 사원', level: 30, rebirth: 2, monsters: ['viper', 'dragon'], bossMonster: 'templeOracle', boss: '하늘의 마녀 · 엘리쟈', gold: 6000, pearls: 5, description: '환생의 기억을 지닌 자에게만 열리는 문.' },
     { id: 'ventCathedral', name: '엘나스 · 자쿰의 제단', level: 60, rebirth: 8, monsters: ['ventCrab', 'ventLeviathan'], bossMonster: 'ventColossus', boss: '폐광의 거대 석상 · 자쿰', gold: 30000, pearls: 12, description: '엘나스 폐광 깊은 곳의 제단. 팔 하나하나가 숨을 쉬는, 환생 8회의 탐험지.' },
     { id: 'starSanctum', name: '루디브리엄 · 시계탑', level: 48, rebirth: 6, monsters: ['starKoi', 'starKoi'], bossMonster: 'starfallSeraph', boss: '시계탑의 주인 · 파풀라투스', gold: 18000, pearls: 8, description: '장난감 도시의 시계탑 꼭대기. 멈춘 시간 속에서 차원의 침략자와 맞서는 후반 탐험지.' },
+    // v3.367 코프룰루 지역 던전(잡몹 1판 + 보스).
+    { id: 'orbitBridge', world: 'koprulu' as const, name: '잿빛 궤도 · 함교', level: 110, rebirth: 28, monsters: ['aoBridgeGuard', 'aoBridgeGuard'], bossMonster: 'aoRustAdmiral', boss: '함교의 마지막 선장 · 녹슨 제독', gold: 120000, pearls: 14, description: '정거장 가장 높은 곳의 함교. 마지막 선장은 아직도 자리에 앉아 항로를 바꾸려 든다.' },
+    { id: 'hiveHeart', world: 'koprulu' as const, name: '군체 늪지 · 군체의 심장', level: 126, rebirth: 38, monsters: ['hmMuscleWall', 'hmMuscleWall'], bossMonster: 'hmHiveMother', boss: '군체의 심장 · 모체', gold: 190000, pearls: 18, description: '늪 가장 깊은 곳에서 뛰는 군체의 심장. 심장이 멈추기 전에는 늪의 알이 깨어나기를 멈추지 않는다.' },
 ];
 /** v3.209 랜덤게임을 지운 뒤로는 DUNGEONS와 같습니다(예전 이름을 쓰는 곳이 많아 남겨 둠). */
 export const PLAIN_DUNGEONS = DUNGEONS;

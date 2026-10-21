@@ -73,4 +73,9 @@ export const FOE_FX: Record<string, FoeFx> = {
     onyxBrand: { kind: 'brand', glyphs: ['✠', '🜂', '✠', '🜂', '✠', '🜂', '✠', '🜂'] },
     // 창세: 하늘에서 창세의 빛기둥이 내려오고 빛의 고리가 퍼집니다.
     onyxGenesis: { kind: 'genesis', glyphs: ['✦', '✧', '創', '✦', '✧', '世', '✦', '✧'] },
+    // v3.367 코프룰루 칠흑 보스 고유 기술.
+    onyxHush: { kind: 'silence', glyphs: ['♪', '✕', '◌', '♪', '✕', '◌', '♪', '✕'] },
+    onyxQuarry: { kind: 'tentacle', glyphs: ['⛏', '✦', '⛏', '✦', '⛏', '✦', '⛏', '✦'], perHit: true },
+    onyxGaze: { kind: 'nightmare', glyphs: ['◉', '✦', '◉', '☾', '◉', '✦', '◉', '☾'] },
+    onyxWeave: { kind: 'sunfire', glyphs: ['✧', '🔥', '✧', '✦', '✧', '🔥', '✧', '✦'] },
 };

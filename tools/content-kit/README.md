@@ -34,13 +34,13 @@ pangaea-content-kit/
 기존 데이터를 다시 뽑으려면 `node scripts/export-game-data.mjs`(저장소 루트 `pnpm install` 필요). 게임에서 온 항목만 새로 쓰고 키트로 생성·병합한 항목은 보존합니다. 내보낸 파일을 스키마로 점검: `node scripts/kit.mjs validate monster data/monster.json --fresh`.
 
 ### 생성된 콘텐츠(코프룰루 구역, 1차 배치)
-`data/<type>.raw/batchNN.json`(원본) · `batchNN.qa.json`(자체 검수 기록) → `data/<type>.json`에 병합됨. 게임에는 아직 넣지 않았습니다(STYLE_GUIDE 8절 표대로 코드 작업 필요).
+`data/<type>.raw/batchNN.json`(원본) · `batchNN.qa.json`(자체 검수 기록) → `data/<type>.json`에 병합 → **v3.367에서 게임에 반영됨**(장비 이름 풀 84개만 제외, Q6 보류). 반영 위치: `game/data/world.ts` · `encounters.ts` · `art.ts` · `onyx.ts` · `gear.ts` · `economy.ts` · `boss-core.ts` · `book-traits.ts` · `variants.ts` · `secret/odds.ts` · `expansion-koprulu.ts`(직업 · 스킬) · `story.ts` + `components/game/story-scenes.tsx` · `story-art.tsx`.
 | type | 생성 | 내용 |
 |---|---|---|
 | area | 10 | 지역 4곳(잿빛 궤도 · 광맥 황야 · 군체 늪지 · 고요한 성단) = 사냥터 8(Lv.104~132, 환생 25~40) + 던전 2(함교 · 군체의 심장) |
-| monster | 80 | 사냥터마다 9종(common 4 · rare 2 · epic 1 · legendary 1 · 난이도 변종 epic 1) + 던전 잡몹 2 · 던전 보스 2 · 칠흑 보스 4 |
+| monster | 80 | 사냥터마다 9종(common 4 · rare 2 · epic 1 · legendary 1 · 난이도 변종 epic 1) + 던전 잡몹 2 · 던전 보스 2 · 칠흑 보스 4(전용 성향 · 고유 기술 onyxHush · onyxQuarry · onyxGaze · onyxWeave) |
 | item | 150 | 장비 이름 풀 84(기계 계열 · 생체 계열 7등급 × 6부위, Q6 보류라 게임 미적용) · 옵션 56 · 칠흑 장신구 4 · 유물 6 |
-| skill | 60 | 강철 보병 계보(물리, `ir*`) 5직업 × 6 + 군체 조율사 계보(마법·상태이상, `hv*`) 5직업 × 6. 직업 정의(classes.ts)는 따로 만들어야 함 |
+| skill | 60 | 강철 보병 계보(물리, `ir*`) 5직업 × 6 + 군체 조율사 계보(상태이상, `hv*`) 5직업 × 6. 직업 정의는 `game/data/expansion-koprulu.ts`(세계 `koprulu`) |
 | event | 40 | 3부 ‘별의 바다를 건너는 자’ 제7~19장(장 제목 `data/story-chapters.json`), 장당 2~4장면 |
 기존 게임 데이터 자체의 규칙 위반(특별 몬스터 lore 길이, 패시브 첫 문장 중복 38건, 폐기 옵션 3건, 스토리 ‘당신’ 1건)은 생성분과 무관하며 `validate --fresh` 결과에 그대로 남습니다.
 

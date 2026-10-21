@@ -1302,6 +1302,1060 @@
     ]
   },
   {
+    "id": "aoScrapDrone",
+    "name": "고철 드론",
+    "name_en": null,
+    "level": 104,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bat",
+    "stage": "derelictHangar",
+    "dungeon": null,
+    "lore": "멈춘 정거장을 아직도 정비한다. 모험가를 고장 난 부품으로 본다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 8313,
+      "attack": 232,
+      "defense": 83,
+      "exp": 1738262,
+      "gold": 32732
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoRustSentry",
+    "name": "녹슨 경비기",
+    "name_en": null,
+    "level": 105,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "golem",
+    "stage": "derelictHangar",
+    "dungeon": null,
+    "lore": "경보가 꺼진 지 오래지만 명령은 남아 있다. 침입자는 막는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 8461,
+      "attack": 234,
+      "defense": 84,
+      "exp": 1938162,
+      "gold": 34860
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoHangarSpore",
+    "name": "격납고 포자",
+    "name_en": null,
+    "level": 106,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "venom",
+    "shape": "mushroom",
+    "stage": "derelictHangar",
+    "dungeon": null,
+    "lore": "화물 틈에 뿌리내린 포자. 기름 냄새를 맡고 모여든다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 8610,
+      "attack": 236,
+      "defense": 84,
+      "exp": 2161050,
+      "gold": 37126
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoDriftJelly",
+    "name": "표류 해파리",
+    "name_en": null,
+    "level": 107,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "arcane",
+    "shape": "bubble",
+    "stage": "derelictHangar",
+    "dungeon": null,
+    "lore": "중력이 없는 격납고를 느리게 떠돈다. 촉수에 전기가 흐른다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 8761,
+      "attack": 238,
+      "defense": 85,
+      "exp": 2409571,
+      "gold": 39539
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoDeckWraith",
+    "name": "갑판 망령",
+    "name_en": null,
+    "level": 108,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "arcane",
+    "shape": "ghost",
+    "stage": "fracturedDeck",
+    "dungeon": null,
+    "lore": "갑판이 갈라지던 날의 선원들. 아직도 자기 자리를 지킨다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 8913,
+      "attack": 241,
+      "defense": 86,
+      "exp": 2686672,
+      "gold": 42109
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoStarMoth",
+    "name": "별빛 나방",
+    "name_en": null,
+    "level": 109,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bat",
+    "stage": "fracturedDeck",
+    "dungeon": null,
+    "lore": "별빛을 먹고 날개가 빛난다. 빛을 들고 있으면 먼저 달려든다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9066,
+      "attack": 243,
+      "defense": 87,
+      "exp": 2995639,
+      "gold": 44846
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoPatrolUnit",
+    "name": "순찰 기계",
+    "name_en": null,
+    "level": 110,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "controller",
+    "shape": "fighter",
+    "stage": "fracturedDeck",
+    "dungeon": null,
+    "lore": "갑판을 정해진 길로만 돈다. 길을 막으면 밀어낸다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9220,
+      "attack": 245,
+      "defense": 88,
+      "exp": 3340137,
+      "gold": 47761
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoHullBarnacle",
+    "name": "외벽 따개비",
+    "name_en": null,
+    "level": 111,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "crab",
+    "stage": "fracturedDeck",
+    "dungeon": null,
+    "lore": "외벽에 붙어 별바람을 견딘다. 떼어 내려면 껍질부터 깨야 한다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9376,
+      "attack": 247,
+      "defense": 88,
+      "exp": 3724253,
+      "gold": 50865
+    },
+    "drops": null,
+    "tags": [
+      "잿빛 궤도"
+    ]
+  },
+  {
+    "id": "aoBridgeGuard",
+    "name": "함교 경비기",
+    "name_en": null,
+    "level": 110,
+    "tier": 11,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "statue",
+    "stage": null,
+    "dungeon": "orbitBridge",
+    "lore": "함교 문을 지키는 중장갑 기계. 선장의 명령 없이는 비키지 않는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9220,
+      "attack": 245,
+      "defense": 88,
+      "exp": 3340137,
+      "gold": 47761
+    },
+    "drops": null,
+    "tags": [
+      "던전"
+    ]
+  },
+  {
+    "id": "vwShardBeetle",
+    "name": "결정 딱정벌레",
+    "name_en": null,
+    "level": 112,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "crab",
+    "stage": "crystalQuarry",
+    "dungeon": null,
+    "lore": "결정을 먹고 등갑이 결정이 되었다. 햇빛에 보랏빛으로 반짝인다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9533,
+      "attack": 249,
+      "defense": 89,
+      "exp": 4152542,
+      "gold": 54172
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwDigger",
+    "name": "채굴 기계",
+    "name_en": null,
+    "level": 113,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "controller",
+    "shape": "golem",
+    "stage": "crystalQuarry",
+    "dungeon": null,
+    "lore": "기지가 버려진 뒤에도 땅을 판다. 앞을 막는 것도 광석으로 친다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9691,
+      "attack": 252,
+      "defense": 90,
+      "exp": 4630085,
+      "gold": 57693
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwDustWing",
+    "name": "결정 가루 날개",
+    "name_en": null,
+    "level": 114,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bat",
+    "stage": "crystalQuarry",
+    "dungeon": null,
+    "lore": "날개에서 결정 가루가 떨어진다. 가루를 마시면 눈이 따갑다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 9850,
+      "attack": 254,
+      "defense": 91,
+      "exp": 5162545,
+      "gold": 61443
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwQuarryWorm",
+    "name": "채굴장 지렁이",
+    "name_en": null,
+    "level": 115,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "venom",
+    "shape": "snake",
+    "stage": "crystalQuarry",
+    "dungeon": null,
+    "lore": "갱도를 통째로 삼키며 자란다. 입 안에 결정 이빨이 겹겹이 났다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10011,
+      "attack": 256,
+      "defense": 92,
+      "exp": 5756237,
+      "gold": 65437
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwGasToad",
+    "name": "가스 두꺼비",
+    "name_en": null,
+    "level": 116,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "venom",
+    "shape": "slime",
+    "stage": "gasCaldera",
+    "dungeon": null,
+    "lore": "노란 가스를 마셔 몸이 부풀었다. 터지기 전에 잡아야 한다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10173,
+      "attack": 258,
+      "defense": 92,
+      "exp": 6418204,
+      "gold": 69690
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwStingWisp",
+    "name": "독침 안개",
+    "name_en": null,
+    "level": 117,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bubble",
+    "stage": "gasCaldera",
+    "dungeon": null,
+    "lore": "가스 구름 속을 날며 독침을 떨어뜨린다. 보이지 않을 때가 더 위험하다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10337,
+      "attack": 260,
+      "defense": 93,
+      "exp": 7156298,
+      "gold": 74220
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwSulfurCrab",
+    "name": "유황 게",
+    "name_en": null,
+    "level": 118,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "crab",
+    "stage": "gasCaldera",
+    "dungeon": null,
+    "lore": "분화구 바닥의 유황을 먹고 산다. 집게에서 노란 연기가 난다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10502,
+      "attack": 263,
+      "defense": 94,
+      "exp": 7979272,
+      "gold": 79044
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "vwPipeKeeper",
+    "name": "가스관 관리기",
+    "name_en": null,
+    "level": 119,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "controller",
+    "shape": "golem",
+    "stage": "gasCaldera",
+    "dungeon": null,
+    "lore": "가스관을 지키라는 명령만 남았다. 가까이 가면 밸브를 돌려 가스를 뿜는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10668,
+      "attack": 265,
+      "defense": 95,
+      "exp": 8896889,
+      "gold": 84182
+    },
+    "drops": null,
+    "tags": [
+      "광맥 황야"
+    ]
+  },
+  {
+    "id": "hmLarva",
+    "name": "군체 유충",
+    "name_en": null,
+    "level": 120,
+    "tier": 12,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "slime",
+    "stage": "spawningMarsh",
+    "dungeon": null,
+    "lore": "알주머니에서 막 깨어났다. 작지만 수백 마리가 한 방향으로 달린다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 10835,
+      "attack": 267,
+      "defense": 96,
+      "exp": 9920031,
+      "gold": 89654
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmMarshSlider",
+    "name": "늪 미끄럼이",
+    "name_en": null,
+    "level": 121,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "tidal",
+    "shape": "octopus",
+    "stage": "spawningMarsh",
+    "dungeon": null,
+    "lore": "촉수로 늪 위를 미끄러진다. 닿는 것마다 늪 아래로 끌어 내린다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11004,
+      "attack": 269,
+      "defense": 96,
+      "exp": 11060834,
+      "gold": 95481
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmAcidHound",
+    "name": "산성 사냥개",
+    "name_en": null,
+    "level": 122,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "venom",
+    "shape": "croc",
+    "stage": "spawningMarsh",
+    "dungeon": null,
+    "lore": "침이 늪보다 독하다. 무리로 사냥하고 먹이를 나누지 않는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11174,
+      "attack": 271,
+      "defense": 97,
+      "exp": 12332830,
+      "gold": 101688
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmEggSac",
+    "name": "알주머니",
+    "name_en": null,
+    "level": 123,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "mushroom",
+    "stage": "spawningMarsh",
+    "dungeon": null,
+    "lore": "늪 바닥에 박힌 알주머니. 건드리면 껍질이 굳고 안에서 무언가 꿈틀댄다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11345,
+      "attack": 274,
+      "defense": 98,
+      "exp": 13751106,
+      "gold": 108297
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmNerveRunner",
+    "name": "신경 주자",
+    "name_en": null,
+    "level": 124,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bat",
+    "stage": "nerveCorridor",
+    "dungeon": null,
+    "lore": "신경 다발 위를 달린다. 벽이 움찔할 때마다 속도가 붙는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11517,
+      "attack": 276,
+      "defense": 99,
+      "exp": 15332483,
+      "gold": 115337
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmSpinePillar",
+    "name": "가시 기둥",
+    "name_en": null,
+    "level": 125,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "statue",
+    "stage": "nerveCorridor",
+    "dungeon": null,
+    "lore": "벽에서 자라는 기둥. 움직이지 않지만 지나가는 것을 꿰뚫는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11691,
+      "attack": 278,
+      "defense": 100,
+      "exp": 17095718,
+      "gold": 122834
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmMindEye",
+    "name": "정신 눈알",
+    "name_en": null,
+    "level": 126,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "arcane",
+    "shape": "eye",
+    "stage": "nerveCorridor",
+    "dungeon": null,
+    "lore": "회랑 천장에서 내려다본다. 눈이 마주치면 머리가 울린다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11866,
+      "attack": 280,
+      "defense": 100,
+      "exp": 19061726,
+      "gold": 130818
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmPlateBrute",
+    "name": "갑판 군체",
+    "name_en": null,
+    "level": 127,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "controller",
+    "shape": "golem",
+    "stage": "nerveCorridor",
+    "dungeon": null,
+    "lore": "등에 갑판 같은 판을 두른 중장갑 군체. 길을 막고 밀어낸다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12043,
+      "attack": 282,
+      "defense": 101,
+      "exp": 21253824,
+      "gold": 139321
+    },
+    "drops": null,
+    "tags": [
+      "군체 늪지"
+    ]
+  },
+  {
+    "id": "hmMuscleWall",
+    "name": "근육 벽",
+    "name_en": null,
+    "level": 126,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "golem",
+    "stage": null,
+    "dungeon": "hiveHeart",
+    "lore": "심장을 감싼 근육. 베면 아물고, 아물수록 두꺼워진다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 11866,
+      "attack": 280,
+      "defense": 100,
+      "exp": 19061726,
+      "gold": 130818
+    },
+    "drops": null,
+    "tags": [
+      "던전"
+    ]
+  },
+  {
+    "id": "scLightWeaver",
+    "name": "빛의 직조자",
+    "name_en": null,
+    "level": 128,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "arcane",
+    "shape": "mage",
+    "stage": "lightSpire",
+    "dungeon": null,
+    "lore": "빛으로 짜인 수호자. 공격도 방어도 빛으로 한다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12221,
+      "attack": 285,
+      "defense": 102,
+      "exp": 23698014,
+      "gold": 148377
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scGlimmer",
+    "name": "반짝임",
+    "name_en": null,
+    "level": 129,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "bubble",
+    "stage": "lightSpire",
+    "dungeon": null,
+    "lore": "첨탑을 떠도는 빛의 조각. 혼자서는 약하지만 늘 떼로 다닌다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12400,
+      "attack": 287,
+      "defense": 103,
+      "exp": 26423286,
+      "gold": 158021
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scMemoryLens",
+    "name": "기억 렌즈",
+    "name_en": null,
+    "level": 130,
+    "tier": 13,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "silencer",
+    "shape": "eye",
+    "stage": "lightSpire",
+    "dungeon": null,
+    "lore": "모험가의 지나온 생을 비춰 본다. 비친 기억은 잠시 말을 잃는다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12580,
+      "attack": 289,
+      "defense": 104,
+      "exp": 29461964,
+      "gold": 168293
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scStairStatue",
+    "name": "계단 석상",
+    "name_en": null,
+    "level": 131,
+    "tier": 14,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "statue",
+    "stage": "lightSpire",
+    "dungeon": null,
+    "lore": "첨탑 계단마다 선 결정 석상. 허락 없이 오르면 깨어난다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12762,
+      "attack": 291,
+      "defense": 104,
+      "exp": 32850089,
+      "gold": 179232
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scUnsealed",
+    "name": "풀려난 수호자",
+    "name_en": null,
+    "level": 132,
+    "tier": 14,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "controller",
+    "shape": "fighter",
+    "stage": "voidGallery",
+    "dungeon": null,
+    "lore": "봉인이 풀린 고대 수호자. 명령은 잊었고 적의만 남았다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 12945,
+      "attack": 293,
+      "defense": 105,
+      "exp": 36627850,
+      "gold": 190882
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scVoidJelly",
+    "name": "공허 해파리",
+    "name_en": null,
+    "level": 133,
+    "tier": 14,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "arcane",
+    "shape": "bubble",
+    "stage": "voidGallery",
+    "dungeon": null,
+    "lore": "별빛이 닿지 않는 곳을 떠돈다. 촉수가 닿으면 체온이 사라진다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 13129,
+      "attack": 296,
+      "defense": 106,
+      "exp": 40840052,
+      "gold": 203289
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scDimStatue",
+    "name": "빛 잃은 석상",
+    "name_en": null,
+    "level": 134,
+    "tier": 14,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "armored",
+    "shape": "statue",
+    "stage": "voidGallery",
+    "dungeon": null,
+    "lore": "빛을 잃고 검게 굳은 석상. 빛이 없으니 깨뜨릴 틈도 없다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 13314,
+      "attack": 298,
+      "defense": 107,
+      "exp": 45536659,
+      "gold": 216503
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
+    "id": "scReverser",
+    "name": "역행자",
+    "name_en": null,
+    "level": 135,
+    "tier": 14,
+    "rarity": "common",
+    "boss": false,
+    "spawnWeight": null,
+    "rewardMultiplier": null,
+    "minTier": null,
+    "profile": "swift",
+    "shape": "clock",
+    "stage": "voidGallery",
+    "dungeon": null,
+    "lore": "시간을 거꾸로 산다. 공격이 닿기 전에 이미 피해 있다.",
+    "description": null,
+    "behavior": null,
+    "weakness": null,
+    "stats": {
+      "hp": 13501,
+      "attack": 300,
+      "defense": 108,
+      "exp": 50773374,
+      "gold": 230576
+    },
+    "drops": null,
+    "tags": [
+      "고요한 성단"
+    ]
+  },
+  {
     "id": "masteryMimic",
     "name": "숙련의 까미",
     "name_en": null,
@@ -2521,114 +3575,6 @@
     ]
   },
   {
-    "id": "aoScrapDrone",
-    "name": "고철 드론",
-    "name_en": null,
-    "level": 104,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bat",
-    "stage": "derelictHangar",
-    "dungeon": null,
-    "lore": "멈춘 정거장을 아직도 정비한다. 모험가를 고장 난 부품으로 본다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "기계",
-      "무리"
-    ]
-  },
-  {
-    "id": "aoRustSentry",
-    "name": "녹슨 경비기",
-    "name_en": null,
-    "level": 105,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "golem",
-    "stage": "derelictHangar",
-    "dungeon": null,
-    "lore": "경보가 꺼진 지 오래지만 명령은 남아 있다. 침입자는 막는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "기계",
-      "단독"
-    ]
-  },
-  {
-    "id": "aoHangarSpore",
-    "name": "격납고 포자",
-    "name_en": null,
-    "level": 106,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "venom",
-    "shape": "mushroom",
-    "stage": "derelictHangar",
-    "dungeon": null,
-    "lore": "화물 틈에 뿌리내린 포자. 기름 냄새를 맡고 모여든다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "포자",
-      "무리"
-    ]
-  },
-  {
-    "id": "aoDriftJelly",
-    "name": "표류 해파리",
-    "name_en": null,
-    "level": 107,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "arcane",
-    "shape": "bubble",
-    "stage": "derelictHangar",
-    "dungeon": null,
-    "lore": "중력이 없는 격납고를 느리게 떠돈다. 촉수에 전기가 흐른다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "부유",
-      "마법"
-    ]
-  },
-  {
     "id": "aoCargoSpider",
     "name": "화물 거미",
     "name_en": null,
@@ -2647,12 +3593,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 8610,
+      "attack": 236,
+      "defense": 84,
+      "exp": 2161050,
+      "gold": 37126
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "기계",
-      "함정형"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2674,12 +3624,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 8913,
+      "attack": 241,
+      "defense": 86,
+      "exp": 2686672,
+      "gold": 42109
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "기계",
-      "포식자"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2701,12 +3655,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9066,
+      "attack": 243,
+      "defense": 87,
+      "exp": 2995639,
+      "gold": 44846
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "기생",
-      "희귀"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2728,12 +3686,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9220,
+      "attack": 245,
+      "defense": 88,
+      "exp": 3340137,
+      "gold": 47761
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "기계",
-      "전설"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2755,120 +3717,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 8913,
+      "attack": 241,
+      "defense": 86,
+      "exp": 2686672,
+      "gold": 42109
+    },
     "drops": null,
     "tags": [
       "잿빛 궤도",
-      "기계",
       "난이도30+"
-    ]
-  },
-  {
-    "id": "aoDeckWraith",
-    "name": "갑판 망령",
-    "name_en": null,
-    "level": 108,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "arcane",
-    "shape": "ghost",
-    "stage": "fracturedDeck",
-    "dungeon": null,
-    "lore": "갑판이 갈라지던 날의 선원들. 아직도 자기 자리를 지킨다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "망령",
-      "마법"
-    ]
-  },
-  {
-    "id": "aoStarMoth",
-    "name": "별빛 나방",
-    "name_en": null,
-    "level": 109,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bat",
-    "stage": "fracturedDeck",
-    "dungeon": null,
-    "lore": "별빛을 먹고 날개가 빛난다. 빛을 들고 있으면 먼저 달려든다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "부유",
-      "무리"
-    ]
-  },
-  {
-    "id": "aoPatrolUnit",
-    "name": "순찰 기계",
-    "name_en": null,
-    "level": 110,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "controller",
-    "shape": "fighter",
-    "stage": "fracturedDeck",
-    "dungeon": null,
-    "lore": "갑판을 정해진 길로만 돈다. 길을 막으면 밀어낸다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "기계",
-      "단독"
-    ]
-  },
-  {
-    "id": "aoHullBarnacle",
-    "name": "외벽 따개비",
-    "name_en": null,
-    "level": 111,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "crab",
-    "stage": "fracturedDeck",
-    "dungeon": null,
-    "lore": "외벽에 붙어 별바람을 견딘다. 떼어 내려면 껍질부터 깨야 한다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "갑각",
-      "단단함"
     ]
   },
   {
@@ -2890,12 +3749,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9220,
+      "attack": 245,
+      "defense": 88,
+      "exp": 3340137,
+      "gold": 47761
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "함정형",
-      "포식자"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2917,12 +3780,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9533,
+      "attack": 249,
+      "defense": 89,
+      "exp": 4152542,
+      "gold": 54172
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "전격",
-      "마법"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2944,12 +3811,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9691,
+      "attack": 252,
+      "defense": 90,
+      "exp": 4630085,
+      "gold": 57693
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "갑각",
-      "희귀"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2971,12 +3842,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9850,
+      "attack": 254,
+      "defense": 91,
+      "exp": 5162545,
+      "gold": 61443
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "포식자",
-      "전설"
+      "잿빛 궤도"
     ]
   },
   {
@@ -2998,39 +3873,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9533,
+      "attack": 249,
+      "defense": 89,
+      "exp": 4152542,
+      "gold": 54172
+    },
     "drops": null,
     "tags": [
       "잿빛 궤도",
-      "부유",
       "난이도30+"
-    ]
-  },
-  {
-    "id": "aoBridgeGuard",
-    "name": "함교 경비기",
-    "name_en": null,
-    "level": 110,
-    "tier": 11,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "statue",
-    "stage": null,
-    "dungeon": "orbitBridge",
-    "lore": "함교 문을 지키는 중장갑 기계. 선장의 명령 없이는 비키지 않는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "잿빛 궤도",
-      "던전",
-      "기계"
     ]
   },
   {
@@ -3041,7 +3894,7 @@
     "tier": 12,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 6.5,
     "minTier": null,
     "profile": "papulatus",
@@ -3052,12 +3905,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9533,
+      "attack": 249,
+      "defense": 89,
+      "exp": 4152542,
+      "gold": 54172
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "보스",
-      "던전"
+      "던전",
+      "보스"
     ]
   },
   {
@@ -3068,10 +3926,10 @@
     "tier": 12,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 4,
     "minTier": null,
-    "profile": "boss",
+    "profile": "onyxVesper",
     "shape": "ghost",
     "stage": null,
     "dungeon": null,
@@ -3079,120 +3937,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10011,
+      "attack": 256,
+      "defense": 92,
+      "exp": 5756237,
+      "gold": 65437
+    },
     "drops": null,
     "tags": [
-      "잿빛 궤도",
-      "칠흑",
-      "보스"
-    ]
-  },
-  {
-    "id": "vwShardBeetle",
-    "name": "결정 딱정벌레",
-    "name_en": null,
-    "level": 112,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "crab",
-    "stage": "crystalQuarry",
-    "dungeon": null,
-    "lore": "결정을 먹고 등갑이 결정이 되었다. 햇빛에 보랏빛으로 반짝인다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "갑각",
-      "단단함"
-    ]
-  },
-  {
-    "id": "vwDigger",
-    "name": "채굴 기계",
-    "name_en": null,
-    "level": 113,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "controller",
-    "shape": "golem",
-    "stage": "crystalQuarry",
-    "dungeon": null,
-    "lore": "기지가 버려진 뒤에도 땅을 판다. 앞을 막는 것도 광석으로 친다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "기계",
-      "무리"
-    ]
-  },
-  {
-    "id": "vwDustWing",
-    "name": "결정 가루 날개",
-    "name_en": null,
-    "level": 114,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bat",
-    "stage": "crystalQuarry",
-    "dungeon": null,
-    "lore": "날개에서 결정 가루가 떨어진다. 가루를 마시면 눈이 따갑다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "비행",
-      "무리"
-    ]
-  },
-  {
-    "id": "vwQuarryWorm",
-    "name": "채굴장 지렁이",
-    "name_en": null,
-    "level": 115,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "venom",
-    "shape": "snake",
-    "stage": "crystalQuarry",
-    "dungeon": null,
-    "lore": "갱도를 통째로 삼키며 자란다. 입 안에 결정 이빨이 겹겹이 났다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "포식자",
-      "독"
+      "칠흑"
     ]
   },
   {
@@ -3214,12 +3968,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 9850,
+      "attack": 254,
+      "defense": 91,
+      "exp": 5162545,
+      "gold": 61443
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "마법",
-      "희귀"
+      "광맥 황야"
     ]
   },
   {
@@ -3241,12 +3999,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10173,
+      "attack": 258,
+      "defense": 92,
+      "exp": 6418204,
+      "gold": 69690
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "골렘",
-      "단단함"
+      "광맥 황야"
     ]
   },
   {
@@ -3268,12 +4030,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10337,
+      "attack": 260,
+      "defense": 93,
+      "exp": 7156298,
+      "gold": 74220
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "마법",
-      "희귀"
+      "광맥 황야"
     ]
   },
   {
@@ -3295,12 +4061,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10502,
+      "attack": 263,
+      "defense": 94,
+      "exp": 7979272,
+      "gold": 79044
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "거인",
-      "전설"
+      "광맥 황야"
     ]
   },
   {
@@ -3322,120 +4092,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10173,
+      "attack": 258,
+      "defense": 92,
+      "exp": 6418204,
+      "gold": 69690
+    },
     "drops": null,
     "tags": [
       "광맥 황야",
-      "결정",
       "난이도40+"
-    ]
-  },
-  {
-    "id": "vwGasToad",
-    "name": "가스 두꺼비",
-    "name_en": null,
-    "level": 116,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "venom",
-    "shape": "slime",
-    "stage": "gasCaldera",
-    "dungeon": null,
-    "lore": "노란 가스를 마셔 몸이 부풀었다. 터지기 전에 잡아야 한다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "독",
-      "무리"
-    ]
-  },
-  {
-    "id": "vwStingWisp",
-    "name": "독침 안개",
-    "name_en": null,
-    "level": 117,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bubble",
-    "stage": "gasCaldera",
-    "dungeon": null,
-    "lore": "가스 구름 속을 날며 독침을 떨어뜨린다. 보이지 않을 때가 더 위험하다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "비행",
-      "독"
-    ]
-  },
-  {
-    "id": "vwSulfurCrab",
-    "name": "유황 게",
-    "name_en": null,
-    "level": 118,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "crab",
-    "stage": "gasCaldera",
-    "dungeon": null,
-    "lore": "분화구 바닥의 유황을 먹고 산다. 집게에서 노란 연기가 난다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "갑각",
-      "독"
-    ]
-  },
-  {
-    "id": "vwPipeKeeper",
-    "name": "가스관 관리기",
-    "name_en": null,
-    "level": 119,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "controller",
-    "shape": "golem",
-    "stage": "gasCaldera",
-    "dungeon": null,
-    "lore": "가스관을 지키라는 명령만 남았다. 가까이 가면 밸브를 돌려 가스를 뿜는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "광맥 황야",
-      "기계",
-      "단독"
     ]
   },
   {
@@ -3457,12 +4124,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10502,
+      "attack": 263,
+      "defense": 94,
+      "exp": 7979272,
+      "gold": 79044
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "포식자",
-      "희귀"
+      "광맥 황야"
     ]
   },
   {
@@ -3484,12 +4155,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10835,
+      "attack": 267,
+      "defense": 96,
+      "exp": 9920031,
+      "gold": 89654
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "비행",
-      "화상"
+      "광맥 황야"
     ]
   },
   {
@@ -3511,12 +4186,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11004,
+      "attack": 269,
+      "defense": 96,
+      "exp": 11060834,
+      "gold": 95481
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "독",
-      "희귀"
+      "광맥 황야"
     ]
   },
   {
@@ -3538,12 +4217,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11174,
+      "attack": 271,
+      "defense": 97,
+      "exp": 12332830,
+      "gold": 101688
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "포식자",
-      "전설"
+      "광맥 황야"
     ]
   },
   {
@@ -3565,11 +4248,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 10835,
+      "attack": 267,
+      "defense": 96,
+      "exp": 9920031,
+      "gold": 89654
+    },
     "drops": null,
     "tags": [
       "광맥 황야",
-      "거인",
       "난이도40+"
     ]
   },
@@ -3581,10 +4269,10 @@
     "tier": 13,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 4,
     "minTier": null,
-    "profile": "zakum",
+    "profile": "onyxHalder",
     "shape": "statue",
     "stage": null,
     "dungeon": null,
@@ -3592,120 +4280,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11345,
+      "attack": 274,
+      "defense": 98,
+      "exp": 13751106,
+      "gold": 108297
+    },
     "drops": null,
     "tags": [
-      "광맥 황야",
-      "칠흑",
-      "보스"
-    ]
-  },
-  {
-    "id": "hmLarva",
-    "name": "군체 유충",
-    "name_en": null,
-    "level": 120,
-    "tier": 12,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "slime",
-    "stage": "spawningMarsh",
-    "dungeon": null,
-    "lore": "알주머니에서 막 깨어났다. 작지만 수백 마리가 한 방향으로 달린다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "생체",
-      "무리"
-    ]
-  },
-  {
-    "id": "hmMarshSlider",
-    "name": "늪 미끄럼이",
-    "name_en": null,
-    "level": 121,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "tidal",
-    "shape": "octopus",
-    "stage": "spawningMarsh",
-    "dungeon": null,
-    "lore": "촉수로 늪 위를 미끄러진다. 닿는 것마다 늪 아래로 끌어 내린다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "생체",
-      "촉수"
-    ]
-  },
-  {
-    "id": "hmAcidHound",
-    "name": "산성 사냥개",
-    "name_en": null,
-    "level": 122,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "venom",
-    "shape": "croc",
-    "stage": "spawningMarsh",
-    "dungeon": null,
-    "lore": "침이 늪보다 독하다. 무리로 사냥하고 먹이를 나누지 않는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "포식자",
-      "독"
-    ]
-  },
-  {
-    "id": "hmEggSac",
-    "name": "알주머니",
-    "name_en": null,
-    "level": 123,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "mushroom",
-    "stage": "spawningMarsh",
-    "dungeon": null,
-    "lore": "늪 바닥에 박힌 알주머니. 건드리면 껍질이 굳고 안에서 무언가 꿈틀댄다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "생체",
-      "단단함"
+      "칠흑"
     ]
   },
   {
@@ -3727,12 +4311,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11174,
+      "attack": 271,
+      "defense": 97,
+      "exp": 12332830,
+      "gold": 101688
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "함정형",
-      "희귀"
+      "군체 늪지"
     ]
   },
   {
@@ -3754,12 +4342,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11517,
+      "attack": 276,
+      "defense": 99,
+      "exp": 15332483,
+      "gold": 115337
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "비행",
-      "마법"
+      "군체 늪지"
     ]
   },
   {
@@ -3781,12 +4373,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11691,
+      "attack": 278,
+      "defense": 100,
+      "exp": 17095718,
+      "gold": 122834
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "생체",
-      "희귀"
+      "군체 늪지"
     ]
   },
   {
@@ -3808,12 +4404,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11866,
+      "attack": 280,
+      "defense": 100,
+      "exp": 19061726,
+      "gold": 130818
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "포식자",
-      "전설"
+      "군체 늪지"
     ]
   },
   {
@@ -3835,120 +4435,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11517,
+      "attack": 276,
+      "defense": 99,
+      "exp": 15332483,
+      "gold": 115337
+    },
     "drops": null,
     "tags": [
       "군체 늪지",
-      "생체",
       "난이도40+"
-    ]
-  },
-  {
-    "id": "hmNerveRunner",
-    "name": "신경 주자",
-    "name_en": null,
-    "level": 124,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bat",
-    "stage": "nerveCorridor",
-    "dungeon": null,
-    "lore": "신경 다발 위를 달린다. 벽이 움찔할 때마다 속도가 붙는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "생체",
-      "날쌤"
-    ]
-  },
-  {
-    "id": "hmSpinePillar",
-    "name": "가시 기둥",
-    "name_en": null,
-    "level": 125,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "statue",
-    "stage": "nerveCorridor",
-    "dungeon": null,
-    "lore": "벽에서 자라는 기둥. 움직이지 않지만 지나가는 것을 꿰뚫는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "함정형",
-      "단단함"
-    ]
-  },
-  {
-    "id": "hmMindEye",
-    "name": "정신 눈알",
-    "name_en": null,
-    "level": 126,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "arcane",
-    "shape": "eye",
-    "stage": "nerveCorridor",
-    "dungeon": null,
-    "lore": "회랑 천장에서 내려다본다. 눈이 마주치면 머리가 울린다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "마법",
-      "감시"
-    ]
-  },
-  {
-    "id": "hmPlateBrute",
-    "name": "갑판 군체",
-    "name_en": null,
-    "level": 127,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "controller",
-    "shape": "golem",
-    "stage": "nerveCorridor",
-    "dungeon": null,
-    "lore": "등에 갑판 같은 판을 두른 중장갑 군체. 길을 막고 밀어낸다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "생체",
-      "단단함"
     ]
   },
   {
@@ -3970,12 +4467,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 11866,
+      "attack": 280,
+      "defense": 100,
+      "exp": 19061726,
+      "gold": 130818
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "전격",
-      "포식자"
+      "군체 늪지"
     ]
   },
   {
@@ -3997,12 +4498,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12221,
+      "attack": 285,
+      "defense": 102,
+      "exp": 23698014,
+      "gold": 148377
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "기생",
-      "독"
+      "군체 늪지"
     ]
   },
   {
@@ -4024,12 +4529,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12400,
+      "attack": 287,
+      "defense": 103,
+      "exp": 26423286,
+      "gold": 158021
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "지배",
-      "희귀"
+      "군체 늪지"
     ]
   },
   {
@@ -4051,12 +4560,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12580,
+      "attack": 289,
+      "defense": 104,
+      "exp": 29461964,
+      "gold": 168293
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "지배",
-      "전설"
+      "군체 늪지"
     ]
   },
   {
@@ -4078,39 +4591,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12221,
+      "attack": 285,
+      "defense": 102,
+      "exp": 23698014,
+      "gold": 148377
+    },
     "drops": null,
     "tags": [
       "군체 늪지",
-      "지배",
       "난이도50+"
-    ]
-  },
-  {
-    "id": "hmMuscleWall",
-    "name": "근육 벽",
-    "name_en": null,
-    "level": 126,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "golem",
-    "stage": null,
-    "dungeon": "hiveHeart",
-    "lore": "심장을 감싼 근육. 베면 아물고, 아물수록 두꺼워진다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "군체 늪지",
-      "던전",
-      "단단함"
     ]
   },
   {
@@ -4121,7 +4612,7 @@
     "tier": 13,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 7,
     "minTier": null,
     "profile": "venomBoss",
@@ -4132,12 +4623,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12221,
+      "attack": 285,
+      "defense": 102,
+      "exp": 23698014,
+      "gold": 148377
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "보스",
-      "던전"
+      "던전",
+      "보스"
     ]
   },
   {
@@ -4148,10 +4644,10 @@
     "tier": 14,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 4,
     "minTier": null,
-    "profile": "arcaneBoss",
+    "profile": "onyxMirren",
     "shape": "eye",
     "stage": null,
     "dungeon": null,
@@ -4159,120 +4655,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12762,
+      "attack": 291,
+      "defense": 104,
+      "exp": 32850089,
+      "gold": 179232
+    },
     "drops": null,
     "tags": [
-      "군체 늪지",
-      "칠흑",
-      "보스"
-    ]
-  },
-  {
-    "id": "scLightWeaver",
-    "name": "빛의 직조자",
-    "name_en": null,
-    "level": 128,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "arcane",
-    "shape": "mage",
-    "stage": "lightSpire",
-    "dungeon": null,
-    "lore": "빛으로 짜인 수호자. 공격도 방어도 빛으로 한다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "빛",
-      "마법"
-    ]
-  },
-  {
-    "id": "scGlimmer",
-    "name": "반짝임",
-    "name_en": null,
-    "level": 129,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "bubble",
-    "stage": "lightSpire",
-    "dungeon": null,
-    "lore": "첨탑을 떠도는 빛의 조각. 혼자서는 약하지만 늘 떼로 다닌다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "빛",
-      "무리"
-    ]
-  },
-  {
-    "id": "scMemoryLens",
-    "name": "기억 렌즈",
-    "name_en": null,
-    "level": 130,
-    "tier": 13,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "silencer",
-    "shape": "eye",
-    "stage": "lightSpire",
-    "dungeon": null,
-    "lore": "모험가의 지나온 생을 비춰 본다. 비친 기억은 잠시 말을 잃는다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "고대",
-      "감시"
-    ]
-  },
-  {
-    "id": "scStairStatue",
-    "name": "계단 석상",
-    "name_en": null,
-    "level": 131,
-    "tier": 14,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "statue",
-    "stage": "lightSpire",
-    "dungeon": null,
-    "lore": "첨탑 계단마다 선 결정 석상. 허락 없이 오르면 깨어난다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "고대",
-      "단단함"
+      "칠흑"
     ]
   },
   {
@@ -4294,12 +4686,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12580,
+      "attack": 289,
+      "defense": 104,
+      "exp": 29461964,
+      "gold": 168293
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "빛",
-      "희귀"
+      "고요한 성단"
     ]
   },
   {
@@ -4321,12 +4717,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12945,
+      "attack": 293,
+      "defense": 105,
+      "exp": 36627850,
+      "gold": 190882
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "빛",
-      "화상"
+      "고요한 성단"
     ]
   },
   {
@@ -4348,12 +4748,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13129,
+      "attack": 296,
+      "defense": 106,
+      "exp": 40840052,
+      "gold": 203289
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "그림자",
-      "희귀"
+      "고요한 성단"
     ]
   },
   {
@@ -4375,12 +4779,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13314,
+      "attack": 298,
+      "defense": 107,
+      "exp": 45536659,
+      "gold": 216503
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "고대",
-      "전설"
+      "고요한 성단"
     ]
   },
   {
@@ -4402,120 +4810,17 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 12945,
+      "attack": 293,
+      "defense": 105,
+      "exp": 36627850,
+      "gold": 190882
+    },
     "drops": null,
     "tags": [
       "고요한 성단",
-      "빛",
       "난이도50+"
-    ]
-  },
-  {
-    "id": "scUnsealed",
-    "name": "풀려난 수호자",
-    "name_en": null,
-    "level": 132,
-    "tier": 14,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "controller",
-    "shape": "fighter",
-    "stage": "voidGallery",
-    "dungeon": null,
-    "lore": "봉인이 풀린 고대 수호자. 명령은 잊었고 적의만 남았다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "고대",
-      "공허"
-    ]
-  },
-  {
-    "id": "scVoidJelly",
-    "name": "공허 해파리",
-    "name_en": null,
-    "level": 133,
-    "tier": 14,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "arcane",
-    "shape": "bubble",
-    "stage": "voidGallery",
-    "dungeon": null,
-    "lore": "별빛이 닿지 않는 곳을 떠돈다. 촉수가 닿으면 체온이 사라진다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "공허",
-      "마법"
-    ]
-  },
-  {
-    "id": "scDimStatue",
-    "name": "빛 잃은 석상",
-    "name_en": null,
-    "level": 134,
-    "tier": 14,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "armored",
-    "shape": "statue",
-    "stage": "voidGallery",
-    "dungeon": null,
-    "lore": "빛을 잃고 검게 굳은 석상. 빛이 없으니 깨뜨릴 틈도 없다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "고대",
-      "단단함"
-    ]
-  },
-  {
-    "id": "scReverser",
-    "name": "역행자",
-    "name_en": null,
-    "level": 135,
-    "tier": 14,
-    "rarity": "common",
-    "boss": false,
-    "spawnWeight": null,
-    "rewardMultiplier": null,
-    "minTier": null,
-    "profile": "swift",
-    "shape": "clock",
-    "stage": "voidGallery",
-    "dungeon": null,
-    "lore": "시간을 거꾸로 산다. 공격이 닿기 전에 이미 피해 있다.",
-    "description": null,
-    "behavior": null,
-    "weakness": null,
-    "stats": null,
-    "drops": null,
-    "tags": [
-      "고요한 성단",
-      "시간",
-      "날쌤"
     ]
   },
   {
@@ -4537,12 +4842,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13314,
+      "attack": 298,
+      "defense": 107,
+      "exp": 45536659,
+      "gold": 216503
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "공허",
-      "희귀"
+      "고요한 성단"
     ]
   },
   {
@@ -4564,12 +4873,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13689,
+      "attack": 302,
+      "defense": 108,
+      "exp": 56612312,
+      "gold": 245563
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "포식자",
-      "공허"
+      "고요한 성단"
     ]
   },
   {
@@ -4591,12 +4904,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13879,
+      "attack": 304,
+      "defense": 109,
+      "exp": 63122728,
+      "gold": 261525
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "공허",
-      "희귀"
+      "고요한 성단"
     ]
   },
   {
@@ -4618,12 +4935,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 14070,
+      "attack": 307,
+      "defense": 110,
+      "exp": 70381842,
+      "gold": 278524
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "고대",
-      "전설"
+      "고요한 성단"
     ]
   },
   {
@@ -4645,11 +4966,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 13689,
+      "attack": 302,
+      "defense": 108,
+      "exp": 56612312,
+      "gold": 245563
+    },
     "drops": null,
     "tags": [
       "고요한 성단",
-      "시간",
       "난이도50+"
     ]
   },
@@ -4661,10 +4987,10 @@
     "tier": 14,
     "rarity": "legendary",
     "boss": true,
-    "spawnWeight": null,
+    "spawnWeight": 1,
     "rewardMultiplier": 4,
     "minTier": null,
-    "profile": "boss",
+    "profile": "onyxSolenne",
     "shape": "mage",
     "stage": null,
     "dungeon": null,
@@ -4672,12 +4998,16 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": null,
+    "stats": {
+      "hp": 14262,
+      "attack": 309,
+      "defense": 111,
+      "exp": 78475754,
+      "gold": 296628
+    },
     "drops": null,
     "tags": [
-      "고요한 성단",
-      "칠흑",
-      "보스"
+      "칠흑"
     ]
   }
 ]

@@ -58,6 +58,8 @@ const ROLE_BY_LINEAGE: Record<string, SubRoleId> = {
     paladin: 'magic',
     seagrassKeeper: 'healer',
     fishWhisperer: 'utility', salvageMerchant: 'utility', voyageScribe: 'utility', relicScavenger: 'utility', bard: 'utility', bossNaturalist: 'utility',
+    /** v3.367 코프룰루: 강철 보병은 물리 딜러, 군체 조율사는 상태이상 딜러. */
+    irTrooper: 'physical', hvSporeGatherer: 'status',
     fisher: 'none',
     'physical-independent': 'training', 'magic-independent': 'training', 'defense-independent': 'training',
     'status-independent': 'training', 'hybrid-independent': 'training', 'support-independent': 'training',

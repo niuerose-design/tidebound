@@ -938,17 +938,17 @@
     ],
     "hint": "환생 25회를 달성한다",
     "trigger": {
-      "kind": "rebirths",
-      "value": 25
+      "kind": "custom",
+      "value": "(s.rebirths || 0) >= 25"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "갈라진 하늘 틈으로 거꾸로 걸린 바다, 선착장 노인의 뒷모습",
+    "art_hint": null,
     "tags": [
       "제7장",
-      "rebirths"
+      "custom"
     ]
   },
   {
@@ -969,7 +969,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "거대한 부서진 정거장 격납고, 열린 문 틈의 빛",
+    "art_hint": null,
     "tags": [
       "제7장",
       "region_visit"
@@ -992,7 +992,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "모험가 어깨에 매달린 작은 드론, 용접 불꽃",
+    "art_hint": null,
     "tags": [
       "제7장",
       "stage_visit"
@@ -1016,7 +1016,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "반으로 갈라진 우주 정거장 갑판, 떠다니는 반투명한 선원들",
+    "art_hint": null,
     "tags": [
       "제8장",
       "stage_visit"
@@ -1034,13 +1034,13 @@
     "hint": "잿빛 궤도 몬스터 100종을 처치한다",
     "trigger": {
       "kind": "custom",
-      "value": "잿빛 궤도 지역 도감 처치 합계 100"
+      "value": "regionKills(s, '잿빛 궤도') >= 100"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "별 하나가 삼켜지는 순간, 검은 날개 실루엣",
+    "art_hint": null,
     "tags": [
       "제8장",
       "custom"
@@ -1064,7 +1064,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "검은 기록 장치에서 흘러나오는 빛의 파형",
+    "art_hint": null,
     "tags": [
       "제8장",
       "boss_kill"
@@ -1081,13 +1081,13 @@
     "hint": "잿빛 궤도 · 함교에 들어간다",
     "trigger": {
       "kind": "custom",
-      "value": "던전 orbitBridge 첫 입장"
+      "value": "(s.clears?.orbitBridge || 0) > 0"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "육중한 함교 문 앞의 경비 기계, 붉은 경고등",
+    "art_hint": null,
     "tags": [
       "제9장",
       "custom"
@@ -1111,7 +1111,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "시계 문자판 같은 함교, 의자에 앉은 녹슨 선장의 실루엣",
+    "art_hint": null,
     "tags": [
       "제9장",
       "boss_kill"
@@ -1135,7 +1135,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "소리가 지워진 부두, 수많은 눈이 박힌 안개 형체",
+    "art_hint": null,
     "tags": [
       "제9장",
       "onyx_boss"
@@ -1159,7 +1159,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "보랏빛 결정이 드러난 사막 지층, 멀리 버려진 채굴 기지",
+    "art_hint": null,
     "tags": [
       "제10장",
       "region_visit"
@@ -1182,7 +1182,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "보라색 결정 사이를 떠도는 작은 빛 덩어리",
+    "art_hint": null,
     "tags": [
       "제10장",
       "stage_visit"
@@ -1206,7 +1206,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "무너지는 결정 거인, 바닥에 구르는 속 빈 결정",
+    "art_hint": null,
     "tags": [
       "제10장",
       "boss_kill"
@@ -1229,7 +1229,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "노란 가스 구름 속 부풀어 오른 두꺼비형 생물",
+    "art_hint": null,
     "tags": [
       "제11장",
       "stage_visit"
@@ -1252,7 +1252,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "거대한 아가리가 불을 뱉는 분화구, 멀리 보라색 안개",
+    "art_hint": null,
     "tags": [
       "제11장",
       "boss_kill"
@@ -1276,7 +1276,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "보랏빛 갱도에 봉인된 여섯 팔의 결정 석상",
+    "art_hint": null,
     "tags": [
       "제11장",
       "onyx_boss"
@@ -1299,7 +1299,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "보라색 생체 늪 위를 걷는 모험가, 사방의 알주머니",
+    "art_hint": null,
     "tags": [
       "제12장",
       "region_visit"
@@ -1323,7 +1323,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "한꺼번에 깨어나는 알주머니, 쏟아지는 유충 떼",
+    "art_hint": null,
     "tags": [
       "제12장",
       "stage_visit"
@@ -1346,7 +1346,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "늪 위에 솟은 거대한 날개 달린 포식자",
+    "art_hint": null,
     "tags": [
       "제12장",
       "boss_kill"
@@ -1369,7 +1369,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "숨 쉬는 살벽으로 된 회랑, 바닥을 가로지르는 신경 다발",
+    "art_hint": null,
     "tags": [
       "제13장",
       "stage_visit"
@@ -1393,7 +1393,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "거대한 심장 모양의 모체, 멈추는 박동의 빛",
+    "art_hint": null,
     "tags": [
       "제13장",
       "boss_kill"
@@ -1417,7 +1417,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "늪 위에 떠 있는 거대한 눈, 감기는 눈꺼풀",
+    "art_hint": null,
     "tags": [
       "제13장",
       "onyx_boss"
@@ -1441,7 +1441,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "별들 사이 멈춰 선 빛의 첨탑",
+    "art_hint": null,
     "tags": [
       "제14장",
       "region_visit"
@@ -1465,7 +1465,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "빛의 렌즈에 비친 작은 선착장 풍경",
+    "art_hint": null,
     "tags": [
       "제14장",
       "stage_visit"
@@ -1488,7 +1488,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "빛으로 풀어지는 고대 갑주",
+    "art_hint": null,
     "tags": [
       "제14장",
       "boss_kill"
@@ -1512,7 +1512,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "검은 회랑 끝의 빛나는 문, 거꾸로 걷는 실루엣",
+    "art_hint": null,
     "tags": [
       "제15장",
       "stage_visit"
@@ -1536,7 +1536,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "닫힌 거대한 문 앞에 무너진 석상",
+    "art_hint": null,
     "tags": [
       "제15장",
       "boss_kill"
@@ -1560,7 +1560,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "빛의 실을 짜는 고대 직조자, 흩어지는 빛의 소리",
+    "art_hint": null,
     "tags": [
       "제15장",
       "onyx_boss"
@@ -1577,13 +1577,13 @@
     "hint": "코프룰루 구역 칠흑 보스 4종을 모두 처치한다",
     "trigger": {
       "kind": "custom",
-      "value": "onyxVesper·onyxHalder·onyxMirren·onyxSolenne 처치 기록 모두 1 이상"
+      "value": "KOPRULU_ONYX.every(id => (s.onyxBook?.[id] || 0) > 0)"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "네 개의 칠흑 장신구가 놓인 탁자",
+    "art_hint": null,
     "tags": [
       "제16장",
       "custom"
@@ -1606,7 +1606,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "무릉도장 꼭대기에서 하늘을 보는 두 사람",
+    "art_hint": null,
     "tags": [
       "제16장",
       "abyss_floor"
@@ -1629,7 +1629,7 @@
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "25개의 별이 박힌 무기, 내려놓은 망치",
+    "art_hint": null,
     "tags": [
       "제16장",
       "star"
@@ -1646,13 +1646,13 @@
     "hint": "강철 보병 계보 1차 직업으로 전직한다",
     "trigger": {
       "kind": "custom",
-      "value": "직업 irTrooper 해금"
+      "value": "hasJob(s, 'irTrooper')"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "낡은 교범과 녹슨 소총",
+    "art_hint": null,
     "tags": [
       "제17장",
       "custom"
@@ -1669,13 +1669,13 @@
     "hint": "군체 조율사 계보 1차 직업으로 전직한다",
     "trigger": {
       "kind": "custom",
-      "value": "직업 hvSporeGatherer 해금"
+      "value": "hasJob(s, 'hvSporeGatherer')"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "손바닥 위에서 빛나는 보라색 포자",
+    "art_hint": null,
     "tags": [
       "제17장",
       "custom"
@@ -1693,13 +1693,13 @@
     "hint": "코프룰루 계보 5차 직업으로 전직한다",
     "trigger": {
       "kind": "custom",
-      "value": "직업 irClusterMarshal 또는 hvEvoArchitect 해금"
+      "value": "hasJob(s, 'irClusterMarshal') || hasJob(s, 'hvEvoArchitect')"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "지휘봉과 빛나는 눈, 그 사이의 별 바다",
+    "art_hint": null,
     "tags": [
       "제17장",
       "custom"
@@ -1715,17 +1715,17 @@
     ],
     "hint": "환생 40회를 달성한다",
     "trigger": {
-      "kind": "rebirths",
-      "value": 40
+      "kind": "custom",
+      "value": "(s.rebirths || 0) >= 40"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "처음으로 고개를 든 노인, 하늘을 가리키는 모험가",
+    "art_hint": null,
     "tags": [
       "제18장",
-      "rebirths"
+      "custom"
     ]
   },
   {
@@ -1739,17 +1739,17 @@
     ],
     "hint": "환생 50회를 달성한다",
     "trigger": {
-      "kind": "rebirths",
-      "value": 50
+      "kind": "custom",
+      "value": "(s.rebirths || 0) >= 50"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "닫힌 문에 손을 댄 모험가, 문 너머의 희미한 손",
+    "art_hint": null,
     "tags": [
       "제18장",
-      "rebirths"
+      "custom"
     ]
   },
   {
@@ -1763,13 +1763,13 @@
     "hint": "군체의 심장을 나이트메어 난이도로 정복한다",
     "trigger": {
       "kind": "custom",
-      "value": "던전 hiveHeart nightmare 클리어 1회"
+      "value": "(s.modeClears?.nightmare?.hiveHeart || 0) > 0"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "붉게 뛰는 심장과 그 앞에 선 작은 모험가",
+    "art_hint": null,
     "tags": [
       "제18장",
       "custom"
@@ -1786,13 +1786,13 @@
     "hint": "코프룰루 구역 몬스터 80종을 모두 처치한다",
     "trigger": {
       "kind": "custom",
-      "value": "코프룰루 4지역 도감 80종 처치 기록"
+      "value": "kopruluSpecies(s) >= KOPRULU_MONSTERS.length"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "별 사이에 펼쳐진 도감 페이지",
+    "art_hint": null,
     "tags": [
       "제19장",
       "custom"
@@ -1809,17 +1809,17 @@
     ],
     "hint": "환생 60회를 달성한다",
     "trigger": {
-      "kind": "rebirths",
-      "value": 60
+      "kind": "custom",
+      "value": "(s.rebirths || 0) >= 60"
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "건네지는 낡은 그물, 뒤에 선 새 모험가의 그림자",
+    "art_hint": null,
     "tags": [
       "제19장",
-      "rebirths"
+      "custom"
     ]
   },
   {
@@ -1832,17 +1832,17 @@
     ],
     "hint": "결투에서 10승을 거둔다",
     "trigger": {
-      "kind": "custom",
-      "value": "결투 승수 10 이상"
+      "kind": "duel_win",
+      "value": null
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "선착장에 나란히 앉은 두 모험가",
+    "art_hint": null,
     "tags": [
       "제19장",
-      "custom"
+      "duel_win"
     ]
   },
   {
@@ -1856,17 +1856,17 @@
     ],
     "hint": "승천 2회를 달성한다",
     "trigger": {
-      "kind": "custom",
-      "value": "ascension 2 이상"
+      "kind": "ascend",
+      "value": null
     },
     "area_filter": null,
     "weight": null,
     "body": null,
     "choices": null,
-    "art_hint": "멀리서 열리기 시작하는 빛의 문",
+    "art_hint": null,
     "tags": [
       "제19장",
-      "custom"
+      "ascend"
     ]
   }
 ]

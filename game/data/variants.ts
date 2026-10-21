@@ -37,6 +37,7 @@ export const variantById = (id?: VariantId) => id ? VARIANTS.find(v => v.id === 
 export const REGION_SIGNATURE: Record<string, VariantId[]> = {
     '리스항구': ['swarm'], '헤네시스': ['giant'], '페리온': ['abyssal'], '엘리니아': ['starlit'], '커닝시티': ['swarm', 'abyssal'],
     '아쿠아로드': ['swarm'], '리프레': ['giant'], '시간의 신전': ['starlit'], '아케인 리버': ['swarm', 'abyssal'],
+    '잿빛 궤도': ['swarm'], '광맥 황야': ['giant'], '군체 늪지': ['abyssal'], '고요한 성단': ['starlit'],
 };
 /** 사냥터의 지역 변종 배율(지역 표가 없으면 1). */
 const regionVariantScale = (stageId: string, id: VariantId) => ODDS.variant.region[stageById(stageId)?.region || '']?.[id] ?? 1;

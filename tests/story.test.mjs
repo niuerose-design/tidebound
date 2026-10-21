@@ -56,7 +56,7 @@ test('v3.216 story part 2: no ascension gate except the finale, onyx = all 9 (8 
     assert.ok(s.story.onyxAll, 'all 9 onyx owned'); assert.ok(s.story.clone, 'second adventurer slot');
     const ascensionGated = STORY.filter(x => x.when({ ...newState(0), ascension: 1 }) && !x.when(newState(0)));
     assert.deepEqual(ascensionGated.map(x => x.id).filter(id => !['awake', 'shell', 'henesys', 'perion', 'ellinia', 'kerning', 'rebirth1', 'rebirth5', 'rebirth10', 'rebirth50'].includes(id)), ['ascend'], 'only the finale needs an ascension');
-    assert.equal(STORY.at(-1).id, 'ascend', 'the ascension scene is last');
+    assert.equal(STORY.filter(x => x.chapter === 5).at(-1).id, 'ascend', 'the ascension scene closes part 2'); assert.equal(STORY.at(-1).id, 'ascendTwice', 'v3.367 part 3 ends with the second ascension');
 });
 
 test('v3.216 story art: every chapter has an SVG banner fallback, image paths only for files in the manifest', async () => {
@@ -65,7 +65,7 @@ test('v3.216 story art: every chapter has an SVG banner fallback, image paths on
     for (const key of [...STORY.map(x => x.id), ...STORY_CHAPTERS.map((_, i) => `chapter-${i}`)]) assert.equal(storyArtSrc(key), STORY_ART[key] ? `/art/story/${key}.${STORY_ART[key]}` : null, key);
     const src = (await import('node:fs')).readFileSync('components/game/story-art.tsx', 'utf8');
     const banners = src.slice(src.indexOf('const BANNERS'), src.indexOf('];', src.indexOf('const BANNERS')));
-    assert.equal((banners.match(/\/\/ 제\d장/g) || []).length, STORY_CHAPTERS.length, 'one SVG banner per chapter');
+    assert.equal((banners.match(/\/\/ 제\d+장/g) || []).length, STORY_CHAPTERS.length, 'one SVG banner per chapter');
 });
 
 test('v3.217 story art: every scene has its own SVG illustration and chapters start folded', async () => {
