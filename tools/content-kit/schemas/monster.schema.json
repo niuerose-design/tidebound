@@ -1,0 +1,295 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pangaea/monster",
+  "title": "Monster",
+  "description": "게임 정의: game/data/world.ts MonsterDef(rows · specialMonsters) + game/data/maple-monsters.ts(이름·설명 덮어쓰기) + game/data/encounters.ts profileIds(성향) + game/data/art.ts MONSTER_SHAPES(실루엣). 체력·공격·방어·경험치·골드는 level 하나로 공식 계산되므로 수치 필드를 직접 적지 않는다. 출현 가중치는 서버 전용 game/secret/odds.ts ODDS.spawn.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "level",
+    "rarity",
+    "profile",
+    "shape",
+    "stage",
+    "lore",
+    "tags"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "게임 id. 영문 camelCase (예: stormBarracuda, lfWyvern). 지역 접두사 관례: aq=아쿠아로드, lf=리프레, tt=시간의 신전, ar=아케인 리버, onyx=칠흑 보스. 그림 파일 public/art/monsters/{id}.webp 이름이 된다."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 10,
+      "description": "한국어 이름. 기존 1~9자(윌 · 돼지 ~ 블루 드래곤 터틀). 띄어쓰기 포함."
+    },
+    "name_en": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40,
+      "description": "[미사용] 게임에 영문 몬스터 이름 필드가 없다. 참고용."
+    },
+    "level": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120,
+      "description": "몬스터 레벨. 체력 35+12L+0.65L², 공격 3+2.2L, 방어 ⌊0.8L⌋, 경험치·골드는 world.ts 곡선(STYLE_GUIDE 6절). 사냥터 입장 레벨 ~ +6 범위에 둔다."
+    },
+    "tier": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 12,
+      "description": "[미사용] 키트 편의용 10레벨 단위 티어 = ⌈level/10⌉. 게임에는 없음(게임의 ‘난이도(tide/tier)’는 사냥터 난이도라 다른 개념)."
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "rare",
+        "epic",
+        "legendary"
+      ],
+      "description": "게임 MonsterDef.rarity. common은 rows(일반 출현, 가중치 1), rare/epic/legendary는 specialMonsters(출현 가중치 ODDS.spawn 필요). 도감 표시 색이 달라진다."
+    },
+    "boss": {
+      "type": "boolean",
+      "default": false,
+      "description": "게임 MonsterDef.boss. 던전 보스(bossMonster) · 칠흑 보스(onyx*). true면 rarity는 legendary, rewardMultiplier 2.6~6, 전투 능력치에 bossLevelScale이 곱해진다."
+    },
+    "spawnWeight": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1,
+      "description": "서버 전용 ODDS.spawn 값(game/secret/odds.ts). common은 1(적지 않음). 기존 범위: rare 0.08~0.18(배수로 0.6), epic 0.04~0.08, legendary 0.018~0.03. 모르면 null → 등급 기본값 표(STYLE_GUIDE 6.3)로 채움."
+    },
+    "rewardMultiplier": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 8,
+      "description": "경험치·골드 배율(game MonsterDef.rewardMultiplier). 기존 범위: common 1, rare 1.35~1.55, epic 1.2~2.8, legendary 1.6~2, 던전 보스 2.6~6, 칠흑 4. null → STYLE_GUIDE 6.3 표."
+    },
+    "minTier": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 300,
+      "description": "사냥터 난이도 이 단계 이상에서만 출현(game MonsterDef.minTier). 기존: 레이스 20, 와이번 30. 보통 null."
+    },
+    "profile": {
+      "type": "string",
+      "enum": [
+        "swift",
+        "armored",
+        "arcane",
+        "venom",
+        "silencer",
+        "controller",
+        "blaze",
+        "frenzy",
+        "tidal",
+        "stormEel",
+        "venomBoss",
+        "arcaneBoss",
+        "boss",
+        "zakum",
+        "papulatus",
+        "pinkBean",
+        "onyxDusk",
+        "onyxDunkel",
+        "onyxWill",
+        "onyxLucid",
+        "onyxHilla",
+        "onyxSwoo",
+        "onyxDamien",
+        "onyxSeren",
+        "onyxBlackMage"
+      ],
+      "description": "전투 성향(game/data/encounters.ts PROFILES → profileIds). 기술 세트·방어/마방/회피/속도 배율이 여기서 정해진다. swift 날쌘 개체(출혈) · armored 단단한 껍질(기절·돌진) · arcane 마력 생물(마법 평타) · venom 독성(중독·출혈) · silencer 침묵(마법 평타) · controller 대지 제어자(감속·기절·복합) · blaze 불꽃(화상·추가타) · frenzy 광폭(추가타·가속) · tidal 혼돈(복합 평타·약화) · stormEel 전격(귀참·침묵). 보스용: venomBoss · arcaneBoss · boss(고대 보스) · zakum · papulatus. 칠흑 보스(onyx*)는 보스마다 전용 성향을 코드로 추가해야 한다. 월드보스 pinkBean, 칠흑 onyx*(9종)도 enum에 있으나 보스 전용이라 일반 몬스터에는 쓰지 않는다."
+    },
+    "shape": {
+      "type": "string",
+      "enum": [
+        "snail",
+        "mushroom",
+        "slime",
+        "pig",
+        "boar",
+        "golem",
+        "eye",
+        "monkey",
+        "drake",
+        "ghost",
+        "skeleton",
+        "octopus",
+        "bat",
+        "crab",
+        "croc",
+        "snake",
+        "bubble",
+        "chest",
+        "demon",
+        "mage",
+        "fighter",
+        "statue",
+        "clock",
+        "dusk",
+        "dunkel",
+        "will",
+        "lucid",
+        "hilla",
+        "swoo",
+        "damien",
+        "seren",
+        "blackmage"
+      ],
+      "description": "그림이 없을 때 쓰는 실루엣(game/data/art.ts MONSTER_SHAPES). 일반 몬스터는 snail~clock 23종 중에서 고른다(dusk~blackmage는 칠흑 보스 전용). 그림은 public/art/monsters/{id}.webp에 두고 node scripts/art-manifest.mjs 를 돌리면 자동 사용."
+    },
+    "stage": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "출현 사냥터 id(world.ts BASE_STAGES[].monsters에 들어갈 곳). 던전 전용·특별 몬스터는 null. 지역 무리 서식지는 자동으로 그 지역 사냥터 몬스터를 모두 쓴다."
+    },
+    "dungeon": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "던전 전용이면 던전 id(world.ts DUNGEONS). 보스면 그 던전의 bossMonster가 된다."
+    },
+    "lore": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 80,
+      "description": "도감·조우 때 보이는 한 줄 설명(game MonsterDef.lore). 기존 12~71자, 1~2문장 ‘~다’ 평서체(특별 몬스터·대왕만 60자 넘음, 새 몬스터는 50자 안으로). 키트의 flavor에 해당."
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 40,
+      "maxLength": 100,
+      "description": "[미사용] 게임은 lore 한 줄만 쓴다. 도감 확장 때 쓸 수 있어 남겨 둠(2~3문장: 생태 → 모험가와의 관계)."
+    },
+    "behavior": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 15,
+      "maxLength": 60,
+      "description": "[미사용] 실제 행동은 profile(성향)이 결정한다. 기존 성향에 없는 패턴을 제안할 때 설계 메모로만 쓴다(새 성향 추가는 encounters.ts 코드 작업)."
+    },
+    "weakness": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 4,
+      "maxLength": 40,
+      "description": "[미사용] 도감의 약점 힌트는 PROFILES[].hint(성향마다 하나)라 몬스터별로 적을 곳이 없다. 설계 메모용."
+    },
+    "stats": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "hp": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attack": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "defense": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "exp": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "gold": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "description": "[계산값] 생성 때는 null. level로 world.ts 공식이 정하므로 게임에 직접 넣을 수 없다. data/monster.json(기존 데이터 내보내기)에는 참고용으로 채워 둔다."
+    },
+    "drops": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item_hint",
+          "rarity"
+        ],
+        "properties": {
+          "item_hint": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "rarity": {
+            "type": "string",
+            "enum": [
+              "common",
+              "uncommon",
+              "rare",
+              "epic",
+              "legendary"
+            ]
+          },
+          "rate": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "description": "[미사용] 게임에 몬스터별 드롭 테이블이 없다. 장비 드롭은 부위·등급·레벨 공통 공식(STYLE_GUIDE 6.4). 아이템 배치의 SOURCES 입력용 메모로만 쓴다."
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 12
+      },
+      "description": "[미사용] 중복 방지·검색용(키트 내부). 예: 버섯, 무리, 언데드, 비룡."
+    }
+  }
+}

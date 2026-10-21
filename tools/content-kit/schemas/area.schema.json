@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pangaea/area",
+  "title": "Area",
+  "description": "게임 정의: game/data/world.ts StageDef(BASE_STAGES 사냥터) · HABITAT_META(지역마다 하나인 무리 서식지) · DUNGEONS(지역 던전). 지역(region)은 사냥터의 region 문자열로만 존재하고 따로 정의 표가 없다. 새 지역을 열면 HABITAT_META · HABITAT_REBIRTH · STAGE_FIT · REGION_SIGNATURE(variants.ts) · ODDS.variant.region(secret/odds.ts)에도 한 줄씩 넣어야 한다.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "region", "place", "subtitle", "level", "rebirth", "description", "monsters", "tone", "tags"],
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{2,30}$", "description": "게임 id(camelCase: brook, duskVents, coralForest). 세이브에 저장되므로 한 번 정하면 바꾸지 않는다." },
+    "kind": { "type": "string", "enum": ["stage", "dungeon"], "description": "stage = 사냥터(BASE_STAGES). dungeon = 지역 던전(DUNGEONS: 잡몹 1판 + 보스). 무리 서식지는 지역마다 자동 생성이라 따로 만들지 않고 habitat 칸에 적는다." },
+    "region": { "type": "string", "minLength": 2, "maxLength": 8, "description": "지역 이름(한국어). 기존: 리스항구 · 헤네시스 · 페리온 · 엘리니아 · 커닝시티 · 아쿠아로드 · 리프레 · 시간의 신전 · 아케인 리버. 같은 지역 사냥터는 region이 글자까지 같아야 한다." },
+    "place": { "type": "string", "minLength": 2, "maxLength": 10, "description": "세부 장소(한국어). 화면 이름은 ‘지역 · 장소’로 자동 조합(name). 기존 2~9자(선착장, 유적 발굴지 수로, 불타는 땅 화구호)." },
+    "name": { "type": ["string", "null"], "maxLength": 24, "description": "[계산값] `${region} · ${place}`. 던전은 ‘지역 · 장소’ 형식의 name을 직접 쓴다(예: 헤네시스 · 버섯 동산)." },
+    "subtitle": { "type": "string", "pattern": "^[A-Z0-9 ·'\\-]{4,48}$", "description": "영문 대문자 부제 ‘REGION · PLACE’(StageDef.subtitle). 예: LITH HARBOR · PIER, PERION · BURNING CRATER. 던전은 없음(빈 문자열 대신 ‘-’ 불가 → 던전이면 ‘DUNGEON’으로 두고 게임에 넣을 때 버린다)." },
+    "level": { "type": "integer", "minimum": 1, "maximum": 120, "description": "입장(권장) 레벨. 몬스터 능력치는 이 레벨 + 6까지만 센다(STAGE_ENEMY_LEVEL_OVER). 기존 사냥터: 1·5·10·14·18·24·26·34·46·55·70·80·90·100. 던전: 8·14·18·26·30·40·48·60." },
+    "rebirth": { "type": "integer", "minimum": 0, "maximum": 100, "description": "입장 환생 횟수. 기존 사냥터: 0(~Lv.26) · 1(Lv.34) · 2(46) · 5(55) · 10(70) · 15(80·90) · 20(100)." },
+    "fit": { "type": ["integer", "null"], "minimum": 0, "maximum": 100, "description": "적정 환생(STAGE_FIT, 측정값: 난이도 0에서 사망 0 · 평균 처치 3턴 이하). 입장 환생보다 크면 따로 표시. 측정 전이면 null." },
+    "tier": { "type": ["integer", "null"], "minimum": 1, "maximum": 12, "description": "[미사용] 키트 편의용 = ⌈level/10⌉." },
+    "terrain": { "type": ["string", "null"], "enum": ["coast", "forest", "swamp", "plain", "mountain", "cave", "ruin", "desert", "tundra", "abyss", "city", "temple", "river", null], "description": "[미사용] 게임에 지형 enum이 없다. 몬스터 배치 HABITAT 입력과 tone 색 고르기에 참고." },
+    "climate": { "type": ["string", "null"], "maxLength": 12, "description": "[미사용] 참고용." },
+    "description": { "type": "string", "minLength": 20, "maxLength": 80, "description": "사냥터 목록에 보이는 설명(StageDef.description). 기존 25~55자, 2문장: 무엇이 보이고 → 무엇이 위험한가/누가 닿는가. 환생 조건이 있으면 ‘다섯 번의 생을 건넌 모험가만’처럼 문장에 녹인다." },
+    "flavor": { "type": ["string", "null"], "minLength": 10, "maxLength": 30, "description": "[미사용] 게임에 한 줄 플레이버 칸이 없다." },
+    "lore": { "type": ["string", "null"], "minLength": 60, "maxLength": 200, "description": "[미사용] 탐험 완료 해금 로어 같은 시스템이 없다. 스토리(game/data/story.ts) 장면 소재로 쓸 수 있어 남겨 둠." },
+    "ambient_lines": { "type": ["array", "null"], "minItems": 3, "maxItems": 6, "items": { "type": "string", "minLength": 8, "maxLength": 40 }, "description": "[미사용] 방치 중 분위기 문장 시스템이 없다(전투 로그는 systems/combat-feedback.ts가 생성). 나중에 사냥터 로그 연출을 넣을 때 소재." },
+    "monsters": { "type": "array", "minItems": 0, "maxItems": 6, "items": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{2,30}$" }, "description": "출현 몬스터 id(StageDef.monsters). 사냥터는 3~6종(common 3 + special 1~3). 던전은 잡몹 2종(마지막 칸은 보스 자리라 bossMonster로 채움). 아직 몬스터를 만들기 전이면 []로 두고 monster_hints를 채운다." },
+    "monster_hints": { "type": ["array", "null"], "minItems": 2, "maxItems": 6, "items": { "type": "string", "maxLength": 20 }, "description": "[키트 전용] 다음 몬스터 배치의 입력. 생태 역할(포식자/무리/채집형/함정형)이 겹치지 않게." },
+    "tone": { "type": "string", "pattern": "^#[0-9a-f]{6}$", "description": "사냥터 카드 색(StageDef.tone). 기존: 바다 #68b6ce · 숲 #72b89b · 유적 #9e96c8 · 화산 #d17c62 · 도시 #9c8ed4 · 신전 #c9a85c." },
+    "habitat": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["id", "subtitle", "description", "tone", "rebirth"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{2,30}Swarm$", "description": "무리 서식지 id(…Swarm). 예: lithSwarm, aquaSwarm." },
+        "subtitle": { "type": "string", "pattern": "^[A-Z0-9 ·'\\-]{4,48}$", "description": "‘REGION · SWARM XXX’ 형식." },
+        "description": { "type": "string", "minLength": 20, "maxLength": 80, "description": "‘떼로 몰려온다’ 느낌의 2문장." },
+        "tone": { "type": "string", "pattern": "^#[0-9a-f]{6}$" },
+        "rebirth": { "type": "integer", "minimum": 2, "maximum": 100, "description": "HABITAT_REBIRTH 입장 환생(기존 2·2·2·3·7·14·15·15·20)." },
+        "signature": { "type": "array", "minItems": 1, "maxItems": 2, "items": { "type": "string", "enum": ["swarm", "giant", "abyssal", "starlit"] }, "description": "지역 대표 변종(REGION_SIGNATURE). 1종이면 ×2.5, 2종이면 각 ×1.8." }
+      },
+      "description": "이 사냥터가 새 지역의 첫 사냥터일 때만 채운다(HABITAT_META · HABITAT_REBIRTH · REGION_SIGNATURE 한 줄씩). 기존 지역이면 null."
+    },
+    "boss": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["monster", "title", "gold", "pearls"],
+      "properties": {
+        "monster": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{2,30}$", "description": "보스 몬스터 id(DUNGEONS[].bossMonster, boss: true인 몬스터)." },
+        "title": { "type": "string", "minLength": 4, "maxLength": 20, "description": "‘칭호 · 이름’(DUNGEONS[].boss). 예: 수로의 왕 · 킹 슬라임, 불꽃의 마족 · 주니어 발록." },
+        "gold": { "type": "integer", "minimum": 0, "description": "클리어 골드(기존: Lv.8 350 · 14 950 · 18 1600 · 26 4200 · 30 6000 · 48 18000 · 60 30000 ≈ 권장 레벨 몬스터 골드 × 6~10)." },
+        "pearls": { "type": "integer", "minimum": 0, "description": "클리어 세계석(기존: 1·1·2·3·5·8·12)." }
+      },
+      "description": "kind가 dungeon일 때 필수. 사냥터면 null."
+    },
+    "neighbor_hint": { "type": ["string", "null"], "maxLength": 40, "description": "[키트 전용] 다음 지역 씨앗." },
+    "tags": { "type": "array", "minItems": 1, "maxItems": 5, "items": { "type": "string", "maxLength": 12 }, "description": "[미사용] 키트 내부 검색·중복 방지용." }
+  }
+}

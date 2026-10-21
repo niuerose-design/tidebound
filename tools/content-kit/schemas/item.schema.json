@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "pangaea/item",
+  "title": "Item",
+  "description": "게임의 아이템은 전부 장비(game/types.ts Item: slot 4종 × 등급 7단계)이고 소모품·재료·잡템은 없다. 장비 이름은 (부위, 등급, 무기 계열)마다 하나씩 고정 표(game/data/maple-gear.ts)에서 가져오며 수치(power)는 드롭 때 굴린다. 따라서 ‘아이템 생성’은 네 갈래다: gear(이름 표 한 칸) · affix(장비 옵션 정의, game/data/gear.ts AFFIX_POOL) · onyx(칠흑 장신구, game/data/onyx.ts ONYX_ITEMS) · relic(유물, game/data/economy.ts RELICS). kind에 따라 쓰는 칸이 다르다(아래 각 칸 설명의 [gear]/[affix]/[onyx]/[relic] 표시). 해당 없는 칸은 null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "kind",
+    "name",
+    "tags"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "camelCase. [gear] `${slot}_${rarity}_${style}` 대신 사람이 읽는 id(예: zakumSword). 게임 표에는 index로 들어가므로 키트 내부 식별용. [affix] AFFIX_POOL id(예: might, glassCannon). [onyx] ONYX_ITEMS id. [relic] RELICS id."
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "gear",
+        "affix",
+        "onyx",
+        "relic"
+      ],
+      "description": "gear 장비 이름 표 · affix 장비 옵션 · onyx 칠흑 장신구 · relic 유물."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 14,
+      "description": "한국어 이름. 기존 gear 2~13자(목검 · 타일런트 히아데스 클록), affix 1~5자(룬 · 맹공 · 피의 계약), onyx 4~12자, relic 5~9자."
+    },
+    "name_en": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40,
+      "description": "[미사용] 게임에 영문 이름 칸이 없다."
+    },
+    "slot": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "rod",
+        "coat",
+        "charm",
+        "cape",
+        null
+      ],
+      "description": "[gear·relic 필수, onyx는 항상 charm] 부위. rod=무기 · coat=방어구 · charm=장신구 · cape=망토(balance.ts SLOTS). [affix] onlySlot(망토 전용 statusResist처럼)에 쓸 때만."
+    },
+    "rarity": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 6,
+      "description": "[gear 필수] 등급 번호 = 붙는 옵션 수. 0 일반 · 1 희귀 · 2 영웅 · 3 전설 · 4 신화 · 5 고대 · 6 태초(balance.ts RARITIES, factor 1/1.5/2.2/3.3/3.9/4.5/5.2). 같은 (slot, rarity, style) 칸은 게임에 하나뿐이라 새 이름은 기존 이름을 **대체**한다. [affix] minRarity(이 등급부터 뽑힘: 규칙 옵션 3, 고대 전용 5, 태초 전용 6). [onyx] 항상 6, [relic] 항상 3."
+    },
+    "style": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "physical",
+        "magic",
+        "balanced",
+        null
+      ],
+      "description": "[gear, slot이 rod일 때 필수] 무기 계열(WEAPON_NAMES.physical/magic/balanced). 다른 부위는 null. 표시: 물리 특화 · 마법 특화 · 물리·마법 겸용."
+    },
+    "set_name": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 12,
+      "description": "[gear] 등급의 세트 이름(GEAR_SETS, 도감 ‘${set} 무기’에 쓰임). 등급마다 하나: 0 초보자 · 1 메이플 · 2 자쿰 · 3 파프니르 · 4 앱솔랩스 · 5 아케인셰이드 · 6 제네시스. 등급 안의 6개 이름(무기 3계열·방어구·망토·장신구)은 같은 세트 어휘를 공유한다."
+    },
+    "tier": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1,
+      "maximum": 12,
+      "description": "[미사용] 장비 레벨은 드롭 때 몬스터 레벨 ~ 내 레벨+10으로 정해지고 이름과 무관하다."
+    },
+    "type": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "weapon",
+        "armor",
+        "accessory",
+        "consumable",
+        "material",
+        "misc",
+        null
+      ],
+      "description": "[미사용] 키트 호환용. 게임은 slot으로만 구분하고 consumable·material·misc는 존재하지 않는다(소모품 대신 재화: 골드 · 세계석 · 정수 · SP · 던전 주화)."
+    },
+    "flavor": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 10,
+      "maxLength": 30,
+      "description": "[미사용] gear에는 플레이버 칸이 없다(장비창 설명은 부위별 고정 문장)."
+    },
+    "description": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 6,
+      "maxLength": 140,
+      "description": "[affix 필수] 옵션 설명(AffixDef.description, 장비창·도감에 표시). 기존 9~134자, 보통 한 문장 ‘물리 공격을 올립니다.’ 양날·규칙 옵션은 두 문장까지. [onyx 필수] 획득 증표 설명(ONYX_ITEMS[].desc) 예: ‘더스크를 쓰러뜨린 증표. 가시 반격이 크게 오릅니다.’ [relic 필수] RELICS[].description. [gear] 미사용."
+    },
+    "effect_text": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 60,
+      "description": "[미사용] 효과 문구는 stat·value에서 systems/equipment.ts가 자동 생성한다."
+    },
+    "affix": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "stat",
+        "kind",
+        "base"
+      ],
+      "properties": {
+        "stat": {
+          "type": "string",
+          "description": "Stats 키(game/types.ts). 주요: attack magic hp defense resist mana manaRegen accuracy evasion crit critDamage penetration lifesteal speed dotBonus thorns arcaneStrike expBonus goldBonus dropBonus statusResist chainBonus bossDamage allStats superCrit masteryFlat rankFlat essenceBonus stunBonus controlBonus dotTurnsBonus poisonStackBonus arcaneRatioBonus followUpBonus healBonus executeBonus hpRegen ornament. 표시 이름은 data/progression.ts STAT_LABELS."
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "flat",
+            "percent",
+            "rule"
+          ],
+          "description": "flat: value = base × max(1, power) × roll. percent: value = base × roll(소수 4자리). rule: value = base 고정, 기술 규칙 숫자 하나를 바꿈(상한 gear.ts RULE_CAPS)."
+        },
+        "base": {
+          "type": "number",
+          "description": "기준값. 기존 flat: attack/magic .27, hp .81, defense/resist .162, 양손(rollBoth) .18/.108. percent: crit .015, critDamage .1, penetration .05, lifesteal .015, speed 2, dotBonus .06, thorns .04, expBonus .03, goldBonus .04, dropBonus .01. 양날(berserk) attack 1.35 / defense −.405. 고대 전용 ruin critDamage .2, transcend allStats .015, hunter bossDamage .05, tempo chainBonus .02. roll = (.6 + q×.8) × (1 + rarity×.2)."
+        },
+        "stat2": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "두 번째 능력치(양손 옵션 force/guardian/flow/sense 또는 양날 옵션의 손해 쪽)."
+        },
+        "base2": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "stat2 기준값. 양날이면 음수(고정, 굴리지 않음)."
+        },
+        "rollBoth": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "true면 stat2도 같은 roll로 굴림(양손). false/null이면 stat2는 고정(양날)."
+        },
+        "weight": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "뽑힐 가중치(기본 1). 강한 옵션은 .4(brutal·ruin·hunter·tempo·bounty), transcend .2. 규칙 옵션은 ×.25가 따로 곱해진다."
+        },
+        "minRarity": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 6
+        },
+        "onlySlot": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "rod",
+            "coat",
+            "charm",
+            "cape",
+            null
+          ]
+        },
+        "onlyOrigin": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "특정 출처 전용(onyx · abyss). 사냥터 테마 가중(×4)은 gear.ts ORIGIN_AFFIXES에 사냥터 id → 옵션 id로 따로 적는다."
+        },
+        "uncapped": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "GEAR_CAPS(lifesteal .1, statusResist .5) 무시."
+        },
+        "fixed": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "굴리지 않고 base 그대로(drill·valor·ornate·pinch)."
+        },
+        "rare": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "태초·칠흑 전용 희귀 옵션(가중치 ODDS.affix.rare = .0035)."
+        },
+        "junk": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "꽝 옵션(ODDS.affix.junk = .02, 장비당 최대 1줄)."
+        }
+      },
+      "description": "[affix 필수] AffixDef 수치. [onyx 필수] 고유 옵션 1줄(kind rule, onlyOrigin onyx). [relic 필수] 옛 단일 옵션(stat·base만: 예 goldBonus .2). [gear] null."
+    },
+    "boss": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[a-z][a-zA-Z0-9]{2,30}$",
+      "description": "[onyx 필수] 드롭하는 칠흑 보스 몬스터 id(onyx*). 보스는 지역마다 하나(onyx.ts ONYX_BOSSES region → boss)."
+    },
+    "stats": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": {
+        "type": "number"
+      },
+      "description": "[미사용] 장비 능력치는 power × 등급 × 성 × 부위 계수로 자동 계산(systems/equipment.ts itemStats). 직접 적지 않는다."
+    },
+    "source_hint": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40,
+      "description": "[미사용] 드롭은 부위 균등 · 등급 공통 분포라 출처가 따로 없다. [onyx] 지역·서식지 메모용."
+    },
+    "tags": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "maxLength": 12
+      },
+      "description": "[미사용] 키트 내부 검색·중복 방지용."
+    }
+  }
+}

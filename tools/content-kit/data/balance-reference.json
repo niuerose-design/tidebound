@@ -1,0 +1,492 @@
+{
+  "generatedAt": "2026-10-21",
+  "monsterByLevel": [
+    {
+      "level": 1,
+      "hp": 48,
+      "attack": 5,
+      "defense": 0,
+      "exp": 9,
+      "gold": 7,
+      "combat": {
+        "hp": 101,
+        "attack": 5,
+        "magic": 6,
+        "defense": 0,
+        "resist": 0,
+        "crit": 0.040600000000000004,
+        "accuracy": 0.952,
+        "penetration": 0.0035,
+        "evasion": 0,
+        "speed": 6,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 5,
+      "hp": 111,
+      "attack": 14,
+      "defense": 4,
+      "exp": 16,
+      "gold": 11,
+      "combat": {
+        "hp": 233,
+        "attack": 15,
+        "magic": 17,
+        "defense": 10,
+        "resist": 2,
+        "crit": 0.043000000000000003,
+        "accuracy": 0.96,
+        "penetration": 0.0175,
+        "evasion": 0,
+        "speed": 6,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 10,
+      "hp": 220,
+      "attack": 25,
+      "defense": 8,
+      "exp": 32,
+      "gold": 19,
+      "combat": {
+        "hp": 527,
+        "attack": 27,
+        "magic": 32,
+        "defense": 19,
+        "resist": 5,
+        "crit": 0.046,
+        "accuracy": 0.97,
+        "penetration": 0.035,
+        "evasion": 0,
+        "speed": 7,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 20,
+      "hp": 535,
+      "attack": 47,
+      "defense": 16,
+      "exp": 128,
+      "gold": 60,
+      "combat": {
+        "hp": 1595,
+        "attack": 56,
+        "magic": 65,
+        "defense": 41,
+        "resist": 10,
+        "crit": 0.052,
+        "accuracy": 0.99,
+        "penetration": 0.07,
+        "evasion": 0,
+        "speed": 9,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 30,
+      "hp": 980,
+      "attack": 69,
+      "defense": 24,
+      "exp": 518,
+      "gold": 187,
+      "combat": {
+        "hp": 3499,
+        "attack": 89,
+        "magic": 103,
+        "defense": 65,
+        "resist": 16,
+        "crit": 0.057999999999999996,
+        "accuracy": 1.01,
+        "penetration": 0.105,
+        "evasion": 0,
+        "speed": 11,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 40,
+      "hp": 1555,
+      "attack": 91,
+      "defense": 32,
+      "exp": 2096,
+      "gold": 582,
+      "combat": {
+        "hp": 6466,
+        "attack": 127,
+        "magic": 146,
+        "defense": 91,
+        "resist": 23,
+        "crit": 0.064,
+        "accuracy": 1.03,
+        "penetration": 0.14,
+        "evasion": 0,
+        "speed": 13,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 50,
+      "hp": 2260,
+      "attack": 113,
+      "defense": 40,
+      "exp": 8481,
+      "gold": 1092,
+      "combat": {
+        "hp": 10726,
+        "attack": 168,
+        "magic": 193,
+        "defense": 120,
+        "resist": 30,
+        "crit": 0.07,
+        "accuracy": 1.05,
+        "penetration": 0.17500000000000002,
+        "evasion": 0,
+        "speed": 14,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 60,
+      "hp": 3095,
+      "attack": 135,
+      "defense": 48,
+      "exp": 34310,
+      "gold": 2049,
+      "combat": {
+        "hp": 16509,
+        "attack": 214,
+        "magic": 246,
+        "defense": 151,
+        "resist": 38,
+        "crit": 0.076,
+        "accuracy": 1.0699999999999998,
+        "penetration": 0.21,
+        "evasion": 0,
+        "speed": 16,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 70,
+      "hp": 4060,
+      "attack": 157,
+      "defense": 56,
+      "exp": 42931,
+      "gold": 3847,
+      "combat": {
+        "hp": 24043,
+        "attack": 264,
+        "magic": 304,
+        "defense": 184,
+        "resist": 46,
+        "crit": 0.08199999999999999,
+        "accuracy": 1.0899999999999999,
+        "penetration": 0.245,
+        "evasion": 0,
+        "speed": 18,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 80,
+      "hp": 5155,
+      "attack": 179,
+      "defense": 64,
+      "exp": 127502,
+      "gold": 7221,
+      "combat": {
+        "hp": 33559,
+        "attack": 319,
+        "magic": 366,
+        "defense": 220,
+        "resist": 55,
+        "crit": 0.088,
+        "accuracy": 1.1099999999999999,
+        "penetration": 0.28,
+        "evasion": 0,
+        "speed": 20,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 90,
+      "hp": 6380,
+      "attack": 201,
+      "defense": 72,
+      "exp": 378675,
+      "gold": 13554,
+      "combat": {
+        "hp": 45285,
+        "attack": 377,
+        "magic": 434,
+        "defense": 258,
+        "resist": 64,
+        "crit": 0.094,
+        "accuracy": 1.13,
+        "penetration": 0.28,
+        "evasion": 0,
+        "speed": 21,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 100,
+      "hp": 7735,
+      "attack": 223,
+      "defense": 80,
+      "exp": 1124646,
+      "gold": 25444,
+      "combat": {
+        "hp": 59451,
+        "attack": 440,
+        "magic": 506,
+        "defense": 298,
+        "resist": 75,
+        "crit": 0.1,
+        "accuracy": 1.15,
+        "penetration": 0.28,
+        "evasion": 0,
+        "speed": 23,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    },
+    {
+      "level": 110,
+      "hp": 9220,
+      "attack": 245,
+      "defense": 88,
+      "exp": 3340137,
+      "gold": 47761,
+      "combat": {
+        "hp": 76286,
+        "attack": 508,
+        "magic": 584,
+        "defense": 341,
+        "resist": 85,
+        "crit": 0.1,
+        "accuracy": 1.17,
+        "penetration": 0.28,
+        "evasion": 0,
+        "speed": 25,
+        "mana": 100,
+        "manaRegen": 10
+      }
+    }
+  ],
+  "tide": [
+    {
+      "tier": 0,
+      "hp": 1,
+      "attack": 1,
+      "gold": 1,
+      "exp": 1
+    },
+    {
+      "tier": 5,
+      "hp": 2.75,
+      "attack": 1.9,
+      "gold": 3.5,
+      "exp": 2.5
+    },
+    {
+      "tier": 10,
+      "hp": 4.5,
+      "attack": 2.8,
+      "gold": 6,
+      "exp": 4
+    },
+    {
+      "tier": 20,
+      "hp": 8,
+      "attack": 4.6,
+      "gold": 11,
+      "exp": 7
+    },
+    {
+      "tier": 30,
+      "hp": 12.1,
+      "attack": 6.6,
+      "gold": 16,
+      "exp": 10.5
+    },
+    {
+      "tier": 50,
+      "hp": 23.9,
+      "attack": 11.8,
+      "gold": 22.71,
+      "exp": 17.21
+    },
+    {
+      "tier": 70,
+      "hp": 40.5,
+      "attack": 18.6,
+      "gold": 25.49,
+      "exp": 19.99
+    },
+    {
+      "tier": 100,
+      "hp": 74.4,
+      "attack": 31.8,
+      "gold": 28.55,
+      "exp": 23.05
+    },
+    {
+      "tier": 200,
+      "hp": 265.4,
+      "attack": 101.8,
+      "gold": 35.56,
+      "exp": 30.06
+    },
+    {
+      "tier": 260,
+      "hp": 437.6,
+      "attack": 163,
+      "gold": 38.75,
+      "exp": 33.25
+    }
+  ],
+  "rarities": [
+    {
+      "name": "일반",
+      "color": "#9dadaf",
+      "factor": 1
+    },
+    {
+      "name": "희귀",
+      "color": "#68b6ee",
+      "factor": 1.5
+    },
+    {
+      "name": "영웅",
+      "color": "#bf96ef",
+      "factor": 2.2
+    },
+    {
+      "name": "전설",
+      "color": "#e7be71",
+      "factor": 3.3
+    },
+    {
+      "name": "신화",
+      "color": "#f08a6c",
+      "factor": 3.9
+    },
+    {
+      "name": "고대",
+      "color": "#5fd0b5",
+      "factor": 4.5
+    },
+    {
+      "name": "태초",
+      "color": "#ff6fb5",
+      "factor": 5.2
+    }
+  ],
+  "dropRarity": [
+    0.5,
+    0.25,
+    0.13,
+    0.07,
+    0.035,
+    0.012,
+    0.00027
+  ],
+  "dropChance": {
+    "base": 0.0025,
+    "cap": 0.03
+  },
+  "appraisal": [
+    0.58,
+    0.32,
+    0.088,
+    0.01,
+    0.0015,
+    0.0005
+  ],
+  "spawn": {
+    "masteryMimic": 0,
+    "expNuri": 0,
+    "essenceSlime": 0,
+    "kingMimic": 0,
+    "kingNuri": 0,
+    "kingSlime": 0,
+    "seahorse": 0.18,
+    "needlefish": 0.12,
+    "tidejelly": 0.07,
+    "emberEel": 0.14,
+    "ashRay": 0.1,
+    "magmaPuffer": 0.06,
+    "cinderKoi": 0.045,
+    "starKoi": 0.1,
+    "prismRay": 0.065,
+    "voidGuppy": 0.04,
+    "stormBarracuda": 0.08,
+    "eclipseMoonfish": 0.06,
+    "novaManta": 0.03,
+    "cinderAngler": 0.6,
+    "ventLeviathan": 0.3,
+    "abyssManta": 0.018
+  },
+  "variant": {
+    "swarm": 0.04,
+    "giant": 0.02,
+    "abyssal": 0.004,
+    "starlit": 0.008
+  },
+  "mimic": {
+    "chance": 0.0015,
+    "perTier": 0.0005,
+    "stageStep": 0.25,
+    "tiers": [
+      0.7,
+      0.25,
+      0.05
+    ],
+    "letterMid": 0.35
+  },
+  "nuri": {
+    "chance": 0.0075,
+    "perTier": 0.00025,
+    "tiers": [
+      0.7,
+      0.25,
+      0.05
+    ]
+  },
+  "slime": {
+    "chance": 0.0015,
+    "perTier": 0.0001,
+    "tiers": [
+      0.7,
+      0.25,
+      0.05
+    ]
+  },
+  "onyx": {
+    "chance": 0.003,
+    "perTier": 0.02,
+    "pity": 2000,
+    "drop": 0.003,
+    "dropPity": 300,
+    "trackPity": [
+      500,
+      400,
+      300
+    ]
+  }
+}
