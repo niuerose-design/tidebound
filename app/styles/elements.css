@@ -34,7 +34,7 @@ button {
   transition:background .18s,border-color .18s,transform .18s
 }
 
-button:focus-visible,a:focus-visible,input:focus-visible {
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible,[role=tab]:focus-visible,[role=button]:focus-visible,[tabindex]:focus-visible {
   outline:2px solid var(--primary);
   outline-offset:4px
 }
@@ -94,7 +94,7 @@ strong,b {
 }
 
 .micro {
-  font-size:10px;
+  font-size:11px;
   letter-spacing:1.3px;
   color:#829699
 }
