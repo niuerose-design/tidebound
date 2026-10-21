@@ -1,4 +1,5 @@
 'use client';
+/** v3.381 새 설정 화면(components/features/settings/settings-screen.tsx, #settings)으로 교체되어 더는 쓰지 않습니다. 브리프 9절 규칙대로 한 버전 뒤(v3.382)에 지웁니다. */
 import { useSkillFx, setSkillFx, useFxGlow, setFxGlow, useSceneLootSetting, setSceneLoot } from './skill-fx-setting';
 import { useNotices, setNotice, NOTICE_KINDS } from './notice-settings';
 import { useStarSetting, setStarSetting } from './star-catch-setting';
