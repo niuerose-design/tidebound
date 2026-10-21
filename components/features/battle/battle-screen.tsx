@@ -1,21 +1,18 @@
 'use client';
 /**
- * v3.389 재설계 4단계 다섯째 화면: 자동 사냥(1차). 틀 · 모험가 카드 · 알림 · 기록판 · 선택판을 새 토대로 옮겼습니다.
- * 장면(배경 · 몬스터 · 연출 · 전투 기록) · 조작 줄(핫바 · 시작/정지 · 호루라기)은 옛 BattleArena 를 그대로 품고 2차에서 옮깁니다.
+ * v3.389 재설계 4단계 다섯째 화면: 자동 사냥. 1차(틀 · 모험가 카드 · 알림 · 기록판 · 선택판), 2차 v3.390(난이도 카드 · 장면 · 조작 줄 · 핫바 · 호루라기).
+ * 장면 안의 연출(scene-stage · combat-fx)은 연출 CSS 에 붙어 있어 옛 클래스를 그대로 씁니다(arena.tsx).
  * 재생 프레임은 이 화면만 구독하고(useReplayView), 능력치는 동기화 상태로 한 번만 계산합니다.
  */
 import { useMemo, type ReactNode } from 'react';
 import { BookOpen, Fish, ScrollText } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { stageById, MONSTERS } from '@/game/data/world';
-import { tideLimit } from '@/game/systems/meta';
 import { tutorialActive } from '@/game/systems/guidance';
 import { GAME_BUILD } from '@/game/data/update-log';
 import { cachedStats, useReplayView, type FrameStore } from '@/components/game/use-game';
-import { BattleArena, TargetStrip } from '@/components/game/battle-view';
 import { TutorialCard } from '@/components/game/guidance-panels';
 import { LiveRatesCard } from '@/components/game/live-rates-card';
-import { TideSelector } from '@/components/game/tide-selector';
 import { SlotChips } from '@/components/game/slot-chips';
 import { useNotices } from '@/components/game/notice-settings';
 import { NumberTicker, formatExact } from '@/components/ui/game';
@@ -23,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { PlayerCard } from './player-card';
 import { Rail } from './rail';
 import { Notices } from './notices';
+import { TidePanel } from './tide-panel';
+import { Arena } from './arena';
 
 type Send = (a: Action) => void;
 export function BattleScreen({ s: base, frames, busy, send, setView, onSwitchSlot }: { s: State; frames: FrameStore; busy: boolean; send: Send; setView: (v: string) => void; onSwitchSlot?: (slot: number) => Promise<void> }) {
@@ -30,8 +29,6 @@ export function BattleScreen({ s: base, frames, busy, send, setView, onSwitchSlo
     const playerStats = useMemo(() => cachedStats(base), [base]);
     const show = useNotices();
     const st = stageById(s.stage)!;
-    // v3.228 집중 사냥 줄은 동기화 상태로만 다시 만들어, 재생 프레임마다 난이도 카드(memo)가 다시 그려지지 않게 합니다.
-    const targetStrip = useMemo(() => <TargetStrip base={base} busy={busy} send={send} inline/>, [base, busy, send]);
     return <div className="grid gap-3 text-ink-1" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
         <Summary base={base} setView={setView}/>
         <Notices base={base} send={send} setView={setView}/>
@@ -42,9 +39,8 @@ export function BattleScreen({ s: base, frames, busy, send, setView, onSwitchSlo
                 <PlayerCard s={s} a={playerStats} setView={setView} compact/>
                 {tutorialActive(base) && <div className="battle-top-tutorial"><TutorialCard s={base} send={send} busy={busy} setView={setView}/></div>}
                 {show('liveRates') && <LiveRatesCard s={base} compact/>}
-                {tideLimit(base) ? <TideSelector s={base} send={send} busy={busy} extra={targetStrip}/> : <TargetStrip base={base} busy={busy} send={send}/>}
-                {/* 장면 · 조작 줄은 2차 PR 전까지 옛 CSS(.battle-hud .battle-console .battle-scene 높이)를 그대로 쓰도록 같은 클래스로 감쌉니다. */}
-                <div className="battle-hud block!"><div className="battle-console"><BattleArena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/></div></div>
+                <TidePanel s={base} send={send} busy={busy}/>
+                <Arena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
             </section>
             <aside className="order-2 min-w-0 lg:order-3"><Rail s={s} base={base} busy={busy} send={send} setView={setView}/></aside>
         </div>

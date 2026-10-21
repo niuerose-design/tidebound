@@ -12,7 +12,7 @@ import { viewFromHash, hashForView } from './view-route';
 // v3.386 재설계 4단계 셸: 사이드바 · 상단 바 · 모바일 탭 · 진행 위젯(components/features/shell). 옛 navigation · mobile-tab-bar 는 다음 버전에 삭제.
 import { SideNav, TopBar, TabBar, ActivityWidget, ALL_VIEWS, navHidden } from '@/components/features/shell';
 import { ViewTabs } from './view-tabs';
-// v3.389 재설계 4단계 다섯째 화면: 자동 사냥(1차). 옛 battle-view 는 장면 · 조작 줄만 빌려 주고 2차에서 삭제.
+// v3.389~3.390 재설계 4단계 다섯째 화면: 자동 사냥.
 import { BattleScreen } from '@/components/features/battle';
 import { useFeedLiveRates } from './live-rates';
 import { useFeedBattleRecords } from './battle-records';
