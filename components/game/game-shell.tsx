@@ -58,7 +58,8 @@ const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
 const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
 const Character = lazyPanel(() => import('./character-panel').then(m => m.Character));
 const Cosmetics = lazyPanel(() => import('./cosmetics-panel').then(m => m.Cosmetics));
-const Collection = lazyPanel(() => import('./collection-panel').then(m => m.Collection));
+// v3.382 재설계 4단계 두 번째 화면: 도감(새 토대). 옛 collection-panel 은 다음 버전에 삭제.
+const Collection = lazyPanel(() => import('@/components/features/codex/codex-screen').then(m => m.CodexScreen));
 const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
 const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
 const BattleRecordsPanel = lazyPanel(() => import('./battle-records-panel').then(m => m.BattleRecordsPanel));

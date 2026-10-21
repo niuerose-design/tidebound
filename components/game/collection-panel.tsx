@@ -1,4 +1,5 @@
 'use client';
+/** v3.382 새 도감 화면(components/features/codex/codex-screen.tsx, #book)으로 교체되어 더는 쓰지 않습니다. 브리프 9절 규칙대로 한 버전 뒤(v3.383)에 지웁니다. */
 import { STARFORCE } from '@/game/data/starforce';
 import { useState } from 'react';
 import { BookOpen, ChevronDown, Swords } from 'lucide-react';

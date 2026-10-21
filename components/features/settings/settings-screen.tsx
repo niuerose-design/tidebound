@@ -9,7 +9,7 @@ import { HelpCircle, LogOut, ScrollText, Swords, UserRound } from 'lucide-react'
 import type { State, Action } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { SectionHeader, RARITY_KEYS, rarityVar } from '@/components/ui/game';
+import { SectionHeader, ChoiceChips, RARITY_KEYS, rarityVar } from '@/components/ui/game';
 import { cn } from '@/lib/utils';
 import { GAME_BUILD } from '@/game/data/update-log';
 import { researchRank, salvageRate, autoGrades, autoMaxGrade, AUTO_RESEARCH, type AutoDevice } from '@/game/data/economy';
@@ -49,11 +49,11 @@ export function SettingsScreen({ s, busy, send, onSwitchSlot, onLogout, setView 
             {researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="vend" title="자동 판매기" verb="골드로 판매" on={!!s.autoVend} action="autoVend"/>}
             <ToggleRow title="능력치 최대 투자 확인" desc="능력치 화면의 ‘최대’ 버튼을 누를 때 확인 창을 띄웁니다. 끄면 남은 포인트를 바로 투자합니다(재분배는 무료)." checked={!s.skipStatConfirm} disabled={busy} onChange={on => send({ type: 'statConfirm', value: on ? 'on' : 'off' })}/>
             <Row title="무리 최대 규모" desc="이보다 큰 무리가 뽑히면 이 규모로 나옵니다. 큰 무리는 보상도 마리 수만큼이라 효율은 비슷하고 한 번의 전투만 길어집니다. 일반 사냥터 무리는 ×100까지이고, ×500 도전 무리는 무리 서식지에서만 나옵니다(서식지에는 적용되지 않음). ‘끔’이면 무리 대신 일반 개체가 나오고, 다른 변종(거대 · 심연 · 별빛)은 그대로 나옵니다." stack>
-                <ChoiceGroup label="무리 최대 규모" value={String(swarmCapOf(s))} disabled={busy} onChange={v => send({ type: 'swarmCap', value: v })}
+                <ChoiceChips label="무리 최대 규모" value={String(swarmCapOf(s))} disabled={busy} onChange={v => send({ type: 'swarmCap', value: v })}
                     options={SWARM_CAPS.map(cap => ({ value: String(cap), label: cap === 0 ? '끔' : cap >= 100 ? '제한 없음(×100)' : `×${cap}까지` }))}/>
             </Row>
             {salvageRate(s) > 0 && <Row title="청산 방식" desc={`환생할 때 유물을 뺀 보관함 · 착용 장비 전부를 효율 ${Math.round(salvageRate(s) * 100)}%로 ${s.salvageMode === 'dismantle' ? '분해해 정수를 받습니다.' : '판매해 다음 생 시작 골드에 더합니다.'}`}>
-                <ChoiceGroup label="청산 방식" value={s.salvageMode === 'dismantle' ? 'dismantle' : 'sell'} disabled={busy} onChange={v => send({ type: 'salvageMode', value: v })} options={[{ value: 'sell', label: '판매' }, { value: 'dismantle', label: '분해' }]}/>
+                <ChoiceChips label="청산 방식" value={s.salvageMode === 'dismantle' ? 'dismantle' : 'sell'} disabled={busy} onChange={v => send({ type: 'salvageMode', value: v })} options={[{ value: 'sell', label: '판매' }, { value: 'dismantle', label: '분해' }]}/>
             </Row>}
         </Card>
         <Card id="scene" title="전투 연출" description="이 기기에만 저장됩니다. 끄면 휴대폰이 덜 버벅이고 배터리를 아낍니다.">
@@ -107,13 +107,6 @@ function ToggleRow({ title, desc, checked, onChange, disabled, device }: { title
         <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onChange}/>
     </Row>;
 }
-function ChoiceGroup({ label, options, value, onChange, disabled }: { label: string; options: { value: string; label: string; title?: string; disabled?: boolean; style?: React.CSSProperties; mark?: boolean }[]; value: string | string[]; onChange: (v: string) => void; disabled?: boolean }) {
-    const picked = (v: string) => Array.isArray(value) ? value.includes(v) : value === v;
-    return <div role="group" aria-label={label} className="flex flex-wrap gap-2">{options.map(o => <button key={o.value} type="button" aria-pressed={picked(o.value)} disabled={disabled || o.disabled} title={o.title} style={o.style}
-        className={cn('min-h-9 rounded-m border px-3 text-s font-medium transition-colors outline-none focus-visible:ring-[3px] focus-visible:ring-accent/50 disabled:cursor-not-allowed disabled:opacity-50',
-            picked(o.value) ? 'border-accent bg-accent-soft text-ink-1' : 'border-line bg-surface-1 text-ink-2 hover:bg-surface-3')}
-        onClick={() => onChange(o.value)}>{o.label}{o.mark && !picked(o.value) ? ' ·' : ''}</button>)}</div>;
-}
 
 /* ---------- 모험가 ---------- */
 
@@ -162,7 +155,7 @@ function AutoDeviceRow({ s, busy, send, device, title, verb, on, action }: { s: 
             <span className="w-9 text-right font-num text-xs text-ink-3" aria-hidden>{on ? '켜짐' : '꺼짐'}</span>
             <Switch id={id} checked={on} disabled={busy} onCheckedChange={v => send({ type: action, value: v ? 'on' : 'off' })}/>
         </Row>
-        <div className="-mt-1 pb-3"><ChoiceGroup label={`${title} 등급`} value={mine.map(String)} disabled={busy} onChange={v => send({ type: 'autoGrade', id: device, value: v })}
+        <div className="-mt-1 pb-3"><ChoiceChips label={`${title} 등급`} value={mine.map(String)} disabled={busy} onChange={v => send({ type: 'autoGrade', id: device, value: v })}
             options={RARITIES.slice(1, 6).map((r, i) => { const g = i + 1; return { value: String(g), label: r.name, disabled: g > max, mark: other.includes(g), style: { color: rarityVar(RARITY_KEYS[g]) }, title: g > max ? '연구 2단계 필요' : other.includes(g) ? `자동 ${otherName}에서 고른 등급(누르면 이쪽으로 옮김)` : undefined }; })}/></div>
     </>;
 }
