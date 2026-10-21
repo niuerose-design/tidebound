@@ -405,6 +405,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.367 코프룰루 사냥터 8곳이 BASE_STAGES 뒤(무리 서식지 앞)에 들어가 옛 서식지 index(14~22)가 8 밀렸습니다. 가장 멀리 간 사냥터가 서식지였던 세이브만 옮깁니다.
     if (!s.kopruluStagesShifted) { if ((s.bestStage || 0) >= 14) s.bestStage += 8; s.kopruluStagesShifted = true; }
     if (!s.overclockRescaled) { fixOverclockSpeed(s); s.overclockRescaled = true; }
+    restoreLv1Vow(s);
     if (!s.relicRule) { for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})]) if (item?.relic) item.relicLegacy = true; s.relicRule = true; }
     // v3.38 던전 첫 정복 SP(옛 보스 연구)는 업적 firstClear:던전 id로 옮겼습니다. 이미 받은 것은 받은 업적으로 옮겨 두 번 받지 않습니다.
     const bossClaims = (s as { bossResearchClaims?: Record<string, boolean> }).bossResearchClaims;
@@ -523,6 +524,17 @@ function boostPenetrationAffixes(s: State) {
  * 옛 수치 ÷ 위력으로 굴림 위치(0~1.5)를 되찾아 percent 공식으로 다시 만듭니다. 체력 손해(value2)는 원래 위력 비례 고정이라 그대로 둡니다.
  * 이미 고정 폭 범위 안(최고 굴림 이하)인 줄은 손대지 않습니다(한 번만, overclockRescaled).
  */
+/** v3.376 LV1 모험가(테스트용 서약, v3.210) 삭제: 걸린 채 저장된 세이브는 보관해 둔 레벨 · 경험치 · 능력치 배분으로 되돌리고, 기록 필드(lv1AbyssBest)는 지웁니다. */
+export function restoreLv1Vow(s: State) {
+    const saved = s.vows?.lv1;
+    if (saved) {
+        s.level = saved.level; s.exp = saved.exp; s.attributes = { ...saved.attributes }; s.statPoints = saved.statPoints;
+        const rest = { ...s.vows! }; delete rest.lv1;
+        s.vows = Object.keys(rest).length ? rest : undefined;
+        addLog(s, `LV1 모험가 서약이 없어져 Lv.${saved.level}로 돌아왔습니다.`, 'system');
+    }
+    delete (s as Record<string, unknown>).lv1AbyssBest;
+}
 export function fixOverclockSpeed(s: State) {
     const def = affixDef('overclock');
     if (!def?.base) return;

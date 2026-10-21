@@ -166,7 +166,7 @@
 
 1. 토대: zod · vitest(병행) · zustand 추가. 경계 ESLint. Tailwind 4 `@theme` 토큰(`app/styles/theme.css`의 현재 토큰에서 시작) + 게임 범용 컴포넌트 10종 + `/dev/ui` 나열. 기존 화면 변경 없음.
 2. 서버 비용 선행 처리(브리프 9절 순서와 별개로 비용이 급하므로): 비활성 탭 동기화 0, 전투 화면 외 폴링 제거, 저장 디바운스 60초, 응답 델타(키별 얕은 병합). 배포 뒤 Active CPU 전후 기록.
-3. 코어 추출: `game/systems/turn.ts` 중심으로 "서버와 화면이 같은 `tick`을 쓰는" 경계 확정, 시드 난수 주입(`mutate`에 rng 전달) → 골든 테스트. **(v3.376 진행)** `game/server/rng.ts requestRng(id, revision, lastTick, salt)`를 `mutate`가 `advance` · `act`에 넘기고, `tests/golden.test.mjs`가 기준 몸 3개의 1시간 세이브 해시를 `tests/fixtures/golden.json`과 비교합니다(갱신: `node scripts/golden-update.mjs`).
+3. 코어 추출: `game/systems/turn.ts` 중심으로 "서버와 화면이 같은 `tick`을 쓰는" 경계 확정, 시드 난수 주입(`mutate`에 rng 전달) → 골든 테스트. **(v3.377 진행)** `game/server/rng.ts requestRng(id, revision, lastTick, salt)`를 `mutate`가 `advance` · `act`에 넘기고, `tests/golden.test.mjs`가 기준 몸 3개의 1시간 세이브 해시를 `tests/fixtures/golden.json`과 비교합니다(갱신: `node scripts/golden-update.mjs`).
 4. 세이브 v2 마이그레이션 체인 + 운영 세이브 익명 픽스처 10개. **(v3.375 진행)** 운영 페이지 통계 탭의 내보내기 버튼(`exportFixtures`)이 `tests/fixtures/saves/` 용 익명 JSON을 내려줍니다.
 5. 셸 교체 → 화면 순차 교체(설정 → 도감 → 보관함 → 스킬 → 사냥 메인).
 

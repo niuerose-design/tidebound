@@ -1,4 +1,4 @@
-// v3.376 골든 테스트 공용(재설계 3단계): 시드 고정 난수로 기준 몸을 1시간(1,800턴) 돌린 세이브의 해시.
+// v3.377 골든 테스트 공용(재설계 3단계): 시드 고정 난수로 기준 몸을 1시간(1,800턴) 돌린 세이브의 해시.
 // 같은 코드 · 같은 시드면 해시가 같아야 합니다. 의도한 밸런스 변경이면 `node scripts/golden-update.mjs` 로 기준 파일을 다시 씁니다.
 import { createHash } from 'node:crypto';
 import { referenceBodies } from './reference-body.mjs';

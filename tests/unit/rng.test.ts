@@ -3,7 +3,7 @@ import { requestRng, mulberry32, fnv1a } from '@/game/server/rng';
 
 const take = (rng: () => number, n = 5) => Array.from({ length: n }, () => rng());
 
-describe('request rng (v3.376)', () => {
+describe('request rng (v3.377)', () => {
     it('same adventurer · revision · lastTick · salt → same sequence in [0, 1)', () => {
         const a = take(requestRng('acc_1', 7, 1_800_000_000_000, 's'));
         const b = take(requestRng('acc_1', 7, 1_800_000_000_000, 's'));

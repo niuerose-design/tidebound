@@ -176,7 +176,7 @@ test('v25.5 reset passives fire on crit, kill and chain (players only); chained 
     // 연속 행동 초기화: 얼티밋 타임은 편성 첫 번째 대기 중인 기술만.
     const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
     for (const id of ['riskDividend', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
-    // v3.376 시험용 스킬은 지웁니다(뒤의 골든 테스트가 기준 몸의 스킬 목록을 해시함).
+    // v3.377 시험용 스킬은 지웁니다(뒤의 골든 테스트가 기준 몸의 스킬 목록을 해시함).
     } finally { REG.splice(REG.indexOf(zz), 1); registerSkills([]); }
 });
 
