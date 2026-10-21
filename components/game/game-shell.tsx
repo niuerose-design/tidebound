@@ -56,7 +56,7 @@ const Inventory = lazyPanel(() => import('@/components/features/inventory/invent
 // v3.393 재설계 4단계: 상점 · 던전 주화 상점(새 토대).
 const Shop = lazyPanel(() => import('@/components/features/shop').then(m => m.ShopScreen));
 const DungeonShop = lazyPanel(() => import('@/components/features/shop').then(m => m.DungeonShopScreen));
-const Expedition = lazyPanel(() => import('./expedition-panel').then(m => m.Expedition));
+const Expedition = lazyPanel(() => import('@/components/features/expedition').then(m => m.ExpeditionScreen));
 const MarketPanel = lazyPanel(() => import('@/components/features/market').then(m => m.MarketScreen));
 const StoryPanel = lazyPanel(() => import('@/components/features/journal').then(m => m.StoryScreen));
 const Rebirth = lazyPanel(() => import('@/components/features/legacy').then(m => m.RebirthScreen));

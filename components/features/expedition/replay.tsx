@@ -1,6 +1,6 @@
 'use client';
 /**
- * 원정대 12단계: 전투 재생. 저장된 프레임(ReplayFrame)을 보드 위에서 한 장면씩 틀어 줍니다.
+ * v3.405 원정대 전투 재생(새 토대로 옮김 · 장면 연출 CSS exp-arena · exp-fighter 는 예외로 옛 클래스 유지). 저장된 프레임(ReplayFrame)을 보드 위에서 한 장면씩 틀어 줍니다.
  * - 위쪽이 상대(뒷줄 · 앞줄), 아래쪽이 내 보드(앞줄 · 뒷줄). 칸마다 그림 · 이름 · 체력 막대.
  * - 프레임마다 행동 유닛은 앞으로 튀어나오고(lunge), 대상은 흔들리며 피해 숫자가 떠오릅니다. 시전은 기술 이름 띠, 처치는 흐려짐, 부활은 번쩍임.
  * - 동작 줄이기 설정이면 애니메이션 없이 마지막 장면으로 갑니다. 재생 속도 1 · 2 · 4배.
@@ -8,8 +8,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { unitById, type UnitDef } from '@/game/data/expedition';
 import type { ExpeditionPlaced, ReplayFrame } from '@/game/types';
-import { MonsterArt } from './art';
-import { OnyxArt } from './onyx-art';
+import { MonsterArt } from '@/components/game/art';
+import { OnyxArt } from '@/components/game/onyx-art';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 /** 유닛 그림. 23단계(2): skin(UNIT_SKINS id)이 있으면 색 · 빛 효과 겉싸개를 두릅니다(내 유닛에만). */
 export const UnitArt = ({ def, size, skin }: { def: UnitDef; size: number; skin?: string }) => { const art = def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>; return skin && skin !== 'default' ? <span className={`exp-skin exp-skin-${skin}`}>{art}</span> : art; };
@@ -70,10 +72,10 @@ export function BattleReplay({ board, foe, frames, turns, won, opponent, truncat
         <div className="exp-arena-side mine">{grid('a', board, ['front', 'back'])}</div>
         <p className="exp-arena-caption" aria-live="polite">{cur ? caption(cur, name) : '재생 준비'}{ended && truncated ? ' · (뒤는 생략)' : ''}</p>
         <div className="exp-arena-controls">
-            <button type="button" className="secondary small" onClick={() => { if (ended) { setStep(-1); setPlaying(true); } else setPlaying(p => !p); }}>{ended ? '다시 보기' : playing ? '일시 정지' : '재생'}</button>
-            <button type="button" className="secondary small" disabled={ended} onClick={() => { setPlaying(false); setStep(frames.length - 1); }}>끝으로</button>
-            <button type="button" className={`secondary small${speed !== 1 ? ' on' : ''}`} onClick={() => setSpeed(s => s === 1 ? 2 : s === 2 ? 4 : 1)}>{speed}배속</button>
-            <button type="button" className="text-button" onClick={onClose}>닫기</button>
+            <Button type="button" size="xs" variant="outline" className="pointer-coarse:min-h-11" onClick={() => { if (ended) { setStep(-1); setPlaying(true); } else setPlaying(p => !p); }}>{ended ? '다시 보기' : playing ? '일시 정지' : '재생'}</Button>
+            <Button type="button" size="xs" variant="outline" className="pointer-coarse:min-h-11" disabled={ended} onClick={() => { setPlaying(false); setStep(frames.length - 1); }}>끝으로</Button>
+            <Button type="button" size="xs" variant="outline" className={cn('pointer-coarse:min-h-11', speed !== 1 && 'border-accent text-accent')} onClick={() => setSpeed(s => s === 1 ? 2 : s === 2 ? 4 : 1)}>{speed}배속</Button>
+            <Button type="button" size="xs" variant="ghost" className="pointer-coarse:min-h-11" onClick={onClose}>닫기</Button>
         </div>
     </div>;
 }
