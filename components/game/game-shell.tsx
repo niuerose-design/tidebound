@@ -57,8 +57,9 @@ const Stages = lazyPanel(() => import('./stages-panel').then(m => m.Stages));
 const Dungeons = lazyPanel(() => import('./dungeons-panel').then(m => m.Dungeons));
 const Altar = lazyPanel(() => import('./altar-panel').then(m => m.Altar));
 const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
-const Character = lazyPanel(() => import('./character-panel').then(m => m.Character));
-const Cosmetics = lazyPanel(() => import('./cosmetics-panel').then(m => m.Cosmetics));
+// v3.392 재설계 4단계: 능력치 · 치장(새 토대).
+const Character = lazyPanel(() => import('@/components/features/character').then(m => m.CharacterScreen));
+const Cosmetics = lazyPanel(() => import('@/components/features/character').then(m => m.CosmeticsScreen));
 // v3.382 재설계 4단계 두 번째 화면: 도감(새 토대). 옛 collection-panel 은 다음 버전에 삭제.
 const Collection = lazyPanel(() => import('@/components/features/codex/codex-screen').then(m => m.CodexScreen));
 const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
