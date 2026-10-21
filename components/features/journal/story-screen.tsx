@@ -41,7 +41,7 @@ export function StoryScreen({ s }: { s: State }) {
                     const chapter = STORY_CHAPTERS[ci], scenes = STORY.filter(x => x.chapter === ci), got = scenes.filter(x => open[x.id]).length;
                     const freshIn = seen ? scenes.filter(x => open[x.id] && !seen.has(x.id)).length : 0;
                     // v3.217 처음에는 모든 장이 접혀 있습니다(장 제목의 NEW 수로 새 이야기를 알 수 있음).
-                    return <FoldSection key={chapter} title={chapter} summary={<span className="inline-flex items-center gap-2">{got} / {scenes.length}{freshIn > 0 && <New n={freshIn}/>}</span>}>
+                    return <FoldSection key={chapter} defaultOpen={false} title={chapter} summary={<span className="inline-flex items-center gap-2">{got} / {scenes.length}{freshIn > 0 && <New n={freshIn}/>}</span>}>
                         <ChapterBanner chapter={ci} title={chapter} dim={got === 0}/>
                         <div className="grid gap-2">{scenes.map(x => open[x.id]
                             ? <Scene key={x.id} title={x.title} date={kstIso(open[x.id]).slice(0, 10).replace(/-/g, '.')} fresh={!!seen && !seen.has(x.id)} id={x.id} lines={x.lines}/>

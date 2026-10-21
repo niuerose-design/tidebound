@@ -73,7 +73,8 @@ test('v3.217 story art: every scene has its own SVG illustration and chapters st
     const src = fs.readFileSync('components/game/story-scenes.tsx', 'utf8');
     const ids = [...src.slice(src.indexOf('export const SCENE_ART')).matchAll(/^ {4}(\w+): id =>/gm)].map(m => m[1]);
     assert.deepEqual([...ids].sort(), STORY.map(x => x.id).sort(), 'one SVG per scene, no strays');
-    assert.match(fs.readFileSync('components/game/story-panel.tsx', 'utf8'), /defaultOpen=\{false\}/, 'chapters start folded');
+    // v3.401 모험 일지는 components/features/journal/story-screen.tsx(새 토대)로 옮겼습니다.
+    assert.match(fs.readFileSync('components/features/journal/story-screen.tsx', 'utf8'), /defaultOpen=\{false\}/, 'chapters start folded');
 });
 
 test('v3.369 svg art: every koprulu monster · skill · lineage · onyx charm has a vector picture that the manifest lists and the file is self-contained', async () => {
