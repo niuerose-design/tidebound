@@ -10,6 +10,7 @@ import { STAGES, REGIONS, closedIn, CLOSED_NOTE } from '@/game/data/world';
 import { levelGateOk } from '@/game/systems/meta';
 import { onyxBossFor } from '@/game/data/onyx';
 import type { PanelProps } from './panel-props';
+import { KOPRULU_REBIRTH } from '@/game/data/expansion-koprulu';
 
 type WorldId = 'maple' | 'koprulu';
 const WORLD_INFO: Record<WorldId, { name: string; sub: string; accent: string; note: string }> = {
@@ -79,7 +80,7 @@ export function WorldMap({ s, send, busy }: PanelProps) {
     return <section className="world-map" style={{ '--world-accent': info.accent } as React.CSSProperties}>
     <div className="world-map-tabs" role="tablist" aria-label="세계">
         {(Object.keys(WORLD_INFO) as WorldId[]).map(w => <button key={w} role="tab" aria-selected={world === w} className={`world-tab ${world === w ? 'on' : ''}`} style={{ '--world-accent': WORLD_INFO[w].accent } as React.CSSProperties} onClick={() => pickWorld(w)}>
-            <small>{WORLD_INFO[w].sub}</small><b>{WORLD_INFO[w].name}</b>{w === 'koprulu' && s.rebirths < 50 ? <Lock size={13}/> : hereRegion && worldOfRegion(hereRegion) === w ? <MapPin size={13}/> : null}
+            <small>{WORLD_INFO[w].sub}</small><b>{WORLD_INFO[w].name}</b>{w === 'koprulu' && s.rebirths < KOPRULU_REBIRTH ? <Lock size={13}/> : hereRegion && worldOfRegion(hereRegion) === w ? <MapPin size={13}/> : null}
         </button>)}
     </div>
     <svg viewBox="0 0 480 300" className="world-map-svg" role="img" aria-label={`${info.name} 지도`}>

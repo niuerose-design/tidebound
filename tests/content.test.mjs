@@ -624,3 +624,14 @@ test('v3.332 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) li
     assert.ok(s.logs.some(l => /운영 보정/.test(l.text || l.message || JSON.stringify(l))));
     const before = JSON.stringify([bag.affixes, s.logs.length]); migrateState(s, 0); assert.equal(JSON.stringify([bag.affixes, s.logs.length]), before, 'runs once');
 });
+
+test('v3.373 koprulu jobs gate on rebirths like the zone: tier 1~3 need 50, tier 4 52, tier 5 62; requirement row shows and clears',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
+ const K=await L.load('data/expansion-koprulu');const C=await L.load('data/classes');const P=await L.load('systems/progression');
+ assert.equal(K.KOPRULU_REBIRTH,50);
+ for(const j of K.KOPRULU_JOBS){const reg=C.jobById(j.id);assert.equal(reg.rebirth,j.tier>=5?62:j.tier===4?52:50,`${j.id} rebirth`);}
+ const s=newState(0);s.level=10;s.rebirths=0;const trooper=C.jobById('irTrooper');
+ const row=P.jobRequirements(s,trooper).find(r=>r.label==='환생 50회');assert.ok(row&&!row.met,'rebirth row unmet at 0');
+ s.rebirths=50;assert.ok(P.jobRequirements(s,trooper).find(r=>r.label==='환생 50회').met,'met at 50');
+ const maple=C.JOBS.find(j=>j.tier===1&&!j.rebirth&&!j.secret&&j.pearlCost===undefined);assert.ok(maple,'maple tier-1 jobs stay rebirth-free');
+});
