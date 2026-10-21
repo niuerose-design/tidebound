@@ -26,6 +26,9 @@ export function Expedition({ s, send, busy }: PanelProps) {
     // 24단계: 화면을 탭으로 나눕니다(원정 · 과제 · 성장 · 기록 · 꾸미기). 고른 탭은 기기에 기억.
     const [tab, setTabState] = useState(() => { try { const v = localStorage.getItem('exp-tab') || 'play'; return ['play', 'quests', 'growth', 'records', 'style'].includes(v) ? v : 'play'; } catch { return 'play'; } });
     const setTab = (v: string) => { setTabState(v); try { localStorage.setItem('exp-tab', v); } catch { /* 저장 불가 */ } };
+    // 24단계(3): 상점 · 벤치 서랍(보드 아래, 접힘 기억). 모바일에서 판 화면 길이를 줄입니다.
+    const [drawerOpen, setDrawerState] = useState(() => { try { return localStorage.getItem('exp-drawer') !== 'closed'; } catch { return true; } });
+    const setDrawer = (v: boolean) => { setDrawerState(v); try { localStorage.setItem('exp-drawer', v ? 'open' : 'closed'); } catch { /* 저장 불가 */ } };
     // 23단계 소셜: 보드 공유 코드 복사 · 목표 보드 코드 입력. 연출 보상: 보드 테마.
     const [copied, setCopied] = useState(''), [codeInput, setCodeInput] = useState('');
     // 23단계(3): 작성자 메모(계정에 저장 · 모든 내 코드에 붙음). 입력 중 값은 화면에, 저장은 버튼 · 포커스 아웃.
@@ -154,6 +157,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const boardKeys = new Set(traits.map(t => t.trait.id as string)), onBoard = new Set(r.board.map(x => x.unit));
     const ownedCount = (id: string) => [...r.board, ...r.bench].filter(x => x.unit === id).reduce((n, x) => n + (x.star === 3 ? 9 : x.star === 2 ? 3 : 1), 0);
     const freeSlots = Math.max(0, slots - r.board.length);
+    const affordable = r.bench.length >= bench ? 0 : r.shop.filter(id => id && (unitById(id)?.cost || 99) <= r.gold).length;
     const inAbyss = isAbyssRound(r.round), depth = inAbyss ? r.round - EXPEDITION.rounds : 0;
     const bossNext = isBossRound(r.round) ? unitById(inAbyss ? abyssBoss(r.round) : ACT_BOSSES[actOf(r.round)]) : undefined;
     const todo = r.abyssChoice ? '12라운드 완주! 심연으로 계속 갈지, 보상을 받고 마칠지 고르세요.' : r.augmentOffer?.length ? '증강을 하나 고르세요(판 전체에 걸리는 효과).' : r.box?.length ? '상자에서 아이템을 고르거나 건너뛰세요.' : freeSlots && r.bench.length ? `보드에 빈 칸 ${freeSlots} · 벤치 유닛을 앞줄 · 뒷줄에 놓으세요.` : !r.board.length ? '상점에서 유닛을 사서 보드에 놓으세요.' : picking !== null ? '장착할 유닛의 ‘장착’을 누르거나 합쳐지는 아이템(→)을 누르세요.' : held.length && r.board.some(x => !x.item) ? `아이템 ${held.length}개가 놀고 있어요. 장착하면 더 강해집니다.` : r.gold >= EXPEDITION.xp && r.level < 8 && r.bench.length ? '골드가 남으면 경험치를 사서 배치 칸을 늘릴 수 있습니다.' : bossNext ? (inAbyss ? `심연 보스 ${bossNext.name}이(가) 기다립니다.` : `${actOf(r.round)}막 보스 ${bossNext.name}이(가) 기다립니다. 이기면 세계석 +${EXPEDITION.actPearls}.`) : '전투 준비 완료.';
@@ -172,7 +176,6 @@ export function Expedition({ s, send, busy }: PanelProps) {
         <p className={`exp-todo${r.box?.length || r.augmentOffer?.length ? ' urgent' : bossNext ? ' boss' : ''}`} role="status">다음 할 일 · {todo}</p>
         {runRule ? <p className="exp-rule small">{setById(r.set).icon} {setById(r.set).name} 세트 · 이번 판 규칙 · <b>{runRule.name}</b> · {runRule.desc}</p> : null}
         {r.last?.frames && r.last.foe && closedReplay !== `${r.startedAt}:${r.round}` ? <BattleReplay key={`${r.startedAt}:${r.round}`} board={r.history?.[r.round - 1] || r.board} foe={r.last.foe} frames={r.last.frames} turns={r.last.turns} won={r.last.won} opponent={r.last.opponent} truncated={r.last.truncated} theme={theme.id} skin={skin.id} onClose={() => setClosedReplay(`${r.startedAt}:${r.round}`)}/> : null}
-        <div className="exp-columns">
         <section className="panel exp-board-panel" aria-label="보드">
             <div className="section-title"><h2>보드</h2><span>앞줄 · 뒷줄 4칸, 누르면 벤치로{r.board.length ? <> · <button type="button" className="text-button" title="지금 보드를 한 줄 코드로 복사합니다(다른 모험가가 목표로 불러올 수 있음)" onClick={() => copy('board', myCode(r.board, { set: r.set, augments: r.augments, round: r.round, wins: r.wins }))}>{copied === 'board' ? '복사됨' : '코드 복사'}</button></> : null}</span></div>
             <div className={`exp-board theme-${theme.id}`}><div className="exp-row-label">뒷줄</div>{[0, 1, 2, 3].map(c => cell('back', c))}<div className="exp-row-label">앞줄</div>{[0, 1, 2, 3].map(c => cell('front', c))}</div>
@@ -192,15 +195,22 @@ export function Expedition({ s, send, busy }: PanelProps) {
             </div>
             {r.last && <div className={`exp-last ${r.last.won ? 'won' : 'lost'}`}><b>{r.round - 1}라운드 {r.last.won ? '승리' : '패배'}</b>{r.last.opponent ? <> · 상대 <b>{r.last.opponent}</b>의 원정대{r.last.scaled ? <small className="muted" title="상대 보드가 이 라운드 기준보다 세서 ★을 낮춰 맞췄습니다"> (★ 조정)</small> : null}{r.last.foeAugments?.length ? <small className="muted" title={r.last.foeAugments.map(augmentDesc).join(' / ')}> (증강 {r.last.foeAugments.map(augmentName).join(' · ')})</small> : null}</> : ' · 웨이브'} · {r.last.turns}턴 · 아군 체력 {r.last.hpLeft[0]}% · 적 {r.last.hpLeft[1]}% <button type="button" className="text-button" onClick={() => setShowLog(v => !v)}>{showLog ? '기록 접기' : '기록 보기'}</button>{r.last.frames && r.last.foe && closedReplay === `${r.startedAt}:${r.round}` ? <> · <button type="button" className="text-button" onClick={() => setClosedReplay('')}>재생 보기</button></> : null}{r.ghostPoints ? <small className="muted"> · 고스트 가산 +{r.ghostPoints}</small> : null}{showLog && <ul className="exp-log">{r.last.log.map((l, i) => <li key={i} style={{ animationDelay: `${Math.min(i, 30) * 70}ms` }}>{l}</li>)}</ul>}</div>}
         </section>
-        <section className="panel exp-bench-panel" aria-label="벤치">
+        <section className={`panel exp-drawer${drawerOpen ? ' open' : ''}`} aria-label="상점 · 벤치">
+            <button type="button" className="exp-drawer-head" aria-expanded={drawerOpen} onClick={() => setDrawer(!drawerOpen)}>
+                <b>🛒 상점 · 벤치 {r.bench.length}/{bench}</b>
+                <span>{r.gold} G{affordable ? <em className="exp-drawer-badge">살 수 있는 유닛 {affordable}</em> : null}<i aria-hidden>{drawerOpen ? '▾' : '▸'}</i></span>
+            </button>
+            {drawerOpen ? <div className="exp-drawer-body">
+        <div className="exp-bench-panel" aria-label="벤치">
             <div className="section-title"><h2>벤치</h2><span>{r.bench.length} / {bench}</span></div>
             {r.bench.length ? <ul className="exp-bench">{r.bench.map((x, i) => { const def = unitById(x.unit)!; return <li key={i} className={`cost-${def.cost}`}><div className="exp-bench-unit"><UnitArt def={def} size={30} skin={skin.id}/><div><b>{def.name} <small>{stars(x.star)}</small></b><small>{tags(def)}</small>{itemBadge('bench', i, x.item)}</div></div><div className="button-row">{equipButton('bench', i)}<button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:front` })}>앞줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionPlace', value: `bench:${i}:back` })}>뒷줄</button><button className="secondary small" disabled={busy} onClick={() => send({ type: 'expeditionSell', value: `bench:${i}` })}>판매 {sellPrice(def.cost, x.star)}</button></div></li>; })}</ul> : <p className="muted">상점에서 산 유닛이 여기 옵니다.</p>}
-        </section>
         </div>
-        <section className="panel exp-shop-panel" aria-label="상점">
+        <div className="exp-shop-panel" aria-label="상점">
             <div className="section-title"><h2>상점</h2><span><button className="secondary small" disabled={busy || r.gold < (mods.rerollCost ?? EXPEDITION.reroll)} onClick={() => send({ type: 'expeditionReroll' })}>새로 고침 {mods.rerollCost ?? EXPEDITION.reroll} G</button> <button className="secondary small" disabled={busy || r.gold < EXPEDITION.xp || r.level >= 8} onClick={() => send({ type: 'expeditionXp' })}>경험치 {EXPEDITION.xp} G</button></span></div>
             <div className="exp-shop">{r.shop.map((id, i) => { if (!id) return <div key={i} className="exp-card sold">판매됨</div>; const def = unitById(id)!, sk = enemySkillById(def.skill); const own = ownedCount(id), plus = onBoard.has(id) ? [] : traitKeys({ unit: id, star: 1, row: 'front' }, def).filter(k => boardKeys.has(k)).map(k => (ORIGIN_NAMES as Record<string, string>)[k] || (ROLE_NAMES as Record<string, string>)[k] || (SPECIAL_NAMES as Record<string, string>)[k]); return <button type="button" key={i} className={`exp-card cost-${def.cost}${plus.length ? ' synergy' : ''}${targetIds.has(id) ? ' target' : ''}`} disabled={busy || r.gold < def.cost || r.bench.length >= bench} title={sk ? `${sk.name}: ${sk.desc}` : undefined} onClick={() => send({ type: 'expeditionBuy', value: String(i) })}><UnitArt def={def} size={34} skin={skin.id}/>{targetIds.has(id) ? <span className="exp-target-badge" aria-label="목표 보드 유닛">🎯</span> : null}<b>{def.name}</b><small>{tags(def)}</small>{plus.length ? <span className="exp-plus">시너지 +{plus.map(n => n.split(' ')[0]).join(' · ')}</span> : null}{own ? <span className="exp-own">{own >= 9 ? '★3 보유' : `합치기 ${own % 3 || 3}/3${own >= 3 ? ' → ★3' : ''}`}</span> : null}<em>{def.cost} G</em></button>; })}</div>
             <details className="exp-shop-help"><summary>상점 · 승급 규칙</summary><p className="footnote">같은 유닛을 3개 모으면 ★이 하나 오릅니다(★2 셋이면 ★3). 합칠 때 아이템은 첫 유닛 것만 남고 나머지는 가진 칸으로 돌아옵니다. 유닛을 팔면 산 값을 그대로 돌려받고 아이템도 돌아옵니다. {EXPEDITION.synergySlotRound}라운드부터 상점 마지막 칸에는 지금 보드의 시너지를 채워 주는 유닛이 나옵니다. 유닛은 마나가 100이 되면 기술을 씁니다(공격할 때 +10, 맞을 때 +5). 상점 카드를 길게 누르면 기술 설명이 보입니다.</p></details>
+        </div>
+            </div> : <p className="exp-drawer-hint muted">{r.shop.filter(Boolean).length ? `상점에 유닛 ${r.shop.filter(Boolean).length}칸` : '상점이 비었습니다'}{r.bench.length ? ` · 벤치 ${r.bench.length}` : ''} · 열려면 누르세요</p>}
         </section>
     </>);
 }
