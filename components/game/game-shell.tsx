@@ -35,10 +35,11 @@ function preloadPanels() {
     const idle = (fn: () => void) => typeof window.requestIdleCallback === 'function' ? window.requestIdleCallback(fn, { timeout: 4000 }) : setTimeout(fn, 1500);
     idle(() => { for (const load of panelLoaders) void load().catch(() => { preloaded = false; }); });
 }
-const MasteryBoard = lazyPanel(() => import('./mastery-board').then(m => m.MasteryBoard));
+// v3.397 재설계 4단계: 전직 · 숙련 진행판(새 토대).
+const MasteryBoard = lazyPanel(() => import('@/components/features/jobs').then(m => m.MasteryScreen));
 // v3.385 재설계 4단계 네 번째 화면: 스킬(새 토대). 옛 skills-panel 은 다음 버전에 삭제.
 const Skills = lazyPanel(() => import('@/components/features/skills/skills-screen').then(m => m.SkillsScreen));
-const Classes = lazyPanel(() => import('./classes-panel').then(m => m.Classes));
+const Classes = lazyPanel(() => import('@/components/features/jobs').then(m => m.ClassesScreen));
 const VoyageLog = lazyPanel(() => import('./guidance-panels').then(m => m.VoyageLog));
 const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
 const SlotsPanel = lazyPanel(() => import('./slots-panel').then(m => m.SlotsPanel));
