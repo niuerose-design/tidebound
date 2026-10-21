@@ -493,18 +493,14 @@ test('v3.208 abyss cores: gained/awakened by first clearing floors (best record)
  const old=newState(0);old.abyssBest=41;const m=M.migrateState(JSON.parse(JSON.stringify(old)));assert.equal(m.bossCores.abyssTrainee.rank,5);assert.equal(m.bossCores.abyssMaster.rank,0);
 });
 
-test('v3.210 LV1 adventurer vow (test): start now at Lv.1, no exp/levels, level gates ignored, no rebirth, exclusive, quit restores, best abyss floor recorded and kept',async()=>{
+test('v3.376 LV1 adventurer vow removed: no action, no level-gate bypass, saves stuck in the vow are restored once on load',async()=>{
  const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
- const s=newState(0);s.level=60;s.exp=1234;s.rebirths=0;s.attributes={...s.attributes,str:80};s.statPoints=7;s.running=false;
- act(s,{type:'lv1Vow',id:'start'},0);assert.equal(s.level,1);assert.equal(s.exp,0);assert.equal(s.attributes.str,newState(0).attributes.str);assert.ok(s.vows.lv1);
- assert.throws(()=>act(s,{type:'lv1Vow',id:'start'},0),/이미/);
- const E=await L.load('systems/encounter');s.exp=99999;E.gainLevels(s);assert.equal(s.level,1);assert.equal(s.exp,0);
- assert.equal(expMultiplier(s),0);
- const M=await L.load('systems/meta');assert.equal(M.levelGateOk(s,90),true,'level gates ignored');
- assert.throws(()=>act(s,{type:'rebirth'},0),/LV1 모험가/);
- act(s,{type:'lv1Vow',id:'quit'},0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);
- const t=newState(0);t.vows={rough:1};assert.throws(()=>act(t,{type:'lv1Vow',id:'start'},0),/다른 서약/);
- const u=newState(0);act(u,{type:'lv1Vow',id:'start'},0);u.lv1AbyssBest=7;const {restartLife}=await L.load('systems/actions/lifecycle');act(u,{type:'lv1Vow',id:'quit'},0);restartLife(u,10);assert.equal(u.lv1AbyssBest,7,'record kept across lives');
+ assert.throws(()=>act(newState(0),{type:'lv1Vow',id:'start'},0),'action is gone');
+ const M=await L.load('systems/meta');const g=newState(0);g.vows={lv1:{level:60,exp:0,attributes:{...g.attributes},statPoints:0}};assert.equal(M.levelGateOk(g,90),false,'vow no longer bypasses level gates');
+ const Mi=await L.load('systems/migrations');
+ const s=newState(0);s.level=1;s.exp=0;s.statPoints=0;s.lv1AbyssBest=7;s.vows={lv1:{level:60,exp:1234,attributes:{...s.attributes,str:80},statPoints:7}};
+ Mi.migrateState(s,0);assert.equal(s.level,60);assert.equal(s.exp,1234);assert.equal(s.attributes.str,80);assert.equal(s.statPoints,7);assert.equal(s.vows,undefined);assert.equal(s.lv1AbyssBest,undefined);
+ const t=newState(0);t.vows={rough:1,lv1:{level:30,exp:5,attributes:{...t.attributes},statPoints:2}};Mi.migrateState(t,0);assert.deepEqual(t.vows,{rough:1},'other vows kept');assert.equal(t.level,30);
 });
 
 test('v3.227 tailwind lasts until the previous life\'s top level (rebirth log), not the current rebirth level; old saves fall back to the previous life\'s required level',()=>{
@@ -627,4 +623,15 @@ test('v3.332 one-time fix: the onyx 창세의 뱃지 swaps its 고통 (venom) li
     assert.ok(worn.affixes.some(a => a.id === 'venom') && worn.affixes.filter(a => a.id === 'ruin').length === 1, 'a badge that already has 파멸 keeps its lines');
     assert.ok(s.logs.some(l => /운영 보정/.test(l.text || l.message || JSON.stringify(l))));
     const before = JSON.stringify([bag.affixes, s.logs.length]); migrateState(s, 0); assert.equal(JSON.stringify([bag.affixes, s.logs.length]), before, 'runs once');
+});
+
+test('v3.376 koprulu jobs gate on rebirths like the zone: tier 1~3 need 50, tier 4 52, tier 5 62; requirement row shows and clears',async()=>{
+ const L=(await import('../scripts/lib/game-modules.mjs')).loadGame();
+ const K=await L.load('data/expansion-koprulu');const C=await L.load('data/classes');const P=await L.load('systems/progression');
+ assert.equal(K.KOPRULU_REBIRTH,50);
+ for(const j of K.KOPRULU_JOBS){const reg=C.jobById(j.id);assert.equal(reg.rebirth,j.tier>=5?62:j.tier===4?52:50,`${j.id} rebirth`);}
+ const s=newState(0);s.level=10;s.rebirths=0;const trooper=C.jobById('irTrooper');
+ const row=P.jobRequirements(s,trooper).find(r=>r.label==='환생 50회');assert.ok(row&&!row.met,'rebirth row unmet at 0');
+ s.rebirths=50;assert.ok(P.jobRequirements(s,trooper).find(r=>r.label==='환생 50회').met,'met at 50');
+ const maple=C.JOBS.find(j=>j.tier===1&&!j.rebirth&&!j.secret&&j.pearlCost===undefined);assert.ok(maple,'maple tier-1 jobs stay rebirth-free');
 });

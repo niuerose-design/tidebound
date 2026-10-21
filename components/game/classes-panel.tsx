@@ -3,6 +3,7 @@ import type { PanelProps } from './panel-props';
 import { useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, Compass, Flag, Lock, Search } from 'lucide-react';
 import { JOBS, LINEAGES, WORLDS, lineageOf, jobById, type WorldId } from '@/game/data/classes';
+import { KOPRULU_REBIRTH } from '@/game/data/expansion-koprulu';
 import { jobMasteryTarget } from '@/game/systems/progression';
 import { Heading, format } from './shared';
 import { noviceLife } from '@/game/systems/guidance';
@@ -112,12 +113,12 @@ function WorldBook({ s, currentWorld, onOpen }: { s: PanelProps['s']; currentWor
             <p>세계마다 서로 다른 계보가 이어집니다. 읽을 세계를 고르세요.</p>
         </div>
         <ol className="world-book-page world-book-index">
-            {WORLDS.map((w, i) => { const n = worldJobCount(s, w.id);
+            {WORLDS.map((w, i) => { const n = worldJobCount(s, w.id), locked = w.id === 'koprulu' && s.rebirths < KOPRULU_REBIRTH;
                 return <li key={w.id}><button type="button" className={`world-chapter ${w.id === currentWorld ? 'current' : ''}`} style={{ '--world-color': w.accent } as React.CSSProperties} onClick={() => onOpen(w.id)}>
                     <span className="world-chapter-no">제{i + 1}장</span>
-                    <strong>{w.name}</strong>
+                    <strong>{locked ? <><Lock size={13}/> </> : null}{w.name}</strong>
                     <small>{w.subtitle}</small>
-                    <em>{n ? `직업 ${n}개${w.id === currentWorld ? ' · 현재 직업' : ''}` : '아직 드러난 계보 없음'}</em>
+                    <em>{locked ? `환생 ${KOPRULU_REBIRTH}회부터 전직 · 미리 보기만` : n ? `직업 ${n}개${w.id === currentWorld ? ' · 현재 직업' : ''}` : '아직 드러난 계보 없음'}</em>
                 </button></li>; })}
             <li><div className="world-chapter locked" aria-disabled="true"><span className="world-chapter-no">제{WORLDS.length + 1}장</span><strong><Lock size={13}/> 추후 추가 예정</strong><small>아직 쓰이지 않은 장입니다.</small></div></li>
         </ol>

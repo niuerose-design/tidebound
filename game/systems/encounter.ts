@@ -22,7 +22,7 @@ import { EXP_NURI, rollNuriTier, upgradeNuriTier, nuriChance, nuriEligible } fro
 import { ESSENCE_SLIME, rollSlimeTier, slimeChance, slimeEligible, slimeBundle } from '../data/essence-slime';
 import { KING, kingReady, isSpecialId, type KingKind } from '../data/king';
 import { RANKS, rankState, rankIndex, rankPerkLevel, rankPerkValue, swarmRankKills, swarmMasteryKills } from '../data/rank';
-import { roughHeal, lv1Active } from './vows';
+import { roughHeal } from './vows';
 import { sproutHeal } from '../data/sprout';
 import type { State, Item, Stats, Enemy } from '../types';
 import { BALANCE, MONSTER_TUNING, RARITIES, xpNeeded, DUNGEON_TUNING, BOSS_PRESSURE_WAVE, DUNGEON_STAGE, dungeonStageMultiplier } from '../data/balance';
@@ -47,8 +47,6 @@ export function victoryHeal(s: State, a = stats(s)) {
 }
 /** 쌓인 경험치로 올릴 수 있는 만큼 레벨을 올립니다(최대 Lv.100). */
 export function gainLevels(s: State) {
-    // v3.210 LV1 모험가: 레벨이 오르지 않고 경험치도 쌓지 않습니다.
-    if (lv1Active(s)) { s.exp = 0; return; }
     while (s.exp >= xpNeeded(s.level, s.rebirths, xpWall(s)) && s.level < 100) {
         s.exp -= xpNeeded(s.level, s.rebirths, xpWall(s));
         s.level++;
@@ -517,7 +515,6 @@ export function reward(s: State, rng: () => number) {
                 s.abyssBest = Math.max(s.abyssBest, depth);
                 recordAbyssDepth(s, depth, s.lastTick);
                 if (deeper) syncAbyssCores(s);
-                if (lv1Active(s) && depth > (s.lv1AbyssBest || 0)) { s.lv1AbyssBest = depth; addLog(s, `LV1 모험가 기록 · 무릉도장 ${depth}층`, 'reward'); }
                 const pearls = abyssPearls(depth);
                 s.pearls += pearls;
                 addLog(s, `무릉도장 ${depth}층 정복 · 세계석 +${pearls}`, 'reward');

@@ -160,8 +160,10 @@ test('v25.5 reset passives fire on crit, kill and chain (players only); chained 
     const mk = (skills, extra = {}) => ({ name: 'A', job: 'x', stats: { ...base, crit: 0 }, hp: 1000, mana: 200, skills, cooldowns: {}, stun: 0, effects: {}, ranks: {}, mastery: {}, practice: {}, ...extra });
     const sk = id => SKILLS.find(x => x.id === id);
     // v3.170 관중의 환호(치명타 초기화)는 수련 정리로 지웠으므로 같은 모양의 시험용 패시브로 치명타 초기화 틀을 검사합니다.
-    const { registerSkills } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/data/skills.js');
-    registerSkills([{ ...sk('roninGrit'), id: 'zzCritReset', name: '시험용 치명 초기화', job: 'zzTest', cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } }]);
+    const { registerSkills, SKILLS: REG } = await (await import('../scripts/lib/game-modules.mjs')).loadGame().load('game/data/skills.js');
+    const zz = { ...sk('roninGrit'), id: 'zzCritReset', name: '시험용 치명 초기화', job: 'zzTest', cooldownReset: { on: 'crit', chance: .3, pick: 'longest' } };
+    registerSkills([zz]);
+    try {
     // 연속 행동도 대기는 1씩만 줄어듭니다(공통 가속 없음).
     const p = mk([]); p.cooldowns = { hook: 3 }; strike(p, target(), () => 0, [], false, true); assert.equal(p.cooldowns.hook, 2);
     // 치명타 초기화: 관중의 환호 + 치명타 100% → 가장 긴 대기 하나만 0.
@@ -174,6 +176,8 @@ test('v25.5 reset passives fire on crit, kill and chain (players only); chained 
     // 연속 행동 초기화: 얼티밋 타임은 편성 첫 번째 대기 중인 기술만.
     const c = mk(['chronoSovereign', 'frozenTime', 'precede']); c.cooldowns = { frozenTime: 6, precede: 5 }; strike(c, target(), () => 0, [], false, true); assert.equal(c.cooldowns.frozenTime, 0); assert.equal(c.cooldowns.precede, 4, 'second skill only ticks');
     for (const id of ['riskDividend', 'chronoSovereign', 'roninGrit']) assert.ok(sk(id).cooldownReset, id);
+    // v3.377 시험용 스킬은 지웁니다(뒤의 골든 테스트가 기준 몸의 스킬 목록을 해시함).
+    } finally { REG.splice(REG.indexOf(zz), 1); registerSkills([]); }
 });
 
 test('v25.5 multicast: chant spells fire together in one action with scaled cooldown and mana; non-multicast loadouts are untouched', () => {
