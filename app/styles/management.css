@@ -745,6 +745,10 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
     .exp-todo { font-size:12px; padding:7px 10px; } .exp-rule { font-size:12px; }
     .exp-recent li { grid-template-columns:auto 1fr; } .exp-recent li > span:last-of-type { grid-column:2; } .exp-recent li small { grid-column:1 / 3; }
 }
+/* 20단계 분기 세트 */
+.exp-set { margin:0 0 12px; padding:10px 12px; border-radius:8px; background:linear-gradient(135deg,#13262b,#1b1733); border:1px solid #3a4a6a; font-size:12px; }
+.exp-set-head { display:flex; justify-content:space-between; gap:8px; align-items:baseline; margin-bottom:4px; } .exp-set-head b { font-size:15px; color:#e4ebfa; } .exp-set-head small { color:#9fb0d6; white-space:nowrap; }
+.exp-mastery-bar i.set { background:linear-gradient(90deg,#6f8fd6,#c99cf5); }
 /* v3.356 출발 화면 접기 */
 .exp-recent > summary, .exp-quest-fold > summary { cursor:pointer; color:#c9b68a; font-weight:600; font-size:12px; margin:0 0 6px; }
 .exp-quest-fold { margin:0 0 12px; } .exp-quest-fold .exp-quest-box { margin-top:4px; }

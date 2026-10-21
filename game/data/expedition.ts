@@ -98,7 +98,18 @@ export const UNITS: UnitDef[] = [
     { id: 'zakum', name: '자쿰', monster: 'ventColossus', cost: 5, origin: 'underground', roles: ['charge'], special: ['boss'], skill: 'zakumArms' },
     { id: 'blackMage', name: '검은 마법사', monster: 'onyxBlackMage', cost: 5, origin: 'temple', roles: ['arcane'], special: ['boss', 'onyx'], skill: 'onyxGenesis' },
 ];
-export const unitById = (id: string) => UNITS.find(u => u.id === id);
+/** 20단계 세트 전용 유닛(기본 30종 밖). 세트가 바뀌어도 옛 보드 · 도감 · 고스트가 풀리도록 unitById는 전체를 봅니다. */
+export const EXTRA_UNITS: UnitDef[] = [
+    // 세트 2 ‘심해의 조류’(2027-Q1): 던전 보스 4종(본편 처치로 해금 · 코어 조각 연결)과 버섯 2종.
+    { id: 'blueMushroom', name: '파란 버섯', monster: 'seahorse', cost: 1, origin: 'meadow', roles: ['plague'], skill: 'foeBurn' },
+    { id: 'hornMushroom', name: '뿔버섯', monster: 'needlefish', cost: 1, origin: 'wasteland', roles: ['charge'], skill: 'foeCrush' },
+    { id: 'kingSlime', name: '킹 슬라임', monster: 'kelpHydra', cost: 2, origin: 'underground', roles: ['guard'], special: ['boss'], skill: 'foeTideSlam' },
+    { id: 'zombieMushmom', name: '좀비 머쉬맘', monster: 'anchorWraith', cost: 3, origin: 'wasteland', roles: ['wraith'], special: ['boss'], skill: 'onyxSoulDrain' },
+    { id: 'juniorBalrog', name: '주니어 발록', monster: 'magmaKraken', cost: 4, origin: 'underground', roles: ['charge'], special: ['boss'], skill: 'foeFrenzy' },
+    { id: 'papulatus', name: '파풀라투스', monster: 'starfallSeraph', cost: 4, origin: 'temple', roles: ['arcane'], special: ['boss'], skill: 'papTimeStop' },
+];
+export const ALL_UNITS: UnitDef[] = [...UNITS, ...EXTRA_UNITS];
+export const unitById = (id: string) => ALL_UNITS.find(u => u.id === id);
 
 /**
  * 시너지 효과(단계별). 능력치로 적을 수 있는 것은 Stats 보정(bonus)과 배율(mult)로, 나머지는 flag로 두고 systems/expedition.ts의 전투 계층이 처리합니다.
@@ -149,7 +160,7 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
  * 6단계 유닛 아이템(판 전용 8종): 라운드를 이기면 하나를 얻고(상자), 유닛마다 한 칸에 장착합니다. 본편 장비 옵션과 같은 능력치 이름을 써서 전투 계층이 Stats 보정으로 바로 적용합니다.
  * 판이 끝나면 사라집니다. 같은 아이템을 여럿 가질 수 있고, 유닛을 팔거나 승급하면 아이템은 가진 칸으로 돌아옵니다.
  */
-export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). 8단계: 'emblem'은 문장(3라운드부터 상자 셋째 칸). */ tier?: 2 | 'emblem'; /** 8단계 문장: 낀 유닛을 이 지역 · 역할로도 셉니다(시너지 머릿수 +1). */ emblem?: { origin?: Origin; role?: Role } };
+export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). 8단계: 'emblem'은 문장(3라운드부터 상자 셋째 칸). */ tier?: 2 | 'emblem'; /** 20단계: 세트 전용 아이템. */ set?: string; /** 8단계 문장: 낀 유닛을 이 지역 · 역할로도 셉니다(시너지 머릿수 +1). */ emblem?: { origin?: Origin; role?: Role } };
 export const ITEMS: ItemDef[] = [
     { id: 'blade', name: '맹공의 검', desc: '물리 공격 +35%', mult: { attack: 1.35 } },
     { id: 'wand', name: '마력의 지팡이', desc: '마법 공격 +35%', mult: { magic: 1.35 } },
@@ -159,6 +170,8 @@ export const ITEMS: ItemDef[] = [
     { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 +30%p · 치명타 +10%p', bonus: { followUpBonus: .3, crit: .1 } },
     { id: 'manaStone', name: '마나석', desc: '시작 마나 +60 · 최대 체력 +15%', startMana: 60, mult: { hp: 1.15 } },
     { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30% 반격 · 최대 체력 +20%', reflect: .3, mult: { hp: 1.2 } },
+    // 20단계 세트 전용(심해의 조류): 상자 기본 풀에 더해짐.
+    { id: 'tidePearl', name: '조류의 진주', desc: '속도 +3 · 흡혈 +15%p', bonus: { speed: 3, lifesteal: .15 }, set: 'deepTide' },
     // 7단계 조합 아이템(상자에 안 나옴).
     { id: 'greatBlade', name: '대검', desc: '물리 공격 +80%', mult: { attack: 1.8 }, tier: 2 },
     { id: 'archStaff', name: '대마법봉', desc: '마법 공격 +80%', mult: { magic: 1.8 }, tier: 2 },
@@ -187,7 +200,7 @@ export type SeasonSettlement = { season: string; rank: number; total: number; wi
 const COMBOS: Record<string, string> = { 'blade+blade': 'greatBlade', 'wand+wand': 'archStaff', 'shield+shield': 'towerShield', 'boots+boots': 'windBoots', 'blade+wand': 'doomSpear', 'shield+thornMail': 'citadel', 'boots+horn': 'galeHorn', 'fang+manaStone': 'bloodOrb' };
 export const comboOf = (a: string, b: string) => COMBOS[[a, b].sort().join('+')] ? itemById(COMBOS[[a, b].sort().join('+')]) : undefined;
 /** 상자에 나오는 아이템(기본 8종). */
-export const BOX_ITEMS = () => ITEMS.filter(x => !x.tier);
+export const BOX_ITEMS = (setId?: string) => ITEMS.filter(x => !x.tier && (!x.set || x.set === setId));
 /** 상자 선택지 수. */
 export const BOX_CHOICES = 3;
 export const itemById = (id: string) => ITEMS.find(x => x.id === id);
@@ -204,7 +217,7 @@ export type RunMods = {
     /** 경제: 라운드 골드 가산 · 이자 상한 가산 · 경험치 구매 가산 · 새로 고침 비용 · 벤치 가산 · 상자 선택지 가산 · 문장 매 라운드 · 증강 선택지 가산 · 막 보상 배율 · 고스트 확률 · 최대 턴. */
     goldPlus?: number; interestPlus?: number; xpPlus?: number; rerollCost?: number; benchPlus?: number; boxPlus?: number; emblemEvery?: boolean; augmentPlus?: number; actMult?: number; ghostChance?: number; maxTurns?: number;
 };
-export type AugmentDef = { id: string; name: string; desc: string; tier: 1 | 2 | 3; kind: 'economy' | 'synergy' | 'combat'; mods?: RunMods; /** 고를 때 바로: 판 체력 회복. */ heal?: number; /** 'trait'면 보드에 맞춰 traitPlus:<id>로 만들어집니다(표에는 틀만). */ dynamic?: 'trait' };
+export type AugmentDef = { id: string; name: string; desc: string; tier: 1 | 2 | 3; kind: 'economy' | 'synergy' | 'combat'; /** 20단계: 세트 전용이면 그 세트에서만 나옵니다. */ set?: string; mods?: RunMods; /** 고를 때 바로: 판 체력 회복. */ heal?: number; /** 'trait'면 보드에 맞춰 traitPlus:<id>로 만들어집니다(표에는 틀만). */ dynamic?: 'trait' };
 /** 증강은 2 · 5 · 8라운드 시작 때 3개 중 하나(숙련 특전으로 4개). 라운드별 등급: 2 → 1등급, 5 → 2등급, 8 → 3등급. */
 export const AUGMENT_ROUNDS = [2, 5, 8];
 export const AUGMENTS: AugmentDef[] = [
@@ -230,6 +243,8 @@ export const AUGMENTS: AugmentDef[] = [
     { id: 'bigStars', name: '별의 축복', desc: '★2 이상 유닛 능력치 +12%', tier: 3, kind: 'combat', mods: { starPower: 1.12 } },
     { id: 'traitPlus3', name: '고대 문양', desc: '시너지 머릿수 +2', tier: 3, kind: 'synergy', dynamic: 'trait' },
     { id: 'treasury', name: '금고', desc: '라운드마다 골드 +4', tier: 3, kind: 'economy', mods: { goldPlus: 4 } },
+    // 20단계 세트 전용(심해의 조류).
+    { id: 'tideSurge', name: '조류 타기', desc: '뒷줄 공격 · 마법 +15% · 모든 유닛 속도 +1', tier: 2, kind: 'combat', set: 'deepTide', mods: { backPower: 1.15, speed: 1 } },
 ];
 export const augmentById = (id: string) => { const base = id.split(':')[0]; return AUGMENTS.find(a => a.id === base); };
 /** 'traitPlus2:meadow' 같은 동적 증강의 보정. */
@@ -367,15 +382,34 @@ export const difficultyUnlocked = (clears?: Record<number, number>) => Math.min(
 // ───────────── 19단계: 본편 연결(보스 유닛 해금 · 보스 코어 조각 · 도감 → 본편 도감) ─────────────
 /** 보스 유닛(special boss)은 본편에서 그 몬스터를 BOSS_UNLOCK_KILLS번 이상 처치해야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). */
 export const BOSS_UNLOCK_KILLS = 1;
-export const bossUnits = () => UNITS.filter(u => u.special?.includes('boss'));
-export const lockedBossUnits = (book: Record<string, number> | undefined) => new Set(bossUnits().filter(u => (book?.[u.monster] || 0) < BOSS_UNLOCK_KILLS).map(u => u.id));
+export const bossUnits = (pool: UnitDef[] = UNITS) => pool.filter(u => u.special?.includes('boss'));
+export const lockedBossUnits = (book: Record<string, number> | undefined, pool: UnitDef[] = ALL_UNITS) => new Set(bossUnits(pool).filter(u => (book?.[u.monster] || 0) < BOSS_UNLOCK_KILLS).map(u => u.id));
 /** 보스 코어 조각: 막 보스 · 심연 보스를 이기면 확률로 그 보스의 코어 조각. 조각이 per개 모이면 본편 보스 코어(없으면 획득 · 있으면 각성). */
 /** 운영 결정(v3.356): 칠흑 · 본편 드롭 경제를 흔들지 않도록 1%에서 시작해 난이도마다 +0.5%p, 심연 +1%p(최대 4%). 운영 집계를 보고 조금씩 올립니다. */
 export const CORE_SHARD = { per: 10, base: .01, perDifficulty: .005, abyssBonus: .01 };
 export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.base + CORE_SHARD.perDifficulty * (Math.max(1, difficulty) - 1) + (abyss ? CORE_SHARD.abyssBonus : 0);
 /** 유닛 → 본편 던전 코어 id. 없는 보스(칠흑 보스)는 던전 코어 7종 중 무작위(‘고대의 조각’). */
-export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral' };
+export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral', kingSlime: 'kelpCatacomb', zombieMushmom: 'cemetery', juniorBalrog: 'caldera', papulatus: 'starSanctum' };
 export const SHARD_CORE_POOL = ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum'];
 export const shardCoreFor = (unitId: string, rng: () => number) => SHARD_CORE_OF[unitId] || SHARD_CORE_POOL[Math.floor(rng() * SHARD_CORE_POOL.length)];
 /** 도감 연결: 유닛 도감이 동 · 은 · 금에 닿을 때마다 그 유닛의 본편 몬스터 처치 수를 더해 줍니다(연구 단계가 빨라짐). */
 export const CODEX_LINK_KILLS = [50, 200, 500];
+
+// ───────────── 20단계: 분기 세트 ─────────────
+/** 분기 세트: 3~4개월마다 유닛 풀 일부 교체 + 세트 전용 증강 · 아이템. 판은 시작할 때의 세트(run.set)를 끝까지 쓰고, 도감 · 통계 · 고스트는 id 기준이라 세트가 바뀌어도 남습니다. */
+export type SetDef = { id: string; name: string; icon: string; /** 시작 분기 'YYYY-Qn'(한국 시간). */ from: string; desc: string; /** 기본 30종에서 빼는 id · 더하는 id(EXTRA_UNITS). */ remove?: string[]; add?: string[] };
+export const SETS: SetDef[] = [
+    { id: 'genesis', name: '창세', icon: '🌊', from: '2026-Q4', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
+    { id: 'deepTide', name: '심해의 조류', icon: '🌑', from: '2027-Q1', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 버섯 2종이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['blueMushroom', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+];
+/** 한국 시간 분기 키. */
+export const quarterKey = (now: number) => { const d = new Date(now + 9 * 3600_000); return `${d.getUTCFullYear()}-Q${1 + Math.floor(d.getUTCMonth() / 3)}`; };
+/** 지금 분기의 세트: from이 지금 분기 이하인 마지막 세트(없으면 첫 세트). */
+export const activeSet = (now: number) => { const q = quarterKey(now); return [...SETS].reverse().find(x => x.from <= q) || SETS[0]; };
+export const setById = (id?: string) => SETS.find(x => x.id === id) || SETS[0];
+export const nextSet = (now: number) => { const q = quarterKey(now); return SETS.find(x => x.from > q); };
+/** 세트의 유닛 풀. */
+export const setUnits = (setId?: string): UnitDef[] => { const d = setById(setId), out = UNITS.filter(u => !d.remove?.includes(u.id)); for (const id of d.add || []) { const u = unitById(id); if (u && !out.includes(u)) out.push(u); } return out; };
+/** 세트 숙련(세트마다 처음부터): 레벨 n → n+1에 150 + 50(n−1), 최대 20. 5 · 10 · 15 · 20에 세계석 10 · 20 · 30 · 50, 20이면 세트 칭호. */
+export const SET_MASTERY = { max: 20, rewards: { 5: 10, 10: 20, 15: 30, 20: 50 } as Record<number, number> };
+export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);

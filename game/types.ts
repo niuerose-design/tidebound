@@ -622,6 +622,9 @@ export type State = {
     expeditionAbyssBest?: number;
     expeditionFeats?: Record<string, number>;
     expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number }[];
+    /** 20단계: 세트 숙련(세트가 바뀌면 처음부터) · 세트 숙련 20을 찍은 세트 id. */
+    expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
+    expeditionSetDone?: Record<string, number>;
     /** 19단계: 보스 코어 조각(코어 id → 개수) · 도감 연결로 이미 준 단계(유닛 id → 1~3). */
     expeditionShards?: Record<string, number>;
     expeditionCodexLinked?: Record<string, number>;
@@ -1052,6 +1055,8 @@ export type ExpeditionRun = {
     acts?: number;
     /** 16단계: 난이도(1~5, 없으면 1). */
     difficulty?: number;
+    /** 20단계: 이 판의 분기 세트 id(없으면 첫 세트). */
+    set?: string;
     /** 15단계: 12라운드 완주 여부 · 완주 직후 심연 선택 대기 · 심연에서 이긴 라운드 수 · 이 판의 패배 수. */
     cleared?: boolean; abyssChoice?: boolean; abyss?: number; losses?: number;
     /** 11단계: 고른 증강(id, 동적은 'traitPlus2:meadow') · 아직 고르지 않은 증강 선택지 · 이 판의 주간 규칙 id · 시작 때 숙련 레벨(특전 고정). */

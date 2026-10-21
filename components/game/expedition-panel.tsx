@@ -2,7 +2,7 @@
 /** 원정대(오토배틀러) 화면: 8라운드 PvE · 고스트, 횟수 제한 없음(5단계). 상점 5장 → 벤치 → 보드(앞줄 · 뒷줄 4칸) → 전투. 드래그 없이 버튼만으로 390px에서도 쓰이게. */
 import { useState } from 'react';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
-import { EXPEDITION, UNITS, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS } from '@/game/data/expedition';
+import { EXPEDITION, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, type UnitDef, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, SEASON_REWARDS, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRule, weeklyRuleById, masteryXpFor, MASTERY_MAX, MASTERY_PERKS, questById, CODEX_TIERS, codexTier, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, activeSet, nextSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, quarterKey } from '@/game/data/expedition';
 import { BOSS_CORES } from '@/game/data/boss-core';
 import { weekKey, dayKey } from '@/game/data/time';
 import { activeTraits, traitKeys, ACT_BOSSES, abyssBoss } from '@/game/systems/expedition';
@@ -36,6 +36,9 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const [openTrait, setOpenTrait] = useState<string | null>(null);
     // 11단계: 이번 주 규칙(출발 화면용, useNow는 처음엔 0이라 하이드레이션 뒤에 채워짐) · 숙련.
     const now = useNow(60_000), thisWeek = now ? weeklyRule(weekKey(now)).id : null;
+    // 20단계 분기 세트: 지금 세트 · 다음 세트 · 유닛 풀 · 세트 숙련(세트가 다르면 처음부터).
+    const curSet = now ? activeSet(now) : setById(undefined), upcoming = now ? nextSet(now) : undefined, pool = setUnits(curSet.id);
+    const sm = s.expeditionSetMastery && s.expeditionSetMastery.set === curSet.id ? s.expeditionSetMastery : { set: curSet.id, level: 1, xp: 0, claimed: [] as number[] };
     const mastery = s.expeditionMastery || { level: 1, xp: 0, total: 0 }, nextPerk = MASTERY_PERKS.find(p => p.level > mastery.level);
     const masteryBox = <div className="exp-mastery" aria-label="원정 숙련">
         <div className="exp-mastery-head"><b>원정 숙련 {mastery.level}{mastery.level >= MASTERY_MAX ? ' (최대)' : ''}</b><small>{mastery.level < MASTERY_MAX ? `${mastery.xp} / ${masteryXpFor(mastery.level)}` : '완성'}</small></div>
@@ -63,17 +66,22 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const featBox = <details className="exp-feats"><summary>도전 기록 · {FEATS.filter(f => feats[f.id]).length}/{FEATS.length}</summary><ul>{FEATS.map(f => <li key={f.id} className={feats[f.id] ? 'on' : ''}><b>{f.name}</b> · {f.desc}{feats[f.id] ? <small> · {feats[f.id]}회 · 칭호 {f.title}</small> : <small className="muted"> · 칭호 {f.title}</small>}</li>)}</ul></details>;
     // 19단계 본편 연결: 잠긴 보스 유닛 · 코어 조각 · 도감 연결.
     const locked = lockedBossUnits(s.book), shards = s.expeditionShards || {};
-    const linkBox = <details className="exp-link"><summary>본편 연결 · 보스 유닛 {bossUnits().length - locked.size}/{bossUnits().length} 해금 · 코어 조각 {Object.values(shards).reduce((a, n) => a + n, 0)}</summary>
+    const linkBox = <details className="exp-link"><summary>본편 연결 · 보스 유닛 {bossUnits(pool).length - locked.size}/{bossUnits(pool).length} 해금 · 코어 조각 {Object.values(shards).reduce((a, n) => a + n, 0)}</summary>
         <ul>
-            <li><b>보스 유닛 해금</b> · 본편에서 그 보스를 {BOSS_UNLOCK_KILLS}번 이상 잡아야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). {bossUnits().map(u => <span key={u.id} className={`exp-link-chip${locked.has(u.id) ? ' locked' : ''}`} title={locked.has(u.id) ? `본편 ${u.name} 처치 ${s.book[u.monster] || 0}/${BOSS_UNLOCK_KILLS}` : `본편 처치 ${s.book[u.monster] || 0}`}>{locked.has(u.id) ? '🔒 ' : '✓ '}{u.name}</span>)}</li>
+            <li><b>보스 유닛 해금</b> · 본편에서 그 보스를 {BOSS_UNLOCK_KILLS}번 이상 잡아야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). {bossUnits(pool).map(u => <span key={u.id} className={`exp-link-chip${locked.has(u.id) ? ' locked' : ''}`} title={locked.has(u.id) ? `본편 ${u.name} 처치 ${s.book[u.monster] || 0}/${BOSS_UNLOCK_KILLS}` : `본편 처치 ${s.book[u.monster] || 0}`}>{locked.has(u.id) ? '🔒 ' : '✓ '}{u.name}</span>)}</li>
             <li><b>보스 코어 조각</b> · 막 보스 · 심연 보스를 이기면 {Math.round(shardChance(chosenDiff, false) * 100)}%(심연 +{Math.round(CORE_SHARD.abyssBonus * 100)}%p, 난이도마다 +{Math.round(CORE_SHARD.perDifficulty * 100)}%p)로 조각. {CORE_SHARD.per}개면 본편 보스 코어(없으면 획득 · 있으면 각성). 머쉬맘 → {BOSS_CORES.grotto.name}, 자쿰 → {BOSS_CORES.ventCathedral.name}, 칠흑 보스 → 던전 코어 7종 중 무작위. {Object.keys(shards).length ? Object.entries(shards).filter(([, n]) => n > 0).map(([id, n]) => <span key={id} className="exp-link-chip">{BOSS_CORES[id]?.name || id} {n}/{CORE_SHARD.per}</span>) : <small className="muted">아직 조각 없음</small>}</li>
             <li><b>도감 연결</b> · 유닛 도감이 동 · 은 · 금에 닿으면 그 유닛의 본편 몬스터 처치 수 +{CODEX_LINK_KILLS.join(' · +')}(연구 단계가 빨라집니다). 지금까지 {Object.keys(s.expeditionCodexLinked || {}).length}종 연결.</li>
         </ul>
     </details>;
-    const codexBox = <details className="exp-codex"><summary>유닛 도감 · {Object.values(unitWins).filter(n => n > 0).length}/{UNITS.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
-        <p className="footnote">보드에 두고 이긴 라운드 수로 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}. 30종 모두 이기면 칭호 📘, 금 5종이면 🏅. 동 · 은 · 금마다 본편 도감 처치 +{CODEX_LINK_KILLS.join(' · +')}.</p>
-        <div className="exp-codex-grid">{[...UNITS].sort((a, b) => a.cost - b.cost).map(def => { const w = unitWins[def.id] || 0, tier = codexTier(w); return <div key={def.id} className={`exp-codex-unit cost-${def.cost} tier-${tier}${w ? '' : ' unseen'}`} title={`${def.name} · ${tags(def)} · 배치 ${unitUse[def.id] || 0} · 승리 ${w}`}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{w ? `${w}승${tier ? ` · ${CODEX_TIERS[tier - 1].name}` : ''}` : unitUse[def.id] ? '아직 승리 없음' : '미등록'}</small></div>; })}</div>
+    const codexBox = <details className="exp-codex"><summary>유닛 도감 · {curSet.icon} {curSet.name} {pool.filter(u => unitWins[u.id] > 0).length}/{pool.length} 승리 · 금 {Object.values(unitWins).filter(n => codexTier(n) >= 3).length}</summary>
+        <p className="footnote">보드에 두고 이긴 라운드 수로 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}. 30종 모두 이기면 칭호 📘, 금 5종이면 🏅. 동 · 은 · 금마다 본편 도감 처치 +{CODEX_LINK_KILLS.join(' · +')}.{setById(curSet.id).remove?.length ? ` 이번 세트에서 쉬는 유닛: ${setById(curSet.id).remove!.map(id => unitById(id)?.name).join(' · ')}(기록은 남고 다음 세트에 돌아올 수 있음).` : ''}</p>
+        <div className="exp-codex-grid">{[...pool].sort((a, b) => a.cost - b.cost).map(def => { const w = unitWins[def.id] || 0, tier = codexTier(w); return <div key={def.id} className={`exp-codex-unit cost-${def.cost} tier-${tier}${w ? '' : ' unseen'}`} title={`${def.name} · ${tags(def)} · 배치 ${unitUse[def.id] || 0} · 승리 ${w}`}><UnitArt def={def} size={26}/><b>{def.name}</b><small>{w ? `${w}승${tier ? ` · ${CODEX_TIERS[tier - 1].name}` : ''}` : unitUse[def.id] ? '아직 승리 없음' : '미등록'}</small></div>; })}</div>
     </details>;
+    // 20단계 분기 세트: 지금 세트(출발 화면) · 다음 세트 예고 · 세트 숙련.
+    const setBanner = <div className="exp-set" aria-label="분기 세트"><div className="exp-set-head"><b>{curSet.icon} {curSet.name} 세트</b><small>{now ? quarterKey(now) : ''}{upcoming ? ` · 다음: ${upcoming.icon} ${upcoming.name}(${upcoming.from})` : ''}</small></div><small className="muted">{curSet.desc}</small>
+        <div className="exp-mastery-head" style={{ marginTop: 8 }}><b style={{ fontSize: 13 }}>세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small>{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
+        <div className="exp-mastery-bar"><i className="set" style={{ width: `${sm.level >= SET_MASTERY.max ? 100 : Math.min(100, Math.round(100 * sm.xp / setMasteryXpFor(sm.level)))}%` }}/></div>
+        <small className="muted">세트마다 처음부터. 숙련 경험치와 같이 오르고 {Object.entries(SET_MASTERY.rewards).map(([lv, p]) => `${lv}에 세계석 ${p}`).join(' · ')}, 20이면 칭호 {curSet.icon} {curSet.name}의 원정대.</small></div>;
     const weekBanner = weekRule ? <p className="exp-rule">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="muted">(매주 월요일 바뀜 · 판을 시작할 때 규칙이 붙어 끝까지 유지)</small></p> : null;
 
     // 18단계(모바일 정리): 소개는 한 줄로 줄이고 긴 설명은 접어 둡니다.
@@ -84,16 +92,16 @@ export function Expedition({ s, send, busy }: PanelProps) {
     const rewardTable = <p className="footnote">월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>;
     if (!r || (r.done && !r.reward && r.reward !== 0)) return <>{intro}<section className="panel exp-start">
         {season}{weekBanner}
-        {diffPicker}
+        {setBanner}{diffPicker}
         <button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</button>
         {recentBox}{masteryBox}{questDetails}{linkBox}{featBox}{codexBox}
-        <p className="footnote">유닛 {UNITS.length}종 · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
+        <p className="footnote">유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨(경험치 {EXPEDITION.xp} G)로 늘어납니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</p>
         {rewardTable}
     </section></>;
     if (r.done) return <>{intro}<section className="panel exp-start">
         <h2>원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
         <div className="button-row"><button className="primary" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>바로 다시 출발 · {difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name}</button><button className="secondary" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</button></div>
-        {diffPicker}{recentBox}{masteryBox}{questDetails}{linkBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
+        {setBanner}{diffPicker}{recentBox}{masteryBox}{questDetails}{linkBox}{featBox}{codexBox}{season}{weekBanner}{rewardTable}
     </section></>;
     const mods = runMods(r), runRule = weeklyRuleById(r.rule), bench = benchCap(r);
     const traits = activeTraits(r.board, mods), slots = EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
@@ -118,7 +126,7 @@ export function Expedition({ s, send, busy }: PanelProps) {
         </section>
         <ol className={`exp-progress${inAbyss ? ' abyss' : ''}`} aria-label="라운드 진행">{Array.from({ length: EXPEDITION.rounds }, (_, i) => i + 1).map(n => { const boss = isBossRound(n), won = r.history?.[n] && n < r.round ? (n === r.round - 1 ? r.last?.won : undefined) : undefined; return <li key={n} className={`${n < r.round ? 'past' : n === r.round ? 'now' : ''}${boss ? ' boss' : ''}`} title={boss ? `${actOf(n)}막 보스 ${unitById(ACT_BOSSES[actOf(n)])?.name}` : `${n}라운드`}>{boss ? <UnitArt def={unitById(ACT_BOSSES[actOf(n)])!} size={18}/> : n}{won === false ? <i/> : null}</li>; })}</ol>
         <p className={`exp-todo${r.box?.length || r.augmentOffer?.length ? ' urgent' : bossNext ? ' boss' : ''}`} role="status">다음 할 일 · {todo}</p>
-        {runRule ? <p className="exp-rule small">이번 판 규칙 · <b>{runRule.name}</b> · {runRule.desc}</p> : null}
+        {runRule ? <p className="exp-rule small">{setById(r.set).icon} {setById(r.set).name} 세트 · 이번 판 규칙 · <b>{runRule.name}</b> · {runRule.desc}</p> : null}
         <div className="exp-columns">
         <section className="panel exp-board-panel" aria-label="보드">
             <div className="section-title"><h2>보드</h2><span>앞줄 · 뒷줄 4칸, 누르면 벤치로</span></div>

@@ -1,4 +1,4 @@
-import { FEATS, DIFFICULTIES } from './expedition';
+import { FEATS, DIFFICULTIES, SETS } from './expedition';
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
 import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
@@ -176,6 +176,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'expSeasonTop:3', honor: true, group: '모험' as const, title: '원정 시즌 3위 안', desc: '월간 원정대 순위 3위 안으로 시즌을 마칩니다.', reward: {}, progress: (s: State) => s.expeditionSeasonBest && s.expeditionSeasonBest <= 3 ? 1 : 0, target: 1 },
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
+    // 20단계: 세트 숙련 20(세트 완성) 명예 업적.
+    ...SETS.map(set => ({ id: `expSet:${set.id}`, honor: true, group: '모험' as const, title: `${set.name} 세트 완성`, desc: `원정대 ${set.icon} ${set.name} 세트 숙련 20을 찍습니다.`, reward: {}, progress: (s: State) => s.expeditionSetDone?.[set.id] || 0, target: 1 })),
     // 16단계: 난이도 완주 명예 업적.
     ...[3, 4, 5].map(d => ({ id: `expDiff:${d}`, honor: true, group: '모험' as const, title: `난이도 ${DIFFICULTIES[d - 1].name} 완주`, desc: `원정대 난이도 ${DIFFICULTIES[d - 1].icon} ${DIFFICULTIES[d - 1].name}을(를) 완주합니다.`, reward: {}, progress: (s: State) => s.expeditionDiffClears?.[d] || 0, target: 1 })),
     // 15단계: 도전 기록(완주 조건) 명예 업적.
