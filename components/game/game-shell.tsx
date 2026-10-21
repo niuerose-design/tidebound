@@ -62,7 +62,7 @@ const Collection = lazyPanel(() => import('./collection-panel').then(m => m.Coll
 const Stats = lazyPanel(() => import('./stats-panel').then(m => m.Stats));
 const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
 const BattleRecordsPanel = lazyPanel(() => import('./battle-records-panel').then(m => m.BattleRecordsPanel));
-// v3.379 재설계 4단계 첫 화면: 설정(토큰 · shadcn · 게임 범용 조각으로 새로 만든 화면).
+// v3.380 재설계 4단계 첫 화면: 설정(토큰 · shadcn · 게임 범용 조각으로 새로 만든 화면).
 const SettingsScreen = lazyPanel(() => import('@/components/features/settings/settings-screen').then(m => m.SettingsScreen));
 type NavItem = { id: string; name: string; Icon: React.ComponentType<{ size?: number }>; unlock?: (s: State) => string | null; views?: string[]; /** v3.18 조건을 채우기 전에는 메뉴에서 아예 숨깁니다(해킹). */ hidden?: (s: State) => boolean };
 /** 합친 화면의 탭별 제목(상단 빵부스러기). 없으면 메뉴 이름을 씁니다. */
@@ -76,7 +76,7 @@ const hackerOnly = (s: State) => isHackerJob(s.job);
 // v3.242 입문 메뉴: 첫 생에는 아직 쓸 수 없는 메뉴를 숨기고 Lv.10 · 첫 던전 정복에 엽니다(game/systems/guidance.ts).
 const navHidden = (s: State | null | undefined, view: string) => { if (!s) return false; const owners = NAV.flatMap(g => g.items).filter(i => i.id === view || i.views?.includes(view)); return owners.length > 0 && owners.every(i => i.hidden?.(s)); };
 export const NAV: { label: string; items: NavItem[] }[] = [{ label: '모험', items: [{ id: 'battle', name: '자동 사냥', Icon: Swords }, { id: 'stages', name: '사냥터·던전', Icon: Map, views: ['stages', 'dungeons'], hidden: hackerOnly }, { id: 'altar', name: '제단', Icon: Flame, views: ['altar'], hidden: noviceMenuLocked }, { id: 'expedition', name: '원정대', Icon: Flag, views: ['expedition'], hidden: noviceMenuLocked }, { id: 'hacker', name: '해킹', Icon: Terminal, views: ['hacker', 'crew'], hidden: (s: State) => !isHackerJob(s.job) && !s.hacker?.crew }] }, { label: '성장', items: [{ id: 'character', name: '능력치 · 치장', Icon: Target, views: ['character', 'cosmetics'] }, { id: 'shop', name: '상점 · 장비 보관함', Icon: ShoppingBag, views: ['shop', 'dungeonShop', 'inventory'], hidden: hackerOnly }, { id: 'market', name: '증권거래소', Icon: ChartCandlestick, views: ['market'], hidden: noviceMarketLocked }, { id: 'skills', name: '스킬 · 전직', Icon: Zap, views: ['skills', 'classes', 'mastery'] }, { id: 'rebirth', name: '환생 · 분신', Icon: RefreshCw, views: ['rebirth', 'slots'], hidden: (s: State) => hackerOnly(s) || noviceMenuLocked(s) }, { id: 'slots', name: '분신', Icon: RefreshCw, views: ['slots'], hidden: (s: State) => !isHackerJob(s.job) }] }, { label: '기록과 명예', items: [{ id: 'book', name: '도감 · 업적 · 스토리', Icon: BookOpen, views: ['book', 'voyage', 'story'] }, { id: 'stats', name: '통계 · 기록', Icon: BarChart3, views: ['stats', 'records'], hidden: noviceMenuLocked }, { id: 'guild', name: '길드', Icon: Users, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: (s: State) => hackerOnly(s) || noviceMenuLocked(s) }, { id: 'ranking', name: '랭킹 · 결투', Icon: Trophy, unlock: (s: State) => s.rebirths || s.level >= 10 ? null : 'Lv.10', hidden: noviceMenuLocked }, { id: 'help', name: '도움말 · 업데이트', Icon: HelpCircle, views: ['help', 'updates'] }, { id: 'settings', name: '설정', Icon: Settings }] }];
-/** v3.379 주소 해시로 열 수 있는 화면 목록(메뉴에 걸린 화면 전부). */
+/** v3.380 주소 해시로 열 수 있는 화면 목록(메뉴에 걸린 화면 전부). */
 const ALL_VIEWS: ReadonlySet<string> = new Set(NAV.flatMap(g => g.items.flatMap(i => [i.id, ...(i.views || [])])));
 
 export default function GameShell() {
@@ -89,7 +89,7 @@ export default function GameShell() {
     // v3.101 최근 전투 기록(몹별): 받은 로그를 이 브라우저에만 모읍니다(서버 요청 없음).
     useFeedBattleRecords(s);
     const [picked, setPicked] = useState('battle');
-    // v3.379 화면 주소: 메뉴 화면은 #해시로 적어 새로고침 · 뒤로가기 · 공유가 됩니다(view-route.ts). 첫 그림은 서버와 같게 자동 사냥으로 그리고, 붙은 뒤 해시를 읽습니다.
+    // v3.380 화면 주소: 메뉴 화면은 #해시로 적어 새로고침 · 뒤로가기 · 공유가 됩니다(view-route.ts). 첫 그림은 서버와 같게 자동 사냥으로 그리고, 붙은 뒤 해시를 읽습니다.
     const setView = useCallback((v: string) => { setPicked(v); if (window.location.hash !== hashForView(v)) window.history.pushState(null, '', hashForView(v) || window.location.pathname + window.location.search); }, []);
     useEffect(() => { const apply = () => setPicked(viewFromHash(window.location.hash, ALL_VIEWS)); apply(); window.addEventListener('hashchange', apply); window.addEventListener('popstate', apply); return () => { window.removeEventListener('hashchange', apply); window.removeEventListener('popstate', apply); }; }, []);
     // v3.25 지금 직업에서 숨긴 화면이면 자동 사냥 화면으로.

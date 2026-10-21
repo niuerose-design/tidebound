@@ -1,6 +1,6 @@
 'use client';
 /**
- * v3.379 설정 화면(재설계 4단계의 첫 화면, 브리프 9절 5 · 6.2 · 6.4). 옛 설정 다이얼로그(components/game/settings-dialog.tsx)를 대신합니다.
+ * v3.380 설정 화면(재설계 4단계의 첫 화면, 브리프 9절 5 · 6.2 · 6.4). 옛 설정 다이얼로그(components/game/settings-dialog.tsx)를 대신합니다.
  * 토큰 · shadcn 기본 · 게임 범용 조각만 조합하고 새 전역 CSS 를 만들지 않습니다. 주소는 #settings (view-route.ts).
  * 서버에 저장되는 항목(이름 · 자동 장치 · 확인 · 무리 규모 · 청산)은 send(action), 이 기기에만 남는 항목(연출 · 알림 · 스타캐치)은 각 localStorage 스토어입니다.
  */
