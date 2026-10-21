@@ -65,7 +65,7 @@ const Stages = lazyPanel(() => import('@/components/features/world').then(m => m
 const Dungeons = lazyPanel(() => import('@/components/features/world').then(m => m.DungeonsScreen));
 // v3.396 재설계 4단계: 세계의 제단(새 토대).
 const Altar = lazyPanel(() => import('@/components/features/altar').then(m => m.AltarScreen));
-const Rankings = lazyPanel(() => import('./rankings-panel').then(m => m.Rankings));
+const Rankings = lazyPanel(() => import('@/components/features/arena').then(m => m.ArenaScreen));
 // v3.392 재설계 4단계: 능력치 · 치장(새 토대).
 const Character = lazyPanel(() => import('@/components/features/character').then(m => m.CharacterScreen));
 const Cosmetics = lazyPanel(() => import('@/components/features/character').then(m => m.CosmeticsScreen));
