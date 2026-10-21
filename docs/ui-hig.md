@@ -7,7 +7,8 @@
 | 항목 | 기준 | 구현 위치 |
 |---|---|---|
 | 터치 대상 | 손가락 기기(`pointer: coarse`)에서 모든 조작 요소 44×44pt 이상. 작게 보여야 하는 아이콘 · 글자 버튼은 보이는 크기는 두고 `::after`로 닿는 영역만 넓힘 | `app/styles/responsive.css` 맨 위 `@media (pointer:coarse)` |
-| 글자 크기 | 11px 아래로 쓰지 않음. 본문 16px, 보조 13px(`small`), 가장 작은 표시 11px | 스타일 전체(테스트 `tests/v25.test.mjs`가 11px 미만을 잡음) |
+| 글자 크기 | 11px 아래로 쓰지 않음. 본문 16px(데스크톱 · 마우스 기기는 15px, v3.387), 보조 13px(`small`), 가장 작은 표시 11px | 스타일 전체(테스트 `tests/v25.test.mjs`가 11px 미만을 잡음) |
+| 글꼴 | 본문 나눔스퀘어 · 제목 마루 부리를 자체 호스팅(OFL). 기기 글꼴에 기대지 않아 어디서나 같은 모양 | `app/styles/fonts.css`, `public/fonts/`, `tools/fonts/` |
 | 대비 | 글자와 배경 4.5:1 이상(18px 이상 · 14px 굵게는 3:1). 꺼진 상태 · 장식 기호는 3:1 | 색은 `theme.css` 토큰(`--muted #8d9fa4` 이상의 밝기) |
 | 초점 | 키보드 초점은 버튼 · 링크 · 입력 · 선택 상자 · 접기 제목 · 탭 모두 2px 테두리 | `app/styles/elements.css` `:focus-visible` |
 | 움직임 | `prefers-reduced-motion`이면 애니메이션 · 전환을 모두 끔 | `responsive.css` 첫 블록 |

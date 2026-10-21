@@ -6,11 +6,24 @@
 
 body {
   margin:0;
-  background:var(--background);
+  /* v3.387 바탕: 위쪽 청록 · 아래 오른쪽 금빛이 은은히 깔린 깊은 바다. 그 위에 아주 옅은 잡티(body::before)로 종이 같은 결을 줍니다. */
+  background:radial-gradient(ellipse 90% 55% at 50% -12%,rgba(129,203,180,.11),transparent 62%),radial-gradient(ellipse 60% 45% at 100% 105%,rgba(212,181,121,.08),transparent 60%),var(--background);
   color:var(--foreground);
-  font-family:'Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-family:var(--font-ui);
   font-size:16px;
   line-height:1.6
+}
+/* 손가락 기기 · 좁은 화면은 16px, 데스크톱은 15px(v3.387 전체 크기 완화). */
+@media (min-width:768px) and (pointer:fine) { body { font-size:15px } }
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  opacity:.045;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  background-size:160px 160px
 }
 
 button,input {
@@ -43,22 +56,26 @@ h1,h2,h3,p {
   margin:0
 }
 
+/* v3.387 제목은 마루 부리(세리프). 본문과 다른 결로 판타지 기록장 느낌을 냅니다. */
 h1 {
+  font-family:var(--font-display);
   font-size:28px;
-  font-weight:600;
-  letter-spacing:-1.1px;
-  line-height:1.4
+  font-weight:700;
+  letter-spacing:-.3px;
+  line-height:1.35
 }
 
 h2 {
+  font-family:var(--font-display);
   font-size:19px;
-  font-weight:600;
-  letter-spacing:-.4px
+  font-weight:700;
+  letter-spacing:-.1px
 }
 
 h3 {
+  font-family:var(--font-display);
   font-size:16px;
-  font-weight:600
+  font-weight:700
 }
 
 p {
@@ -86,8 +103,9 @@ strong,b {
 }
 
 .eyebrow {
+  font-family:var(--font-display);
   font-size:11px;
-  letter-spacing:2.1px;
+  letter-spacing:2.4px;
   color:var(--primary);
   font-weight:600;
   margin-bottom:9px

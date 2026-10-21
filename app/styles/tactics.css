@@ -17,7 +17,7 @@
 
 /* ── 제목 · 엔딩 ── */
 .tx-title { max-width: 720px; margin: 40px auto; padding: 36px 30px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; position: relative; overflow: hidden; }
-.tx-title h1 { font-family: Georgia, serif; font-size: 34px; letter-spacing: 1px; color: var(--gold); margin: 6px 0 12px; }
+.tx-title h1 { font-family: var(--font-display); font-size: 34px; letter-spacing: 1px; color: var(--gold); margin: 6px 0 12px; }
 .tx-title-art { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 80% 10%, #1c3c42 0%, transparent 55%); }
 .tx-title-wave { position: absolute; left: -10%; right: -10%; bottom: -40px; height: 120px; background: repeating-linear-gradient(90deg, #203a3c 0 40px, #1b3134 40px 80px); opacity: .35; border-radius: 50%; }
 .tx-title > * { position: relative; }
@@ -201,7 +201,7 @@
 .tx-log li { display: flex; gap: 8px; font-size: 12px; color: #aec0c2; }
 .tx-log li small { color: #8d9fa4; width: 22px; flex: none; }
 .tx-log li.k-loss { color: #ef8c85; } .tx-log li.k-levelup { color: #a4e9ba; } .tx-log li.k-event { color: #f2d36b; } .tx-log li.k-turn { color: #8d9fa4; }
-.tx-banner { position: fixed; left: 50%; top: 32%; transform: translateX(-50%); background: #0b1a1ee6; border: 1px solid var(--gold); color: var(--gold); font-family: Georgia, serif; font-size: 26px; letter-spacing: 3px; padding: 14px 40px; border-radius: 10px; z-index: 30; animation: tx-banner 1.4s forwards; pointer-events: none; }
+.tx-banner { position: fixed; left: 50%; top: 32%; transform: translateX(-50%); background: #0b1a1ee6; border: 1px solid var(--gold); color: var(--gold); font-family: var(--font-display); font-size: 26px; letter-spacing: 3px; padding: 14px 40px; border-radius: 10px; z-index: 30; animation: tx-banner 1.4s forwards; pointer-events: none; }
 @keyframes tx-banner { 0% { opacity: 0; transform: translate(-50%, 10px); } 15% { opacity: 1; transform: translate(-50%, 0); } 80% { opacity: 1; } 100% { opacity: 0; } }
 .tx-notice { position: fixed; left: 50%; top: 86px; transform: translateX(-50%); background: #5c2626ee; border: 1px solid #d46a6a; color: #ffe6e6; font-size: 14px; padding: 8px 18px; border-radius: 8px; z-index: 30; pointer-events: none; }
 .tx-overlay { position: fixed; inset: 0; background: #0b1a1ec0; display: grid; place-items: center; z-index: 40; padding: 20px; }
@@ -209,7 +209,7 @@
 .tx-end h2 { font-size: 22px; color: var(--gold); }
 .tx-end .tx-row { justify-content: center; }
 .tx-dialogue { position: fixed; inset: 0; z-index: 35; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 20px; background: linear-gradient(to top, #0b1a1ef0 0, #0b1a1e60 40%, transparent 70%); cursor: pointer; }
-.tx-dialogue-title { font-family: Georgia, serif; color: var(--gold); letter-spacing: 2px; font-size: 18px; margin-bottom: 10px; }
+.tx-dialogue-title { font-family: var(--font-display); color: var(--gold); letter-spacing: 2px; font-size: 18px; margin-bottom: 10px; }
 .tx-dialogue-box { width: min(760px, 100%); background: #112027f5; border: 1px solid #34524c; border-radius: 12px; padding: 16px 18px; display: grid; grid-template-columns: 56px 1fr; gap: 4px 14px; position: relative; }
 .tx-dialogue-box strong { color: #a2dcc6; font-size: 14px; }
 .tx-dialogue-box p { font-size: 16px; line-height: 1.7; color: #e3e9e7; }

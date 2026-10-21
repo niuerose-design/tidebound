@@ -279,7 +279,7 @@
 .route-step.branch { padding:6px; border:1px dashed #33494b; border-radius:10px; }
 .route-card { display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; padding:12px 14px; border:1px solid #34494c; border-radius:9px; background:#122126; color:#dfe7e3; }
 .route-card strong { font-size:15px; }
-.route-card .route-tier { font-family:Georgia,serif; color:#8fab9f; margin-right:2px; }
+.route-card .route-tier { font-family:var(--font-display); color:#8fab9f; margin-right:2px; }
 .route-note { font-size:12px; color:#95aca5; }
 .route-note.current { color:var(--gold); }
 .route-note.mastered { color:#e8d39a; }

@@ -36,7 +36,7 @@
 
 .stage-num {
   font-size:26px;
-  font-family:Georgia,serif;
+  font-family:var(--font-display);
   opacity:.8
 }
 
@@ -175,7 +175,7 @@
   align-items:center;
   gap:5px;
   color:#b88c72;
-  font:700 14px Georgia,serif
+  font:700 14px var(--font-display)
 }
 
 .dungeon-vs span {

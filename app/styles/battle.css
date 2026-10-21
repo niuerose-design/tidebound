@@ -364,7 +364,7 @@
 .tide-fx-fragment{font-size:24px}
 .tide-fx-caption{top:36px}.tide-fx-caption strong{font-size:16px;letter-spacing:.3px}
 .tide-fx.finale{--fx:#ffe38b}
-.tide-fx-heaven{left:-40px;top:-52px;width:80px;text-align:center;font:700 54px/1 Georgia,'Noto Serif KR',serif;color:#fff2c4;text-shadow:0 0 18px #ffd97a,0 0 40px #ffb84a;animation:tideHeaven 1.4s ease-out var(--fx-delay) both}
+.tide-fx-heaven{left:-40px;top:-52px;width:80px;text-align:center;font:700 54px/1 var(--font-display);color:#fff2c4;text-shadow:0 0 18px #ffd97a,0 0 40px #ffb84a;animation:tideHeaven 1.4s ease-out var(--fx-delay) both}
 .tide-fx.finale .tide-fx-caption{top:42px}.tide-fx.finale .tide-fx-caption strong{color:#ffe9b0;font-size:17px}
 @keyframes tideFlash{0%{opacity:0;scale:.4}18%{opacity:.9;scale:1}100%{opacity:0;scale:1.6}}
 @keyframes tideHeaven{0%{opacity:0;scale:.3;rotate:-8deg}18%{opacity:1;scale:1.25;rotate:2deg}32%{scale:1}78%{opacity:1}100%{opacity:0;scale:1.1;translate:0 -18px}}
@@ -386,8 +386,8 @@
 .scene-fx-finale .scene-fx-slash{left:-10%;top:50%;width:120%;height:3px;background:linear-gradient(90deg,transparent,#fff7d6,#ffd36a,#fff7d6,transparent);box-shadow:0 0 24px #ffd36a;transform-origin:center;animation:sceneSlash 2.6s ease-out var(--fx-delay) both}
 .scene-fx-finale .scene-fx-ring{left:50%;top:50%;width:220px;height:220px;margin:-110px 0 0 -110px;animation:sceneFinaleRing 1.4s cubic-bezier(.1,.7,.25,1) calc(var(--fx-delay) + 1.05s) both}
 .scene-fx-finale .scene-fx-ring.late{animation-delay:calc(var(--fx-delay) + 1.25s)}
-.scene-fx-seal{left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;text-align:center;font:700 30px/44px Georgia,'Noto Serif KR',serif;color:#f7e3a8;text-shadow:0 0 14px #ffc85a;animation:sceneSeal 2.6s ease-in-out var(--fx-delay) both}
-.scene-fx-heaven{position:absolute;left:50%;top:50%;translate:-50% -50%;font:700 150px/1 Georgia,'Noto Serif KR',serif;color:#fff6d8;text-shadow:0 0 30px #ffd97a,0 0 80px #ffb84a,0 4px 0 #6a4a10;animation:sceneHeaven 2.6s ease-out var(--fx-delay) both}
+.scene-fx-seal{left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;text-align:center;font:700 30px/44px var(--font-display);color:#f7e3a8;text-shadow:0 0 14px #ffc85a;animation:sceneSeal 2.6s ease-in-out var(--fx-delay) both}
+.scene-fx-heaven{position:absolute;left:50%;top:50%;translate:-50% -50%;font:700 150px/1 var(--font-display);color:#fff6d8;text-shadow:0 0 30px #ffd97a,0 0 80px #ffb84a,0 4px 0 #6a4a10;animation:sceneHeaven 2.6s ease-out var(--fx-delay) both}
 .scene-fx-title{position:absolute;left:50%;top:calc(50% + 92px);translate:-50% 0;font-size:16px;letter-spacing:6px;color:#ffe9b0;text-shadow:0 0 12px #000;animation:sceneTitle 2.6s ease-out var(--fx-delay) both;white-space:nowrap}
 .battle-scene:has(.scene-fx-finale) .ocean-art{animation:sceneQuake 2.6s ease-out both}
 @keyframes sceneFlash{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
@@ -634,7 +634,7 @@
 .tide-fx-weaken .tide-fx-fragment{animation-name:tideFragmentDown;animation-duration:.9s}.tide-fx-weaken .tide-fx-ring{opacity:.5}
 .tide-fx-haste .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.5s}
 /* 인(玄): 글자 파편 */
-.tide-fx-glyph .tide-fx-fragment{font-family:Georgia,'Noto Serif KR',serif;font-size:22px}
+.tide-fx-glyph .tide-fx-fragment{font-family:var(--font-display);font-size:22px}
 @keyframes tideFragmentUp{0%,12%{opacity:0;transform:translate(0,0) scale(.5)}20%{opacity:1}100%{opacity:0;transform:translate(calc(var(--fx-x) * .5),calc(-40px + var(--fx-y) * .3)) rotate(var(--fx-rotate)) scale(.6)}}
 @keyframes tideFragmentDown{0%,10%{opacity:0;transform:translate(0,-10px) scale(.6)}22%{opacity:1}100%{opacity:0;transform:translate(calc(var(--fx-x) * .6),calc(46px + var(--fx-y) * .2)) rotate(var(--fx-rotate)) scale(.8)}}
 @keyframes tideTwinkle{0%,10%{opacity:0;transform:translate(0,0) scale(.3)}25%{opacity:1;transform:translate(calc(var(--fx-x) * .4),calc(var(--fx-y) * .4)) scale(1.3)}45%{opacity:.4;transform:translate(calc(var(--fx-x) * .6),calc(var(--fx-y) * .6)) scale(.7)}65%{opacity:1;transform:translate(calc(var(--fx-x) * .8),calc(var(--fx-y) * .8)) scale(1.1)}100%{opacity:0;transform:translate(var(--fx-x),var(--fx-y)) scale(.4)}}

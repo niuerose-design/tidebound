@@ -251,7 +251,7 @@
 
 .rank-number {
   color:var(--gold);
-  font-family:Georgia,serif;
+  font-family:var(--font-display);
   font-size:20px
 }
 

@@ -3,6 +3,7 @@
 @import "tw-animate-css";
 @import "./styles/theme.css";
 @import "./styles/tokens.css";
+@import "./styles/fonts.css";
 @import "./styles/elements.css";
 @import "./styles/shell.css";
 @import "./styles/panels.css";
