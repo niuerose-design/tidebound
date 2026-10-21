@@ -88,13 +88,6 @@
 
 @media(max-width:1080px) {
 
-  .player-column {
-    display:grid;
-    grid-template-columns:2fr 1fr;
-    gap:20px;
-    margin-top:25px
-  }
-
   .player-panel>.section-title {
     margin-bottom:12px
   }
@@ -163,10 +156,6 @@
   .log-line {
     font-size:11px;
     gap:7px
-  }
-
-  .player-column {
-    display:block
   }
 
   .stage-grid {

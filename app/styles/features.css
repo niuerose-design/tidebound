@@ -1,16 +1,9 @@
-/* 기능별 추가 스타일: 던전 반복·무리 사냥·전투 결과·로그인·도감·능력치 상세·안내·목표 등. */
 
-/* 무리 사냥 선택 */
-
-/* 화면 설명 정리 */
-.derived-details { margin-top: 12px; }
-.derived-details > summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 10px 0; }
 .book-block { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 10px; }
 .book-block h4 { font-size: 13px; margin: 0 0 6px; display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
 .book-block h4 small { font-weight: 400; font-size: 11px; color: var(--muted); }
 .book-block p { font-size: 13px; margin: 0 0 8px; }
 .rebirth-three { grid-template-columns: repeat(3, 1fr); margin-top: 18px; }
-.derived-grid > .wide { grid-column: 1 / -1; }
 .ledger-gain li { display: flex; flex-direction: column; gap: 2px; }
 .ledger-gain li small { color: var(--muted); font-size: 12px; }
 .help-rule dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 10px 0 0; font-size: 14px; }
@@ -78,14 +71,12 @@
 .derived-grid > .stat-breakdown.wide { grid-column: 1 / -1; }
 .stat-breakdown > summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
 .stat-breakdown > summary::-webkit-details-marker { display: none; }
-.stat-breakdown-chevron { margin-left: 4px; vertical-align: -1px; color: #6f8a8c; transition: transform .15s; }
 .stat-breakdown[open] .stat-breakdown-chevron { transform: rotate(180deg); }
 .stat-breakdown ul { list-style: none; margin: 10px 0 0; padding: 8px 10px; background: #0f2227; border-radius: 5px; display: grid; gap: 4px; }
 .stat-breakdown li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: #96b0b3; }
 .stat-breakdown li b { font-weight: 500; color: #d4e0d6; font-variant-numeric: tabular-nums; }
 .stat-breakdown .stat-breakdown-total { border-top: 1px solid var(--border); padding-top: 5px; margin-top: 2px; }
 .stat-breakdown .stat-breakdown-total b { color: var(--gold); }
-.stat-breakdown-hint { margin-top: 10px; }
 .stat-breakdown .stat-note { margin: 8px 0 0; font-size: 12px; line-height: 1.6; color: #96b0b3; }
 .skill-state-row .on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .skill-state-row .warn { color: #e3c28d; border-color: #6d5a3f; background: #2c2618; }
@@ -147,8 +138,6 @@
 
 /* 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 왼쪽 안내 슬롯 */
 .num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
-.attribute-row .attribute-buttons { flex-direction: row; gap: 6px; flex-shrink: 0; }
-.attribute-row .attribute-buttons button { min-width: 44px; padding-left: 8px; padding-right: 8px; }
 .skill-status-badge.on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .skill-status-badge.off { color: #7f9a9c; }
 .skill-card.compact .skill-current-description { margin: 8px 0; }
@@ -259,23 +248,8 @@
 /* v26.0 오픈베타 표지 배지 */
 .beta-badge { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border: 1px solid rgba(243, 220, 160, .55); border-radius: 999px; color: #f3dca0; font-size: 11px; letter-spacing: .3em; font-weight: 600; background: rgba(243, 220, 160, .08); }
 .rank-badge .rank-insignia { width: 16px; height: 16px; }
-.rank-head { display: flex; align-items: center; gap: 12px; margin: 10px 0 12px; }
-
-.rank-head-text { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.rank-head-text b { font-size: 1.05rem; }
-.rank-head-text small { color: var(--muted, #9fb7b0); }
-
-.title-actions { display: flex; gap: 8px; margin: 12px 0 8px; flex-wrap: wrap; }
-.title-list { display: grid; gap: 6px; }
-.title-row { display: grid; grid-template-columns: minmax(120px, 1fr) 2fr auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; }
 .title-row.locked { opacity: .55; }
 .title-row.on { border-color: rgba(243, 220, 160, .55); background: rgba(243, 220, 160, .06); }
-.title-desc { font-size: .85rem; color: var(--muted, #9fb7b0); }
-.title-locked { font-size: .8rem; color: var(--muted, #9fb7b0); }
-@media (max-width: 640px) { .title-row { grid-template-columns: 1fr auto; } .title-row .title-desc { grid-column: 1 / -1; }}
-
-/* v26.2 칭호 글꼴·메인 화면 칭호 선택 */
-.title-row .title-desc, .title-row .title-locked { font-size: .82rem; color: #9fb7b0; }
 
 /* v27.11 어종·직업 그림 자리. 이미지가 없으면 실루엣/아이콘이 남습니다. */
 .monster-art, .job-art { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; overflow: hidden; color: #93c0b4; background: radial-gradient(circle at 50% 40%, rgba(147, 192, 180, .14), rgba(147, 192, 180, 0) 70%); }
@@ -311,20 +285,7 @@
 /* v27.70 탄핵 버튼: 신의 자리 주인 이름 옆 */
 .altar-impeach{margin-left:10px;padding:3px 10px;font-size:12px;vertical-align:middle}
 .bonus-feats { margin-top:16px; }
-/* v27.88 치장: 칭호·계급 칸 접기 */
-.cosmetics-fold > summary { cursor:pointer; list-style:none; align-items:center; }
-.cosmetics-fold > summary::-webkit-details-marker { display:none; }
 .cosmetics-fold > summary .achievement-chevron { margin-left:8px; }
-.cosmetics-fold:not([open]) > summary { margin-bottom:0; }
-.cosmetics-fold:not([open]) { align-self:start; }
-
-/* v3.15 계급 흐름도 */
-.rank-flow-title { font-size: 14px; margin: 14px 0 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-.rank-flow-title small { color: var(--muted, #9fb7b0); font-weight: 400; font-size: 12px; }
-.rank-flow { list-style: none; margin: 0; padding: 4px 0 8px; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: thin; min-width: 0; max-width: 100%; }
-/* v3.18 흐름도가 옆 칭호 칸을 밀지 않게(격자 자식의 최소 너비) + 세로 보기 */
-.build-columns > .cosmetics-fold { min-width: 0; }
-.rank-flow-switch { margin-left: auto; display: inline-flex; gap: 4px; }
 .rank-flow.column { flex-direction: column; gap: 4px; overflow: visible; }
 .rank-flow.column .rank-step { width: auto; flex-direction: row; align-items: center; justify-content: flex-start; gap: 10px; padding: 7px 10px 7px 12px; text-align: left; }
 .rank-flow.column .rank-step + .rank-step::before { content: '▾'; left: 50%; top: -9px; translate: -50% 0; font-size: 11px; }
@@ -333,11 +294,6 @@
 .rank-flow.column .rank-step-meta { font-size: 11px; color: var(--muted, #9fb7b0); margin-left: auto; text-align: right; white-space: nowrap; }
 .rank-flow.column .rank-step em { position: static; translate: none; margin-left: 6px; }
 @media (max-width: 767px) { .rank-flow.column .rank-step-meta { white-space: normal; }}
-.rank-step { position: relative; flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px 8px; border: 1px solid rgba(127, 211, 195, .14); border-radius: 10px; background: #0d1d22; text-align: center; }
-.rank-step + .rank-step::before { content: '›'; position: absolute; left: -7px; top: 50%; translate: 0 -55%; color: #4d7a70; font-size: 16px; }
-.rank-step b { font-size: 12px; white-space: nowrap; }
-.rank-step small { font-size: 11px; color: var(--muted, #9fb7b0); white-space: nowrap; }
-.rank-step em { position: absolute; top: -8px; left: 50%; translate: -50% 0; font-style: normal; font-size:11px; padding: 1px 7px; border-radius: 999px; background: #e8d39a; color: #1a1a1a; font-weight: 700; }
 .rank-step.locked { opacity: .5; filter: grayscale(.4); }
 .rank-step.current { border-color: #e8d39a; box-shadow: 0 0 0 1px #e8d39a33, 0 0 16px #e8d39a22; opacity: 1; }
 .rank-step.passed { border-color: rgba(127, 211, 195, .35); }
@@ -395,16 +351,3 @@
 .crew-steps{list-style:none;margin:8px 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.crew-steps li{display:grid;gap:2px;padding:8px 10px;border-radius:8px;background:#0e2026;border:1px solid #9ab4b522}.crew-steps li.done{border-color:#8fe3c488;color:#bff5c6}.crew-steps small{color:#9bb3b0;font-size:12px}@media(max-width:600px){.crew-steps{grid-template-columns:1fr}}
 /* v3.86 각성기 줄 */
 .battle-line em.status.awaken { color: #1d1608; background: #f3d58a; border-radius: 3px; padding: 0 4px; font-weight: 700; }
-
-/* v3.118 비용 초기화 */
-.forge-reset { display:grid; gap:6px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; } .forge-reset small { color:#8ea7a4; font-size:12px; }
-/* v3.205 칭호 쪽 넘기기 */
-.title-pager { display: grid; gap: 8px; }
-.title-pager-nav { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: .85rem; color: #9fb7b0; font-variant-numeric: tabular-nums; }
-.title-pager-nav button { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 30px; padding: 0; }
-.title-pager .title-list { min-height: calc(8 * 46px); align-content: start; }
-@media (max-width: 640px) { .title-pager .title-list { min-height: 0; } .title-pager-nav { justify-content: space-between; }}
-/* v3.292 능력치 찍기 단위 */
-.stat-step { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin:4px 0 6px; }
-.stat-step > span { font-size:13px; color:var(--muted); margin-right:4px; }
-.stat-step button { min-width:48px; }
