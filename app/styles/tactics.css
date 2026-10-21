@@ -237,8 +237,7 @@
     .tx-forecast { position: fixed; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 20; box-shadow: 0 -4px 24px #000a; }
     .tx-dialogue-box p { font-size: 15px; }
     .tx-title { margin: 10px auto; padding: 24px 18px; }
-    .tx-title h1 { font-size: 26px; }
-}
+    .tx-title h1 { font-size: 26px; }}
 
 /* HIG 터치 규칙(손가락 기기): 조작 요소 44×44pt. 본편 responsive.css의 전역 규칙과 같은 방식이며, 이 화면에만 있는 요소(목록 줄 · 칩 · 맵 칸)를 더합니다. */
 @media (pointer: coarse) {
