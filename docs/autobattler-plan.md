@@ -240,3 +240,10 @@
 ## 22. 18단계 (2026-10-20, v3.354): 모바일 화면 정리 · 검토 문서
 - 폰(≤640px): 소개 한 줄 + `details`, 상태 줄 6열 격자(3 + 2칸, 체력 막대 `.exp-hpbar`, 경험치는 작은 줄), 패널 여백 14/12px, `.exp-actions`를 `position: sticky; bottom: 탭 바 + 8px`로 고정(보드 패널 안에서만), 벤치 유닛 가로 배치 · 버튼 36px, 상점 카드 축소, 상점 도움말 접기.
 - 운영 질문(본편 연결 · 다년 가치)에 대한 검토는 `docs/expedition-review.md`. 요지: 본편 연결은 보스 유닛 해금 + 보스 코어 조각 + 도감 → 생태 연구 묶음을, 다년 가치는 분기 세트 교체 + 시즌 숙련 + 주간 리그 + 보드 공유 코드를 권함. 지금 구조는 1년용.
+
+## 23. 19단계 (2026-10-21, v3.355): 본편 연결 묶음(A + C + D)
+- A 보스 유닛 해금: `lockedBossUnits(s.book)` = special boss 유닛 중 `book[monster] < BOSS_UNLOCK_KILLS(1)`. `rollShop(..., exclude)` · `synergyPick(..., exclude)`가 뺀다(비용 5는 셋 다 보스라 풀이 비면 비용 4로 내려감 — 보스를 잡기 전엔 비용 5 유닛을 못 보는 것이 의도). 웨이브 · 고스트 · 보스 웨이브에는 영향 없음. 유닛 ↔ 본편 몬스터: 머쉬맘 grottoWarden · 자쿰 ventColossus · 검은 마법사 onyxBlackMage · 루시드 onyxLucid(모두 `s.book`에 처치 수가 쌓이는 몬스터).
+- C 보스 코어 조각: `rollShard(s, r, bossUnit, abyss, rng)` — 막 보스(4 · 8 · 12) · 심연 보스 승리 때 `shardChance(difficulty, abyss)` = .1 + .03(d−1) + .05(심연). 코어 id는 `SHARD_CORE_OF`(머쉬맘 grotto · 자쿰 ventCathedral), 그 외는 던전 코어 7종 무작위. `expeditionShards[core]`가 10이면 `grantBossCore(s, core, rng, '원정대 조각 10개')`(본편 함수 그대로: 획득 → 각성 5 → 세계석 5). 기대값: 일반 완주 한 판(보스 3) 0.3조각 → 코어 1개에 약 33판.
+- D 도감 연결: `linkCodex(s, unit)` — 승리로 `unitWins`가 오를 때 `codexTier`(동 10 · 은 50 · 금 200)가 `expeditionCodexLinked[unit]`보다 높으면 그 단계들의 `CODEX_LINK_KILLS`(+50 · +200 · +500)를 `s.book[monster]`에 더한다. 본편 연구 단계는 처치 수에서 파생되므로(bookMilestones 50 · 500 · 2500…) 자연히 빨라진다.
+- 화면: 출발 · 종료 화면 ‘본편 연결’ 접힘 상자(보스 유닛 해금 칩 · 조각 현황 · 도감 연결 수), 도감 각주.
+- 균형 메모: 조각 확률은 관리자 통계로 코어 공급 속도를 보고 조정. 본편 코어 드롭과 경합하지 않도록 10%에서 시작.
