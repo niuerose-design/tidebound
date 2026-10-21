@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { CheckCircle2, ChevronDown } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { MONSTERS, SWARM_SIZES, SWARM_UNLOCK } from '@/game/data/world';
@@ -39,7 +40,7 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
         </dl>
         {/* v3.95 막대는 처치 수 그대로(이전 목표부터의 구간으로 그리면 '남은 N회'와 숫자가 어긋나 보임). */}
         {next >= 0 && <Meter value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} label={`${next + 1}단계까지`}/>}
-        {pending.ranks.length > 0 && <button className="gold-button" disabled={busy} onClick={() => send({ type: 'claimBook', id })}>연구 보상 받기 · SP +{pending.sp}</button>}
+        {pending.ranks.length > 0 && <Button type="button" size="sm" className="justify-self-start bg-gold-ink text-surface-0 hover:bg-gold-ink/90 pointer-coarse:min-h-11" disabled={busy} onClick={() => send({ type: 'claimBook', id })}>연구 보상 받기 · SP +{pending.sp}</Button>}
         {reached > 0 && <details className="book-done">
             <summary><ChevronDown size={13}/>달성한 연구 {reached}단계</summary>
             <ul>{MILESTONES.slice(0, reached).map((m, r) => <li key={m}><span>{m.toLocaleString()}회{bookTierReq(r) ? ` · 난이도 ${bookTierReq(r)}+` : ''}</span><span>{stepReward(r, n, swarm) || '능력치만'}</span><span className={r < claimed ? 'positive' : ''}>{!PROGRESSION.bookSP[r] ? '' : r < claimed ? <><CheckCircle2 size={12}/> 수령</> : '미수령'}</span></li>)}</ul>

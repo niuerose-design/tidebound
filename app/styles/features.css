@@ -30,14 +30,7 @@
 .status-pop { max-width: 240px; font-size: 13px; line-height: 1.6; }
 .status-pop strong { display: block; margin-bottom: 4px; }
 .status-pop small { display: block; color: var(--muted); margin-top: 4px; }
-
-/* 로그인 화면 */
-.login-form { display: flex; flex-direction: column; gap: 12px; width: min(360px, 100%); padding: 22px; margin-top: 18px; text-align: left; }
-.login-form label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--muted); }
-.login-form input { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--background); color: inherit; font: inherit; font-size: 15px; }
 .login-error { color: #f09b95; font-size: 13px; margin: 0; }
-.login-note { margin-top: 12px; color: var(--muted); font-size: 12px; }
-.login-hint { font-size: 11px; line-height: 1.5; color: var(--muted); opacity: .85; }
 
 .log-line .battle-line { flex: 1; }
 /* 도감 연구: 연구 진행(플레이어 보상)과 적 정보를 분리 */
@@ -49,14 +42,11 @@
 .book-research-rows dd { margin: 0; text-align: right; }
 .book-research-rows > div > small { flex-basis: 100%; font-size: 11px; color: var(--muted); margin-top: -2px; }
 .book-research-rows > div:has(> small) { flex-wrap: wrap; }
-.book-research > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
 .book-done { margin-top: 10px; font-size: 12px; }
 .book-done summary { cursor: pointer; color: #9fb4af; display: flex; align-items: center; gap: 5px; }
 .book-done ul { list-style: none; padding: 0; margin: 8px 0 0; display: grid; gap: 4px; }
 .book-done li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; color: #9fb4af; }
 .book-done li .positive { display: inline-flex; align-items: center; gap: 3px; }
-.section-title .region-research { margin-top: 0; text-align: right; }
-@media (max-width: 700px) { .section-title .region-research { text-align: left; }}
 /* 능력치 원인별 상세보기 */
 .derived-grid > .stat-breakdown { border-bottom: 1px solid var(--border); padding: 14px 0; }
 .derived-grid > .stat-breakdown.wide { grid-column: 1 / -1; }
@@ -91,24 +81,12 @@
 @media (max-width: 767px) { .panel.auto-run-status { padding: 16px; }}
 /* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
-.tutorial-head { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.tutorial-head strong { color: var(--gold); }
-.tutorial-actions { display: flex; flex-wrap: wrap; gap: 4px 16px; }
-.tutorial-actions .text-button { display: inline-flex; align-items: center; gap: 4px; }
-.tutorial-head span { color: #9fb4af; flex: 1; }
-.tutorial-steps { list-style: none; padding: 0; margin: 12px 0 8px; display: flex; flex-wrap: wrap; gap: 6px; }
-.tutorial-steps li { display: flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 9px; border-radius: 12px; border: 1px solid var(--border); color: #7f9a9c; }
-.tutorial-steps li span { width: 6px; height: 6px; border-radius: 50%; background: #3b5153; }
 .tutorial-steps li.done { color: #b6e0cc; border-color: #3f6d5e; }
 .tutorial-steps li.current { color: var(--gold); border-color: #6d5a3f; }
 .tutorial-steps li.current span { background: var(--gold); }
 .tutorial-card p { font-size: 13px; margin: 0 0 6px; }
 .tutorial-card small { display: block; font-size: 11px; color: var(--muted); margin-top: 4px; }
 .voyage-entry.locked strong, .voyage-entry.locked p { color: #5f7577; }
-/* 장기 목표 */
-
-/* 정리: 숫자 줄임 표기는 부모 글꼴을 그대로 사용, 왼쪽 안내 슬롯 */
-.num-short { font: inherit !important; color: inherit !important; line-height: inherit !important; white-space: nowrap; }
 .skill-status-badge.on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .skill-status-badge.off { color: #7f9a9c; }
 .skill-card.compact .skill-current-description { margin: 8px 0; }
@@ -119,7 +97,6 @@
 .job-compact .meter { margin-top: 10px; }
 .dungeon-stage-card.locked { opacity: .55; }
 .dungeon-stage-card .badge.muted { color: #7f9a9c; border-color: var(--border); }
-.dungeon-stage-card > .gold-button { width: 100%; margin-top: 10px; font-size: 13px; }
 
 /* 전투 로그 가독성: 내/적 행동 띠, 턴 구분선, 최근 획득 한 줄 */
 .battle-line.actor-player, .battle-line.actor-enemy { padding-left: 8px; border-left: 2px solid transparent; }
@@ -138,16 +115,10 @@
 .voyage-entry.achievement p { margin:0; font-size:12px; }
 .abyss-board tr.self td { color:#a4e9ba; }
 .voyage-entry.achievement.claimable { border-left:3px solid #e8d39a; box-shadow:0 0 0 1px #e8d39a33 inset; }
-.voyage-section .section-title .primary.small { margin-left:auto; margin-right:12px; }
-.slot-section .section-title { display:grid; gap:4px; } .slot-section .section-title h3 { font-size:15px; margin:0; } .slot-section .section-title span { font-size:12px; color:#a5bfb1; line-height:1.6; }
 .slot-list li.current { border-color:#d5b36c; background:#223329; } .slot-list li.locked { opacity:.6; }
 .monster-rarity.tier { background:#2b3f55; color:#9fc4ff; }
 .duel-tier.tier-coral { background:#3a2a26; color:#f0a08a; } .duel-tier.tier-pearl { background:#2e3340; color:#dfe6ff; } .duel-tier.tier-deep { background:#16303a; color:#7fc8e8; } .duel-tier.tier-abyss { background:#2a1f3a; color:#c9a6ff; }
 .slots-screen { padding:20px 22px; margin-bottom:18px; } .slots-screen .section-title h3 { display:flex; align-items:center; gap:6px; font-size:16px; margin:0; } .slots-screen .slot-list li button { display:inline-flex; align-items:center; gap:4px; }
-.text-button.inline { display:inline; padding:0 2px; font-size:inherit; color:#e8d39a; text-decoration:underline; }
-
-/* v26.0 오픈베타 표지 배지 */
-.beta-badge { display: inline-block; margin-bottom: 10px; padding: 4px 12px; border: 1px solid rgba(243, 220, 160, .55); border-radius: 999px; color: #f3dca0; font-size: 11px; letter-spacing: .3em; font-weight: 600; background: rgba(243, 220, 160, .08); }
 .rank-badge .rank-insignia { width: 16px; height: 16px; }
 .title-row.locked { opacity: .55; }
 .title-row.on { border-color: rgba(243, 220, 160, .55); background: rgba(243, 220, 160, .06); }
@@ -200,16 +171,10 @@
 .altar-jump > span { font-size: 12px; color: var(--muted, #9fb7b0); }
 .altar-jump small { flex-basis: 100%; font-size: 11px; color: var(--muted, #9fb7b0); }
 
-/* v3.17 모험 안내 보상 */
-.tutorial-reward { font-style: normal; color: #e8d39a; }
-
 /* v3.18 월드보스 알림 줄 */
 .raid-notice { border-color: #8a3b3b; background: linear-gradient(90deg, #2a1414, #1b1212); }
 .raid-notice .altar-notice-open b { color: #ff9d8a; }
 .hacker-status .meter,.hacker-status .footnote{grid-column:1/-1}.infil-history b.ok{color:#9ce8b4}
-/* v3.57 정보 해킹: 알아낸 비밀 조각 목록 */
-.hacker-leaks>.primary{justify-self:start;margin:4px 0 10px}
-.hack-leaks li .text-button{flex:none}
 .program-card.on{border-color:#6fd3b066;background:#6fd3b00d}.crew-members li.self{outline:1px solid #8fe3c455}.crew-steps li.done{border-color:#8fe3c488;color:#bff5c6}
 /* v3.86 각성기 줄 */
 .battle-line em.status.awaken { color: #1d1608; background: #f3d58a; border-radius: 3px; padding: 0 4px; font-weight: 700; }

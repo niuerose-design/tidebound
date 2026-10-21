@@ -72,41 +72,6 @@
   margin-top:9px
 }
 
-.loading-screen {
-  padding:100px 30px;
-  text-align:center;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:20px
-}
-
-.loading-screen>svg {
-  color:var(--gold)
-}
-
-.loading-screen h1 {
-  font-size:25px
-}
-
-.loading-screen p {
-  font-size:14px
-}
-
-.error-box {
-  background:#482d2d;
-  border:1px solid #79524e;
-  padding:15px;
-  border-radius:6px;
-  margin-bottom:18px;
-  color:#f0bab1;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:15px
-}
-
 [data-slot=dialog-content],[data-slot=alert-dialog-content] {
   background:#172a30;
   border-color:#425e61;
@@ -123,23 +88,4 @@
 [data-slot=dialog-overlay],[data-slot=alert-dialog-overlay] {
   backdrop-filter:blur(4px)
 }
-.ranking-actions .text-button { margin-left:8px; font-size:12px }
-.ranking-sort > button:not(.text-button) { padding:4px 10px; border:1px solid var(--border); border-radius:999px; background:#132226; color:#b8c9c4; font-size:12px }
 .ranking-sort > button.active { border-color:#d5b36c; background:#223329; color:#f1e8cf }
-.ranking-sort .text-button { margin-left:6px }
-/* v3.305 새 버전 안내: 서버 버전이 이 화면의 코드 버전과 다를 때. */
-.update-banner {
-  background:#233a33;
-  border:1px solid #4f8f78;
-  padding:12px 15px;
-  border-radius:6px;
-  margin-bottom:18px;
-  color:#cdeee0;
-  font-size:14px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  flex-wrap:wrap;
-}
-.update-banner b { color:#9be7c4; }

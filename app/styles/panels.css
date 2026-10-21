@@ -5,26 +5,6 @@
   background:var(--card)
 }
 
-.section-title {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-  margin-bottom:17px
-}
-
-.section-title h2 {
-  font-size:15px;
-  display:flex;
-  align-items:center;
-  gap:13px
-}
-
-.section-title>span {
-  font-size:12px;
-  color:#82999f
-}
-
 .log-list {
   height:198px;
   overflow:auto;
@@ -63,10 +43,6 @@
 
 .log-line.system p {
   color:#93bda9
-}
-
-.player-panel>.section-title {
-  margin-bottom:25px
 }
 
 .meter {
@@ -116,9 +92,4 @@
   padding:3px 8px;
   font-size:11px;
   white-space:nowrap
-}
-
-/* v25.13 모험 일지 접기 */
-
-.log-fold { display:inline-flex; align-items:center; gap:4px; margin-left:auto; padding:4px 9px; border:1px solid var(--border); border-radius:6px; background:#101c20; color:#9bb3b0; font-size:12px; cursor:pointer; }
-.log-fold svg { transition:transform .15s; } .log-fold svg.open { transform:rotate(90deg); }
+} .log-fold svg.open { transform:rotate(90deg); }
