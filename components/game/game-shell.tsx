@@ -42,7 +42,8 @@ const Skills = lazyPanel(() => import('@/components/features/skills/skills-scree
 const Classes = lazyPanel(() => import('@/components/features/jobs').then(m => m.ClassesScreen));
 // v3.401 재설계 4단계: 목표 · 업적 · 모험 일지(새 토대).
 const VoyageLog = lazyPanel(() => import('@/components/features/journal').then(m => m.GoalsScreen));
-const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
+// v3.402 재설계 4단계: 길드(새 토대).
+const Guild = lazyPanel(() => import('@/components/features/guild').then(m => m.GuildScreen));
 // v3.398 재설계 4단계: 환생 · 분신(새 토대).
 const SlotsPanel = lazyPanel(() => import('@/components/features/legacy').then(m => m.SlotsScreen));
 const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
