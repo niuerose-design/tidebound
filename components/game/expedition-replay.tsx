@@ -11,9 +11,10 @@ import type { ExpeditionPlaced, ReplayFrame } from '@/game/types';
 import { MonsterArt } from './art';
 import { OnyxArt } from './onyx-art';
 
-export const UnitArt = ({ def, size }: { def: UnitDef; size: number }) => def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>;
+/** 유닛 그림. 23단계(2): skin(UNIT_SKINS id)이 있으면 색 · 빛 효과 겉싸개를 두릅니다(내 유닛에만). */
+export const UnitArt = ({ def, size, skin }: { def: UnitDef; size: number; skin?: string }) => { const art = def.special?.includes('onyx') ? <OnyxArt id={def.monster} size={size}/> : <MonsterArt id={def.monster} size={size} boss={!!def.special?.includes('boss')}/>; return skin && skin !== 'default' ? <span className={`exp-skin exp-skin-${skin}`}>{art}</span> : art; };
 
-type Props = { board: ExpeditionPlaced[]; foe: ExpeditionPlaced[]; frames: ReplayFrame[]; turns: number; won: boolean; opponent?: string; truncated?: boolean; /** 23단계: 보드 테마 id(색만 바꿈). */ theme?: string; onClose: () => void };
+type Props = { board: ExpeditionPlaced[]; foe: ExpeditionPlaced[]; frames: ReplayFrame[]; turns: number; won: boolean; opponent?: string; truncated?: boolean; /** 23단계: 보드 테마 id(색만 바꿈) · 내 유닛 피부 id. */ theme?: string; skin?: string; onClose: () => void };
 const BASE_MS = 420;
 
 /** 프레임 step까지 적용한 체력 %(처음 100). */
@@ -31,7 +32,7 @@ function caption(f: ReplayFrame | undefined, name: (k: string) => string) {
     return `${f.t}턴 · ${name(f.a)} ${what} → ${name(f.d || '')}${f.v ? ` ${f.v}` : ''}${f.c ? ' 치명' : ''}${f.k ? ' · 처치' : ''}`;
 }
 
-export function BattleReplay({ board, foe, frames, turns, won, opponent, truncated, theme, onClose }: Props) {
+export function BattleReplay({ board, foe, frames, turns, won, opponent, truncated, theme, skin, onClose }: Props) {
     const reduce = useMemo(() => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches, []);
     const [step, setStep] = useState(() => reduce ? frames.length - 1 : -1);
     const [playing, setPlaying] = useState(!reduce);
@@ -54,7 +55,7 @@ export function BattleReplay({ board, foe, frames, turns, won, opponent, truncat
         const def = unitById(p.unit)!, isActor = cur?.a === k, isTarget = cur?.d === k, dead = hp[k] <= 0 && !(cur?.s === 'revive' && cur.a === k);
         const cls = ['exp-fighter', `cost-${def.cost}`, `star-${p.star}`, k[0] === 'a' ? 'mine' : 'theirs', dead ? 'dead' : '', isActor ? (cur?.s === 'cast' ? 'cast' : cur?.s === 'revive' ? 'revive' : cur?.s === 'start' ? 'start' : cur?.s === 'reflect' ? 'reflecting' : 'act') : '', isTarget ? (cur?.k ? 'hit kill' : cur?.c ? 'hit crit' : cur?.s === 'miss' ? 'dodge' : 'hit') : ''].filter(Boolean).join(' ');
         return <div key={`${k}:${step}:${isActor || isTarget ? 1 : 0}`} className={cls} title={`${def.name} ★${p.star} · 체력 ${hp[k]}%`}>
-            <UnitArt def={def} size={28}/><b>{def.name}</b>
+            <UnitArt def={def} size={28} skin={k[0] === 'a' ? skin : undefined}/><b>{def.name}</b>
             <span className="hp"><i style={{ width: `${hp[k]}%` }}/></span>
             {isTarget && cur?.v ? <em className={`float${cur.c ? ' crit' : ''}`}>{cur.c ? `${cur.v}!` : cur.v}</em> : isTarget && cur?.s === 'miss' ? <em className="float miss">빗나감</em> : null}
             {isActor && cur?.s === 'cast' ? <small className="tag">{cur.m}</small> : isActor && cur?.s === 'start' ? <small className="tag">{cur.m}</small> : isActor && cur?.s === 'revive' ? <small className="tag">부활</small> : null}

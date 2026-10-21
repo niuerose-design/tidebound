@@ -6,7 +6,7 @@ import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOL
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
-    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById } from '../../data/expedition';
+    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
@@ -123,7 +123,9 @@ export function addSetMasteryXp(s: State, xp: number, setId: string) {
         if (pearls) s.pearls = (s.pearls || 0) + pearls;
         const set = setById(setId);
         if (m.level >= SET_MASTERY.max) (s.expeditionSetDone ??= {})[setId] = (s.expeditionSetDone[setId] || 0) + 1;
-        addLog(s, `${set.icon} ${set.name} 세트 숙련 ${m.level}${pearls ? ` · 세계석 +${pearls}` : ''}${m.level >= SET_MASTERY.max ? ' · 세트 완성!' : ''}`, 'reward');
+        const skinsBefore = setMasteryBest({ ...s, expeditionSetMastery: { level: before } }); s.expeditionSetBest = Math.max(s.expeditionSetBest || 0, m.level);
+        const newSkins = UNIT_SKINS.filter(k => k.level > skinsBefore && k.level <= setMasteryBest(s));
+        addLog(s, `${set.icon} ${set.name} 세트 숙련 ${m.level}${pearls ? ` · 세계석 +${pearls}` : ''}${m.level >= SET_MASTERY.max ? ' · 세트 완성!' : ''}${newSkins.length ? ` · 유닛 피부 ${newSkins.map(k => `${k.icon} ${k.name}`).join(' · ')} 해금` : ''}`, 'reward');
     }
 }
 function addMasteryXp(s: State, xp: number, setId?: string) {
@@ -402,6 +404,13 @@ export const expeditionActions: ActionHandlers = {
         if (!t.unlocked(s)) throw new Error(`${t.name} 테마는 아직 잠겨 있습니다: ${t.how}`);
         s.expeditionTheme = t.id === 'default' ? undefined : t.id;
         if (!s.expeditionTheme) delete s.expeditionTheme;
+    },
+    /** 23단계(2): 유닛 피부 고르기(세트 숙련으로 해금된 것만). */
+    expeditionSkin(s, { a }) {
+        const k = skinById(String(a.value || ''));
+        if (k.id !== String(a.value || '')) throw new Error('없는 피부입니다.');
+        if (!skinUnlocked(k, s)) throw new Error(`${k.name} 피부는 아직 잠겨 있습니다: ${k.how}`);
+        if (k.id === 'default') delete s.expeditionSkin; else s.expeditionSkin = k.id;
     },
     expeditionRenown(s) {
         if (s.expedition && !s.expedition.done) throw Error('진행 중인 원정을 마친 뒤 올릴 수 있습니다.');

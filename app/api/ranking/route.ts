@@ -1,7 +1,7 @@
 import { identity, checkOrigin, db, register, failure, listAbyssBoard, duelSeasonKey, duelRowId } from '@/game/server/store';
 import { readHacks, maskSnapshot, playerOfRow, listHackerBoard } from '@/game/server/hacks';
 import { crewBoard } from '@/game/server/crews';
-import { listExpeditionBoard, listLeague, listExpeditionGuilds } from '@/game/server/expedition';
+import { listExpeditionBoard, listLeague } from '@/game/server/expedition';
 import { power } from '@/game/systems/stats';
 import { monthSeason, monthKey, weekKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
@@ -17,8 +17,6 @@ export async function GET(req: Request) { try {
     // 원정대 3단계 ?board=expedition: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드).
     if (new URL(req.url).searchParams.get('board') === 'expedition') { const key = monthKey(Date.now()), rows = await listExpeditionBoard(key); return Response.json({ month: key, rows: rows.map(r => ({ ...r, self: r.id === id })) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // 21단계 ?board=league: 이번 주 원정 주간 리그(내 조 8명).
-    // 23단계 ?board=expeditionGuild: 이번 달 길드 원정 점수(길드원 점수 합).
-    if (new URL(req.url).searchParams.get('board') === 'expeditionGuild') { const key = monthKey(Date.now()); return Response.json({ month: key, rows: await listExpeditionGuilds(key) }, { headers: { 'Cache-Control': 'no-store' } }); }
     if (new URL(req.url).searchParams.get('board') === 'league') { const b = await listLeague(weekKey(Date.now()), id); return Response.json({ ...b, rows: b.rows.map(r => ({ ...r, self: r.id === id })) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // v3.34 ?board=crew: 이번 주 해커 조직 순위(5분 캐시).
     if (new URL(req.url).searchParams.get('board') === 'crew') { const b = await crewBoard(Date.now()); return Response.json({ week: b.week, rows: b.rows }, { headers: { 'Cache-Control': 'no-store' } }); }

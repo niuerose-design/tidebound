@@ -693,7 +693,7 @@ test('expedition stage 22 (small ghost pool): candidates per round pick the leas
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
-test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry code + guild and guild scores aggregate', async () => {
+test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry a share code', async () => {
     const { newState, act } = await import('./harness.mjs');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const D = await L.load('data/expedition');
@@ -725,16 +725,31 @@ test('expedition stage 23 (social · cosmetics): share code round-trips and reje
     assert.ok(D.themeById('coral').unlocked({ expeditionSetDone: { a: 1 } })); assert.ok(D.themeById('crown').unlocked({ expeditionLeague: { best: 4 } })); assert.ok(!D.themeById('crown').unlocked({ expeditionLeague: { best: 3 } }));
     assert.ok(D.themeById('abyss').unlocked({ expeditionAbyssBest: D.ABYSS.max })); assert.ok(D.themeById('legend').unlocked({ expeditionDiffClears: { 5: 1 } })); assert.ok(D.themeById('aurora').unlocked({ expeditionRenown: 10 }));
     act(s, { type: 'expeditionTheme', value: 'default' }, now, mkRng(1)); assert.equal(s.expeditionTheme, undefined);
-    // 서버: 행에 코드 · 길드, 길드 점수 합.
+    // 서버: 행에 코드.
     const file = path.join(os.tmpdir(), `tb-exp23-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     try {
         const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 300 * 86_400_000, key = T.monthKey(now2);
-        const mk = (name, wins, guild) => ({ name, ...(guild ? { guildMember: { id: guild, name: `길드${guild}`, leader: false, syncedAt: 0 } } : {}), expedition: { round: 4, wins, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }], 3: [{ unit: 'pig', star: 2, row: 'front' }] }, augHistory: { 3: ['x1'] }, startedAt: 1 } });
-        await E.syncExpeditionRow('a1', mk('A1', 3, 'g1'), now2); await E.syncExpeditionRow('a2', mk('A2', 2, 'g1'), now2 + 1); await E.syncExpeditionRow('b1', mk('B1', 4, 'g2'), now2 + 2); await E.syncExpeditionRow('solo', mk('솔로', 9), now2 + 3);
+        const mk = (name, wins) => ({ name, expedition: { round: 4, wins, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }], 3: [{ unit: 'pig', star: 2, row: 'front' }] }, augHistory: { 3: ['x1'] }, startedAt: 1 } });
+        await E.syncExpeditionRow('a1', mk('A1', 3), now2); await E.syncExpeditionRow('solo', mk('솔로', 9), now2 + 3);
         const rows = await E.listExpeditionBoard(key); const a1 = rows.find(x => x.id === 'a1');
-        assert.equal(a1.guild, '길드g1'); assert.ok(a1.code.startsWith('TB1.')); const dec = D.decodeBoard(a1.code); assert.deepEqual(dec.units, [{ unit: 'pig', star: 2, row: 'front' }], 'last round board'); assert.deepEqual(dec.augments, ['x1']); assert.equal(dec.wins, 3);
-        assert.equal(rows.find(x => x.id === 'solo').guild, undefined);
-        const guilds = await E.listExpeditionGuilds(key); assert.deepEqual(guilds.map(g => [g.id, g.members]), [['g1', 2], ['g2', 1]]);
-        assert.equal(guilds[0].score, a1.score + rows.find(x => x.id === 'a2').score); assert.equal(guilds[0].best.name, 'A1'); assert.equal(guilds[0].rank, 1);
+        assert.equal(a1.guild, undefined, 'guild score removed in v3.361'); assert.ok(a1.code.startsWith('TB1.')); const dec = D.decodeBoard(a1.code); assert.deepEqual(dec.units, [{ unit: 'pig', star: 2, row: 'front' }], 'last round board'); assert.deepEqual(dec.augments, ['x1']); assert.equal(dec.wins, 3);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
+
+test('expedition stage 23-2 (unit skins): skins unlock by the best set mastery ever reached, set mastery level-ups record expeditionSetBest and announce new skins, the skin action rejects locked ids and a locked pick falls back to default', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
+    assert.equal(D.UNIT_SKINS.length, 5); assert.equal(D.UNIT_SKINS.filter(k => D.skinUnlocked(k, {})).length, 1, 'only default at start');
+    assert.equal(D.setMasteryBest({ expeditionSetBest: 7, expeditionSetMastery: { level: 3 } }), 7, 'old set record counts'); assert.equal(D.setMasteryBest({ expeditionSetDone: { a: 1 } }), D.SET_MASTERY.max, 'a completed set counts as max');
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    assert.throws(() => act(s, { type: 'expeditionSkin', value: 'gold' }, now, mkRng(1)), /잠겨/); assert.throws(() => act(s, { type: 'expeditionSkin', value: 'nope' }, now, mkRng(1)), /없는 피부/);
+    // 세트 숙련 1 → 5: expeditionSetBest 기록, 로그에 은빛 해금.
+    const setId = D.SETS[0].id; let xp = 0; for (let lv = 1; lv < 5; lv++) xp += D.setMasteryXpFor(lv);
+    A.addSetMasteryXp(s, xp, setId); assert.equal(s.expeditionSetMastery.level, 5); assert.equal(s.expeditionSetBest, 5); assert.ok(s.logs.some(l => l.text.includes('🩶 은빛') && l.text.includes('해금')), 'skin unlock logged');
+    act(s, { type: 'expeditionSkin', value: 'silver' }, now, mkRng(1)); assert.equal(s.expeditionSkin, 'silver'); assert.equal(D.activeSkin(s).id, 'silver');
+    assert.throws(() => act(s, { type: 'expeditionSkin', value: 'gold' }, now, mkRng(1)), /세트 숙련 10/);
+    // 세트가 바뀌어 숙련이 1로 돌아가도 기록(expeditionSetBest)으로 피부는 남는다.
+    s.expeditionSetMastery = { set: 'other', level: 1, xp: 0, claimed: [] }; assert.equal(D.activeSkin(s).id, 'silver');
+    s.expeditionSkin = 'radiant'; assert.equal(D.activeSkin(s).id, 'default', 'locked pick falls back'); s.expeditionSetDone = { x: 1 }; assert.equal(D.activeSkin(s).id, 'radiant');
+    act(s, { type: 'expeditionSkin', value: 'default' }, now, mkRng(1)); assert.equal(s.expeditionSkin, undefined);
 });

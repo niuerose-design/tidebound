@@ -630,8 +630,10 @@ export type State = {
     expeditionSetDone?: Record<string, number>;
     /** 23단계: 공유 코드로 불러온 목표 보드(상점에 ‘목표’ 표시 · 모은 수 표시). */
     expeditionTarget?: { code: string; units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments?: string[]; wins?: number; round?: number };
-    /** 23단계: 고른 보드 테마 id(EXP_THEMES, 잠기면 기본). */
+    /** 23단계: 고른 보드 테마 id(EXP_THEMES, 잠기면 기본). 유닛 피부 id(UNIT_SKINS) · 지금까지 가장 높이 올린 세트 숙련(피부 해금 기준, 세트가 바뀌어도 남음). */
     expeditionTheme?: string;
+    expeditionSkin?: string;
+    expeditionSetBest?: number;
     /** 19단계: 보스 코어 조각(코어 id → 개수) · 도감 연결로 이미 준 단계(유닛 id → 1~3). */
     expeditionShards?: Record<string, number>;
     expeditionCodexLinked?: Record<string, number>;
