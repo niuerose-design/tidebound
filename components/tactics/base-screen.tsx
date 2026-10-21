@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Unit } from '@/game/srpg/engine/types';
 import { CHAPTERS } from '@/game/srpg/data/chapters/index';
 import { SHOP_ITEMS, itemDef } from '@/game/srpg/data/items';
@@ -25,7 +26,7 @@ export function BaseScreen({ campaign: c, setCampaign, onSortie, onTitle }: { ca
     return <div className="tx-base">
         <header className="tx-base-head">
             <div><p className="eyebrow">소금바람 해안 전기 · {MODE_NAMES[c.mode]}</p><h1>{ch.number}장 — {ch.title}</h1><p className="tx-lead">{ch.subtitle}</p></div>
-            <div className="tx-base-cta"><div className="tx-gold">{c.gold.toLocaleString()} 골드</div><button type="button" className="primary" onClick={onSortie}>출격 준비</button><button type="button" className="text-button" onClick={onTitle}>제목으로</button></div>
+            <div className="tx-base-cta"><div className="tx-gold">{c.gold.toLocaleString()} 골드</div><button type="button" className="primary" onClick={onSortie}>출격 준비</button><button type="button" className="text-button" onClick={onTitle}>제목으로 가기</button></div>
         </header>
         {notices.length > 0 && <div className="tx-notices" role="status"><ul>{notices.map((n, i) => <li key={i}>{n}</li>)}</ul><button type="button" className="text-button" onClick={dismissNotices}>확인</button></div>}
         <section className="tx-chapter-card">
@@ -38,7 +39,7 @@ export function BaseScreen({ campaign: c, setCampaign, onSortie, onTitle }: { ca
             </div>
             <MapPreview chapter={ch} size={10}/>
         </section>
-        <nav className="tx-tabs" aria-label="베이스 메뉴">{([['units', '부대'], ['convoy', '창고 · 장비'], ['shop', '상점'], ['records', '기록']] as [Tab, string][]).map(([id, name]) => <button type="button" key={id} className={tab === id ? 'on' : ''} onClick={() => setTab(id)}>{name}</button>)}</nav>
+        <Tabs value={tab} onValueChange={v => setTab(v as Tab)}><TabsList className="game-tabs view-tabs tx-tabs" aria-label="베이스 메뉴">{([['units', '부대'], ['convoy', '창고 · 장비'], ['shop', '상점'], ['records', '기록']] as [Tab, string][]).map(([id, name]) => <TabsTrigger key={id} value={id}>{name}</TabsTrigger>)}</TabsList></Tabs>
         {tab === 'units' && <div className="tx-two-col">
             <ul className="tx-roster">{c.roster.map(u => <li key={u.uid} className={`${u.uid === picked ? 'on' : ''} ${u.status === 'dead' ? 'dead' : ''}`} onClick={() => setPicked(u.uid)} role="button"><span className={`tx-token side-player`}>{classDef(u.classId).glyph}</span><div><strong>{u.name}</strong><small>{classDef(u.classId).name} Lv.{u.level}{u.status === 'dead' ? ' · 전사' : ''}</small></div></li>)}</ul>
             {unit && <UnitDetail u={unit} c={c} apply={apply}/>}
@@ -60,7 +61,7 @@ function UnitDetail({ u, c, apply }: { u: Unit; c: Campaign; apply: (fn: () => C
         <p className="tx-skill"><b>클래스 규칙</b> {SKILL_TEXT[cls.skill]} · <b>이동</b> {cls.move} ({{ infantry: '보병', cavalry: '기병', armored: '중갑', flying: '비행' }[cls.move_type]}) · <b>무기</b> {cls.weapons.map(w => ({ sword: '검', lance: '창', axe: '도끼', bow: '활', fire: '불', wind: '바람', thunder: '번개', light: '빛', dark: '어둠', staff: '지팡이', dagger: '단검', claw: '발톱' })[w]).join(' · ')} · <b>격파</b> {u.kills}</p>
         {def && <p className="tx-bio">{def.bio}</p>}
         <h3>소지품 <small>장착할 무기를 누르세요</small></h3>
-        <ItemList u={u} onPick={i => { const d = itemDef(u.items[i].id); if (d.weapon) apply(() => equipItem(c, u.uid, i)); }} action={i => <button type="button" className="text-button" onClick={e => { e.stopPropagation(); apply(() => storeItem(c, u.uid, i)); }}>창고로</button>}/>
+        <ItemList u={u} onPick={i => { const d = itemDef(u.items[i].id); if (d.weapon) apply(() => equipItem(c, u.uid, i)); }} action={i => <button type="button" className="text-button" onClick={e => { e.stopPropagation(); apply(() => storeItem(c, u.uid, i)); }}>창고로 보내기</button>}/>
         {u.status !== 'dead' && <div className="tx-promote">
             {cls.rank === 'base' && <>
                 <strong>승급</strong> <span>{canPromote(u) ? '가능' : `10레벨부터 (지금 ${u.level})`} · 조류의 증표 {seals.length}개</span>
@@ -81,7 +82,7 @@ function ConvoyPanel({ c, apply, picked, setPicked }: { c: Campaign; apply: (fn:
         <section className="tx-detail">
             <h3>받을 유닛</h3>
             <div className="tx-chips">{deployable(c).map(u => <button type="button" key={u.uid} className={u.uid === target?.uid ? 'on' : ''} onClick={() => setPicked(u.uid)}>{u.name} <small>{u.items.length}/5</small></button>)}</div>
-            {target && <><UnitHeader u={target}/><ItemList u={target} onPick={i => { const d = itemDef(target.items[i].id); if (d.weapon) apply(() => equipItem(c, target.uid, i)); }} action={i => <button type="button" className="text-button" onClick={e => { e.stopPropagation(); apply(() => storeItem(c, target.uid, i)); }}>창고로</button>}/></>}
+            {target && <><UnitHeader u={target}/><ItemList u={target} onPick={i => { const d = itemDef(target.items[i].id); if (d.weapon) apply(() => equipItem(c, target.uid, i)); }} action={i => <button type="button" className="text-button" onClick={e => { e.stopPropagation(); apply(() => storeItem(c, target.uid, i)); }}>창고로 보내기</button>}/></>}
         </section>
     </div>;
 }
@@ -94,7 +95,7 @@ function ShopPanel({ c, apply }: { c: Campaign; apply: (fn: () => Campaign) => v
 function RecordsPanel({ c }: { c: Campaign }) {
     return <section className="tx-detail">
         <h3>기록</h3>
-        <table className="tx-table"><thead><tr><th>장</th><th>제목</th><th>턴</th><th>쓰러진 동료</th></tr></thead><tbody>{CHAPTERS.map(ch => { const r = c.cleared[ch.id]; return <tr key={ch.id} className={r ? '' : 'dim'}><td>{ch.number}</td><td>{ch.title}</td><td>{r ? r.turns : '—'}</td><td>{r ? (r.fallen.length ? r.fallen.join(', ') : '없음') : ''}</td></tr>; })}</tbody></table>
+        <div className="tx-table-wrap"><table className="tx-table"><thead><tr><th>장</th><th>제목</th><th>턴</th><th>쓰러진 동료</th></tr></thead><tbody>{CHAPTERS.map(ch => { const r = c.cleared[ch.id]; return <tr key={ch.id} className={r ? '' : 'dim'}><td>{ch.number}</td><td>{ch.title}</td><td>{r ? r.turns : '아직'}</td><td>{r ? (r.fallen.length ? r.fallen.join(', ') : '없음') : ''}</td></tr>; })}</tbody></table></div>
         <p className="tx-note">총 턴 {c.totalTurns} · 시작 {new Date(c.startedAt).toLocaleDateString()}</p>
     </section>;
 }

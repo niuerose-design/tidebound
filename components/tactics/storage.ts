@@ -15,6 +15,10 @@ export const clearCampaign = () => { try { localStorage.removeItem(CAMPAIGN_KEY)
 export const loadSession = () => read<Session>(SESSION_KEY);
 export const saveSession = (s: Session) => write(SESSION_KEY, s);
 export const clearSession = () => { try { localStorage.removeItem(SESSION_KEY); } catch { /* noop */ } };
-export const loadPrefs = (): Prefs => ({ tile: typeof window !== 'undefined' && window.innerWidth < 600 ? 36 : 44, speed: 'normal', showGrid: true, ...(read<Partial<Prefs>>(PREF_KEY) ?? {}) });
+/** 손가락으로 쓰는 기기인지(HIG 44pt 터치 기준). */
+export const coarsePointer = () => typeof window !== 'undefined' && !!window.matchMedia?.('(pointer: coarse)').matches;
+/** 칸 크기 선택지. 손가락 기기는 44px 아래로 내려가지 않습니다. */
+export const tileSizes = () => coarsePointer() ? [44, 56, 68] : [36, 44, 56];
+export const loadPrefs = (): Prefs => { const saved = read<Partial<Prefs>>(PREF_KEY) ?? {}; const sizes = tileSizes(); const tile = saved.tile && sizes.includes(saved.tile) ? saved.tile : 44; return { speed: 'normal', showGrid: true, ...saved, tile }; };
 export const savePrefs = (p: Prefs) => write(PREF_KEY, p);
 export const MODE_NAMES: Record<Mode, string> = { casual: '캐주얼', classic: '클래식' };

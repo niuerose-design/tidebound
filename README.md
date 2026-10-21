@@ -53,6 +53,8 @@ pnpm dev               # http://localhost:5173
 | `components/tactics/` | 제목 · 베이스 · 출격 준비 · 전투 · 결과 화면. 스타일은 `app/styles/tactics.css` |
 | `tests/tactics.test.mjs` | 엔진 공식 · AI 태세 · 승패 · 캠페인 · 10개 장 자동 플레이(결정론) 테스트 |
 
+화면은 `docs/ui-hig.md`(애플 HIG 기준: 손가락 기기 44pt 터치, 글자 11px 이상, 대비 4.5:1, 키보드 초점, 안전 영역, 화면마다 으뜸 버튼 하나, 되돌릴 수 없는 동작은 확인 창)를 따릅니다.
+
 새 장을 추가하려면 `game/srpg/data/chapters/`에 파일을 만들고 `index.ts`에 등록합니다. `tests/tactics.test.mjs`가 맵 치수 · 경로 · 민가/상자 이벤트 · 적 좌표 · 증원 그룹 대응을 검사합니다.
 
 ## 주요 폴더

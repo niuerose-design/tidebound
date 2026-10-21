@@ -20,14 +20,14 @@ export function PrepScreen({ campaign: c, chapter: ch, onBack, onDeploy }: { cam
     const peekUnit = pool.find(u => u.uid === peek);
     return <div className="tx-base tx-prep">
         <header className="tx-base-head"><div><p className="eyebrow">출격 준비</p><h1>{ch.number}장 — {ch.title}</h1><p className="tx-lead">{ch.objective.text} · 최대 {ch.max_deploy}명 · 권장 레벨 {ch.recommended_level}</p></div>
-            <div className="tx-base-cta"><button type="button" className="primary" disabled={!chosen.length} onClick={() => onDeploy(units)}>출격 ({chosen.length}/{ch.max_deploy})</button><button type="button" className="text-button" onClick={onBack}>베이스로</button></div></header>
+            <div className="tx-base-cta"><button type="button" className="primary" disabled={!chosen.length} onClick={() => onDeploy(units)}>출격 ({chosen.length}/{ch.max_deploy})</button><button type="button" className="text-button" onClick={onBack}>베이스로 가기</button></div></header>
         {ch.tips && <div className="tx-tips"><strong>이 장에서 배우는 것</strong><ul>{ch.tips.map((t, i) => <li key={i}>{t}</li>)}</ul></div>}
         <div className="tx-two-col">
             <section className="tx-detail">
                 <h3>부대 <small>누르면 출격 · 순서가 배치 칸 순서입니다</small></h3>
                 <ul className="tx-roster tx-prep-list">{pool.map(u => { const i = chosen.indexOf(u.uid); const isForced = forced.includes(u.uid); return <li key={u.uid} className={i >= 0 ? 'on' : ''}>
                     <button type="button" className={`tx-pick ${isForced ? 'forced' : ''}`} onClick={() => toggle(u.uid)} aria-disabled={isForced} title={isForced ? '강제 출격' : undefined}><span className={`tx-order ${i >= 0 ? 'on' : ''}`}>{i >= 0 ? i + 1 : ''}</span><span className="tx-token side-player">{classDef(u.classId).glyph}</span><div><strong>{u.name}</strong><small>{classDef(u.classId).name} Lv.{u.level} · 체력 {u.stats.hp}{isForced ? ' · 주인공' : ''}</small></div></button>
-                    <span className="tx-row-actions">{i >= 0 && <><button type="button" className="text-button" onClick={() => move(u.uid, -1)} aria-label="앞으로">▲</button><button type="button" className="text-button" onClick={() => move(u.uid, 1)} aria-label="뒤로">▼</button></>}<button type="button" className="text-button" onClick={() => setPeek(u.uid)}>정보</button></span>
+                    <span className="tx-row-actions">{i >= 0 && <><button type="button" className="text-button" onClick={() => move(u.uid, -1)} aria-label="앞으로">▲</button><button type="button" className="text-button" onClick={() => move(u.uid, 1)} aria-label="뒤로">▼</button></>}<button type="button" className="text-button" onClick={() => setPeek(u.uid)}>정보 보기</button></span>
                 </li>; })}</ul>
             </section>
             <section className="tx-detail">

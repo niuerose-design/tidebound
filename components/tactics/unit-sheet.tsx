@@ -17,7 +17,7 @@ export function UnitHeader({ u, hp }: { u: Unit | BattleUnit; hp?: number }) {
         <span className={`tx-token side-${u.side} ${u.boss ? 'boss' : ''}`}>{cls.glyph}</span>
         <div>
             <strong>{u.name}</strong> <small>{cls.name} Lv.{u.level}{u.side === 'player' && <> · 경험 {u.exp}/{EXP_PER_LEVEL}</>}</small>
-            <div className="tx-hpbar"><i style={{ width: `${Math.round(cur / u.stats.hp * 100)}%` }}/><span>{cur}/{u.stats.hp}</span></div>
+            <div className="tx-hpbar" role="img" aria-label={`체력 ${cur} / ${u.stats.hp}`}><i style={{ ['--hp' as string]: `${Math.round(cur / u.stats.hp * 100)}%` }}/><span>체력 {cur}/{u.stats.hp}</span></div>
             {def && <small className="tx-flavor">{def.flavor}</small>}
         </div>
     </div>;

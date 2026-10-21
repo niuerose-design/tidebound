@@ -13,6 +13,7 @@ import { BaseScreen } from './base-screen';
 import { PrepScreen } from './prep-screen';
 import { BattleScreen } from './battle-screen';
 import { DialogueBox } from './dialogue';
+import { ConfirmButton } from '@/components/game/confirm-button';
 import { ResultScreen } from './result-screen';
 // 엔진이 배치 정의를 찾을 수 있게 등록(증원 · 돌격 범위).
 for (const d of DEPLOYMENTS) { DEPLOYMENTS_BY_CHAPTER[d.chapter_id] = d; for (const g of d.groups) if (g.trigger_range) TRIGGER_RANGE[`${d.chapter_id}:${g.id}`] = g.trigger_range; }
@@ -80,7 +81,6 @@ export default function TacticsApp() {
 function TitleScreen({ hasSave, hasSession, onNew, onContinue, onReset }: { hasSave: boolean; hasSession: boolean; onNew: (mode: Mode, name: string) => void; onContinue: () => void; onReset: () => void }) {
     const [mode, setMode] = useState<Mode>('casual');
     const [confirmNew, setConfirmNew] = useState(false);
-    const [confirmReset, setConfirmReset] = useState(false);
     return <div className="tx-title">
         <div className="tx-title-art"><span className="tx-title-wave"/></div>
         <p className="eyebrow">판게아 전기 — 턴제 전술 모드</p>
@@ -88,7 +88,7 @@ function TitleScreen({ hasSave, hasSession, onNew, onContinue, onReset }: { hasS
         <p className="tx-lead">바다가 갈라진 뒤 해적이 망루를 빼앗았다. 조류 지킴이 가문의 후계 세린이 자경단을 이끌고 가라앉은 회랑의 왕좌까지 나아가는 10장의 이야기.</p>
         <ul className="tx-title-facts"><li>10장 · 유닛 14명 · 한 전투 20~40분</li><li>이동 · 공격 · 지형 · 무기 상성 · 승급 · 영입</li><li>영구 사망은 시작할 때 캐주얼 / 클래식으로 고릅니다</li><li>기록은 이 브라우저에만 저장됩니다(본편 계정과 별개)</li></ul>
         <div className="tx-title-actions">
-            {hasSave && <button type="button" className="primary" onClick={onContinue}>{hasSession ? '전투 이어하기' : '이어하기'}</button>}
+            {hasSave && <button type="button" className={confirmNew ? 'secondary' : 'primary'} onClick={onContinue}>{hasSession ? '전투 이어하기' : '이어하기'}</button>}
             {!confirmNew ? <button type="button" className={hasSave ? 'secondary' : 'primary'} onClick={() => setConfirmNew(true)}>새 전기 시작</button> : <div className="tx-mode-pick">
                 <div className="tx-mode-options">
                     <label className={mode === 'casual' ? 'on' : ''}><input type="radio" name="mode" checked={mode === 'casual'} onChange={() => setMode('casual')}/><strong>캐주얼</strong><span>체력이 0이 된 유닛은 그 장에서만 빠지고 다음 장에 돌아옵니다. 되감기 {REWINDS.casual}회.</span></label>
@@ -97,7 +97,7 @@ function TitleScreen({ hasSave, hasSession, onNew, onContinue, onReset }: { hasS
                 <p className="tx-note">주인공 세린이 쓰러지면 어느 모드든 그 장을 다시 합니다. 모드는 나중에 바꿀 수 없습니다.{hasSave && ' 새로 시작하면 지금 기록은 지워집니다.'}</p>
                 <div className="tx-row"><button type="button" className="primary" onClick={() => onNew(mode, MODE_NAMES[mode])}>{MODE_NAMES[mode]}로 시작</button><button type="button" className="secondary" onClick={() => setConfirmNew(false)}>취소</button></div>
             </div>}
-            {hasSave && (!confirmReset ? <button type="button" className="text-button" onClick={() => setConfirmReset(true)}>기록 지우기</button> : <div className="tx-row"><span className="tx-note">정말 지울까요? 되돌릴 수 없습니다.</span><button type="button" className="secondary" onClick={onReset}>지운다</button><button type="button" className="text-button" onClick={() => setConfirmReset(false)}>취소</button></div>)}
+            {hasSave && <ConfirmButton className="text-button danger-text" label="기록 지우기" title="전기 기록을 지울까요?" description="이 브라우저의 전기 기록(진행 · 동료 · 창고)이 모두 사라집니다. 되돌릴 수 없습니다." confirmLabel="지우기" disabled={false} onConfirm={onReset}/>}
         </div>
         <p className="tx-foot"><Link href="/">← 판게아 RPG 본편으로</Link></p>
     </div>;
@@ -116,7 +116,7 @@ function EndingScreen({ campaign, onTitle, onReset }: { campaign: Campaign; onTi
             <div><span>떠난 동료</span><strong>{fallen.length ? fallen.map(u => u.name).join(', ') : '없음'}</strong></div>
         </div>
         <ul className="tx-roster-final">{deployable(campaign).map(u => <li key={u.uid}><strong>{u.name}</strong> <small>Lv.{u.level} · 격파 {u.kills}</small></li>)}</ul>
-        <div className="tx-row"><button type="button" className="primary" onClick={onTitle}>제목으로</button><button type="button" className="secondary" onClick={onReset}>기록을 지우고 새로 시작</button></div>
+        <div className="tx-row"><button type="button" className="primary" onClick={onTitle}>제목으로 가기</button><ConfirmButton className="secondary danger" label="기록 지우고 새로 시작" title="전기 기록을 지울까요?" description="완결한 전기 기록이 사라지고 제목 화면으로 돌아갑니다. 되돌릴 수 없습니다." confirmLabel="지우기" disabled={false} onConfirm={onReset}/></div>
     </div>;
 }
 export { DialogueBox, toast };
