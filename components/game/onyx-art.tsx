@@ -86,7 +86,7 @@ const ART: Record<string, ReactNode> = {
         <path d="M26 24l-2-6M38 24l2-6" stroke="#e9c46a" strokeWidth="1.5" strokeLinecap="round"/>
     </>,
 };
-/** v3.14 public/art/onyx 에 그림이 있으면 그 그림(원작 도트, 확대 시 픽셀 유지), 없거나 못 불러오면 SVG. */
+/** v3.14 public/art/onyx 에 그림이 있으면 그 그림(원작 도트, 확대 시 픽셀 유지 · v3.369 svg는 매끈하게), 없거나 못 불러오면 SVG. */
 export function OnyxArt({ id, size = 48, className = '' }: { id: string; size?: number; className?: string }) {
     const art = ART[id], src = onyxArtSrc(id);
     const [state, setState] = useState<'pending' | 'ready' | 'missing'>(src ? 'pending' : 'missing');
@@ -95,7 +95,7 @@ export function OnyxArt({ id, size = 48, className = '' }: { id: string; size?: 
         {state !== 'ready' && art && <svg width={size} height={size} viewBox="0 0 64 64" role="img">{art}</svg>}
         {state !== 'missing' && src && (
             // eslint-disable-next-line @next/next/no-img-element -- 선택적 정적 파일: 없으면 onError로 SVG에 머무릅니다.
-            <img src={src} alt="" width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
+            <img src={src} alt="" className={src.endsWith('.svg') ? 'vector' : undefined} width={size} height={size} loading="lazy" decoding="async" onLoad={() => setState('ready')} onError={() => setState('missing')}/>
         )}
     </span>;
 }

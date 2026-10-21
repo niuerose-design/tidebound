@@ -98,7 +98,7 @@
 /* 스킬 상태 구분: 습득 / 다른 직업 사용 / 장착, 성장 구성 */
 .skill-state-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 12px 0 8px; }
 .skill-state-row > span { display: flex; flex-direction: column; gap: 2px; font-size: 12px; padding: 6px 8px; border-radius: 5px; border: 1px solid var(--border); color: #7f9a9c; line-height: 1.35; }
-.skill-state-row small { font-size: 10px; color: #6f8a8c; }
+.skill-state-row small { font-size:11px; color: #6f8a8c; }
 .skill-state-row .on { color: #b6e0cc; border-color: #3f6d5e; background: #13302a; }
 .skill-state-row .warn { color: #e3c28d; border-color: #6d5a3f; background: #2c2618; }
 /* 직업: 현재 / 전직 가능 / 조건 미달 구분, 부족한 조건 우선 */
@@ -174,7 +174,7 @@
 .skill-card.compact .skill-actions { margin-top: 14px; }
 
 /* 전직 상세 간결 보기 */
-.job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size: 10px; }
+.job-compact .requirements span small { color: #8faead; margin-left: 3px; font-size:11px; }
 .job-compact .meter { margin-top: 10px; }
 /* 던전 탐험: 낚시터와 같은 카드형 */
 .dungeon-stage-card { cursor: default; text-align: left; display: flex; flex-direction: column; }
@@ -232,7 +232,7 @@
 .battle-line.actor-enemy { border-left-color: #e08a84; }
 .battle-line.actor-enemy > b { color: #f0b3ad; }
 .battle-line.actor-player > b { color: #b8ecd6; }
-.log-turn-divider { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; color: #657f87; font: 600 10px/1 ui-monospace, monospace; letter-spacing: .5px; }
+.log-turn-divider { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; color: #7f979f; font: 600 11px/1 ui-monospace, monospace; letter-spacing: .5px; }
 .log-turn-divider::before, .log-turn-divider::after { content: ''; flex: 1; height: 1px; background: #243b40; }
 .log-reward-ticker { display: flex; align-items: center; gap: 7px; width: 100%; margin: 0 0 8px; padding: 6px 10px; border: 1px solid #2d474a; border-radius: 6px; background: #13262c; color: #cfd9b3; font-size: 12px; text-align: left; cursor: pointer; }
 .log-reward-ticker svg { flex: none; color: var(--gold); }
@@ -329,7 +329,7 @@
 /* v26.2 칭호 글꼴·메인 화면 칭호 선택 */
 .title-row .title-desc, .title-row .title-locked { font-size: .82rem; color: #9fb7b0; }
 
-.metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size: 10px; color: #9fb7b0; margin-left: 4px; cursor: help; }
+.metric-hint { display: inline-block; width: 15px; height: 15px; line-height: 13px; text-align: center; border: 1px solid rgba(159, 183, 176, .5); border-radius: 999px; font-size:11px; color: #9fb7b0; margin-left: 4px; cursor: help; }
 
 /* v27.11 어종·직업 그림 자리. 이미지가 없으면 실루엣/아이콘이 남습니다. */
 .monster-art, .job-art { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; border-radius: 12px; overflow: hidden; color: #93c0b4; background: radial-gradient(circle at 50% 40%, rgba(147, 192, 180, .14), rgba(147, 192, 180, 0) 70%); }
@@ -396,7 +396,7 @@
 .rank-step + .rank-step::before { content: '›'; position: absolute; left: -7px; top: 50%; translate: 0 -55%; color: #4d7a70; font-size: 16px; }
 .rank-step b { font-size: 12px; white-space: nowrap; }
 .rank-step small { font-size: 11px; color: var(--muted, #9fb7b0); white-space: nowrap; }
-.rank-step em { position: absolute; top: -8px; left: 50%; translate: -50% 0; font-style: normal; font-size: 10px; padding: 1px 7px; border-radius: 999px; background: #e8d39a; color: #1a1a1a; font-weight: 700; }
+.rank-step em { position: absolute; top: -8px; left: 50%; translate: -50% 0; font-style: normal; font-size:11px; padding: 1px 7px; border-radius: 999px; background: #e8d39a; color: #1a1a1a; font-weight: 700; }
 .rank-step.locked { opacity: .5; filter: grayscale(.4); }
 .rank-step.current { border-color: #e8d39a; box-shadow: 0 0 0 1px #e8d39a33, 0 0 16px #e8d39a22; opacity: 1; }
 .rank-step.passed { border-color: rgba(127, 211, 195, .35); }

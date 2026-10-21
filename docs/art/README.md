@@ -7,13 +7,13 @@
 
 | 대상 | 경로 | 파일 이름 | 권장 크기 |
 |---|---|---|---|
-| 몬스터·보스 | `public/art/monsters/` | `{몬스터 id}.png` 또는 `.webp` (예: `minnow.png`, `magmaKraken.webp`) | 원작 그림 그대로, 또는 512×512 |
-| 직업 계보 | `public/art/jobs/` | `{계보 id}.png` 또는 `.webp` | 512×512, 정방형 |
-| 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) |
+| 몬스터·보스 | `public/art/monsters/` | `{몬스터 id}.png` · `.webp` · `.svg` (예: `minnow.png`, `magmaKraken.webp`, `aoScrapDrone.svg`) | 원작 그림 그대로, 또는 512×512 |
+| 직업 계보 | `public/art/jobs/` | `{계보 id}.png` · `.webp` · `.svg` | 512×512, 정방형 |
+| 스킬 아이콘 | `public/art/skills/` | `{스킬 id}.png` 또는 `.svg`. 목록은 `docs/art/skill-icons.md` | 원작 도트 아이콘 그대로(32×32 등) · svg는 64×64 좌표 |
 | 스토리 삽화 | `public/art/story/` | 장 배너 `chapter-{0~18}`, 장면 `{장면 id}` (.png/.webp). 프롬프트 · 목록은 `docs/art/story-prompts.md` | 배너 1600×400, 장면 1280×720 |
 
 - 몬스터 id는 `game/data/maple-monsters.ts`(원작 이름과 함께), 직업 계보 id는 `game/data/maple-names.ts`에 있습니다. 대소문자를 그대로 지킵니다.
-- 같은 id에 png·webp가 둘 다 있으면 png를 씁니다.
+- 같은 id에 여러 형식이 있으면 png > webp > svg 순으로 씁니다(v3.369). svg는 `image-rendering` 도트 규칙 없이 매끈하게 그립니다.
 - 직업 그림은 계보 단위(47장)입니다. 같은 계보의 1~5차가 한 그림을 공유합니다.
 
 ## 쓰이는 자리
@@ -50,6 +50,11 @@ weathered sea gear, calm expression, plain dark background, no text, no watermar
 ## 실루엣(폴백) 규칙
 
 어종마다 `game/data/art.ts`의 `MONSTER_SHAPES`에 모양 하나를 적어 둡니다(물고기·비단잉어·가오리·곰치·오징어·게·해파리·상어·복어·해마·아귀·망령·거수). 새 어종을 추가하면 이 표에도 넣어야 하며, 테스트가 빠진 어종을 잡습니다.
+
+## 코프룰루 구역 벡터 그림 (v3.369)
+
+코프룰루 구역의 그림 146장(`public/art/monsters/{ao|vw|hm|sc}*.svg` · 칠흑 `onyx{Vesper,Halder,Mirren,Solenne}.svg` 80장, `public/art/skills/{ir|hv}*.svg` 60장, `public/art/jobs/{irTrooper,hvSporeGatherer}.svg`, `public/art/onyx/onyx{Vesper,Halder,Mirren,Solenne}.svg`)은 `tools/art-svg/`가 만든 SVG입니다. 원작 이미지를 쓰지 않고 몸체 원형(`archetypes.mjs`) · 지역 팔레트 · 종마다 다른 장식(`monsters.mjs`)으로 그립니다.
+고치려면 명세를 바꾸고 `node tools/art-svg/make.mjs`(폴더별: `monsters skills jobs onyx`) → `node scripts/art-manifest.mjs`. 그린 그림으로 바꿀 때는 같은 id의 `.png`/`.webp`를 넣으면 그쪽이 우선합니다.
 
 ## 계보 문장(엠블럼) 그림 (v3.223)
 

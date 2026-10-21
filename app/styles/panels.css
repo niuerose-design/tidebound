@@ -64,7 +64,7 @@
 
 .battle-skill small {
   display:block;
-  font-size:10px;
+  font-size:11px;
   color:#8da6a6;
   margin-top:3px
 }
@@ -102,13 +102,13 @@
 
 .log-line>span:nth-child(2) {
   align-self:center;
-  color:#657f87
+  color:#7f979f
 }
 
 .log-number {
   font-family:monospace;
-  font-size:10px;
-  color:#4f6b75;
+  font-size:11px;
+  color:#7f979f;
   min-width:25px
 }
 
@@ -294,7 +294,7 @@
 
 .mini-equipment small {
   display:block;
-  font-size:10px;
+  font-size:11px;
   color:#728f99
 }
 

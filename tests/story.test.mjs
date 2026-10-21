@@ -1,5 +1,5 @@
 // v3.215 스토리 ‘모험 일지’: 장면 표 형식, 이정표마다 열림, 처음 보는 세이브는 한 줄로 묶어 알림, 환생 · 승천해도 유지.
-import { assert, test, act, newState } from './harness.mjs';
+import { assert, test, act, newState, MONSTERS } from './harness.mjs';
 import { loadGame } from '../scripts/lib/game-modules.mjs';
 const { load } = loadGame();
 const { STORY, STORY_CHAPTERS, STORY_PARTS } = await load('data/story');
@@ -74,4 +74,24 @@ test('v3.217 story art: every scene has its own SVG illustration and chapters st
     const ids = [...src.slice(src.indexOf('export const SCENE_ART')).matchAll(/^ {4}(\w+): id =>/gm)].map(m => m[1]);
     assert.deepEqual([...ids].sort(), STORY.map(x => x.id).sort(), 'one SVG per scene, no strays');
     assert.match(fs.readFileSync('components/game/story-panel.tsx', 'utf8'), /defaultOpen=\{false\}/, 'chapters start folded');
+});
+
+test('v3.369 svg art: every koprulu monster · skill · lineage · onyx charm has a vector picture that the manifest lists and the file is self-contained', async () => {
+    const fs = await import('node:fs');
+    const { MONSTER_ART, JOB_ART, ONYX_ART, SKILL_ART } = await load('data/art-manifest');
+    const { monsterArtSrc, skillArtSrc } = await load('data/art');
+    const { KOPRULU_SKILLS, KOPRULU_LINEAGES } = await load('data/expansion-koprulu');
+    const koprulu = MONSTERS.filter(m => /^(ao|vw|hm|sc)[A-Z]/.test(m.id) || /^onyx(Vesper|Halder|Mirren|Solenne)$/.test(m.id));
+    assert.equal(koprulu.length, 80, '80 koprulu monsters');
+    const check = (folder, id, ext) => {
+        assert.equal(ext, 'svg', `${folder}/${id} is svg`);
+        const src = fs.readFileSync(`public/art/${folder}/${id}.svg`, 'utf8');
+        assert.ok(src.startsWith('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '), `${id} svg root`);
+        assert.ok(!/<script|href=|url\((?!#)/.test(src), `${id} has no script or external reference`);
+    };
+    for (const m of koprulu) { check('monsters', m.id, MONSTER_ART[m.id]); assert.equal(monsterArtSrc(m.id), `/art/monsters/${m.id}.svg`); }
+    for (const s of KOPRULU_SKILLS) { check('skills', s.id, SKILL_ART[s.id]); assert.equal(skillArtSrc(s.id), `/art/skills/${s.id}.svg`); }
+    for (const l of KOPRULU_LINEAGES) check('jobs', l.id, JOB_ART[l.id]);
+    for (const b of ONYX_BOSSES.filter(b => /^onyx(Vesper|Halder|Mirren|Solenne)$/.test(b.id))) check('onyx', b.id, ONYX_ART[b.id]);
+    assert.equal(skillArtSrc('breath'), null, 'skills without a file ask for nothing');
 });
