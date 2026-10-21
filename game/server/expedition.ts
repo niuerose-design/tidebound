@@ -6,7 +6,7 @@ import 'server-only';
  */
 import { db } from './db';
 import { monthKey, previousMonthKey, weekKey, weekSeason } from '../data/time';
-import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, type SeasonSettlement, type LeagueSettlement } from '../data/expedition';
+import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
@@ -22,17 +22,25 @@ const GHOST_POOL = 60;
 const GHOST_CACHE_MS = 60_000;
 let ghostCache: { key: string; at: number; rows: Awaited<ReturnType<ReturnType<typeof db>['listRankings']>> } | null = null;
 export const forgetGhosts = () => { ghostCache = null; };
-export async function pickGhosts(key: string, me: string, rng = Math.random, now = Date.now()): Promise<Record<number, ExpeditionGhost>> {
+/** 22단계: 라운드마다 후보 최대 3명(내 점수와 가까운 순)을 보내고, 후보 계정 수(pool)도 함께 보냅니다. */
+export async function pickGhosts(key: string, me: string, rng = Math.random, now = Date.now()): Promise<Record<number, ExpeditionGhost[]> & { pool?: number }> {
     const rows = ghostCache && ghostCache.key === key && now - ghostCache.at < GHOST_CACHE_MS ? ghostCache.rows : await db().listRankings(expeditionSeason(key), GHOST_POOL);
     ghostCache = { key, at: now, rows };
-    const pools: Record<number, ExpeditionGhost[]> = {};
+    const pools: Record<number, (ExpeditionGhost & { score: number })[]> = {}, accounts = new Set<string>();
+    let myScore: number | undefined;
     for (const r of rows) {
         let snap: ExpeditionSnapshot; try { snap = JSON.parse(r.snapshot) as ExpeditionSnapshot; } catch { continue; }
-        if (snap.account === me) continue;
-        for (let round = 2; round <= EXPEDITION.rounds; round++) { if (isBossRound(round)) continue; const board = snap.boards?.[round]; if (board?.length) { const augments = snap.augs?.[round] || [], mods = combatMods(mergeMods([weeklyRuleById(snap.rule)?.mods, ...augments.map(augmentMods), ...masteryPerks(snap.mastery || 1).map(p => p.mods)])); (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0, ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) }); } }
+        if (snap.account === me) { myScore = snap.score ?? expeditionScore(snap); continue; }
+        accounts.add(snap.account);
+        for (let round = 2; round <= EXPEDITION.rounds; round++) { if (isBossRound(round)) continue; const board = snap.boards?.[round]; if (board?.length) { const augments = snap.augs?.[round] || [], mods = combatMods(mergeMods([weeklyRuleById(snap.rule)?.mods, ...augments.map(augmentMods), ...masteryPerks(snap.mastery || 1).map(p => p.mods)])); (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0, account: snap.account, score: snap.score ?? expeditionScore(snap), ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) }); } }
     }
-    const out: Record<number, ExpeditionGhost> = {};
-    for (const [round, pool] of Object.entries(pools)) out[Number(round)] = pool[Math.floor(rng() * pool.length)];
+    // 내 점수와 가까운 순으로 후보 3명(점수가 없으면 무작위 섞기). 후보 계정 수를 pool로 실어 화면 쪽이 확률을 낮출 수 있게 합니다.
+    const out: Record<number, ExpeditionGhost[]> & { pool?: number } = {};
+    for (const [round, pool] of Object.entries(pools)) {
+        const sorted = myScore !== undefined ? [...pool].sort((a, b) => Math.abs(a.score - myScore!) - Math.abs(b.score - myScore!)) : [...pool].sort(() => rng() - .5);
+        out[Number(round)] = sorted.slice(0, GHOST_GUARD.candidates).map(g => { const copy: ExpeditionGhost & { score?: number } = { ...g }; delete copy.score; return copy; });
+    }
+    out.pool = accounts.size;
     return out;
 }
 /** 전투 · 종료 뒤 이번 달 행 갱신. 승수가 지난 최고 이상이면 보드 스냅샷도 바꿉니다. */

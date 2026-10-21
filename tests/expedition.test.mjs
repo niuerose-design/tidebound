@@ -167,8 +167,8 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
         assert.equal(two.score, 536); assert.equal(two.ghostPoints, 30);
         await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }, true, 30, 2), now + 3); assert.equal((await E.listExpeditionBoard(key)).find(r => r.name === '둘').score, 536, 'idempotent per run');
         assert.equal(E.expeditionScore({ wins: 8, cleared: true, round: 8, ghostByRun: { a: 10, b: 20 } }), 888);
-        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2].mods, undefined, 'no augments: no mods'); assert.equal(ghosts[2].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[3].name, '둘'); assert.equal(ghosts[4], undefined);
-        const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2].name, '하나');
+        const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(ghosts[2][0].name, '둘', 'self excluded, other player picked'); assert.equal(ghosts[2][0].mods, undefined, 'no augments: no mods'); assert.equal(ghosts[2][0].wins, 5, 'ghost carries its best wins'); assert.equal(ghosts[2][0].account, 'p2'); assert.equal(ghosts[3][0].name, '둘'); assert.equal(ghosts[4], undefined); assert.equal(ghosts.pool, 1, 'one other account');
+        const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(forTwo[2][0].name, '하나');
         assert.equal(E.expeditionSeason('2026-10'), 30_000_000 + 202610);
         // 9단계 정산: 다음 달에 지난달 행으로 순위 · 보상. 행이 없으면 null.
         const nextMonth = now + 32 * 86_400_000;
@@ -276,8 +276,8 @@ test('expedition stage 8: emblems add a trait key (counted once per unit), guard
     // 고스트 보드의 문장도 통과하고 상대 시너지에 반영된다.
     const ghost = A.parseGhost(JSON.stringify({ 2: { name: 'g', board: [{ unit: 'pig', star: 1, row: 'front', item: 'emblem_forest' }] } }), 2); assert.equal(ghost.board[0].item, 'emblem_forest');
     // 설명 생성.
-    assert.equal(D.describeTier({ count: 4, mult: { hp: 1.7 }, flags: ['regen'] }), '체력 +70% · 매 턴 체력 4% 회복');
-    assert.equal(D.describeTier({ count: 2, damageTaken: .2, only: 'guard' }), '수호 유닛만: 받는 피해 −20%');
+    assert.equal(D.describeTier({ count: 4, mult: { hp: 1.7 }, flags: ['regen'] }), '체력 70% 증가 · 매 턴 최대 체력의 4%를 회복');
+    assert.equal(D.describeTier({ count: 2, damageTaken: .2, only: 'guard' }), '수호 유닛에게만: 받는 피해 20% 감소');
     for (const t of D.TRAITS) for (const tier of t.tiers) assert.ok(D.describeTier(tier).length > 3, `${t.id} tier ${tier.count} has a description`);
 });
 
@@ -539,9 +539,9 @@ test('expedition stage 17: ghost boards carry the opponent run mods (augments ·
         const mk = (name, round, augs) => ({ name, expedition: { round, wins: 4, done: true, last: { won: true }, history: { 3: [{ unit: 'pig', star: 1, row: 'front' }] }, augHistory: augs, rule: 'giants', mastery: 30, startedAt: 1 } });
         await E.syncExpeditionRow('g1', mk('증강맨', 4, { 3: ['frontWall', 'traitPlus1:meadow'] }), now2);
         const ghosts = await E.pickGhosts(key, 'other', () => 0);
-        assert.deepEqual(ghosts[3].augments, ['frontWall', 'traitPlus1:meadow']);
+        assert.deepEqual(ghosts[3][0].augments, ['frontWall', 'traitPlus1:meadow']);
         // 방벽 1.15 × 숙련 30 특전 앞줄 1.05, 거인의 주 ★2+ 1.08, 초원 문양 +1.
-        assert.ok(Math.abs(ghosts[3].mods.frontHp - 1.15 * 1.05) < 1e-9); assert.equal(ghosts[3].mods.starPower, 1.08); assert.deepEqual(ghosts[3].mods.traitPlus, { meadow: 1 }); assert.equal(ghosts[3].mods.goldPlus, undefined);
+        assert.ok(Math.abs(ghosts[3][0].mods.frontHp - 1.15 * 1.05) < 1e-9); assert.equal(ghosts[3][0].mods.starPower, 1.08); assert.deepEqual(ghosts[3][0].mods.traitPlus, { meadow: 1 }); assert.equal(ghosts[3][0].mods.goldPlus, undefined);
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
@@ -654,5 +654,41 @@ test('expedition stage 21: weekly league rows group 8 per tier, list/settle prom
         const s2 = await E.settleLeague('q2', next); assert.equal(s2.rank, 8, 'q2 (2 wins) is last after q1 accumulated'); assert.equal(s2.nextTier, 1); assert.equal(s2.pearls, 2);
         const s9 = await E.settleLeague('q9', next); assert.equal(s9.rank, 1); assert.equal(s9.size, 1); assert.equal(s9.nextTier, 3);
         assert.equal(await E.settleLeague('nobody', next), null);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});
+
+test('expedition stage 22 (small ghost pool): candidates per round pick the least-seen account, same opponent at most twice per run, small pools lower the ghost chance, over-strong ghost boards are scaled down to the round budget, server sends up to 3 nearest-score candidates and the pool size', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
+    // capGhostBoard: 2라운드(예산 5 × 1.3 = 6.5 → 6)에 ★3 자쿰(20) → ★을 내리고 그래도 넘으면 약한 유닛부터 뺀다.
+    const strong = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 3, row: 'front' }, { unit: 'slime', star: 1, row: 'back' }];
+    const c2 = A.capGhostBoard(strong, 2, 1); assert.equal(c2.scaled, true); assert.ok(D.boardValue(c2.board) <= Math.round(X.WAVE_BUDGET[2] * 1.3), `value ${D.boardValue(c2.board)}`); assert.ok(c2.board.length >= 1);
+    const c12 = A.capGhostBoard([{ unit: 'pig', star: 2, row: 'front' }, { unit: 'slime', star: 1, row: 'back' }], 12, 1); assert.equal(c12.scaled, false, 'weak board untouched'); assert.deepEqual(c12.board.map(p => p.star), [2, 1]);
+    const c12e = A.capGhostBoard(strong, 12, 5); assert.ok(D.boardValue(c12e.board) <= Math.round(X.WAVE_BUDGET[12] * 1.6 * 1.3));
+    // parseGhost: 후보 셋 중 이 판에서 가장 적게 만난 계정, pool 전달.
+    const value = JSON.stringify({ pool: 2, 3: [{ name: 'A', account: 'a', board: [{ unit: 'pig', star: 1, row: 'front' }] }, { name: 'B', account: 'b', board: [{ unit: 'slime', star: 1, row: 'front' }] }] });
+    assert.equal(A.parseGhost(value, 3).name, 'A'); assert.equal(A.parseGhost(value, 3, { a: 2 }).name, 'B'); assert.equal(A.parseGhost(value, 3).pool, 2); assert.equal(A.parseGhost(value, 3).account, 'a');
+    assert.equal(A.parseGhost(JSON.stringify({ 3: { name: 'old', board: [{ unit: 'pig', star: 1, row: 'front' }] } }), 3).name, 'old', 'single-object shape still works');
+    // 판: 같은 상대는 2번까지(rng 0 → 늘 고스트 선택), 세 번째 라운드는 웨이브. pool 1이면 확률 × .5.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }];
+    const one = (round) => JSON.stringify({ pool: 1, [round]: [{ name: '유일', account: 'only', board: [{ unit: 'slime', star: 1, row: 'front' }] }] });
+    const zero = () => 0;
+    for (const round of [2, 3, 5]) { r.round = round; clearOffer(s); act(s, { type: 'expeditionFight', value: one(round) }, now + round, zero); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); if (round < 5) assert.equal(r.last.opponent, '유일', `round ${round} ghost`); else assert.equal(r.last.opponent, undefined, 'third meeting falls back to a wave'); }
+    assert.equal(r.ghostSeen.only, 2);
+    // 확률 축소: rng .4 → pool 1(×.5 = .3)이면 웨이브, pool 4(×1 = .6)이면 고스트.
+    r.round = 6; delete r.ghostSeen; clearOffer(s); act(s, { type: 'expeditionFight', value: one(6) }, now + 6, () => .4); assert.equal(r.last.opponent, undefined, 'pool 1 halves the chance'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    r.round = 7; clearOffer(s); act(s, { type: 'expeditionFight', value: JSON.stringify({ pool: 4, 7: [{ name: '넷', account: 'four', board: [{ unit: 'slime', star: 1, row: 'front' }] }] }) }, now + 7, () => .4); assert.equal(r.last.opponent, '넷'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
+    // 센 고스트는 ★이 깎이고 scaled 표시.
+    r.round = 2; clearOffer(s); delete r.ghostSeen; act(s, { type: 'expeditionFight', value: JSON.stringify({ pool: 4, 2: [{ name: '강자', account: 'str', board: strong }] }) }, now + 8, zero); assert.equal(r.last.opponent, '강자'); assert.equal(r.last.scaled, true); assert.ok(D.boardValue(r.last.foe) <= Math.round(X.WAVE_BUDGET[2] * 1.3));
+    // 서버: 후보는 내 점수와 가까운 순으로 최대 3명, pool은 다른 계정 수.
+    const file = path.join(os.tmpdir(), `tb-exp22-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 200 * 86_400_000, key = T.monthKey(now2);
+        const mk = (name, wins) => ({ name, expedition: { round: 4, wins, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }] }, startedAt: 1 } });
+        await E.syncExpeditionRow('me', mk('나', 3), now2); for (const [id, w] of [['g1', 1], ['g2', 2], ['g3', 4], ['g4', 8], ['g5', 12]]) await E.syncExpeditionRow(id, mk(id, w), now2 + 1);
+        const g = await E.pickGhosts(key, 'me', () => 0, now2 + 100_000); assert.equal(g.pool, 5); assert.equal(g[2].length, 3); assert.deepEqual(g[2].map(x => x.account), ['g3', 'g2', 'g1'], 'nearest to my score (3 wins) first'); assert.ok(g[2].every(x => x.score === undefined));
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });

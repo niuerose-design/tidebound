@@ -53,8 +53,8 @@ export const isAbyssRound = (round: number) => round > EXPEDITION.rounds;
 /** 15단계 도전 기록(완주 조건 칭호): 판이 끝날 때 판정해 expeditionFeats에 횟수를 쌓습니다. */
 export const FEATS: { id: string; name: string; desc: string; title: string }[] = [
     { id: 'flawless', name: '무패 완주', desc: '한 번도 지지 않고 12라운드 완주', title: '🛡 무패의 원정대장' },
-    { id: 'noItem', name: '맨손 완주', desc: '12라운드 보드에 아이템 없이 완주', title: '✋ 맨손의 원정대장' },
-    { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드 보드가 모두 한 지역(문장 제외)', title: '🏳 한 깃발의 원정대' },
+    { id: 'noItem', name: '맨손 완주', desc: '12라운드를 이길 때 보드에 아이템이 하나도 없음', title: '✋ 맨손의 원정대장' },
+    { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드를 이길 때 보드 유닛이 모두 같은 지역(문장은 안 쳐줌)', title: '🏳 한 깃발의 원정대' },
     { id: 'cheap', name: '서민 완주', desc: '12라운드 보드가 모두 비용 1~2 유닛', title: '🪙 동전의 원정대' },
     { id: 'abyss10', name: '심연 10', desc: '심연 10라운드 이상 생존', title: '🌑 심연을 걷는 자' },
     { id: 'abyss20', name: '심연 끝', desc: '심연 20라운드(끝)까지 생존', title: '🕳 심연의 주인' },
@@ -136,15 +136,15 @@ export const TRAITS: TraitDef[] = [
 ];
 /** 기획서의 ‘의도한 조합’ 6개(균형 측정용 목표 편성). */
 /** 8단계 화면용: 시너지 단계 효과를 글로 풉니다(데이터에서 자동 생성 → 수치가 바뀌어도 설명이 어긋나지 않음). */
-const FLAG_DESC: Record<string, string> = { regen: '매 턴 체력 4% 회복', reflect: '받은 피해 25% 반격', manaBoost: '마나 획득 +25%', killStack: '처치마다 공격 +10%', haste: '시작 때 가속', startMana50: '시작 마나 50', startMana100: '시작 마나 100', backline15: '뒷줄 받는 피해 −15%', ignoreResist: '상태이상 저항 무시', spread: '독 · 화상 전염', revive: '망령 1회 부활(30%)', roar: '시작 때 포효 · 적 약화 2턴' };
-const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}`, crit: v => `치명타 +${Math.round(v * 100)}%p`, penetration: v => `관통 +${Math.round(v * 100)}%p`, followUpBonus: v => `추가타 위력 +${Math.round(v * 100)}%p`, lifesteal: v => `흡혈 +${Math.round(v * 100)}%p`, stunBonus: v => `기절 +${v}턴`, controlBonus: v => `제어 +${v}턴`, poisonStackBonus: v => `독 중첩 +${v}`, dotTurnsBonus: v => `지속 피해 +${v}턴` };
+const FLAG_DESC: Record<string, string> = { regen: '매 턴 최대 체력의 4%를 회복', reflect: '받은 피해의 25%를 공격한 적에게 되돌려줌', manaBoost: '마나가 25% 더 빨리 참', killStack: '적을 쓰러뜨릴 때마다 아군 전체 공격력 5% 증가', haste: '전투 시작 때 아군 전체 3턴 가속', startMana50: '마나 50을 채운 채 시작', startMana100: '마나를 가득 채운 채 시작(첫 턴부터 기술)', backline15: '뒷줄 유닛이 받는 피해 15% 감소', ignoreResist: '적의 상태이상 저항을 무시', spread: '쓰러진 적의 독 · 화상이 다른 적에게 옮겨감', revive: '망령 유닛이 쓰러지면 체력 30%로 한 번 되살아남', roar: '전투 시작 때 보스가 포효해 적 전체를 2턴 약화' };
+const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}(먼저 움직임)`, crit: v => `치명타 확률 ${Math.round(v * 100)}% 증가`, penetration: v => `방어 관통 ${Math.round(v * 100)}% 증가`, followUpBonus: v => `추가타 위력 ${Math.round(v * 100)}% 증가`, lifesteal: v => `준 피해의 ${Math.round(v * 100)}%만큼 체력 회복(흡혈)`, stunBonus: v => `기절이 ${v}턴 더 오래감`, controlBonus: v => `제어 효과가 ${v}턴 더 오래감`, poisonStackBonus: v => `독을 ${v}중첩 더 걸음`, dotTurnsBonus: v => `지속 피해가 ${v}턴 더 오래감` };
 export function describeTier(t: TraitTier): string {
     const out: string[] = [];
-    for (const k of ['hp', 'attack', 'magic'] as const) if (t.mult?.[k]) out.push(`${k === 'hp' ? '체력' : k === 'attack' ? '물리 공격' : '마법 공격'} +${Math.round((t.mult[k]! - 1) * 100)}%`);
-    if (t.damageTaken) out.push(`받는 피해 −${Math.round(t.damageTaken * 100)}%`);
+    for (const k of ['hp', 'attack', 'magic'] as const) if (t.mult?.[k]) out.push(`${k === 'hp' ? '체력' : k === 'attack' ? '물리 공격력' : '마법 공격력'} ${Math.round((t.mult[k]! - 1) * 100)}% 증가`);
+    if (t.damageTaken) out.push(`받는 피해 ${Math.round(t.damageTaken * 100)}% 감소`);
     for (const k in t.bonus || {}) out.push(STAT_DESC[k] ? STAT_DESC[k]((t.bonus as Record<string, number>)[k]) : `${k} +${(t.bonus as Record<string, number>)[k]}`);
     for (const f of t.flags || []) if (FLAG_DESC[f]) out.push(FLAG_DESC[f]);
-    const who = t.only === 'guard' ? '수호 유닛만' : t.only === 'boss' ? '보스만' : t.only === 'backline' ? '뒷줄만' : '';
+    const who = t.only === 'guard' ? '수호 유닛에게만' : t.only === 'boss' ? '보스 유닛에게만' : t.only === 'backline' ? '뒷줄 유닛에게만' : '';
     return (who ? `${who}: ` : '') + out.join(' · ');
 }
 export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
@@ -162,29 +162,29 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
  */
 export type ItemDef = { id: string; name: string; desc: string; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; startMana?: number; reflect?: number; /** 7단계: 조합으로만 나오는 상위 아이템(상자에 안 나옴). 8단계: 'emblem'은 문장(3라운드부터 상자 셋째 칸). */ tier?: 2 | 'emblem'; /** 20단계: 세트 전용 아이템. */ set?: string; /** 8단계 문장: 낀 유닛을 이 지역 · 역할로도 셉니다(시너지 머릿수 +1). */ emblem?: { origin?: Origin; role?: Role } };
 export const ITEMS: ItemDef[] = [
-    { id: 'blade', name: '맹공의 검', desc: '물리 공격 +35%', mult: { attack: 1.35 } },
-    { id: 'wand', name: '마력의 지팡이', desc: '마법 공격 +35%', mult: { magic: 1.35 } },
-    { id: 'shield', name: '수호의 방패', desc: '받는 피해 −25%', damageTaken: .25 },
-    { id: 'boots', name: '질풍의 신발', desc: '속도 +4(먼저 행동)', bonus: { speed: 4 } },
-    { id: 'fang', name: '흡혈의 송곳니', desc: '흡혈 +25%p', bonus: { lifesteal: .25 } },
-    { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 +30%p · 치명타 +10%p', bonus: { followUpBonus: .3, crit: .1 } },
-    { id: 'manaStone', name: '마나석', desc: '시작 마나 +60 · 최대 체력 +15%', startMana: 60, mult: { hp: 1.15 } },
-    { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30% 반격 · 최대 체력 +20%', reflect: .3, mult: { hp: 1.2 } },
+    { id: 'blade', name: '맹공의 검', desc: '물리 공격력 35% 증가', mult: { attack: 1.35 } },
+    { id: 'wand', name: '마력의 지팡이', desc: '마법 공격력 35% 증가', mult: { magic: 1.35 } },
+    { id: 'shield', name: '수호의 방패', desc: '받는 피해 25% 감소', damageTaken: .25 },
+    { id: 'boots', name: '질풍의 신발', desc: '속도 +4 (먼저 움직임)', bonus: { speed: 4 } },
+    { id: 'fang', name: '흡혈의 송곳니', desc: '준 피해의 25%만큼 체력 회복', bonus: { lifesteal: .25 } },
+    { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 30% · 치명타 확률 10% 증가', bonus: { followUpBonus: .3, crit: .1 } },
+    { id: 'manaStone', name: '마나석', desc: '마나 60을 채운 채 시작 · 최대 체력 15% 증가', startMana: 60, mult: { hp: 1.15 } },
+    { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30%를 적에게 되돌려줌 · 최대 체력 20% 증가', reflect: .3, mult: { hp: 1.2 } },
     // 20단계 세트 전용(심해의 조류): 상자 기본 풀에 더해짐.
-    { id: 'tidePearl', name: '조류의 진주', desc: '속도 +3 · 흡혈 +15%p', bonus: { speed: 3, lifesteal: .15 }, set: 'deepTide' },
+    { id: 'tidePearl', name: '조류의 진주', desc: '속도 +3 · 준 피해의 15%만큼 체력 회복', bonus: { speed: 3, lifesteal: .15 }, set: 'deepTide' },
     // 7단계 조합 아이템(상자에 안 나옴).
-    { id: 'greatBlade', name: '대검', desc: '물리 공격 +80%', mult: { attack: 1.8 }, tier: 2 },
-    { id: 'archStaff', name: '대마법봉', desc: '마법 공격 +80%', mult: { magic: 1.8 }, tier: 2 },
-    { id: 'towerShield', name: '대방패', desc: '받는 피해 −45% · 최대 체력 +15%', damageTaken: .45, mult: { hp: 1.15 }, tier: 2 },
-    { id: 'windBoots', name: '폭풍의 신발', desc: '속도 +10(거의 항상 선공)', bonus: { speed: 10 }, tier: 2 },
-    { id: 'doomSpear', name: '파멸의 창', desc: '물리 · 마법 공격 +45%', mult: { attack: 1.45, magic: 1.45 }, tier: 2 },
-    { id: 'citadel', name: '성채', desc: '받는 피해 −35% · 반격 45% · 최대 체력 +30%', damageTaken: .35, reflect: .45, mult: { hp: 1.3 }, tier: 2 },
-    { id: 'galeHorn', name: '질풍의 뿔', desc: '속도 +6 · 추가타 위력 +45%p · 치명타 +15%p', bonus: { speed: 6, followUpBonus: .45, crit: .15 }, tier: 2 },
-    { id: 'bloodOrb', name: '흡혈의 보주', desc: '흡혈 +40%p · 시작 마나 +100 · 최대 체력 +20%', bonus: { lifesteal: .4 }, startMana: 100, mult: { hp: 1.2 }, tier: 2 },
+    { id: 'greatBlade', name: '대검', desc: '물리 공격력 80% 증가', mult: { attack: 1.8 }, tier: 2 },
+    { id: 'archStaff', name: '대마법봉', desc: '마법 공격력 80% 증가', mult: { magic: 1.8 }, tier: 2 },
+    { id: 'towerShield', name: '대방패', desc: '받는 피해 45% 감소 · 최대 체력 15% 증가', damageTaken: .45, mult: { hp: 1.15 }, tier: 2 },
+    { id: 'windBoots', name: '폭풍의 신발', desc: '속도 +10 (거의 항상 먼저 움직임)', bonus: { speed: 10 }, tier: 2 },
+    { id: 'doomSpear', name: '파멸의 창', desc: '물리 · 마법 공격력 45% 증가', mult: { attack: 1.45, magic: 1.45 }, tier: 2 },
+    { id: 'citadel', name: '성채', desc: '받는 피해 35% 감소 · 받은 피해의 45%를 되돌려줌 · 최대 체력 30% 증가', damageTaken: .35, reflect: .45, mult: { hp: 1.3 }, tier: 2 },
+    { id: 'galeHorn', name: '질풍의 뿔', desc: '속도 +6 · 추가타 위력 45% · 치명타 확률 15% 증가', bonus: { speed: 6, followUpBonus: .45, crit: .15 }, tier: 2 },
+    { id: 'bloodOrb', name: '흡혈의 보주', desc: '준 피해의 40%만큼 체력 회복 · 마나를 가득 채운 채 시작 · 최대 체력 20% 증가', bonus: { lifesteal: .4 }, startMana: 100, mult: { hp: 1.2 }, tier: 2 },
 ];
 // 8단계 문장 12종: 지역 6 · 역할 6. 조합 불가, 상자 셋째 칸에만(3라운드부터).
-for (const o of Object.keys(ORIGIN_NAMES) as Origin[]) ITEMS.push({ id: `emblem_${o}`, name: `${ORIGIN_NAMES[o].split(' ')[0]}의 문장`, desc: `낀 유닛을 ${ORIGIN_NAMES[o]}(으)로도 셉니다 · 시너지 머릿수 +1`, tier: 'emblem', emblem: { origin: o } });
-for (const r of Object.keys(ROLE_NAMES) as Role[]) ITEMS.push({ id: `emblem_${r}`, name: `${ROLE_NAMES[r]}의 문장`, desc: `낀 유닛을 ${ROLE_NAMES[r]}(으)로도 셉니다 · 시너지 머릿수 +1`, tier: 'emblem', emblem: { role: r } });
+for (const o of Object.keys(ORIGIN_NAMES) as Origin[]) ITEMS.push({ id: `emblem_${o}`, name: `${ORIGIN_NAMES[o].split(' ')[0]}의 문장`, desc: `장착한 유닛이 ${ORIGIN_NAMES[o]} 시너지에도 포함됩니다(인원 +1)`, tier: 'emblem', emblem: { origin: o } });
+for (const r of Object.keys(ROLE_NAMES) as Role[]) ITEMS.push({ id: `emblem_${r}`, name: `${ROLE_NAMES[r]}의 문장`, desc: `장착한 유닛이 ${ROLE_NAMES[r]} 시너지에도 포함됩니다(인원 +1)`, tier: 'emblem', emblem: { role: r } });
 export const EMBLEMS = () => ITEMS.filter(x => x.tier === 'emblem');
 /** 8단계: 문장이 상자에 섞이기 시작하는 라운드. */
 export const EMBLEM_ROUND = 3;
@@ -226,25 +226,25 @@ export const AUGMENTS: AugmentDef[] = [
     { id: 'cheapReroll', name: '단골 상점', desc: '새로 고침 1골드', tier: 1, kind: 'economy', mods: { rerollCost: 1 } },
     { id: 'widerBench', name: '넓은 벤치', desc: '벤치 +2칸', tier: 1, kind: 'economy', mods: { benchPlus: 2 } },
     { id: 'quickFeet', name: '날랜 발', desc: '모든 유닛 속도 +2', tier: 1, kind: 'combat', mods: { speed: 2 } },
-    { id: 'frontWall', name: '방벽', desc: '앞줄 체력 +15%', tier: 1, kind: 'combat', mods: { frontHp: 1.15 } },
-    { id: 'traitPlus1', name: '문양', desc: '시너지 머릿수 +1', tier: 1, kind: 'synergy', dynamic: 'trait' },
+    { id: 'frontWall', name: '방벽', desc: '앞줄 유닛 체력 15% 증가', tier: 1, kind: 'combat', mods: { frontHp: 1.15 } },
+    { id: 'traitPlus1', name: '문양', desc: '시너지 하나의 인원 +1', tier: 1, kind: 'synergy', dynamic: 'trait' },
     // 2등급(5라운드)
-    { id: 'interest', name: '복리', desc: '이자 상한 +3(최대 8)', tier: 2, kind: 'economy', mods: { interestPlus: 3 } },
-    { id: 'tutor', name: '가정교사', desc: '경험치 구매마다 +2', tier: 2, kind: 'economy', mods: { xpPlus: 2 } },
-    { id: 'bigBox', name: '큰 상자', desc: '상자 선택지 +1', tier: 2, kind: 'economy', mods: { boxPlus: 1 } },
-    { id: 'manaFlow', name: '마나 흐름', desc: '마나 획득 +30%', tier: 2, kind: 'combat', mods: { manaGain: 1.3 } },
-    { id: 'backline', name: '후방 지원', desc: '뒷줄 공격 · 마법 +20%', tier: 2, kind: 'combat', mods: { backPower: 1.2 } },
-    { id: 'secondWind', name: '재정비', desc: '판 체력 +25 즉시 회복', tier: 2, kind: 'combat', heal: 25 },
-    { id: 'traitPlus2', name: '깊은 문양', desc: '시너지 머릿수 +1', tier: 2, kind: 'synergy', dynamic: 'trait' },
-    { id: 'emblemRain', name: '문장의 비', desc: '매 라운드 상자에 문장', tier: 2, kind: 'synergy', mods: { emblemEvery: true } },
+    { id: 'interest', name: '복리', desc: '이자를 라운드마다 최대 8골드까지 받음(기본 5)', tier: 2, kind: 'economy', mods: { interestPlus: 3 } },
+    { id: 'tutor', name: '가정교사', desc: '경험치를 살 때마다 2를 더 받음', tier: 2, kind: 'economy', mods: { xpPlus: 2 } },
+    { id: 'bigBox', name: '큰 상자', desc: '상자에서 고를 수 있는 아이템이 하나 더 나옴', tier: 2, kind: 'economy', mods: { boxPlus: 1 } },
+    { id: 'manaFlow', name: '마나 흐름', desc: '모든 유닛의 마나가 30% 더 빨리 참', tier: 2, kind: 'combat', mods: { manaGain: 1.3 } },
+    { id: 'backline', name: '후방 지원', desc: '뒷줄 유닛의 물리 · 마법 공격력 20% 증가', tier: 2, kind: 'combat', mods: { backPower: 1.2 } },
+    { id: 'secondWind', name: '재정비', desc: '원정 체력을 바로 25 회복', tier: 2, kind: 'combat', heal: 25 },
+    { id: 'traitPlus2', name: '깊은 문양', desc: '시너지 하나의 인원 +1', tier: 2, kind: 'synergy', dynamic: 'trait' },
+    { id: 'emblemRain', name: '문장의 비', desc: '상자에 매 라운드 문장이 나옴', tier: 2, kind: 'synergy', mods: { emblemEvery: true } },
     // 3등급(8라운드)
-    { id: 'thorns', name: '가시 덤불', desc: '모든 유닛 받은 피해 15% 반격', tier: 3, kind: 'combat', mods: { reflect: .15 } },
-    { id: 'bossHunter', name: '보스 사냥꾼', desc: '보스 라운드 받는 피해 −25% · 막 보상 2배', tier: 3, kind: 'combat', mods: { bossGuard: .25, actMult: 2 } },
-    { id: 'bigStars', name: '별의 축복', desc: '★2 이상 유닛 능력치 +12%', tier: 3, kind: 'combat', mods: { starPower: 1.12 } },
-    { id: 'traitPlus3', name: '고대 문양', desc: '시너지 머릿수 +2', tier: 3, kind: 'synergy', dynamic: 'trait' },
+    { id: 'thorns', name: '가시 덤불', desc: '모든 유닛이 받은 피해의 15%를 적에게 되돌려줌', tier: 3, kind: 'combat', mods: { reflect: .15 } },
+    { id: 'bossHunter', name: '보스 사냥꾼', desc: '보스 라운드에 받는 피해 25% 감소 · 막 보스 보상 2배', tier: 3, kind: 'combat', mods: { bossGuard: .25, actMult: 2 } },
+    { id: 'bigStars', name: '별의 축복', desc: '★2 이상 유닛의 체력 · 공격력 12% 증가', tier: 3, kind: 'combat', mods: { starPower: 1.12 } },
+    { id: 'traitPlus3', name: '고대 문양', desc: '시너지 하나의 인원 +2', tier: 3, kind: 'synergy', dynamic: 'trait' },
     { id: 'treasury', name: '금고', desc: '라운드마다 골드 +4', tier: 3, kind: 'economy', mods: { goldPlus: 4 } },
     // 20단계 세트 전용(심해의 조류).
-    { id: 'tideSurge', name: '조류 타기', desc: '뒷줄 공격 · 마법 +15% · 모든 유닛 속도 +1', tier: 2, kind: 'combat', set: 'deepTide', mods: { backPower: 1.15, speed: 1 } },
+    { id: 'tideSurge', name: '조류 타기', desc: '뒷줄 유닛 공격력 15% 증가 · 모든 유닛 속도 +1', tier: 2, kind: 'combat', set: 'deepTide', mods: { backPower: 1.15, speed: 1 } },
 ];
 export const augmentById = (id: string) => { const base = id.split(':')[0]; return AUGMENTS.find(a => a.id === base); };
 /** 'traitPlus2:meadow' 같은 동적 증강의 보정. */
@@ -254,19 +254,19 @@ export function augmentMods(id: string): RunMods | undefined {
     return def.mods;
 }
 export function augmentName(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return id; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} ${def.name}` : def.name; }
-export function augmentDesc(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return ''; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} 머릿수 +${def.tier === 3 ? 2 : 1}(보드에 ${tn}가 하나라도 있을 때)` : def.desc; }
+export function augmentDesc(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return ''; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} 시너지 인원 +${def.tier === 3 ? 2 : 1} (보드에 ${tn} 유닛이 하나라도 있을 때)` : def.desc; }
 
 /** 주간 규칙: 한국 시간 주(ISO)마다 하나. 판을 시작할 때 그 주 규칙이 판에 붙어 끝까지 유지됩니다. */
 export type WeeklyRule = { id: string; name: string; desc: string; mods: RunMods };
 export const WEEKLY_RULES: WeeklyRule[] = [
     { id: 'golden', name: '황금 주간', desc: '라운드마다 골드 +1', mods: { goldPlus: 1 } },
-    { id: 'emblems', name: '문장 주간', desc: '매 라운드 상자에 문장', mods: { emblemEvery: true } },
-    { id: 'blitz', name: '속전속결', desc: '전투 최대 25턴(남은 체력 비율 판정이 잦음) · 모든 유닛 속도 +1', mods: { maxTurns: 25, speed: 1 } },
-    { id: 'giants', name: '거인의 주', desc: '★2 이상 유닛 능력치 +8%', mods: { starPower: 1.08 } },
+    { id: 'emblems', name: '문장 주간', desc: '상자에 매 라운드 문장이 나옴', mods: { emblemEvery: true } },
+    { id: 'blitz', name: '속전속결', desc: '전투가 25턴에 끝나고(남은 체력이 많은 쪽 승리) 모든 유닛 속도 +1', mods: { maxTurns: 25, speed: 1 } },
+    { id: 'giants', name: '거인의 주', desc: '★2 이상 유닛의 체력 · 공격력 8% 증가', mods: { starPower: 1.08 } },
     { id: 'bossRush', name: '보스 러시', desc: '막 보스 보상 2배', mods: { actMult: 2 } },
-    { id: 'haunted', name: '고스트 주간', desc: '고스트 상대 확률 90%', mods: { ghostChance: .9 } },
+    { id: 'haunted', name: '고스트 주간', desc: '다른 모험가의 원정대를 더 자주(90%) 만남', mods: { ghostChance: .9 } },
     { id: 'thrift', name: '절약 주간', desc: '새로 고침 1골드', mods: { rerollCost: 1 } },
-    { id: 'bazaar', name: '큰 장', desc: '벤치 +1 · 상자 선택지 +1', mods: { benchPlus: 1, boxPlus: 1 } },
+    { id: 'bazaar', name: '큰 장', desc: '벤치 한 칸 더 · 상자에서 고를 아이템 하나 더', mods: { benchPlus: 1, boxPlus: 1 } },
 ];
 export function weeklyRule(weekKey: string): WeeklyRule { let h = 0; for (const ch of weekKey) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return WEEKLY_RULES[h % WEEKLY_RULES.length]; }
 export const weeklyRuleById = (id?: string) => WEEKLY_RULES.find(r => r.id === id);
@@ -289,14 +289,14 @@ export type MasteryPerk = { level: number; id: string; name: string; desc: strin
 export const MASTERY_PERKS: MasteryPerk[] = [
     { level: 2, id: 'm2', name: '견습 원정가', desc: '칭호 🧭 원정 견습', title: 'expMastery:2' },
     { level: 5, id: 'm5', name: '노잣돈', desc: '시작 골드 +2', startGold: 2 },
-    { level: 10, id: 'm10', name: '넉넉한 벤치', desc: '벤치 +1', mods: { benchPlus: 1 } },
-    { level: 15, id: 'm15', name: '눈썰미', desc: '상자 선택지 +1', mods: { boxPlus: 1 } },
+    { level: 10, id: 'm10', name: '넉넉한 벤치', desc: '벤치 한 칸 더', mods: { benchPlus: 1 } },
+    { level: 15, id: 'm15', name: '눈썰미', desc: '상자에서 고를 아이템 하나 더', mods: { boxPlus: 1 } },
     { level: 20, id: 'm20', name: '베테랑', desc: '칭호 🏕 원정 베테랑', title: 'expMastery:20' },
-    { level: 25, id: 'm25', name: '넓은 시야', desc: '증강 선택지 4개', mods: { augmentPlus: 1 } },
-    { level: 30, id: 'm30', name: '단련된 보병', desc: '앞줄 체력 +5%', mods: { frontHp: 1.05 } },
+    { level: 25, id: 'm25', name: '넓은 시야', desc: '증강을 3개가 아니라 4개 중에서 고름', mods: { augmentPlus: 1 } },
+    { level: 30, id: 'm30', name: '단련된 보병', desc: '앞줄 유닛 체력 5% 증가', mods: { frontHp: 1.05 } },
     { level: 35, id: 'm35', name: '노련한 지휘', desc: '시작 골드 +2 더', startGold: 2 },
     { level: 40, id: 'm40', name: '원정대장', desc: '칭호 🚩 원정대장', title: 'expMastery:40' },
-    { level: 50, id: 'm50', name: '전설', desc: '칭호 🌟 원정 전설 · 마나 획득 +10%', mods: { manaGain: 1.1 }, title: 'expMastery:50' },
+    { level: 50, id: 'm50', name: '전설', desc: '칭호 🌟 원정 전설 · 모든 유닛의 마나가 10% 더 빨리 참', mods: { manaGain: 1.1 }, title: 'expMastery:50' },
 ];
 export const masteryPerks = (level: number) => MASTERY_PERKS.filter(p => p.level <= level);
 /** 17단계: 고스트에 실어 보내는 전투 보정(경제 · 상자 · 고스트 확률 · 턴은 뺌). 값은 범위를 잘라 위조를 막습니다. */
@@ -343,7 +343,7 @@ export const EXPEDITION_QUESTS: QuestDef[] = [
     { id: 'd_star3', key: 'star3', name: '세 별', desc: '유닛을 ★3으로 1번 올리기', target: 1, period: 'daily', pearls: 3, xp: 30 },
     { id: 'd_combine', key: 'combines', name: '대장간', desc: '아이템 조합 1번', target: 1, period: 'daily', pearls: 3, xp: 30 },
     { id: 'd_augment2', key: 'augments', name: '선택의 순간', desc: '증강 2번 고르기', target: 2, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_synergy', key: 'synergy4', name: '완성된 조합', desc: '4단계(머릿수 4) 이상 시너지를 켠 채 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
+    { id: 'd_synergy', key: 'synergy4', name: '완성된 조합', desc: '인원 4명 이상인 시너지를 켠 채 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
     { id: 'd_reach8', key: 'reach8', name: '3막 진입', desc: '9라운드까지 가기', target: 1, period: 'daily', pearls: 3, xp: 30 },
     { id: 'd_emblem', key: 'emblems', name: '문장 수집', desc: '문장 1개 고르기', target: 1, period: 'daily', pearls: 3, xp: 30 },
     // 주간(보상 세계석 10 · 숙련 150)
@@ -352,7 +352,7 @@ export const EXPEDITION_QUESTS: QuestDef[] = [
     { id: 'w_boss6', key: 'bossWins', name: '보스 사냥 주간', desc: '막 보스 6번 이기기', target: 6, period: 'weekly', pearls: 10, xp: 150 },
     { id: 'w_ghost10', key: 'ghostWins', name: '열 명의 모험가', desc: '고스트 10번 이기기', target: 10, period: 'weekly', pearls: 10, xp: 150 },
     { id: 'w_runs5', key: 'runs', name: '다섯 판', desc: '원정 5판 마치기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_synergy5', key: 'synergy4', name: '조합의 달인', desc: '4단계 이상 시너지를 켠 채 5번 이기기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
+    { id: 'w_synergy5', key: 'synergy4', name: '조합의 달인', desc: '인원 4명 이상인 시너지를 켠 채 5번 이기기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
     { id: 'w_star3x3', key: 'star3', name: '별 셋 셋', desc: '유닛을 ★3으로 3번 올리기', target: 3, period: 'weekly', pearls: 10, xp: 150 },
 ];
 export const QUESTS_PER_PERIOD = 3;
@@ -380,10 +380,10 @@ export const COMP_KEYS_MAX = 40;
 export type DifficultyDef = { level: number; name: string; icon: string; /** 웨이브 예산 배율 · 적 ★ 확률 가산 · 막 보스 ★ · 보상(세계석 · 숙련) 배율 · 시즌 점수 가산 · 설명. */ budget: number; starPlus: number; bossStar: 1 | 2; reward: number; score: number; desc: string };
 export const DIFFICULTIES: DifficultyDef[] = [
     { level: 1, name: '일반', icon: '🌱', budget: 1, starPlus: 0, bossStar: 1, reward: 1, score: 0, desc: '기본 난이도' },
-    { level: 2, name: '숙련', icon: '🌿', budget: 1.12, starPlus: .05, bossStar: 1, reward: 1.25, score: 60, desc: '웨이브 +12% · 적 ★ 확률 +5%p' },
-    { level: 3, name: '정예', icon: '⚔', budget: 1.25, starPlus: .1, bossStar: 1, reward: 1.5, score: 120, desc: '웨이브 +25% · 적 ★ 확률 +10%p' },
-    { level: 4, name: '악몽', icon: '🔥', budget: 1.4, starPlus: .15, bossStar: 2, reward: 1.8, score: 180, desc: '웨이브 +40% · 적 ★ 확률 +15%p · 막 보스 ★2' },
-    { level: 5, name: '전설', icon: '⚡', budget: 1.6, starPlus: .2, bossStar: 2, reward: 2.2, score: 240, desc: '웨이브 +60% · 적 ★ 확률 +20%p · 막 보스 ★2' },
+    { level: 2, name: '숙련', icon: '🌿', budget: 1.12, starPlus: .05, bossStar: 1, reward: 1.25, score: 60, desc: '적이 12% 더 강하고 ★ 유닛이 5% 더 자주 나옴' },
+    { level: 3, name: '정예', icon: '⚔', budget: 1.25, starPlus: .1, bossStar: 1, reward: 1.5, score: 120, desc: '적이 25% 더 강하고 ★ 유닛이 10% 더 자주 나옴' },
+    { level: 4, name: '악몽', icon: '🔥', budget: 1.4, starPlus: .15, bossStar: 2, reward: 1.8, score: 180, desc: '적이 40% 더 강하고 ★ 유닛이 15% 더 자주 나옴 · 막 보스 ★2' },
+    { level: 5, name: '전설', icon: '⚡', budget: 1.6, starPlus: .2, bossStar: 2, reward: 2.2, score: 240, desc: '적이 60% 더 강하고 ★ 유닛이 20% 더 자주 나옴 · 막 보스 ★2' },
 ];
 export const difficultyOf = (level?: number) => DIFFICULTIES.find(d => d.level === (level || 1)) || DIFFICULTIES[0];
 /** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 5). */
@@ -423,3 +423,9 @@ export const setUnits = (setId?: string): UnitDef[] => { const d = setById(setId
 /** 세트 숙련(세트마다 처음부터): 레벨 n → n+1에 150 + 50(n−1), 최대 20. 5 · 10 · 15 · 20에 세계석 10 · 20 · 30 · 50, 20이면 세트 칭호. */
 export const SET_MASTERY = { max: 20, rewards: { 5: 10, 10: 20, 15: 30, 20: 50 } as Record<number, number> };
 export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
+
+// ───────────── 22단계: 고스트 풀이 작을 때의 보호 ─────────────
+/** 고스트 보호: 같은 상대는 한 판에 maxSameRun번까지, 후보가 poolFull명 미만이면 고스트 확률을 비례해 낮춤(최저 poolMinChance 배), 상대 보드 가치가 그 라운드 웨이브 예산 × capMult를 넘으면 ★을 낮추고 그래도 넘으면 약한 유닛부터 뺌. */
+export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: 1.3, candidates: 3 };
+/** 보드 가치 = Σ 비용 × ★ 배수(1 · 2 · 4), 웨이브 예산과 같은 단위. */
+export const boardValue = (board: { unit: string; star: number }[]) => board.reduce((n, p) => n + (unitById(p.unit)?.cost || 0) * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
