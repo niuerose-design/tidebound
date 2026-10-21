@@ -7,29 +7,10 @@
 .port-resource-bar strong { display:block; margin-top:5px; color:var(--gold); font-size:28px; line-height:1.3; font-variant-numeric:tabular-nums; }
 .port-resource-bar strong small { font-size:13px; color:#a7b9b1; font-weight:400; }
 .port-tabs.game-tabs { margin-bottom:22px; }
-/* v3.78 환생 유물 탭: 규칙 칩 + 4열 카드(보유 중이면 지금 상태). */
-.relic-facts { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 16px; }
-.relic-facts span { padding:6px 10px; border:1px solid var(--border); border-radius:8px; background:#0f1d21; font-size:12px; color:#9fb5b2; }
-.relic-facts b { color:#e1eeeb; font-weight:600; }
-.relic-facts small { color:#7f9596; margin-left:4px; }
-.relic-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
-.relic-card { display:flex; flex-direction:column; gap:10px; min-width:0; padding:18px; border-top:2px solid #5a6f71; }
 .relic-card.ready { border-top-color:#86cfc0; }
 .relic-card.owned { border-top-color:var(--gold); }
-.relic-card header { display:flex; align-items:center; gap:10px; }
-.relic-card header>div { min-width:0; }
-.relic-card h2 { margin:0; font-size:16px; line-height:1.4; }
-.relic-card header small { font-size:12px; color:#8fa6a4; }
-.relic-state { align-self:flex-start; padding:3px 8px; border-radius:999px; font-size:11px; background:#16302f; color:#9fb5b2; }
 .relic-card.ready .relic-state { color:#a4e9ba; }
 .relic-card.owned .relic-state { color:var(--gold); }
-.relic-desc { margin:0; font-size:13px; line-height:1.6; color:#a5b7b4; }
-.relic-affix { margin:0; font-size:12px; color:#c5d8d2; }
-.relic-owned, .relic-preview { display:grid; gap:4px; flex:1; align-content:start; }
-.relic-owned>small, .relic-preview>small { font-size:12px; color:#8fa6a4; }
-.relic-card .equipment-numbers { margin:6px 0 0; gap:6px; }
-.relic-card .equipment-numbers>span { font-size:13px; }
-.relic-card>button { width:100%; }
 .forge-pick.on { background:#16302f; border-color:var(--rarity); box-shadow:inset 0 0 0 1px var(--rarity); }
 .forge-head .text-button { margin-left:auto; }
 .forge-bench { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; margin-top:14px; }
@@ -37,265 +18,68 @@
 .forge-star .star-row i { flex:1 1 0; min-width:0; text-align:center; font-size:clamp(10px,1.4vw,16px); }
 .forge-star .star-odds { margin:0; }
 .gear-slot:has(.gear-slot-item.open) { box-shadow:inset 0 0 0 1px var(--rarity); }
-.legacy-resource-bar { grid-template-columns:.8fr .8fr 1fr 1.3fr; }
-.legacy-resource-bar>div:last-child strong small { display:block; margin-top:4px; line-height:1.5; }
-.rebirth-ready { display:grid; grid-template-columns:minmax(0,1fr) 245px; gap:30px; padding:28px; }
-.rebirth-ready h2 { font-size:23px; margin:9px 0 24px; line-height:1.5; }
 .rebirth-ready .meter { max-width:560px; }
-.rebirth-reward { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding-left:25px; border-left:1px solid var(--border); font-size:14px; color:#a9beb5; }
-.rebirth-reward>strong { display:flex; gap:12px; align-items:center; font-size:43px; color:var(--gold); line-height:1.2; }
-.rebirth-reward>small { font-size:12px; text-align:center; }
-.rebirth-reward>button { width:100%; margin-top:6px; }
-.rebirth-records { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.rebirth-records>article { padding:23px 26px; }
-.rebirth-records h2 { font-size:17px; margin:0 0 14px; }
-.rebirth-records .ledger-kept h2 { color:#b1d8be; }
-.rebirth-records .ledger-reset h2 { color:#d4b4a4; }
-.rebirth-records ul { padding-left:18px; list-style:disc; margin:0; }
-.rebirth-records li { padding:4px 0; line-height:1.7; color:#aabbb6; font-size:13px; }
-.legacy-fold { margin-top:18px; padding:19px 24px; }
-.legacy-fold summary { cursor:pointer; color:#c1d0bf; font-size:14px; }
-.legacy-fold p { line-height:1.85; margin:15px 0 0; font-size:13px; color:#9fb4af; }
-.legacy-fold b { margin-right:12px; color:var(--gold); }
-.data-management summary { color:#b5aaa0; }
-.data-management button { margin-top:17px; }
 .tab-intro { color:#a2b7ae; font-size:14px; margin-bottom:20px; line-height:1.8; }
-.research-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-.research-card { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:21px 24px; }
-.research-card h2 { font-size:17px; margin:0 0 6px; }
-.research-card p { font-size:13px; color:#a5bfb1; margin:0 0 9px; }
-.research-card small { font-size:12px; color:var(--muted); }
-.research-card>button { flex-shrink:0; min-width:88px; }
-.research-card p.research-effect { color:#e2c98f; font-weight:600; }
 .research-card.locked { opacity:.6; }
-.vow-panel { padding:20px 22px; margin:18px 0; }
-.vow-current { display:flex; flex-direction:column; gap:8px; padding:12px 14px; border:1px solid #d6b87955; border-radius:8px; margin:10px 0 14px; background:#2a2a1f44; }
-.vow-current>span { font-size:13px; color:#e2c98f; }
-
-.vow-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
-.vow-card { border:1px solid #9ab4b533; border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:8px; }
-.vow-card h3 { font-size:16px; margin:0; }
-.vow-card p { font-size:12px; color:#a5bfb1; line-height:1.7; margin:0; flex:1; }
 .vow-card.locked { opacity:.55; }
-.vow-rough { display:flex; gap:6px; flex-wrap:wrap; }
-.vow-rough button { flex:1; min-width:52px; padding-left:6px; padding-right:6px; }
-.vow-badge { display:inline-block; margin-left:6px; padding:1px 7px; border-radius:99px; font-size:11px; border:1px solid #d6b87988; color:#e6cf97; vertical-align:middle; }
-.vow-badge.vow-breath { border-color:#d38e8088; color:#eab0a4; }
-.vow-badge.vow-rough { border-color:#7fc4a888; color:#a8e0c8; }
-@media(max-width:900px){ .vow-grid { grid-template-columns:1fr; }}
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
 .research-tabs.game-tabs { margin-bottom:16px; }
-.research-group { margin-bottom:18px; }
-.research-group-title { font-size:14px; color:#b9cfc6; margin:0 0 10px; letter-spacing:.04em; }
 /* v3.24 연구 묶음 접기·펼치기 */
 .research-group.folded { margin-bottom:8px; }
-.research-group-toggle { display:flex; align-items:center; gap:6px; width:100%; padding:4px 0; background:none; border:0; color:inherit; font:inherit; letter-spacing:inherit; cursor:pointer; text-align:left; }
-.research-group-toggle small { margin-left:auto; font-size:12px; color:#86a097; letter-spacing:0; }
-.research-group-arrow { flex:none; transition:transform .15s ease; }
 .research-group.folded .research-group-arrow { transform:rotate(-90deg); }
-.research-reset { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; margin-top:6px; }
-.research-reset p { font-size:13px; color:#a5bfb1; margin:6px 0 0; line-height:1.7; }
-.research-reset button { flex-shrink:0; }
-@media(max-width:600px){ .research-grid { grid-template-columns:1fr; } .research-reset { flex-direction:column; align-items:stretch; }}
-.job-current-summary { display:flex; align-items:center; gap:17px; padding:22px 26px; margin-bottom:20px; background:linear-gradient(110deg,#213a35,#152329); }
-.job-current-summary>svg { color:var(--gold); flex-shrink:0; }
-.job-current-summary small { font-size:12px; color:#a8bcb3; }
-.job-current-summary h2 { font-size:22px; margin:3px 0; }
-.job-current-summary p { margin:7px 0 0; font-size:13px; color:#a5bcb0; }
-.job-current-summary>button { margin-left:auto; flex-shrink:0; }
-/* v3.164 목표 직업 줄 · 머리 버튼 묶음(현재 직업 보기 · 목표 보기) · 목표 깃발 */
-.job-current-summary .job-goal-line { display:flex; align-items:center; gap:5px; color:#b9a9d8; }
 .job-current-summary .job-goal-line.ready { color:#b6e0cc; }
-.job-current-summary .job-goal-line b { color:#e8efe9; font-weight:600; }
-.job-summary-buttons { display:flex; flex-direction:column; gap:6px; margin-left:auto; flex-shrink:0; }
-.job-goal-flag { color:#e0b36a; margin-left:5px; vertical-align:-1px; }
 .route-card.goal { border-color:#8a7440; }
 .job-status.goal { color:#e0b36a; border-color:#8a7440; display:inline-flex; align-items:center; gap:3px; }
-.job-goal-button { display:inline-flex; align-items:center; justify-content:center; gap:5px; }
 .job-goal-button.active { color:#e0b36a; border-color:#8a7440; }
-.job-inspector { min-width:0; }
-.job-family-description { font-size:13px; color:#9db5ab; line-height:1.85; margin:0 0 14px; }
-.job-inspector { padding:25px; }
-.job-inspector>h2 { font-size:28px; margin:18px 0 8px; }
-.job-inspector>p { font-size:14px; line-height:1.85; color:#a8bcb3; margin:12px 0; }
-.job-inspector .job-motto { color:var(--gold); margin:0 0 15px; font-size:13px; }
-.job-detail-section { border-top:1px solid var(--border); padding-top:18px; margin-top:18px; }
-.job-detail-section h3 { font-size:14px; margin:0 0 12px; color:#cbd8c4; }
-.job-section-heading { display:flex; align-items:center; gap:9px; }
-.job-section-heading h3 { margin:0; }
-.job-section-heading { margin-bottom:12px; }
-.info-trigger { display:inline-flex; justify-content:center; align-items:center; flex-shrink:0; color:#adc6b6; border-radius:4px; padding:4px; }
-.vow-info-trigger { gap:4px; margin-left:8px; padding:2px 7px; font-size:12px; font-weight:500; color:var(--gold); border:1px solid #506958; vertical-align:middle; }
-.vow-info-pop p { margin:0; }
-.vow-info-pop b { color:var(--gold); font-weight:600; }
-.info-trigger:hover { color:#e4e6c9; background:#31463c; }
 .game-tooltip { max-width:340px; padding:13px 16px; background:#253c35; color:#e0e4d8; border:1px solid #506958; font-size:13px; line-height:1.8; }
 .game-tooltip p+p { margin-top:10px; }
-.job-bonus-table { width:100%; margin-bottom:14px; font-size:13px; border-collapse:collapse; font-variant-numeric:tabular-nums; }
-.job-bonus-table th,.job-bonus-table td { padding:9px 5px; border-bottom:1px solid #2b4039; text-align:right; font-weight:400; }
-.job-bonus-table th:first-child { text-align:left; }
-.job-bonus-table thead { color:#8fab9d; font-size:12px; }
-.job-inspector .vocation-skills { margin-bottom:0; }
-.job-inspector .vocation-skills>span { font-size:14px; }
-.job-inspector .vocation-skills small { font-size:12px; }
-.job-inspector>button { width:100%; margin-top:23px; }
-.skill-level-line .info-trigger { margin-left:auto; }
 .skill-card .skill-current-description { min-height:0; }
 .skill-grid-detailed .skill-card { min-width:0; }
 .skill-growth-table tr.current { background:#264237; }
 .skill-card .skill-stage-table-wrap:focus-visible, .info-trigger:focus-visible { outline:2px solid #b2ceaa; outline-offset:3px; }
-@media (max-width:1180px) {
-    .legacy-resource-bar { grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .job-inspector { padding:20px; }
-    .research-card { padding:18px; }}
-@media (max-width:1180px) {
-    .relic-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }}
 @media (max-width:1000px) {
     .forge-bench { grid-template-columns:minmax(0,1fr); }
     .forge-star .star-row i { font-size:clamp(10px,3.6vw,16px); }}
 @media (max-width:767px) {
-    .relic-grid { grid-template-columns:minmax(0,1fr); }
     .port-resource-bar { padding:20px; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); }
     .port-resource-bar strong { font-size:25px; }
     .port-resource-bar>div { gap:10px; }
     .port-resource-bar>div:last-child { grid-column:1/-1; }
-    .legacy-resource-bar>div:last-child { grid-column:auto; }
     .port-resource-bar>div>svg { width:18px; }
-    .research-grid,.rebirth-records { grid-template-columns:1fr; }
     .port-tabs.game-tabs { width:100%; display:flex; padding:0; height:auto; }
-    /* v3.333 상점 탭이 5개(정수 구매 추가)라 좁은 화면에서 한 줄에 들어가도록 여백 · 글자를 조금 줄입니다. */
-    .port-tabs [data-slot=tabs-trigger] { flex:1 1 0; min-width:0; padding:12px 4px; font-size:12px; white-space:nowrap; }
-    .rebirth-ready { grid-template-columns:1fr; padding:22px; gap:20px; }
-    .rebirth-ready h2 { font-size:21px; }
-    .rebirth-reward { border-left:0; border-top:1px solid var(--border); padding:20px 0 0; }
-    .job-current-summary { padding:20px; flex-wrap:wrap; gap:12px; }
-    .job-current-summary>button { margin-left:38px; }
-    .job-summary-buttons { flex-direction:row; margin-left:38px; }
 
     .skill-grid-detailed .skill-card { padding:20px; }
     /* v3.308 자세히 보기 성장 표: 좁은 화면에서는 가로로 잘리지 않게 레벨별 카드로 쌓습니다(머리글 숨기고 칸마다 data-label 표기). */
     .skill-card .skill-stage-table-wrap { overflow:visible; }
     .skill-growth-table tr.current { border-radius:6px; }}
-
-/* 직업 계보도: 계열 칩 → 계보 카드 → 항로도 → 상세 패널(모바일은 아래에서 올라오는 창). */
-/* 세 칸: ① 계보 카드 · ② 항로도 · ③ 직업 상세 */
-.job-columns { display:grid; grid-template-columns:minmax(250px,.95fr) minmax(260px,1fr) minmax(300px,1.1fr); gap:18px; align-items:start; }
 .job-columns>.panel, .job-lineage-column { min-width:0; padding:18px; display:flex; flex-direction:column; gap:12px; }
-.job-column-title { display:flex; align-items:center; gap:7px; font-size:16px; margin:0; color:#e4ece7; }
-.job-column-title span { color:#8fab9f; font-size:15px; }
-.job-tree-chips { display:flex; flex-wrap:wrap; gap:5px; }
-.job-tree-chip { display:flex; align-items:center; gap:6px; padding:6px 10px; border:1px solid var(--border); border-radius:99px; background:#132226; color:#9fb6ae; font-size:12px; white-space:nowrap; }
-.job-tree-chip span { color:#7f988f; font-size:11px; }
 .job-tree-chip.active { color:#e8efe9; border-color:var(--tree-color); background:#1a2e31; box-shadow:inset 0 0 0 1px var(--tree-color); }
-.job-family-description { border-left:3px solid; padding:1px 0 1px 10px; margin:0; font-size:12px; line-height:1.7; }
-.lineage-list { display:flex; flex-direction:column; gap:8px; }
-.lineage-item { display:flex; flex-direction:column; align-items:flex-start; gap:4px; text-align:left; padding:12px 14px; border:1px solid #34494c; border-radius:9px; background:#122126; color:#dfe7e3; }
-.lineage-item strong { font-size:15px; }
-.lineage-item small { font-size:12px; color:#95aca5; line-height:1.55; }
 .lineage-item .lineage-status.ready { color:#b6e0cc; }
-.lineage-item.has-current .lineage-status { color:var(--gold); }
 .lineage-item.selected { border-color:var(--tree-color); box-shadow:0 0 0 1px var(--tree-color); background:#17282c; }
-.lineage-dots { display:flex; align-items:center; gap:5px; }
-.lineage-dots i { width:9px; height:9px; border-radius:50%; border:1px solid #c9d6d0; }
 .lineage-dots i.reached { background:#e6ede9; }
-.lineage-dots em { font-style:normal; font-size:12px; color:#95aca5; margin-left:4px; }
-.route-summary { margin:0; font-size:12px; color:#95aca5; line-height:1.7; }
-.route-steps { display:flex; flex-direction:column; align-items:stretch; }
-.route-arrow { align-self:center; color:#5d7571; margin:4px 0; }
-.route-step { display:flex; flex-direction:column; gap:6px; }
-.route-step.branch { padding:6px; border:1px dashed #33494b; border-radius:10px; }
-.route-card { display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; padding:12px 14px; border:1px solid #34494c; border-radius:9px; background:#122126; color:#dfe7e3; }
-.route-card strong { font-size:15px; }
-.route-card .route-tier { font-family:var(--font-display); color:#8fab9f; margin-right:2px; }
-.route-note { font-size:12px; color:#95aca5; }
 .route-note.current { color:var(--gold); }
 .route-note.mastered { color:#e8d39a; }
 .route-note.ready { color:#b6e0cc; }
 .route-note.near { color:#e7c98c; }
 .route-note.locked { color:#d9a197; }
-.route-from { font-size:11px; color:#c6b58a; }
 .route-card.selected { border-color:#5b9be6; box-shadow:0 0 0 1px #5b9be6; background:#15232f; }
 .job-status.mastered { color:#e8d39a; border-color:#8a7440; }
 .job-status.near { color:#e7c98c; border-color:#6d5f3f; }
-.job-detail-slot { position:sticky; top:16px; min-width:0; }
-.job-sheet-backdrop, .job-sheet-close { display:none; }
-.job-sheet { position:relative; display:flex; flex-direction:column; padding:18px 18px 0!important; gap:8px!important; }
-.job-inspector>h2.job-column-title { font-size:16px; margin:0; }
-.job-detail-title { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.job-detail-title h2 { font-size:24px; margin:4px 0 0; }
 .job-detail-title .job-status { margin-left:0; }
-.job-detail-sub { margin:0; font-size:13px; color:#a8bcb3; }
-.job-sheet .job-motto { margin:0; }
 .job-detail-tabs.game-tabs { width:100%; display:flex; margin:6px 0 0; }
-.job-detail-tabs [data-slot=tabs-trigger] { flex:1; font-size:13px; }
-.job-detail-body { padding-bottom:10px; }
-.job-detail-body>p { font-size:14px; line-height:1.8; color:#a8bcb3; }
-.job-cross { font-size:13px; color:#c6b58a!important; }
-.job-req-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
-.job-req-list li>span { display:flex; align-items:center; gap:6px; font-size:13px; margin-bottom:4px; }
 .job-req-list li.met>span { color:#b6e0cc; }
 .job-req-list li.missing>span { color:#e7b2a6; }
-.job-req-list small { font-size:12px; color:#8fa2a6; }
-.job-sheet-footer { display:flex; gap:8px; padding:14px 0 18px; margin-top:auto; background:#15252a; border-top:1px solid var(--border); }
-.job-sheet-footer>button { flex:1; }
-/* 직업 3단계: 빠른 찾기 · 검색·태그 · 비교 · 실루엣 */
-.job-finder { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
-.job-finder-chip { display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border:1px solid var(--border); border-radius:8px; background:#132226; color:#b8c9c2; font-size:13px; }
-.job-finder-chip b { color:#e8d39a; font-weight:700; }
 .job-finder-chip.active { border-color:#d5b36c; background:#223329; color:#f1e8cf; }
-.job-search { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 14px; }
-.job-search-box { display:flex; align-items:center; gap:6px; padding:0 10px; min-width:200px; border:1px solid var(--border); border-radius:8px; background:#101c20; color:#8fa2a6; }
-.job-search-box input { flex:1; min-width:0; padding:7px 0; background:none; border:0; outline:none; color:#e8efe9; font-size:13px; }
-.job-tag-chips { display:flex; flex-wrap:wrap; gap:4px; }
-.job-tag-chip { flex:0 0 auto; white-space:nowrap; padding:4px 8px; border:1px solid transparent; border-radius:99px; background:#132226; color:#8fa89f; font-size:11px; }
 .job-tag-chip.active { border-color:#7fb8a4; color:#dff2ea; background:#1a2e31; }
-.job-list-clear { align-self:flex-start; font-size:12px; }
-.route-steps.job-list { gap:8px; }
 .route-note.secret { color:#b9a9d8; font-style:italic; }
 .job-silhouette .job-detail-title h2 { color:#8b98a3; letter-spacing:4px; }
 .job-silhouette { padding-bottom:18px!important; }
 .job-compare { margin-top:18px; padding:18px; }
-.job-compare-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; }
-.job-compare-head h2 { margin:0; }
-.job-compare-scroll { overflow-x:auto; }
-.job-compare-table { width:100%; min-width:520px; border-collapse:collapse; font-size:12px; }
-.job-compare-table th, .job-compare-table td { padding:7px 8px; border-bottom:1px solid #22363a; text-align:left; vertical-align:top; }
-.job-compare-table tbody th { color:#95aca5; font-weight:500; white-space:nowrap; width:92px; }
-.job-compare-table thead th { position:relative; padding-right:26px; }
-.job-compare-table thead th strong { display:block; font-size:14px; color:#e8efe9; }
-.job-compare-table thead th small { color:#8fa2a6; font-weight:400; }
-.job-compare-table thead th button { position:absolute; top:6px; right:4px; padding:3px; color:#8fa2a6; border-radius:4px; }
 .job-compare-table td.negative { color:#e7b2a6; }
-.job-compare-section th { color:#d5b36c!important; font-size:11px; letter-spacing:1px; padding-top:12px!important; }
-.job-compare-req { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:3px; }
-.job-compare-req li { display:flex; align-items:center; gap:4px; }
 .job-compare-req li.met { color:#b6e0cc; }
 .job-compare-req li.missing { color:#e7b2a6; }
-.job-sheet-footer { flex-wrap:wrap; }
-@media (max-width:1180px) {
-    .job-columns { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
-    .job-columns>.job-detail-slot { grid-column:1/-1; position:static; }}
-@media (max-width:767px) {
-    .job-columns { grid-template-columns:1fr; gap:12px; }
-    .job-tree-chips { flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -18px; padding:0 18px; }
-    .job-tree-chips::-webkit-scrollbar { display:none; }
-    .job-tree-chip { flex:0 0 auto; padding:8px 13px; font-size:13px; }
-    .job-tag-chips { flex:1 1 100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; }
-    .job-search-box { flex:1 1 100%; }
-    .job-columns>.job-detail-slot { display:contents; }
-    /* 전직 확인 창(z 50)이 위에 오도록 상세 창은 그 아래(45·46)에 둡니다.
-       v27.60 모바일 하단 탭바(z 60)가 창 맨 아래 전직 버튼을 덮지 않도록 창을 탭바 높이(58px)만큼 올립니다. */
-    .job-detail-slot .job-sheet { position:fixed!important; left:0; right:0; bottom:calc(58px + env(safe-area-inset-bottom)); z-index:46; max-height:calc(82vh - 58px - env(safe-area-inset-bottom)); overflow-y:auto; border-radius:14px 14px 0 0; translate:0 calc(110% + 80px); transition:translate .22s ease; box-shadow:0 -12px 32px #0009; animation:none; }
-    .job-detail-slot.sheet-open .job-sheet { translate:0 0; }
-    .job-detail-slot.sheet-open .job-sheet-backdrop { display:block; position:fixed; inset:0; z-index:45; background:#000a; }
-    .job-sheet-footer { position:sticky; bottom:0; z-index:1; }
-    .job-sheet>.job-sheet-close { display:inline-flex; position:absolute; right:14px; top:14px; width:auto; margin:0; padding:6px; color:#b8c9c2; border-radius:6px; z-index:2; }}
-
-/* v27.13 장비 감정 1·5·10개 버튼 */
-.gamble-count-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; width:100%; }
-.gamble-count-row button { width:100%; padding:9px 6px; font-size:12px; white-space:nowrap; }
 
 /* v27.40 스킬 아이콘: 원작 도트 아이콘이 흐려지지 않게 */
 .skill-art { image-rendering: pixelated; image-rendering: crisp-edges; object-fit: contain; flex-shrink: 0; }
@@ -306,73 +90,13 @@
 .altar-notice-open { display:flex; align-items:center; gap:8px; flex:1; min-width:0; padding:7px 12px; color:#f3dcb8; text-align:left; }
 .altar-notice-open span { color:#d9c3a3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .altar-notice-dismiss { padding:0 10px; color:#c4a989; }
-/* v3.31 승천 카드: 환생 준비 탭 맨 위. 환생 카드와 같은 짜임에 금빛 테두리. */
-.ascension-panel { margin-bottom: 18px; padding: 0; border-color: #6b6236; background: linear-gradient(160deg, #1c1a12, #101a1d 60%); }
-.ascension-panel .ascension-ready { padding: 24px 28px 8px; }
 .ascension-panel .ascension-ready .eyebrow { color: #e3c28d; }
-.ascension-panel .rebirth-reward strong svg { color: #e3c28d; }
-.ascension-panel .rebirth-three { margin: 0; padding: 0 18px 18px; }
-.ascension-panel .ascension-log { padding: 0 28px 18px; margin: 0; }
-@media (max-width: 767px) { .ascension-panel .ascension-ready { padding: 18px 16px 6px; } .ascension-panel .rebirth-three { padding: 0 12px 12px; } .ascension-panel .ascension-log { padding: 0 16px 14px; }}
-
-/* v3.40 숙련 진행판 */
-.mastery-summary { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:14px; padding:18px 20px; margin-bottom:14px; }
-.mastery-summary small { font-size:12px; color:#9db5ab; }
-.mastery-summary strong { display:block; font-size:24px; color:var(--gold); margin:4px 0 6px; }
-.mastery-summary strong span { font-size:13px; color:#8faead; margin-left:3px; }
-.mastery-summary p { margin:0; font-size:12px; color:#8faead; line-height:1.5; }
-.mastery-letters { padding:14px 18px; margin-bottom:14px; }
-.mastery-letters h2 { display:flex; align-items:center; gap:6px; font-size:14px; margin:0 0 8px; }
-.mastery-letters ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:4px 16px; }
-.mastery-letters li { display:flex; justify-content:space-between; font-size:12px; color:#b4ccc6; }
-.mastery-letters b { color:#a4e9ba; font-weight:600; }
-.mastery-filter { display:flex; gap:6px; margin:0 0 12px; }
-.mastery-tree { padding:0; margin-bottom:10px; overflow:hidden; }
-.mastery-tree > summary { display:flex; align-items:center; gap:10px; padding:14px 18px; cursor:pointer; list-style:none; }
-.mastery-tree > summary::-webkit-details-marker { display:none; }
-.mastery-tree > summary h2 { font-size:15px; margin:0; }
-.mastery-tree > summary small { font-size:12px; color:#9db5ab; white-space:nowrap; }
 .mastery-tree > summary .meter { flex:1; min-width:60px; }
-.mastery-tree-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
-.mastery-chevron { color:#7f9c98; transition:transform .2s; flex-shrink:0; }
-.mastery-tree[open] .mastery-chevron { transform:rotate(180deg); }
-.mastery-rows { list-style:none; margin:0; padding:0 18px 12px; display:grid; gap:6px; }
-.mastery-row { display:grid; grid-template-columns:minmax(0, 220px) 1fr; gap:14px; align-items:center; padding:7px 10px; border:1px solid var(--border); border-radius:7px; background:#0f2227; }
-.mastery-row.state-current { border-color:#6fb7a0aa; }
-.mastery-row.state-done { border-color:#d5b36c55; }
-.mastery-row.state-locked { opacity:.6; }
-.mastery-name { display:flex; flex-direction:column; align-items:flex-start; gap:2px; background:none; border:0; padding:0; color:inherit; cursor:pointer; text-align:left; min-width:0; }
-.mastery-name b { font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
-.mastery-name small { font-size:11px; color:#8faead; }
-.mastery-row.state-done .mastery-name small { color:#e8d39a; }
-.mastery-meter small, .mastery-none { font-size:11px; color:#8faead; }
-.mastery-empty { padding:0 18px 14px; font-size:13px; color:#8faead; margin:0; }
-@media (min-width:1100px) { .mastery-rows { grid-template-columns:repeat(2, minmax(0, 1fr)); } .mastery-row { grid-template-columns:minmax(0, 170px) 1fr; }}
-@media (max-width:767px) {
-    .mastery-summary { grid-template-columns:1fr 1fr; padding:14px; }
-    .mastery-row { grid-template-columns:1fr; gap:6px; }
-    .mastery-tree > summary { padding:12px 14px; flex-wrap:wrap; }
-    .mastery-rows { padding:0 12px 12px; }}
-
-/* v3.40 승천 편의: 자동 환생 · 연구 구매 예약 */
-.automation-panel { padding:18px 20px; margin-bottom:14px; }
 .automation-panel.locked { opacity:.7; }
 .automation-panel .section-title { gap:10px; }
 .automation-panel .section-title h2 { display:flex; align-items:center; gap:6px; margin-right:auto; }
 .automation-panel .section-title span { font-size:12px; color:#9db5ab; }
-.automation-panel > p { font-size:13px; color:#a5bcb0; line-height:1.6; margin:6px 0 10px; }
-.automation-row { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-.automation-row label { display:flex; align-items:center; gap:8px; font-size:13px; color:#b4ccc6; }
-.automation-row select { min-width:0; max-width:100%; }
-.research-plan-list { list-style:decimal inside; margin:0 0 10px; padding:0; display:grid; gap:5px; }
-.research-plan-list li { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:6px 10px; border:1px solid var(--border); border-radius:6px; background:#0f2227; font-size:13px; }
-.research-plan-list li::marker { color:#7f9c98; }
-.research-plan-list li > span:first-child { display:inline-flex; gap:8px; align-items:baseline; flex:1; min-width:0; }
-.research-plan-list li small { color:#8faead; font-size:12px; }
 .research-plan-list li.done b { color:#a4e9ba; }
-.research-plan-actions { display:inline-flex; gap:4px; flex-shrink:0; }
-.research-plan-empty { font-size:13px; color:#8faead; margin:0 0 10px; }
-.automation-note { font-size:12px; color:#8faead; margin:8px 0 0; }
 .appraisal-pity .muted { color:var(--muted); font-size:12px; }
 .imprint-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
 .imprint-row label { display:grid; gap:4px; font-size:12px; color:var(--muted); min-width:160px; max-width:100%; }
@@ -393,10 +117,7 @@
 .admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
 /* v3.72 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
 .shop-body { min-height:620px; }
-.draw-desc { margin:0; min-height:3.6em; line-height:1.8; }
-.draw-cost { margin:0; min-height:1.6em; }
-.draw-actions { min-height:44px; }
-@media(max-width:767px){ .gamble-count-row { grid-template-columns:minmax(0,1fr); } .shop-body { min-height:0; } .draw-desc { min-height:7.2em; }}
+@media(max-width:767px){ .shop-body { min-height:0; }}
 /* v3.79 접었다 펴는 구역(Fold): 제목 줄 전체가 누름 단추, 오른쪽 화살표가 접히면 돌아갑니다. */
 .fold>summary { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
 .fold>summary::-webkit-details-marker { display:none; }
@@ -404,7 +125,6 @@
 .fold-chevron { flex:none; color:#8fa6a4; transition:transform .15s ease; }
 .fold:not([open])>summary .fold-chevron { transform:rotate(-90deg); }
 .fold[open]>summary { margin-bottom:12px; }
-.stats-fold-plain { margin-bottom:16px; }
 /* v3.79 제단 모바일: 탭이 화면 밖으로 나가지 않게 줄바꿈, 게이지 제목과 효과는 위아래로. */
 @media (max-width:600px) {
     .altar-tabs { display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); width:100% !important; height:auto !important; }
@@ -412,26 +132,12 @@
     .altar-tabs svg { display:none; }
     .altar-gauge-head { flex-direction:column; align-items:flex-start; gap:2px; }
 }
-
-/* v3.186 던전 난이도 안내(헬 · 나이트메어가 누구를 위한 난이도인지) */
-.dungeon-mode-note { display:block; font-size:12px; color:#98b1b1; margin-top:6px; line-height:1.6; }
-/* v3.204 던전 주화 상점 · 보스 코어 칸 */
-.dshop-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:14px; margin:14px 0; }
-.dshop-card { padding:22px; display:flex; flex-direction:column; gap:12px; }
-.dshop-card .draw-cost { margin-top:auto; }
-.dshop-card .draw-actions { min-height:0; }
-.dshop-card h2 { font-size:18px; }
-.dshop-card .draw-desc { min-height:0; }
-.dshop-card .draw-controls { min-height:0; }
-.dshop-card .gamble-count-row { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
 .core-slot { margin-bottom:14px; }
 .core-slot-body { display:grid; gap:4px; min-width:0; }
 .core-slot-body strong { font-size:15px; color:var(--rarity); }
 .core-slot-body small { font-size:12px; color:#8fa6a4; line-height:1.6; }
 .core-slot .gear-slot-upgrade select { min-height:30px; max-width:220px; }
-.dungeon-coin-link { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
-.dungeon-coin-link b { color:var(--gold); }
-@media(max-width:767px){ .dungeon-coin-link { padding:12px 14px; } .dungeon-coin-link button { flex:1 1 100%; } .dshop-grid { grid-template-columns:minmax(0,1fr); } .dshop-card { min-height:0; } .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; }}
+@media(max-width:767px){ .core-slot .gear-slot-upgrade { flex-direction:column; align-items:stretch; } .core-slot .gear-slot-upgrade select { max-width:none; }}
 .core-tile.locked { opacity:.5; }
 .core-tile.locked svg { color:#5a6f71; }
 .core-tile.worn svg { color:#d6b879; }
@@ -447,67 +153,8 @@
 /* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
 .mkt-up { color:#e8746b; }
 .mkt-down { color:#6fa8e6; }
-.mkt-open { padding:22px; display:grid; gap:12px; margin:14px 0; }
-.mkt-open button { justify-self:start; }
-.mkt-rules { margin:0; padding-left:18px; display:grid; gap:6px; color:#a8bdb6; font-size:13px; line-height:1.6; }
-.mkt-stop { display:flex; align-items:flex-start; gap:10px; padding:12px 18px; margin:14px 0; font-size:13px; line-height:1.6; color:#f3d2cd; border-color:#7a3b36; background:rgba(122,59,54,.18); }
-.mkt-stop svg { flex:none; color:#e8746b; margin-top:2px; }
-.mkt-stop b { color:#ffb4ab; margin-right:4px; }
-.mkt-rumor { display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; padding:12px 18px; margin:14px 0; font-size:13px; color:#a8bdb6; }
-.mkt-rumor b { color:var(--gold); margin-right:4px; }
-.mkt-rumor small { margin-left:auto; color:var(--muted); }
-.mkt-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
-.mkt-price { display:grid; justify-items:end; gap:2px; }
-.mkt-price strong { font-size:20px; font-variant-numeric:tabular-nums; }
-.mkt-price small { font-size:12px; font-variant-numeric:tabular-nums; }
-.mkt-spark { width:100%; height:56px; display:block; color:var(--muted); }
-.mkt-spark-empty { display:grid; place-items:center; font-size:12px; border:1px dashed var(--border); border-radius:var(--radius-md); }
-.mkt-hold { font-size:13px; margin:0; font-variant-numeric:tabular-nums; }
-.mkt-qty { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
-.mkt-qty label { display:flex; align-items:center; gap:8px; font-size:13px; color:#a8bdb6; }
-.mkt-qty input { width:96px; min-height:32px; padding:4px 10px; border:1px solid var(--border); border-radius:var(--radius-md); background:var(--background); color:var(--foreground); font-variant-numeric:tabular-nums; }
-.mkt-qty button { min-height:32px; }
-.mkt-journal { padding:18px 22px; margin:14px 0; display:grid; gap:10px; }
-.mkt-journal header { display:flex; justify-content:space-between; align-items:center; }
-.mkt-journal h3 { margin:0; font-size:15px; }
-.mkt-journal ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; font-size:13px; max-height:260px; overflow:auto; }
-.mkt-journal li span { color:var(--muted); margin-right:8px; font-variant-numeric:tabular-nums; }
-.mkt-journal p { margin:0; font-size:12px; }
-@media(max-width:767px){ .mkt-rumor { padding:12px 14px; } .mkt-rumor small { margin-left:0; flex-basis:100%; } .mkt-journal { padding:16px 14px; }}
-/* v3.215 스토리 탭(모험 일지): 진행 줄 · 장 제목 · 장면 카드 · 잠긴 장면 */
-.story-progress { display:flex; flex-wrap:wrap; align-items:center; gap:10px 14px; padding:14px 18px; margin:14px 0; font-size:14px; color:#a8bdb6; }
-.story-progress svg { color:var(--gold); flex:none; }
-.story-progress b { color:var(--foreground); font-size:16px; }
-.story-new { font-style:normal; color:var(--gold); margin-left:6px; }
-.story-bar { flex:1 1 160px; height:6px; border-radius:999px; background:var(--border); overflow:hidden; }
-.story-bar i { display:block; height:100%; background:var(--gold); border-radius:inherit; }
-.story-part { margin:26px 0 6px; }
-.story-part-title { display:flex; align-items:baseline; gap:10px; margin:0 0 4px; padding-bottom:10px; border-bottom:1px solid var(--border); font-size:20px; letter-spacing:.02em; }
-.story-part-title span { color:var(--gold); }
-.story-part-title small { margin-left:auto; font-size:12px; color:var(--muted); font-weight:400; }
-.story-chapter { margin:14px 0 4px; }
-.story-chapter>summary { padding:8px 4px; border-radius:var(--radius-md); }
-.story-chapter>summary:hover { background:rgba(212,181,121,.06); }
-.story-chapter>summary h2 { font-size:16px; color:var(--gold); margin:0; }
 .story-chapter>summary .section-title { display:flex; align-items:baseline; gap:10px; }
 .story-chapter>summary .section-title>span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
-.story-list { display:grid; gap:10px; }
-.story-scene { padding:18px 22px; display:grid; gap:8px; }
-.story-scene-head { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
-.story-scene-head::-webkit-details-marker { display:none; }
-.story-scene-head h3 { flex:1; min-width:0; }
-.story-scene-chevron { flex:none; color:#8fa6a4; transition:transform .15s ease; }
-details.story-scene:not([open]) .story-scene-chevron { transform:rotate(-90deg); }
-details.story-scene { padding:14px 20px; }
-details.story-scene[open] { padding-bottom:18px; }
-details.story-scene:not([open]):hover { border-color:#3a5258; }
-.story-scene-body { display:grid; gap:8px; margin-top:10px; }
-.story-scene h3 { margin:0; font-size:16px; display:flex; align-items:center; gap:8px; }
-.story-scene time { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
-.story-scene p { margin:0; font-size:14px; line-height:1.8; color:#cfdcd8; word-break:keep-all; }
-.story-badge { font-size:11px; letter-spacing:.08em; padding:2px 6px; border-radius:var(--radius-sm); background:var(--gold); color:#1a1408; }
-.story-locked { display:flex; align-items:center; gap:8px; padding:12px 18px; font-size:13px; color:var(--muted); border-style:dashed; }
-@media(max-width:767px){ .story-scene { padding:16px 14px; } .story-progress { padding:12px 14px; }}
 /* v3.216 스토리 삽화: 장 배너(가로 4:1, 그림 없으면 SVG 풍경) · 장면 그림(파일이 있을 때만, 16:9) */
 .story-banner { position:relative; margin:0 0 12px; aspect-ratio:4 / 1; max-height:230px; width:100%; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:#0b1418; }
 .story-banner svg, .story-banner img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
@@ -520,29 +167,9 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .story-banner img.ready, .story-scene-art img.ready { opacity:1; }
 .story-scene-art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
 @media(max-width:767px){ .story-banner { aspect-ratio:3 / 1; }}
-
-/* v3.220 전직 화면 세계 목차(책). 왼쪽 표지 장 · 오른쪽 목차 장, 좁은 화면에서는 위아래로 쌓습니다. */
-.job-world-book { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.3fr); gap:0; padding:0; overflow:hidden; border-radius:12px; background:linear-gradient(90deg,#1a2a2f 0%,#15232a 48%,#0d171b 50%,#15232a 52%,#1a2a2f 100%); box-shadow:0 10px 26px #0006, inset 0 0 0 1px #3a4f50; }
-.world-book-page { margin:0; padding:26px 24px; display:flex; flex-direction:column; gap:10px; min-width:0; }
-.world-book-cover { align-items:flex-start; justify-content:center; color:var(--gold); border-right:1px solid #0a1215; }
-.world-book-cover small { color:#8fab9f; letter-spacing:.12em; font-size:11px; }
-.world-book-cover h2 { margin:0; font-size:24px; color:#efe6cf; }
-.world-book-cover p { margin:0; font-size:13px; line-height:1.8; color:#a8bcb3; }
-.world-book-index { list-style:none; border-left:1px solid #2c3d41; }
-.world-chapter { width:100%; display:flex; flex-direction:column; align-items:flex-start; gap:3px; text-align:left; padding:12px 14px 12px 16px; border:1px solid #34494c; border-left:4px solid var(--world-color,#5a6b6e); border-radius:9px; background:#122126; color:#dfe7e3; }
 .world-chapter:not(.locked):hover { background:#18292e; border-color:var(--world-color); }
 .world-chapter.current { box-shadow:inset 0 0 0 1px var(--world-color); }
-.world-chapter-no { font-size:11px; letter-spacing:.08em; color:var(--world-color,#7f988f); }
-.world-chapter strong { font-size:16px; display:flex; align-items:center; gap:5px; }
-.world-chapter small { font-size:12px; color:#95aca5; }
-.world-chapter em { font-style:normal; font-size:12px; color:#b6e0cc; }
 .world-chapter.locked { opacity:.55; border-style:dashed; border-left-style:solid; cursor:not-allowed; }
-.job-world-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-.job-world-name { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--world-color); }
-@media (max-width:767px) {
-    .job-world-book { grid-template-columns:1fr; background:#15232a; }
-    .world-book-cover { border-right:0; border-bottom:1px solid #0a1215; padding:20px 16px; }
-    .world-book-index { border-left:0; padding:16px; }}
 
 /* v3.276 물건도감 칠흑 카드의 천장 표시 */
 .onyx-pity { display:grid; gap:4px; margin:4px 0 8px; font-size:12px; color:#c9dbd2; }
@@ -559,13 +186,6 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .affix-glossary-stat { font-size:12px; color:#9fd0c1; min-width:0; overflow-wrap:anywhere; }
 .affix-glossary small { grid-column:1 / -1; font-size:12px; line-height:1.45; color:#9fb5b2; word-break:keep-all; overflow-wrap:anywhere; }
 .help-rule .affix-glossary { max-height:320px; }
-
-/* 원정대(오토배틀러) 2단계 화면. 비용 색은 등급 색(일반 · 희귀 · 영웅 · 전설 · 신화)을 빌립니다. */
-.exp-start { padding:22px; display:flex; flex-direction:column; gap:14px; }
-.exp-start h2 { font-size:20px; margin:0; }
-.exp-bar { margin-bottom:16px; }
-.exp-board-panel { margin-bottom:16px; }
-.exp-board-panel { padding:18px; }
 .exp-board { display:grid; grid-template-columns:44px repeat(4,minmax(0,1fr)); gap:6px; align-items:stretch; padding:6px; margin:-6px; border-radius:8px; background:var(--exp-board-bg, transparent); }
 .exp-row-label { font-size:12px; color:#8fa6a4; display:flex; align-items:center; }
 .exp-cell { min-height:58px; border:1px dashed var(--exp-cell-border, #3a5250); border-radius:6px; background:var(--exp-cell-bg, #0f2227); display:flex; flex-direction:column; align-items:stretch; justify-content:center; gap:2px; color:inherit; min-width:0; }
@@ -584,17 +204,12 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-item.picked { background:#e0b36a; color:#1b2f30; }
 .exp-item.combo { border-color:#7fd6a0; color:#bff0cf; }
 .exp-item.combo small { margin-left:4px; font-size:11px; color:#7fd6a0; }
-/* 7단계 상자 선택지 · 조합표 */
-.exp-box { margin:0 0 10px; padding:8px 10px; border:1px solid #8a7440; border-radius:6px; background:#2b2a1d; }
 .exp-box .section-title { margin-bottom:6px; }
 .exp-box-choices { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-bottom:6px; }
 .exp-box-choice { display:flex; flex-direction:column; gap:3px; padding:8px 6px; border-radius:5px; border:1px solid #e0b36a; background:#1f1e14; color:#f0dcae; cursor:pointer; text-align:center; min-width:0; }
 .exp-box-choice b { font-size:13px; }
 .exp-box-choice small { font-size:11px; color:#c9b68a; line-height:1.3; }
 .exp-box-choice:hover:not(:disabled) { background:#3a3722; }
-.exp-combos { margin:0 0 10px; font-size:12px; }
-.exp-combos summary { cursor:pointer; color:#c9b68a; }
-.exp-combos ul { margin:4px 0 0; padding-left:16px; display:grid; gap:2px; }
 @media (max-width:480px) { .exp-box-choices { grid-template-columns:1fr; } .exp-box-choice { flex-direction:row; align-items:center; justify-content:space-between; text-align:left; }}
 .exp-cell b { font-size:12px; line-height:1.2; text-align:center; word-break:keep-all; }
 .exp-cell small, .exp-bench small, .exp-card small { font-size:11px; color:#9dadaf; }
@@ -607,12 +222,7 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-traits button.max { background:#2f5a3f; color:#eaf5df; }
 .exp-traits button.open { border-color:#8fc7a4; }
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
-.exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; }
-/* 18단계 모바일 정리: 소개 접기 · 체력 막대 · 간결한 상태 줄 · 고정 전투 버튼 · 벤치 · 상점 도움말 */
-.exp-intro-more { margin-top:6px; font-size:13px; } .exp-intro-more summary { cursor:pointer; color:#8fc7a4; } .exp-intro-more p { margin-top:6px; color:#9dadaf; line-height:1.6; }
-.exp-xp { display:block; font-size:11px; color:#8fa6a4; margin-top:2px; }
-.exp-hpbar { display:block; height:4px; border-radius:2px; background:#13262b; margin-top:4px; overflow:hidden; } .exp-hpbar b { display:block; height:100%; background:linear-gradient(90deg,#e08a7a,#f0b48f); border-radius:2px; }
-.exp-shop-help { margin-top:10px; font-size:12px; } .exp-shop-help summary { cursor:pointer; color:#8fc7a4; } .exp-shop-help .footnote { margin-top:6px; }
+.exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; } .exp-shop-help .footnote { margin-top:6px; }
 @media (max-width:640px) {
     .exp-bar.port-resource-bar { grid-template-columns:repeat(6, minmax(0,1fr)); padding:12px 12px 10px; gap:10px 8px; margin-bottom:10px; border-radius:10px; }
     .exp-bar.port-resource-bar > div { flex-direction:column; align-items:flex-start; gap:2px; grid-column:span 2; }
@@ -620,67 +230,33 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
     .exp-bar.port-resource-bar svg { width:16px; height:16px; }
     .exp-bar.port-resource-bar span { font-size:11px; }
     .exp-bar.port-resource-bar strong { font-size:20px; margin-top:0; line-height:1.2; } .exp-bar.port-resource-bar strong small { font-size:11px; }
-    .exp-board-panel, .exp-start { padding:14px 12px; } .exp-drawer-head { padding:12px; } .exp-drawer-body { padding:0 12px 14px; grid-template-columns:1fr; gap:12px; } .exp-drawer-hint { padding:0 12px 12px; }
     .exp-row-label { font-size:11px; }
-    .exp-actions { position:sticky; bottom:calc(58px + env(safe-area-inset-bottom) + 8px); z-index:30; margin:8px -12px -14px; padding:10px 12px 12px; background:#0f1f24f2; backdrop-filter:blur(6px); border-top:1px solid #1f3a3b; border-radius:0 0 10px 10px; }
     .exp-actions .primary, .exp-actions button { min-height:44px; }
     .exp-bench li { padding:8px 10px; } .exp-bench li > div.exp-bench-unit:first-child { flex-direction:row; align-items:center; gap:10px; } .exp-bench li > div.exp-bench-unit:first-child > div { display:flex; flex-direction:column; min-width:0; } .exp-bench .button-row { gap:6px; } .exp-bench .button-row button { flex:1; padding:7px 6px; font-size:12px; min-height:36px; }
     .exp-card { padding:8px 4px; } .exp-card b { font-size:12px; } .exp-card small { font-size:11px; }
     .exp-traits button { padding:4px 7px; font-size:11px; }
-    .exp-todo { font-size:12px; padding:7px 10px; } .exp-rule { font-size:12px; }
-    .exp-recent li { grid-template-columns:auto 1fr; } .exp-recent li > span:last-of-type { grid-column:2; } .exp-recent li small { grid-column:1 / 3; }}
-/* 20단계 분기 세트 */
-.exp-set { margin:0 0 12px; padding:10px 12px; border-radius:8px; background:linear-gradient(135deg,#13262b,#1b1733); border:1px solid #3a4a6a; font-size:12px; }
-.exp-set-head { display:flex; justify-content:space-between; gap:8px; align-items:baseline; margin-bottom:4px; } .exp-set-head b { font-size:15px; color:#e4ebfa; } .exp-set-head small { color:#9fb0d6; white-space:nowrap; }
+    .exp-todo { font-size:12px; padding:7px 10px; }}
 .exp-mastery-bar i.set { background:linear-gradient(90deg,#6f8fd6,#c99cf5); }
-/* v3.356 출발 화면 접기 */
-.exp-recent > summary, .exp-quest-fold > summary { cursor:pointer; color:#c9b68a; font-weight:600; font-size:12px; margin:0 0 6px; } .exp-quest-fold .exp-quest-box { margin-top:4px; }
-.exp-recent[open] > summary { margin-bottom:8px; }
-/* 19단계 본편 연결 */
-.exp-link { margin:0 0 12px; font-size:12px; } .exp-link summary { cursor:pointer; color:#c9b68a; font-weight:600; }
-.exp-link ul { margin:6px 0 0; padding-left:16px; display:grid; gap:6px; color:#9dadaf; line-height:1.5; } .exp-link li b { color:#d7dec9; }
 .exp-link-chip { display:inline-block; margin:2px 4px 0 0; padding:2px 7px; border-radius:4px; border:1px solid #2a4a46; background:#0f2227; color:#c7d6d2; font-size:11px; }
-.exp-link-chip.locked { opacity:.55; }
-/* 16단계 난이도 */
-.exp-diff { margin:0 0 12px; } .exp-diff .section-title { margin-bottom:6px; }
+.exp-link-chip.locked { opacity:.55; } .exp-diff .section-title { margin-bottom:6px; }
 .exp-diff-list { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:6px; }
 .exp-diff-card { display:flex; flex-direction:column; gap:3px; padding:8px 6px; border-radius:6px; border:1px solid #2a4a46; background:#0f2227; color:#c7d6d2; cursor:pointer; text-align:left; min-width:0; }
 .exp-diff-card b { font-size:13px; color:#d7dec9; } .exp-diff-card small { font-size:11px; line-height:1.3; color:#9dadaf; } .exp-diff-card .exp-diff-reward { color:#e0b36a; }
 .exp-diff-card.on { border-color:#8fc7a4; background:#1c3229; box-shadow:0 0 0 1px #8fc7a455; }
 .exp-diff-card.locked { opacity:.45; cursor:default; }
 @media (max-width:640px) { .exp-diff-list { grid-template-columns:repeat(2, minmax(0,1fr)); }}
-/* 15단계 심연 · 최근 판 · 도전 기록 */
-.exp-abyss-choice { margin:0 0 10px; padding:12px 14px; border-radius:8px; border:1px solid #7f6fd6; background:linear-gradient(160deg,#1b1733,#0f1a2b); }
-.exp-abyss-choice h3 { font-size:17px; margin:0 0 6px; color:#e6d6ff; } .exp-abyss-choice p { font-size:12px; color:#c3cfeb; line-height:1.5; margin:0 0 10px; }
 .exp-abyss-btn { background:linear-gradient(135deg,#4a3a8c,#7f6fd6); color:#f3ecff; }
 .exp-rule.small.abyss { border-left-color:#7f6fd6; background:#1b1733; color:#dccfff; }
 .exp-progress.abyss li { opacity:.55; } .exp-progress.abyss li.boss { opacity:.7; }
-.exp-recent { margin:0 0 12px; } .exp-recent ul { list-style:none; margin:0; padding:0; display:grid; gap:4px; }
-.exp-recent li { display:grid; grid-template-columns:auto 1fr auto; gap:8px 10px; align-items:baseline; padding:6px 10px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; font-size:12px; }
-.exp-recent li.cleared { border-color:#5fa37a; } .exp-recent li b { color:#d7dec9; } .exp-recent .when { color:#6f8a88; font-variant-numeric:tabular-nums; } .exp-recent li small { grid-column:2 / 4; }
-.exp-feats { margin:10px 0 4px; font-size:12px; } .exp-feats summary { cursor:pointer; color:#c9b68a; font-weight:600; }
-.exp-feats ul { margin:6px 0 0; padding-left:16px; display:grid; gap:3px; color:#6f8a88; } .exp-feats li.on { color:#d7dec9; } .exp-feats li.on::before { content:'✓ '; color:#8fc7a4; }
-/* 13단계 과제 · 도감 */
-.exp-quest-box { margin:10px 0 4px; } .exp-quest-box .section-title { margin-bottom:6px; }
-.exp-quest-cols { display:grid; grid-template-columns:1fr 1fr; gap:10px; } .exp-quest-cols h3 { font-size:12px; color:#9dadaf; margin:0 0 4px; font-weight:600; }
-.exp-quests { list-style:none; margin:0; padding:0; display:grid; gap:6px; }
-.exp-quests li { padding:7px 9px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; font-size:12px; display:grid; gap:3px; }
+.exp-recent li.cleared { border-color:#5fa37a; } .exp-recent .when { color:#6f8a88; font-variant-numeric:tabular-nums; } .exp-feats li.on { color:#d7dec9; } .exp-feats li.on::before { content:'✓ '; color:#8fc7a4; } .exp-quest-box .section-title { margin-bottom:6px; }
 .exp-quests li.done { border-color:#5fa37a; background:#13262b; } .exp-quests li.done .exp-quest-head b::before { content:'✓ '; color:#8fc7a4; }
-.exp-quest-head { display:flex; justify-content:space-between; gap:6px; align-items:baseline; } .exp-quest-head b { color:#d7dec9; } .exp-quest-head small { color:#c9b68a; white-space:nowrap; font-size:11px; }
-.exp-quest-bar { display:block; height:4px; border-radius:2px; background:#1b2f30; overflow:hidden; } .exp-quest-bar i { display:block; height:100%; background:linear-gradient(90deg,#e0b36a,#f0dcae); }
-.exp-codex { margin:12px 0 4px; font-size:12px; } .exp-codex summary { cursor:pointer; color:#c9b68a; font-weight:600; }
 .exp-codex-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:6px; margin-top:6px; }
 .exp-codex-unit { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); text-align:center; min-width:0; }
 .exp-codex-unit b { font-size:11px; word-break:keep-all; } .exp-codex-unit small { font-size:11px; color:#9dadaf; }
 .exp-codex-unit.unseen { opacity:.45; filter:grayscale(.6); }
 .exp-codex-unit.tier-4 { box-shadow:0 0 0 1px #cfe6ff, 0 0 12px #cfe6ff66; } .exp-codex-unit.tier-5 { box-shadow:0 0 0 1px #9ad8ff, 0 0 14px #9ad8ff99; }
-/* 21단계 명성 · 주간 리그 */
-.exp-renown { color:#f0dcae; font-weight:600; margin-left:6px; }
-.exp-renown-box { margin:8px 0 4px; padding:8px 10px; border-radius:6px; border:1px solid #e0b36a; background:#2b2a1d; } .exp-renown-box p { font-size:12px; color:#f0dcae; margin:0 0 8px; line-height:1.5; }
-.exp-league-line { margin:8px 0 2px; font-size:12px; color:#c7d6d2; } .exp-league-line b { color:#f0dcae; }
 .abyss-board tr.promote td:first-child { color:#8fe0ab; } .abyss-board tr.demote td:first-child { color:#e08a7a; }
 .exp-codex-unit.tier-1 { box-shadow:0 0 0 1px #b87333; } .exp-codex-unit.tier-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; } .exp-codex-unit.tier-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
-@media (max-width:480px) { .exp-quest-cols { grid-template-columns:1fr; }}
 /* 12단계 전투 재생 · ★ 광채 */
 .exp-cell.star-3, .exp-fighter.star-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
 .exp-cell.star-2, .exp-fighter.star-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; }
@@ -720,10 +296,7 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 @keyframes exp-pulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { .exp-fighter, .exp-fighter .float { animation:none !important; } .exp-fighter .hp i { transition:none; }}
 @media (max-width:480px) { .exp-fighter { min-height:56px; } .exp-fighter b { font-size:11px; }}
-/* 11단계 증강 · 주간 규칙 · 숙련 */
-.exp-rule { margin:-4px 0 12px; padding:8px 12px; border-radius:6px; background:#1b2436; border-left:3px solid #6f8fd6; color:#cfd9f2; font-size:13px; }
 .exp-rule.small { margin:-6px 0 12px; font-size:12px; padding:6px 10px; }
-.exp-aug-offer { margin:0 0 10px; padding:8px 10px; border:1px solid #6f8fd6; border-radius:6px; background:#161e2e; }
 .exp-aug-offer .section-title { margin-bottom:6px; }
 .exp-aug-choices { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; }
 .exp-aug-choice { display:flex; flex-direction:column; gap:3px; padding:9px 8px; border-radius:6px; border:1px solid #6f8fd6; background:#1b2436; color:#e4ebfa; cursor:pointer; text-align:left; min-width:0; }
@@ -733,12 +306,7 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-aug-choice:hover:not(:disabled) { filter:brightness(1.15); }
 .exp-augments { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:0 0 10px; font-size:12px; }
 .exp-aug { padding:3px 8px; border-radius:4px; border:1px solid #6f8fd6; background:#1b2436; color:#cfd9f2; }
-.exp-aug.tier-2 { border-color:#e0b36a; color:#f0dcae; } .exp-aug.tier-3 { border-color:#c99cf5; color:#e6d6ff; }
-.exp-mastery { margin:12px 0 4px; padding:10px 12px; border-radius:6px; background:#0f2227; border:1px solid #2a4a46; font-size:12px; }
-.exp-mastery-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; } .exp-mastery-head b { font-size:14px; color:#d7dec9; }
-.exp-mastery-bar { height:8px; border-radius:4px; background:#13262b; overflow:hidden; margin-bottom:6px; } .exp-mastery-bar i { display:block; height:100%; background:linear-gradient(90deg,#5fa37a,#8fe0ab); border-radius:4px; }
-.exp-mastery details { margin-top:6px; } .exp-mastery summary { cursor:pointer; color:#c9b68a; }
-.exp-mastery ul { margin:4px 0 0; padding-left:16px; display:grid; gap:2px; color:#6f8a88; } .exp-mastery li.on { color:#d7dec9; } .exp-mastery li.on::before { content:'✓ '; color:#8fc7a4; }
+.exp-aug.tier-2 { border-color:#e0b36a; color:#f0dcae; } .exp-aug.tier-3 { border-color:#c99cf5; color:#e6d6ff; } .exp-mastery li.on { color:#d7dec9; } .exp-mastery li.on::before { content:'✓ '; color:#8fc7a4; }
 @media (max-width:480px) { .exp-aug-choices { grid-template-columns:1fr; }}
 /* 10단계 라운드 진행 띠 · 보스 */
 .exp-progress { list-style:none; margin:-6px 0 10px; padding:0; display:grid; grid-template-columns:repeat(12, minmax(0,1fr)); gap:3px; }
@@ -751,8 +319,6 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-todo.boss { border-left-color:#e09a7a; background:#2b1d1d; color:#f3c9b5; }
 .exp-boss-btn { background:linear-gradient(135deg,#8c4a3a,#c26a4a); color:#fff2ea; }
 @media (max-width:480px) { .exp-progress { grid-template-columns:repeat(12, minmax(0,1fr)); gap:2px; } .exp-progress li { height:20px; font-size:11px; }}
-/* 9단계 지난 시즌 정산 */
-.exp-season { margin:0 0 10px; padding:8px 12px; border-radius:6px; background:#2b2a1d; border-left:3px solid #e0b36a; color:#f0dcae; font-size:13px; }
 /* 8단계 다음 할 일 · 상점 표시 · 배지 색 */
 .exp-todo { margin:-6px 0 12px; padding:8px 12px; border-radius:6px; background:#13262b; border-left:3px solid #5a8f87; color:#c7d6d2; font-size:13px; }
 .exp-todo.urgent { border-left-color:#e0b36a; background:#2b2a1d; color:#f0dcae; }
@@ -761,7 +327,6 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-item-badge.emblem { border-color:#9a7fd6; background:#241f33; color:#cdbbf5; }
 .exp-item-badge.tier2 { border-color:#e0b36a; background:#3a3722; color:#f5d98a; }
 .exp-box-choice.emblem { border-color:#9a7fd6; }
-.exp-actions { margin-top:8px; }
 .exp-last { margin-top:12px; font-size:13px; padding:10px 12px; border-radius:6px; background:#1b2f30; }
 .exp-last.won { border-left:3px solid #7fc48f; } .exp-last.lost { border-left:3px solid #e08a7a; }
 .exp-log { margin:8px 0 0; padding-left:16px; font-size:12px; color:#9dadaf; line-height:1.6; }
@@ -794,15 +359,11 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .theme-crown { --exp-board-bg:linear-gradient(160deg, #3a2e10, #1f1a08); --exp-cell-bg:#2e2510; --exp-cell-border:#e0b36a; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #5a4a1a 0%, #1a1408 70%); --exp-arena-border:#b08a3a; }
 .theme-abyss { --exp-board-bg:linear-gradient(160deg, #06080f, #0a0714); --exp-cell-bg:#0b0a16; --exp-cell-border:#4a3a7a; --exp-arena-bg:radial-gradient(ellipse at 50% 60%, #1a1030 0%, #030308 75%); --exp-arena-border:#2e2650; }
 .theme-legend { --exp-board-bg:linear-gradient(160deg, #0f2a22, #2a2310); --exp-cell-bg:#122a24; --exp-cell-border:#e0d36a; --exp-arena-bg:radial-gradient(ellipse at 50% 40%, #2a4a2a 0%, #2a2310 50%, #0b1a14 80%); --exp-arena-border:#a0a03a; }
-.exp-themes > summary, .exp-share > summary { cursor:pointer; color:#c9b68a; font-weight:600; font-size:12px; margin:0 0 6px; }
 .exp-theme-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(120px, 1fr)); gap:8px; margin-top:6px; }
 .exp-theme-card { display:flex; flex-direction:column; gap:4px; padding:8px; border:1px solid var(--exp-cell-border, #3a5250); border-radius:8px; background:var(--exp-board-bg, #0f2227); color:inherit; cursor:pointer; text-align:left; min-width:0; }
 .exp-theme-card i { display:block; height:22px; border-radius:5px; background:var(--exp-arena-bg, radial-gradient(ellipse at 50% 45%, #15302e 0%, #0b1a1f 70%)); border:1px solid var(--exp-arena-border, #2a4a46); }
 .exp-theme-card b { font-size:12px; } .exp-theme-card small { font-size:11px; color:#9fb3b1; }
-.exp-theme-card.on { outline:2px solid #e0b36a; } .exp-theme-card.locked { opacity:.55; cursor:default; filter:grayscale(.5); }
-.exp-share-input { display:flex; gap:6px; margin-top:6px; } .exp-share-input input { flex:1; min-width:0; font-size:12px; padding:6px 8px; border:1px solid var(--border); border-radius:6px; background:#0f2227; color:inherit; }
-.exp-target-now { margin:6px 0; padding:8px 10px; border:1px solid #5fa37a66; border-radius:6px; background:#0f2a22; font-size:12px; } .exp-target-now small { color:#9fb3b1; } .exp-target-now .button-row { margin-top:6px; }
-.exp-target-line { margin:6px 0 0; font-size:12px; color:#c5d8d2; }
+.exp-theme-card.on { outline:2px solid #e0b36a; } .exp-theme-card.locked { opacity:.55; cursor:default; filter:grayscale(.5); } .exp-target-now .button-row { margin-top:6px; }
 .exp-card { position:relative; }
 .exp-card.target { border-color:#e0b36a; box-shadow:inset 0 0 0 1px #e0b36a44; } .exp-card .exp-target-badge { position:absolute; top:4px; right:6px; font-size:12px; }
 
@@ -822,36 +383,16 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 
 /* 24단계 원정대 탭: 원정 · 과제 · 성장 · 기록 · 꾸미기. 좁은 화면에서는 한 줄에 다섯 칸. */
 .exp-tabs.game-tabs { width:100%; display:flex; margin-bottom:12px; }
-.exp-tabs [data-slot=tabs-trigger] { flex:1 1 0; min-width:0; white-space:nowrap; }
-.exp-tabs [data-slot=tabs-trigger].has-todo::after { content:''; display:inline-block; width:6px; height:6px; border-radius:50%; background:#e0b36a; margin-left:5px; vertical-align:middle; }
-.exp-tab-panel { gap:10px; }
-.exp-tab-panel > details { margin:0; }
-.exp-tab-panel .exp-mastery, .exp-tab-panel .exp-set, .exp-tab-panel .exp-quest-box, .exp-tab-panel .exp-codex, .exp-tab-panel .exp-feats, .exp-tab-panel .exp-link { margin:0; }
-.exp-set-growth { background:#0f2227; }
-@media (max-width:480px) { .exp-tabs [data-slot=tabs-trigger] { padding:10px 2px; font-size:12px; }}
-.exp-set-head { flex-wrap:wrap; } .exp-set-head b { white-space:nowrap; flex-shrink:0; }
-.exp-mastery > small, .exp-set > small, .exp-set > p.exp-league-line { display:block; margin-top:6px; }
-
-.exp-share-memo { margin-top:8px; }
-.exp-share-byline { margin:4px 0 0; font-size:12px; color:#c9b68a; }
 
 /* 24단계(2) 모바일 점검: 순위 탭이 다섯 개를 넘어 화면 밖으로 나가지 않게 줄바꿈, 전투 재생은 보드 위(할 일 줄 아래)에 두어 전투 직후 바로 보입니다. */
 .ranking-tabs.game-tabs { flex-wrap:wrap; height:auto; width:100%; display:flex; }
-.ranking-tabs [data-slot=tabs-trigger] { white-space:nowrap; }
 .exp-arena.above { margin:0 0 12px; }
 .ranking-tabs.game-tabs { height:auto !important; row-gap:6px; margin-bottom:14px; }
 .abyss-board .section-title { flex-wrap:wrap; row-gap:4px; } .abyss-board .section-title h2 { min-width:0; }
 
 /* 24단계(3) 상점 · 벤치 서랍: 보드 아래 한 패널, 머리줄을 누르면 접힘(기기에 기억). 넓은 화면에서는 벤치 | 상점 두 칸. */
 .exp-drawer { padding:0; }
-.exp-drawer-head { all:unset; display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; box-sizing:border-box; padding:14px 18px; cursor:pointer; color:inherit; }
-.exp-drawer-head b { font-size:15px; } .exp-drawer-head > span { display:flex; align-items:center; gap:8px; font-size:13px; color:#c9b68a; }
-.exp-drawer-head i { font-style:normal; color:#8fa6a4; } .exp-drawer-badge { font-style:normal; font-size:11px; padding:2px 7px; border-radius:10px; background:#5fa37a33; color:#a4e9ba; }
 .exp-drawer:not(.open) .exp-drawer-head { padding-bottom:6px; }
-.exp-drawer-hint { margin:0; padding:0 18px 14px; font-size:12px; }
-.exp-drawer-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:16px; padding:0 18px 18px; }
-.exp-drawer-body > div { min-width:0; }
-@media (max-width:767px) { .exp-drawer-body { grid-template-columns:1fr; gap:12px; padding:0 12px 14px; } .exp-drawer-head { padding:12px; } .exp-drawer-hint { padding:0 12px 12px; }}
 
 /* 24단계(4) 모바일 점검: 재화 막대의 큰 수가 칸을 넘지 않게(정수도 1.2억처럼 짧게 쓰고, 그래도 길면 줄바꿈). */
 .port-resource-bar>div>span { min-width:0; } .port-resource-bar strong { overflow-wrap:anywhere; }

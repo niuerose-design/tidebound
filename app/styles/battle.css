@@ -308,22 +308,12 @@
 }
 /* v25.17 합친 화면의 윗줄 탭 · 스킬 자원 카드 축소 */
 .view-tabs{margin-bottom:16px}.skill-resource-grid>.panel{padding:12px 16px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.skill-resource-grid .meter{flex-basis:100%;margin-top:4px}
-.achievement-group summary{display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#112329}
-.achievement-group summary::-webkit-details-marker{display:none}
-.achievement-group summary h3{margin:0}.achievement-group summary span{font-size:12px;color:#8ea7a4}
-.achievement-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.achievement-group[open] .achievement-chevron{transform:rotate(180deg)}
-.achievement-group[open] summary{margin-bottom:10px}
 .goal-list li>div.meter{display:block}.goal-list .meter-label{display:flex;justify-content:space-between;white-space:nowrap}
 .bonus-count.small{font-size:15px}.bonus-count.small small{font-size:11px}
-.bonus-grid{list-style:none;margin:0 0 4px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
-.bonus-grid.wide{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
-.bonus-grid li{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid #9ab4b522;border-radius:7px;background:#112329;font-size:13px}
-.bonus-grid li span{color:#a9bdb8}.bonus-grid li strong{color:#a4e9ba;font-weight:600;text-align:right;white-space:nowrap}
-.bonus-grid li.done{border-color:#4a8063}.bonus-grid li.done strong{color:#e8d39a}.bonus-grid li strong em{font-style:normal;color:#e8d39a}
+.bonus-grid li.done{border-color:#4a8063}.bonus-grid li.done strong{color:#e8d39a}
 .bonus-rows li.active{border-color:#3f6b5e}.bonus-rows li.done{border-color:#4a8063;background:#14302a}
 .bonus-rows .meter{margin:0}.bonus-rows dd.positive{color:#a4e9ba}
 .bonus-chip.seen{color:#c5d8d2;border-color:#9ab4b555}.bonus-chip.done{color:#e8d39a;border-color:#6b6236;background:#2a2b1e}
-@media(max-width:767px){.bonus-grid{grid-template-columns:1fr}}
 /* v25.19 변종 표식 */
 .variant-badge{display:inline-block;margin-right:6px;padding:1px 7px;border-radius:999px;font-size:11px;font-weight:600;vertical-align:middle}
 .variant-giant{background:#3a2a1a;color:#f0b26b}.variant-abyssal{background:#1f1a3a;color:#b9a6ff}.variant-starlit{background:#1a2f3a;color:#9fe2ff}.variant-swarm{background:#1f3a2e;color:#a4e9ba}.gear-more.muted{border-style:solid;color:#8ea7a4}
@@ -417,18 +407,7 @@
 .variant-mark.lit{color:var(--mark,#e8d39a);border-color:color-mix(in srgb,var(--mark,#e8d39a) 55%,transparent);background:color-mix(in srgb,var(--mark,#e8d39a) 14%,#0f1f25);box-shadow:0 0 8px color-mix(in srgb,var(--mark,#e8d39a) 35%,transparent)}
 .variant-mark.variant-golden{--mark:#f3d27a}.variant-mark.variant-swarm{--mark:#a4e9ba}.variant-mark.variant-giant{--mark:#f0b26b}.variant-mark.variant-abyssal{--mark:#b9a6ff}.variant-mark.variant-starlit{--mark:#9fe2ff}
 .variant-mark b{position:absolute;right:-7px;top:-7px;min-width:16px;height:16px;padding:0 3px;border-radius:8px;background:var(--mark,#e8d39a);color:#0b1a1f;font-size:11px;line-height:14px;text-align:center}
-/* v25.21 길드 관리(길드장) 접이식 */
-.guild-manage{padding:0;margin-bottom:18px}
-.guild-manage>summary{display:flex;align-items:center;gap:8px;padding:14px 18px;cursor:pointer;list-style:none;font-weight:600;color:#e8d39a}
-.guild-manage>summary::-webkit-details-marker{display:none}.guild-manage>summary small{font-weight:400;color:#8ea7a4;font-size:12px}
-.guild-manage-chevron{margin-left:auto;color:#7f9c98;transition:transform .15s}.guild-manage[open]>summary .guild-manage-chevron{transform:rotate(180deg)}
-.guild-manage-body{border-top:1px solid #9ab4b51a;padding:6px 18px 16px;display:grid;gap:14px}
-.guild-manage-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-top:12px;border-top:1px solid #9ab4b512}
-.guild-manage-row:first-child{border-top:0}.guild-manage-row h3{margin:0;font-size:14px;color:#dbe9e3}.guild-manage-row p{margin:3px 0 0;font-size:12px;color:#8ea7a4}
-.guild-manage-row.members{flex-direction:column;align-items:stretch}
-.guild-kick-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.guild-kick-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid #9ab4b522;border-radius:7px;background:#112329;font-size:13px}
-.guild-kick-list li span{display:grid;gap:2px}.guild-kick-list li small{font-size:11px;color:#7f9c98}.guild-kick-list li.empty{color:#8ea7a4;justify-content:center}
+.guild-manage-row.members{flex-direction:column;align-items:stretch}.guild-kick-list li.empty{color:#8ea7a4;justify-content:center}
 
 /* v26.3 주사위 연출(도박 기술) */
 
@@ -445,9 +424,6 @@
 @keyframes sceneDiceTumble{0%{transform:rotate(-220deg) scale(.3);opacity:0}65%{transform:rotate(18deg) scale(1.15);opacity:1}100%{transform:rotate(0) scale(1)}}
 @keyframes sceneDiceLine{0%{opacity:0;transform:translateX(-50%) translateY(8px) scale(.9)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.scene-fx-dice,.scene-fx-dice-faces span,.scene-fx-dice-line{animation:none}}
-
-/* v27.23 무한 심연 현재 층 */
-.abyss-floor{display:inline-block;margin-left:6px;padding:2px 10px;border:1px solid #d5b36c;border-radius:999px;background:rgba(213,179,108,.14);color:#ffe3a0;font-size:.55em;font-weight:700;letter-spacing:1px;vertical-align:middle;box-shadow:0 0 12px rgba(213,179,108,.35)}
 /* v27.24 5차 궁극기 전용 장면 연출(.scene-fx-ult.ult-<kind>): 어둠 + 섬광 + 두 장치(ult-a/ult-b) + 파편 8개 + 제목 */
 .scene-fx-ult{--fx:#ffe38b;position:absolute;inset:0}
 .scene-fx-ult .scene-fx-dark{inset:0;background:#040c10;animation:sceneDark 2.4s ease-in-out var(--fx-delay) both}
@@ -855,10 +831,7 @@
 .tide-fx-burn .tide-fx-fragment{animation-name:tideFragmentUp;animation-duration:.9s;font-size:13px}
 
 .battle-selector-panel .section-title .text-button{white-space:nowrap;flex:none}
-/* v27.55 해역 난이도: 최소·최대 버튼과 슬라이더 */
-.tide-controls{display:grid;gap:6px;justify-items:stretch;min-width:0}
 .tide-controls .button-row{display:flex;align-items:center;gap:6px;justify-content:flex-end;flex-wrap:wrap}
-.tide-slider{width:100%;min-width:140px;accent-color:#d5b36c}
 .battle-console>.tide-selector{flex-wrap:wrap}
 .battle-console>.tide-selector>div:first-child{flex:1 1 300px;min-width:0}
 .battle-console>.tide-selector>.tide-controls{flex:0 1 300px;margin-left:auto}
@@ -897,8 +870,6 @@
   .mobile-tab-bar{backface-visibility:hidden}}
 @media(max-width:767px){
   .battle-console .opponent-card .name-statuses{flex:none;flex-wrap:nowrap;overflow:hidden;max-width:45%}
-  /* 좁은 카드에서 칭호 배지가 이름을 밀어내지 않도록 숨깁니다(칭호는 맨 위 모험가 요약 줄에 보임). */
-  .battle-console .player-opponent .rebirth-title{display:none}
   .battle-console .opponent-card .meter-label,.battle-console .opponent-card small{font-variant-numeric:tabular-nums}}
 /* v3.13 실시간 효율 */
 .live-rates{container-type:inline-size;margin-bottom:12px;padding:12px 14px;border:1px solid #2f5658;background:linear-gradient(160deg,#0f2329,#0c1a1f 70%)}
@@ -945,7 +916,6 @@
 @keyframes sceneKkamiKillTitle{0%{opacity:0;scale:.6}15%,78%{opacity:1;scale:1}100%{opacity:0;scale:1.1}}
 @media(prefers-reduced-motion:reduce){.scene-fx-kkami-ring{display:none}}
 .battle-utility-rail>.battle-feed .rail-log{flex:1 1 0;height:auto;min-height:260px}
-.battle-feed-empty{color:#718c90;font-size:12px;margin:8px 0}
 .chat-line.news-line .chat-name{color:#e7be71}
 .chat-line.news-line .chat-text{color:#d6dfd7}
 @media(max-width:767px){.battle-utility-rail>.battle-feed .rail-log{flex:none;height:300px;min-height:0}}
@@ -964,25 +934,6 @@
 .chat-line.news-line.hacker-alert{border-left-color:#ff6b6b}.chat-line.news-line.hacker-alert .chat-name,.chat-line.news-line.hacker-alert .chat-text{color:#ff6b6b}
 /* v3.101 통계 · 기록 › 전투 기록: 몹별 최근 전투 */
 .battle-records{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(320px,100%),1fr));gap:12px;align-items:start}
-.battle-record-group{padding:12px}
-/* v3.119 몹별 접기 */
-.battle-record-mob{display:flex;align-items:center;gap:6px;width:100%;padding:2px 0;background:none;border:0;color:#cfe0d6;font:inherit;font-size:13px;text-align:left;cursor:pointer}.battle-record-mob small{margin-left:auto;color:#718c90;font-size:11px;font-weight:500}.battle-record-mob[aria-expanded=true]{margin-bottom:6px}
-.battle-record-group h3{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:0 0 4px;color:#cfe0d6;font-size:13px}
-.battle-record-group h3 small{color:#718c90;font-size:11px;font-weight:500}
-.battle-record{border:1px solid #263f42;border-radius:6px;background:#0b1a1f;margin-bottom:4px}
-.battle-record.result-win{border-left:3px solid #5f9a7a}
-.battle-record.result-lose{border-left:3px solid #b56a5f}
-.battle-record.result-flee{border-left:3px solid #7f8a8c}
-.battle-record-head{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;padding:6px 8px;border:0;background:transparent;color:#b9cbc6;font-size:12px;text-align:left;cursor:pointer}
-.battle-record-head:focus-visible{outline:2px solid #8fb39a;outline-offset:1px}
-.battle-record-title b{color:#e1e7d2;font-weight:600}
-.battle-record-title em{margin-left:4px;font-style:normal;font-weight:700}
-.result-win .battle-record-title em{color:#8fd1a8}
-.result-lose .battle-record-title em{color:#e59a8c}
-.result-flee .battle-record-title em{color:#a9b4b6}
-.battle-record-stats{color:#8ea6a2;font-size:11px}
-.battle-record-diff{color:#d7c48a;font-size:11px}
-.battle-record-toggle{display:inline-flex;align-items:center;gap:2px;color:#7f9c98;font-size:11px}
 .battle-record-log{padding:4px 8px 8px;border-top:1px solid #1d3134;max-height:420px;overflow-y:auto}
 .scene-whistle.pending{border-color:var(--gold);color:var(--gold)}
 
@@ -1844,16 +1795,8 @@ button.scene-foe-name:hover{color:#fff;text-decoration:underline dotted}
 /* v3.256 몬스터 HP 숫자: 짧은 단위(만 · 억)로 바 아래에. */
 .scene-foe-hud .player-hp-anchor{display:flex;flex-direction:column-reverse}
 .scene-foe-hp{display:block;margin-top:3px;text-align:center;font:600 11px/1.2 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:#f3e7d5;text-shadow:0 1px 3px #041219;white-space:nowrap;pointer-events:auto}
-/* v3.257 던전 진행: 장면 아래 웨이브는 작은 칩 한 줄(그림 · W번호 · 이름), 머리 줄은 촘촘하게. */
-.dungeon-run-panel .dungeon-run-header{margin-bottom:10px}
-.dungeon-run-panel .dungeon-run-header p:empty{display:none}
-.dungeon-run-panel .dungeon-wave-track{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}
-.dungeon-run-panel .dungeon-wave{flex-direction:row;align-items:center;gap:6px;min-height:0;padding:4px 10px 4px 5px;border-radius:999px}
 .dungeon-run-panel .dungeon-wave .monster-art{width:22px;height:22px;margin:0;border-radius:50%}
-.dungeon-run-panel .dungeon-wave strong{font-size:11.5px;white-space:nowrap}
 .dungeon-run-panel .dungeon-scene{margin:0}
-@media(max-width:767px){.dungeon-run-panel .dungeon-run-header{flex-direction:row;align-items:center}.dungeon-run-panel .dungeon-run-header>button{flex:none;width:auto}}
-@media(max-width:767px){.dungeon-run-panel .dungeon-run-header h2{font-size:19px}}
 /* v3.258 스킬 갈래별 기본 아이콘 색(그림 파일이 없는 스킬). 단축키 줄 · 스킬 화면 공통. */
 .skill-glyph{color:#cfe0da}
 .skill-glyph.v-pierce{color:#f1e3b6}.skill-glyph.v-slash{color:#ffe9cf}.skill-glyph.v-quake,.skill-glyph.v-impact{color:#e0b98a}.skill-glyph.v-bite{color:#b7f08a}

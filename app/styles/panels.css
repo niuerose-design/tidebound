@@ -25,19 +25,6 @@
   color:#82999f
 }
 
-.skill-symbol {
-  width:35px;
-  flex-shrink:0;
-  color:#acd4bf;
-  display:flex;
-  justify-content:center
-}
-
-.battle-skill.vacant .skill-symbol {
-  color:#546b73;
-  font-size:24px
-}
-
 .log-list {
   height:198px;
   overflow:auto;
