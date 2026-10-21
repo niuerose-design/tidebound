@@ -385,7 +385,7 @@ export const WORLDS: { id: WorldId; name: string; subtitle: string; description:
     // v3.231 제3장 이계: 세계석만 내면 들어오는 세계(Job.pearlCost). 기존과 다른 규칙으로 움직이는 계보들.
     { id: 'otherworld', name: '이계', subtitle: '세계석이 여는 세계', description: '세계석을 내면 다른 조건 없이 들어오는 세계입니다. 이계의 직업은 기존과 전혀 다른 규칙으로 움직이고, 전투 직업은 세계석을 연료로 태웁니다. 해커 · 요원 · 트레이더 계보가 있습니다.', accent: '#3fc7c0' },
     // v3.367 제4장 코프룰루 구역: 판게아 바다 너머 별의 바다. 판게아 고유 이름의 계보 2개(강철 보병 · 군체 조율사).
-    { id: 'koprulu', name: '코프룰루 구역', subtitle: '별의 바다 너머', description: '바다 위에도 바다가 있습니다. 부서진 궤도 정거장에서 주운 교범과 늪의 포자로 싸우는 두 계보가 있는 세계입니다.', accent: '#a784c9' },
+    { id: 'koprulu', name: '코프룰루 구역', subtitle: '별의 바다 너머', description: '바다 위에도 바다가 있습니다. 부서진 궤도 정거장에서 주운 교범과 늪의 포자로 싸우는 두 계보가 있는 세계입니다. 사냥터와 같이 환생 50회부터 전직할 수 있고(4차 52회 · 5차 62회), 그 전에는 미리 볼 수만 있습니다.', accent: '#a784c9' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */

@@ -673,8 +673,6 @@ export type State = {
     /** v3.231 트레이더: 동기화 때 서버가 구한 평가 손익 배율(가중 · 자름 전 손익률 × 포지션 비중). */
     marketPnl?: number;
     coreSlot?: string;
-    /** v3.210 LV1 모험가 서약으로 오른 최고 무릉도장 층(환생 · 승천해도 남음). */
-    lv1AbyssBest?: number;
     /** v3.201 주화 상점 하루 한도 상품을 산 날(한국 시간)과 그날 산 횟수(칠흑 · v3.201 성장권). */
     dungeonShopDay?: { day: string; onyx?: number; growth1?: number; growth4?: number; coreBox?: number };
     attributes: Record<Attribute, number>;
@@ -940,7 +938,7 @@ export type State = {
 export type Vows = { anchor?: boolean; breath?: boolean; rough?: number; restraint?: number; seal?: { kind: 'stage' | 'dungeon'; id: string; caught: number; exp: number } | null;
     /** v25.6 이번 생의 조건 카드: stage 지정 사냥터 경험치·골드 ×1.5, tree 지정 계열 직업 숙련 ×2, gold 골드 ×2·경험치 ×0.75. */
     focus?: { kind: 'stage' | 'tree' | 'gold'; id?: string };
-    /** v3.210 LV1 모험가(테스트용): 거는 순간의 레벨 · 경험치 · 배분 능력치를 보관하고 Lv.1로 고정합니다. 포기하면 되돌립니다. */
+    /** v3.210 LV1 모험가(테스트용)는 v3.376에 삭제됐습니다. 걸린 채 저장된 세이브를 되돌리는 migrations(restoreLv1Vow)만 읽습니다. */
     lv1?: { level: number; exp: number; attributes: Record<Attribute, number>; statPoints: number } };
 /** v3.18 침투 작전 한 판. 정답은 서버 키로만 계산하므로 여기에는 남지 않습니다. */
 export type HackerInfil = {
