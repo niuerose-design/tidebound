@@ -6,7 +6,7 @@ import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOL
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
-    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor } from '../../data/expedition';
+    activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
@@ -24,10 +24,23 @@ export const expeditionReward = (wins: number, cleared: boolean) => wins * EXPED
 export function parseSettlement(value: unknown): SeasonSettlement | null {
     if (typeof value !== 'string' || !value) return null;
     try {
-        const v = JSON.parse(value) as Partial<SeasonSettlement>;
-        if (!/^\d{4}-\d{2}$/.test(String(v.season)) || !Number.isInteger(v.rank) || !Number.isInteger(v.total)) return null;
+        const raw = JSON.parse(value) as Partial<SeasonSettlement> & { season?: unknown; league?: unknown };
+        // 21단계부터 value는 { season, league } 묶음. 옛 모양(정산 객체 그대로)도 받습니다.
+        const v = (raw && typeof raw.season === 'object' ? raw.season : raw) as Partial<SeasonSettlement> | null;
+        if (!v || !/^\d{4}-\d{2}$/.test(String(v.season)) || !Number.isInteger(v.rank) || !Number.isInteger(v.total)) return null;
         const rank = Math.max(0, v.rank!), wins = Math.max(0, Math.floor(Number(v.wins) || 0));
         return { season: v.season!, rank, total: Math.max(rank, v.total!), wins, pearls: seasonPearls(rank) };
+    } catch { return null; }
+}
+/** 21단계 주간 리그 정산(서버가 만든 값): 모양만 확인하고 세계석 · 다음 등급은 순위에서 다시 계산합니다. */
+export function parseLeagueSettlement(value: unknown): LeagueSettlement | null {
+    if (typeof value !== 'string' || !value) return null;
+    try {
+        const raw = JSON.parse(value) as { league?: Partial<LeagueSettlement> };
+        const v = raw?.league; if (!v || !/^\d{4}-W\d{2}$/.test(String(v.week)) || !Number.isInteger(v.rank) || !Number.isInteger(v.tier) || !Number.isInteger(v.size)) return null;
+        const tier = Math.max(1, Math.min(LEAGUE.tiers.length, v.tier!)), rank = Math.max(1, v.rank!), size = Math.max(rank, v.size!);
+        const nextTier = rank <= LEAGUE.promote && tier < LEAGUE.tiers.length ? tier + 1 : rank > size - LEAGUE.demote && size >= LEAGUE.demoteMin && tier > 1 ? tier - 1 : tier;
+        return { week: v.week!, tier, rank, size, score: Math.max(0, Math.floor(Number(v.score) || 0)), pearls: LEAGUE.rewards[rank - 1] ?? LEAGUE.rewards[LEAGUE.rewards.length - 1], nextTier };
     } catch { return null; }
 }
 /** 8단계 문장 고르기: 보드에서 다음 단계까지 가장 가까운(아직 최대가 아닌) 시너지의 문장. 같은 거리면 머릿수가 많은 쪽, 그래도 같으면 무작위, 시너지가 없으면 아무 문장. */
@@ -115,8 +128,8 @@ export function addSetMasteryXp(s: State, xp: number, setId: string) {
 }
 function addMasteryXp(s: State, xp: number, setId?: string) {
     addSetMasteryXp(s, xp, setId || s.expedition?.set || activeSet(Date.now()).id);
-    const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 }; m.xp += xp; m.total += xp; const before = m.level;
-    while (m.level < MASTERY_MAX && m.xp >= masteryXpFor(m.level)) { m.xp -= masteryXpFor(m.level); m.level++; }
+    const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 }, renown = s.expeditionRenown || 0; m.xp += xp; m.total += xp; const before = m.level;
+    while (m.level < MASTERY_MAX && m.xp >= masteryXpFor(m.level, renown)) { m.xp -= masteryXpFor(m.level, renown); m.level++; }
     if (m.level >= MASTERY_MAX) m.xp = 0;
     if (m.level > before) { const perks = MASTERY_PERKS.filter(p => p.level > before && p.level <= m.level); addLog(s, `원정 숙련 ${m.level} 달성${perks.length ? ` · 특전: ${perks.map(p => `${p.name}(${p.desc})`).join(', ')}` : ''}`, 'reward'); }
 }
@@ -181,7 +194,7 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     const actMult = runMods(r).actMult || 1, actPearls = Math.round(EXPEDITION.actPearls * actMult);
     const abyss = r.abyss || 0, abyssBonus = Math.floor(abyss / ABYSS.bonusEvery) * ABYSS.bonus;
     const diff = difficultyOf(r.difficulty);
-    const reward = Math.round((expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus) * diff.reward);
+    const reward = Math.round((expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus) * diff.reward * renownRewardMult(s.expeditionRenown));
     r.reward = reward; s.pearls = (s.pearls || 0) + reward;
     if (cleared) (s.expeditionDiffClears ??= {})[diff.level] = (s.expeditionDiffClears[diff.level] || 0) + 1;
     { const best = (s.expeditionDiffBest ??= {})[diff.level] || { wins: 0, abyss: 0 }; best.wins = Math.max(best.wins, r.wins); best.abyss = Math.max(best.abyss, abyss); s.expeditionDiffBest[diff.level] = best; }
@@ -201,6 +214,12 @@ export const expeditionActions: ActionHandlers = {
     expeditionStart(s, { a, now, rng }) {
         if (s.expedition && !s.expedition.done) throw Error('이미 원정이 진행 중입니다.');
         ensureQuests(s, now);
+        const league = parseLeagueSettlement(a.value);
+        if (league && s.expeditionLeague?.claimed !== league.week) {
+            const L = s.expeditionLeague ??= { tier: 1 };
+            L.claimed = league.week; L.last = league; L.tier = league.nextTier; L.best = Math.max(L.best || 0, league.nextTier); s.pearls = (s.pearls || 0) + league.pearls;
+            addLog(s, `원정 주간 리그 ${league.week} 정산 · ${leagueTierName(league.tier)} ${league.rank}위/${league.size}명 · 세계석 +${league.pearls}${league.nextTier > league.tier ? ` · ${leagueTierName(league.nextTier)}로 승급!` : league.nextTier < league.tier ? ` · ${leagueTierName(league.nextTier)}로 강등` : ''}`, 'reward');
+        }
         const settle = parseSettlement(a.value);
         if (settle && s.expeditionSeasonClaimed !== settle.season) {
             if (settle.rank) s.expeditionSeasonBest = s.expeditionSeasonBest ? Math.min(s.expeditionSeasonBest, settle.rank) : settle.rank;
@@ -342,6 +361,13 @@ export const expeditionActions: ActionHandlers = {
         (r.items ??= []).push(x.item); delete x.item;
     },
     expeditionQuit(s, { now }) { const r = run(s); finish(s, r, now, r.cleared ? (r.abyss ? `심연 ${r.abyss}라운드 뒤 마침` : '완주 뒤 마침') : `${r.round}라운드에서 포기`); },
+    /** 21단계 원정 명성: 숙련 50(최대)이고 진행 중인 판이 없을 때. 숙련을 1로 되돌리고 명성 +1(다음 주기 경험치 요구 +20%, 세계석 보상 +2%). */
+    expeditionRenown(s) {
+        if (s.expedition && !s.expedition.done) throw Error('진행 중인 원정을 마친 뒤 올릴 수 있습니다.');
+        const m = s.expeditionMastery; if (!m || m.level < MASTERY_MAX) throw Error(`원정 숙련 ${MASTERY_MAX}이 되어야 명성을 올릴 수 있습니다.`);
+        s.expeditionRenown = (s.expeditionRenown || 0) + 1; m.level = 1; m.xp = 0;
+        addLog(s, `✨ 원정 명성 ${s.expeditionRenown} · 숙련이 1로 돌아가고 다음 주기 경험치 요구 +${Math.round(RENOWN.xpGrowth * 100 * s.expeditionRenown)}%, 세계석 보상 +${Math.round(RENOWN.rewardPer * 100 * Math.min(RENOWN.rewardCap, s.expeditionRenown))}%`, 'reward');
+    },
     /** 15단계: 완주 뒤 심연으로 계속(13라운드 시작: 수입 · 상점). */
     expeditionAbyss(s, { rng }) {
         const r = run(s); if (!r.abyssChoice) throw Error('지금은 심연으로 갈 수 없습니다.');

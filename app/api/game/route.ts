@@ -14,7 +14,7 @@ import { postPlayerNews } from '@/game/server/news';
 import { collectNews, type NewsEvent } from '@/game/systems/news';
 import { vaultAfterAscend } from '@/game/server/vault';
 import { marketFeed, marketStatus } from '@/game/systems/market';
-import { pickGhosts, syncExpeditionRow, settleExpeditionSeason } from '@/game/server/expedition';
+import { pickGhosts, syncExpeditionRow, settleExpeditionSeason, syncLeagueRow, settleLeague } from '@/game/server/expedition';
 import { monthKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
 export async function POST(req: Request) { try {
@@ -25,7 +25,8 @@ export async function POST(req: Request) { try {
     // 원정대 3단계: 고스트 상대는 서버가 고릅니다(화면이 보낸 value는 버림). 2라운드부터, 같은 라운드 보드를 가진 다른 플레이어 행에서.
     if (a.type === 'expeditionFight') { const g = await pickGhosts(monthKey(Date.now()), id).catch(() => ({})); a.value = Object.keys(g).length ? JSON.stringify(g) : undefined; }
     // 원정대 9단계: 출발 때 지난달 시즌 정산을 서버가 계산해 넣습니다(화면이 보낸 value는 버림). 이미 받은 시즌이면 핸들러가 건너뜁니다.
-    if (a.type === 'expeditionStart') { const settle = await settleExpeditionSeason(id, Date.now()).catch(() => null); a.value = settle ? JSON.stringify(settle) : undefined; }
+    // 21단계: 주간 리그 정산도 함께 묶어 보냅니다({ season, league }).
+    if (a.type === 'expeditionStart') { const [settle, league] = await Promise.all([settleExpeditionSeason(id, Date.now()).catch(() => null), settleLeague(id, Date.now()).catch(() => null)]); a.value = settle || league ? JSON.stringify({ season: settle, league }) : undefined; }
     try {
         let announce = '';
         let crewFlush: CrewApply | null | undefined;
@@ -39,7 +40,7 @@ export async function POST(req: Request) { try {
         // v3.39 모험가 소식(칠흑·승천·5차 전직·무릉도장·22성·장성 진급). 저장이 끝난 뒤 한 번만 올립니다.
         if (news.length) await postPlayerNews(id, out.state, news, Date.now());
         // 원정대 3단계: 전투 · 포기 뒤 이번 달 순위 행(보드 스냅샷 포함)을 갱신합니다. 실패해도 게임 응답은 그대로.
-        if (a.type === 'expeditionFight' || a.type === 'expeditionQuit') await syncExpeditionRow(id, out.state, Date.now()).catch(e => console.error('expedition row', e instanceof Error ? e.message : e));
+        if (a.type === 'expeditionFight' || a.type === 'expeditionQuit' || a.type === 'expeditionFinish') { await syncExpeditionRow(id, out.state, Date.now()).catch(e => console.error('expedition row', e instanceof Error ? e.message : e)); await syncLeagueRow(id, out.state, Date.now()).catch(e => console.error('league row', e instanceof Error ? e.message : e)); }
         // v27.62 동기화는 클라이언트가 가진 마지막 로그 뒤의 로그만 보냅니다(log-delta.ts). v3.92 다른 행동도 같게(키가 없거나 못 찾으면 전체).
         const trimmed = trimLogs(out.state.logs, (a as { logKey?: unknown }).logKey);
         // v3.43 정보 비공개 카탈로그(docs/concept.md 10장). 화면은 단계마다 비밀 표 대신 이것을 읽게 됩니다.

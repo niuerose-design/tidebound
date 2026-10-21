@@ -5,8 +5,8 @@ import 'server-only';
  * - 전투 뒤: 이번 달 행을 갱신합니다. 이번 판이 지난 최고보다 못하면 보드 스냅샷은 두고 '판 수'만 올립니다.
  */
 import { db } from './db';
-import { monthKey, previousMonthKey } from '../data/time';
-import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, type SeasonSettlement } from '../data/expedition';
+import { monthKey, previousMonthKey, weekKey, weekSeason } from '../data/time';
+import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, type SeasonSettlement, type LeagueSettlement } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
@@ -70,4 +70,45 @@ export async function settleExpeditionSeason(id: string, now: number): Promise<S
     const rows = await db().listRankings(season, SETTLE_POOL);
     const rank = rows.findIndex(r => r.id === mine.id) + 1;
     return { season: key, rank, total: rows.length, wins: snap.wins || 0, pearls: seasonPearls(rank) };
+}
+
+// ───────────── 21단계 주간 리그 ─────────────
+/** 주간 리그 행: rankings 표(id 'league:<주>:<모험가>', season = 40,000,000 + 주 번호). 같은 등급끼리 8명씩 조(group)를 짭니다(그 주에 처음 전투한 순서). */
+export const leagueSeason = (key: string) => 40_000_000 + weekSeason(key);
+export const leagueRowId = (key: string, id: string) => `league:${key}:${id}`;
+export type LeagueSnapshot = { season: number; account: string; name: string; tier: number; group: number; bestRun: number; wins: number; runs: number; score: number; updated: number };
+const LEAGUE_POOL = 2000;
+const previousWeekKey = (now: number) => weekKey(now - 7 * 86_400_000);
+/** 전투 · 종료 뒤 이번 주 행 갱신. 점수 = 최고 판 점수 + 그 주 끝난 판들의 승리 합. 조는 처음 들어올 때 정해져 바뀌지 않습니다. */
+export async function syncLeagueRow(id: string, s: State, now: number) {
+    const r = s.expedition; if (!r?.history) return;
+    const key = weekKey(now), season = leagueSeason(key), rowId = leagueRowId(key, id), tier = Math.max(1, Math.min(LEAGUE.tiers.length, s.expeditionLeague?.tier || 1));
+    const prev = await db().getRanking(rowId, season);
+    let snap: LeagueSnapshot | null = null; try { snap = prev ? JSON.parse(prev.snapshot) as LeagueSnapshot : null; } catch { snap = null; }
+    if (!snap) {
+        const rows = await db().listRankings(season, LEAGUE_POOL);
+        let same = 0; for (const row of rows) { try { if ((JSON.parse(row.snapshot) as LeagueSnapshot).tier === tier) same++; } catch { /* 깨진 행 */ } }
+        snap = { season, account: id, name: s.name, tier, group: Math.floor(same / LEAGUE.size), bestRun: 0, wins: 0, runs: 0, score: 0, updated: now };
+    }
+    const mine = runScore({ wins: r.wins, cleared: !!r.cleared || r.round > EXPEDITION.rounds, round: Math.min(EXPEDITION.rounds, r.round), abyss: r.abyss || 0, difficulty: r.difficulty || 1 });
+    snap.bestRun = Math.max(snap.bestRun, mine); snap.name = s.name; snap.updated = now;
+    if (r.done && r.last) { snap.wins += r.wins; snap.runs++; }
+    snap.score = snap.bestRun + snap.wins;
+    await db().upsertRanking({ id: rowId, snapshot: JSON.stringify(snap), rating: snap.score, power: snap.tier, updated_at: now });
+}
+/** 내 조의 순위표(이번 주). 아직 행이 없으면 등급만 돌려줍니다. */
+export async function listLeague(key: string, id: string, tierHint = 1) {
+    const season = leagueSeason(key), rows = await db().listRankings(season, LEAGUE_POOL);
+    const snaps: LeagueSnapshot[] = []; for (const row of rows) { try { snaps.push(JSON.parse(row.snapshot) as LeagueSnapshot); } catch { /* 깨진 행 */ } }
+    const me = snaps.find(x => x.account === id);
+    const members = me ? snaps.filter(x => x.tier === me.tier && x.group === me.group).sort((a, b) => b.score - a.score || b.bestRun - a.bestRun) : [];
+    return { week: key, tier: me?.tier || tierHint, group: me?.group ?? null, joined: !!me, rows: members.map((x, i) => ({ rank: i + 1, id: x.account, name: x.name, score: x.score, bestRun: x.bestRun, wins: x.wins, runs: x.runs })) };
+}
+/** 지난주 정산: 내 조 안 순위 → 세계석 · 승급/강등. 지급 · 중복 방지는 expeditionStart 핸들러(expeditionLeague.claimed). */
+export async function settleLeague(id: string, now: number): Promise<LeagueSettlement | null> {
+    const key = previousWeekKey(now), board = await listLeague(key, id);
+    if (!board.joined) return null;
+    const rank = board.rows.findIndex(x => x.id === id) + 1, size = board.rows.length, tier = board.tier;
+    const nextTier = rank <= LEAGUE.promote && tier < LEAGUE.tiers.length ? tier + 1 : rank > size - LEAGUE.demote && size >= LEAGUE.demoteMin && tier > 1 ? tier - 1 : tier;
+    return { week: key, tier, rank, size, score: board.rows[rank - 1]?.score || 0, pearls: LEAGUE.rewards[rank - 1] ?? LEAGUE.rewards[LEAGUE.rewards.length - 1], nextTier };
 }

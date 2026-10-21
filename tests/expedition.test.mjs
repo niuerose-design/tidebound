@@ -613,3 +613,46 @@ test('expedition stage 20 (quarterly sets): quarter key and active/next set by d
     // 판 종료 때 영구 숙련과 세트 숙련이 함께 오른다.
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.wins = 3; act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); assert.equal(s.expeditionSetMastery.set, 'deepTide', 'run set wins over the stale genesis track'); assert.ok(s.expeditionMastery.total > 0);
 });
+
+test('expedition stage 21: weekly league rows group 8 per tier, list/settle promote and demote with pearls, start applies the league settlement once; renown resets mastery with scaling xp and reward bonus; codex tiers to diamond; milestone achievements and titles', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition'), T = await L.load('data/time'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    // 정산 파서: 1~2위 승급 · 7~8위 강등(6명 이상) · 세계석표.
+    const mk = (rank, size, tier = 2) => A.parseLeagueSettlement(JSON.stringify({ league: { week: '2026-W43', tier, rank, size, score: 900 } }));
+    assert.deepEqual(mk(1, 8), { week: '2026-W43', tier: 2, rank: 1, size: 8, score: 900, pearls: 15, nextTier: 3 }); assert.equal(mk(2, 8).nextTier, 3); assert.equal(mk(3, 8).nextTier, 2); assert.equal(mk(7, 8).nextTier, 1); assert.equal(mk(8, 8).pearls, 2);
+    assert.equal(mk(5, 5).nextTier, 2, 'small group: no demotion'); assert.equal(mk(1, 8, 5).nextTier, 5, 'master cannot promote'); assert.equal(mk(8, 8, 1).nextTier, 1, 'bronze cannot demote'); assert.equal(A.parseLeagueSettlement(JSON.stringify({ league: { week: 'bad', tier: 1, rank: 1, size: 8 } })), null);
+    assert.ok(A.parseSettlement(JSON.stringify({ season: { season: '2026-09', rank: 2, total: 5, wins: 6 }, league: null })), 'bundled season settlement still parses'); assert.ok(A.parseSettlement(JSON.stringify({ season: '2026-09', rank: 2, total: 5, wins: 6 })), 'legacy shape');
+    // 핸들러: 리그 정산 한 번만 · 등급 반영.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.pearls = 0;
+    const v = JSON.stringify({ season: null, league: { week: '2026-W43', tier: 1, rank: 1, size: 8, score: 500 } });
+    act(s, { type: 'expeditionStart', value: v }, now, mkRng(1)); assert.equal(s.pearls, 15); assert.equal(s.expeditionLeague.tier, 2); assert.equal(s.expeditionLeague.best, 2); assert.equal(s.expeditionLeague.claimed, '2026-W43');
+    act(s, { type: 'expeditionQuit' }, now, mkRng(1)); act(s, { type: 'expeditionStart', value: v }, now + 1, mkRng(1)); assert.equal(s.pearls, 15, 'same week once');
+    act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1));
+    // 명성: 숙련 50에서만, 숙련 1로 · 경험치 요구 ×1.2 · 보상 ×1.02.
+    assert.throws(() => act(s, { type: 'expeditionRenown' }, now + 2, mkRng(1)), /숙련 50/);
+    s.expeditionMastery = { level: 50, xp: 0, total: 70000 }; act(s, { type: 'expeditionRenown' }, now + 2, mkRng(1)); assert.equal(s.expeditionRenown, 1); assert.equal(s.expeditionMastery.level, 1); assert.equal(D.masteryXpFor(1, 1), 120); assert.equal(D.masteryXpFor(1, 0), 100); assert.ok(Math.abs(D.renownRewardMult(1) - 1.02) < 1e-9); assert.ok(Math.abs(D.renownRewardMult(99) - 1.5) < 1e-9, 'reward cap at renown 25');
+    act(s, { type: 'expeditionStart' }, now + 3, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = []; r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.wins = 10; s.pearls = 0; act(s, { type: 'expeditionQuit' }, now + 4, mkRng(1)); assert.equal(r.reward, Math.round(10 * 1.02));
+    assert.throws(() => { act(s, { type: 'expeditionStart' }, now + 5, mkRng(1)); act(s, { type: 'expeditionRenown' }, now + 5, mkRng(1)); }, /마친 뒤/); act(s, { type: 'expeditionQuit' }, now + 5, mkRng(1));
+    assert.equal(D.CODEX_TIERS.length, 5); assert.equal(D.codexTier(1000), 4); assert.equal(D.codexTier(5000), 5); assert.equal(D.codexTier(999), 3);
+    for (const id of ['expRenown:1', 'expRenown:50', 'expLeague:5', 'expTotalWins:100000', 'expRuns:10000', 'expSet:genesis']) { assert.ok(AC.ACHIEVEMENTS.find(a => a.id === id), id); assert.ok(TT.TITLES.find(t => t.id === id), `title ${id}`); }
+    assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expRenown:1').progress(s), 1); assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expLeague:3').progress(s), 2);
+    // 서버: 같은 등급 9명 → 조 0에 8명 · 조 1에 1명, 조 순위표, 지난주 정산.
+    const file = path.join(os.tmpdir(), `tb-exp21-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    try {
+        const E = await L.load('server/expedition'); const wk = now + 120 * 86_400_000, key = T.weekKey(wk);
+        const run = (wins, done = true) => ({ name: `p${wins}`, expeditionLeague: { tier: 2 }, expedition: { round: 13, wins, cleared: true, done, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }] }, startedAt: 1 } });
+        for (let i = 1; i <= 9; i++) await E.syncLeagueRow(`q${i}`, run(i), wk + i);
+        const b1 = await E.listLeague(key, 'q1'); assert.equal(b1.joined, true); assert.equal(b1.tier, 2); assert.equal(b1.group, 0); assert.equal(b1.rows.length, 8); assert.equal(b1.rows[0].id, 'q8', 'highest score first');
+        const b9 = await E.listLeague(key, 'q9'); assert.equal(b9.group, 1); assert.equal(b9.rows.length, 1);
+        assert.equal((await E.listLeague(key, 'nobody')).joined, false);
+        // 두 번째 동기화는 조를 바꾸지 않고 승리를 누적한다.
+        await E.syncLeagueRow('q1', run(4), wk + 50); const again = await E.listLeague(key, 'q1'); const me = again.rows.find(x => x.id === 'q1'); assert.equal(me.wins, 5); assert.equal(me.runs, 2); assert.equal(again.group, 0);
+        // 지난주 정산: 다음 주 시점에서 q8 1위 승급 · q1 8위 강등 · q9는 1명 조라 유지.
+        const next = wk + 7 * 86_400_000;
+        const s8 = await E.settleLeague('q8', next); assert.equal(s8.rank, 1); assert.equal(s8.nextTier, 3); assert.equal(s8.pearls, 15); assert.equal(s8.week, key);
+        const s2 = await E.settleLeague('q2', next); assert.equal(s2.rank, 8, 'q2 (2 wins) is last after q1 accumulated'); assert.equal(s2.nextTier, 1); assert.equal(s2.pearls, 2);
+        const s9 = await E.settleLeague('q9', next); assert.equal(s9.rank, 1); assert.equal(s9.size, 1); assert.equal(s9.nextTier, 3);
+        assert.equal(await E.settleLeague('nobody', next), null);
+    } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
+});

@@ -622,6 +622,9 @@ export type State = {
     expeditionAbyssBest?: number;
     expeditionFeats?: Record<string, number>;
     expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number }[];
+    /** 21단계: 원정 명성(숙련 50 초기화 횟수) · 주간 리그(등급 · 정산한 주 · 지난 정산 · 최고 등급). */
+    expeditionRenown?: number;
+    expeditionLeague?: { tier: number; claimed?: string; last?: import('./data/expedition').LeagueSettlement; best?: number };
     /** 20단계: 세트 숙련(세트가 바뀌면 처음부터) · 세트 숙련 20을 찍은 세트 id. */
     expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
     expeditionSetDone?: Record<string, number>;

@@ -1,9 +1,9 @@
 import { identity, checkOrigin, db, register, failure, listAbyssBoard, duelSeasonKey, duelRowId } from '@/game/server/store';
 import { readHacks, maskSnapshot, playerOfRow, listHackerBoard } from '@/game/server/hacks';
 import { crewBoard } from '@/game/server/crews';
-import { listExpeditionBoard } from '@/game/server/expedition';
+import { listExpeditionBoard, listLeague } from '@/game/server/expedition';
 import { power } from '@/game/systems/stats';
-import { monthSeason, monthKey } from '@/game/data/time';
+import { monthSeason, monthKey, weekKey } from '@/game/data/time';
 export const dynamic = 'force-dynamic';
 /** 서약 배지: 알려진 배지 문자열만 통과시킵니다(서약 이전 스냅샷은 빈 목록). */
 const VOW_BADGES = new Set(['anchor', 'breath', 'rough1', 'rough2', 'rough3', 'restraint1', 'restraint2', 'restraint3']);
@@ -16,6 +16,8 @@ export async function GET(req: Request) { try {
     if (new URL(req.url).searchParams.get('board') === 'hacker') { const now = Date.now(), key = monthKey(now), rows = await listHackerBoard(key), hacks = await readHacks(now); return Response.json({ month: key, rows: rows.map(r => { const self = r.id === id, out = self ? r : maskSnapshot(r, r.id, hacks, now); const { privacy: _privacy, ...rest } = out as typeof out & { privacy?: unknown }; void _privacy; return { ...rest, self }; }) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // 원정대 3단계 ?board=expedition: 이번 달 원정대 순위(최고 승수 · 완주 · 닿은 라운드).
     if (new URL(req.url).searchParams.get('board') === 'expedition') { const key = monthKey(Date.now()), rows = await listExpeditionBoard(key); return Response.json({ month: key, rows: rows.map(r => ({ ...r, self: r.id === id })) }, { headers: { 'Cache-Control': 'no-store' } }); }
+    // 21단계 ?board=league: 이번 주 원정 주간 리그(내 조 8명).
+    if (new URL(req.url).searchParams.get('board') === 'league') { const b = await listLeague(weekKey(Date.now()), id); return Response.json({ ...b, rows: b.rows.map(r => ({ ...r, self: r.id === id })) }, { headers: { 'Cache-Control': 'no-store' } }); }
     // v3.34 ?board=crew: 이번 주 해커 조직 순위(5분 캐시).
     if (new URL(req.url).searchParams.get('board') === 'crew') { const b = await crewBoard(Date.now()); return Response.json({ week: b.week, rows: b.rows }, { headers: { 'Cache-Control': 'no-store' } }); }
     const now = Date.now(), season = duelSeasonKey(now), rows = await db().listRankings(monthSeason(season), 100), hacks = await readHacks(now);

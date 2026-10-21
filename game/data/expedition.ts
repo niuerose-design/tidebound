@@ -273,7 +273,17 @@ export const weeklyRuleById = (id?: string) => WEEKLY_RULES.find(r => r.id === i
 
 /** 원정 숙련(계정 성장): 판이 끝날 때 승리 × 10 + 막 보스 × 20 + 완주 50 경험치. 레벨 n → n+1에 100 + 50 × (n − 1). 최대 50. */
 export const MASTERY_MAX = 50;
-export const masteryXpFor = (level: number) => 100 + 50 * (level - 1);
+/** 21단계 명성: 숙련 50을 찍으면 ‘원정 명성’을 올리며 숙련을 1로 되돌릴 수 있습니다. 명성마다 다음 주기의 숙련 경험치 요구 +20%, 세계석 보상 +2%(명성 25까지 반영). 방치형 장르의 환생층(Cookie Clicker 승천 · Antimatter Dimensions 무한)과 같은 역할. */
+export const RENOWN = { xpGrowth: .2, rewardPer: .02, rewardCap: 25, titles: [1, 5, 10, 25, 50] };
+export const masteryXpFor = (level: number, renown = 0) => Math.round((100 + 50 * (level - 1)) * (1 + RENOWN.xpGrowth * Math.max(0, renown)));
+export const renownRewardMult = (renown = 0) => 1 + RENOWN.rewardPer * Math.min(RENOWN.rewardCap, Math.max(0, renown));
+/** 21단계 주간 리그: 같은 등급의 모험가 8명이 한 조. 주간 점수 = 그 주 최고 판 점수 + 그 주 승리 합. 1~2위 승급 · 7~8위(6명 이상인 조) 강등. */
+export const LEAGUE = { size: 8, tiers: ['브론즈', '실버', '골드', '다이아', '마스터'], icons: ['🥉', '🥈', '🥇', '💎', '👑'], rewards: [15, 10, 10, 5, 5, 2, 2, 2], promote: 2, demote: 2, demoteMin: 6 };
+export const leagueTierName = (tier?: number) => `${LEAGUE.icons[Math.max(1, Math.min(LEAGUE.tiers.length, tier || 1)) - 1]} ${LEAGUE.tiers[Math.max(1, Math.min(LEAGUE.tiers.length, tier || 1)) - 1]}`;
+export type LeagueSettlement = { week: string; tier: number; rank: number; size: number; score: number; pearls: number; nextTier: number };
+/** 누적 이정표(수십 년 단위 목표): 총 승리 · 총 판 수. */
+export const MILESTONE_WINS = [1000, 10000, 100000];
+export const MILESTONE_RUNS = [100, 1000, 10000];
 export const masteryRunXp = (wins: number, acts: number, cleared: boolean) => wins * 10 + acts * 20 + (cleared ? 50 : 0);
 export type MasteryPerk = { level: number; id: string; name: string; desc: string; mods?: RunMods; startGold?: number; title?: string };
 export const MASTERY_PERKS: MasteryPerk[] = [
@@ -356,7 +366,7 @@ export function pickQuests(period: 'daily' | 'weekly', key: string): string[] {
 }
 export const questById = (id: string) => EXPEDITION_QUESTS.find(q => q.id === id);
 /** 유닛 도감 숙달 단계(그 유닛을 보드에 두고 이긴 라운드 수): 동 10 · 은 50 · 금 200. */
-export const CODEX_TIERS = [{ wins: 10, name: '동' }, { wins: 50, name: '은' }, { wins: 200, name: '금' }];
+export const CODEX_TIERS = [{ wins: 10, name: '동' }, { wins: 50, name: '은' }, { wins: 200, name: '금' }, { wins: 1000, name: '백금' }, { wins: 5000, name: '다이아' }];
 export const codexTier = (wins: number) => CODEX_TIERS.filter(t => wins >= t.wins).length;
 /** 13단계 관리자 집계용 조합 키: 2단계 이상(4명 이상 또는 역할 6) 켜진 시너지를 ‘id머릿수’로 정렬해 이어 붙입니다. 없으면 'none'. */
 export const compKey = (active: { trait: { id: string; tiers: { count: number }[] }; count: number; tier: number }[]) => {

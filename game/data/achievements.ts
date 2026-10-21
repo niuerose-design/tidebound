@@ -1,4 +1,4 @@
-import { FEATS, DIFFICULTIES, SETS } from './expedition';
+import { FEATS, DIFFICULTIES, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS } from './expedition';
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
 import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
@@ -176,6 +176,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'expSeasonTop:3', honor: true, group: '모험' as const, title: '원정 시즌 3위 안', desc: '월간 원정대 순위 3위 안으로 시즌을 마칩니다.', reward: {}, progress: (s: State) => s.expeditionSeasonBest && s.expeditionSeasonBest <= 3 ? 1 : 0, target: 1 },
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
+    // 21단계: 명성 · 리그 등급 · 누적 이정표(수십 년 단위 목표) 명예 업적.
+    ...RENOWN.titles.map(n => ({ id: `expRenown:${n}`, honor: true, group: '모험' as const, title: `원정 명성 ${n}`, desc: `원정 숙련 50을 ${n}번 되돌려 명성 ${n}에 이릅니다.`, reward: {}, progress: (s: State) => s.expeditionRenown || 0, target: n })),
+    ...[3, 4, 5].map(t => ({ id: `expLeague:${t}`, honor: true, group: '모험' as const, title: `주간 리그 ${LEAGUE.tiers[t - 1]}`, desc: `원정 주간 리그에서 ${LEAGUE.icons[t - 1]} ${LEAGUE.tiers[t - 1]} 등급에 오릅니다.`, reward: {}, progress: (s: State) => s.expeditionLeague?.best || 1, target: t })),
+    ...MILESTONE_WINS.map(n => ({ id: `expTotalWins:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}승`, desc: `원정대 누적 ${n.toLocaleString()}승.`, reward: {}, progress: (s: State) => s.expeditionStats?.wins || 0, target: n })),
+    ...MILESTONE_RUNS.map(n => ({ id: `expRuns:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}판`, desc: `원정대 누적 ${n.toLocaleString()}판.`, reward: {}, progress: (s: State) => s.expeditionStats?.runs || 0, target: n })),
     // 20단계: 세트 숙련 20(세트 완성) 명예 업적.
     ...SETS.map(set => ({ id: `expSet:${set.id}`, honor: true, group: '모험' as const, title: `${set.name} 세트 완성`, desc: `원정대 ${set.icon} ${set.name} 세트 숙련 20을 찍습니다.`, reward: {}, progress: (s: State) => s.expeditionSetDone?.[set.id] || 0, target: 1 })),
     // 16단계: 난이도 완주 명예 업적.
