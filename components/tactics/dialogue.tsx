@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import type { Line } from '@/game/srpg/engine/types';
 import { speakerName, portraitGlyph } from './format';
@@ -16,6 +17,6 @@ export function DialogueBox({ lines, onDone, title }: { lines: Line[]; onDone: (
             <div><strong>{speakerName(line.speaker)}</strong><p>{line.text}</p></div>
             <small>{i + 1}/{lines.length} · 눌러서 다음</small>
         </div>
-        <button type="button" className="text-button tx-skip" onClick={e => { e.stopPropagation(); onDone(); }}>건너뛰기</button>
+        <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent tx-skip" onClick={e => { e.stopPropagation(); onDone(); }}>건너뛰기</Button>
     </div>;
 }

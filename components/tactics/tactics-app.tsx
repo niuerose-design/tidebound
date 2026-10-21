@@ -1,4 +1,6 @@
 'use client';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Toaster, toast } from 'sonner';
@@ -13,7 +15,7 @@ import { BaseScreen } from './base-screen';
 import { PrepScreen } from './prep-screen';
 import { BattleScreen } from './battle-screen';
 import { DialogueBox } from './dialogue';
-import { ConfirmButton } from '@/components/game/confirm-button';
+import { ConfirmAction } from '@/components/ui/game';
 import { ResultScreen } from './result-screen';
 // 엔진이 배치 정의를 찾을 수 있게 등록(증원 · 돌격 범위).
 for (const d of DEPLOYMENTS) { DEPLOYMENTS_BY_CHAPTER[d.chapter_id] = d; for (const g of d.groups) if (g.trigger_range) TRIGGER_RANGE[`${d.chapter_id}:${g.id}`] = g.trigger_range; }
@@ -83,21 +85,21 @@ function TitleScreen({ hasSave, hasSession, onNew, onContinue, onReset }: { hasS
     const [confirmNew, setConfirmNew] = useState(false);
     return <div className="tx-title">
         <div className="tx-title-art"><span className="tx-title-wave"/></div>
-        <p className="eyebrow">판게아 전기 — 턴제 전술 모드</p>
+        <p className="tx-eyebrow">판게아 전기 — 턴제 전술 모드</p>
         <h1>소금바람 해안 전기</h1>
         <p className="tx-lead">바다가 갈라진 뒤 해적이 망루를 빼앗았다. 조류 지킴이 가문의 후계 세린이 자경단을 이끌고 가라앉은 회랑의 왕좌까지 나아가는 10장의 이야기.</p>
         <ul className="tx-title-facts"><li>10장 · 유닛 14명 · 한 전투 20~40분</li><li>이동 · 공격 · 지형 · 무기 상성 · 승급 · 영입</li><li>영구 사망은 시작할 때 캐주얼 / 클래식으로 고릅니다</li><li>기록은 이 브라우저에만 저장됩니다(본편 계정과 별개)</li></ul>
         <div className="tx-title-actions">
-            {hasSave && <button type="button" className={confirmNew ? 'secondary' : 'primary'} onClick={onContinue}>{hasSession ? '전투 이어하기' : '이어하기'}</button>}
-            {!confirmNew ? <button type="button" className={hasSave ? 'secondary' : 'primary'} onClick={() => setConfirmNew(true)}>새 전기 시작</button> : <div className="tx-mode-pick">
+            {hasSave && <Button type="button" size="sm" variant="outline" className={cn('pointer-coarse:min-h-11', !confirmNew && 'bg-accent text-accent-ink hover:bg-accent/90 border-transparent')} onClick={onContinue}>{hasSession ? '전투 이어하기' : '이어하기'}</Button>}
+            {!confirmNew ? <Button type="button" size="sm" variant="outline" className={cn('pointer-coarse:min-h-11', !hasSave && 'bg-accent text-accent-ink hover:bg-accent/90 border-transparent')} onClick={() => setConfirmNew(true)}>새 전기 시작</Button> : <div className="tx-mode-pick">
                 <div className="tx-mode-options">
                     <label className={mode === 'casual' ? 'on' : ''}><input type="radio" name="mode" checked={mode === 'casual'} onChange={() => setMode('casual')}/><strong>캐주얼</strong><span>체력이 0이 된 유닛은 그 장에서만 빠지고 다음 장에 돌아옵니다. 되감기 {REWINDS.casual}회.</span></label>
                     <label className={mode === 'classic' ? 'on' : ''}><input type="radio" name="mode" checked={mode === 'classic'} onChange={() => setMode('classic')}/><strong>클래식</strong><span>체력이 0이 된 유닛은 영원히 떠납니다. 장비는 창고로 돌아옵니다. 되감기 {REWINDS.classic}회.</span></label>
                 </div>
                 <p className="tx-note">주인공 세린이 쓰러지면 어느 모드든 그 장을 다시 합니다. 모드는 나중에 바꿀 수 없습니다.{hasSave && ' 새로 시작하면 지금 기록은 지워집니다.'}</p>
-                <div className="tx-row"><button type="button" className="primary" onClick={() => onNew(mode, MODE_NAMES[mode])}>{MODE_NAMES[mode]}로 시작</button><button type="button" className="secondary" onClick={() => setConfirmNew(false)}>취소</button></div>
+                <div className="tx-row"><Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" onClick={() => onNew(mode, MODE_NAMES[mode])}>{MODE_NAMES[mode]}로 시작</Button><Button type="button" variant="outline" size="sm" className="pointer-coarse:min-h-11" onClick={() => setConfirmNew(false)}>취소</Button></div>
             </div>}
-            {hasSave && <ConfirmButton className="text-button danger-text" label="기록 지우기" title="전기 기록을 지울까요?" description="이 브라우저의 전기 기록(진행 · 동료 · 창고)이 모두 사라집니다. 되돌릴 수 없습니다." confirmLabel="지우기" disabled={false} onConfirm={onReset}/>}
+            {hasSave && <ConfirmAction variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs text-danger pointer-coarse:min-h-11" label="기록 지우기" title="전기 기록을 지울까요?" description="이 브라우저의 전기 기록(진행 · 동료 · 창고)이 모두 사라집니다. 되돌릴 수 없습니다." confirmLabel="지우기" onConfirm={onReset}/>}
         </div>
         <p className="tx-foot"><Link href="/">← 판게아 RPG 본편으로</Link></p>
     </div>;
@@ -106,7 +108,7 @@ function EndingScreen({ campaign, onTitle, onReset }: { campaign: Campaign; onTi
     const cleared = CHAPTERS.filter(c => campaign.cleared[c.id]);
     const fallen = campaign.roster.filter(u => u.status === 'dead');
     return <div className="tx-title tx-ending">
-        <p className="eyebrow">소금바람 해안 전기 — 완결</p>
+        <p className="tx-eyebrow">소금바람 해안 전기 — 완결</p>
         <h1>등대에 불이 켜졌다</h1>
         <p className="tx-lead">익사한 왕은 잠들고 바다가 닫혔다. 갯벌에 물이 들고, 어촌의 배가 다시 뜬다. {lordUnit(campaign)?.name}과 자경단은 소금바람 해안으로 돌아간다.</p>
         <div className="tx-record">
@@ -116,7 +118,7 @@ function EndingScreen({ campaign, onTitle, onReset }: { campaign: Campaign; onTi
             <div><span>떠난 동료</span><strong>{fallen.length ? fallen.map(u => u.name).join(', ') : '없음'}</strong></div>
         </div>
         <ul className="tx-roster-final">{deployable(campaign).map(u => <li key={u.uid}><strong>{u.name}</strong> <small>Lv.{u.level} · 격파 {u.kills}</small></li>)}</ul>
-        <div className="tx-row"><button type="button" className="primary" onClick={onTitle}>제목으로 가기</button><ConfirmButton className="secondary danger" label="기록 지우고 새로 시작" title="전기 기록을 지울까요?" description="완결한 전기 기록이 사라지고 제목 화면으로 돌아갑니다. 되돌릴 수 없습니다." confirmLabel="지우기" disabled={false} onConfirm={onReset}/></div>
+        <div className="tx-row"><Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" onClick={onTitle}>제목으로 가기</Button><ConfirmAction variant="destructive" label="기록 지우고 새로 시작" title="전기 기록을 지울까요?" description="완결한 전기 기록이 사라지고 제목 화면으로 돌아갑니다. 되돌릴 수 없습니다." confirmLabel="지우기" onConfirm={onReset}/></div>
     </div>;
 }
 export { DialogueBox, toast };

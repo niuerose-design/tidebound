@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { useRef, useState } from 'react';
 import type { State } from '@/game/types';
 import { jobById } from '@/game/data/classes';
@@ -33,7 +34,7 @@ export function SceneLookSettings({ s }: { s: State | null }) {
                 <div className="scene-look-image">
                     <span>내 그림</span>
                     <input ref={file} type="file" accept="image/png,image/jpeg,image/gif,image/webp" hidden onChange={e => upload(e.target.files?.[0])}/>
-                    <div className="button-row"><button type="button" className="secondary" onClick={() => file.current?.click()}>{image ? '바꾸기' : '그림 올리기'}</button>{image && <button type="button" className="text-button" onClick={() => { setHeroImage(null); setError(''); }}>지우기</button>}</div>
+                    <div className="flex flex-wrap items-center gap-2"><Button type="button" size="sm" variant="outline" className="pointer-coarse:min-h-11" onClick={() => file.current?.click()}>{image ? '바꾸기' : '그림 올리기'}</Button>{image && <Button type="button" size="xs" variant="ghost" className="text-accent pointer-coarse:min-h-11" onClick={() => { setHeroImage(null); setError(''); }}>지우기</Button>}</div>
                 </div>
             </div>
             {error && <p className="scene-look-error" role="alert">{error}</p>}

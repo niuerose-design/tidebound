@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Megaphone, MessageCircle, Send } from 'lucide-react';
 import { CHAT_MAX_CHARS, CHAT_COOLDOWN_MS, CHAT_KEEP } from '@/game/data/chat';
@@ -83,7 +84,7 @@ function ChatFeed({ open, playerName, active }: { open: boolean; playerName: str
         {error && <p className="chat-error" role="alert">{error}</p>}
         <form className="chat-form" onSubmit={e => { e.preventDefault(); void submit(); }}>
             <input value={draft} maxLength={CHAT_MAX_CHARS} placeholder={`${playerName}(으)로 ${active === 'guild' ? '길드' : '전체'} 채팅 · ${CHAT_MAX_CHARS}자`} aria-label="채팅 입력" onChange={e => setDraft(e.target.value)} disabled={sending}/>
-            <button type="submit" className="primary small" disabled={sending || !draft.trim()} aria-label="보내기"><Send size={14}/></button>
+            <Button type="submit" size="icon-sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11 pointer-coarse:min-w-11" disabled={sending || !draft.trim()} aria-label="보내기"><Send size={14}/></Button>
         </form>
         <small className="chat-note">{draft.length} / {CHAT_MAX_CHARS} · {CHAT_COOLDOWN_MS / 1000}초에 한 줄 · 최근 {CHAT_KEEP}줄만 보관</small>
     </div>;

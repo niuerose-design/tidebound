@@ -1,4 +1,6 @@
 'use client';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import type { Battle, BattleUnit, Line, Mode, Pos } from '@/game/srpg/engine/types';
@@ -13,7 +15,7 @@ import { weaponOf, attackWeapon, canWield } from '@/game/srpg/engine/unit';
 import * as B from '@/game/srpg/engine/battle';
 import { enemyStep } from '@/game/srpg/engine/ai';
 import { saveSession, loadPrefs, savePrefs, tileSizes, type Session, type Prefs } from './storage';
-import { ConfirmButton } from '@/components/game/confirm-button';
+import { ConfirmAction } from '@/components/ui/game';
 import { MapCanvas, HEIGHT, type MapCanvasHandle, type MapAnim } from './map-canvas';
 import { makeGeometry } from './geometry';
 import { StatGrid, UnitHeader, ItemList } from './unit-sheet';
@@ -254,14 +256,14 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
             <div className="tx-hud-right">
                 <span title="남은 적">적 {enemiesLeft}</span>
                 <span title="아직 행동하지 않은 아군">대기 {remainingActors}</span>
-                <button type="button" className="secondary small" disabled={!B.canRewind(battle) || ui.kind === 'enemy' || !!dialogue} onClick={rewind} title="이번 턴(또는 이전 턴) 시작으로 되돌립니다">되감기 ({battle.rewindsLeft}회 남음)</button>
+                <Button type="button" variant="outline" size="xs" className="pointer-coarse:min-h-11" disabled={!B.canRewind(battle) || ui.kind === 'enemy' || !!dialogue} onClick={rewind} title="이번 턴(또는 이전 턴) 시작으로 되돌립니다">되감기 ({battle.rewindsLeft}회 남음)</Button>
                 {/* 으뜸 동작은 화면에 하나: 행동 메뉴 · 예측 창이 열려 있으면 그쪽이 으뜸이고 턴 종료는 보조가 됩니다. */}
-                <button type="button" className={`${ui.kind === 'idle' || ui.kind === 'enemy' ? 'primary' : 'secondary'} small`} disabled={ui.kind === 'enemy' || !!dialogue || !!ended} onClick={runEnemyPhase}>턴 종료{remainingActors ? ` (${remainingActors}명 남음)` : ''}</button>
-                <button type="button" className="text-button" aria-pressed={showLog} onClick={() => setShowLog(v => !v)}>{showLog ? '기록 닫기' : '기록 보기'}</button>
-                <button type="button" className="text-button" onClick={() => changePrefs({ tile: sizes[(sizes.indexOf(tile) + 1) % sizes.length] ?? sizes[0] })}>칸 크기 {tile}px</button>
-                <button type="button" className="text-button" aria-pressed={prefs.view === 'iso'} onClick={() => changePrefs({ view: prefs.view === 'iso' ? 'flat' : 'iso' })}>{prefs.view === 'iso' ? '평면 보기' : '입체 보기'}</button>
-                <button type="button" className="text-button" onClick={() => changePrefs({ speed: prefs.speed === 'normal' ? 'fast' : 'normal' })}>적 턴 {prefs.speed === 'normal' ? '보통' : '빠름'}</button>
-                <ConfirmButton className="text-button" label="포기하기" title="이 전투를 포기할까요?" description="전투 진행은 사라지고 베이스로 돌아갑니다. 부대는 출격 전 상태 그대로입니다." confirmLabel="포기하기" disabled={ui.kind === 'enemy'} onConfirm={onAbandon}/>
+                <Button type="button" size="xs" variant="outline" className={cn('pointer-coarse:min-h-11', (ui.kind === 'idle' || ui.kind === 'enemy') && 'bg-accent text-accent-ink hover:bg-accent/90 border-transparent')} disabled={ui.kind === 'enemy' || !!dialogue || !!ended} onClick={runEnemyPhase}>턴 종료{remainingActors ? ` (${remainingActors}명 남음)` : ''}</Button>
+                <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" aria-pressed={showLog} onClick={() => setShowLog(v => !v)}>{showLog ? '기록 닫기' : '기록 보기'}</Button>
+                <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => changePrefs({ tile: sizes[(sizes.indexOf(tile) + 1) % sizes.length] ?? sizes[0] })}>칸 크기 {tile}px</Button>
+                <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" aria-pressed={prefs.view === 'iso'} onClick={() => changePrefs({ view: prefs.view === 'iso' ? 'flat' : 'iso' })}>{prefs.view === 'iso' ? '평면 보기' : '입체 보기'}</Button>
+                <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => changePrefs({ speed: prefs.speed === 'normal' ? 'fast' : 'normal' })}>적 턴 {prefs.speed === 'normal' ? '보통' : '빠름'}</Button>
+                <ConfirmAction variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs text-accent pointer-coarse:min-h-11" label="포기하기" title="이 전투를 포기할까요?" description="전투 진행은 사라지고 베이스로 돌아갑니다. 부대는 출격 전 상태 그대로입니다." confirmLabel="포기하기" disabled={ui.kind === 'enemy'} onConfirm={onAbandon}/>
             </div>
         </header>
         <div className="tx-battle-body">
@@ -272,12 +274,12 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
                 </div>
             </div>
             <aside className="tx-side">
-                {ui.kind === 'menu' && <div className="tx-menu" role="menu">{menuActions.map(a => <button type="button" key={a.id} className={a.id === 'cancel' ? 'text-button' : 'secondary'} onClick={a.run}>{a.label}</button>)}</div>}
-                {ui.kind === 'weapon' && <div className="tx-menu"><strong>무기 선택</strong>{ui.options.map(i => { const it = sel!.items[i], d = itemDef(it.id); return <button type="button" key={it.n} className="secondary" onClick={() => { const b = B.equip(battle, ui.uid, i); setBattle(b); setUi({ kind: 'target', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining, action: 'attack', targets: B.attackTargets(b, b.units.find(x => x.uid === ui.uid)!).map(t => t.uid) }); }}>{d.name} <small>위력 {d.weapon!.might} 명중 {d.weapon!.hit} 사거리 {d.weapon!.range.join('~')}</small></button>; })}<button type="button" className="text-button" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</button></div>}
-                {ui.kind === 'target' && <div className="tx-menu"><strong>{{ attack: '공격할 상대', heal: '회복할 아군', talk: '대화할 상대', trade: '교환할 아군' }[ui.action]}를 맵에서 누르세요</strong>{ui.targets.map(t => { const o = unit(t); return <button type="button" key={t} className="secondary" onClick={() => onCell(o.x, o.y)}>{o.name} <small>{o.hp}/{o.stats.hp}</small></button>; })}<button type="button" className="text-button" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</button></div>}
-                {ui.kind === 'door' && <div className="tx-menu"><strong>열 문을 맵에서 누르세요</strong><button type="button" className="text-button" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</button></div>}
+                {ui.kind === 'menu' && <div className="tx-menu" role="menu">{menuActions.map(a => <Button type="button" key={a.id} variant={a.id === 'cancel' ? 'ghost' : 'outline'} size="sm" className={cn('pointer-coarse:min-h-11', a.id === 'cancel' ? 'text-accent' : 'justify-start text-left')} onClick={a.run}>{a.label}</Button>)}</div>}
+                {ui.kind === 'weapon' && <div className="tx-menu"><strong>무기 선택</strong>{ui.options.map(i => { const it = sel!.items[i], d = itemDef(it.id); return <Button type="button" key={it.n} variant="outline" size="sm" className="justify-start text-left pointer-coarse:min-h-11" onClick={() => { const b = B.equip(battle, ui.uid, i); setBattle(b); setUi({ kind: 'target', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining, action: 'attack', targets: B.attackTargets(b, b.units.find(x => x.uid === ui.uid)!).map(t => t.uid) }); }}>{d.name} <small>위력 {d.weapon!.might} 명중 {d.weapon!.hit} 사거리 {d.weapon!.range.join('~')}</small></Button>; })}<Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</Button></div>}
+                {ui.kind === 'target' && <div className="tx-menu"><strong>{{ attack: '공격할 상대', heal: '회복할 아군', talk: '대화할 상대', trade: '교환할 아군' }[ui.action]}를 맵에서 누르세요</strong>{ui.targets.map(t => { const o = unit(t); return <Button type="button" key={t} variant="outline" size="sm" className="justify-start text-left pointer-coarse:min-h-11" onClick={() => onCell(o.x, o.y)}>{o.name} <small>{o.hp}/{o.stats.hp}</small></Button>; })}<Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</Button></div>}
+                {ui.kind === 'door' && <div className="tx-menu"><strong>열 문을 맵에서 누르세요</strong><Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</Button></div>}
                 {ui.kind === 'forecast' && fc && sel && <ForecastPanel a={sel} d={unit(ui.target)} fc={fc} onConfirm={() => { const b = act(() => B.attack(battle, ui.uid, ui.target, ch)); afterAction(b, ui.uid, ui.remaining); }} onCancel={() => setUi({ kind: 'target', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining, action: 'attack', targets: ui.targets })}/>}
-                {ui.kind === 'items' && sel && <div className="tx-menu tx-item-menu"><strong>아이템</strong><ItemList u={sel} action={i => { const d = itemDef(sel.items[i].id); return <span className="tx-row-actions">{d.weapon && canWield(classDef(sel.classId), d) && sel.equipped !== i && <button type="button" className="text-button" onClick={() => setBattle(B.equip(battle, sel.uid, i))}>장착</button>}{(d.kind === 'vulnerary' || d.kind === 'boost') && <button type="button" className="text-button" onClick={() => afterAction(act(() => B.consumeItem(battle, sel.uid, i, ch)), sel.uid, ui.remaining)}>사용</button>}</span>; }}/><button type="button" className="text-button" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</button></div>}
+                {ui.kind === 'items' && sel && <div className="tx-menu tx-item-menu"><strong>아이템</strong><ItemList u={sel} action={i => { const d = itemDef(sel.items[i].id); return <span className="tx-row-actions">{d.weapon && canWield(classDef(sel.classId), d) && sel.equipped !== i && <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => setBattle(B.equip(battle, sel.uid, i))}>장착</Button>}{(d.kind === 'vulnerary' || d.kind === 'boost') && <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => afterAction(act(() => B.consumeItem(battle, sel.uid, i, ch)), sel.uid, ui.remaining)}>사용</Button>}</span>; }}/><Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}>뒤로</Button></div>}
                 {ui.kind === 'trade' && sel && <TradePanel a={sel} b={unit(ui.other)} onMove={(give, take) => { const nb = act(() => B.trade(battle, sel.uid, ui.other, give, take)); if (nb) setUi({ ...ui }); }} onDone={() => setUi({ kind: 'menu', uid: ui.uid, preMove: ui.preMove, remaining: ui.remaining })}/>}
                 {(ui.kind === 'idle' || ui.kind === 'selected' || ui.kind === 'enemy') && (inspected ? <UnitPanel u={inspected} battle={battle}/> : <div className="tx-help"><strong>{ui.kind === 'enemy' ? '적이 움직이는 중' : '아군을 눌러 행동을 고르세요'}</strong><p>파란 칸 = 이동 가능, 빨간 칸 = 공격 범위. 아군은 네모, 적은 동그라미, 중립은 겹테두리입니다. 적을 누르면 그 적의 위협 범위가 보입니다. 행동을 마친 유닛은 어두워집니다.</p><p className="tx-note">{ch.objective.text} · 패배: {ch.defeat_conditions.join(', ')}</p></div>)}
                 {showLog && <div className="tx-log"><strong>기록</strong><ul>{battle.log.slice(-40).reverse().map((l, i) => <li key={i} className={`k-${l.kind}`}><small>{l.turn}</small>{l.text}</li>)}</ul></div>}
@@ -287,9 +289,9 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
         {notice && <div className="tx-notice" role="status">{notice}</div>}
         {dialogue && <DialogueBox lines={dialogue} onDone={() => { setDialogue(null); persist(battle, snapshots); }}/>}
         {!dialogue && ended && <div className="tx-overlay"><div className="tx-end">
-            <p className="eyebrow">{ended.status === 'won' ? '승리' : '패배'}</p>
+            <p className="tx-eyebrow">{ended.status === 'won' ? '승리' : '패배'}</p>
             <h2>{ended.status === 'won' ? `${ch.title} — ${ended.turn}턴 만에 끝났다` : ended.lostReason}</h2>
-            {ended.status === 'won' ? <button type="button" className="primary" onClick={() => onEnd(ended)}>결과 보기</button> : <div className="tx-row"><button type="button" className="primary" onClick={onAbandon}>베이스로 돌아가 다시 출격</button></div>}
+            {ended.status === 'won' ? <Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" onClick={() => onEnd(ended)}>결과 보기</Button> : <div className="tx-row"><Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" onClick={onAbandon}>베이스로 돌아가 다시 출격</Button></div>}
         </div></div>}
     </div>;
 }
@@ -322,7 +324,7 @@ function ForecastPanel({ a, d, fc, onConfirm, onCancel }: { a: BattleUnit; d: Ba
             <tr><td>{fc.atk.crit}%</td><th>필살</th><td>{fc.def.crit === null ? '—' : `${fc.def.crit}%`}</td></tr>
         </tbody></table>
         {kills && <p className="tx-note hl">모두 맞으면 쓰러뜨린다</p>}{dies && <p className="tx-note warn">반격을 모두 맞으면 {a.name}이(가) 쓰러진다</p>}
-        <div className="tx-row"><button type="button" className="primary" onClick={onConfirm}>공격</button><button type="button" className="text-button" onClick={onCancel}>취소</button></div>
+        <div className="tx-row"><Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" onClick={onConfirm}>공격</Button><Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 text-accent" onClick={onCancel}>취소</Button></div>
     </div>;
 }
 function TradePanel({ a, b, onMove, onDone }: { a: BattleUnit; b: BattleUnit; onMove: (give: number | null, take: number | null) => void; onDone: () => void }) {
@@ -332,7 +334,7 @@ function TradePanel({ a, b, onMove, onDone }: { a: BattleUnit; b: BattleUnit; on
             <div><em>{a.name} ({a.items.length}/5)</em><ItemList u={a} onPick={i => onMove(i, null)}/></div>
             <div><em>{b.name} ({b.items.length}/5)</em><ItemList u={b} onPick={i => onMove(null, i)}/></div>
         </div>
-        <button type="button" className="secondary" onClick={onDone}>교환 마치기</button>
+        <Button type="button" variant="outline" size="sm" className="pointer-coarse:min-h-11" onClick={onDone}>교환 마치기</Button>
     </div>;
 }
 export { TERRAIN, unkey };

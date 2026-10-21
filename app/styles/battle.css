@@ -1306,7 +1306,7 @@
 .ow-hud-fuel .bar i{display:block;height:100%;background:linear-gradient(90deg,#1f9e95,var(--ow-fuel));box-shadow:0 0 10px var(--ow-fuel);transition:width .3s}
 .ow-hud-fuel .num{font:600 12px/1 ui-monospace,monospace;font-variant-numeric:tabular-nums;color:var(--ow-fuel);white-space:nowrap}
 .ow-hud-actions{display:flex;gap:4px;flex-wrap:wrap}
-.ow-hud-actions button{padding:3px 8px;font-size:11.5px}
+.ow-hud-actions button{font-size:11.5px}
 .ow-hud-actions button.on{border-color:var(--ow-fuel);color:var(--ow-fuel)}
 .ow-hud.saving{border-color:#ff547066}
 .ow-hud.saving .ow-hud-fuel>span:first-child{color:var(--ow-bear);font-weight:700;animation:owHudBlink 1s steps(2) infinite}
