@@ -1,5 +1,5 @@
 'use client';
-/** v3.13 실시간 효율 카드: 지난 5분 실측(시간당 경험치·골드·처치·숙련, DPS)과 1·6·24시간 예상치. 전투 화면(접을 수 있음)과 통계 화면에 같은 카드를 씁니다. */
+/** v3.408 새 토대로 옮김. v3.13 실시간 효율 카드: 지난 5분 실측(시간당 경험치·골드·처치·숙련, DPS)과 1·6·24시간 예상치. 전투 화면(접을 수 있음)과 통계 화면에 같은 카드를 씁니다. */
 import { memo, useEffect, useState, useSyncExternalStore } from 'react';
 import { Activity, ChevronDown, Coins, Fish, Sparkles, Swords, Zap } from 'lucide-react';
 import type { State } from '@/game/types';
@@ -7,8 +7,13 @@ import type { RecentKill } from '@/game/systems/live-rates';
 import { projectLevel, msToCap, LEVEL_CAP } from '@/game/systems/live-rates';
 import { xpNeeded , type XpTargetWall } from '@/game/data/balance';
 const xpNeededSafe = (level: number, rebirths: number, wall?: XpTargetWall) => level >= LEVEL_CAP ? 1 : xpNeeded(level, rebirths, wall);
-import { short, format } from './shared';
-import { recentKill, RATE_WINDOW_MS, useLiveRates } from './live-rates';
+import { short, format } from '@/components/game/shared';
+import { recentKill, RATE_WINDOW_MS, useLiveRates } from '@/components/game/live-rates';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { cn } from '@/lib/utils';
+/** 타일 강조색(경험치 · 골드 · 처치 · 숙련 · DPS). */
+const TONE: Record<string, string> = { exp: '#8fd3ff', gold: '#ffd76a', kills: '#a4e9ba', mastery: '#d9b8ff', dps: '#ff8f7a' };
 import { xpWall } from '@/game/systems/meta';
 const FOLD_KEY = 'tidebound.liveRates';
 type Recent = RecentKill | null;
@@ -40,17 +45,17 @@ export const LiveRatesCard = memo(function LiveRatesCard({ s, compact = false }:
         { Icon: Sparkles, label: '숙련 / 시간', value: short(r.perHour.mastery), sub: '직업·장착 스킬 숙련', tone: 'mastery' },
         { Icon: Swords, label: 'DPS', value: short(r.dps), sub: '내가 준 피해 / 초', tone: 'dps' },
     ];
-    return <section className={`panel live-rates ${compact ? 'compact' : ''} ${open ? '' : 'folded'} ${r.ready ? 'ready' : 'warming'}`} aria-label="실시간 효율">
-        <div className="section-title">
-            <h2><Activity size={16}/> 실시간 효율 <span className="micro">{status}</span></h2>
-            {recent && <span className="live-recent" key={recent.id} title="가장 최근 처치로 얻은 양(경험의 누리·숙련의 까미 당첨분 포함)">최근 처치 <b>+{format(recent.exp)} EXP</b><b>+{format(recent.gold)} G</b>{recent.mastery > 0 && <b>숙련 +{format(recent.mastery)}</b>}</span>}
-            {compact && <button type="button" className="log-fold" aria-expanded={open} onClick={toggle} title={open ? '접기' : '펼치기'}><ChevronDown size={16}/></button>}
+    return <section className={cn('grid gap-2.5 text-ink-1', compact ? 'mb-3 rounded-l border border-line bg-surface-2 px-3.5 py-3 shadow-1' : '')} aria-label="실시간 효율">
+        <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="inline-flex items-center gap-1.5 font-display text-s font-bold"><Activity size={16} className="text-accent"/> 실시간 효율 <span className={cn('font-sans text-xs font-medium', r.ready ? 'text-ink-3' : 'text-warn')}>{status}</span></h2>
+            {recent && <span className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-line bg-surface-1 px-2 py-0.5 text-xs text-ink-3 max-sm:order-3 max-sm:w-full" key={recent.id} title="가장 최근 처치로 얻은 양(경험의 누리·숙련의 까미 당첨분 포함)">최근 처치 <b className="font-num text-gold-ink">+{format(recent.exp)} EXP</b><b className="font-num text-gold-ink">+{format(recent.gold)} G</b>{recent.mastery > 0 && <b className="font-num text-ok">숙련 +{format(recent.mastery)}</b>}</span>}
+            {compact && <Button type="button" size="icon-xs" variant="outline" className="ml-auto pointer-coarse:min-h-11 pointer-coarse:min-w-11" aria-expanded={open} onClick={toggle} title={open ? '접기' : '펼치기'}><ChevronDown size={16} className={cn('transition-transform', open && 'rotate-180')}/></Button>}
         </div>
         {open && <>
-            <div className="live-body"><div className="live-tiles">{tiles.map(t => <div key={t.label} className={`live-tile tone-${t.tone}`}><t.Icon size={15}/><span>{t.label}</span><strong>{r.ready ? t.value : '—'}</strong>{t.sub && <small>{r.ready ? t.sub : ' '}</small>}</div>)}</div>
-            <table className="live-forecast"><colgroup><col className="head"/><col/><col className="lv"/><col/><col/><col/></colgroup><thead><tr><th>예상</th><th>경험치</th><th>레벨</th><th>골드</th><th>처치</th><th>숙련</th></tr></thead>
-                <tbody>{HORIZONS.map(([label, h]) => { const p = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp * h, xpWall(s)); return <tr key={label}><th>{label}</th><td title={r.ready ? format(Math.round(r.perHour.exp * h)) : ''}>{r.ready ? short(r.perHour.exp * h) : '—'}</td><td><em>{r.ready ? (p.capped ? `Lv.${LEVEL_CAP} ✓` : `Lv.${p.level}`) : '—'}</em></td><td title={r.ready ? format(Math.round(r.perHour.gold * h)) : ''}>{r.ready ? short(r.perHour.gold * h) : '—'}</td><td>{r.ready ? short(r.perHour.kills * h) : '—'}</td><td>{r.ready ? short(r.perHour.mastery * h) : '—'}</td></tr>; })}</tbody></table></div>
-            {!compact && <p className="footnote"><Sparkles size={12}/> 브라우저가 이미 받는 전투 기록으로 계산하므로 서버에 부담이 없습니다. 5분 창의 실측 평균이며, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다. 레벨 예상은 지금 속도가 이어진다고 보고 셉니다(몬스터·난이도를 바꾸면 달라짐). 숙련은 직업 단련치 합의 증가분입니다.</p>}
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">{tiles.map(t => <div key={t.label} style={{ '--tone': TONE[t.tone] } as React.CSSProperties} className="relative grid min-w-0 content-start gap-0.5 overflow-hidden rounded-m border border-line bg-surface-1 py-2.5 pl-3.5 pr-9 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--tone)]"><t.Icon size={15} className="absolute right-2.5 top-2.5 text-[var(--tone)] opacity-85"/><span className="text-xs tracking-wide text-ink-3">{t.label}</span><strong className={cn('font-num text-l font-extrabold leading-tight', r.ready ? 'text-ink-1' : 'text-ink-3')}>{r.ready ? t.value : '—'}</strong>{t.sub && <small className="h-4 truncate text-xs leading-4 text-ink-3">{r.ready ? t.sub : ' '}</small>}</div>)}</div>
+            <Table className="max-w-xl font-num text-xs [&_td]:text-right [&_th]:text-right"><TableHeader><TableRow><TableHead className="text-left!">예상</TableHead><TableHead>경험치</TableHead><TableHead>레벨</TableHead><TableHead>골드</TableHead><TableHead>처치</TableHead><TableHead>숙련</TableHead></TableRow></TableHeader>
+                <TableBody>{HORIZONS.map(([label, h]) => { const p = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp * h, xpWall(s)); return <TableRow key={label}><TableHead className="text-left! font-semibold text-ink-2">{label}</TableHead><TableCell title={r.ready ? format(Math.round(r.perHour.exp * h)) : ''}>{r.ready ? short(r.perHour.exp * h) : '—'}</TableCell><TableCell className="text-[#8fd3ff]">{r.ready ? (p.capped ? `Lv.${LEVEL_CAP} ✓` : `Lv.${p.level}`) : '—'}</TableCell><TableCell title={r.ready ? format(Math.round(r.perHour.gold * h)) : ''}>{r.ready ? short(r.perHour.gold * h) : '—'}</TableCell><TableCell>{r.ready ? short(r.perHour.kills * h) : '—'}</TableCell><TableCell>{r.ready ? short(r.perHour.mastery * h) : '—'}</TableCell></TableRow>; })}</TableBody></Table>
+            {!compact && <p className="flex items-start gap-1.5 text-xs leading-relaxed text-ink-3"><Sparkles size={12} className="mt-0.5 shrink-0"/> 브라우저가 이미 받는 전투 기록으로 계산하므로 서버에 부담이 없습니다. 5분 창의 실측 평균이며, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다. 레벨 예상은 지금 속도가 이어진다고 보고 셉니다(몬스터·난이도를 바꾸면 달라짐). 숙련은 직업 단련치 합의 증가분입니다.</p>}
         </>}
     </section>;
 });
