@@ -41,6 +41,10 @@ jobs:
       - name: Gameplay tests
         run: pnpm test 2>&1 | tee /tmp/test.log; exit ${PIPESTATUS[0]}
         shell: bash
+      # v3.374 새 코드(토큰 · 범용 컴포넌트 · 세이브 차분)의 단위 테스트(vitest).
+      - name: Unit tests (vitest)
+        run: pnpm test:unit 2>&1 | tee /tmp/unit.log; exit ${PIPESTATUS[0]}
+        shell: bash
       # next build가 프로젝트 전체 타입 검사(Running TypeScript)를 포함하므로 따로 tsc를 돌리지 않습니다.
       - name: Build (타입 검사 포함)
         run: pnpm build 2>&1 | tee /tmp/build.log; exit ${PIPESTATUS[0]}

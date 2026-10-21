@@ -1,0 +1,112 @@
+/*
+ * v3.374 디자인 토큰(재설계 2단계 토대, 브리프 6.1). 새 화면 · 게임 범용 컴포넌트는 이 토큰만 씁니다.
+ * 기존 화면의 변수(--background · --card · --primary · --gold 등, theme.css)는 그대로 두고 여기서 같은 값을 가리키게 했습니다.
+ * 바탕 단계 surface 0~3(뒤 → 앞), 글자 단계 ink 1~3(진함 → 흐림), 강조 accent, 등급 7, 피해 종류 4, 상태 4, 간격 4px 단위, 둥글기 3, 그림자 2, 모션 2.
+ * 다크가 기본이고 라이트는 [data-theme="light"]로 바꿉니다(아직 화면에 스위치 없음).
+ */
+:root {
+  --surface-0: #0e191f;
+  --surface-1: #101e24;
+  --surface-2: #152329;
+  --surface-3: #1b2b30;
+  --ink-1: #e3e9e7;
+  --ink-2: #aec0c2;
+  --ink-3: #8d9fa4;
+  --line: #2a3a40;
+  --line-strong: #3b5058;
+  --accent: #81cbb4;
+  --accent-ink: #092420;
+  --accent-soft: #203a3c;
+  --gold-ink: #d4b579;
+  --rarity-common: #9dadaf;
+  --rarity-rare: #68b6ee;
+  --rarity-epic: #bf96ef;
+  --rarity-legendary: #e7be71;
+  --rarity-mythic: #f08a6c;
+  --rarity-ancient: #5fd0b5;
+  --rarity-primal: #ff6fb5;
+  --dmg-physical: #f2a36b;
+  --dmg-magic: #7fd6ee;
+  --dmg-split: #c7a3f0;
+  --dmg-fixed: #ffe08a;
+  --ok: #8fc49b;
+  --warn: #e0b36a;
+  --danger: #ef8c85;
+  --info: #75b8d6;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 14px;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, .35);
+  --shadow-2: 0 10px 24px rgba(0, 0, 0, .45);
+  --duration-fast: 120ms;
+  --duration-base: 220ms;
+  --ease-out: cubic-bezier(.2, .7, .2, 1);
+  --font-ui: 'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-num: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --text-xs: 11px;
+  --text-s: 13px;
+  --text-m: 15px;
+  --text-l: 18px;
+  --text-xl: 22px;
+  --text-2xl: 28px;
+}
+:root[data-theme="light"] {
+  --surface-0: #f3f6f5;
+  --surface-1: #ffffff;
+  --surface-2: #e9efed;
+  --surface-3: #dde5e2;
+  --ink-1: #142024;
+  --ink-2: #3b4d52;
+  --ink-3: #5f7378;
+  --line: #c9d5d2;
+  --line-strong: #a9b9b5;
+  --accent: #1f8f72;
+  --accent-ink: #ffffff;
+  --accent-soft: #d6ede6;
+  --gold-ink: #8a6a2c;
+}
+/* Tailwind 유틸리티 이름: bg-surface-1 · text-ink-2 · border-line · text-rarity-epic · rounded-m · gap-2(기본 간격은 Tailwind 그대로) */
+@theme inline {
+  --color-surface-0: var(--surface-0);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold-ink: var(--gold-ink);
+  --color-rarity-common: var(--rarity-common);
+  --color-rarity-rare: var(--rarity-rare);
+  --color-rarity-epic: var(--rarity-epic);
+  --color-rarity-legendary: var(--rarity-legendary);
+  --color-rarity-mythic: var(--rarity-mythic);
+  --color-rarity-ancient: var(--rarity-ancient);
+  --color-rarity-primal: var(--rarity-primal);
+  --color-dmg-physical: var(--dmg-physical);
+  --color-dmg-magic: var(--dmg-magic);
+  --color-dmg-split: var(--dmg-split);
+  --color-dmg-fixed: var(--dmg-fixed);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --radius-s: var(--radius-s);
+  --radius-m: var(--radius-m);
+  --radius-l: var(--radius-l);
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --font-ui: var(--font-ui);
+  --font-num: var(--font-num);
+}
