@@ -970,3 +970,12 @@ details.story-scene:not([open]):hover { border-color:#3a5258; }
 .exp-drawer-body { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.6fr); gap:16px; padding:0 18px 18px; }
 .exp-drawer-body > div { min-width:0; }
 @media (max-width:767px) { .exp-drawer-body { grid-template-columns:1fr; gap:12px; padding:0 12px 14px; } .exp-drawer-head { padding:12px; } .exp-drawer-hint { padding:0 12px 12px; } }
+
+/* 24단계(4) 모바일 점검: 재화 막대의 큰 수가 칸을 넘지 않게(정수도 1.2억처럼 짧게 쓰고, 그래도 길면 줄바꿈). */
+.port-resource-bar>div>span { min-width:0; } .port-resource-bar strong { overflow-wrap:anywhere; }
+@media (max-width:767px) {
+    .exp-bench { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px; }
+    .exp-bench li { flex-direction:column; align-items:stretch; gap:6px; padding:8px; }
+    .exp-bench li > div.exp-bench-unit:first-child > div b { font-size:12px; } .exp-bench li > div.exp-bench-unit:first-child > div small { font-size:10px; }
+    .exp-bench .button-row { gap:4px; } .exp-bench .button-row button { padding:6px 2px; font-size:11px; min-height:32px; }
+}
