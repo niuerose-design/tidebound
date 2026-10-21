@@ -1,9 +1,10 @@
 'use client';
+/** v3.400 모험 도움말(새 토대): 주제는 FoldSection, 규칙 카드 · 상태이상 · 능력치 · 전투 흐름은 토큰 카드. 내용(문구 · 수식)은 옛 guide-panel 그대로입니다. */
 import { DUNGEON_COINS, DAILY_BONUS } from '@/game/data/dungeon-shop';
 import { SPROUT, sproutExp } from '@/game/data/sprout';
 import { BOOK_ECOLOGY } from '@/game/data/book-traits';
 import { ASCENSION } from '@/game/data/ascension';
-import { BookOpen, ChevronDown, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets, TrendingUp } from 'lucide-react';
+import { BookOpen, Coins, Crosshair, Fish, Flame, Gauge, Heart, RefreshCw, Shield, Sparkles, Swords, Target, Zap , Droplets, TrendingUp } from 'lucide-react';
 import { MARKET, MARKET_TICK_MS, STOCKS } from '@/game/data/market';
 import type { ReactNode } from 'react';
 import { BALANCE, MONSTER_TUNING, STATUS_GUIDE, STATUS_TUNING, SKILL_FORMULA, DUNGEON_MODES, DUNGEON_STAGE, XP_SCALING } from '@/game/data/balance';
@@ -28,8 +29,9 @@ import { TAILWIND_EXP, tailwindExp, xpWall, LEVEL_GATE_FREE_REBIRTHS, TIDE_CHALL
 import { CORE_PASSIVE, CORE_TRANSCEND } from '@/game/systems/progression';
 import { CORE_REWORK } from '@/game/data/core-passive';
 import { OVER_TARGET } from '@/game/data/balance';
-import { Heading } from './shared';
-import { AffixGlossaryList } from './affix-glossary';
+import { SectionHeader, FoldSection } from '@/components/ui/game';
+import { cn } from '@/lib/utils';
+import { AffixGlossaryList } from '@/components/game/affix-glossary';
 import { AFFIX_POOL } from '@/game/data/gear';
 /** v3.323 도움말 ‘장비 옵션 이름’: 새로 붙는 옵션 전부(꽝 · 더는 붙지 않는 옵션 · 칠흑 고유 옵션 제외). 규칙 옵션은 ◆를 붙입니다. */
 const GLOSSARY_AFFIXES = AFFIX_POOL.filter(a => !a.retired && !a.junk && !a.onlyOrigin).map(a => ({ ...a, name: a.kind === 'rule' ? `◆ ${a.name}` : a.name }));
@@ -37,53 +39,47 @@ import { JOB_TREES, LINEAGES } from '@/game/data/classes';
 /** 0.125 → 12.5 */
 const pctOf = (n: number) => Number((n * 100).toFixed(1));
 
+/** v3.400 도움말 본문 공통 글 스타일(옛 help CSS 대신 Tailwind 변형): 문단 · 목록 · 굵은 글. */
+const PROSE = '[&_p]:text-xs [&_p]:leading-relaxed [&_p]:text-ink-2 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:text-xs [&_ul]:leading-relaxed [&_ul]:text-ink-2 [&_li]:mt-0.5 [&_b]:text-ink-1 [&_strong]:text-ink-1';
 /** 도움말 카드: 효과 → 조건 → 제한. 각 항목은 두세 문장으로 짧게 적습니다. */
 function Rule({ icon, title, effect, condition, limit }: { icon: ReactNode; title: string; effect: ReactNode; condition?: ReactNode; limit?: ReactNode }) {
-    return <section className="panel help-card help-rule">
-        <h2>{icon} {title}</h2>
-        <dl>
-            <dt>효과</dt><dd>{effect}</dd>
-            {condition && <><dt>조건</dt><dd>{condition}</dd></>}
-            {limit && <><dt>제한</dt><dd>{limit}</dd></>}
-        </dl>
+    const row = (k: string, v: ReactNode) => <><dt className="text-xs font-semibold text-accent">{k}</dt><dd className={cn('text-xs leading-relaxed text-ink-2', PROSE)}>{v}</dd></>;
+    return <section className="grid content-start gap-2 rounded-m border border-line bg-surface-1 p-3">
+        <h3 className="inline-flex items-center gap-1.5 text-s font-semibold [&_svg]:size-4 [&_svg]:text-accent">{icon} {title}</h3>
+        <dl className="grid gap-1">{row('효과', effect)}{condition && row('조건', condition)}{limit && row('제한', limit)}</dl>
     </section>;
 }
-
 /** 도움말 주제: 제목을 눌러 접고 펼칩니다. v27.81 모든 주제가 접힌 채로 시작합니다. */
 function Topic({ icon, title, note, open = false, children }: { icon: ReactNode; title: string; note: string; open?: boolean; children: ReactNode }) {
-    return <details className="help-section help-topic" open={open}>
-        <summary className="section-title"><h2>{icon} {title}</h2><span>{note}</span><ChevronDown size={17} className="help-topic-chevron"/></summary>
-        <div className="help-topic-body">{children}</div>
-    </details>;
+    return <FoldSection title={<span className="inline-flex items-center gap-2 [&_svg]:size-[18px] [&_svg]:text-accent">{icon}{title}</span>} summary={note} defaultOpen={open}><div className={cn('grid gap-3', PROSE)}>{children}</div></FoldSection>;
 }
-
 const STATUS_GROUPS = [
     { title: '행동 방해', ids: ['stun', 'silence', 'weaken', 'corrode'] },
     { title: '지속 피해 · 속도', ids: ['bleed', 'poison', 'burn', 'slow', 'haste'] },
 ] as const;
 
-export function Guide({ s }: { s?: State }) {
+export function HelpScreen({ s }: { s?: State }) {
     // v3.49 정보 비공개(10.2-7)가 켜져 있으면 드롭·등급·정수·변종·칠흑 확률과 공식을 뺍니다. 전투 수치는 그대로.
     const swarm = VARIANTS.find(v => v.id === 'swarm')!, secret = catalogNow().secret;
-    return <>
-        <Heading eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제는 모두 접혀 있습니다. 제목을 누르면 펼치고 다시 누르면 접습니다."/>
+    return <div className="grid gap-4 text-ink-1">
+        <SectionHeader as="h1" eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제는 모두 접혀 있습니다. 제목을 누르면 펼치고 다시 누르면 접습니다."/>
         <Topic icon={<Target size={19}/>} title="능력치" note="기본치 + 레벨 성장 + 직접 배분. 직업·장비·스킬이 더해집니다.">
-            <div className="help-stat-grid">{ATTRIBUTES.map(a => <article className="panel help-stat-card" key={a.id}><strong>{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{ATTRIBUTES.map(a => <article className="grid gap-1 rounded-m border border-line bg-surface-1 p-3" key={a.id}><strong className="text-s">{a.code} · {a.name}</strong><p>{a.description}</p></article>)}</div>
             <Rule icon={<Swords size={19}/>} title="계보와 전직"
                 effect={<>직업은 일곱 계열({JOB_TREES.filter(t => t.id !== 'mystery').map(t => t.name).join(' · ')} · ???)의 {LINEAGES.filter(l => !l.id.endsWith('independent') && l.tree !== 'mystery').length}개 계보로 이어집니다. 1차는 Lv.10에 열리고, 계보를 따라 5차까지 올라갑니다.<br/>자주 가는 길: <b>아처</b>(근력·기민, 관통·치명 물리) · <b>매지션</b>(지능·정신, 폭발 주문과 회복) · <b>검사</b>(체질·근력, 방어·기절) · <b>매지션(불,독)</b>(기민·지능, 중독을 쌓는 상태이상) · <b>데몬슬레이어 (1차)</b>(근력·지능, 물리+마법 복합) · <b>엔젤릭버스터 (1차)</b>(행운·정신, 가속·경험치 보조).</>}
                 condition="전직 화면의 계보 카드와 항로도에서 다음 직업의 조건을 보고, 숙달한 직업은 조건 없이 다시 전직합니다."
                 limit="능력치 재분배는 무료이며 자동 사냥 중에는 할 수 없습니다. ??? 계열의 히든 직업은 숨은 조건(플레이 기록)을 만족하면 드러나고, 한 번 만족한 조건은 계속 유지됩니다."/>
-            <p className="footnote help-notation"><b>표기</b> +10%: 비율 보너스(같은 종류끼리 합산) · +1%p: 확률에 그대로 더함 · ×1.2: 곱하는 배율. 능력치 화면의 수치를 누르면 기여 내역이 열립니다.</p>
+            <p className="text-xs leading-relaxed text-ink-3"><b>표기</b> +10%: 비율 보너스(같은 종류끼리 합산) · +1%p: 확률에 그대로 더함 · ×1.2: 곱하는 배율. 능력치 화면의 수치를 누르면 기여 내역이 열립니다.</p>
         </Topic>
         <Topic icon={<Swords size={19}/>} title="전투" note="빠른 쪽이 먼저, 더 빠르면 한 턴에 여러 번 움직입니다.">
-            <div className="help-flow">
+            <div className="grid gap-2 sm:grid-cols-5 [&>div]:grid [&>div]:gap-0.5 [&>div]:rounded-m [&>div]:bg-surface-1 [&>div]:p-3 [&>div>b]:font-num [&>div>b]:text-xs [&>div>b]:text-accent [&>div>strong]:text-s">
                 <div><b>1</b><strong>상태 처리</strong><p>상태이상 남은 턴, 회복, 기절을 먼저 처리합니다.</p></div>
                 <div><b>2</b><strong>스킬 선택</strong><p>장착한 액티브를 위에서부터 조건·대기·마나·확률 순으로 확인하고, 모두 실패하면 기본 공격입니다.</p></div>
                 <div><b>3</b><strong>명중 판정</strong><p>공격마다 한 번 판정합니다.</p></div>
                 <div><b>4</b><strong>피해 계산</strong><p>공격 × 스킬 배율에 상대 방어·관통·치명타를 적용합니다.</p></div>
                 <div><b>5</b><strong>추가타</strong><p>추가타가 있는 스킬은 같은 행동 안에서 이어집니다.</p></div>
             </div>
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Zap size={19}/>} title="속도 · 연속 행동"
                     effect={`상대보다 빠르면 행동할 때마다 확률로 한 번 더 움직입니다. 확률 = ${BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도).`}
                     condition={`${[1.5, 2, 4].map(r => `속도 ${r}배 ${Math.round(Math.min(1, BALANCE.chainCoefficient * Math.log2(r)) * 100)}%`).join(' · ')}. 추가 행동도 온전한 행동이라 대기·회복·지속 피해가 한 칸씩 진행됩니다.`}
@@ -97,9 +93,8 @@ export function Guide({ s }: { s?: State }) {
                     condition="탱커 계보 패시브는 반격과 함께 무리 조우 확률을 올립니다(+30~120%). 탱커는 1:1이 느린 대신 무리를 반격으로 갈아 마리 수만큼 보상을 받는 길입니다."
                     limit="반격은 흡혈이 2배로 적용되고, 피해 없는 상태이상 기술에는 발동하지 않습니다."/>
             </div>
-            <details className="help-fold">
-                <summary><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 지속(고정) · 마력 평타 · 능력치 비례</span><ChevronDown size={15} className="help-topic-chevron"/></summary>
-                <div className="help-columns">
+            <FoldSection level={3} title={<span className="inline-flex flex-wrap items-center gap-2 [&_svg]:size-4 [&_svg]:text-accent [&_span]:text-xs [&_span]:font-normal [&_span]:text-ink-3"><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 지속(고정) · 마력 평타 · 능력치 비례</span></span>}>
+                <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                     <Rule icon={<Swords size={19}/>} title="물리 피해"
                         effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
                         condition="명중은 기본 공식 그대로(회피 전부 적용). 기본 공격과 대부분의 검·격투 계열 기술이 여기에 속합니다."
@@ -125,21 +120,21 @@ export function Guide({ s }: { s?: State }) {
                         condition="피해 유형(물리/마법)은 기술에 표시된 대로 따르며, 방어·명중 규칙도 그 유형을 따릅니다. 아크 계열은 반대 공격력을 기준값으로 쓰는 ‘교차’ 기술입니다."
                         limit="장비·버프로 오른 공격력은 능력치 비례 기준값에 들어가지 않습니다."/>
                 </div>
-            </details>
+            </FoldSection>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="상태이상" note={`${STATUS_GUIDE.length}종. PvE와 결투에 같은 규칙입니다.`}>
-            {STATUS_GROUPS.map(g => <div className="help-status-group" key={g.title}>
-                <h3>{g.title}</h3>
-                <div className="help-status-grid">{STATUS_GUIDE.filter(st => (g.ids as readonly string[]).includes(st.id)).map(status => <article className="panel help-status-card" key={status.id}>
-                    <div className="help-status-top"><strong>{status.name}</strong><span>{status.kind}</span></div>
+            {STATUS_GROUPS.map(g => <div className="grid gap-2" key={g.title}>
+                <h3 className="text-s font-semibold">{g.title}</h3>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{STATUS_GUIDE.filter(st => (g.ids as readonly string[]).includes(st.id)).map(status => <article className="grid gap-1 rounded-m border border-line bg-surface-1 p-3" key={status.id}>
+                    <div className="flex items-baseline justify-between gap-2"><strong className="text-s">{status.name}</strong><span className="text-xs text-ink-3">{status.kind}</span></div>
                     <p>{status.description}</p>
-                    <small>{status.detail}</small>
+                    <small className="text-xs text-ink-3">{status.detail}</small>
                 </article>)}</div>
             </div>)}
-            <p className="footnote help-status-rules"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로 저항합니다(최대 50%). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
+            <p className="text-xs leading-relaxed text-ink-3"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로 저항합니다(최대 50%). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
         </Topic>
         <Topic icon={<Zap size={19}/>} title="스킬" note="발동, 습득·계승, 숙련과 극한돌파.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Zap size={19}/>} title="액티브"
                     effect="전투 중 발동 확률에 따라 자동으로 씁니다. 편성 순서대로 판정해 처음 성공한 하나만 사용합니다."
                     condition="마나·재사용 대기·스킬별 조건(체력 비율 등)을 채워야 합니다."
@@ -167,7 +162,7 @@ export function Guide({ s }: { s?: State }) {
             </div>
         </Topic>
         <Topic icon={<Shield size={19}/>} title="직업" note="숙달하면 그 직업의 보너스가 커집니다.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Shield size={19}/>} title="직업 숙달"
                     effect="직업별 숙련 목표를 채우면 그 직업의 체력·공격·방어 보너스가 강화됩니다. 전직 화면에서 전후를 비교할 수 있습니다. 3차부터 목표가 크게 늘어(3차 ×3 · 4차 30만~45만 · 5차 150만), 5차 전직에는 선행 직업 숙달이 필요합니다."
                     condition="그 직업을 쓰는 동안만 적용됩니다. 숙달한 직업은 조건 없이 다시 전직할 수 있습니다."
@@ -175,7 +170,7 @@ export function Guide({ s }: { s?: State }) {
             </div>
         </Topic>
         <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Fish size={19}/>} title="변종"
                     effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b>{secret ? '' : ` ${percent(v.chance, 1)}`} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보 패시브(메소 마스터리·메소 가드·섀도우 파트너·메소 익스플로전 강화)가 확률을 올립니다.</>}
                     condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다(픽파킷 +20% · 무리 감지 +50% · 메소 익스플로전 강화 +100% 등).`}
@@ -204,7 +199,7 @@ export function Guide({ s }: { s?: State }) {
             </div>
         </Topic>
         <Topic icon={<Flame size={19}/>} title="제단 · 난이도 · 특수 몬스터" note="모두가 함께 채우는 제단, 사냥터·던전 난이도, 까미와 누리.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Flame size={19}/>} title="제단 · 축복"
                     effect={`골드·세계석·정수를 바치면 기여도(골드 ${ALTAR.goldPerPoint.toLocaleString()} = 1 · 세계석 1 = ${ALTAR.pearlPoints} · 정수 1 = ${ALTAR.essencePoints})가 고른 게이지에 쌓입니다. 축복 게이지가 차면 모든 모험가에게 ${BLESSINGS[0].hours}시간 동안 효과가 켜집니다: ${BLESSINGS.map(b => b.name).join(' · ')}.`}
                     condition="게이지는 서버 전체가 공유합니다. 혼자 다 채울 필요가 없고, 바친 만큼 주간 기여 순위에 오릅니다(익명 선택 가능)."
@@ -242,7 +237,7 @@ export function Guide({ s }: { s?: State }) {
             </div>
         </Topic>
         <Topic icon={<RefreshCw size={19}/>} title="성장 · 재화" note="환생, 세계석 연구, 도감, 상점.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<RefreshCw size={19}/>} title="환생"
                     effect="세계석 = 레벨 ÷ 10 + 환생 횟수 보상 + 연구·스킬 보너스. 영구 보너스(체력·공격·방어)는 2.5% × √환생 횟수, 영구 경험치는 환생마다 +25%."
                     condition={`요구 레벨은 30에서 환생마다 +${ECONOMY.rebirthLevelStep}(Lv.${ECONOMY.rebirthLevelLateFrom}까지), 그 뒤로는 환생마다 +${ECONOMY.rebirthLevelLateStep}(최대 Lv.${ECONOMY.rebirthLevelCap}). 환생 ${LEVEL_GATE_FREE_REBIRTHS}회부터는 사냥터·던전에 레벨 제한이 없습니다. 환생한 뒤에는 직전 생에 도달한 최고 레벨까지 경험치 +${Math.round((s ? tailwindExp(s) : TAILWIND_EXP) * 100)}%(순풍, 경험치 보너스에 합연산). 요구 레벨부터는 필요 경험치가 레벨마다 ×${(s ? xpWall(s).growth : OVER_TARGET.growth).toFixed(2)}씩 거듭 붙습니다(역풍). 환생 ${SPROUT.expUntil}회 전까지는 새싹의 축복으로 경험치 ×${sproutExp(0)}(환생할 때마다 ${SPROUT.expPerRebirth}씩 줄어듦), 환생 ${SPROUT.survivalUntil}회 전까지는 쓰러진 뒤 회복 대기 절반·처치 후 회복 +${Math.round(SPROUT.healBonus * 100)}%p.`}
@@ -283,12 +278,12 @@ export function Guide({ s }: { s?: State }) {
             </div>
         </Topic>
         <Topic icon={<Gauge size={19}/>} title="저장 데이터" note="초기화 규칙.">
-            <div className="help-columns">
+            <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-3">
                 <Rule icon={<Gauge size={19}/>} title="데이터 초기화"
                     effect="이름만 남기고 레벨·환생·장비·도감·길드·랭킹 등록까지 새 게임으로 돌아갑니다."
                     condition="환생 화면 ‘저장 데이터 관리’에서 자동 사냥과 던전을 멈춘 뒤 실행합니다."
                     limit="되돌릴 수 없습니다."/>
             </div>
         </Topic>
-    </>;
+    </div>;
 }

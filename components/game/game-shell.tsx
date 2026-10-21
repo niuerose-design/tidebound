@@ -45,7 +45,8 @@ const Guild = lazyPanel(() => import('./guild-panel').then(m => m.Guild));
 // v3.398 재설계 4단계: 환생 · 분신(새 토대).
 const SlotsPanel = lazyPanel(() => import('@/components/features/legacy').then(m => m.SlotsScreen));
 const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
-const Guide = lazyPanel(() => import('./guide-panel').then(m => m.Guide));
+// v3.400 재설계 4단계: 도움말(새 토대).
+const Guide = lazyPanel(() => import('@/components/features/help').then(m => m.HelpScreen));
 // v3.399 재설계 4단계: 통계 · 전투 기록 · 업데이트 내역(새 토대).
 const UpdateLog = lazyPanel(() => import('@/components/features/records').then(m => m.UpdatesScreen));
 // v3.384 재설계 4단계 세 번째 화면: 장비 보관함(새 토대). 옛 inventory-panel 은 상점 강화 탭 · 환생 화면이 아직 써서 남겨 둡니다.
