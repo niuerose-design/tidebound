@@ -799,7 +799,7 @@ test('v27.64 tide lifts low-stage monster levels toward the top stage (capped by
     const cap = Math.max(...W.STAGES.map(st => st.level)) + W.STAGE_ENEMY_LEVEL_OVER;
     assert.equal(W.tideLiftLevel(1, 0, 90), 1, 'no tide → no lift');
     assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS, 200), cap, 'reaches the top-stage level at the lift tier');
-    assert.equal(W.tideLiftLevel(1, 40, 200), cap, 'never past the top stage'); assert.equal(cap, 138, 'v3.367 cap = Lv.132 stage(공허 회랑) + 6; 플레이어 Lv.100이 상한이라 실제 목표 레벨은 그대로');
+    assert.equal(W.tideLiftLevel(1, 40, 200), cap, 'never past the top stage'); assert.equal(cap, 112, 'v3.367 cap = Lv.106 stage(공허 회랑) + 6; 플레이어 Lv.100이 상한이라 실제 목표 레벨은 그대로');
     assert.equal(W.tideLiftLevel(1, 40, 20), 20, 'never past the player level');
     assert.equal(W.tideLiftLevel(50, 40, 20), 50, 'never lowers a monster');
     assert.equal(W.tideLiftLevel(1, W.TIDE_LIFT_TIERS / 2, 200), Math.round(1 + (cap - 1) / 2), 'halfway at half the lift tier');

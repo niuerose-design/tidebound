@@ -57,11 +57,11 @@ export const ONYX_BOSSES: OnyxBoss[] = [
     { id: 'onyxDamien', hpMul: 120, name: '데미안', region: '리프레', drop: { charm: 'onyxHilla' } },
     { id: 'onyxSeren', hpMul: 70, name: '세렌', region: '시간의 신전', drop: { charm: 'onyxSeren' } },
     { id: 'onyxBlackMage', hpMul: 80, name: '검은 마법사', region: '아케인 리버', drop: { charm: 'onyxBlackMage' } },
-    // v3.367 코프룰루 칠흑 보스. 서식지 최강 몬스터가 Lv.110~138이라 배율은 작습니다.
-    { id: 'onyxVesper', hpMul: 60, name: '베스퍼', region: '잿빛 궤도', drop: { charm: 'onyxVesper' } },
-    { id: 'onyxHalder', hpMul: 50, name: '할더', region: '광맥 황야', drop: { charm: 'onyxHalder' } },
-    { id: 'onyxMirren', hpMul: 40, name: '미렌', region: '군체 늪지', drop: { charm: 'onyxMirren' } },
-    { id: 'onyxSolenne', hpMul: 35, name: '솔렌', region: '고요한 성단', drop: { charm: 'onyxSolenne' } },
+    // v3.367 코프룰루 칠흑 보스. 서식지 최강 몬스터는 Lv.104~110(아케인 리버와 비슷)이고 환생 50 이상의 땅이라 검은 마법사(80)보다 높게 둡니다.
+    { id: 'onyxVesper', hpMul: 90, name: '베스퍼', region: '잿빛 궤도', drop: { charm: 'onyxVesper' } },
+    { id: 'onyxHalder', hpMul: 100, name: '할더', region: '광맥 황야', drop: { charm: 'onyxHalder' } },
+    { id: 'onyxMirren', hpMul: 110, name: '미렌', region: '군체 늪지', drop: { charm: 'onyxMirren' } },
+    { id: 'onyxSolenne', hpMul: 120, name: '솔렌', region: '고요한 성단', drop: { charm: 'onyxSolenne' } },
 ];
 export const onyxItemById = (id: string) => ONYX_ITEMS.find(i => i.id === id);
 /** 지금 칠흑 보스에게서 얻을 수 있는 장신구(상점 · 환생 이정표 후보). */

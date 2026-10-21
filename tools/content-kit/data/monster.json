@@ -1305,8 +1305,8 @@
     "id": "aoScrapDrone",
     "name": "고철 드론",
     "name_en": null,
-    "level": 104,
-    "tier": 11,
+    "level": 100,
+    "tier": 10,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1320,13 +1320,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8313,
-      "attack": 232,
-      "defense": 83,
-      "exp": 1738262,
-      "gold": 32732
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1336,7 +1330,7 @@
     "id": "aoRustSentry",
     "name": "녹슨 경비기",
     "name_en": null,
-    "level": 105,
+    "level": 101,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1351,13 +1345,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8461,
-      "attack": 234,
-      "defense": 84,
-      "exp": 1938162,
-      "gold": 34860
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1367,7 +1355,7 @@
     "id": "aoHangarSpore",
     "name": "격납고 포자",
     "name_en": null,
-    "level": 106,
+    "level": 101,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1382,13 +1370,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8610,
-      "attack": 236,
-      "defense": 84,
-      "exp": 2161050,
-      "gold": 37126
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1398,7 +1380,7 @@
     "id": "aoDriftJelly",
     "name": "표류 해파리",
     "name_en": null,
-    "level": 107,
+    "level": 102,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1413,13 +1395,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8761,
-      "attack": 238,
-      "defense": 85,
-      "exp": 2409571,
-      "gold": 39539
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1429,7 +1405,7 @@
     "id": "aoDeckWraith",
     "name": "갑판 망령",
     "name_en": null,
-    "level": 108,
+    "level": 101,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1444,13 +1420,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8913,
-      "attack": 241,
-      "defense": 86,
-      "exp": 2686672,
-      "gold": 42109
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1460,7 +1430,7 @@
     "id": "aoStarMoth",
     "name": "별빛 나방",
     "name_en": null,
-    "level": 109,
+    "level": 102,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1475,13 +1445,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9066,
-      "attack": 243,
-      "defense": 87,
-      "exp": 2995639,
-      "gold": 44846
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1491,7 +1455,7 @@
     "id": "aoPatrolUnit",
     "name": "순찰 기계",
     "name_en": null,
-    "level": 110,
+    "level": 102,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1506,13 +1470,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9220,
-      "attack": 245,
-      "defense": 88,
-      "exp": 3340137,
-      "gold": 47761
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1522,8 +1480,8 @@
     "id": "aoHullBarnacle",
     "name": "외벽 따개비",
     "name_en": null,
-    "level": 111,
-    "tier": 12,
+    "level": 103,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1537,13 +1495,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9376,
-      "attack": 247,
-      "defense": 88,
-      "exp": 3724253,
-      "gold": 50865
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -1553,7 +1505,7 @@
     "id": "aoBridgeGuard",
     "name": "함교 경비기",
     "name_en": null,
-    "level": 110,
+    "level": 102,
     "tier": 11,
     "rarity": "common",
     "boss": false,
@@ -1568,13 +1520,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9220,
-      "attack": 245,
-      "defense": 88,
-      "exp": 3340137,
-      "gold": 47761
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "던전"
@@ -1584,8 +1530,8 @@
     "id": "vwShardBeetle",
     "name": "결정 딱정벌레",
     "name_en": null,
-    "level": 112,
-    "tier": 12,
+    "level": 102,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1599,13 +1545,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9533,
-      "attack": 249,
-      "defense": 89,
-      "exp": 4152542,
-      "gold": 54172
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1615,8 +1555,8 @@
     "id": "vwDigger",
     "name": "채굴 기계",
     "name_en": null,
-    "level": 113,
-    "tier": 12,
+    "level": 103,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1630,13 +1570,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9691,
-      "attack": 252,
-      "defense": 90,
-      "exp": 4630085,
-      "gold": 57693
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1646,8 +1580,8 @@
     "id": "vwDustWing",
     "name": "결정 가루 날개",
     "name_en": null,
-    "level": 114,
-    "tier": 12,
+    "level": 103,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1661,13 +1595,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9850,
-      "attack": 254,
-      "defense": 91,
-      "exp": 5162545,
-      "gold": 61443
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1677,8 +1605,8 @@
     "id": "vwQuarryWorm",
     "name": "채굴장 지렁이",
     "name_en": null,
-    "level": 115,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1692,13 +1620,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10011,
-      "attack": 256,
-      "defense": 92,
-      "exp": 5756237,
-      "gold": 65437
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1708,8 +1630,8 @@
     "id": "vwGasToad",
     "name": "가스 두꺼비",
     "name_en": null,
-    "level": 116,
-    "tier": 12,
+    "level": 103,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1723,13 +1645,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10173,
-      "attack": 258,
-      "defense": 92,
-      "exp": 6418204,
-      "gold": 69690
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1739,8 +1655,8 @@
     "id": "vwStingWisp",
     "name": "독침 안개",
     "name_en": null,
-    "level": 117,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1754,13 +1670,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10337,
-      "attack": 260,
-      "defense": 93,
-      "exp": 7156298,
-      "gold": 74220
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1770,8 +1680,8 @@
     "id": "vwSulfurCrab",
     "name": "유황 게",
     "name_en": null,
-    "level": 118,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1785,13 +1695,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10502,
-      "attack": 263,
-      "defense": 94,
-      "exp": 7979272,
-      "gold": 79044
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1801,8 +1705,8 @@
     "id": "vwPipeKeeper",
     "name": "가스관 관리기",
     "name_en": null,
-    "level": 119,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1816,13 +1720,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10668,
-      "attack": 265,
-      "defense": 95,
-      "exp": 8896889,
-      "gold": 84182
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -1832,8 +1730,8 @@
     "id": "hmLarva",
     "name": "군체 유충",
     "name_en": null,
-    "level": 120,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1847,13 +1745,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10835,
-      "attack": 267,
-      "defense": 96,
-      "exp": 9920031,
-      "gold": 89654
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -1863,8 +1755,8 @@
     "id": "hmMarshSlider",
     "name": "늪 미끄럼이",
     "name_en": null,
-    "level": 121,
-    "tier": 13,
+    "level": 105,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1878,13 +1770,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11004,
-      "attack": 269,
-      "defense": 96,
-      "exp": 11060834,
-      "gold": 95481
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -1894,8 +1780,8 @@
     "id": "hmAcidHound",
     "name": "산성 사냥개",
     "name_en": null,
-    "level": 122,
-    "tier": 13,
+    "level": 105,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1909,13 +1795,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11174,
-      "attack": 271,
-      "defense": 97,
-      "exp": 12332830,
-      "gold": 101688
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -1925,8 +1805,8 @@
     "id": "hmEggSac",
     "name": "알주머니",
     "name_en": null,
-    "level": 123,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1940,13 +1820,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11345,
-      "attack": 274,
-      "defense": 98,
-      "exp": 13751106,
-      "gold": 108297
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -1956,8 +1830,8 @@
     "id": "hmNerveRunner",
     "name": "신경 주자",
     "name_en": null,
-    "level": 124,
-    "tier": 13,
+    "level": 105,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -1971,13 +1845,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11517,
-      "attack": 276,
-      "defense": 99,
-      "exp": 15332483,
-      "gold": 115337
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -1987,8 +1855,8 @@
     "id": "hmSpinePillar",
     "name": "가시 기둥",
     "name_en": null,
-    "level": 125,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2002,13 +1870,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11691,
-      "attack": 278,
-      "defense": 100,
-      "exp": 17095718,
-      "gold": 122834
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -2018,8 +1880,8 @@
     "id": "hmMindEye",
     "name": "정신 눈알",
     "name_en": null,
-    "level": 126,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2033,13 +1895,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11866,
-      "attack": 280,
-      "defense": 100,
-      "exp": 19061726,
-      "gold": 130818
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -2049,8 +1905,8 @@
     "id": "hmPlateBrute",
     "name": "갑판 군체",
     "name_en": null,
-    "level": 127,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2064,13 +1920,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12043,
-      "attack": 282,
-      "defense": 101,
-      "exp": 21253824,
-      "gold": 139321
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -2080,8 +1930,8 @@
     "id": "hmMuscleWall",
     "name": "근육 벽",
     "name_en": null,
-    "level": 126,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2095,13 +1945,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11866,
-      "attack": 280,
-      "defense": 100,
-      "exp": 19061726,
-      "gold": 130818
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "던전"
@@ -2111,8 +1955,8 @@
     "id": "scLightWeaver",
     "name": "빛의 직조자",
     "name_en": null,
-    "level": 128,
-    "tier": 13,
+    "level": 105,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2126,13 +1970,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12221,
-      "attack": 285,
-      "defense": 102,
-      "exp": 23698014,
-      "gold": 148377
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2142,8 +1980,8 @@
     "id": "scGlimmer",
     "name": "반짝임",
     "name_en": null,
-    "level": 129,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2157,13 +1995,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12400,
-      "attack": 287,
-      "defense": 103,
-      "exp": 26423286,
-      "gold": 158021
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2173,8 +2005,8 @@
     "id": "scMemoryLens",
     "name": "기억 렌즈",
     "name_en": null,
-    "level": 130,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2188,13 +2020,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12580,
-      "attack": 289,
-      "defense": 104,
-      "exp": 29461964,
-      "gold": 168293
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2204,8 +2030,8 @@
     "id": "scStairStatue",
     "name": "계단 석상",
     "name_en": null,
-    "level": 131,
-    "tier": 14,
+    "level": 107,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2219,13 +2045,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12762,
-      "attack": 291,
-      "defense": 104,
-      "exp": 32850089,
-      "gold": 179232
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2235,8 +2055,8 @@
     "id": "scUnsealed",
     "name": "풀려난 수호자",
     "name_en": null,
-    "level": 132,
-    "tier": 14,
+    "level": 106,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2250,13 +2070,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12945,
-      "attack": 293,
-      "defense": 105,
-      "exp": 36627850,
-      "gold": 190882
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2266,8 +2080,8 @@
     "id": "scVoidJelly",
     "name": "공허 해파리",
     "name_en": null,
-    "level": 133,
-    "tier": 14,
+    "level": 107,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2281,13 +2095,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13129,
-      "attack": 296,
-      "defense": 106,
-      "exp": 40840052,
-      "gold": 203289
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2297,8 +2105,8 @@
     "id": "scDimStatue",
     "name": "빛 잃은 석상",
     "name_en": null,
-    "level": 134,
-    "tier": 14,
+    "level": 107,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2312,13 +2120,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13314,
-      "attack": 298,
-      "defense": 107,
-      "exp": 45536659,
-      "gold": 216503
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -2328,8 +2130,8 @@
     "id": "scReverser",
     "name": "역행자",
     "name_en": null,
-    "level": 135,
-    "tier": 14,
+    "level": 108,
+    "tier": 11,
     "rarity": "common",
     "boss": false,
     "spawnWeight": null,
@@ -2343,13 +2145,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13501,
-      "attack": 300,
-      "defense": 108,
-      "exp": 50773374,
-      "gold": 230576
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -3578,7 +3374,7 @@
     "id": "aoCargoSpider",
     "name": "화물 거미",
     "name_en": null,
-    "level": 106,
+    "level": 102,
     "tier": 11,
     "rarity": "rare",
     "boss": false,
@@ -3593,13 +3389,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8610,
-      "attack": 236,
-      "defense": 84,
-      "exp": 2161050,
-      "gold": 37126
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3609,7 +3399,7 @@
     "id": "aoWeldHound",
     "name": "용접 사냥개",
     "name_en": null,
-    "level": 108,
+    "level": 103,
     "tier": 11,
     "rarity": "rare",
     "boss": false,
@@ -3624,13 +3414,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8913,
-      "attack": 241,
-      "defense": 86,
-      "exp": 2686672,
-      "gold": 42109
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3640,7 +3424,7 @@
     "id": "aoCoreLeech",
     "name": "동력 거머리",
     "name_en": null,
-    "level": 109,
+    "level": 103,
     "tier": 11,
     "rarity": "epic",
     "boss": false,
@@ -3655,13 +3439,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9066,
-      "attack": 243,
-      "defense": 87,
-      "exp": 2995639,
-      "gold": 44846
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3671,7 +3449,7 @@
     "id": "aoBlackBoxWarden",
     "name": "블랙박스 수호기",
     "name_en": null,
-    "level": 110,
+    "level": 104,
     "tier": 11,
     "rarity": "legendary",
     "boss": false,
@@ -3686,13 +3464,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9220,
-      "attack": 245,
-      "defense": 88,
-      "exp": 3340137,
-      "gold": 47761
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3702,13 +3474,13 @@
     "id": "aoGhostDrone",
     "name": "유령 드론",
     "name_en": null,
-    "level": 108,
+    "level": 103,
     "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.6,
-    "minTier": 30,
+    "minTier": 50,
     "profile": "arcane",
     "shape": "ghost",
     "stage": "derelictHangar",
@@ -3717,24 +3489,18 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 8913,
-      "attack": 241,
-      "defense": 86,
-      "exp": 2686672,
-      "gold": 42109
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도",
-      "난이도30+"
+      "난이도50+"
     ]
   },
   {
     "id": "aoRiftLurker",
     "name": "틈새 잠복자",
     "name_en": null,
-    "level": 110,
+    "level": 103,
     "tier": 11,
     "rarity": "rare",
     "boss": false,
@@ -3749,13 +3515,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9220,
-      "attack": 245,
-      "defense": 88,
-      "exp": 3340137,
-      "gold": 47761
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3765,8 +3525,8 @@
     "id": "aoSignalEel",
     "name": "신호 장어",
     "name_en": null,
-    "level": 112,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.11,
@@ -3780,13 +3540,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9533,
-      "attack": 249,
-      "defense": 89,
-      "exp": 4152542,
-      "gold": 54172
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3796,8 +3550,8 @@
     "id": "aoVoidCrab",
     "name": "공허 게",
     "name_en": null,
-    "level": 113,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -3811,13 +3565,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9691,
-      "attack": 252,
-      "defense": 90,
-      "exp": 4630085,
-      "gold": 57693
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3827,8 +3575,8 @@
     "id": "aoStarEater",
     "name": "별 포식자",
     "name_en": null,
-    "level": 114,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.022,
@@ -3842,13 +3590,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9850,
-      "attack": 254,
-      "defense": 91,
-      "exp": 5162545,
-      "gold": 61443
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도"
@@ -3858,13 +3600,13 @@
     "id": "aoEclipseMoth",
     "name": "일식 나방",
     "name_en": null,
-    "level": 112,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.7,
-    "minTier": 30,
+    "minTier": 50,
     "profile": "silencer",
     "shape": "bat",
     "stage": "fracturedDeck",
@@ -3873,25 +3615,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9533,
-      "attack": 249,
-      "defense": 89,
-      "exp": 4152542,
-      "gold": 54172
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "잿빛 궤도",
-      "난이도30+"
+      "난이도50+"
     ]
   },
   {
     "id": "aoRustAdmiral",
     "name": "녹슨 제독",
     "name_en": null,
-    "level": 112,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -3905,13 +3641,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9533,
-      "attack": 249,
-      "defense": 89,
-      "exp": 4152542,
-      "gold": 54172
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "던전",
@@ -3922,8 +3652,8 @@
     "id": "onyxVesper",
     "name": "베스퍼",
     "name_en": null,
-    "level": 115,
-    "tier": 12,
+    "level": 106,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -3937,13 +3667,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10011,
-      "attack": 256,
-      "defense": 92,
-      "exp": 5756237,
-      "gold": 65437
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "칠흑"
@@ -3953,8 +3677,8 @@
     "id": "vwPrismLizard",
     "name": "프리즘 도마뱀",
     "name_en": null,
-    "level": 114,
-    "tier": 12,
+    "level": 104,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.15,
@@ -3968,13 +3692,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 9850,
-      "attack": 254,
-      "defense": 91,
-      "exp": 5162545,
-      "gold": 61443
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -3984,8 +3702,8 @@
     "id": "vwOreGolem",
     "name": "광석 골렘",
     "name_en": null,
-    "level": 116,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.11,
@@ -3999,13 +3717,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10173,
-      "attack": 258,
-      "defense": 92,
-      "exp": 6418204,
-      "gold": 69690
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4015,8 +3727,8 @@
     "id": "vwVeinSpirit",
     "name": "광맥 정령",
     "name_en": null,
-    "level": 117,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.07,
@@ -4030,13 +3742,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10337,
-      "attack": 260,
-      "defense": 93,
-      "exp": 7156298,
-      "gold": 74220
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4046,8 +3752,8 @@
     "id": "vwCrystalTitan",
     "name": "결정 거인",
     "name_en": null,
-    "level": 118,
-    "tier": 12,
+    "level": 106,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.025,
@@ -4061,13 +3767,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10502,
-      "attack": 263,
-      "defense": 94,
-      "exp": 7979272,
-      "gold": 79044
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4077,13 +3777,13 @@
     "id": "vwHollowShard",
     "name": "속 빈 결정",
     "name_en": null,
-    "level": 116,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.6,
-    "minTier": 40,
+    "minTier": 60,
     "profile": "tidal",
     "shape": "statue",
     "stage": "crystalQuarry",
@@ -4092,25 +3792,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10173,
-      "attack": 258,
-      "defense": 92,
-      "exp": 6418204,
-      "gold": 69690
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야",
-      "난이도40+"
+      "난이도60+"
     ]
   },
   {
     "id": "vwBloatHound",
     "name": "부푼 사냥개",
     "name_en": null,
-    "level": 118,
-    "tier": 12,
+    "level": 105,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.16,
@@ -4124,13 +3818,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10502,
-      "attack": 263,
-      "defense": 94,
-      "exp": 7979272,
-      "gold": 79044
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4140,8 +3828,8 @@
     "id": "vwCinderWasp",
     "name": "잿불 말벌",
     "name_en": null,
-    "level": 120,
-    "tier": 12,
+    "level": 106,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.12,
@@ -4155,13 +3843,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10835,
-      "attack": 267,
-      "defense": 96,
-      "exp": 9920031,
-      "gold": 89654
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4171,8 +3853,8 @@
     "id": "vwFumeSerpent",
     "name": "연기 뱀",
     "name_en": null,
-    "level": 121,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -4186,13 +3868,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11004,
-      "attack": 269,
-      "defense": 96,
-      "exp": 11060834,
-      "gold": 95481
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4202,8 +3878,8 @@
     "id": "vwCalderaMaw",
     "name": "분화구 아가리",
     "name_en": null,
-    "level": 122,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.02,
@@ -4217,13 +3893,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11174,
-      "attack": 271,
-      "defense": 97,
-      "exp": 12332830,
-      "gold": 101688
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야"
@@ -4233,13 +3903,13 @@
     "id": "vwYellowTitan",
     "name": "황색 거인",
     "name_en": null,
-    "level": 120,
-    "tier": 12,
+    "level": 106,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.7,
-    "minTier": 40,
+    "minTier": 60,
     "profile": "armored",
     "shape": "golem",
     "stage": "gasCaldera",
@@ -4248,25 +3918,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 10835,
-      "attack": 267,
-      "defense": 96,
-      "exp": 9920031,
-      "gold": 89654
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "광맥 황야",
-      "난이도40+"
+      "난이도60+"
     ]
   },
   {
     "id": "onyxHalder",
     "name": "할더",
     "name_en": null,
-    "level": 123,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -4280,13 +3944,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11345,
-      "attack": 274,
-      "defense": 98,
-      "exp": 13751106,
-      "gold": 108297
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "칠흑"
@@ -4296,8 +3954,8 @@
     "id": "hmSpineCrawler",
     "name": "가시 기는 것",
     "name_en": null,
-    "level": 122,
-    "tier": 13,
+    "level": 106,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.16,
@@ -4311,13 +3969,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11174,
-      "attack": 271,
-      "defense": 97,
-      "exp": 12332830,
-      "gold": 101688
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4327,8 +3979,8 @@
     "id": "hmBroodWatcher",
     "name": "산란 감시자",
     "name_en": null,
-    "level": 124,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.12,
@@ -4342,13 +3994,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11517,
-      "attack": 276,
-      "defense": 99,
-      "exp": 15332483,
-      "gold": 115337
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4358,8 +4004,8 @@
     "id": "hmSpawner",
     "name": "산란체",
     "name_en": null,
-    "level": 125,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -4373,13 +4019,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11691,
-      "attack": 278,
-      "defense": 100,
-      "exp": 17095718,
-      "gold": 122834
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4389,8 +4029,8 @@
     "id": "hmMarshTyrant",
     "name": "늪의 폭군",
     "name_en": null,
-    "level": 126,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.022,
@@ -4404,13 +4044,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11866,
-      "attack": 280,
-      "defense": 100,
-      "exp": 19061726,
-      "gold": 130818
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4420,13 +4054,13 @@
     "id": "hmBlackLarva",
     "name": "검은 유충",
     "name_en": null,
-    "level": 124,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.6,
-    "minTier": 40,
+    "minTier": 70,
     "profile": "swift",
     "shape": "slime",
     "stage": "spawningMarsh",
@@ -4435,25 +4069,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11517,
-      "attack": 276,
-      "defense": 99,
-      "exp": 15332483,
-      "gold": 115337
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지",
-      "난이도40+"
+      "난이도70+"
     ]
   },
   {
     "id": "hmSynapseHound",
     "name": "시냅스 사냥개",
     "name_en": null,
-    "level": 126,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.15,
@@ -4467,13 +4095,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 11866,
-      "attack": 280,
-      "defense": 100,
-      "exp": 19061726,
-      "gold": 130818
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4483,8 +4105,8 @@
     "id": "hmVeinLeech",
     "name": "혈관 거머리",
     "name_en": null,
-    "level": 128,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.11,
@@ -4498,13 +4120,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12221,
-      "attack": 285,
-      "defense": 102,
-      "exp": 23698014,
-      "gold": 148377
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4514,8 +4130,8 @@
     "id": "hmOverseer",
     "name": "지배종",
     "name_en": null,
-    "level": 129,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -4529,13 +4145,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12400,
-      "attack": 287,
-      "defense": 103,
-      "exp": 26423286,
-      "gold": 158021
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4545,8 +4155,8 @@
     "id": "hmCorridorKing",
     "name": "회랑의 왕",
     "name_en": null,
-    "level": 130,
-    "tier": 13,
+    "level": 109,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.02,
@@ -4560,13 +4170,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12580,
-      "attack": 289,
-      "defense": 104,
-      "exp": 29461964,
-      "gold": 168293
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지"
@@ -4576,13 +4180,13 @@
     "id": "hmPaleOverseer",
     "name": "창백한 지배종",
     "name_en": null,
-    "level": 128,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.8,
-    "minTier": 50,
+    "minTier": 70,
     "profile": "arcane",
     "shape": "demon",
     "stage": "nerveCorridor",
@@ -4591,25 +4195,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12221,
-      "attack": 285,
-      "defense": 102,
-      "exp": 23698014,
-      "gold": 148377
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "군체 늪지",
-      "난이도50+"
+      "난이도70+"
     ]
   },
   {
     "id": "hmHiveMother",
     "name": "모체",
     "name_en": null,
-    "level": 128,
-    "tier": 13,
+    "level": 108,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -4623,13 +4221,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12221,
-      "attack": 285,
-      "defense": 102,
-      "exp": 23698014,
-      "gold": 148377
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "던전",
@@ -4640,8 +4232,8 @@
     "id": "onyxMirren",
     "name": "미렌",
     "name_en": null,
-    "level": 131,
-    "tier": 14,
+    "level": 110,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -4655,13 +4247,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12762,
-      "attack": 291,
-      "defense": 104,
-      "exp": 32850089,
-      "gold": 179232
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "칠흑"
@@ -4671,8 +4257,8 @@
     "id": "scPrismGuard",
     "name": "프리즘 수호자",
     "name_en": null,
-    "level": 130,
-    "tier": 13,
+    "level": 107,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.15,
@@ -4686,13 +4272,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12580,
-      "attack": 289,
-      "defense": 104,
-      "exp": 29461964,
-      "gold": 168293
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4702,8 +4282,8 @@
     "id": "scHaloWisp",
     "name": "후광 요정",
     "name_en": null,
-    "level": 132,
-    "tier": 14,
+    "level": 108,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.12,
@@ -4717,13 +4297,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12945,
-      "attack": 293,
-      "defense": 105,
-      "exp": 36627850,
-      "gold": 190882
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4733,8 +4307,8 @@
     "id": "scShadowEater",
     "name": "그림자 포식자",
     "name_en": null,
-    "level": 133,
-    "tier": 14,
+    "level": 108,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -4748,13 +4322,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13129,
-      "attack": 296,
-      "defense": 106,
-      "exp": 40840052,
-      "gold": 203289
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4764,8 +4332,8 @@
     "id": "scSpireKeeper",
     "name": "첨탑 수호장",
     "name_en": null,
-    "level": 134,
-    "tier": 14,
+    "level": 109,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.025,
@@ -4779,13 +4347,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13314,
-      "attack": 298,
-      "defense": 107,
-      "exp": 45536659,
-      "gold": 216503
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4795,13 +4357,13 @@
     "id": "scDawnWeaver",
     "name": "새벽 직조자",
     "name_en": null,
-    "level": 132,
-    "tier": 14,
+    "level": 108,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.7,
-    "minTier": 50,
+    "minTier": 80,
     "profile": "arcane",
     "shape": "mage",
     "stage": "lightSpire",
@@ -4810,25 +4372,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 12945,
-      "attack": 293,
-      "defense": 105,
-      "exp": 36627850,
-      "gold": 190882
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단",
-      "난이도50+"
+      "난이도80+"
     ]
   },
   {
     "id": "scHollowSentinel",
     "name": "텅 빈 파수꾼",
     "name_en": null,
-    "level": 134,
-    "tier": 14,
+    "level": 108,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.14,
@@ -4842,13 +4398,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13314,
-      "attack": 298,
-      "defense": 107,
-      "exp": 45536659,
-      "gold": 216503
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4858,8 +4408,8 @@
     "id": "scGravityMaw",
     "name": "중력 아가리",
     "name_en": null,
-    "level": 136,
-    "tier": 14,
+    "level": 109,
+    "tier": 11,
     "rarity": "rare",
     "boss": false,
     "spawnWeight": 0.11,
@@ -4873,13 +4423,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13689,
-      "attack": 302,
-      "defense": 108,
-      "exp": 56612312,
-      "gold": 245563
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4889,8 +4433,8 @@
     "id": "scEchoOfEnd",
     "name": "끝의 메아리",
     "name_en": null,
-    "level": 137,
-    "tier": 14,
+    "level": 109,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
@@ -4904,13 +4448,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13879,
-      "attack": 304,
-      "defense": 109,
-      "exp": 63122728,
-      "gold": 261525
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4920,8 +4458,8 @@
     "id": "scLastWarden",
     "name": "최후의 관문지기",
     "name_en": null,
-    "level": 138,
-    "tier": 14,
+    "level": 110,
+    "tier": 11,
     "rarity": "legendary",
     "boss": false,
     "spawnWeight": 0.02,
@@ -4935,13 +4473,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 14070,
-      "attack": 307,
-      "defense": 110,
-      "exp": 70381842,
-      "gold": 278524
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단"
@@ -4951,13 +4483,13 @@
     "id": "scStillReverser",
     "name": "멈춘 역행자",
     "name_en": null,
-    "level": 136,
-    "tier": 14,
+    "level": 109,
+    "tier": 11,
     "rarity": "epic",
     "boss": false,
     "spawnWeight": 0.06,
     "rewardMultiplier": 2.8,
-    "minTier": 50,
+    "minTier": 80,
     "profile": "controller",
     "shape": "clock",
     "stage": "voidGallery",
@@ -4966,25 +4498,19 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 13689,
-      "attack": 302,
-      "defense": 108,
-      "exp": 56612312,
-      "gold": 245563
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "고요한 성단",
-      "난이도50+"
+      "난이도80+"
     ]
   },
   {
     "id": "onyxSolenne",
     "name": "솔렌",
     "name_en": null,
-    "level": 139,
-    "tier": 14,
+    "level": 110,
+    "tier": 11,
     "rarity": "legendary",
     "boss": true,
     "spawnWeight": 1,
@@ -4998,13 +4524,7 @@
     "description": null,
     "behavior": null,
     "weakness": null,
-    "stats": {
-      "hp": 14262,
-      "attack": 309,
-      "defense": 111,
-      "exp": 78475754,
-      "gold": 296628
-    },
+    "stats": null,
     "drops": null,
     "tags": [
       "칠흑"

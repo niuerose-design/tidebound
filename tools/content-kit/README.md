@@ -37,7 +37,7 @@ pangaea-content-kit/
 `data/<type>.raw/batchNN.json`(원본) · `batchNN.qa.json`(자체 검수 기록) → `data/<type>.json`에 병합 → **v3.367에서 게임에 반영됨**(장비 이름 풀 84개만 제외, Q6 보류). 반영 위치: `game/data/world.ts` · `encounters.ts` · `art.ts` · `onyx.ts` · `gear.ts` · `economy.ts` · `boss-core.ts` · `book-traits.ts` · `variants.ts` · `secret/odds.ts` · `expansion-koprulu.ts`(직업 · 스킬) · `story.ts` + `components/game/story-scenes.tsx` · `story-art.tsx`.
 | type | 생성 | 내용 |
 |---|---|---|
-| area | 10 | 지역 4곳(잿빛 궤도 · 광맥 황야 · 군체 늪지 · 고요한 성단) = 사냥터 8(Lv.104~132, 환생 25~40) + 던전 2(함교 · 군체의 심장) |
+| area | 10 | 지역 4곳(잿빛 궤도 · 광맥 황야 · 군체 늪지 · 고요한 성단) = 사냥터 8(Lv.100~106, 환생 50~65 · 고인물 전용) + 던전 2(함교 · 군체의 심장) |
 | monster | 80 | 사냥터마다 9종(common 4 · rare 2 · epic 1 · legendary 1 · 난이도 변종 epic 1) + 던전 잡몹 2 · 던전 보스 2 · 칠흑 보스 4(전용 성향 · 고유 기술 onyxHush · onyxQuarry · onyxGaze · onyxWeave) |
 | item | 150 | 장비 이름 풀 84(기계 계열 · 생체 계열 7등급 × 6부위, Q6 보류라 게임 미적용) · 옵션 56 · 칠흑 장신구 4 · 유물 6 |
 | skill | 60 | 강철 보병 계보(물리, `ir*`) 5직업 × 6 + 군체 조율사 계보(상태이상, `hv*`) 5직업 × 6. 직업 정의는 `game/data/expansion-koprulu.ts`(세계 `koprulu`) |
