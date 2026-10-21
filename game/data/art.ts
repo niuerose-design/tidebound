@@ -5,12 +5,14 @@
  */
 import { MONSTERS } from './world';
 
-import { MONSTER_ART, JOB_ART, ONYX_ART, STORY_ART, SKILL_ART } from './art-manifest';
+import { MONSTER_ART, JOB_ART, ONYX_ART, STORY_ART, SKILL_ART, ITEM_ART } from './art-manifest';
 /** v27.57 그림이 있으면 경로, 없으면 null(요청하지 않고 실루엣·아이콘). 목록은 node scripts/art-manifest.mjs 가 만듭니다. */
 export const monsterArtSrc = (id: string) => MONSTER_ART[id] ? `/art/monsters/${id}.${MONSTER_ART[id]}` : null;
 export const jobArtSrc = (lineageId: string) => JOB_ART[lineageId] ? `/art/jobs/${lineageId}.${JOB_ART[lineageId]}` : null;
 /** v3.14 칠흑 장신구 그림(public/art/onyx/{보스id}.png|webp). 없으면 null(components/game/onyx-art의 SVG). */
 export const onyxArtSrc = (bossId: string) => ONYX_ART[bossId] ? `/art/onyx/${bossId}.${ONYX_ART[bossId]}` : null;
+/** v3.388 장비 그림(public/art/items/{slot}-{등급}.webp, 무기는 rod-{물리·마법·겸용}-{등급}). 없으면 null(부위 아이콘). 등급은 0~6으로 묶습니다. */
+export const gearArtSrc = (slot: string, rarity: number, style?: 'physical' | 'magic' | 'balanced' | null) => { const r = Math.max(0, Math.min(6, Math.floor(rarity || 0))); const key = slot === 'rod' ? `rod-${style || 'physical'}-${r}` : `${slot}-${r}`; return ITEM_ART[key] ? `/art/items/${key}.${ITEM_ART[key]}` : null; };
 /** v3.216 스토리 삽화(public/art/story/{chapter-N | 장면 id}.png|webp). 없으면 null. */
 export const storyArtSrc = (key: string) => STORY_ART[key] ? `/art/story/${key}.${STORY_ART[key]}` : null;
 /** v27.40 스킬 아이콘(public/art/skills/{id}.png|svg). 목록에 없으면 null(기본 아이콘). v3.369 svg 도 받습니다. */

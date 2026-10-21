@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { ChoiceChips, ItemSlot, RarityTag, StatBar, rarityKey, rarityVar, formatPercent } from '@/components/ui/game';
 import { OnyxArt } from '@/components/game/onyx-art';
-import { SlotIcon } from '@/components/game/shared';
+import { GearArt } from '@/components/game/gear-art';
 import { BALANCE, RARITIES, SLOTS } from '@/game/data/balance';
 import { EQUIPMENT_NAMES } from '@/game/data/equipment';
 import { PROGRESSION, percent } from '@/game/data/progression';
@@ -57,7 +57,7 @@ export function ItemBook({ s, send, busy, secret }: { s: State; send: Send; busy
                 const key = itemKey(slot, i), done = !!s.itemBook[key], candidate = s.inventory.find(item => item.slot === slot && item.rarity === i && !item.locked && !item.relic);
                 return <BookCard key={key} undiscovered={!done}>
                     <div className="flex items-start gap-3">
-                        <ItemSlot rarity={rarityKey(i)} label={`${rarity.name} ${label}`} size="l"><SlotIcon slot={slot} size={26}/></ItemSlot>
+                        <ItemSlot rarity={rarityKey(i)} label={`${rarity.name} ${label}`} size="l"><GearArt slot={slot} rarity={i} size={52}/></ItemSlot>
                         <div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-m font-semibold text-ink-1">{EQUIPMENT_NAMES[slot as keyof typeof EQUIPMENT_NAMES][i]}</span><RarityTag rarity={rarityKey(i)}/></div>
                             <div className="mt-0.5 text-xs text-ink-3">{label} · {gain}</div>
                             <div className={`mt-1 text-xs font-medium ${done ? 'text-ok' : 'text-ink-3'}`}>{done ? '등록 완료 · 영구 보너스 적용 중' : '미등록'}</div></div>

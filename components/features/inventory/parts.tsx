@@ -5,7 +5,7 @@ import { Gem, Lock, Sparkles } from 'lucide-react';
 import type { Item, Stats } from '@/game/types';
 import { RarityTag, KeyValueList, rarityKey, formatExact } from '@/components/ui/game';
 import { OnyxArt } from '@/components/game/onyx-art';
-import { SlotIcon } from '@/components/game/shared';
+import { GearArt } from '@/components/game/gear-art';
 import { cn } from '@/lib/utils';
 import { RARITIES, SLOTS } from '@/game/data/balance';
 import { STAT_LABELS, byStatOrder, statDeltaDisplay } from '@/game/data/progression';
@@ -15,7 +15,7 @@ import { starLabel } from '@/game/data/starforce';
 export const HEIR_LABEL = { ancient: '원시 고대', primal: '계승 태초' } as const;
 export const rarityOf = (item: Pick<Item, 'rarity' | 'onyx'>) => item.onyx ? 'primal' : rarityKey(item.rarity);
 /** 장비 칸 그림(칠흑은 전용 그림). */
-export function ItemArt({ item, size = 22 }: { item: Item; size?: number }) { return item.onyx ? <OnyxArt id={item.onyx} size={size + 8}/> : <SlotIcon slot={item.slot} size={size}/>; }
+export function ItemArt({ item, size = 22 }: { item: Item; size?: number }) { return item.onyx ? <OnyxArt id={item.onyx} size={size + 8}/> : <GearArt slot={item.slot} rarity={item.rarity} style={item.style} size={size + 8}/>; }
 /** 이름 + 별 + 상태 아이콘(보호 · 유물 · 계승 · 칠흑). */
 export function ItemName({ item, always, className }: { item: Item; always?: boolean; className?: string }) {
     return <span className={cn('inline-flex flex-wrap items-center gap-1.5 font-semibold text-ink-1', className)}>
