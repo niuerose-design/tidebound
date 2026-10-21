@@ -1,25 +1,25 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
-import type { Battle, BattleUnit, Line, Mode, Pos, CombatResult } from '@/game/srpg/engine/types';
+import type { Battle, BattleUnit, Line, Mode, Pos } from '@/game/srpg/engine/types';
 import { CHAPTER_MAP } from '@/game/srpg/data/chapters/index';
 import { classDef, SKILL_TEXT } from '@/game/srpg/data/classes';
 import { itemDef } from '@/game/srpg/data/items';
 import { UNIT_MAP } from '@/game/srpg/data/units';
 import { TERRAIN, terrainAt, manhattan } from '@/game/srpg/engine/terrain';
-import { key, unkey, threatCells, moveRange, hostile } from '@/game/srpg/engine/grid';
+import { key, unkey, threatCells, moveRange, hostile, pathTo } from '@/game/srpg/engine/grid';
 import { forecast, attackRange, allWeaponRange, unitAt, staffRange, healAmount } from '@/game/srpg/engine/combat';
 import { weaponOf, attackWeapon, canWield } from '@/game/srpg/engine/unit';
 import * as B from '@/game/srpg/engine/battle';
 import { enemyStep } from '@/game/srpg/engine/ai';
 import { saveSession, loadPrefs, savePrefs, tileSizes, type Session, type Prefs } from './storage';
 import { ConfirmButton } from '@/components/game/confirm-button';
-import { TILE_CLASS } from './map-view';
+import { MapCanvas, type MapCanvasHandle, type MapAnim } from './map-canvas';
 import { StatGrid, UnitHeader, ItemList } from './unit-sheet';
 import { DialogueBox } from './dialogue';
 type Ui =
     | { kind: 'idle' }
-    | { kind: 'selected'; uid: string; stoppable: Set<string>; threat: Set<string>; budget?: number }
+    | { kind: 'selected'; uid: string; stoppable: Set<string>; threat: Set<string>; prev: Map<string, string>; budget?: number }
     | { kind: 'menu'; uid: string; preMove: Battle; remaining: number }
     | { kind: 'weapon'; uid: string; preMove: Battle; remaining: number; options: number[] }
     | { kind: 'target'; uid: string; preMove: Battle; remaining: number; action: 'attack' | 'heal' | 'talk' | 'trade'; targets: string[] }
@@ -29,7 +29,7 @@ type Ui =
     | { kind: 'door'; uid: string; preMove: Battle; remaining: number; doors: Pos[] }
     | { kind: 'enemy' };
 const MAX_SNAPSHOTS = 8;
-const PHASE_MS: Record<Prefs['speed'], number> = { normal: 520, fast: 160 };
+const PHASE_MS: Record<Prefs['speed'], number> = { normal: 360, fast: 120 };
 /** 전투 화면. 상태 전이는 모두 엔진 함수로 하고, 여기서는 선택 · 연출 · 저장만 합니다. */
 export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; mode: Mode; onEnd: (b: Battle) => void; onAbandon: () => void }) {
     const ch = CHAPTER_MAP[session.chapterId];
@@ -40,14 +40,22 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
     const [notice, setNotice] = useState<string | null>(null);
     const [banner, setBanner] = useState<string | null>(() => session.battle.turn === 1 ? `${ch.number}장 ${ch.title}` : null);
     const [inspect, setInspect] = useState<string | null>(null);
-    const [fx, setFx] = useState<{ result: CombatResult; at: number } | null>(null);
     const [acting, setActing] = useState<string | null>(null);
     const [showLog, setShowLog] = useState(false);
     const [ended, setEnded] = useState<Battle | null>(null);
     const [prefs, setPrefs] = useState<Prefs>(() => typeof window === 'undefined' ? { tile: 44, speed: 'normal', showGrid: true } : loadPrefs());
     const [sizes] = useState<number[]>(() => tileSizes());
-    const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-    useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
+    const [hoverPath, setHoverPath] = useState<Pos[] | null>(null);
+    const [reducedMotion] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+    const canvas = useRef<MapCanvasHandle>(null), scrollBox = useRef<HTMLDivElement>(null);
+    /** 연출은 순서대로 이어 붙입니다(이동 → 전투 → 다음 적). 상태는 즉시 바뀌고 그림만 뒤따릅니다. */
+    const animQueue = useRef<Promise<void>>(Promise.resolve());
+    const cancelled = useRef(false);
+    // StrictMode(개발)는 효과를 두 번 실행하므로 마운트 때 다시 false로 둡니다.
+    useEffect(() => { cancelled.current = false; return () => { cancelled.current = true; }; }, []);
+    const queueAnim = useCallback((anims: MapAnim[]) => { animQueue.current = animQueue.current.then(() => canvas.current?.play(anims)).catch(() => undefined); return animQueue.current; }, []);
+    /** 적 턴 카메라: 움직이는 유닛이 보이게 맵 스크롤을 따라갑니다. */
+    const follow = useCallback((x: number, y: number) => { const el = scrollBox.current; if (!el) return; const t = prefs.tile; const left = x * t + t / 2 - el.clientWidth / 2, top = y * t + t / 2 - el.clientHeight / 2; el.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reducedMotion ? 'auto' : 'smooth' }); }, [prefs.tile, reducedMotion]);
     const persist = useCallback((b: Battle, snaps: Battle[]) => saveSession({ chapterId: ch.id, battle: b, snapshots: snaps, deployed: session.deployed }), [ch.id, session.deployed]);
     /** 엔진 결과 반영: 대사 · 배너 · 저장 · 종료 판정. */
     const commit = useCallback((next: Battle, snaps?: Battle[]) => {
@@ -56,28 +64,28 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
         setBattle(cleaned);
         if (lines.length) setDialogue(prev => prev ? [...prev, ...lines] : lines);
         if (next.pendingNotice) { setNotice(next.pendingNotice); cleaned.pendingNotice = null; }
-        if (next.lastCombat) setFx({ result: next.lastCombat, at: Date.now() });
+        if (next.lastCombat) { queueAnim([{ kind: 'combat', result: next.lastCombat }]); cleaned.lastCombat = null; }
         const s = snaps ?? snapshots;
         if (snaps) setSnapshots(snaps);
         persist(cleaned, s);
         if (cleaned.status !== 'playing') setEnded(cleaned);
         return cleaned;
-    }, [persist, snapshots]);
+    }, [persist, snapshots, queueAnim]);
     const act = useCallback((fn: () => Battle, snaps?: Battle[]) => { try { return commit(fn(), snaps); } catch (e) { toast.error((e as Error).message); return null; } }, [commit]);
     const unit = (uid: string) => battle.units.find(u => u.uid === uid)!;
     const selectUnit = (u: BattleUnit, budget?: number) => {
         const r = moveRange(battle.tiles, u, battle.units, budget);
         const threat = threatCells(battle.tiles, r.stoppable, allWeaponRange(u));
-        setUi({ kind: 'selected', uid: u.uid, stoppable: r.stoppable, threat, budget });
-        setInspect(u.uid);
+        setUi({ kind: 'selected', uid: u.uid, stoppable: r.stoppable, threat, prev: r.prev, budget });
+        setInspect(u.uid); setHoverPath(null);
     };
     const toMenu = (b: Battle, uid: string, preMove: Battle, remaining: number) => { setUi({ kind: 'menu', uid, preMove, remaining }); return b; };
-    const cancelToSelected = (pre: Battle, uid: string) => { setBattle(pre); const u = pre.units.find(x => x.uid === uid)!; const r = moveRange(pre.tiles, u, pre.units); setUi({ kind: 'selected', uid, stoppable: r.stoppable, threat: threatCells(pre.tiles, r.stoppable, allWeaponRange(u)) }); };
+    const cancelToSelected = (pre: Battle, uid: string) => { setBattle(pre); const u = pre.units.find(x => x.uid === uid)!; const r = moveRange(pre.tiles, u, pre.units); setUi({ kind: 'selected', uid, stoppable: r.stoppable, threat: threatCells(pre.tiles, r.stoppable, allWeaponRange(u)), prev: r.prev }); };
     /** 행동을 마친 뒤: 재이동(canto)이 남았으면 이동 선택으로, 아니면 대기. */
     const afterAction = (b: Battle | null, uid: string, remaining: number) => {
         if (!b || b.status !== 'playing') { setUi({ kind: 'idle' }); return; }
         const u = b.units.find(x => x.uid === uid);
-        if (u && u.hp > 0 && B.hasCanto(u) && remaining > 0) { const r = moveRange(b.tiles, u, b.units, remaining); setUi({ kind: 'selected', uid, stoppable: r.stoppable, threat: new Set(), budget: remaining }); }
+        if (u && u.hp > 0 && B.hasCanto(u) && remaining > 0) { const r = moveRange(b.tiles, u, b.units, remaining); setUi({ kind: 'selected', uid, stoppable: r.stoppable, threat: new Set(), prev: r.prev, budget: remaining }); }
         else setUi({ kind: 'idle' });
     };
     // ── 맵 클릭 ──
@@ -95,6 +103,9 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
                 const pre = battle;
                 const r = moveRange(battle.tiles, u, battle.units, ui.budget);
                 const remaining = r.reach.get(key(x, y)) ?? 0;
+                const path = pathTo(r.prev, [u.x, u.y], [x, y]);
+                queueAnim([{ kind: 'move', uid: ui.uid, path }]);
+                setHoverPath(null);
                 const moved = act(() => B.moveUnit(battle, ui.uid, [x, y], ui.budget));
                 if (!moved) return;
                 if (ui.budget !== undefined) { setUi({ kind: 'idle' }); return; } // 재이동은 이동으로 끝
@@ -145,22 +156,33 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
         if (ui.kind === 'enemy' || dialogue || ended) return;
         const start = act(() => B.endPlayerTurn(battle, ch));
         if (!start || start.status !== 'playing') return;
-        setUi({ kind: 'enemy' }); setInspect(null); setBanner('적 행동');
-        const step = (cur: Battle) => {
-            const { battle: next, action } = enemyStep(cur, ch);
-            if (!action) {
-                const fresh = B.startPlayerTurn(next, ch);
-                const snaps = [...snapshots.slice(-(MAX_SNAPSHOTS - 1)), { ...fresh, pending: [] }];
-                commit(fresh, snaps);
-                setActing(null); setUi({ kind: 'idle' }); setBanner(`${fresh.turn}턴`);
-                return;
+        setUi({ kind: 'enemy' }); setInspect(null); setHoverPath(null); setBanner('적 행동');
+        const run = async () => {
+            let cur = start;
+            await new Promise(r => setTimeout(r, PHASE_MS[prefs.speed]));
+            for (;;) {
+                if (cancelled.current) return;
+                const { battle: next, action } = enemyStep(cur, ch);
+                if (!action) {
+                    const fresh = B.startPlayerTurn(next, ch);
+                    const snaps = [...snapshots.slice(-(MAX_SNAPSHOTS - 1)), { ...fresh, pending: [] }];
+                    commit(fresh, snaps);
+                    setActing(null); setUi({ kind: 'idle' }); setBanner(`${fresh.turn}턴`);
+                    return;
+                }
+                setActing(action.uid);
+                const mover = next.units.find(u => u.uid === action.uid);
+                if (action.path.length > 1) { follow(action.path[action.path.length - 1][0], action.path[action.path.length - 1][1]); queueAnim([{ kind: 'move', uid: action.uid, path: action.path }]); }
+                else if (mover && action.kind !== 'wait') follow(mover.x, mover.y);
+                if (action.kind === 'loot' && mover) queueAnim([{ kind: 'event', x: mover.x, y: mover.y, text: action.text ?? '약탈' }]);
+                const shown = commit(next);
+                await animQueue.current;
+                if (shown.status !== 'playing') { setActing(null); setUi({ kind: 'idle' }); return; }
+                await new Promise(r => setTimeout(r, action.kind === 'wait' ? 0 : PHASE_MS[prefs.speed] * .5));
+                cur = shown;
             }
-            setActing(action.uid);
-            const shown = commit(next);
-            if (shown.status !== 'playing') { setActing(null); setUi({ kind: 'idle' }); return; }
-            timer.current = setTimeout(() => step(shown), action.kind === 'wait' ? Math.min(80, PHASE_MS[prefs.speed]) : PHASE_MS[prefs.speed] + (action.combat ? 380 : 0));
         };
-        timer.current = setTimeout(() => step(start), 400);
+        void run();
     };
     const rewind = () => {
         if (!B.canRewind(battle) || ui.kind === 'enemy' || dialogue) return;
@@ -189,8 +211,17 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
     const turnsLeft = B.isTurnLimited(ch) ? Math.max(0, ch.objective.turns! - battle.turn + 1) : null;
     useEffect(() => { if (!banner) return; const t = setTimeout(() => setBanner(null), 1400); return () => clearTimeout(t); }, [banner]);
     useEffect(() => { if (!notice) return; const t = setTimeout(() => setNotice(null), 2600); return () => clearTimeout(t); }, [notice]);
-    useEffect(() => { if (!fx) return; const t = setTimeout(() => setFx(null), 1500); return () => clearTimeout(t); }, [fx]);
-    const hpOf = (u: BattleUnit) => u.hp;
+    /** 마우스가 지나는 칸까지의 이동 경로(이동 선택 중, 갈 수 있는 칸만). */
+    const onMapHover = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (ui.kind !== 'selected') { if (hoverPath) setHoverPath(null); return; }
+        const rect = e.currentTarget.getBoundingClientRect(); const x = Math.floor((e.clientX - rect.left) / tile), y = Math.floor((e.clientY - rect.top) / tile);
+        const u = unit(ui.uid); const k = key(x, y);
+        if (!ui.stoppable.has(k) || (x === u.x && y === u.y)) { if (hoverPath) setHoverPath(null); return; }
+        const last = hoverPath?.[hoverPath.length - 1];
+        if (last && last[0] === x && last[1] === y) return;
+        setHoverPath(pathTo(ui.prev, [u.x, u.y], [x, y]));
+    };
+    const usedSet = useMemo(() => new Set(battle.used), [battle.used]);
     /** 키보드 초점: 지금 상태에서 눌러서 뜻이 있는 칸만 Tab 순서에 넣습니다(모든 칸을 넣으면 Tab이 수백 번 필요). */
     const cellFocusable = (x: number, y: number) => {
         const k = key(x, y), here = unitAt(battle, x, y);
@@ -202,15 +233,12 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
     };
     const cellLabel = (x: number, y: number) => { const here = unitAt(battle, x, y); const t = terrainAt(battle.tiles, x, y).name; return here ? `${x},${y} ${t}, ${here.name} 체력 ${here.hp}/${here.stats.hp}${here.side === 'enemy' ? ' (적)' : here.side === 'ally' ? ' (중립)' : ''}` : `${x},${y} ${t}`; };
     const cellClass = (x: number, y: number) => {
-        const k = key(x, y), t = battle.tiles[y][x];
-        const cls = [`tx-cell`, `t-${TILE_CLASS[t] ?? 'plain'}`];
+        const k = key(x, y);
+        const cls = ['tx-cell'];
         if (ui.kind === 'selected') { if (ui.stoppable.has(k)) cls.push('r-move'); else if (ui.threat.has(k)) cls.push('r-attack'); }
         if (inspectThreat.has(k)) cls.push('r-threat');
         if (targetSet.size && battle.units.some(u => u.hp > 0 && u.x === x && u.y === y && targetSet.has(u.uid))) cls.push('r-target');
         if (ui.kind === 'door' && ui.doors.some(d => d[0] === x && d[1] === y)) cls.push('r-target');
-        if (ch.objective.target_pos && ch.objective.target_pos[0] === x && ch.objective.target_pos[1] === y) cls.push('goal');
-        if (battle.used.includes(k)) cls.push('used');
-        if (!prefs.showGrid) cls.push('nogrid');
         return cls.join(' ');
     };
     return <div className={`tx-battle ${ui.kind === 'enemy' ? 'enemy-phase' : ''}`}>
@@ -229,14 +257,10 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
             </div>
         </header>
         <div className="tx-battle-body">
-            <div className="tx-map-scroll">
-                <div className="tx-map" style={{ width: w * tile, height: h * tile, ['--tile' as string]: `${tile}px`, gridTemplateColumns: `repeat(${w}, ${tile}px)` }}>
+            <div className="tx-map-scroll" ref={scrollBox}>
+                <div className="tx-map" style={{ width: w * tile, height: h * tile, ['--tile' as string]: `${tile}px`, gridTemplateColumns: `repeat(${w}, ${tile}px)` }} onMouseMove={onMapHover} onMouseLeave={() => { if (hoverPath) setHoverPath(null); }}>
+                    <MapCanvas ref={canvas} tiles={battle.tiles} units={battle.units} tile={tile} goal={ch.objective.target_pos} used={usedSet} path={hoverPath} selectedUid={sel?.uid ?? null} inspectedUid={inspected?.uid ?? null} actingUid={acting} showGrid={prefs.showGrid} speed={prefs.speed} reducedMotion={reducedMotion}/>
                     {battle.tiles.map((row, y) => [...row].map((_, x) => { const focusable = cellFocusable(x, y); return <div key={`${x},${y}`} className={cellClass(x, y)} onClick={() => onCell(x, y)} role="button" tabIndex={focusable ? 0 : -1} aria-label={cellLabel(x, y)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCell(x, y); } }}/>; }))}
-                    {battle.units.filter(u => u.hp > 0 && u.x >= 0).map(u => <div key={u.uid} className={`tx-unit side-${u.side} ${u.acted && u.side === 'player' ? 'acted' : ''} ${u.boss ? 'boss' : ''} ${sel?.uid === u.uid ? 'selected' : ''} ${acting === u.uid ? 'acting' : ''} ${inspected?.uid === u.uid ? 'inspected' : ''} ${u.recruitableAs ? 'recruitable' : ''}`} style={{ transform: `translate(${u.x * tile}px, ${u.y * tile}px)` }} onClick={() => onCell(u.x, u.y)} title={`${u.name} ${hpOf(u)}/${u.stats.hp}`}>
-                        <span className="tx-glyph">{classDef(u.classId).glyph}</span>
-                        <i className="tx-unit-hp"><b style={{ width: `${Math.round(hpOf(u) / u.stats.hp * 100)}%` }}/></i>
-                        {fx && fx.result.strikes.some(s => s.defender === u.uid) && <span className={`tx-pop ${fx.result.strikes.find(s => s.defender === u.uid)?.heal ? 'heal' : ''}`}>{fx.result.strikes.filter(s => s.defender === u.uid).map((s, i) => <em key={i} className={s.crit ? 'crit' : s.hit ? '' : 'miss'}>{s.heal ? `+${s.dmg}` : s.hit ? (s.crit ? `필살 ${s.dmg}` : s.dmg) : '빗나감'}</em>)}</span>}
-                    </div>)}
                 </div>
             </div>
             <aside className="tx-side">
