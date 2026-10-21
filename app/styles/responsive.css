@@ -15,11 +15,11 @@
 /* v3.370 HIG(애플 휴먼 인터페이스 가이드라인) 터치 규칙: 손가락으로 쓰는 기기에서는 모든 조작 요소가 최소 44×44pt.
    큰 요소는 높이를 올리고, 아이콘 · 글자 버튼처럼 작게 보여야 하는 것은 보이는 크기는 그대로 두고 닿는 영역(가상 요소)만 44pt로 넓힙니다. */
 @media (pointer:coarse) {
-  button:not(.text-button):not(.icon-button):not(.skill-pin):not(.log-fold):not(.feed-fold):not(.voyage-brief-dismiss):not(.map-node):not(.scene-foe-name):not(.world-tab):not(.hotbar-slot),[role=tab],select,summary,input:not([type=range]):not([type=checkbox]):not([type=radio]) {
+  button:not(.icon-button):not(.skill-pin):not(.log-fold):not(.feed-fold):not(.voyage-brief-dismiss):not(.map-node):not(.scene-foe-name):not(.world-tab):not(.hotbar-slot),[role=tab],select,summary,input:not([type=range]):not([type=checkbox]):not([type=radio]) {
     min-height:44px
   }
 
-  button.secondary,button.primary,[data-sidebar=trigger],.job-sheet-close,.tide-selector .button-row button {
+  [data-sidebar=trigger],.job-sheet-close,.tide-selector .button-row button {
     min-width:44px
   }
 
@@ -32,11 +32,11 @@
     height:22px
   }
 
-  .text-button,.icon-button,.skill-pin,.log-fold,.feed-fold,.voyage-brief-dismiss,.scene-foe-name {
+  .icon-button,.skill-pin,.log-fold,.feed-fold,.voyage-brief-dismiss,.scene-foe-name {
     position:relative
   }
 
-  .text-button::after,.icon-button::after,.skill-pin::after,.log-fold::after,.feed-fold::after,.voyage-brief-dismiss::after,.scene-foe-name::after {
+  .icon-button::after,.skill-pin::after,.log-fold::after,.feed-fold::after,.voyage-brief-dismiss::after,.scene-foe-name::after {
     content:'';
     position:absolute;
     left:50%;
@@ -56,20 +56,6 @@
 @media(max-width:1250px) {
   .workspace {
     padding:26px 22px
-  }
-
-  .page-heading {
-    gap:10px
-  }
-
-  .page-heading h1 {
-    font-size:24px
-  }}
-
-@media(max-width:1080px) {
-
-  .player-panel>.section-title {
-    margin-bottom:12px
   }}
 
 @media(max-width:767px) {
@@ -79,21 +65,6 @@
 
   .workspace {
     padding:23px 16px
-  }
-
-  .page-heading {
-    align-items:flex-start;
-    flex-wrap:wrap;
-    margin-bottom:21px
-  }
-
-  .page-heading h1 {
-    font-size:25px
-  }
-
-  .page-heading p {
-    font-size:13px;
-    line-height:1.9
   }
 
   .page-heading .eyebrow {
@@ -112,11 +83,6 @@
     background:linear-gradient(0deg,#0b2029 0%,#0b2029cc 15%,transparent 70%),linear-gradient(90deg,#0d272cbf,transparent 95%)
   }
 
-  .section-title h2 {
-    font-size:14px;
-    gap:8px
-  }
-
   .log-line {
     font-size:11px;
     gap:7px
@@ -132,17 +98,9 @@
     letter-spacing:1px
   }
 
-  .dungeon-run-header .secondary {
-    width:100%
-  }
-
   .rewards {
     font-size:11px;
     gap:12px
-  }
-
-  .item-card .button-row {
-    flex-direction:column
   }
 
   .skill-card {
@@ -178,18 +136,6 @@
   .notice>svg {
     flex-shrink:0;
     margin-top:2px
-  }
-
-  .game-tabs {
-    gap:10px!important
-  }
-
-  .game-tabs [data-slot=tabs-trigger] {
-    font-size:13px
-  }
-
-  .error-box {
-    font-size:12px
   }}
 
 /* 모바일 하단 탭 */

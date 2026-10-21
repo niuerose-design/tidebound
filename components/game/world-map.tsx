@@ -1,4 +1,5 @@
 'use client';
+import { Button } from '@/components/ui/button';
 /**
  * v3.368 사냥터 월드맵: 사냥터 화면 위에 그린 SVG 지도. 메이플 월드(판게아 대륙, 바다)와 코프룰루 구역(별의 바다) 두 장을 탭으로 나눠 보여 주고,
  * 지역마다 사냥터 · 무리 서식지 점을 찍어 점을 고르면 아래 안내 줄에서 바로 입장합니다. 그림은 원작 그림을 쓰지 않고 지역 분위기를 실루엣으로 그렸습니다.
@@ -107,7 +108,7 @@ export function WorldMap({ s, send, busy }: PanelProps) {
         {picked ? <>
             <span className="map-dot" style={{ background: picked.tone }}/>
             <div className="map-info-text"><b>{picked.name}</b><small>Lv.{picked.level}+{picked.rebirth ? ` · 환생 ${picked.rebirth}회` : ''}{picked.habitat ? ' · 무리 서식지' : ` · 몬스터 ${picked.monsters.length}종`}{picked.habitat && onyxBossFor(picked.region) ? ` · 칠흑 ${onyxBossFor(picked.region)!.name}` : ''}{pickedLock ? ` · ${pickedLock}` : ''}</small></div>
-            {picked.id === s.stage && !inDungeon ? <span className="badge">현재 사냥터</span> : <button className="small" disabled={busy || !!pickedLock} onClick={() => send({ type: 'stage', id: picked.id })}>{pickedLock ? <Lock size={13}/> : <Sparkles size={13}/>} 입장</button>}
+            {picked.id === s.stage && !inDungeon ? <span className="badge">현재 사냥터</span> : <Button type="button" size="xs" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" disabled={busy || !!pickedLock} onClick={() => send({ type: 'stage', id: picked.id })}>{pickedLock ? <Lock size={13}/> : <Sparkles size={13}/>} 입장</Button>}
         </> : <small className="map-info-text">{info.note} 지도의 점을 누르면 바로 들어갈 수 있습니다.</small>}
     </div>
     </section>;

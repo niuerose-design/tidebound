@@ -2,6 +2,14 @@
 import { useState } from 'react';
 import { kstIso } from '@/game/data/time';
 import { format, formatDuration } from '@/components/game/shared';
+import { Button } from '@/components/ui/button';
+import { FoldSection } from '@/components/ui/game';
+import { field as fieldCls } from '@/components/features/shop/parts';
+import { cn } from '@/lib/utils';
+/** v3.410 운영자 페이지도 새 토대(토큰 · shadcn · 게임 키트). 인라인 스타일 대신 tailwind 토큰 클래스를 씁니다. */
+const card = 'rounded-l border border-line bg-surface-2 shadow-1';
+const Primary = (p: React.ComponentProps<typeof Button>) => <Button type="submit" size="sm" {...p} className={cn('bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11', p.className)}/>;
+const Sm = (p: React.ComponentProps<typeof Button>) => <Button type="button" size="sm" variant="outline" {...p} className={cn('pointer-coarse:min-h-11', p.className)}/>;
 
 type AdminSp = { have: number; research: { name: string; sp: number; claimed: boolean }[]; spentSkills: { name: string; sp: number }[]; limitBreaks: { name: string; sp: number }[]; logs: string[] };
 type AdminPlayer = { id: string; username: string; slot: number; name: string; level: number; job: string; rank: string; rebirths: number; pearls: number; gold: number; sp: AdminSp; inDungeon: boolean; revision: number; updatedAt: number; lastRebirthAt: number | null; lifeMs: number | null; lifePartial: boolean; paceMs: number | null };
@@ -32,10 +40,10 @@ type Bucket = { label: string; count: number };
 type Balance = { godDepth: number; reached: number; god: { tries: number; wins: number; players: number; best: number }; offline: { settled: number; capped: number }; abyss: Bucket[] };
 type Stats = { rebirthPace: RebirthPace; balance: Balance; altar: { gen: number; godAlive: boolean; throne: string; points: number; titheGold: number }; at: number; accounts: number; saves: number; active: { hour: number; day: number; week: number }; running: number; inDungeon: number; level: { avg: number; max: number; buckets: Bucket[] }; rebirths: { avg: number; max: number; buckets: Bucket[] }; stages: Count[]; dungeons: Count[]; jobs: Count[]; totals: { kills: number; playHours: number; gold: number; pearls: number; sp: number }; medians: { gold: number; pearls: number }; abyssBest: number; limitBreakers: number; inGuild: number; top: { name: string; level: number; rebirths: number; abyss: number }[]; ranks: { dist: { name: string; count: number }[]; top: string; perks: { name: string; count: number; avg: number; max: number }[]; freePoints: number } };
 /** v27.32 통계 카드 한 칸. */
-const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className="panel" style={{ padding: 12 }}><div style={{ fontSize: 12, color: '#9bb3b0' }}>{label}</div><div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>{note && <div style={{ fontSize: 12, color: '#9bb3b0' }}>{note}</div>}</div>;
+const Tile = ({ label, value, note }: { label: string; value: string; note?: string }) => <div className={cn(card, 'grid gap-0.5 p-3')}><div className="text-xs text-ink-3">{label}</div><div className="font-num text-l font-bold">{value}</div>{note && <div className="text-xs text-ink-3">{note}</div>}</div>;
 /** 화살표로 접었다 펴는 칸. note는 접혀 있어도 제목 옆에 보입니다. */
 function Fold({ title, note, open = true, children }: { title: string; note?: React.ReactNode; open?: boolean; children: React.ReactNode }) {
-    return <details className="panel admin-fold" open={open}><summary><span className="admin-fold-arrow" aria-hidden>▶</span><b>{title}</b>{note != null && <small>{note}</small>}</summary><div className="admin-fold-body">{children}</div></details>;
+    return <FoldSection title={title} summary={note} defaultOpen={open}><div className="grid gap-2 text-s">{children}</div></FoldSection>;
 }
 /** 탭 설명(접힌 ‘도움말’에 들어갑니다). */
 const HELP: Record<Tab, string> = {
@@ -47,16 +55,16 @@ const HELP: Record<Tab, string> = {
     market: '증권거래소 장 폐쇄(켜면 풀 때까지 매수 · 매도 막힘)와 서킷브레이커(정한 시간 동안만 막힘, 끝나면 저절로 재개)를 겁니다. 시세는 계산식이라 계속 흐르고, 막는 것은 거래입니다. 사유는 유저 화면에 그대로 보입니다. 다른 서버에는 최대 30초 뒤 반영됩니다.',
     income: '사냥으로 번 골드 · 처치 경험치 · 현재 직업 숙련을 플레이 1시간 단위로 기록합니다. 시간당 값은 최근 3시간 평균이고, 1시간을 못 채웠으면 추정(≈)합니다. 판매·환불과 누리 보너스 경험치는 빠지고, 경험치 기록은 환생하면 새로 쌓입니다. 모험가를 검색하면 경험치·숙련도 함께 보입니다.',
 };
-const muted = { color: '#9bb3b0' } as const;
-const rowItem = { padding: '8px 10px', display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', borderTop: '1px solid #263f42' } as const;
+const muted = 'text-ink-3';
+const rowItem = 'flex items-center justify-between gap-2.5 border-t border-line px-2.5 py-2';
 /** 막대 목록: 가장 큰 값을 100%로 봅니다. */
 function Bars({ title, rows, total }: { title: string; rows: { label: string; count: number }[]; total: number }) {
     const max = Math.max(1, ...rows.map(r => r.count));
-    return <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>{title}</h2>{!rows.length && <p style={{ color: '#9bb3b0', fontSize: 13, margin: 0 }}>없습니다.</p>}
-        <div style={{ display: 'grid', gap: 5 }}>{rows.map(r => <div key={r.label} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 140px) 1fr auto', gap: 8, alignItems: 'center', fontSize: 13 }}>
-            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.label}</span>
-            <span style={{ height: 10, borderRadius: 5, background: '#1d3034' }}><span style={{ display: 'block', height: '100%', width: `${r.count / max * 100}%`, borderRadius: 5, background: '#6fb7a0' }}/></span>
-            <span style={{ color: '#c9dbd6', minWidth: 72, textAlign: 'right' }}>{format(r.count)}{total ? <small style={{ color: '#9bb3b0' }}> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
+    return <div className={cn(card, 'grid gap-2 p-3.5')}><h2 className="font-display text-s font-bold">{title}</h2>{!rows.length && <p className="text-s text-ink-3">없습니다.</p>}
+        <div className="grid gap-1.5">{rows.map(r => <div key={r.label} className="grid grid-cols-[minmax(90px,140px)_1fr_auto] items-center gap-2 text-s">
+            <span className="truncate">{r.label}</span>
+            <span className="h-2.5 rounded-full bg-surface-0"><span className="block h-full rounded-full bg-accent" style={{ width: `${r.count / max * 100}%` }}/></span>
+            <span className="min-w-[72px] text-right font-num text-ink-2">{format(r.count)}{total ? <small className="text-ink-3"> ({Math.round(r.count / total * 100)}%)</small> : null}</span></div>)}</div></div>;
 }
 const MULTS = [['exp', '경험치'], ['gold', '골드'], ['drop', '장비 드롭'], ['mastery', '숙련'], ['mimic', '까미 출현'], ['nuri', '누리 출현']] as const;
 /** datetime-local(한국 시간으로 입력) → ISO. */
@@ -66,19 +74,19 @@ const isoToKst = (iso: string) => kstIso(Date.parse(iso)).slice(0, 16);
 const phase = (e: EventRow, at: number) => e.live ? ' · 진행 중' : Date.parse(e.from) > at ? ' · 시작 전' : ' · 종료됨';
 const when = (e: EventRow) => `${isoToKst(e.from).replace('T', ' ')} ~ ${isoToKst(e.until).replace('T', ' ')} (한국 시간)`;
 const mults = (e: EventRow) => MULTS.filter(([k]) => (e[k] ?? 1) !== 1).map(([k, label]) => `${label} ×${e[k]}`).join(' · ') || '배율 없음(공지)';
-const field = { padding: 8, borderRadius: 6, border: '1px solid #3b5458', background: '#0d1a1e', color: '#e6f1ee' } as const;
+const field = fieldCls;
 const sum = (xs: { sp: number }[]) => xs.reduce((a, x) => a + x.sp, 0);
 /** v27.28 SP 내역: 받은 연구·안 받은 연구·쓴 곳·남은 기록. */
 function SpDetail({ sp }: { sp: AdminSp }) {
-    const got = sp.research.filter(r => r.claimed), waiting = sp.research.filter(r => !r.claimed), small = { color: '#9bb3b0' } as const;
-    return <div style={{ fontSize: 13, display: 'grid', gap: 4, marginTop: 8, paddingTop: 8, borderTop: '1px solid #2a3d40' }}>
-        <div><b>보유 SP {sp.have}</b> <span style={small}>· 스킬에 쓴 SP {sum(sp.spentSkills)} · 한계돌파에 쓴 SP {sum(sp.limitBreaks)}</span></div>
+    const got = sp.research.filter(r => r.claimed), waiting = sp.research.filter(r => !r.claimed);
+    return <div className="mt-2 grid gap-1 border-t border-line pt-2 text-s">
+        <div><b>보유 SP {sp.have}</b> <span className="text-ink-3">· 스킬에 쓴 SP {sum(sp.spentSkills)} · 한계돌파에 쓴 SP {sum(sp.limitBreaks)}</span></div>
         <div>보스 첫 정복 연구 받음: {got.length ? got.map(r => `${r.name}(+${r.sp})`).join(', ') : '없음'}</div>
-        <div>정복했지만 아직 안 받음: {waiting.length ? <b style={{ color: '#d5b36c' }}>{waiting.map(r => `${r.name}(+${r.sp})`).join(', ')}</b> : '없음'}</div>
-        {sp.spentSkills.length > 0 && <div style={small}>강화·계승: {sp.spentSkills.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
-        {sp.limitBreaks.length > 0 && <div style={small}>한계돌파: {sp.limitBreaks.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
-        <div style={small}>최근 기록의 SP 줄{sp.logs.length ? '' : ': 없음(기록은 최근 70줄만 남습니다)'}</div>
-        {sp.logs.length > 0 && <ul style={{ margin: 0, paddingLeft: 18, ...small }}>{sp.logs.map((t, i) => <li key={i}>{t}</li>)}</ul>}
+        <div>정복했지만 아직 안 받음: {waiting.length ? <b className="text-gold-ink">{waiting.map(r => `${r.name}(+${r.sp})`).join(', ')}</b> : '없음'}</div>
+        {sp.spentSkills.length > 0 && <div className="text-ink-3">강화·계승: {sp.spentSkills.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
+        {sp.limitBreaks.length > 0 && <div className="text-ink-3">한계돌파: {sp.limitBreaks.map(x => `${x.name} ${x.sp}`).join(', ')}</div>}
+        <div className="text-ink-3">최근 기록의 SP 줄{sp.logs.length ? '' : ': 없음(기록은 최근 70줄만 남습니다)'}</div>
+        {sp.logs.length > 0 && <ul className="list-disc pl-4 text-ink-3">{sp.logs.map((t, i) => <li key={i}>{t}</li>)}</ul>}
     </div>;
 }
 const line = (p: AdminPlayer) => `${p.name} · ${brief(p)}`;
@@ -203,64 +211,64 @@ export default function AdminPage() {
     const TABS: [Tab, string][] = [['life', '모험가 관리'], ['events', '서버 이벤트'], ['closures', '입장 관리'], ['stats', '통계'], ['income', '사냥 수입'], ['news', '소식 테스트'], ['market', '증권거래소']];
     const openTab = (id: Tab) => { setTab(id); setError(''); setDone(''); if (!key) return; if (id === 'events') loadEvents(); if (id === 'closures') loadClosures(); if (id === 'stats') loadStats(); if (id === 'news') loadNews(); if (id === 'income') void loadIncome(); if (id === 'market') void loadMarket(); };
     const closureList = (kind: keyof ClosureList, title: string, open: boolean) => closures && <Fold title={title} open={open} note={`${closures[kind].length}곳 · 막힘 ${closures[kind].filter(r => r.closed).length}`}>
-        <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{closures[kind].map(r => <li key={r.id} style={rowItem}>
-            <span style={{ fontSize: 13 }}><b>{r.name}</b> · {r.closed ? <b style={{ color: '#ff9a9a' }}>입장 막힘</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}{r.locked ? <small style={muted}> · 첫 사냥터(닫을 수 없음)</small> : null}</span>
-            {!r.locked && <button className={r.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</button>}</li>)}</ul></Fold>;
-    const reload = (label: string, run: () => unknown) => <button className="secondary" disabled={busy || !key} onClick={() => void run()}>{label}</button>;
+        <ul className="grid">{closures[kind].map(r => <li key={r.id} className={rowItem}>
+            <span className="text-s"><b>{r.name}</b> · {r.closed ? <b className="text-danger">입장 막힘</b> : <span className="text-ok">열림</span>}{r.locked ? <small className={muted}> · 첫 사냥터(닫을 수 없음)</small> : null}</span>
+            {!r.locked && <Sm className={cn(r.closed && 'border-transparent bg-accent text-accent-ink hover:bg-accent/90')} disabled={busy} onClick={() => toggleClosed(kind, r)}>{r.closed ? '다시 열기' : '입장 막기'}</Sm>}</li>)}</ul></Fold>;
+    const reload = (label: string, run: () => unknown) => <Sm disabled={busy || !key} onClick={() => void run()}>{label}</Sm>;
     const grid = (min: number) => ({ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(min(${min}px, 100%), 1fr))`, gap: 10 }) as const;
-    return <main className="admin-tool" style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px', color: '#e6f1ee', display: 'grid', gap: 12 }}>
-        <header style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', justifyContent: 'space-between' }}>
-            <h1 style={{ fontSize: 22, margin: 0 }}>운영 도구</h1>
-            <input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="운영자 키(TIDEBOUND_ADMIN_KEY)" aria-label="운영자 키" style={{ ...field, flex: '1 1 220px', maxWidth: 320 }}/>
+    return <main className="mx-auto grid max-w-4xl gap-3 px-4 py-6 text-ink-1">
+        <header className="flex flex-wrap items-center justify-between gap-2.5">
+            <h1 className="font-display text-xl font-bold">운영 도구</h1>
+            <input type="password" value={key} onChange={e => setKey(e.target.value)} autoComplete="off" placeholder="운영자 키(TIDEBOUND_ADMIN_KEY)" aria-label="운영자 키" className={cn(field, 'max-w-80 flex-[1_1_220px]')}/>
         </header>
-        <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{TABS.map(([id, label]) => <button key={id} type="button" className={tab === id ? 'primary' : 'secondary'} onClick={() => openTab(id)}>{label}</button>)}</nav>
-        <details className="admin-help"><summary><span className="admin-fold-arrow" aria-hidden>▶</span>도움말</summary><p>{HELP[tab]}</p></details>
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} style={{ display: 'flex', gap: 8, flex: 1 }}>
-                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="모험가 이름(일부) 또는 로그인 아이디" style={{ ...field, flex: 1 }}/>
-                <button className="primary" disabled={busy || !key || !query.trim()}>찾기</button>
+        <nav className="flex flex-wrap gap-1.5" aria-label="운영 메뉴">{TABS.map(([id, label]) => <Button key={id} type="button" size="sm" variant="outline" className={cn('pointer-coarse:min-h-11', tab === id && 'border-transparent bg-accent text-accent-ink hover:bg-accent/90')} aria-pressed={tab === id} onClick={() => openTab(id)}>{label}</Button>)}</nav>
+        <FoldSection level={3} title="도움말"><p className="text-s leading-relaxed text-ink-3">{HELP[tab]}</p></FoldSection>
+        <div className="flex flex-wrap items-center gap-2">
+            {tab === 'life' && <form onSubmit={e => { e.preventDefault(); search(); }} className="flex flex-1 gap-2">
+                <input value={query} onChange={e => setQuery(e.target.value)} placeholder="모험가 이름(일부) 또는 로그인 아이디" className={cn(field, 'flex-1')}/>
+                <Primary disabled={busy || !key || !query.trim()}>찾기</Primary>
             </form>}
             {tab === 'events' && reload(events ? '새로고침' : '이벤트 불러오기', loadEvents)}
             {tab === 'stats' && reload(stats ? '새로고침' : '통계 불러오기', loadStats)}
             {tab === 'closures' && reload(closures ? '새로고침' : '목록 불러오기', loadClosures)}
             {tab === 'news' && reload(news ? '새로고침' : '최근 소식 불러오기', loadNews)}
             {tab === 'market' && reload(market ? '새로고침' : '상태 불러오기', loadMarket)}
-            {tab === 'income' && <form onSubmit={e => { e.preventDefault(); void loadIncome(); }} style={{ display: 'flex', gap: 8, flex: 1 }}>
-                <input value={incomeQuery} onChange={e => setIncomeQuery(e.target.value)} placeholder="모험가 이름·아이디 (비우면 전체)" style={{ ...field, flex: 1 }}/>
-                <button className="primary" disabled={busy || !key}>{income ? '새로고침' : '불러오기'}</button>
+            {tab === 'income' && <form onSubmit={e => { e.preventDefault(); void loadIncome(); }} className="flex flex-1 gap-2">
+                <input value={incomeQuery} onChange={e => setIncomeQuery(e.target.value)} placeholder="모험가 이름·아이디 (비우면 전체)" className={cn(field, 'flex-1')}/>
+                <Primary disabled={busy || !key}>{income ? '새로고침' : '불러오기'}</Primary>
             </form>}
-            {!key && <small style={muted}>운영자 키를 먼저 넣어 주세요.</small>}
+            {!key && <small className={muted}>운영자 키를 먼저 넣어 주세요.</small>}
         </div>
-        {error && <p role="alert" style={{ color: '#ff9a9a', margin: 0 }}>{error}</p>}
-        {done && <p role="status" style={{ color: '#9ce8b4', margin: 0 }}>{done}</p>}
+        {error && <p role="alert" className="text-s text-danger">{error}</p>}
+        {done && <p role="status" className="text-s text-ok">{done}</p>}
 
         {tab === 'events' && events && <>
-            <div className="panel" style={{ padding: 12, fontSize: 13 }}>지금 배너: <b>{events.banner || '진행 중인 이벤트 없음'}</b></div>
+            <div className={cn(card, 'p-3 text-s')}>지금 배너: <b>{events.banner || '진행 중인 이벤트 없음'}</b></div>
             <Fold title="등록된 이벤트 · 서버 메시지" note={`${events.extra.length}개 · 진행 중 ${events.extra.filter(e => e.live).length}`}>
-                {!events.extra.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{events.extra.map(e => <li key={e.id} style={rowItem}>
-                    <span style={{ fontSize: 13 }}><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{phase(e, events.at)}<br/><small style={muted}>{when(e)}</small></span>
-                    <button className="secondary" disabled={busy} onClick={() => removeEvent(e.id)}>삭제</button></li>)}</ul>
+                {!events.extra.length && <p className="text-s text-ink-3">없습니다.</p>}
+                <ul className="grid">{events.extra.map(e => <li key={e.id} className={rowItem}>
+                    <span className="text-s"><b>{e.name || '(이름 없음)'}</b> · {mults(e)}{phase(e, events.at)}<br/><small className={muted}>{when(e)}</small></span>
+                    <Sm disabled={busy} onClick={() => removeEvent(e.id)}>삭제</Sm></li>)}</ul>
             </Fold>
             <Fold title="새 이벤트 · 서버 메시지" open={false}>
-                <form onSubmit={ev => { ev.preventDefault(); saveEvent(); }} style={{ display: 'grid', gap: 8 }}>
-                    <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>배너 이름(배율은 자동으로 붙습니다)<input value={draft.name} maxLength={40} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="예: 숨겨진 직업 하나가 개방되었습니다" style={field}/></label>
+                <form onSubmit={ev => { ev.preventDefault(); saveEvent(); }} className="grid gap-2">
+                    <label className="grid gap-1 text-s">배너 이름(배율은 자동으로 붙습니다)<input value={draft.name} maxLength={40} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="예: 숨겨진 직업 하나가 개방되었습니다" className={field}/></label>
                     <div style={grid(200)}>
-                        <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>시작(한국 시간)<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} style={field}/></label>
-                        <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>종료(한국 시간)<input type="datetime-local" value={draft.until} onChange={e => setDraft({ ...draft, until: e.target.value })} style={field}/></label>
+                        <label className="grid gap-1 text-s">시작(한국 시간)<input type="datetime-local" value={draft.from} onChange={e => setDraft({ ...draft, from: e.target.value })} className={field}/></label>
+                        <label className="grid gap-1 text-s">종료(한국 시간)<input type="datetime-local" value={draft.until} onChange={e => setDraft({ ...draft, until: e.target.value })} className={field}/></label>
                     </div>
-                    <div style={grid(110)}>{MULTS.map(([k, label]) => <label key={k} style={{ display: 'grid', gap: 4, fontSize: 13 }}>{label}<input type="number" min={1} max={10} step={0.1} value={draft[k]} onChange={e => setDraft({ ...draft, [k]: e.target.value })} style={field}/></label>)}</div>
-                    <button className="primary" disabled={busy || !draft.from || !draft.until}>이벤트 저장</button>
+                    <div style={grid(110)}>{MULTS.map(([k, label]) => <label key={k} className="grid gap-1 text-s">{label}<input type="number" min={1} max={10} step={0.1} value={draft[k]} onChange={e => setDraft({ ...draft, [k]: e.target.value })} className={field}/></label>)}</div>
+                    <Primary disabled={busy || !draft.from || !draft.until}>이벤트 저장</Primary>
                 </form>
             </Fold>
         </>}
 
         {tab === 'stats' && stats && <>
             <Fold title="세이브 익명 내보내기 (재설계 픽스처)" open={false} note="이름 · 계정 · 길드 · 상대 기록을 지운 JSON. tests/fixtures/saves/ 에 둡니다.">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-                    <label style={{ fontSize: 13 }}>최대 개수 <input value={fxLimit} onChange={e => setFxLimit(e.target.value)} inputMode="numeric" style={{ width: 70 }}/></label>
-                    <label style={{ fontSize: 13 }}>최소 레벨 <input value={fxMinLevel} onChange={e => setFxMinLevel(e.target.value)} inputMode="numeric" style={{ width: 70 }}/></label>
-                    <button className="primary" disabled={busy || !key} onClick={() => void exportFixtures()}>JSON 내려받기</button>
+                <div className="flex flex-wrap items-center gap-2">
+                    <label className="text-s">최대 개수 <input value={fxLimit} onChange={e => setFxLimit(e.target.value)} inputMode="numeric" className={cn(field, 'ml-1 w-[70px]')}/></label>
+                    <label className="text-s">최소 레벨 <input value={fxMinLevel} onChange={e => setFxMinLevel(e.target.value)} inputMode="numeric" className={cn(field, 'ml-1 w-[70px]')}/></label>
+                    <Primary type="button" disabled={busy || !key} onClick={() => void exportFixtures()}>JSON 내려받기</Primary>
                 </div>
             </Fold>
             {expedition && <Fold title="원정대(오토배틀러)" note={`${expedition.players}명 · ${format(expedition.runs)}판 · 완주 ${format(expedition.clears)} · 고스트 ${expedition.ghostFights ? `${Math.round(100 * expedition.ghostWins / expedition.ghostFights)}%(${expedition.ghostFights}전)` : '없음'}`} open={false}>
@@ -268,8 +276,8 @@ export default function AdminPage() {
                     <Tile label="판 수" value={format(expedition.runs)} note={`완주율 ${expedition.runs ? Math.round(100 * expedition.clears / expedition.runs) : 0}% · 판당 ${expedition.runs ? (expedition.wins / expedition.runs).toFixed(1) : '0'}승`}/>
                     {expedition.rounds.map(r => <Tile key={r.round} label={`${r.round}라운드 승률`} value={`${r.rate}%`} note={`${format(r.plays)}전 ${format(r.wins)}승`}/>)}
                 </div>
-                <p style={{ fontSize: 13, marginTop: 12 }}><b>많이 배치한 유닛</b> · {expedition.units.length ? expedition.units.map(u => `${u.name} ${format(u.count)}`).join(' · ') : '아직 없음'}</p>
-                <p style={{ fontSize: 13, marginTop: 8 }}><b>시너지 조합별 승률</b>(전투 20 이상, 4명 이상 켜진 조합) · {expedition.comps?.length ? expedition.comps.map(c => `${c.name} ${c.rate}%(${format(c.plays)}전)`).join(' · ') : '아직 없음'}</p>
+                <p className="mt-3 text-s"><b>많이 배치한 유닛</b> · {expedition.units.length ? expedition.units.map(u => `${u.name} ${format(u.count)}`).join(' · ') : '아직 없음'}</p>
+                <p className="mt-2 text-s"><b>시너지 조합별 승률</b>(전투 20 이상, 4명 이상 켜진 조합) · {expedition.comps?.length ? expedition.comps.map(c => `${c.name} ${c.rate}%(${format(c.plays)}전)`).join(' · ') : '아직 없음'}</p>
             </Fold>}
             <Fold title="요약" note={`${new Date(stats.at).toLocaleString('ko-KR')} 기준`}>
                 <div style={grid(150)}>
@@ -286,32 +294,32 @@ export default function AdminPage() {
                 </div>
             </Fold>
             <Fold title="제단 관리" open={false} note={`${stats.altar.gen}번째 신 ${stats.altar.godAlive ? '깨어 있음' : '잠듦'} · 신의 자리 ${stats.altar.throne || '비어 있음'} · 몫 ${big(stats.altar.titheGold)} G · 기여도 ${format(stats.altar.points)}`}>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                    <button className="secondary" disabled={busy} onClick={() => resetAltar('offers')}>공물 초기화(게이지 0)</button>
-                    <button className="secondary" disabled={busy} onClick={() => resetAltar('god')}>신 초기화(신·자리·몫 비우기)</button>
+                <div className="flex flex-wrap gap-2">
+                    <Sm disabled={busy} onClick={() => resetAltar('offers')}>공물 초기화(게이지 0)</Sm>
+                    <Sm disabled={busy} onClick={() => resetAltar('god')}>신 초기화(신·자리·몫 비우기)</Sm>
                 </div>
-                <h3 style={{ fontSize: 14, margin: '12px 0 6px' }}>축복 단계 설정</h3>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <h3 className="mb-1.5 mt-3 text-s font-semibold">축복 단계 설정</h3>
+                <div className="flex flex-wrap items-center gap-2">
                     <select value={blessId} onChange={e => setBlessId(e.target.value)} aria-label="축복">{Object.entries(BLESS_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
                     <select value={blessLevel} onChange={e => setBlessLevel(Number(e.target.value))} aria-label="단계">{[0, 1, 2, 3, 4, 5, 6].map(l => <option key={l} value={l}>{l ? `${l}단계` : '끄기(0)'}</option>)}</select>
-                    <input value={blessMinutes} onChange={e => setBlessMinutes(e.target.value.replace(/[^0-9]/g, ''))} placeholder="유지 분(비우면 기본)" inputMode="numeric" style={{ width: 150 }} aria-label="유지 시간(분)"/>
-                    <button className="primary" disabled={busy || !key} onClick={() => void setBlessing()}>적용</button>
+                    <input value={blessMinutes} onChange={e => setBlessMinutes(e.target.value.replace(/[^0-9]/g, ''))} placeholder="유지 분(비우면 기본)" inputMode="numeric" className={cn(field, 'w-[150px]')} aria-label="유지 시간(분)"/>
+                    <Primary type="button" disabled={busy || !key} onClick={() => void setBlessing()}>적용</Primary>
                 </div>
-                <p style={{ ...muted, fontSize: 12, margin: '6px 0 0' }}>기여도는 그대로 두고 단계·시간만 바꿉니다. 기본 시간: 1~3단계 × 1시간, 4·5·6단계는 4·2·1시간 뒤 3단계로 내려와 12시간.</p>
+                <p className="mt-1.5 text-xs text-ink-3">기여도는 그대로 두고 단계·시간만 바꿉니다. 기본 시간: 1~3단계 × 1시간, 4·5·6단계는 4·2·1시간 뒤 3단계로 내려와 12시간.</p>
             </Fold>
             <Fold title="환생 통계" note={`24시간 ${format(stats.rebirthPace.recent.day)}회 · 7일 ${format(stats.rebirthPace.recent.week)}회`}>
-                <div style={{ display: 'grid', gap: 10 }}>
+                <div className="grid gap-2.5">
                     <div style={grid(200)}>
                         <Tile label="환생까지 실제 시간" value={stats.rebirthPace.measured ? formatDuration(stats.rebirthPace.real.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${formatDuration(stats.rebirthPace.real.avg)} · ${format(stats.rebirthPace.measured)}건` : '아직 없습니다'}/>
                         <Tile label="환생까지 사냥 시간" value={stats.rebirthPace.measured ? formatDuration(stats.rebirthPace.play.median) : '-'} note={stats.rebirthPace.measured ? `중앙값 · 평균 ${formatDuration(stats.rebirthPace.play.avg)}` : ''}/>
                     </div>
                     <div style={grid(320)}>
-                        <div className="panel" style={{ padding: 14 }}><h3 style={{ fontSize: 14, margin: '0 0 8px' }}>회차별 평균 시간</h3>
-                            {!stats.rebirthPace.byCount.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                            <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.rebirthPace.byCount.map(b => <tr key={b.label}><td style={{ padding: '3px 0' }}>{b.label}</td><td style={{ textAlign: 'right' }}>실제 {formatDuration(b.real)}</td><td style={{ textAlign: 'right' }}>사냥 {formatDuration(b.play)}</td><td style={{ textAlign: 'right', ...muted }}>{format(b.count)}건</td></tr>)}</tbody></table></div>
-                        <div className="panel" style={{ padding: 14 }}><h3 style={{ fontSize: 14, margin: '0 0 8px' }}>최근 환생 20건</h3>
-                            {!stats.rebirthPace.latest.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                            <ol style={{ margin: 0, paddingLeft: 20, fontSize: 12, display: 'grid', gap: 3 }}>{stats.rebirthPace.latest.map((r, i) => <li key={i}>{r.name} · {r.n}번째 · {new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · 실제 {formatDuration(r.realMs)}{r.partial ? '(일부)' : ''} · 사냥 {formatDuration(r.playMs)}</li>)}</ol></div>
+                        <div className={cn(card, 'p-3.5')}><h3 className="mb-2 font-display text-s font-bold">회차별 평균 시간</h3>
+                            {!stats.rebirthPace.byCount.length && <p className="text-s text-ink-3">없습니다.</p>}
+                            <table className="w-full border-collapse text-s"><tbody>{stats.rebirthPace.byCount.map(b => <tr key={b.label}><td className="py-0.5">{b.label}</td><td className="text-right">실제 {formatDuration(b.real)}</td><td className="text-right">사냥 {formatDuration(b.play)}</td><td className="text-right text-ink-3">{format(b.count)}건</td></tr>)}</tbody></table></div>
+                        <div className={cn(card, 'p-3.5')}><h3 className="mb-2 font-display text-s font-bold">최근 환생 20건</h3>
+                            {!stats.rebirthPace.latest.length && <p className="text-s text-ink-3">없습니다.</p>}
+                            <ol className="grid list-decimal gap-0.5 pl-5 text-xs">{stats.rebirthPace.latest.map((r, i) => <li key={i}>{r.name} · {r.n}번째 · {new Date(r.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })} · 실제 {formatDuration(r.realMs)}{r.partial ? '(일부)' : ''} · 사냥 {formatDuration(r.playMs)}</li>)}</ol></div>
                     </div>
                 </div>
             </Fold>
@@ -331,10 +339,10 @@ export default function AdminPage() {
                     <Bars title="지금 있는 던전" rows={stats.dungeons.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                     <Bars title="현재 직업 상위 15" rows={stats.jobs.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
                     <Bars title="계급장(계급 순)" rows={stats.ranks.dist.map(r => ({ label: r.name, count: r.count }))} total={stats.saves}/>
-                    <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>진급 특전 선택</h2>
-                        <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' }}><tbody>{stats.ranks.perks.map(p => <tr key={p.name}><td style={{ padding: '3px 0' }}>{p.name}</td><td style={{ textAlign: 'right' }}>{format(p.count)}명{stats.saves ? <small style={muted}> ({Math.round(p.count / stats.saves * 100)}%)</small> : null}</td><td style={{ textAlign: 'right', ...muted }}>평균 {p.avg} / {p.max}단계</td></tr>)}</tbody></table></div>
-                    <div className="panel" style={{ padding: 14 }}><h2 style={{ fontSize: 15, margin: '0 0 8px' }}>환생·레벨 상위 10</h2>
-                        <ol style={{ margin: 0, paddingLeft: 20, fontSize: 13, display: 'grid', gap: 3 }}>{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
+                    <div className={cn(card, 'p-3.5')}><h2 className="mb-2 font-display text-s font-bold">진급 특전 선택</h2>
+                        <table className="w-full border-collapse text-s"><tbody>{stats.ranks.perks.map(p => <tr key={p.name}><td className="py-0.5">{p.name}</td><td className="text-right">{format(p.count)}명{stats.saves ? <small className={muted}> ({Math.round(p.count / stats.saves * 100)}%)</small> : null}</td><td className="text-right text-ink-3">평균 {p.avg} / {p.max}단계</td></tr>)}</tbody></table></div>
+                    <div className={cn(card, 'p-3.5')}><h2 className="mb-2 font-display text-s font-bold">환생·레벨 상위 10</h2>
+                        <ol className="grid list-decimal gap-0.5 pl-5 text-s">{stats.top.map((p, i) => <li key={i}>{p.name} · 환생 {p.rebirths}회 · Lv.{p.level}{p.abyss ? ` · 무릉도장 ${p.abyss}층` : ''}</li>)}</ol></div>
                 </div>
             </Fold>
         </>}
@@ -353,104 +361,104 @@ export default function AdminPage() {
                     <Tile label="시간당 경험치" value={p.exp ? `${p.exp.estimated ? '≈ ' : ''}${big(p.exp.perHour)}` : '-'} note={p.exp ? `기록 뒤 합계 ${big(p.exp.earned)} · 이번 생 기준` : ''}/>
                     <Tile label="시간당 숙련" value={p.mastery ? `${p.mastery.estimated ? '≈ ' : ''}${big(p.mastery.perHour)}` : '-'} note={p.mastery ? `기록 뒤 합계 ${big(p.mastery.earned)} · 현재 직업` : ''}/>
                 </div>
-                {!p.log.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> : <div style={grid(260)}>{INCOME_KINDS.map(([k, label, color]) => { const top = Math.max(1, ...p.log.map(x => x[k] || 0)); return <div key={k}>
-                    <b style={{ fontSize: 13 }}>{label}</b>
-                    <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 0', display: 'grid', gap: 3, fontSize: 12 }}>{p.log.map(x => <li key={x.ago} style={{ display: 'grid', gridTemplateColumns: '64px 1fr 72px', gap: 8, alignItems: 'center' }}><span style={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span style={{ height: 8, borderRadius: 4, background: '#2d474a' }}><span style={{ display: 'block', height: 8, borderRadius: 4, width: `${(x[k] || 0) ? Math.max(2, (x[k] || 0) / top * 100) : 0}%`, background: color }}/></span><b style={{ textAlign: 'right' }}>{big(x[k] || 0)}</b></li>)}</ul>
+                {!p.log.length ? <p className="text-s text-ink-3">아직 기록이 없습니다.</p> : <div style={grid(260)}>{INCOME_KINDS.map(([k, label, color]) => { const top = Math.max(1, ...p.log.map(x => x[k] || 0)); return <div key={k}>
+                    <b className="text-s">{label}</b>
+                    <ul className="mt-1 grid gap-0.5 text-xs">{p.log.map(x => <li key={x.ago} className="grid grid-cols-[64px_1fr_72px] items-center gap-2"><span className={muted}>{x.ago ? `${x.ago}시간 전` : '지금'}</span><span className="h-2 rounded-full bg-surface-0"><span className="block h-2 rounded-full" style={{ width: `${(x[k] || 0) ? Math.max(2, (x[k] || 0) / top * 100) : 0}%`, background: color }}/></span><b className="text-right">{big(x[k] || 0)}</b></li>)}</ul>
                 </div>; })}</div>}
             </Fold>)}
-            {incomeQuery.trim() && !income.picked.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>‘{incomeQuery}’에 맞는 모험가가 없습니다.</p>}
+            {incomeQuery.trim() && !income.picked.length && <p className="text-s text-ink-3">‘{incomeQuery}’에 맞는 모험가가 없습니다.</p>}
             <Fold title="시간당 골드 상위 30" note="최근 24시간 저장 · 줄을 누르면 시간별 기록">
-                {!income.top.length ? <p style={{ ...muted, fontSize: 13, margin: 0 }}>아직 기록이 없습니다.</p> :
-                <div style={{ overflowX: 'auto' }}><table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}><thead><tr style={{ ...muted, textAlign: 'left' }}><th>#</th><th>모험가</th><th>환생</th><th>Lv</th><th>장소 · 난이도</th><th style={{ textAlign: 'right' }}>시간당</th><th style={{ textAlign: 'right' }}>보유</th></tr></thead>
-                <tbody>{income.top.map((r, i) => <tr key={r.id} style={{ borderTop: '1px solid #263f42', cursor: 'pointer' }} onClick={() => { setIncomeQuery(r.name); void loadIncome(r.name); }}><td>{i + 1}</td><td>{r.name} <span style={muted}>{r.username}</span></td><td>{r.rebirths}{r.ascension ? `·승${r.ascension}` : ''}</td><td>{r.level}</td><td>{r.place} · {r.tide}</td><td style={{ textAlign: 'right' }}>{r.estimated ? '≈ ' : ''}{big(r.perHour)}</td><td style={{ textAlign: 'right' }}>{big(r.gold)}</td></tr>)}</tbody></table></div>}
+                {!income.top.length ? <p className="text-s text-ink-3">아직 기록이 없습니다.</p> :
+                <div className="overflow-x-auto"><table className="w-full border-collapse text-xs"><thead><tr className="text-left text-ink-3"><th>#</th><th>모험가</th><th>환생</th><th>Lv</th><th>장소 · 난이도</th><th className="text-right">시간당</th><th className="text-right">보유</th></tr></thead>
+                <tbody>{income.top.map((r, i) => <tr key={r.id} className="cursor-pointer border-t border-line hover:bg-surface-3/60" onClick={() => { setIncomeQuery(r.name); void loadIncome(r.name); }}><td>{i + 1}</td><td>{r.name} <span className={muted}>{r.username}</span></td><td>{r.rebirths}{r.ascension ? `·승${r.ascension}` : ''}</td><td>{r.level}</td><td>{r.place} · {r.tide}</td><td className="text-right">{r.estimated ? '≈ ' : ''}{big(r.perHour)}</td><td className="text-right">{big(r.gold)}</td></tr>)}</tbody></table></div>}
             </Fold>
         </>}
 
         {tab === 'news' && <>
             <Fold title="소식 올리기">
-                <div style={{ display: 'grid', gap: 10 }}>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'end' }}>
-                        <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>모험가 이름<input value={newsName} onChange={e => setNewsName(e.target.value)} maxLength={20} style={field}/></label>
-                        <label style={{ display: 'flex', gap: 6, alignItems: 'center', fontSize: 13, paddingBottom: 8 }}><input type="checkbox" checked={newsTag} onChange={e => setNewsTag(e.target.checked)}/> [테스트] 붙이기</label>
+                <div className="grid gap-2.5">
+                    <div className="flex flex-wrap items-end gap-2">
+                        <label className="grid gap-1 text-s">모험가 이름<input value={newsName} onChange={e => setNewsName(e.target.value)} maxLength={20} className={field}/></label>
+                        <label className="flex items-center gap-1.5 pb-2 text-s"><input type="checkbox" checked={newsTag} onChange={e => setNewsTag(e.target.checked)}/> [테스트] 붙이기</label>
                     </div>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{NEWS_KINDS.map(([id, label]) => <button key={id} className="secondary" disabled={busy || !key} onClick={() => void postNews(id)}>{label}</button>)}</div>
-                    <form onSubmit={e => { e.preventDefault(); void postNews('custom'); }} style={{ display: 'flex', gap: 8 }}>
-                        <input value={newsText} onChange={e => setNewsText(e.target.value)} maxLength={200} placeholder="직접 입력(운영 공지 한 줄, 200자)" style={{ ...field, flex: 1 }}/>
-                        <button className="primary" disabled={busy || !key || !newsText.trim()}>올리기</button>
+                    <div className="flex flex-wrap gap-1.5">{NEWS_KINDS.map(([id, label]) => <Sm key={id} disabled={busy || !key} onClick={() => void postNews(id)}>{label}</Sm>)}</div>
+                    <form onSubmit={e => { e.preventDefault(); void postNews('custom'); }} className="flex gap-2">
+                        <input value={newsText} onChange={e => setNewsText(e.target.value)} maxLength={200} placeholder="직접 입력(운영 공지 한 줄, 200자)" className={cn(field, 'flex-1')}/>
+                        <Primary disabled={busy || !key || !newsText.trim()}>올리기</Primary>
                     </form>
                 </div>
             </Fold>
             <Fold title="지우기" open={false} note="되돌릴 수 없음">
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{CLEAR_SCOPES.map(([scope, label, what]) => <button key={scope} className="secondary" disabled={busy || !key} title={what} onClick={() => void clearChat(scope, what)}>{label}</button>)}</div>
-                <p style={{ ...muted, fontSize: 12, margin: '8px 0 0' }}>소식은 기록판 ‘소식’ 탭, 전체 채팅은 ‘채팅’ 탭의 전체, 길드 채팅은 모든 길드의 ‘길드’ 채널입니다. 지운 뒤 새로 올라오는 줄은 그대로 쌓입니다.</p>
+                <div className="flex flex-wrap gap-1.5">{CLEAR_SCOPES.map(([scope, label, what]) => <Sm key={scope} disabled={busy || !key} title={what} onClick={() => void clearChat(scope, what)}>{label}</Sm>)}</div>
+                <p className="mt-2 text-xs text-ink-3">소식은 기록판 ‘소식’ 탭, 전체 채팅은 ‘채팅’ 탭의 전체, 길드 채팅은 모든 길드의 ‘길드’ 채널입니다. 지운 뒤 새로 올라오는 줄은 그대로 쌓입니다.</p>
             </Fold>
-            {news && <Fold title="최근 소식" note={`${news.length}줄`}>{!news.length && <p style={{ ...muted, fontSize: 13, margin: 0 }}>없습니다.</p>}
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 4, fontSize: 13 }}>{[...news].reverse().map(r => <li key={r.id} style={{ color: r.hacker ? '#ff9a9a' : undefined }}><span style={muted}>{kstIso(r.at).slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></Fold>}
+            {news && <Fold title="최근 소식" note={`${news.length}줄`}>{!news.length && <p className="text-s text-ink-3">없습니다.</p>}
+                <ul className="grid gap-1 text-s">{[...news].reverse().map(r => <li key={r.id} className={cn(r.hacker && 'text-danger')}><span className={muted}>{kstIso(r.at).slice(5, 16).replace('T', ' ')} · {r.name}</span> {r.text}</li>)}</ul></Fold>}
         </>}
 
         {tab === 'market' && market && <>
             <Fold title="장 상태" note={market.control.closed ? '폐장' : market.control.haltUntil ? '서킷브레이커' : '정상 거래'}>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>장 폐쇄</b> · {market.control.closed ? <b style={{ color: '#ff9a9a' }}>폐장 중(매수 · 매도 막힘)</b> : <span style={{ color: '#9ce8b4' }}>열림</span>}</span>
-                        <button className={market.control.closed ? 'primary' : 'secondary'} disabled={busy} onClick={() => void setMarketControl({ closed: !market.control.closed }, market.control.closed ? '장을 다시 엽니다.' : '장을 닫습니다(풀 때까지 거래 막힘).')}>{market.control.closed ? '장 열기' : '장 닫기'}</button></li>
-                    <li style={{ ...rowItem, flexWrap: 'wrap' }}><span style={{ fontSize: 13 }}><b>서킷브레이커</b> · {market.control.haltUntil ? <b style={{ color: '#ffcf8a' }}>{kstIso(market.control.haltUntil).slice(5, 16).replace('T', ' ')}까지 거래 중단</b> : <span style={muted}>없음</span>}</span>
-                        <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                            {[10, 30, 60].map(m => <button key={m} className="secondary" disabled={busy} onClick={() => void setMarketControl({ haltMinutes: m }, `서킷브레이커 ${m}분을 겁니다.`)}>{m}분</button>)}
-                            <input value={haltMin} onChange={e => setHaltMin(e.target.value)} inputMode="numeric" aria-label="서킷브레이커 분" style={{ ...field, width: 70 }}/>
-                            <button className="secondary" disabled={busy || !(Number(haltMin) > 0)} onClick={() => void setMarketControl({ haltMinutes: Number(haltMin) }, `서킷브레이커 ${haltMin}분을 겁니다.`)}>분 걸기</button>
-                            {market.control.haltUntil > 0 && <button className="primary" disabled={busy} onClick={() => void setMarketControl({ haltMinutes: 0 }, '서킷브레이커를 풉니다.')}>해제</button>}
+                <ul className="grid">
+                    <li className={rowItem}><span className="text-s"><b>장 폐쇄</b> · {market.control.closed ? <b className="text-danger">폐장 중(매수 · 매도 막힘)</b> : <span className="text-ok">열림</span>}</span>
+                        <Sm className={cn(market.control.closed && 'border-transparent bg-accent text-accent-ink hover:bg-accent/90')} disabled={busy} onClick={() => void setMarketControl({ closed: !market.control.closed }, market.control.closed ? '장을 다시 엽니다.' : '장을 닫습니다(풀 때까지 거래 막힘).')}>{market.control.closed ? '장 열기' : '장 닫기'}</Sm></li>
+                    <li className={cn(rowItem, 'flex-wrap')}><span className="text-s"><b>서킷브레이커</b> · {market.control.haltUntil ? <b className="text-gold-ink">{kstIso(market.control.haltUntil).slice(5, 16).replace('T', ' ')}까지 거래 중단</b> : <span className={muted}>없음</span>}</span>
+                        <span className="flex flex-wrap items-center gap-1.5">
+                            {[10, 30, 60].map(m => <Sm key={m} disabled={busy} onClick={() => void setMarketControl({ haltMinutes: m }, `서킷브레이커 ${m}분을 겁니다.`)}>{m}분</Sm>)}
+                            <input value={haltMin} onChange={e => setHaltMin(e.target.value)} inputMode="numeric" aria-label="서킷브레이커 분" className={cn(field, 'w-[70px]')}/>
+                            <Sm disabled={busy || !(Number(haltMin) > 0)} onClick={() => void setMarketControl({ haltMinutes: Number(haltMin) }, `서킷브레이커 ${haltMin}분을 겁니다.`)}>분 걸기</Sm>
+                            {market.control.haltUntil > 0 && <Primary type="button" disabled={busy} onClick={() => void setMarketControl({ haltMinutes: 0 }, '서킷브레이커를 풉니다.')}>해제</Primary>}
                         </span></li>
-                    <li style={{ ...rowItem, flexWrap: 'wrap' }}><span style={{ fontSize: 13 }}><b>사유</b> <small style={muted}>(유저 화면에 보임 · 최대 100자 · 장 닫기 · 서킷브레이커와 함께 저장)</small></span>
-                        <span style={{ display: 'flex', gap: 6, flex: '1 1 280px' }}><input value={marketReason} maxLength={100} onChange={e => setMarketReason(e.target.value)} placeholder="예: 시세 점검" style={{ ...field, flex: 1 }}/>
-                            <button className="secondary" disabled={busy} onClick={() => void setMarketControl({}, '사유만 바꿉니다.')}>사유 저장</button></span></li>
+                    <li className={cn(rowItem, 'flex-wrap')}><span className="text-s"><b>사유</b> <small className={muted}>(유저 화면에 보임 · 최대 100자 · 장 닫기 · 서킷브레이커와 함께 저장)</small></span>
+                        <span className="flex flex-[1_1_280px] gap-1.5"><input value={marketReason} maxLength={100} onChange={e => setMarketReason(e.target.value)} placeholder="예: 시세 점검" className={cn(field, 'flex-1')}/>
+                            <Sm disabled={busy} onClick={() => void setMarketControl({}, '사유만 바꿉니다.')}>사유 저장</Sm></span></li>
                 </ul>
             </Fold>
             <Fold title="지금 시세" note={`${market.stocks.length}종목 · 24시간 등락`}>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{market.stocks.map(x => <li key={x.id} style={rowItem}><span style={{ fontSize: 13 }}><b>{x.name}</b> <small style={muted}>{x.risk} · 기준가 {format(x.base)}</small></span>
-                    <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums' }}>{format(x.price)} <span style={{ color: x.change > 0 ? '#e8746b' : x.change < 0 ? '#6fa8e6' : undefined }}>{x.change > 0 ? '+' : ''}{(x.change * 100).toFixed(2)}%</span></span></li>)}</ul>
+                <ul className="grid">{market.stocks.map(x => <li key={x.id} className={rowItem}><span className="text-s"><b>{x.name}</b> <small className={muted}>{x.risk} · 기준가 {format(x.base)}</small></span>
+                    <span className="font-num text-s">{format(x.price)} <span className={cn(x.change > 0 ? 'text-[#e8746b]' : x.change < 0 ? 'text-[#6fa8e6]' : '')}>{x.change > 0 ? '+' : ''}{(x.change * 100).toFixed(2)}%</span></span></li>)}</ul>
             </Fold>
         </>}
 
         {tab === 'closures' && closures && <>
             <Fold title="서버 상태" note={[broadcast ? '해커 방송 중' : '', secrecy?.on ? '정보 비공개' : '', hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 ? '해킹 효과 있음' : ''].filter(Boolean).join(' · ') || '이상 없음'}>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small style={muted}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span style={muted}>없음</span>}</span>{broadcast && <button className="secondary" disabled={busy} onClick={removeBroadcast}>방송 지우기</button>}</li>
-                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>정보 비공개</b> · {secrecy ? `${secrecy.on ? '켜짐' : '꺼짐(오픈 베타)'}${secrecy.env ? ` · 환경 변수 ${secrecy.env} 우선` : ''}` : '-'}</span>{secrecy && <button className="secondary" disabled={busy || !!secrecy.env} onClick={toggleSecrecy}>{secrecy.on ? '끄기' : '켜기'}</button>}</li>
-                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>서버 리전</b> · {region ? <>함수 {region.functionRegion ? `${region.functionRegion}${region.functionCity ? `(${region.functionCity})` : ''}` : '로컬'} · DB {region.dbRegion || '알 수 없음'}{region.dbRegion && region.recommended ? (region.aligned ? <small style={muted}> · 같은 곳입니다</small> : <small style={{ color: '#e0b36a' }}> · 다릅니다 → vercel.json에 {'"regions": ["' + region.recommended + '"]'}{region.recommendedCity ? `(${region.recommendedCity})` : ''}를 넣고 다시 배포하세요</small>) : null}</> : '-'}</span></li>
-                    <li style={rowItem}><span style={{ fontSize: 13 }}><b>해킹 효과</b> · {hackFx ? `변조 ${hackFx.tamper} · 다운 ${hackFx.down} · 패치 ${hackFx.patched} · DDoS ${hackFx.ddos || 0}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 && <button className="secondary" disabled={busy} onClick={removeHackEffects}>모두 지우기</button>}</li>
+                <ul className="grid">
+                    <li className={rowItem}><span className="text-s"><b>해커 방송</b> · {broadcast ? <>[해커 {broadcast.by}] {broadcast.text} <small className={muted}>· {new Date(broadcast.until).toLocaleTimeString()}까지</small></> : <span className={muted}>없음</span>}</span>{broadcast && <Sm disabled={busy} onClick={removeBroadcast}>방송 지우기</Sm>}</li>
+                    <li className={rowItem}><span className="text-s"><b>정보 비공개</b> · {secrecy ? `${secrecy.on ? '켜짐' : '꺼짐(오픈 베타)'}${secrecy.env ? ` · 환경 변수 ${secrecy.env} 우선` : ''}` : '-'}</span>{secrecy && <Sm disabled={busy || !!secrecy.env} onClick={toggleSecrecy}>{secrecy.on ? '끄기' : '켜기'}</Sm>}</li>
+                    <li className={rowItem}><span className="text-s"><b>서버 리전</b> · {region ? <>함수 {region.functionRegion ? `${region.functionRegion}${region.functionCity ? `(${region.functionCity})` : ''}` : '로컬'} · DB {region.dbRegion || '알 수 없음'}{region.dbRegion && region.recommended ? (region.aligned ? <small className={muted}> · 같은 곳입니다</small> : <small className="text-gold-ink"> · 다릅니다 → vercel.json에 {'"regions": ["' + region.recommended + '"]'}{region.recommendedCity ? `(${region.recommendedCity})` : ''}를 넣고 다시 배포하세요</small>) : null}</> : '-'}</span></li>
+                    <li className={rowItem}><span className="text-s"><b>해킹 효과</b> · {hackFx ? `변조 ${hackFx.tamper} · 다운 ${hackFx.down} · 패치 ${hackFx.patched} · DDoS ${hackFx.ddos || 0}` : '-'}</span>{hackFx && hackFx.tamper + hackFx.down + hackFx.patched + (hackFx.ddos || 0) > 0 && <Sm disabled={busy} onClick={removeHackEffects}>모두 지우기</Sm>}</li>
                 </ul>
             </Fold>
             {closureList('dungeons', '던전', true)}{closureList('stages', '사냥터', false)}
         </>}
 
         {tab === 'life' && players && <Fold title="검색 결과" note={`${players.length}명${players.length === 30 ? ' (최대 30명)' : ''}`}>
-            {!players.length && <p style={{ ...muted, margin: 0 }}>찾은 모험가가 없습니다.</p>}
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>{players.map(p => <li key={p.id} style={{ ...rowItem, display: 'block', background: preview?.id === p.id || edit?.player.id === p.id ? 'rgba(213,179,108,.08)' : undefined }}>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13 }}><b>{p.name}</b> <span style={muted}>· {p.username || '?'} · {p.slot}번 슬롯</span><br/><small style={muted}>{brief(p)} · 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}{lifeLine(p) ? <><br/>{lifeLine(p)}</> : null}</small></span>
-                    <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                        <button className="secondary" disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·세계석</button>
-                        <button className="secondary" disabled={busy} onClick={() => setSpOpen(spOpen === p.id ? null : p.id)} aria-expanded={spOpen === p.id}>SP 내역 {spOpen === p.id ? '▾' : '▸'}</button>
-                        <button className="secondary" disabled={busy} onClick={() => look(p.id)}>초기화 미리 보기</button>
+            {!players.length && <p className="text-ink-3">찾은 모험가가 없습니다.</p>}
+            <ul className="grid">{players.map(p => <li key={p.id} className={cn(rowItem, 'block', (preview?.id === p.id || edit?.player.id === p.id) && 'bg-gold-ink/10')}>
+                <div className="flex flex-wrap items-center justify-between gap-2.5">
+                    <span className="text-s"><b>{p.name}</b> <span className={muted}>· {p.username || '?'} · {p.slot}번 슬롯</span><br/><small className={muted}>{brief(p)} · 저장 {new Date(p.updatedAt).toLocaleString('ko-KR')}{lifeLine(p) ? <><br/>{lifeLine(p)}</> : null}</small></span>
+                    <span className="flex flex-wrap justify-end gap-1.5">
+                        <Sm disabled={busy} onClick={() => { setPreview(null); setDone(''); setEdit({ player: p, gold: String(p.gold), pearls: String(p.pearls) }); }}>골드·세계석</Sm>
+                        <Sm disabled={busy} onClick={() => setSpOpen(spOpen === p.id ? null : p.id)} aria-expanded={spOpen === p.id}>SP 내역 {spOpen === p.id ? '▾' : '▸'}</Sm>
+                        <Sm disabled={busy} onClick={() => look(p.id)}>초기화 미리 보기</Sm>
                     </span>
                 </div>
                 {spOpen === p.id && <SpDetail sp={p.sp}/>}
             </li>)}</ul>
         </Fold>}
-        {tab === 'life' && edit && <form className="panel" onSubmit={e => { e.preventDefault(); adjust(); }} style={{ padding: 16, display: 'grid', gap: 8, border: '1px solid #d5b36c' }}>
-            <h2 style={{ fontSize: 16, margin: 0 }}>골드·세계석 조정 · {edit.player.name} <small style={muted}>({edit.player.username || '?'} · {edit.player.slot}번 슬롯)</small></h2>
-            <p style={{ fontSize: 13, ...muted, margin: 0 }}>최종 값을 입력합니다(더하기 아님). 비우면 그대로입니다.</p>
+        {tab === 'life' && edit && <form className={cn(card, 'grid gap-2 border-gold-ink p-4')} onSubmit={e => { e.preventDefault(); adjust(); }}>
+            <h2 className="font-display text-m font-bold">골드·세계석 조정 · {edit.player.name} <small className={muted}>({edit.player.username || '?'} · {edit.player.slot}번 슬롯)</small></h2>
+            <p className="text-s text-ink-3">최종 값을 입력합니다(더하기 아님). 비우면 그대로입니다.</p>
             <div style={grid(200)}>
-                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>골드 <small style={muted}>지금 {edit.player.gold.toLocaleString()}</small><input inputMode="numeric" value={edit.gold} onChange={e => setEdit({ ...edit, gold: e.target.value })} style={field}/></label>
-                <label style={{ display: 'grid', gap: 4, fontSize: 13 }}>세계석 <small style={muted}>지금 {edit.player.pearls.toLocaleString()}</small><input inputMode="numeric" value={edit.pearls} onChange={e => setEdit({ ...edit, pearls: e.target.value })} style={field}/></label>
+                <label className="grid gap-1 text-s">골드 <small className={muted}>지금 {edit.player.gold.toLocaleString()}</small><input inputMode="numeric" value={edit.gold} onChange={e => setEdit({ ...edit, gold: e.target.value })} className={field}/></label>
+                <label className="grid gap-1 text-s">세계석 <small className={muted}>지금 {edit.player.pearls.toLocaleString()}</small><input inputMode="numeric" value={edit.pearls} onChange={e => setEdit({ ...edit, pearls: e.target.value })} className={field}/></label>
             </div>
-            <div style={{ display: 'flex', gap: 8 }}><button className="primary" disabled={busy}>조정 적용</button><button type="button" className="secondary" disabled={busy} onClick={() => setEdit(null)}>취소</button></div>
+            <div className="flex gap-2"><Primary disabled={busy}>조정 적용</Primary><Sm disabled={busy} onClick={() => setEdit(null)}>취소</Sm></div>
         </form>}
-        {tab === 'life' && preview && <section className="panel" style={{ padding: 16, display: 'grid', gap: 6, border: '1px solid #d5b36c' }}>
-            <h2 style={{ fontSize: 16, margin: 0 }}>초기화 미리 보기 · {preview.data.before.name} <small style={muted}>({preview.data.before.username || '?'} · {preview.data.before.slot}번 슬롯)</small></h2>
-            <div style={{ fontSize: 13 }}>전: {line(preview.data.before)}</div>
-            <div style={{ fontSize: 13 }}>후: {line(preview.data.after)}</div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 6 }}><button className="primary" disabled={busy} onClick={apply}>이번 생 초기화 적용</button><button className="secondary" disabled={busy} onClick={() => setPreview(null)}>취소</button></div>
+        {tab === 'life' && preview && <section className={cn(card, 'grid gap-1.5 border-gold-ink p-4')}>
+            <h2 className="font-display text-m font-bold">초기화 미리 보기 · {preview.data.before.name} <small className={muted}>({preview.data.before.username || '?'} · {preview.data.before.slot}번 슬롯)</small></h2>
+            <div className="text-s">전: {line(preview.data.before)}</div>
+            <div className="text-s">후: {line(preview.data.after)}</div>
+            <div className="mt-1.5 flex gap-2"><Primary type="button" disabled={busy} onClick={apply}>이번 생 초기화 적용</Primary><Sm disabled={busy} onClick={() => setPreview(null)}>취소</Sm></div>
         </section>}
     </main>;
 }

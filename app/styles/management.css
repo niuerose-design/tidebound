@@ -1,31 +1,20 @@
-/* 항구·환생·전직·스킬 등 관리 화면의 간격과 카드 규칙. */
-/* Harbor, legacy and vocation screens share the compact build-panel rhythm. */
-.port-resource-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); padding:22px 26px; gap:24px; margin-bottom:22px; background:linear-gradient(110deg,#213a35,#152329); }
-.port-resource-bar>div { display:flex; align-items:center; gap:13px; min-width:0; }
-.port-resource-bar svg { color:#adc7b5; flex-shrink:0; }
-.port-resource-bar span { color:#a8bdb6; font-size:13px; }
-.port-resource-bar strong { display:block; margin-top:5px; color:var(--gold); font-size:28px; line-height:1.3; font-variant-numeric:tabular-nums; }
-.port-resource-bar strong small { font-size:13px; color:#a7b9b1; font-weight:400; }
-.port-tabs.game-tabs { margin-bottom:22px; }
+
 .relic-card.ready { border-top-color:#86cfc0; }
 .relic-card.owned { border-top-color:var(--gold); }
 .relic-card.ready .relic-state { color:#a4e9ba; }
 .relic-card.owned .relic-state { color:var(--gold); }
 .forge-pick.on { background:#16302f; border-color:var(--rarity); box-shadow:inset 0 0 0 1px var(--rarity); }
-.forge-head .text-button { margin-left:auto; }
 .forge-bench { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:24px; align-items:start; margin-top:14px; }
 .forge-star .star-row { flex-wrap:nowrap; margin:0; }
 .forge-star .star-row i { flex:1 1 0; min-width:0; text-align:center; font-size:clamp(10px,1.4vw,16px); }
 .forge-star .star-odds { margin:0; }
 .gear-slot:has(.gear-slot-item.open) { box-shadow:inset 0 0 0 1px var(--rarity); }
 .rebirth-ready .meter { max-width:560px; }
-.tab-intro { color:#a2b7ae; font-size:14px; margin-bottom:20px; line-height:1.8; }
 .research-card.locked { opacity:.6; }
 .vow-card.locked { opacity:.55; }
 .setting-toggle { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 0; border-top:1px solid #9ab4b522; margin-top:12px; }
 .setting-toggle p { font-size:12px; color:#a5bfb1; margin:4px 0 0; line-height:1.6; }
 .setting-toggle button { flex-shrink:0; min-width:64px; }
-.research-tabs.game-tabs { margin-bottom:16px; }
 /* v3.24 연구 묶음 접기·펼치기 */
 .research-group.folded { margin-bottom:8px; }
 .research-group.folded .research-group-arrow { transform:rotate(-90deg); }
@@ -43,12 +32,6 @@
     .forge-bench { grid-template-columns:minmax(0,1fr); }
     .forge-star .star-row i { font-size:clamp(10px,3.6vw,16px); }}
 @media (max-width:767px) {
-    .port-resource-bar { padding:20px; gap:18px; grid-template-columns:repeat(2,minmax(0,1fr)); }
-    .port-resource-bar strong { font-size:25px; }
-    .port-resource-bar>div { gap:10px; }
-    .port-resource-bar>div:last-child { grid-column:1/-1; }
-    .port-resource-bar>div>svg { width:18px; }
-    .port-tabs.game-tabs { width:100%; display:flex; padding:0; height:auto; }
 
     .skill-grid-detailed .skill-card { padding:20px; }
     /* v3.308 자세히 보기 성장 표: 좁은 화면에서는 가로로 잘리지 않게 레벨별 카드로 쌓습니다(머리글 숨기고 칸마다 data-label 표기). */
@@ -68,7 +51,6 @@
 .job-status.mastered { color:#e8d39a; border-color:#8a7440; }
 .job-status.near { color:#e7c98c; border-color:#6d5f3f; }
 .job-detail-title .job-status { margin-left:0; }
-.job-detail-tabs.game-tabs { width:100%; display:flex; margin:6px 0 0; }
 .job-req-list li.met>span { color:#b6e0cc; }
 .job-req-list li.missing>span { color:#e7b2a6; }
 .job-finder-chip.active { border-color:#d5b36c; background:#223329; color:#f1e8cf; }
@@ -93,9 +75,6 @@
 .ascension-panel .ascension-ready .eyebrow { color: #e3c28d; }
 .mastery-tree > summary .meter { flex:1; min-width:60px; }
 .automation-panel.locked { opacity:.7; }
-.automation-panel .section-title { gap:10px; }
-.automation-panel .section-title h2 { display:flex; align-items:center; gap:6px; margin-right:auto; }
-.automation-panel .section-title span { font-size:12px; color:#9db5ab; }
 .research-plan-list li.done b { color:#a4e9ba; }
 .appraisal-pity .muted { color:var(--muted); font-size:12px; }
 .imprint-row { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
@@ -105,26 +84,9 @@
 .imprint-row select, .imprint-row input:not([type=checkbox]) { min-height:34px; }
 
 /* 운영 도구: 화살표로 접었다 펴는 칸 · 도움말. */
-.admin-tool .admin-fold > summary, .admin-tool .admin-help > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:8px; flex-wrap:wrap; user-select:none }
-.admin-tool .admin-fold > summary::-webkit-details-marker, .admin-tool .admin-help > summary::-webkit-details-marker { display:none }
-.admin-tool .admin-fold > summary { padding:12px 14px; font-size:15px }
-.admin-tool .admin-fold > summary small { color:#9bb3b0; font-size:12px; font-weight:400 }
-.admin-tool .admin-fold > summary:hover { background:rgba(255,255,255,.03) }
-.admin-tool .admin-fold-arrow { display:inline-block; font-size:11px; color:#9bb3b0; transition:transform .15s }
-.admin-tool details[open] > summary .admin-fold-arrow { transform:rotate(90deg) }
-.admin-tool .admin-fold-body { padding:0 14px 14px }
-.admin-tool .admin-help > summary { font-size:13px; color:#9bb3b0; width:max-content }
-.admin-tool .admin-help p { margin:6px 0 0; font-size:13px; color:#9bb3b0; line-height:1.6 }
 /* v3.72 상점: 세 뽑기 탭이 같은 틀 · 같은 높이라 탭을 바꿔도 흔들리지 않습니다. */
 .shop-body { min-height:620px; }
 @media(max-width:767px){ .shop-body { min-height:0; }}
-/* v3.79 접었다 펴는 구역(Fold): 제목 줄 전체가 누름 단추, 오른쪽 화살표가 접히면 돌아갑니다. */
-.fold>summary { display:flex; align-items:center; gap:10px; cursor:pointer; list-style:none; }
-.fold>summary::-webkit-details-marker { display:none; }
-.fold>summary .section-title { flex:1; min-width:0; margin:0; }
-.fold-chevron { flex:none; color:#8fa6a4; transition:transform .15s ease; }
-.fold:not([open])>summary .fold-chevron { transform:rotate(-90deg); }
-.fold[open]>summary { margin-bottom:12px; }
 /* v3.79 제단 모바일: 탭이 화면 밖으로 나가지 않게 줄바꿈, 게이지 제목과 효과는 위아래로. */
 @media (max-width:600px) {
     .altar-tabs { display:grid !important; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); width:100% !important; height:auto !important; }
@@ -153,8 +115,6 @@
 /* v3.213 주화 증권거래소: 종목 카드 · 미니 차트 · 소문 줄 · 거래 내역. 한국식으로 오름은 빨강, 내림은 파랑. */
 .mkt-up { color:#e8746b; }
 .mkt-down { color:#6fa8e6; }
-.story-chapter>summary .section-title { display:flex; align-items:baseline; gap:10px; }
-.story-chapter>summary .section-title>span { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted); }
 /* v3.216 스토리 삽화: 장 배너(가로 4:1, 그림 없으면 SVG 풍경) · 장면 그림(파일이 있을 때만, 16:9) */
 .story-banner { position:relative; margin:0 0 12px; aspect-ratio:4 / 1; max-height:230px; width:100%; border-radius:var(--radius-lg); overflow:hidden; border:1px solid var(--border); background:#0b1418; }
 .story-banner svg, .story-banner img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
@@ -204,7 +164,6 @@
 .exp-item.picked { background:#e0b36a; color:#1b2f30; }
 .exp-item.combo { border-color:#7fd6a0; color:#bff0cf; }
 .exp-item.combo small { margin-left:4px; font-size:11px; color:#7fd6a0; }
-.exp-box .section-title { margin-bottom:6px; }
 .exp-box-choices { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:6px; margin-bottom:6px; }
 .exp-box-choice { display:flex; flex-direction:column; gap:3px; padding:8px 6px; border-radius:5px; border:1px solid #e0b36a; background:#1f1e14; color:#f0dcae; cursor:pointer; text-align:center; min-width:0; }
 .exp-box-choice b { font-size:13px; }
@@ -224,21 +183,14 @@
 .exp-trait-tiers { list-style:none; margin:0 0 10px; padding:8px 10px; border-radius:6px; background:#0f2227; font-size:12px; display:grid; gap:3px; color:#8fa6a4; }
 .exp-trait-tiers li.on { color:#d7dec9; } .exp-trait-tiers li.on::before { content:'✓ '; color:#8fc7a4; } .exp-shop-help .footnote { margin-top:6px; }
 @media (max-width:640px) {
-    .exp-bar.port-resource-bar { grid-template-columns:repeat(6, minmax(0,1fr)); padding:12px 12px 10px; gap:10px 8px; margin-bottom:10px; border-radius:10px; }
-    .exp-bar.port-resource-bar > div { flex-direction:column; align-items:flex-start; gap:2px; grid-column:span 2; }
-    .exp-bar.port-resource-bar > div:nth-child(4), .exp-bar.port-resource-bar > div:nth-child(5) { grid-column:span 3; }
-    .exp-bar.port-resource-bar svg { width:16px; height:16px; }
-    .exp-bar.port-resource-bar span { font-size:11px; }
-    .exp-bar.port-resource-bar strong { font-size:20px; margin-top:0; line-height:1.2; } .exp-bar.port-resource-bar strong small { font-size:11px; }
     .exp-row-label { font-size:11px; }
-    .exp-actions .primary, .exp-actions button { min-height:44px; }
     .exp-bench li { padding:8px 10px; } .exp-bench li > div.exp-bench-unit:first-child { flex-direction:row; align-items:center; gap:10px; } .exp-bench li > div.exp-bench-unit:first-child > div { display:flex; flex-direction:column; min-width:0; } .exp-bench .button-row { gap:6px; } .exp-bench .button-row button { flex:1; padding:7px 6px; font-size:12px; min-height:36px; }
     .exp-card { padding:8px 4px; } .exp-card b { font-size:12px; } .exp-card small { font-size:11px; }
     .exp-traits button { padding:4px 7px; font-size:11px; }
     .exp-todo { font-size:12px; padding:7px 10px; }}
 .exp-mastery-bar i.set { background:linear-gradient(90deg,#6f8fd6,#c99cf5); }
 .exp-link-chip { display:inline-block; margin:2px 4px 0 0; padding:2px 7px; border-radius:4px; border:1px solid #2a4a46; background:#0f2227; color:#c7d6d2; font-size:11px; }
-.exp-link-chip.locked { opacity:.55; } .exp-diff .section-title { margin-bottom:6px; }
+.exp-link-chip.locked { opacity:.55; }
 .exp-diff-list { display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:6px; }
 .exp-diff-card { display:flex; flex-direction:column; gap:3px; padding:8px 6px; border-radius:6px; border:1px solid #2a4a46; background:#0f2227; color:#c7d6d2; cursor:pointer; text-align:left; min-width:0; }
 .exp-diff-card b { font-size:13px; color:#d7dec9; } .exp-diff-card small { font-size:11px; line-height:1.3; color:#9dadaf; } .exp-diff-card .exp-diff-reward { color:#e0b36a; }
@@ -248,7 +200,7 @@
 .exp-abyss-btn { background:linear-gradient(135deg,#4a3a8c,#7f6fd6); color:#f3ecff; }
 .exp-rule.small.abyss { border-left-color:#7f6fd6; background:#1b1733; color:#dccfff; }
 .exp-progress.abyss li { opacity:.55; } .exp-progress.abyss li.boss { opacity:.7; }
-.exp-recent li.cleared { border-color:#5fa37a; } .exp-recent .when { color:#6f8a88; font-variant-numeric:tabular-nums; } .exp-feats li.on { color:#d7dec9; } .exp-feats li.on::before { content:'✓ '; color:#8fc7a4; } .exp-quest-box .section-title { margin-bottom:6px; }
+.exp-recent li.cleared { border-color:#5fa37a; } .exp-recent .when { color:#6f8a88; font-variant-numeric:tabular-nums; } .exp-feats li.on { color:#d7dec9; } .exp-feats li.on::before { content:'✓ '; color:#8fc7a4; }
 .exp-quests li.done { border-color:#5fa37a; background:#13262b; } .exp-quests li.done .exp-quest-head b::before { content:'✓ '; color:#8fc7a4; }
 .exp-codex-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(96px, 1fr)); gap:6px; margin-top:6px; }
 .exp-codex-unit { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); text-align:center; min-width:0; }
@@ -285,7 +237,6 @@
 .exp-fighter .tag.kill { background:#3a1d1d; border-color:#e08a7a; color:#f3c9b5; }
 .exp-arena-caption { margin:8px 0 6px; font-size:12px; color:#c7d6d2; min-height:1.2em; text-align:center; }
 .exp-arena-controls { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; align-items:center; }
-.exp-arena-controls .secondary.on { border-color:#8fc7a4; color:#d7dec9; }
 @keyframes exp-lunge-up { 0% { transform:translateY(0); } 40% { transform:translateY(-10px) scale(1.06); } 100% { transform:translateY(0); } }
 @keyframes exp-lunge-down { 0% { transform:translateY(0); } 40% { transform:translateY(10px) scale(1.06); } 100% { transform:translateY(0); } }
 @keyframes exp-shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
@@ -297,7 +248,6 @@
 @media (prefers-reduced-motion: reduce) { .exp-fighter, .exp-fighter .float { animation:none !important; } .exp-fighter .hp i { transition:none; }}
 @media (max-width:480px) { .exp-fighter { min-height:56px; } .exp-fighter b { font-size:11px; }}
 .exp-rule.small { margin:-6px 0 12px; font-size:12px; padding:6px 10px; }
-.exp-aug-offer .section-title { margin-bottom:6px; }
 .exp-aug-choices { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:6px; }
 .exp-aug-choice { display:flex; flex-direction:column; gap:3px; padding:9px 8px; border-radius:6px; border:1px solid #6f8fd6; background:#1b2436; color:#e4ebfa; cursor:pointer; text-align:left; min-width:0; }
 .exp-aug-choice small { font-size:11px; color:#9fb0d6; letter-spacing:.02em; } .exp-aug-choice b { font-size:13px; } .exp-aug-choice span { font-size:11px; color:#c3cfeb; line-height:1.35; }
@@ -363,7 +313,7 @@
 .exp-theme-card { display:flex; flex-direction:column; gap:4px; padding:8px; border:1px solid var(--exp-cell-border, #3a5250); border-radius:8px; background:var(--exp-board-bg, #0f2227); color:inherit; cursor:pointer; text-align:left; min-width:0; }
 .exp-theme-card i { display:block; height:22px; border-radius:5px; background:var(--exp-arena-bg, radial-gradient(ellipse at 50% 45%, #15302e 0%, #0b1a1f 70%)); border:1px solid var(--exp-arena-border, #2a4a46); }
 .exp-theme-card b { font-size:12px; } .exp-theme-card small { font-size:11px; color:#9fb3b1; }
-.exp-theme-card.on { outline:2px solid #e0b36a; } .exp-theme-card.locked { opacity:.55; cursor:default; filter:grayscale(.5); } .exp-target-now .button-row { margin-top:6px; }
+.exp-theme-card.on { outline:2px solid #e0b36a; } .exp-theme-card.locked { opacity:.55; cursor:default; filter:grayscale(.5); }
 .exp-card { position:relative; }
 .exp-card.target { border-color:#e0b36a; box-shadow:inset 0 0 0 1px #e0b36a44; } .exp-card .exp-target-badge { position:absolute; top:4px; right:6px; font-size:12px; }
 
@@ -380,22 +330,11 @@
 .exp-skin-card { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 6px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:inherit; cursor:pointer; min-width:0; text-align:center; }
 .exp-skin-card b { font-size:12px; } .exp-skin-card small { font-size:11px; color:#9fb3b1; }
 .exp-skin-card.on { outline:2px solid #e0b36a; } .exp-skin-card.locked { opacity:.55; cursor:default; }
-
-/* 24단계 원정대 탭: 원정 · 과제 · 성장 · 기록 · 꾸미기. 좁은 화면에서는 한 줄에 다섯 칸. */
-.exp-tabs.game-tabs { width:100%; display:flex; margin-bottom:12px; }
-
-/* 24단계(2) 모바일 점검: 순위 탭이 다섯 개를 넘어 화면 밖으로 나가지 않게 줄바꿈, 전투 재생은 보드 위(할 일 줄 아래)에 두어 전투 직후 바로 보입니다. */
-.ranking-tabs.game-tabs { flex-wrap:wrap; height:auto; width:100%; display:flex; }
 .exp-arena.above { margin:0 0 12px; }
-.ranking-tabs.game-tabs { height:auto !important; row-gap:6px; margin-bottom:14px; }
-.abyss-board .section-title { flex-wrap:wrap; row-gap:4px; } .abyss-board .section-title h2 { min-width:0; }
 
 /* 24단계(3) 상점 · 벤치 서랍: 보드 아래 한 패널, 머리줄을 누르면 접힘(기기에 기억). 넓은 화면에서는 벤치 | 상점 두 칸. */
 .exp-drawer { padding:0; }
 .exp-drawer:not(.open) .exp-drawer-head { padding-bottom:6px; }
-
-/* 24단계(4) 모바일 점검: 재화 막대의 큰 수가 칸을 넘지 않게(정수도 1.2억처럼 짧게 쓰고, 그래도 길면 줄바꿈). */
-.port-resource-bar>div>span { min-width:0; } .port-resource-bar strong { overflow-wrap:anywhere; }
 @media (max-width:767px) {
     .exp-bench { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:6px; }
     .exp-bench li { flex-direction:column; align-items:stretch; gap:6px; padding:8px; }

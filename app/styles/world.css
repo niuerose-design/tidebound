@@ -11,14 +11,6 @@
   margin-top:22px
 }
 
-.dungeon-run-header,
-.dungeon-combat-log .section-title {
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:20px
-}
-
 .dungeon-wave.current {
   border-color:#66b7a0;
   box-shadow:0 0 0 1px #66b7a033 inset;
@@ -37,16 +29,6 @@
 
 .dungeon-combatant .meter {
   margin:10px 0
-}
-
-.dungeon-combat-log .section-title {
-  align-items:center;
-  margin-bottom:8px
-}
-
-.dungeon-combat-log .section-title span {
-  color:#779293;
-  font-size:11px
 }
 
 .monster-rarity.epic {
@@ -94,40 +76,6 @@
   color:#81979e;
   margin-top:20px;
   line-height:1.9
-}
-
-.game-tabs {
-  height:43px!important;
-  background:transparent!important;
-  padding:0!important;
-  gap:18px!important;
-  border-bottom:1px solid var(--border);
-  border-radius:0!important;
-  margin-bottom:20px
-}
-
-.game-tabs [data-slot=tabs-trigger] {
-  border-radius:0!important;
-  padding:9px 8px!important;
-  color:#7e999f;
-  font-size:14px;
-  box-shadow:none!important
-}
-
-.game-tabs [data-state=active] {
-  background:transparent!important;
-  border-bottom:2px solid #8bc8b4!important;
-  color:#b5e0d0!important
-}
-
-.button-row {
-  display:flex;
-  gap:7px
-}
-
-.button-row>* {
-  flex:1;
-  min-width:0
 }
 /* v27.86 무리 서식지 카드의 긴 요약은 한 줄에 못 들어가므로 줄을 나눕니다. */
 .stage-card.habitat .stage-footer { flex-wrap:wrap; }

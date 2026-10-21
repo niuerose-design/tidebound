@@ -50,7 +50,6 @@
 .tx-chapter-info > div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; font-size: 13px; }
 .tx-chapter-info span { color: #8d9fa4; }
 .tx-chapter-info strong { color: #c6d2d1; font-weight: 500; }
-.tx-tabs { margin-bottom: 14px; }
 .tx-two-col { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 16px; align-items: start; }
 .tx-roster { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .tx-roster li { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid transparent; border-radius: 7px; cursor: pointer; }
