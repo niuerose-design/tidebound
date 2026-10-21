@@ -25,54 +25,12 @@
   color:#82999f
 }
 
-.battle-skills {
-  padding:19px 20px;
-  margin-bottom:20px
-}
-
-.battle-skill-row {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px
-}
-
-.battle-skill {
-  display:flex;
-  align-items:center;
-  gap:10px;
-  text-align:left;
-  background:#112127;
-  border:1px solid #36504d;
-  border-radius:6px;
-  padding:12px 10px;
-  min-width:0
-}
-
 .skill-symbol {
   width:35px;
   flex-shrink:0;
   color:#acd4bf;
   display:flex;
   justify-content:center
-}
-
-.battle-skill strong {
-  display:block;
-  font-size:12px;
-  font-weight:500
-}
-
-.battle-skill small {
-  display:block;
-  font-size:11px;
-  color:#8da6a6;
-  margin-top:3px
-}
-
-.battle-skill.vacant {
-  border-style:dashed;
-  border-color:#304046;
-  color:#7c939b
 }
 
 .battle-skill.vacant .skill-symbol {
@@ -124,73 +82,8 @@
   padding-top:2px
 }
 
-.player-panel {
-  padding:21px 21px 16px
-}
-
 .player-panel>.section-title {
   margin-bottom:25px
-}
-
-.player-avatar {
-  height:84px;
-  width:84px;
-  border:1px solid #8b805a;
-  border-radius:50%;
-  margin:0 auto 19px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:radial-gradient(circle,#33493e,#172a2d);
-  position:relative;
-  color:#d2b67b;
-  outline:5px solid #a9a36c09;
-  box-shadow:0 0 0 7px #85774726
-}
-
-.player-avatar>span {
-  position:absolute;
-  bottom:-7px;
-  left:29px;
-  min-width:25px;
-  line-height:24px;
-  border-radius:5px;
-  text-align:center;
-  color:#e0cd9f;
-  border:1px solid #8d7b54;
-  background:#28352f;
-  font-size:12px
-}
-
-.player-panel>h3 {
-  text-align:center;
-  font-size:16px;
-  margin-top:21px
-}
-
-.job-label {
-  text-align:center;
-  font-size:11px;
-  margin-top:4px;
-  color:#91a69e
-}
-
-.combat-power {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:19px 0 14px;
-  margin-bottom:10px;
-  border-bottom:1px solid var(--border);
-  font-size:12px;
-  color:#9eb3b5
-}
-
-.combat-power strong {
-  font-size:24px;
-  color:var(--gold);
-  line-height:1;
-  font-weight:500
 }
 
 .meter {
@@ -229,79 +122,6 @@
 
 .player-panel .meter {
   margin:15px 0
-}
-
-.stat-grid {
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:17px 14px;
-  padding:18px 0;
-  border-bottom:1px solid var(--border);
-  margin-bottom:20px
-}
-
-.stat-grid>div {
-  display:grid;
-  grid-template-columns:17px 1fr;
-  column-gap:5px;
-  align-items:center
-}
-
-.stat-grid svg {
-  width:13px;
-  height:13px;
-  color:#89a4a6
-}
-
-.stat-grid span {
-  font-size:11px;
-  color:#8fa5a9
-}
-
-.stat-grid b {
-  font-size:16px;
-  font-weight:500;
-  grid-column:2;
-  margin-top:2px
-}
-
-.equipment-title {
-  margin-bottom:10px
-}
-
-.mini-equipment button {
-  width:100%;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  margin:12px 0;
-  background:none;
-  border:0;
-  text-align:left;
-  padding:0
-}
-
-.mini-slot {
-  height:38px;
-  width:38px;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#1d3137;
-  border:1px solid #3c5157;
-  border-radius:5px
-}
-
-.mini-equipment small {
-  display:block;
-  font-size:11px;
-  color:#728f99
-}
-
-.mini-equipment strong {
-  display:block;
-  font-size:12px;
-  font-weight:400
 }
 
 .badge {

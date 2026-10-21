@@ -3,101 +3,6 @@
   padding:23px;
   margin-bottom:25px
 }
-
-.loadout-columns {
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0, 1fr));
-  gap:18px
-}
-
-.loadout-column {
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  gap:10px
-}
-
-.loadout-column h3 {
-  font-size:14px;
-  color:#c6d6d0;
-  display:flex;
-  align-items:baseline;
-  gap:10px;
-  flex-wrap:wrap
-}
-
-.loadout-column h3 small {
-  font-size:11px;
-  font-weight:400;
-  color:#859ea0
-}
-
-.loadout-row {
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  list-style:none;
-  margin:0;
-  padding:0
-}
-
-.loadout-row .loadout-skill > div {
-  flex:1;
-  min-width:0
-}
-
-.loadout-order {
-  flex:none;
-  width:22px;
-  height:22px;
-  border-radius:50%;
-  display:grid;
-  place-items:center;
-  font-size:12px;
-  font-weight:700;
-  color:#0e1e25;
-  background:var(--gold);
-  font-variant-numeric:tabular-nums
-}
-
-.loadout-passive .loadout-skill {
-  border-style:dashed
-}
-
-.loadout-empty {
-  font-size:12px;
-  color:#859ea0;
-  margin:0
-}
-
-.loadout-skill {
-  display:flex;
-  align-items:center;
-  gap:12px;
-  background:#0e1e25;
-  border:1px solid #35514e;
-  border-radius:6px;
-  padding:11px 15px;
-  color:#a9d5c4
-}
-
-.loadout-skill strong {
-  font-size:13px;
-  display:block;
-  color:#c6d6d0
-}
-
-.loadout-skill small {
-  font-size:11px;
-  color:#859ea0;
-  display:block
-}
-
-.skill-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:17px
-}
 /* v3.4 카드 내용(기타 칸의 긴 규칙 문구 등)이 열 너비를 밀어내지 않게 합니다. */
 .skill-grid > .skill-card { min-width:0 }
 .skill-grid > .skill-card .skill-actions-v2 > button { min-width:0; white-space:normal; overflow-wrap:anywhere }
@@ -119,27 +24,6 @@
   background:#132128
 }
 
-.skill-title {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  margin-bottom:20px
-}
-
-.skill-title>svg {
-  margin-left:auto;
-  color:#6e868c
-}
-
-.skill-title small {
-  font-size:11px;
-  color:#819ba0
-}
-
-.skill-title h3 {
-  font-size:15px
-}
-
 .skill-card p {
   font-size:13px;
   min-height:43px;
@@ -154,54 +38,6 @@
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:21px
-}
-
-.book-section {
-  margin-bottom:30px
-}
-
-.book-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:19px
-}
-
-.book-card {
-  padding:24px
-}
-
-.book-icon {
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  height:65px;
-  color:#93c0b4;
-  margin-bottom:12px
-}
-
-.book-icon>span {
-  font-size:11px;
-  border:1px solid #406458;
-  border-radius:4px;
-  padding:2px 7px
-}
-
-.book-card h3 {
-  font-size:17px
-}
-
-.book-card p {
-  font-size:12px;
-  min-height:44px;
-  margin:8px 0 16px
-}
-
-.book-stats {
-  display:flex;
-  gap:20px;
-  font-size:11px;
-  color:#a2b9ba;
-  margin-bottom:18px
 }
 
 .book-card.undiscovered {
@@ -386,21 +222,6 @@
   gap:15px
 }
 
-.field-label {
-  font-size:14px;
-  color:#b4ccc4
-}
-
-.name-input {
-  background:#102129;
-  border:1px solid #455e62;
-  border-radius:5px;
-  padding:9px 12px;
-  min-width:0;
-  color:#d9e6df;
-  font-size:15px
-}
-
 [data-slot=dialog-content],[data-slot=alert-dialog-content] {
   background:#172a30;
   border-color:#425e61;
@@ -439,7 +260,7 @@
 .training-title h2 { display:flex; align-items:center; gap:7px }
 .training-card .ranking-main-stats { justify-content:center; margin:6px 0 10px }
 .training-actions { display:flex; gap:8px; align-items:center; justify-content:center; margin-top:auto }
-@media (max-width:767px) { .ranking-detail-skills { grid-template-columns:1fr } }
+@media (max-width:767px) { .ranking-detail-skills { grid-template-columns:1fr }}
 
 /* 랭킹 정렬 칩, 결투 요약 정렬, 문 카운트다운, 모바일 랭킹 카드 */
 .ranking-sort { display:flex; align-items:center; gap:6px; flex-wrap:wrap }
@@ -457,8 +278,7 @@
   .ranking-panel td.rank-number { position:absolute; left:12px; top:12px; width:auto; color:var(--gold) }
   .ranking-panel td[data-label]::before { content:attr(data-label) ' '; color:#8fa8a8; font-size:11px; margin-right:4px }
   .ranking-panel td[data-label] { display:inline-block; width:auto; margin-right:12px }
-  .ranking-actions { margin-top:6px }
-}
+  .ranking-actions { margin-top:6px }}
 /* v3.305 새 버전 안내: 서버 버전이 이 화면의 코드 버전과 다를 때. */
 .update-banner {
   background:#233a33;

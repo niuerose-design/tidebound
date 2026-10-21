@@ -139,61 +139,8 @@
   color:#e2bc87
 }
 
-.dungeon-combat-grid {
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);
-  align-items:center;
-  gap:14px
-}
-
-.dungeon-combatant {
-  min-height:175px;
-  border:1px solid #314d4c;
-  border-radius:10px;
-  padding:16px;
-  background:#162a30
-}
-
-.dungeon-combatant h3 {
-  margin:5px 0 14px;
-  font-size:18px
-}
-
-.dungeon-combatant small {
-  color:#93aaab;
-  font-size:11px;
-  line-height:1.7
-}
-
 .dungeon-combatant .meter {
   margin:10px 0
-}
-
-.dungeon-vs {
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:5px;
-  color:#b88c72;
-  font:700 14px var(--font-display)
-}
-
-.dungeon-vs span {
-  color:#8ba4a1;
-  font:11px var(--font-body)
-}
-
-.dungeon-hint {
-  color:#d0b88e;
-  font-size:11px;
-  line-height:1.6;
-  margin:8px 0 0
-}
-
-.dungeon-combat-log {
-  border-top:1px solid #31484a;
-  margin-top:20px;
-  padding-top:15px
 }
 
 .dungeon-combat-log .section-title {
@@ -201,30 +148,9 @@
   margin-bottom:8px
 }
 
-.dungeon-combat-log h3 {
-  font-size:14px
-}
-
 .dungeon-combat-log .section-title span {
   color:#779293;
   font-size:11px
-}
-
-.dungeon-combat-log p {
-  color:#a7b8b4;
-  font-size:12px;
-  border-bottom:1px solid #263b3e;
-  padding:6px 0;
-  margin:0
-}
-
-.monster-rarity {
-  display:inline-block;
-  margin-left:5px;
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:.03em;
-  color:#78b9d9
 }
 
 .monster-rarity.epic {
@@ -233,10 +159,6 @@
 
 .monster-rarity.legendary {
   color:#e3bd76
-}
-
-.boss-book-card {
-  border-color:#6a5240
 }
 
 .rewards {
@@ -278,19 +200,6 @@
   line-height:1.9
 }
 
-.icon-box {
-  width:44px;
-  height:44px;
-  background:#20373b;
-  border:1px solid #3b5658;
-  border-radius:7px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:#a9d6c6;
-  flex-shrink:0
-}
-
 .game-tabs {
   height:43px!important;
   background:transparent!important;
@@ -315,47 +224,6 @@
   color:#b5e0d0!important
 }
 
-.item-grid {
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px
-}
-
-.item-card {
-  padding:17px;
-  border-top:2px solid var(--rarity)
-}
-
-.item-top {
-  display:flex;
-  justify-content:space-between;
-  font-size:11px;
-  color:var(--rarity)
-}
-
-.item-top small {
-  color:#81979d;
-  font-size:11px
-}
-
-.item-icon {
-  height:84px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--rarity)
-}
-
-.item-card h3 {
-  font-size:14px;
-  color:var(--rarity)
-}
-
-.item-card p {
-  font-size:11px;
-  margin:5px 0 18px
-}
-
 .button-row {
   display:flex;
   gap:7px
@@ -365,7 +233,6 @@
   flex:1;
   min-width:0
 }
-
 
 /* v27.88 통계 · 서약 예약 표시 */
 .stats-block { margin-bottom: 16px; padding: 14px 16px; }
@@ -394,12 +261,6 @@
 .gear-row.onyx-frame{border-left:3px solid #000!important}
 .onyx-item-card.unregistered .onyx-art{opacity:.35;filter:grayscale(.7)}
 
-/* v3.15 물건 도감 접기·등급 필터 */
-.item-book-section>summary h2{display:flex;align-items:center;gap:6px}
-.item-filter{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 12px}
-.item-filter button{display:inline-flex;align-items:center;gap:6px}
-.item-filter-dot{width:8px;height:8px;border-radius:50%;background:var(--rarity,#9ab4b5);box-shadow:0 0 6px var(--rarity,#9ab4b5)}
-
 /* v3.160 호루라기 카드(사냥터 난이도 아래) · 재입대 표시 */
 .rank-reenlist { display: block; font-weight: 500; opacity: .85; }
 /* v3.165 재입대 버튼: 계급 머리 오른쪽, 빨간 네모 테두리. 중장일 때만 켜집니다. */
@@ -407,7 +268,7 @@
 .rank-reenlist-button:hover:not(:disabled) { background: rgba(217, 83, 79, .22); box-shadow: 0 0 16px rgba(217, 83, 79, .4); transform: translateY(-1px); }
 .rank-reenlist-button:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; background: transparent; }
 .rank-reenlist-button svg { flex: none; }
-@media (max-width: 767px) { .rank-reenlist-button { padding: 6px 10px; font-size: 12px; } }
+@media (max-width: 767px) { .rank-reenlist-button { padding: 6px 10px; font-size: 12px; }}
 
 /* v3.368 사냥터 월드맵(components/game/world-map.tsx): 세계 탭 · SVG 지도 · 고른 사냥터 안내 줄. */
 .world-map { margin:0 0 18px; border:1px solid var(--border); border-radius:10px; background:var(--card); overflow:hidden; }
@@ -437,5 +298,4 @@
   .world-tab b { font-size:13px; }
   .world-tab small { letter-spacing:.06em; }
   .world-tab svg { right:8px; top:9px; }
-  .world-map-info { flex-wrap:wrap; }
-}
+  .world-map-info { flex-wrap:wrap; }}
