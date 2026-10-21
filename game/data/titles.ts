@@ -5,7 +5,7 @@
  */
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
-import { FEATS } from './expedition';
+import { FEATS, SETS } from './expedition';
 
 type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
@@ -22,6 +22,7 @@ export const TITLES: TitleDef[] = [
     { id: 'expSeasonTop:3', name: '🥇 시즌 3위 안의 원정대', desc: '월간 원정대 순위 3위 안', group: '모험', achievement: 'expSeasonTop:3' },
     { id: 'expCodex:30', name: '📘 원정 도감 완성', desc: '유닛 30종 모두 승리', group: '모험', achievement: 'expCodex:30' },
     { id: 'expCodexGold:5', name: '🏅 다섯 유닛의 주인', desc: '유닛 5종 도감 금', group: '모험', achievement: 'expCodexGold:5' },
+    ...SETS.map(set => ({ id: `expSet:${set.id}`, name: `${set.icon} ${set.name}의 원정대`, desc: `원정대 ${set.name} 세트 숙련 20`, group: '모험' as const, achievement: `expSet:${set.id}` })),
     { id: 'expDiff:3', name: '⚔ 정예 원정대', desc: '난이도 정예 완주', group: '모험', achievement: 'expDiff:3' },
     { id: 'expDiff:4', name: '🔥 악몽을 넘은 원정대', desc: '난이도 악몽 완주', group: '모험', achievement: 'expDiff:4' },
     { id: 'expDiff:5', name: '⚡ 전설의 원정대', desc: '난이도 전설 완주', group: '모험', achievement: 'expDiff:5' },

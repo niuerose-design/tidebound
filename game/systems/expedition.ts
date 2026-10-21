@@ -167,7 +167,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
 }
 /** 상점 5장: 판 레벨의 비용 비중대로 뽑습니다(풀 소진은 2단계). */
 /** 10단계 시너지 슬롯: 보드의 시너지 가운데 다음 단계에 가장 가까운 것(같으면 머릿수 큰 쪽)을 늘리는, 보드에 없는 유닛. 없으면 null. */
-export function synergyPick(board: Placed[], cost: number, rng: () => number, exclude?: Set<string>): string | null {
+export function synergyPick(board: Placed[], cost: number, rng: () => number, exclude?: Set<string>, pool: UnitDef[] = UNITS): string | null {
     const active = activeTraits(board).filter(t => t.tier < t.trait.tiers.length);
     if (!active.length) return null;
     const gap = (t: ActiveTrait) => t.trait.tiers[t.tier].count - t.count;
@@ -175,23 +175,23 @@ export function synergyPick(board: Placed[], cost: number, rng: () => number, ex
     const onBoard = new Set(board.map(p => p.unit));
     for (const t of active) {
         const want = t.trait.id as string;
-        let pool = UNITS.filter(u => u.cost === cost && !onBoard.has(u.id) && !exclude?.has(u.id) && (u.origin === want || (u.roles as string[]).includes(want) || (u.special as string[] | undefined)?.includes(want)));
-        if (!pool.length) pool = UNITS.filter(u => !onBoard.has(u.id) && !exclude?.has(u.id) && Math.abs(u.cost - cost) <= 1 && (u.origin === want || (u.roles as string[]).includes(want)));
-        if (pool.length) return pool[Math.floor(rng() * pool.length)].id;
+        let cands = pool.filter(u => u.cost === cost && !onBoard.has(u.id) && !exclude?.has(u.id) && (u.origin === want || (u.roles as string[]).includes(want) || (u.special as string[] | undefined)?.includes(want)));
+        if (!cands.length) cands = pool.filter(u => !onBoard.has(u.id) && !exclude?.has(u.id) && Math.abs(u.cost - cost) <= 1 && (u.origin === want || (u.roles as string[]).includes(want)));
+        if (cands.length) return cands[Math.floor(rng() * cands.length)].id;
     }
     return null;
 }
 /** 19단계: exclude(본편에서 아직 안 잡은 보스 유닛)는 상점에 나오지 않습니다. 그 비용 풀이 비면(비용 5는 모두 보스) 한 단계 아래 비용으로 채웁니다. */
-export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize, board?: Placed[], exclude?: Set<string>): string[] {
+export function rollShop(level: number, rng: () => number, size = EXPEDITION.shopSize, board?: Placed[], exclude?: Set<string>, units: UnitDef[] = UNITS): string[] {
     const odds = EXPEDITION.shopOdds[Math.min(EXPEDITION.shopOdds.length - 1, Math.max(2, level))];
     const out: string[] = [];
     for (let i = 0; i < size; i++) {
         let r = rng(), cost = 1; for (let c = 0; c < odds.length; c++) { r -= odds[c]; if (r <= 0) { cost = c + 1; break; } }
         // 마지막 칸은 시너지 슬롯(보드가 주어졌을 때).
-        const pick = board && i === size - 1 ? synergyPick(board, cost, rng, exclude) : null;
+        const pick = board && i === size - 1 ? synergyPick(board, cost, rng, exclude, units) : null;
         if (pick) { out.push(pick); continue; }
         // 그 비용에 열린 유닛이 없으면(비용 5는 모두 보스) 한 단계 아래 비용으로 내려갑니다.
-        let c = cost, pool = UNITS.filter(u => u.cost === c && !exclude?.has(u.id)); while (!pool.length && c > 1) { c--; pool = UNITS.filter(u => u.cost === c && !exclude?.has(u.id)); } if (!pool.length) pool = UNITS.filter(u => u.cost === cost); out.push(pool[Math.floor(rng() * pool.length)].id);
+        let c = cost, pool = units.filter(u => u.cost === c && !exclude?.has(u.id)); while (!pool.length && c > 1) { c--; pool = units.filter(u => u.cost === c && !exclude?.has(u.id)); } if (!pool.length) pool = units.filter(u => u.cost === cost); if (!pool.length) pool = units; out.push(pool[Math.floor(rng() * pool.length)].id);
     }
     return out;
 }
@@ -202,7 +202,7 @@ export const ACT_BOSSES = ['', 'mushmom', 'zakum', 'blackMage'];
 /** 심연 보스: 16 · 20 · 24… 라운드에 자쿰 → 검은 마법사 → 루시드 순으로 돌아갑니다. */
 export const ABYSS_BOSSES = ['zakum', 'blackMage', 'lucid'];
 export const abyssBoss = (round: number) => ABYSS_BOSSES[Math.max(0, round / EXPEDITION.actLength - 4) % ABYSS_BOSSES.length];
-export function rollWave(round: number, rng: () => number, difficulty = 1): Placed[] {
+export function rollWave(round: number, rng: () => number, difficulty = 1, units: UnitDef[] = UNITS): Placed[] {
     // 15단계 심연(13라운드~): 12라운드 예산 × 1.1^(n − 12), 보스는 4라운드마다 돌아가며 ★2(24라운드부터 ★3). 16단계 난이도: 예산 배율 · ★ 확률 가산 · 막 보스 ★.
     const diff = difficultyOf(difficulty), abyss = isAbyssRound(round), depth = abyss ? round - EXPEDITION.rounds : 0;
     let budget = Math.round((abyss ? WAVE_BUDGET[EXPEDITION.rounds] * Math.pow(ABYSS.budgetGrowth, depth) : WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)]) * diff.budget);
@@ -214,7 +214,7 @@ export function rollWave(round: number, rng: () => number, difficulty = 1): Plac
         budget = Math.max(0, budget - boss.cost * (star === 3 ? 4 : star === 2 ? 2 : 1));
     }
     while (out.length < slots && budget > 0) {
-        const pool = UNITS.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
+        const pool = units.filter(u => u.cost <= Math.min(maxCost, budget)); if (!pool.length) break;
         const def = pool[Math.floor(rng() * pool.length)];
         const sp = diff.starPlus; let star: 1 | 2 | 3 = round >= 10 && rng() < Math.min(.6, .15 + .03 * depth + sp) ? 3 : round >= 7 && rng() < .45 + sp ? 2 : round >= 4 && rng() < .25 + sp ? 2 : round >= 3 && rng() < .1 + sp ? 2 : 1;
         const starCost = (st: number) => def.cost * (st === 3 ? 4 : st === 2 ? 2 : 1);

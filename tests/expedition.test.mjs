@@ -548,7 +548,8 @@ test('expedition stage 17: ghost boards carry the opponent run mods (augments ·
 test('expedition stage 19 (main-game links): boss units stay out of the shop until the boss is killed in the main game, boss wins roll core shards that forge a boss core at 10, codex tiers add main-game book kills once per tier', async () => {
     const { newState, act } = await import('./harness.mjs');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
-    assert.deepEqual([...D.lockedBossUnits({})].sort(), ['blackMage', 'lucid', 'mushmom', 'zakum']); assert.deepEqual([...D.lockedBossUnits({ grottoWarden: 1, ventColossus: 3 })].sort(), ['blackMage', 'lucid']);
+    assert.deepEqual([...D.lockedBossUnits({}, D.UNITS)].sort(), ['blackMage', 'lucid', 'mushmom', 'zakum']); assert.deepEqual([...D.lockedBossUnits({ grottoWarden: 1, ventColossus: 3 }, D.UNITS)].sort(), ['blackMage', 'lucid']);
+    assert.ok(D.lockedBossUnits({}).has('kingSlime'), 'default pool covers set units too');
     const locked = D.lockedBossUnits({});
     for (let seed = 1; seed <= 30; seed++) for (const id of X.rollShop(8, mkRng(seed), 5, undefined, locked)) assert.ok(!locked.has(id), `locked boss ${id} in shop`);
     assert.ok(Array.from({ length: 60 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5)).flat().some(id => locked.has(id)), 'without exclude bosses do appear at level 8');
@@ -577,4 +578,38 @@ test('expedition stage 19 (main-game links): boss units stay out of the shop unt
     // 전투 승리 경로에서도 불린다.
     s.expeditionStats.unitWins = { seaGuard: 9 }; const sgMonster = D.unitById('seaGuard').monster; s.book[sgMonster] = 0; delete s.expeditionCodexLinked.seaGuard;
     r.round = 2; r.board = [{ unit: 'seaGuard', star: 3, row: 'front' }, { unit: 'zakum', star: 3, row: 'front' }]; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now + 2, mkRng(6)); assert.ok(r.last.won); assert.equal(s.expeditionStats.unitWins.seaGuard, 10); assert.equal(s.book[sgMonster], 50);
+});
+
+test('expedition stage 20 (quarterly sets): quarter key and active/next set by date, set pools swap units, shop/wave/synergy use the run set, set-only augments and items stay in their set, set mastery resets per set and pays pearls + title at 20, data integrity for set units', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition'), Enc = await L.load('data/encounters'), W = await L.load('data/world'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    const t = (iso) => Date.parse(iso);
+    assert.equal(D.quarterKey(t('2026-10-20T03:00:00Z')), '2026-Q4'); assert.equal(D.quarterKey(t('2026-12-31T15:30:00Z')), '2027-Q1', 'KST: Dec 31 15:30 UTC is Jan 1 00:30'); assert.equal(D.quarterKey(t('2027-04-01T00:00:00Z')), '2027-Q2');
+    assert.equal(D.activeSet(t('2026-10-20T03:00:00Z')).id, 'genesis'); assert.equal(D.activeSet(t('2027-01-05T00:00:00Z')).id, 'deepTide'); assert.equal(D.activeSet(t('2020-01-01T00:00:00Z')).id, 'genesis', 'before the first set: first set'); assert.equal(D.nextSet(t('2026-10-20T03:00:00Z')).id, 'deepTide'); assert.equal(D.nextSet(t('2027-06-01T00:00:00Z')), undefined);
+    // 풀: 기본 30 − 6 + 6 = 30, 쉬는 유닛은 빠지고 세트 유닛이 들어온다. unitById는 전체를 본다.
+    const base = D.setUnits('genesis'), tide = D.setUnits('deepTide');
+    assert.equal(base.length, 30); assert.equal(tide.length, 30); assert.ok(!tide.some(u => u.id === 'curseEye')); assert.ok(tide.some(u => u.id === 'papulatus')); assert.ok(D.unitById('kingSlime')); assert.ok(!base.some(u => u.id === 'kingSlime'));
+    for (const u of D.EXTRA_UNITS) { assert.ok(Enc.enemySkillById(u.skill), `${u.id} skill`); assert.ok(W.MONSTERS.some(m => m.id === u.monster), `${u.id} monster`); assert.ok(!D.UNITS.some(b => b.id === u.id || b.monster === u.monster), `${u.id} unique`); }
+    for (const o of Object.keys(D.ORIGIN_NAMES)) assert.ok(tide.filter(u => u.origin === o).length >= 4, `deepTide origin ${o} >= 4`);
+    for (const id of ['kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus']) assert.ok(D.SHARD_CORE_OF[id], `${id} maps to a core`);
+    // 상점 · 웨이브는 주어진 풀만 쓴다.
+    const unlockedAll = new Set();
+    for (let seed = 1; seed <= 25; seed++) { for (const id of X.rollShop(8, mkRng(seed), 5, undefined, unlockedAll, tide)) assert.ok(tide.some(u => u.id === id), `shop from pool: ${id}`); for (const p of X.rollWave(10, mkRng(seed), 1, tide)) assert.ok(tide.some(u => u.id === p.unit) || ['mushmom', 'zakum', 'blackMage'].includes(p.unit), `wave from pool: ${p.unit}`); }
+    assert.ok(Array.from({ length: 40 }, (_, k) => X.rollShop(8, mkRng(k + 1), 5, undefined, unlockedAll, tide)).flat().some(id => id === 'papulatus' || id === 'juniorBalrog' || id === 'kingSlime'), 'set units appear');
+    // 세트 전용 증강 · 아이템.
+    assert.equal(D.augmentById('tideSurge').set, 'deepTide'); assert.ok(!D.BOX_ITEMS('genesis').some(x => x.id === 'tidePearl')); assert.ok(D.BOX_ITEMS('deepTide').some(x => x.id === 'tidePearl'));
+    const r2 = { round: 5, board: [{ unit: 'pig', star: 1, row: 'front' }], augments: [], set: 'genesis', mastery: 1 }; for (let k = 1; k <= 30; k++) assert.ok(!A.rollAugments(r2, mkRng(k)).includes('tideSurge'), 'set-only augment never in genesis');
+    const r3 = { ...r2, set: 'deepTide' }; assert.ok(Array.from({ length: 40 }, (_, k) => A.rollAugments(r3, mkRng(k + 1))).flat().includes('tideSurge'), 'set-only augment appears in its set');
+    // 판은 시작 때 세트를 기억한다.
+    const now = t('2027-01-05T00:00:00Z'), s = newState(0); s.level = 100; s.pearls = 0;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; assert.equal(r.set, 'deepTide'); delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    for (let k = 0; k < 20; k++) { r.gold = 10; r.level = 8; act(s, { type: 'expeditionReroll' }, now, mkRng(k + 3)); assert.ok(r.shop.every(id => tide.some(u => u.id === id) && !D.lockedBossUnits(s.book).has(id))); }
+    // 세트 숙련: 경험치가 같이 오르고, 5 · 10 · 15 · 20에 세계석, 20이면 완성 기록 · 칭호. 세트가 다르면 처음부터.
+    A.addSetMasteryXp(s, 150, 'deepTide'); assert.equal(s.expeditionSetMastery.level, 2); assert.equal(s.expeditionSetMastery.set, 'deepTide');
+    A.addSetMasteryXp(s, 20000, 'deepTide'); assert.equal(s.expeditionSetMastery.level, 20); assert.deepEqual(s.expeditionSetMastery.claimed, [5, 10, 15, 20]); assert.equal(s.pearls, 110); assert.equal(s.expeditionSetDone.deepTide, 1);
+    A.addSetMasteryXp(s, 1000, 'deepTide'); assert.equal(s.pearls, 110, 'maxed: nothing more');
+    A.addSetMasteryXp(s, 200, 'genesis'); assert.equal(s.expeditionSetMastery.set, 'genesis'); assert.equal(s.expeditionSetMastery.level, 2, 'new set starts over');
+    assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expSet:deepTide').progress(s) === 1); assert.ok(TT.TITLES.find(x => x.id === 'expSet:deepTide'));
+    // 판 종료 때 영구 숙련과 세트 숙련이 함께 오른다.
+    r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.wins = 3; act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1)); assert.equal(s.expeditionSetMastery.set, 'deepTide', 'run set wins over the stale genesis track'); assert.ok(s.expeditionMastery.total > 0);
 });
