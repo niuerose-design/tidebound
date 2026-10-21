@@ -46,7 +46,7 @@ const VoyageLog = lazyPanel(() => import('@/components/features/journal').then(m
 const Guild = lazyPanel(() => import('@/components/features/guild').then(m => m.GuildScreen));
 // v3.398 재설계 4단계: 환생 · 분신(새 토대).
 const SlotsPanel = lazyPanel(() => import('@/components/features/legacy').then(m => m.SlotsScreen));
-const Hacker = lazyPanel(() => import('./hacker-panel').then(m => m.Hacker));
+const Hacker = lazyPanel(() => import('@/components/features/hacker').then(m => m.HackerScreen));
 // v3.400 재설계 4단계: 도움말(새 토대).
 const Guide = lazyPanel(() => import('@/components/features/help').then(m => m.HelpScreen));
 // v3.399 재설계 4단계: 통계 · 전투 기록 · 업데이트 내역(새 토대).
@@ -72,7 +72,7 @@ const Cosmetics = lazyPanel(() => import('@/components/features/character').then
 // v3.382 재설계 4단계 두 번째 화면: 도감(새 토대). 옛 collection-panel 은 다음 버전에 삭제.
 const Collection = lazyPanel(() => import('@/components/features/codex/codex-screen').then(m => m.CodexScreen));
 const Stats = lazyPanel(() => import('@/components/features/records').then(m => m.StatsScreen));
-const Crew = lazyPanel(() => import('./crew-panel').then(m => m.Crew));
+const Crew = lazyPanel(() => import('@/components/features/hacker').then(m => m.CrewScreen));
 const BattleRecordsPanel = lazyPanel(() => import('@/components/features/records').then(m => m.RecordsScreen));
 // v3.381 재설계 4단계 첫 화면: 설정(토큰 · shadcn · 게임 범용 조각으로 새로 만든 화면).
 const SettingsScreen = lazyPanel(() => import('@/components/features/settings/settings-screen').then(m => m.SettingsScreen));
