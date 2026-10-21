@@ -15,6 +15,7 @@ import { enemyStep } from '@/game/srpg/engine/ai';
 import { saveSession, loadPrefs, savePrefs, tileSizes, type Session, type Prefs } from './storage';
 import { ConfirmButton } from '@/components/game/confirm-button';
 import { MapCanvas, type MapCanvasHandle, type MapAnim } from './map-canvas';
+import { makeGeometry } from './geometry';
 import { StatGrid, UnitHeader, ItemList } from './unit-sheet';
 import { DialogueBox } from './dialogue';
 type Ui =
@@ -43,19 +44,22 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
     const [acting, setActing] = useState<string | null>(null);
     const [showLog, setShowLog] = useState(false);
     const [ended, setEnded] = useState<Battle | null>(null);
-    const [prefs, setPrefs] = useState<Prefs>(() => typeof window === 'undefined' ? { tile: 44, speed: 'normal', showGrid: true } : loadPrefs());
+    const [prefs, setPrefs] = useState<Prefs>(() => typeof window === 'undefined' ? { tile: 44, speed: 'normal', showGrid: true, view: 'iso' } : loadPrefs());
     const [sizes] = useState<number[]>(() => tileSizes());
+    const [focusCell, setFocusCell] = useState<Pos | null>(null);
+    const geo = useMemo(() => makeGeometry(prefs.view, prefs.tile, ch.map.width, ch.map.height), [prefs.view, prefs.tile, ch.map.width, ch.map.height]);
     const [hoverPath, setHoverPath] = useState<Pos[] | null>(null);
     const [reducedMotion] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
     const canvas = useRef<MapCanvasHandle>(null), scrollBox = useRef<HTMLDivElement>(null);
     /** 연출은 순서대로 이어 붙입니다(이동 → 전투 → 다음 적). 상태는 즉시 바뀌고 그림만 뒤따릅니다. */
     const animQueue = useRef<Promise<void>>(Promise.resolve());
     const cancelled = useRef(false);
-    // StrictMode(개발)는 효과를 두 번 실행하므로 마운트 때 다시 false로 둡니다.
-    useEffect(() => { cancelled.current = false; return () => { cancelled.current = true; }; }, []);
+    // StrictMode(개발)는 효과를 두 번 실행하므로 마운트 때 다시 false로 둡니다. 처음에는 주인공이 보이게 맵을 맞춥니다.
+    useEffect(() => { cancelled.current = false; const lord = B.lordOf(session.battle); const el = scrollBox.current; if (lord && el) { const c = geo.center(lord.x, lord.y); el.scrollTo({ left: Math.max(0, c.cx - el.clientWidth / 2), top: Math.max(0, c.cy - el.clientHeight / 2) }); } return () => { cancelled.current = true; }; // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const queueAnim = useCallback((anims: MapAnim[]) => { animQueue.current = animQueue.current.then(() => canvas.current?.play(anims)).catch(() => undefined); return animQueue.current; }, []);
     /** 적 턴 카메라: 움직이는 유닛이 보이게 맵 스크롤을 따라갑니다. */
-    const follow = useCallback((x: number, y: number) => { const el = scrollBox.current; if (!el) return; const t = prefs.tile; const left = x * t + t / 2 - el.clientWidth / 2, top = y * t + t / 2 - el.clientHeight / 2; el.scrollTo({ left: Math.max(0, left), top: Math.max(0, top), behavior: reducedMotion ? 'auto' : 'smooth' }); }, [prefs.tile, reducedMotion]);
+    const follow = useCallback((x: number, y: number) => { const el = scrollBox.current; if (!el) return; const c = geo.center(x, y); el.scrollTo({ left: Math.max(0, c.cx - el.clientWidth / 2), top: Math.max(0, c.cy - el.clientHeight / 2), behavior: reducedMotion ? 'auto' : 'smooth' }); }, [geo, reducedMotion]);
     const persist = useCallback((b: Battle, snaps: Battle[]) => saveSession({ chapterId: ch.id, battle: b, snapshots: snaps, deployed: session.deployed }), [ch.id, session.deployed]);
     /** 엔진 결과 반영: 대사 · 배너 · 저장 · 종료 판정. */
     const commit = useCallback((next: Battle, snaps?: Battle[]) => {
@@ -207,15 +211,16 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
     const enemiesLeft = battle.units.filter(u => u.side === 'enemy' && u.hp > 0).length;
     const remainingActors = B.remainingActors(battle);
     const tile = prefs.tile;
-    const w = ch.map.width, h = ch.map.height;
+    const w = ch.map.width;
     const turnsLeft = B.isTurnLimited(ch) ? Math.max(0, ch.objective.turns! - battle.turn + 1) : null;
     useEffect(() => { if (!banner) return; const t = setTimeout(() => setBanner(null), 1400); return () => clearTimeout(t); }, [banner]);
     useEffect(() => { if (!notice) return; const t = setTimeout(() => setNotice(null), 2600); return () => clearTimeout(t); }, [notice]);
     /** 마우스가 지나는 칸까지의 이동 경로(이동 선택 중, 갈 수 있는 칸만). */
     const onMapHover = (e: React.MouseEvent<HTMLDivElement>) => {
         if (ui.kind !== 'selected') { if (hoverPath) setHoverPath(null); return; }
-        const rect = e.currentTarget.getBoundingClientRect(); const x = Math.floor((e.clientX - rect.left) / tile), y = Math.floor((e.clientY - rect.top) / tile);
-        const u = unit(ui.uid); const k = key(x, y);
+        const rect = e.currentTarget.getBoundingClientRect(); const cell = geo.unproject(e.clientX - rect.left, e.clientY - rect.top);
+        if (!cell) { if (hoverPath) setHoverPath(null); return; }
+        const [x, y] = cell; const u = unit(ui.uid); const k = key(x, y);
         if (!ui.stoppable.has(k) || (x === u.x && y === u.y)) { if (hoverPath) setHoverPath(null); return; }
         const last = hoverPath?.[hoverPath.length - 1];
         if (last && last[0] === x && last[1] === y) return;
@@ -252,15 +257,16 @@ export function BattleScreen({ session, onEnd, onAbandon }: { session: Session; 
                 <button type="button" className={`${ui.kind === 'idle' || ui.kind === 'enemy' ? 'primary' : 'secondary'} small`} disabled={ui.kind === 'enemy' || !!dialogue || !!ended} onClick={runEnemyPhase}>턴 종료{remainingActors ? ` (${remainingActors}명 남음)` : ''}</button>
                 <button type="button" className="text-button" aria-pressed={showLog} onClick={() => setShowLog(v => !v)}>{showLog ? '기록 닫기' : '기록 보기'}</button>
                 <button type="button" className="text-button" onClick={() => changePrefs({ tile: sizes[(sizes.indexOf(tile) + 1) % sizes.length] ?? sizes[0] })}>칸 크기 {tile}px</button>
+                <button type="button" className="text-button" aria-pressed={prefs.view === 'iso'} onClick={() => changePrefs({ view: prefs.view === 'iso' ? 'flat' : 'iso' })}>{prefs.view === 'iso' ? '평면 보기' : '입체 보기'}</button>
                 <button type="button" className="text-button" onClick={() => changePrefs({ speed: prefs.speed === 'normal' ? 'fast' : 'normal' })}>적 턴 {prefs.speed === 'normal' ? '보통' : '빠름'}</button>
                 <ConfirmButton className="text-button" label="포기하기" title="이 전투를 포기할까요?" description="전투 진행은 사라지고 베이스로 돌아갑니다. 부대는 출격 전 상태 그대로입니다." confirmLabel="포기하기" disabled={ui.kind === 'enemy'} onConfirm={onAbandon}/>
             </div>
         </header>
         <div className="tx-battle-body">
             <div className="tx-map-scroll" ref={scrollBox}>
-                <div className="tx-map" style={{ width: w * tile, height: h * tile, ['--tile' as string]: `${tile}px`, gridTemplateColumns: `repeat(${w}, ${tile}px)` }} onMouseMove={onMapHover} onMouseLeave={() => { if (hoverPath) setHoverPath(null); }}>
-                    <MapCanvas ref={canvas} tiles={battle.tiles} units={battle.units} tile={tile} goal={ch.objective.target_pos} used={usedSet} path={hoverPath} selectedUid={sel?.uid ?? null} inspectedUid={inspected?.uid ?? null} actingUid={acting} showGrid={prefs.showGrid} speed={prefs.speed} reducedMotion={reducedMotion}/>
-                    {battle.tiles.map((row, y) => [...row].map((_, x) => { const focusable = cellFocusable(x, y); return <div key={`${x},${y}`} className={cellClass(x, y)} onClick={() => onCell(x, y)} role="button" tabIndex={focusable ? 0 : -1} aria-label={cellLabel(x, y)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCell(x, y); } }}/>; }))}
+                <div className={`tx-map ${geo.view}`} style={{ width: geo.width, height: geo.height, ['--tile' as string]: `${tile}px`, gridTemplateColumns: geo.view === 'flat' ? `repeat(${w}, ${tile}px)` : undefined }} onMouseMove={onMapHover} onMouseLeave={() => { if (hoverPath) setHoverPath(null); }}>
+                    <MapCanvas ref={canvas} tiles={battle.tiles} units={battle.units} geo={geo} goal={ch.objective.target_pos} used={usedSet} path={hoverPath} focusCell={focusCell} selectedUid={sel?.uid ?? null} inspectedUid={inspected?.uid ?? null} actingUid={acting} showGrid={prefs.showGrid} speed={prefs.speed} reducedMotion={reducedMotion}/>
+                    {battle.tiles.map((row, y) => [...row].map((_, x) => { const focusable = cellFocusable(x, y); const rc = geo.view === 'iso' ? geo.cellRect(x, y) : null; return <div key={`${x},${y}`} className={cellClass(x, y)} style={rc ? { left: rc.left, top: rc.top, width: rc.width, height: rc.height } : undefined} onClick={() => onCell(x, y)} role="button" tabIndex={focusable ? 0 : -1} aria-label={cellLabel(x, y)} onFocus={() => setFocusCell([x, y])} onBlur={() => setFocusCell(f => f && f[0] === x && f[1] === y ? null : f)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onCell(x, y); } }}/>; }))}
                 </div>
             </div>
             <aside className="tx-side">

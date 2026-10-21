@@ -4,7 +4,7 @@ import { Switch as SwitchPrimitive } from 'radix-ui';
 import { cn } from '@/lib/utils';
 
 /**
- * v3.380 스위치(shadcn 기본 + 토큰). 켜짐은 accent, 꺼짐은 surface-3.
+ * v3.381 스위치(shadcn 기본 + 토큰). 켜짐은 accent, 꺼짐은 surface-3.
  * 터치 기기의 공통 규칙(responsive.css: button min-height 44px)은 모양을 망가뜨리므로 높이를 고정하고, 닿는 영역은 ::after 로 44pt 를 채웁니다(docs/ui-hig.md).
  */
 function Switch({ className, ...props }: React.ComponentProps<typeof SwitchPrimitive.Root>) {

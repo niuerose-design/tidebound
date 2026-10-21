@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { viewFromHash, hashForView, DEFAULT_VIEW } from '@/components/game/view-route';
 
 const valid = new Set(['battle', 'settings', 'book', 'updates']);
-describe('view route hash (v3.380)', () => {
+describe('view route hash (v3.381)', () => {
     it('reads a known view from the hash, with or without a slash', () => {
         expect(viewFromHash('#settings', valid)).toBe('settings');
         expect(viewFromHash('#/book', valid)).toBe('book');
