@@ -51,6 +51,7 @@ pnpm dev               # http://localhost:5173
 | `game/srpg/data/` | 클래스 · 아이템 · 유닛 · 장(맵 · 대사 · 이벤트 · 증원)과 적 배치(`chapters/ch01~ch10.ts`) |
 | `game/srpg/state/campaign.ts` | 세이브(로스터 · 창고 · 골드 · 클리어 기록)와 베이스 행동(상점 · 장비 · 승급) |
 | `components/tactics/` | 제목 · 베이스 · 출격 준비 · 전투 · 결과 화면. 스타일은 `app/styles/tactics.css` |
+| `tools/tactics-art/`, `public/art/tactics/` | 블렌더(bpy)로 렌더한 입체 보기 스프라이트(지형 14종 · 클래스 28종 × 편)와 생성 스크립트. 그림이 없으면 캔버스가 절차적으로 그립니다 |
 | `tests/tactics.test.mjs` | 엔진 공식 · AI 태세 · 승패 · 캠페인 · 10개 장 자동 플레이(결정론) 테스트 |
 
 화면은 `docs/ui-hig.md`(애플 HIG 기준: 손가락 기기 44pt 터치, 글자 11px 이상, 대비 4.5:1, 키보드 초점, 안전 영역, 화면마다 으뜸 버튼 하나, 되돌릴 수 없는 동작은 확인 창)를 따릅니다.
