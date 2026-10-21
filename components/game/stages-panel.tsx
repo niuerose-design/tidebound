@@ -11,6 +11,7 @@ import { mimicStageMultiplier } from '@/game/data/mimic';
 import { Heading } from './shared';
 import type { PanelProps } from './panel-props';
 import { TideSelector } from './tide-selector';
+import { WorldMap } from './world-map';
 export function Stages({ s, send, busy }: PanelProps) {
     // 사냥터와 던전은 동시에 돌지 않습니다. 던전 탐험 중에는 현재 사냥터 표시를 지우고 이동을 막습니다(전투 레일과 같은 규칙).
     // v3.49 정보 비공개가 켜져 있으면 무리 규모 비율·까미 출현 배율을 숨깁니다.
@@ -20,6 +21,8 @@ export function Stages({ s, send, busy }: PanelProps) {
     const toggle = (region: string, open: boolean) => setOpenRegions(prev => { const next = { ...prev, [region]: open }; try { localStorage.setItem('tidebound:stage-regions', JSON.stringify(next)); } catch { /* 저장소를 못 쓰면 이번 화면에서만 기억 */ } return next; });
     return <>
     <Heading eyebrow="WORLD MAP" title="사냥터" description="더 먼 곳, 더 강한 몬스터. 오늘의 사냥터를 선택하세요."/>
+    {/* v3.368 월드맵: 메이플 월드 · 코프룰루 구역을 나눠 그린 지도에서 바로 입장합니다. 아래 지역 목록은 그대로입니다. */}
+    <WorldMap s={s} send={send} busy={busy}/>
     <TideSelector s={s} send={send} busy={busy}/>
     {inDungeon && <p className="footnote">던전 탐험 중에는 사냥이 멈춰 있고 사냥터를 바꿀 수 없습니다. 던전에서 귀환하거나 반복이 끝나면 사냥터로 돌아옵니다.</p>}
     {/* v27.34 지역(헤네시스 등)별로 묶어 보여 줍니다. 번호는 전체 순서 그대로입니다. */}
