@@ -65,3 +65,11 @@ const ids = POOL.map(u => u.id), win = new Map(ids.map(id => [id, 0]));
 for (let i = 0; i < ids.length; i++) for (let j = 0; j < ids.length; j++) { if (i === j) continue; let w = 0; for (let k = 0; k < 20; k++) { const r = X.battle([{ unit: ids[i], star: 1, row: 'front' }], [{ unit: ids[j], star: 1, row: 'front' }], mkRng(i * 1000 + j * 31 + k)); if (r.winner === 'a') w++; } win.set(ids[i], win.get(ids[i]) + w / 20); }
 console.log('\n1대1 승률(★1, 29상대 평균) — 비용순');
 for (const u of [...POOL].sort((a, b) => a.cost - b.cost || win.get(b.id) - win.get(a.id))) console.log(`비용 ${u.cost}`, u.name.padEnd(8), String(Math.round(100 * win.get(u.id) / (ids.length - 1))).padStart(3) + '%');
+// v3.416 난이도 사다리: 의도한 조합(비용 1~2 ★3 · 그 위 ★2, 상위 아이템)으로 난이도별 8 · 11 · 12라운드 웨이브 승률. 증강 없이 잰 값. 목표: 전설(5) 100% · 초월(6) 대부분 · 천벌(7)부터 조합 · ★3 · 증강 완성도가 갈라 놓고, 무한(10)은 증강까지 갖춘 ★3 완성 보드만.
+const LADDER_ITEMS = ['greatBlade', 'archStaff', 'towerShield', 'citadel', 'doomSpear', 'bloodOrb', 'archStaff', 'galeHorn'];
+console.log('\n난이도별 완성 편성 승률(8/11/12라운드)');
+for (const comp of D.INTENDED_COMPS.filter(c => c.units.every(id => POOL.some(u => u.id === id)))) {
+    const board = comp.units.map((id, i) => { const def = D.unitById(id); return { unit: id, star: def.cost <= 2 ? 3 : 2, row: X.frontRole(def) ? 'front' : 'back', item: LADDER_ITEMS[i % LADDER_ITEMS.length] }; });
+    const rate = (round, diff) => { let w = 0; const n = Math.max(40, Math.round(trials / 3)); for (let k = 0; k < n; k++) { const rng = mkRng(777 + k * 31 + round); if (X.battle(board, X.rollWave(round, rng, diff, POOL), rng, D.EXPEDITION.maxTurns, undefined, D.isBossRound(round), D.waveMods(round, diff)).winner === 'a') w++; } return Math.round(100 * w / n); };
+    console.log(comp.name.padEnd(28), D.DIFFICULTIES.filter(d => d.level >= 5).map(d => `${d.icon}${[8, 11, 12].map(r => rate(r, d.level)).join('/')}`).join(' '));
+}

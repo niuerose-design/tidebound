@@ -184,9 +184,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     // 20단계: 세트 숙련 20(세트 완성) 명예 업적.
     ...SETS.map(set => ({ id: `expSet:${set.id}`, honor: true, group: '모험' as const, title: `${set.name} 세트 완성`, desc: `원정대 ${set.icon} ${set.name} 세트 숙련 20을 찍습니다.`, reward: {}, progress: (s: State) => s.expeditionSetDone?.[set.id] || 0, target: 1 })),
     // 16단계: 난이도 완주 명예 업적.
-    ...[3, 4, 5].map(d => ({ id: `expDiff:${d}`, honor: true, group: '모험' as const, title: `난이도 ${DIFFICULTIES[d - 1].name} 완주`, desc: `원정대 난이도 ${DIFFICULTIES[d - 1].icon} ${DIFFICULTIES[d - 1].name}을(를) 완주합니다.`, reward: {}, progress: (s: State) => s.expeditionDiffClears?.[d] || 0, target: 1 })),
+    ...[3, 4, 5, 6, 7, 8, 9, 10].map(d => ({ id: `expDiff:${d}`, honor: true, group: '모험' as const, title: `난이도 ${DIFFICULTIES[d - 1].name} 완주`, desc: `원정대 난이도 ${DIFFICULTIES[d - 1].icon} ${DIFFICULTIES[d - 1].name}을(를) 완주합니다.`, reward: {}, progress: (s: State) => s.expeditionDiffClears?.[d] || 0, target: 1 })),
     // 15단계: 도전 기록(완주 조건) 명예 업적.
-    ...['flawless', 'noItem', 'oneOrigin', 'cheap', 'abyss10', 'abyss20'].map(id => { const f = FEATS.find(x => x.id === id)!; return { id: `expFeat:${id}`, honor: true, group: '모험' as const, title: `원정 · ${f.name}`, desc: `${f.desc}.`, reward: {}, progress: (s: State) => s.expeditionFeats?.[id] || 0, target: 1 }; }),
+    ...['flawless', 'noItem', 'oneOrigin', 'cheap', 'abyss10', 'abyss20', /* v3.416 */ 'abyss30', 'abyss40', 'hardFlawless', 'apexClear'].map(id => { const f = FEATS.find(x => x.id === id)!; return { id: `expFeat:${id}`, honor: true, group: '모험' as const, title: `원정 · ${f.name}`, desc: `${f.desc}.`, reward: {}, progress: (s: State) => s.expeditionFeats?.[id] || 0, target: 1 }; }),
     ...[2, 20, 40, 50].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).

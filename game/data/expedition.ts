@@ -47,8 +47,9 @@ export const EXPEDITION = {
 /** 10단계: 라운드의 막(1~3)과 막 보스 라운드 여부. */
 export const actOf = (round: number) => Math.min(3, Math.ceil(round / EXPEDITION.actLength));
 export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0;
-/** 15단계 심연: 12라운드를 완주한 뒤 ‘계속 가기’를 고르면 13라운드부터. 라운드마다 웨이브 예산 ×1.1, 4라운드마다 보스(★2, 24라운드부터 ★3), 고스트 없음, 최대 abyssMax라운드. 심연 5라운드마다 세계석 +abyssBonus. */
-export const ABYSS = { max: 20, budgetGrowth: 1.1, bonusEvery: 5, bonus: 5, scorePerRound: 20 };
+/** 15단계 심연: 12라운드를 완주한 뒤 ‘계속 가기’를 고르면 13라운드부터. 라운드마다 웨이브 예산 ×1.1, 4라운드마다 보스(★2, 24라운드부터 ★3), 고스트 없음, 최대 abyssMax라운드. 심연 5라운드마다 세계석 +abyssBonus.
+ * v3.416 심연 확장: 끝을 20 → 40라운드로. 웨이브 예산은 20라운드 즈음 8칸 ★3에 닿아 더 오르지 않으므로, 심연 deepFrom라운드를 넘긴 뒤로는 적 체력 · 공격력이 라운드마다 deepHp · deepPower씩 붙습니다(복리 아님). */
+export const ABYSS = { max: 40, budgetGrowth: 1.1, bonusEvery: 5, bonus: 5, scorePerRound: 20, deepFrom: 20, deepHp: .05, deepPower: .03 };
 export const isAbyssRound = (round: number) => round > EXPEDITION.rounds;
 /** 15단계 도전 기록(완주 조건 칭호): 판이 끝날 때 판정해 expeditionFeats에 횟수를 쌓습니다. */
 export const FEATS: { id: string; name: string; desc: string; title: string }[] = [
@@ -57,7 +58,12 @@ export const FEATS: { id: string; name: string; desc: string; title: string }[] 
     { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드를 이길 때 보드 유닛이 모두 같은 지역(문장은 안 쳐줌)', title: '🏳 한 깃발의 원정대' },
     { id: 'cheap', name: '서민 완주', desc: '12라운드 보드가 모두 비용 1~2 유닛', title: '🪙 동전의 원정대' },
     { id: 'abyss10', name: '심연 10', desc: '심연 10라운드 이상 생존', title: '🌑 심연을 걷는 자' },
-    { id: 'abyss20', name: '심연 끝', desc: '심연 20라운드(끝)까지 생존', title: '🕳 심연의 주인' },
+    { id: 'abyss20', name: '심연 20', desc: '심연 20라운드 이상 생존', title: '🕳 심연의 주인' },
+    // v3.416 확장 도전.
+    { id: 'abyss30', name: '심연 30', desc: '심연 30라운드 이상 생존', title: '🌘 심연의 군주' },
+    { id: 'abyss40', name: '심연 끝', desc: '심연 40라운드(끝)까지 생존', title: '🕳 바닥을 본 자' },
+    { id: 'hardFlawless', name: '초월 무패', desc: '🌀 초월(6단계) 이상 난이도에서 한 번도 지지 않고 12라운드 완주', title: '💠 흠 없는 초월자' },
+    { id: 'apexClear', name: '무한 완주', desc: '♾ 무한(10단계) 난이도 완주', title: '♾ 무한의 원정대장' },
 ];
 export const featById = (id: string) => FEATS.find(f => f.id === id);
 /** 유닛 판매가: ★1 비용, ★2 비용 × 3, ★3 비용 × 9(산 값 그대로 돌려줌). */
@@ -214,6 +220,8 @@ export type RunMods = {
     traitPlus?: Record<string, number>;
     /** 앞줄 체력 배율 · 뒷줄 공격/마법 배율 · 전체 속도 가산 · 마나 획득 배율 · 전체 반격 · 보스 라운드 받는 피해 감소 · ★2+ 능력치 배율. */
     frontHp?: number; backPower?: number; speed?: number; manaGain?: number; reflect?: number; bossGuard?: number; starPower?: number;
+    /** v3.416 적 웨이브 전용(난이도 6~ · 깊은 심연): 전체 체력 배율 · 전체 물리/마법 공격력 배율. 고스트 보정(combatMods)에는 실리지 않습니다. */
+    hpMult?: number; powerMult?: number;
     /** 경제: 라운드 골드 가산 · 이자 상한 가산 · 경험치 구매 가산 · 새로 고침 비용 · 벤치 가산 · 상자 선택지 가산 · 문장 매 라운드 · 증강 선택지 가산 · 막 보상 배율 · 고스트 확률 · 최대 턴. */
     goldPlus?: number; interestPlus?: number; xpPlus?: number; rerollCost?: number; benchPlus?: number; boxPlus?: number; emblemEvery?: boolean; augmentPlus?: number; actMult?: number; ghostChance?: number; maxTurns?: number;
 };
@@ -320,7 +328,7 @@ export function mergeMods(list: (RunMods | undefined)[]): RunMods {
     for (const m of list) {
         if (!m) continue;
         for (const [k, v] of Object.entries(m.traitPlus || {})) (out.traitPlus ??= {})[k] = (out.traitPlus[k] || 0) + v;
-        for (const k of ['frontHp', 'backPower', 'manaGain', 'starPower', 'actMult'] as const) if (m[k]) out[k] = (out[k] || 1) * m[k]!;
+        for (const k of ['frontHp', 'backPower', 'manaGain', 'starPower', 'actMult', 'hpMult', 'powerMult'] as const) if (m[k]) out[k] = (out[k] || 1) * m[k]!;
         for (const k of ['speed', 'reflect', 'bossGuard', 'goldPlus', 'interestPlus', 'xpPlus', 'benchPlus', 'boxPlus', 'augmentPlus'] as const) if (m[k]) out[k] = (out[k] || 0) + m[k]!;
         if (m.rerollCost !== undefined) out.rerollCost = Math.min(out.rerollCost ?? Infinity, m.rerollCost);
         if (m.emblemEvery) out.emblemEvery = true;
@@ -376,18 +384,33 @@ export const compKey = (active: { trait: { id: string; tiers: { count: number }[
 export const COMP_KEYS_MAX = 40;
 
 // ───────────── 16단계: 난이도 단계 ─────────────
-/** 난이도 1~5. 출발 때 고르며, 바로 위 단계는 아래 단계를 한 번 완주해야 열립니다(expeditionDiffClears). */
-export type DifficultyDef = { level: number; name: string; icon: string; /** 웨이브 예산 배율 · 적 ★ 확률 가산 · 막 보스 ★ · 보상(세계석 · 숙련) 배율 · 시즌 점수 가산 · 설명. */ budget: number; starPlus: number; bossStar: 1 | 2; reward: number; score: number; desc: string };
+/** 난이도 1~10. 출발 때 고르며, 바로 위 단계는 아래 단계를 한 번 완주해야 열립니다(expeditionDiffClears). */
+export type DifficultyDef = { level: number; name: string; icon: string; /** 웨이브 예산 배율 · 적 ★ 확률 가산 · 막 보스 ★ · 보상(세계석 · 숙련) 배율 · 시즌 점수 가산 · 설명. */ budget: number; starPlus: number; bossStar: 1 | 2 | 3; reward: number; score: number; desc: string;
+    /** v3.416 초월 단계(6~10): 웨이브(고스트 제외)에 붙는 적 보정 · 패배 때 판 체력 손실 배율. 예산만으로는 8칸 ★3에서 더 세지지 않아 적 능력치를 직접 올립니다. */
+    foe?: RunMods; loss?: number };
 export const DIFFICULTIES: DifficultyDef[] = [
     { level: 1, name: '일반', icon: '🌱', budget: 1, starPlus: 0, bossStar: 1, reward: 1, score: 0, desc: '기본 난이도' },
     { level: 2, name: '숙련', icon: '🌿', budget: 1.12, starPlus: .05, bossStar: 1, reward: 1.25, score: 60, desc: '적이 12% 더 강하고 ★ 유닛이 5% 더 자주 나옴' },
     { level: 3, name: '정예', icon: '⚔', budget: 1.25, starPlus: .1, bossStar: 1, reward: 1.5, score: 120, desc: '적이 25% 더 강하고 ★ 유닛이 10% 더 자주 나옴' },
     { level: 4, name: '악몽', icon: '🔥', budget: 1.4, starPlus: .15, bossStar: 2, reward: 1.8, score: 180, desc: '적이 40% 더 강하고 ★ 유닛이 15% 더 자주 나옴 · 막 보스 ★2' },
     { level: 5, name: '전설', icon: '⚡', budget: 1.6, starPlus: .2, bossStar: 2, reward: 2.2, score: 240, desc: '적이 60% 더 강하고 ★ 유닛이 20% 더 자주 나옴 · 막 보스 ★2' },
+    // v3.416 초월 단계: 전설을 완주한 모험가를 위한 5단계. 적 능력치 · 속도 · 마나가 직접 오르고, 패배 때 판 체력을 더 잃습니다.
+    { level: 6, name: '초월', icon: '🌀', budget: 1.75, starPlus: .25, bossStar: 2, reward: 2.5, score: 320, desc: '적이 75% 더 강하고 ★ 유닛이 25% 더 자주 나옴 · 적 체력 · 공격력 15% 증가 · 막 보스 ★2', foe: { hpMult: 1.15, powerMult: 1.15 } },
+    { level: 7, name: '천벌', icon: '☄', budget: 1.9, starPlus: .3, bossStar: 3, reward: 2.8, score: 400, desc: '적이 90% 더 강하고 ★ 유닛이 30% 더 자주 나옴 · 적 체력 · 공격력 30% 증가 · 적 속도 +1 · 막 보스 ★3', foe: { hpMult: 1.3, powerMult: 1.3, speed: 1 } },
+    { level: 8, name: '종말', icon: '💀', budget: 2.05, starPlus: .35, bossStar: 3, reward: 3.1, score: 480, desc: '적이 2배 이상 강하고 ★ 유닛이 35% 더 자주 나옴 · 적 체력 · 공격력 45% 증가 · 적 속도 +2 · 적 마나 20% 빨리 참 · 막 보스 ★3 · 패배 피해 25% 증가', foe: { hpMult: 1.45, powerMult: 1.45, speed: 2, manaGain: 1.2 }, loss: 1.25 },
+    { level: 9, name: '혼돈', icon: '🌋', budget: 2.2, starPlus: .4, bossStar: 3, reward: 3.4, score: 560, desc: '적이 2배 이상 강하고 ★ 유닛이 40% 더 자주 나옴 · 적 체력 · 공격력 60% 증가 · 적 속도 +2 · 적 마나 30% 빨리 참 · 적이 받은 피해 10% 반격 · 막 보스 ★3 · 패배 피해 40% 증가', foe: { hpMult: 1.6, powerMult: 1.6, speed: 2, manaGain: 1.3, reflect: .1 }, loss: 1.4 },
+    { level: 10, name: '무한', icon: '♾', budget: 2.4, starPlus: .45, bossStar: 3, reward: 3.8, score: 650, desc: '적이 2.4배 강하고 ★ 유닛이 45% 더 자주 나옴 · 적 체력 · 공격력 80% 증가 · 적 속도 +3 · 적 마나 40% 빨리 참 · 적이 받은 피해 15% 반격 · 막 보스 ★3 · 패배 피해 50% 증가', foe: { hpMult: 1.8, powerMult: 1.8, speed: 3, manaGain: 1.4, reflect: .15 }, loss: 1.5 },
 ];
 export const difficultyOf = (level?: number) => DIFFICULTIES.find(d => d.level === (level || 1)) || DIFFICULTIES[0];
-/** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 5). */
+/** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 DIFFICULTIES.length). */
 export const difficultyUnlocked = (clears?: Record<number, number>) => Math.min(DIFFICULTIES.length, 1 + Math.max(0, ...Object.entries(clears || {}).filter(([, n]) => n > 0).map(([d]) => Number(d))));
+/** v3.416: 그 라운드 PvE 웨이브(고스트 제외)에 붙는 적 보정 = 난이도 foe + 깊은 심연(deepFrom을 넘긴 라운드마다 체력 · 공격력 가산). 없으면 undefined. */
+export function waveMods(round: number, difficulty = 1): RunMods | undefined {
+    const deep = Math.max(0, round - EXPEDITION.rounds - ABYSS.deepFrom);
+    const abyss: RunMods | undefined = deep ? { hpMult: 1 + ABYSS.deepHp * deep, powerMult: 1 + ABYSS.deepPower * deep } : undefined;
+    const foe = difficultyOf(difficulty).foe;
+    return foe || abyss ? mergeMods([foe, abyss]) : undefined;
+}
 
 // ───────────── 19단계: 본편 연결(보스 유닛 해금 · 보스 코어 조각 · 도감 → 본편 도감) ─────────────
 /** 보스 유닛(special boss)은 본편에서 그 몬스터를 BOSS_UNLOCK_KILLS번 이상 처치해야 상점에 나옵니다(웨이브 · 고스트에는 그대로 나옴). */
@@ -395,9 +418,9 @@ export const BOSS_UNLOCK_KILLS = 1;
 export const bossUnits = (pool: UnitDef[] = UNITS) => pool.filter(u => u.special?.includes('boss'));
 export const lockedBossUnits = (book: Record<string, number> | undefined, pool: UnitDef[] = ALL_UNITS) => new Set(bossUnits(pool).filter(u => (book?.[u.monster] || 0) < BOSS_UNLOCK_KILLS).map(u => u.id));
 /** 보스 코어 조각: 막 보스 · 심연 보스를 이기면 확률로 그 보스의 코어 조각. 조각이 per개 모이면 본편 보스 코어(없으면 획득 · 있으면 각성). */
-/** 운영 결정(v3.356): 칠흑 · 본편 드롭 경제를 흔들지 않도록 1%에서 시작해 난이도마다 +0.5%p, 심연 +1%p(최대 4%). 운영 집계를 보고 조금씩 올립니다. */
-export const CORE_SHARD = { per: 10, base: .01, perDifficulty: .005, abyssBonus: .01 };
-export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.base + CORE_SHARD.perDifficulty * (Math.max(1, difficulty) - 1) + (abyss ? CORE_SHARD.abyssBonus : 0);
+/** 운영 결정(v3.356): 칠흑 · 본편 드롭 경제를 흔들지 않도록 1%에서 시작해 난이도마다 +0.5%p, 심연 +1%p(최대 4%). 운영 집계를 보고 조금씩 올립니다. v3.416: 초월 단계(6~)는 전설과 같은 확률(최대 4% 유지). */
+export const CORE_SHARD = { per: 10, base: .01, perDifficulty: .005, abyssBonus: .01, maxDifficulty: 5 };
+export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.base + CORE_SHARD.perDifficulty * (Math.min(CORE_SHARD.maxDifficulty, Math.max(1, difficulty)) - 1) + (abyss ? CORE_SHARD.abyssBonus : 0);
 /** 유닛 → 본편 던전 코어 id. 없는 보스(칠흑 보스)는 던전 코어 7종 중 무작위(‘고대의 조각’). */
 export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral', kingSlime: 'kelpCatacomb', zombieMushmom: 'cemetery', juniorBalrog: 'caldera', papulatus: 'starSanctum' };
 export const SHARD_CORE_POOL = ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum'];
@@ -482,8 +505,11 @@ export const EXP_THEMES: ThemeDef[] = [
     { id: 'aurora', name: '오로라', icon: '🌌', how: '원정 명성 10', unlocked: s => (s.expeditionRenown || 0) >= 10 },
     { id: 'coral', name: '산호초', icon: '🪸', how: '어느 세트든 세트 숙련 20', unlocked: s => Object.values(s.expeditionSetDone || {}).some(n => n > 0) },
     { id: 'crown', name: '왕관', icon: '👑', how: '주간 리그 💎 다이아 이상 도달', unlocked: s => (s.expeditionLeague?.best || 0) >= 4 },
-    { id: 'abyss', name: '심연', icon: '🕳️', how: `심연 ${ABYSS.max}라운드 도달`, unlocked: s => (s.expeditionAbyssBest || 0) >= ABYSS.max },
+    { id: 'abyss', name: '심연', icon: '🕳️', how: '심연 20라운드 도달', unlocked: s => (s.expeditionAbyssBest || 0) >= 20 },
     { id: 'legend', name: '전설', icon: '🏆', how: '🏆 전설 난이도 완주', unlocked: s => (s.expeditionDiffClears?.[5] || 0) >= 1 },
+    // v3.416 확장.
+    { id: 'void', name: '공허', icon: '🌘', how: `심연 ${ABYSS.max}라운드(끝) 도달`, unlocked: s => (s.expeditionAbyssBest || 0) >= ABYSS.max },
+    { id: 'infinity', name: '무한', icon: '♾', how: '♾ 무한 난이도 완주', unlocked: s => (s.expeditionDiffClears?.[10] || 0) >= 1 },
 ];
 export const themeById = (id?: string) => EXP_THEMES.find(t => t.id === id) || EXP_THEMES[0];
 /** 지금 골라 둔 테마가 잠겨 있으면(세이브를 옮겼거나 데이터가 바뀜) 기본으로. */
