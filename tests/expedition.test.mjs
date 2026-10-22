@@ -25,9 +25,9 @@ test('expedition traits: same unit counted once, tiers by count, boss/guard-only
     const built = X.buildSide(board, 'a');
     const pig = built.units[0], base = X.unitBaseStats(D.unitById('pig'), 1);
     assert.equal(pig.stats.attack, Math.round(base.attack * 1.45), 'charge 4: attack ×1.45');
-    // 수호 2: 수호만 받는 피해 −20%. 보스 2: 보스만 체력 +20%.
+    // 수호 2: 수호만 받는 피해 −25%(v3.421). 보스 2: 보스만 체력 +30%.
     const g = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front' }, { unit: 'stoneGolem', star: 1, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }], 'a');
-    assert.equal(g.units[0].damageTaken, .2); assert.equal(g.units[2].damageTaken, undefined, 'non-guard untouched');
+    assert.equal(g.units[0].damageTaken, .25); assert.equal(g.units[2].damageTaken, undefined, 'non-guard untouched');
     // 초원 2가 같이 켜지지 않도록 세 번째 유닛은 숲(이블아이).
     const b = X.buildSide([{ unit: 'mushmom', star: 1, row: 'front' }, { unit: 'zakum', star: 1, row: 'front' }, { unit: 'evilEye', star: 1, row: 'back' }], 'a');
     assert.equal(b.units[0].stats.hp, Math.round(X.unitBaseStats(D.unitById('mushmom'), 1).hp * 1.3)); assert.equal(b.units[2].stats.hp, X.unitBaseStats(D.unitById('evilEye'), 1).hp);
@@ -186,7 +186,7 @@ test('expedition items (stage 6): win drops a box item (hold cap), equip/unequip
     const base = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a').units[0], blade = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'blade' }], 'a').units[0];
     assert.equal(blade.stats.attack, Math.round(base.stats.attack * 1.35)); assert.ok(blade.name.includes('[맹공의 검]'));
     const shield = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front', item: 'shield' }, { unit: 'stoneGolem', star: 1, row: 'front' }], 'a').units[0];
-    assert.ok(Math.abs(shield.damageTaken - (1 - .8 * .75)) < 1e-9, 'guard 2 (20%) and shield (25%) multiply');
+    assert.ok(Math.abs(shield.damageTaken - (1 - .75 * .75)) < 1e-9, 'guard 2 (25%) and shield (25%) multiply');
     assert.equal(X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'manaStone' }], 'a').units[0].charge, 60);
     const mail = X.battle([{ unit: 'seaGuard', star: 3, row: 'front', item: 'thornMail' }], [{ unit: 'pig', star: 1, row: 'front' }], mkRng(4), 3); assert.ok(mail.log.some(l => l.includes('반격')), 'thorn mail reflects');
     // 판 흐름.
@@ -259,9 +259,9 @@ test('expedition stage 8: emblems add a trait key (counted once per unit), guard
     assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_forest' }, { unit: 'pig', star: 1, row: 'front' }]).forest, 1);
     assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_meadow' }]).meadow, 1, 'an emblem of a trait the unit already has adds nothing');
     assert.equal(tr([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_guard' }, { unit: 'kingClang', star: 1, row: 'front' }]).guard, 2);
-    // 수호 2 효과는 수호 문장을 낀 돼지에게도 적용(받는 피해 −20%).
+    // 수호 2 효과는 수호 문장을 낀 돼지에게도 적용(받는 피해 −25%).
     const g = X.buildSide([{ unit: 'pig', star: 1, row: 'front', item: 'emblem_guard' }, { unit: 'kingClang', star: 1, row: 'front' }], 'a').units;
-    assert.ok(Math.abs(g[0].damageTaken - .2) < 1e-9); assert.ok(Math.abs(g[1].damageTaken - .2) < 1e-9);
+    assert.ok(Math.abs(g[0].damageTaken - .25) < 1e-9); assert.ok(Math.abs(g[1].damageTaken - .25) < 1e-9);
     assert.equal(X.hasRole({ unit: 'pig', star: 1, row: 'front', item: 'emblem_wraith' }, D.unitById('pig'), 'wraith'), true);
     // 상자: 3라운드부터 셋째 칸이 문장이고, 다음 단계에 가장 가까운 시너지를 고른다(돌격 3/4 → 돌격의 문장).
     const s = newState(0); s.level = 100; const now = 1_800_000_000_000;
@@ -538,6 +538,14 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 10 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 5 }));
     assert.equal(D.shardChance(10, true), D.shardChance(5, true), 'core shard chance stays capped at the legend rate');
     // v3.417 성급 가치: ★3은 기본 능력치 ×4(웨이브 예산의 ★3 = 비용 × 4와 같은 값), 비용 1 ★3이 비용 4 ★1과 맞먹음.
+    // v3.421 시너지: 6단계 배율이 4단계보다 낮지 않음 · 제어(마나 억제 · 약화 · 시작 약화) · 역병(공격마다 중독) · 지하 공격 배율.
+    for (const id of ['charge', 'arcane']) { const t = D.TRAITS.find(x => x.id === id).tiers, k = id === 'charge' ? 'attack' : 'magic'; assert.ok(t[2].mult[k] >= t[1].mult[k], `${id} 6 ≥ 4`); }
+    { const ctrl = [{ unit: 'slime', star: 1, row: 'front' }, { unit: 'curseEye', star: 1, row: 'back' }, { unit: 'mixedGolem', star: 1, row: 'front' }, { unit: 'memoryMonitor', star: 1, row: 'back' }], foe = [{ unit: 'pig', star: 1, row: 'front' }];
+      const r = X.battle(ctrl, foe, mkRng(3)); assert.ok(r.log.some(l => l.includes('적 전체 약화 2턴')), 'control 4 opens with weaken'); assert.ok(r.frames.some(f => f.m === '제압'));
+      const c2 = X.buildSide(ctrl.slice(0, 2), 'a'); assert.ok(c2.flags.has('manaDrain20') && c2.flags.has('shackle') && !c2.flags.has('dread')); }
+    { const plague = [{ unit: 'orangeMushroom', star: 2, row: 'front' }, { unit: 'fireBoar', star: 2, row: 'front' }], foe = [{ unit: 'seaGuard', star: 3, row: 'front' }];
+      const r = X.battle(plague, foe, mkRng(4)); assert.ok(r.log.some(l => l.includes('중독')), 'plague 2 attacks poison'); }
+    { const ug = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front' }, { unit: 'juniorWraith', star: 1, row: 'back' }], 'a').units[1]; assert.equal(ug.stats.magic, Math.round(X.unitBaseStats(D.unitById('juniorWraith'), 1).magic * 1.05)); }
     // v3.418 신전 2 · 4 체력 8%: 신전 2를 켠 보드는 팀 전체 체력이 8% 높음.
     { const two = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }, { unit: 'pig', star: 1, row: 'front' }], 'a').units[2]; assert.equal(two.maxHp, Math.round(X.unitBaseStats(D.unitById('pig'), 1).hp * 1.08)); }
     assert.equal(D.EXPEDITION.star[3], 4); assert.equal(X.unitBaseStats(D.unitById('slime'), 3).hp, 4 * D.BASE_BY_COST[1].hp);
