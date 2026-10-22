@@ -1,6 +1,7 @@
 'use client';
 
 import { Fragment, useEffect, useRef, useState } from 'react';
+import { useFxStyles } from './fx-styles';
 import { Meter, short } from './shared';
 import { MonsterArt } from './art';
 import { StatusBadges } from './combat-status';
@@ -31,6 +32,7 @@ type CombatCombo = { count: number; actor: 'player' | 'enemy' };
  * 연속 행동이 있으면 combo는 그 묶음에서 가장 긴 연속 번호와 그 행동의 주인입니다(‘×N 연속’을 행동한 쪽 카드에 띄움).
  */
 export function useCombatFx(logs: Log[], playerName: string, enabled = true) {
+    useFxStyles();
     const lastId = useRef<number | null>(null), timers = useRef(new Set<number>());
     const [effects, setEffects] = useState<CombatFx[]>([]), [combo, setCombo] = useState<CombatCombo | null>(null);
     const latest = logs.at(-1)?.id ?? 0;
@@ -257,7 +259,9 @@ function FoeFx({ fx }: { fx: CombatFx }) {
  * 몬스터 스킬은 상대 카드의 알림(monster-skill-cue)이 기본이고, v3.183 보스(boss)의 스킬만 전용 배경 연출(FOE_FX)을 함께 띄웁니다.
  */
 export function SceneFx({ effect, boss = false, pnl = 0 }: { effect: CombatFx[]; boss?: boolean; pnl?: number }) {
+    const fxReady = useFxStyles();
     const cues = effect.filter(fx => (fx.actor === 'player' || boss && !!fx.skillId && !!FOE_FX[fx.skillId]) && !fx.basic && fx.kind !== 'miss' && fx.status !== '행동 불가');
+    if (!fxReady) return null;
     return <div className="scene-fx-layer" aria-hidden="true">{cues.map(fx => { const ult = ultimateOf(fx.skillId), scene = fx.actor === 'player' && (fx.essence || fx.mineSwing) ? <AzerothFx key={fx.id} fx={fx} boss={boss}/> : owScene(fx) ? <OtherworldFx key={fx.id} fx={fx} pnl={pnl} boss={boss}/> : !!AZ_ULT[sceneOf(fx) ?? ''] ? <AzerothUltFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'aberrantSurge' && !fx.finale ? <XenonFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'player' && fx.skillId === 'genesisRune' && !fx.finale ? <MechFx key={fx.id} fx={fx} boss={boss}/> : fx.actor === 'enemy' ? <FoeFx key={fx.id} fx={fx}/> : fx.skillId === 'endOfAll' ? <PunisherFx key={fx.id} fx={fx}/> : ult && !fx.finale ? <div key={fx.id} className={`scene-fx scene-fx-ult ult-${ult.kind}`} style={fxStyle(fx.delay)}>
         <i className="scene-fx-dark"/><i className="scene-fx-flash"/><i className="ult-a"/><i className="ult-b"/>
         {ult.glyphs.map((g, i) => <b key={i} className="ult-frag" style={fxStyle(fx.delay + i * 70, { '--i': i })}>{g}</b>)}
@@ -426,9 +430,11 @@ function useCleave(effect: CombatFx[]): CleaveHold | null {
 }
 /** 사냥터 장면 위: 몬스터 그림의 위 · 아래 반쪽이 베인 선을 따라 벌어집니다(원본 몬스터는 CSS가 숨김). */
 export function FoeCleave({ effect, enemy }: { effect: CombatFx[]; enemy: { id: string; boss?: boolean } | null }) {
+    const fxReady = useFxStyles();
     const held = useCleave(effect);
     if (!held || !enemy) return null;
     const { fx, phase } = held, boss = `${enemy.boss ? 'boss' : ''} ${KING_IDS.includes(enemy.id) ? 'king' : ''}`;
+    if (!fxReady) return null;
     return <div key={fx.id} className="scene-foe-cleave" aria-hidden="true" style={fxStyle(fx.delay)}>
         {phase === 'cut' ? <>
             <MonsterArt id={enemy.id} boss={!!enemy.boss} size={112} className={`scene-foe scene-foe-half upper ${boss}`}/>
