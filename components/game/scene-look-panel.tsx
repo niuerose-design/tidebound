@@ -38,7 +38,7 @@ export function SceneLookSettings({ s }: { s: State | null }) {
                 </div>
             </div>
             {error && <p className="scene-look-error" role="alert">{error}</p>}
-            <p className="footnote">요원 · 트레이더 · 해커 · 광부 · 포식자 · 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다.</p>
+            <p className="mt-5 text-xs leading-relaxed text-ink-3">요원 · 트레이더 · 해커 · 광부 · 포식자 · 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다.</p>
         </div>
         <div className="scene-look-preview battle-scene" aria-label="미리보기">
             <SceneBackdrop theme={look.backdrop === 'auto' ? auto : look.backdrop} fixed/>

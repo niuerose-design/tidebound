@@ -73,12 +73,10 @@
 .auto-run-state.off { color: #e3c28d; border-color: #6b6236; }
 @keyframes auto-run-pulse { 0% { transform: scale(1); opacity: .55; } 70%, 100% { transform: scale(2.7); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .auto-run-state.on i::after { animation: none; }}
-.panel.auto-run-status { padding: 20px 22px; }
 .auto-run-tile.goal { border-color: #3f6b5e; background: #12292a; }
 .auto-run-tile.goal p { font-weight: 600; color: #fff; }
 .auto-run-tile.warn p { color: #e3c28d; } .auto-run-tile.warn .auto-run-label svg { color: #e3c28d; }
 .auto-run-tile.muted p { color: #a9bdb8; }
-@media (max-width: 767px) { .panel.auto-run-status { padding: 16px; }}
 /* 튜토리얼·모험 기록 */
 .tutorial-card { padding: 14px 18px; margin-bottom: 16px; border-left: 3px solid var(--gold); }
 .tutorial-steps li.done { color: #b6e0cc; border-color: #3f6d5e; }

@@ -1,10 +1,4 @@
 /* 공통 패널·섹션 제목·캐릭터 칸·게이지·배지. */
-.panel {
-  border:1px solid var(--border);
-  border-radius:8px;
-  background:var(--card)
-}
-
 .log-list {
   height:198px;
   overflow:auto;

@@ -4,6 +4,7 @@
  * 기록판: 전투 · 획득 · 소식 · 채팅 탭(고른 탭은 이 기기에 남김). 선택판: 사냥터 · 던전 · 제단 탭(동기화 상태만 보고 재생 프레임마다 다시 그리지 않음).
  */
 import { memo, useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { ChevronRight, Compass, Flame, Lock, Map, Megaphone, MessageCircle, Sparkles, Swords } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { levelGateOk } from '@/game/systems/meta';
@@ -40,7 +41,7 @@ function Feed({ s }: { s: State }) {
             <TabsList className="mb-2 flex w-full">{FEED_TABS.map(({ id, label, Icon }) => <TabsTrigger key={id} value={id} className="flex-1 gap-1"><Icon size={13}/>{label}</TabsTrigger>)}</TabsList>
         </Tabs>
         {tab === 'chat' ? <ChatPanel open playerName={s.name} guildName={s.guildMember?.name}/> : tab === 'news' ? <NewsFeed open/> : <>
-            {latestReward && <button type="button" className="mb-2 flex w-full items-center gap-1.5 rounded-m bg-accent-soft px-2 py-1.5 text-left text-xs text-accent" onClick={() => pick('reward')} title="획득 기록 보기"><Sparkles size={12} className="shrink-0"/><span className="truncate">{latestReward.text}</span></button>}
+            {latestReward && <Button type="button" variant="ghost" size="xs" className="mb-2 flex h-auto w-full min-w-0 items-center justify-start gap-1.5 rounded-m bg-accent-soft px-2 py-1.5 text-left text-xs whitespace-normal text-accent hover:bg-accent-soft hover:brightness-110 pointer-coarse:min-h-11" onClick={() => pick('reward')} title="획득 기록 보기"><Sparkles size={12} className="shrink-0"/><span className="min-w-0 truncate">{latestReward.text}</span></Button>}
             <div className="log-list rail-log max-h-72 overflow-y-auto text-xs" role="log" aria-label={tab === 'battle' ? '최근 전투 기록' : '최근 획득 기록'}>{lines.length ? withTurnDividers(lines, log => <JournalLine key={log.id} log={log} playerName={s.name}/>) : <p className="py-4 text-center text-xs text-ink-3">{tab === 'battle' ? '자동 사냥을 시작하면 전투 기록이 표시됩니다.' : '처치 보상과 획득 기록이 여기에 쌓입니다.'}</p>}</div>
         </>}
     </FoldSection>;
@@ -62,7 +63,7 @@ const PlacePicker = memo(function PlacePicker({ s, busy, send, setView }: { s: S
                     <TabsTrigger value="altar" className="flex-1 gap-1"><Flame size={13}/>제단{s.altarStatus?.blessings.length ? <span className="size-1.5 rounded-full bg-gold-ink" aria-label="축복 진행 중"/> : null}</TabsTrigger>
                 </TabsList>
             </Tabs>
-            <button type="button" className="inline-flex min-h-8 shrink-0 items-center gap-0.5 text-xs text-accent hover:text-ink-1 pointer-coarse:min-h-11" onClick={() => setView(link[0])}>{link[1]}<ChevronRight size={13}/></button>
+            <Button type="button" variant="ghost" size="xs" className="h-auto shrink-0 gap-0.5 px-0 py-1 text-xs text-accent has-[>svg]:px-0 hover:bg-transparent hover:text-ink-1 pointer-coarse:min-h-11" onClick={() => setView(link[0])}>{link[1]}<ChevronRight size={13}/></Button>
         </div>
         <div className="grid max-h-64 gap-1 overflow-y-auto pr-0.5">
             {tab === 'stage' ? STAGES.map((stage, index) => {

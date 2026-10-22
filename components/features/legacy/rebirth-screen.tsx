@@ -5,7 +5,7 @@ import { Sparkles, RefreshCw } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { SectionHeader, StatBar, ConfirmAction, FoldSection, NumberTicker, formatExact } from '@/components/ui/game';
+import { SectionHeader, StatBar, ConfirmAction, FoldSection, NumberTicker, formatExact, Eyebrow } from '@/components/ui/game';
 import { rebirthExperience, rebirthMemory } from '@/game/data/long-term';
 import { RESEARCH_TABS, RELICS, RELIC_GROWTH, HEIR_GROWTH, heirFactor, heirPower, ECONOMY, startingLevel, inventoryCap, type ResearchTab } from '@/game/data/economy';
 import { PROGRESSION, STAT_LABELS, statDeltaDisplay } from '@/game/data/progression';
@@ -59,7 +59,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
             {showAutomation(s) && <div className="grid gap-3 lg:grid-cols-3"><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></div>}
             <Card className={cn(ready && !capped && 'border-accent/60')}>
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
-                    <div className="grid gap-2"><span className="eyebrow">{s.rebirths + 1}번째 환생</span><h2 className="font-display text-l font-bold">{capped ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : ready ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><StatBar value={Math.min(s.level, required)} max={required} tone="exp" label="레벨 조건"/>
+                    <div className="grid gap-2"><Eyebrow>{s.rebirths + 1}번째 환생</Eyebrow><h2 className="font-display text-l font-bold">{capped ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : ready ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><StatBar value={Math.min(s.level, required)} max={required} tone="exp" label="레벨 조건"/>
                         {s.rebirths > 0 && <Note>이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${tailwindLevel(s)}(직전 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</Note>}</div>
                     <div className="grid justify-items-center gap-2 rounded-m bg-surface-1 p-4 text-center"><span className="text-xs text-ink-3">{ready ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong className="inline-flex items-center gap-1 font-num text-2xl text-accent"><Sparkles size={24}/>{fmt(reward + breathExtra)}</strong>
                         <ConfirmAction label="환생하기" variant="default" className="bg-accent text-accent-ink hover:bg-accent/90" title="다음 모험을 시작할까요?" description="아래 ‘초기화되는 것’이 처음 상태로 돌아가고, ‘유지되는 것’은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." confirmLabel="환생" disabled={busy || !ready || capped} onConfirm={() => send({ type: 'rebirth' })}/>

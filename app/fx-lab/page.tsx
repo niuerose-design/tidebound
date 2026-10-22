@@ -60,7 +60,7 @@ function FxLabInner() {
     const w = num('w', 900), h = num('h', 420);
     return <main className="fx-lab" style={{ maxWidth: Math.max(w, 360) + 32, margin: '24px auto', padding: '0 16px', color: '#dfe7e3' }}>
         <h1 style={{ fontSize: 18, margin: '0 0 6px' }}>연출 실험실 · {sk ? `${sk.name} (${asFoe ? '보스 몬스터' : job?.name ?? '공용'})` : `알 수 없는 스킬 ${skillId}`}</h1>
-        <p className="footnote" style={{ margin: '0 0 14px' }}>{every / 1000}초마다 발동 · 섬광 {glow ? '켜짐' : '꺼짐'} · {asFoe ? `보스 스킬 id: ${Object.keys(FOE_FX).join(' ')}` : `장면 ${w}×${h}`}</p>
+        <p className="mb-3.5 text-xs leading-relaxed text-ink-3">{every / 1000}초마다 발동 · 섬광 {glow ? '켜짐' : '꺼짐'} · {asFoe ? `보스 스킬 id: ${Object.keys(FOE_FX).join(' ')}` : `장면 ${w}×${h}`}</p>
         <section className={`battle-scene running ${boss ? 'boss-lab' : ''}`} style={{ position: 'relative', width: w, height: h, overflow: 'hidden', borderRadius: 12, border: '1px solid #2c4348' }}>
             <SceneBackdrop theme={(params.get('bg') || 'village') as BackdropTheme} fixed/><div className="scene-shade"/>
             <SceneFoe enemy={enemy} hidden={false} effect={effect}/><FoeCleave effect={effect} enemy={{ id: foeId, boss }}/>

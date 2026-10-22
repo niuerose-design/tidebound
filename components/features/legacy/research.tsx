@@ -20,7 +20,7 @@ const VOW_BY_RESEARCH = Object.fromEntries(VOW_IDS.map(id => [VOW_RESEARCH[id], 
 /** 서약 연구 카드의 설명 팝업: 서약이 무엇인지, 어떻게 거는지, 이 서약의 제약과 보상. */
 function VowInfo({ id, s }: { id: VowId; s: State }) {
     return <Popover>
-        <PopoverTrigger asChild><button type="button" className="inline-flex min-h-9 items-center gap-1 rounded-s px-1 text-xs text-accent outline-none hover:underline focus-visible:ring-[3px] focus-visible:ring-accent/50" aria-label={`${VOW_NAMES[id]} 서약 설명`}><Info size={14}/><span>서약이란?</span></button></PopoverTrigger>
+        <PopoverTrigger asChild><Button type="button" variant="link" size="xs" className="h-auto min-h-9 gap-1 px-1 text-xs text-accent pointer-coarse:min-h-11" aria-label={`${VOW_NAMES[id]} 서약 설명`}><Info size={14}/><span>서약이란?</span></Button></PopoverTrigger>
         <PopoverContent className="grid w-80 gap-2 text-xs leading-relaxed" side="bottom" align="start">
             <strong className="text-s">서약 · {VOW_NAMES[id]}</strong>
             <p>서약은 다음 생에 스스로 거는 제약입니다. 더 어렵게 플레이하는 대신 고유한 보상을 받습니다.</p>

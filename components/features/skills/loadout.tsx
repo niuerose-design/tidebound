@@ -39,8 +39,8 @@ export function Loadout({ s, send, busy, recommended }: { s: State; send: Send; 
                         {type === 'active' && <span className="grid size-6 shrink-0 place-items-center rounded-full bg-surface-3 font-num text-xs text-ink-2" aria-label={`판정 ${i + 1}순위`}>{i + 1}</span>}
                         <span className="grid size-8 shrink-0 place-items-center rounded-s bg-surface-3"><SkillIcon id={id} size={18}/></span>
                         <span className="min-w-0 flex-1"><span className="block truncate text-s font-semibold text-ink-1">{sk.name} · Lv.{skillLevel(sk, rank, mastery)}</span><span className="block text-xs text-ink-3">AP {loadoutSkillAP(s, id)}{type === 'active' ? ` · 발동 ${Math.round((fx.chance || 0) * 100)}%` : ''}{sk.awaken ? ' · 각성(턴마다)' : ''}</span></span>
-                        {type === 'active' && <Button type="button" size="icon-sm" variant="ghost" className="icon-button" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy || i === 0} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={15}/></Button>}
-                        {type === 'active' && <Button type="button" size="icon-sm" variant="ghost" className="icon-button" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy || i >= ids.length - 1} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={15}/></Button>}
+                        {type === 'active' && <Button type="button" size="icon-sm" variant="ghost" className="pointer-coarse:size-11" aria-label={`${sk.name} 우선순위 올리기`} title="먼저 판정" disabled={busy || i === 0} onClick={() => send({ type: 'skillUp', id })}><ArrowUp size={15}/></Button>}
+                        {type === 'active' && <Button type="button" size="icon-sm" variant="ghost" className="pointer-coarse:size-11" aria-label={`${sk.name} 우선순위 내리기`} title="나중에 판정" disabled={busy || i >= ids.length - 1} onClick={() => send({ type: 'skillUp', id: ids[i + 1] })}><ArrowDown size={15}/></Button>}
                         <Button type="button" size="xs" variant="ghost" disabled={busy || !validLoadout(s, s.skills.filter(x => x !== id))} onClick={() => send({ type: 'skill', id })}>해제</Button>
                     </li>; })}</ol>
                 {!ids.length && <p className="text-xs text-ink-3">{type === 'active' ? '액티브가 없으면 기본 공격만 합니다.' : '장착한 패시브가 없습니다.'}</p>}
@@ -56,7 +56,7 @@ export function Loadout({ s, send, busy, recommended }: { s: State; send: Send; 
 function PresetName({ id, name, disabled, send }: { id: string; name?: string; disabled: boolean; send: Send }) {
     const [edit, setEdit] = useState(false);
     const label = name || `편성 ${id}`;
-    if (!edit) return name ? <button type="button" className="rounded-s text-left font-semibold text-ink-1 underline decoration-dotted underline-offset-4 hover:text-accent" disabled={disabled} title="눌러서 이름 바꾸기" onClick={() => setEdit(true)}>{label}</button> : <span className="font-semibold text-ink-1">{label}</span>;
+    if (!edit) return name ? <Button type="button" variant="link" size="xs" className="h-auto px-0 text-left text-sm font-semibold text-ink-1 underline decoration-dotted underline-offset-4 hover:text-accent pointer-coarse:min-h-11" disabled={disabled} title="눌러서 이름 바꾸기" onClick={() => setEdit(true)}>{label}</Button> : <span className="font-semibold text-ink-1">{label}</span>;
     const done = (value: string) => { setEdit(false); const next = value.trim().slice(0, 20); if (next && next !== name) send({ type: 'renamePreset', id, value: next }); };
     return <input className="h-9 w-full max-w-40 rounded-m border border-line bg-surface-0 px-2 text-s text-ink-1 outline-none focus-visible:border-accent" aria-label={`편성 ${id} 이름`} defaultValue={label} maxLength={20} autoFocus onBlur={e => done(e.currentTarget.value)} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); if (e.key === 'Escape') setEdit(false); }}/>;
 }

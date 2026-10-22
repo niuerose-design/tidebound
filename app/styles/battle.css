@@ -4,7 +4,6 @@
 .battle-console>.tide-selector{margin:0 0 11px;padding:11px 14px}
 .battle-console>.tide-selector h3{font-size:13px}
 .battle-console>.tide-selector p,.battle-console>.tide-selector small{font-size:11px}
-.opponent-card .eyebrow{font-size:11px;letter-spacing:1px}
 .opponent-card .meter-label{font-size:11px;margin-bottom:5px}
 .opponent-card .meter [data-slot=progress]{height:5px}
 .battle-console .battle-scene{margin-bottom:11px;height:250px}
@@ -1579,7 +1578,6 @@
 .scene-idle{position:absolute;left:50%;top:44%;translate:-50% -50%;z-index:3;padding:6px 14px;border-radius:999px;background:#06100fb3;font-size:12.5px;color:#c9dbd2;white-space:nowrap;pointer-events:none}
 .scene-idle.recovery{color:#f0c46a}
 .scene-wave{position:absolute;right:12px;top:10px;z-index:5;padding:3px 10px;border-radius:999px;background:#06100fcc;font-size:11px;font-weight:700;color:#e6efe9}
-.battle-dock-info .eyebrow{color:var(--stage-tone,#7fd6b3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .battle-dock .ow-fuel-actions{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11.5px;color:#9db3ab}
 .battle-dock .ow-fuel-actions .ow-hud-actions{display:flex;gap:4px;flex-wrap:wrap}
 .dungeon-scene .scene-log{width:min(55%,330px)}
@@ -1662,7 +1660,6 @@
 @media(min-width:1600px){.battle-hud .battle-console .battle-scene{height:480px}}
 .dungeon-scene{height:400px}
 @media(max-width:767px){.battle-console>.battle-scene,.battle-hud .battle-console .battle-scene{height:440px}.dungeon-scene{height:420px}}
-.battle-dock-info .eyebrow{flex:none}
 /* 몬스터 이름 · 상태: 이름 길이 · 상태이상 개수에 따라 다른 요소가 밀리지 않게 한 줄로 자르고, 상태는 따로 한 줄. */
 .scene-foe-name{max-width:170px;flex-wrap:nowrap;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-inline:auto;padding:0;border:0;background:none;font:inherit;font-size:11.5px;font-weight:700;color:#f3ede2;pointer-events:auto;cursor:default}
 button.scene-foe-name{cursor:pointer;display:flex}

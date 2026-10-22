@@ -41,23 +41,6 @@
   margin-top:2px
 }
 
-.icon-button {
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  width:32px;
-  height:32px;
-  background:transparent;
-  border:0;
-  color:#93a8ac;
-  border-radius:5px
-}
-
-.icon-button:hover {
-  background:#243a3f;
-  color:#d7e5e1
-}
-
 .workspace {
   padding:30px 32px 28px;
   max-width:1600px;
