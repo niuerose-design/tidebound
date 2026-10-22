@@ -21,7 +21,7 @@ export const SPECIAL_NAMES: Record<Special, string> = { boss: '보스', onyx: '�
 
 export const EXPEDITION = {
     /** 10단계: 12라운드 · 3막(1~4 · 5~8 · 9~12). 각 막의 마지막 라운드는 보스 웨이브(고스트 없음)이고 이기면 막 보상 세계석 +actPearls. */
-    rounds: 12, actLength: 4, actPearls: 2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, baseGold: 5, interestPer: 10, interestMax: 5,
+    rounds: 12, actLength: 4, actPearls: 2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, baseGold: 7, interestPer: 10, interestMax: 5,
     /** 10단계 상점 시너지 슬롯: 2라운드부터 상점 마지막 칸은 보드의 시너지(다음 단계에 가장 가까운 것)를 늘리는 유닛이 나옵니다. */
     synergySlotRound: 2,
     /** 판 레벨(2~8)마다 배치 수. */
@@ -37,8 +37,11 @@ export const EXPEDITION = {
      * 웨이브(적 머릿수 1 + 라운드, 예산)는 판 레벨이 2 · 3 · 4 · 5 · 5 · 6 · 6 · 7 · 7 · 8로 오른다고 보고 맞춰져 있는데, 전에는 경험치를 골드로만 살 수 있어
      * 실제 경제로는 레벨 4~5에 머물러 4라운드부터 거의 이기지 못했습니다(상점 시뮬 EXP_ECON=1: 전체 승률 4~9%). 이 값이면 사지 않아도 레벨이 그 곡선을 따라가고
      * (11라운드에 8), 전체 승률이 공짜 레벨 기준(50~78%)보다 조금 낮은 45~73%가 됩니다. 경험치를 사면 그만큼 앞서 갑니다.
+     *
+     * v3.428 경험치를 짜게(롤토체스 원작처럼 골드로 사는 의미가 있도록): 라운드 경험치 4 + 2(r − 1) → 2 + 2(r − 1)(11라운드 뒤 +22). 사지 않으면 목표 곡선보다 대체로 1레벨 낮고 레벨 8은 마지막 라운드에야 됨. 대신 라운드 기본 골드 5 → 7.
+     * 상점 시뮬(EXP_ECON=1, 시드 150판): 전체 승률은 그대로(유닛 먼저 58~68%), 경험치를 먼저 사는 쪽이 유닛 먼저보다 높아짐(무작위 72 : 66 — 전에는 65 : 65로 사도 이득이 없었음).
      */
-    roundXp: { base: 4, perRound: 2 },
+    roundXp: { base: 2, perRound: 2 },
     maxTurns: 40,
     /** 마나: 기본 공격 +10 · 피격 +5, 100에 기술 발동. */
     manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
@@ -125,6 +128,8 @@ export const EXTRA_UNITS: UnitDef[] = [
 ];
 export const ALL_UNITS: UnitDef[] = [...UNITS, ...EXTRA_UNITS];
 export const unitById = (id: string) => ALL_UNITS.find(u => u.id === id);
+/** v3.428 공격 종류: 마력 유닛은 기본 공격 · 주 능력치가 마법(systems/expedition.ts unitBaseStats · magicBasic), 나머지는 물리. 마력의 문장은 시너지 머릿수만 늘리고 공격 종류는 그대로입니다. */
+export const damageType = (def: UnitDef): 'physical' | 'magic' => def.roles.includes('arcane') ? 'magic' : 'physical';
 
 /**
  * 시너지 효과(단계별). 능력치로 적을 수 있는 것은 Stats 보정(bonus)과 배율(mult)로, 나머지는 flag로 두고 systems/expedition.ts의 전투 계층이 처리합니다.

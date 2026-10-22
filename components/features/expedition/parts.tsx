@@ -1,9 +1,11 @@
-import { ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, type UnitDef } from '@/game/data/expedition';
+import { ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, damageType, type UnitDef } from '@/game/data/expedition';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 /** v3.413 원정대 공용 조각(expedition-screen.tsx 에서 분리): 유닛 꼬리표 · 카드 · 머리줄 · 글 · 버튼 · 상자. */
 export const tags = (def: UnitDef) => [ORIGIN_NAMES[def.origin], ...def.roles.map(r => ROLE_NAMES[r]), ...(def.special || []).map(x => SPECIAL_NAMES[x])].join(' · ');
 export const stars = (n: number) => '★'.repeat(n);
+/** v3.428 물리 · 마법 표시: 보드 칸은 기호만(모서리, 읽기 프로그램에는 글로), 벤치 · 상점은 기호 + 글. */
+export const DamageBadge = ({ def, compact }: { def: UnitDef; compact?: boolean }) => { const magic = damageType(def) === 'magic', label = magic ? '마법 공격' : '물리 공격'; return <span className={cn('exp-dmg', magic ? 'magic' : 'physical', compact && 'compact')} title={label}>{compact ? <><span aria-hidden>{magic ? '✦' : '⚔'}</span><span className="sr-only">{label}</span></> : <>{magic ? '✦ 마법' : '⚔ 물리'}</>}</span>; };
 /** 공용 조각: 카드 · 머리줄 · 글 · 버튼. */
 export const Card = ({ children, className, ...rest }: React.ComponentProps<'section'>) => <section {...rest} className={cn('grid content-start gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1', className)}>{children}</section>;
 export const Head = ({ title, aside, level = 2 }: { title: React.ReactNode; aside?: React.ReactNode; level?: 2 | 3 }) => { const Tag = level === 2 ? 'h2' : 'h3'; return <header className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><Tag className={cn('font-display font-bold', level === 2 ? 'text-m' : 'text-s')}>{title}</Tag>{aside !== undefined && <span className="inline-flex flex-wrap items-center gap-2 text-xs text-ink-3">{aside}</span>}</header>; };
