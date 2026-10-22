@@ -418,6 +418,8 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.119 마력 옵션의 턴당 마나 회복이 위력 비례가 아니라 0.01 남짓으로 붙어 있던 장비를 바로잡습니다(최대 마나와 같은 굴림으로).
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
     if (s.version === SAVE_VERSION) revokeCodexLink(s);
+    // v3.434 지금까지 쌓인 명성은 모두 숙련 50 시절의 것(숙련 1000은 v3.432에 생겨 아직 아무도 못 닿음) — 한 번 기록해 명성 연결에서 뺍니다.
+    if (s.version === SAVE_VERSION && s.expeditionRenownLegacy === undefined) s.expeditionRenownLegacy = s.expeditionRenown || 0;
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.

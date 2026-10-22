@@ -624,6 +624,8 @@ export type State = {
     expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number; /** 23단계: 그 판 마지막 보드의 공유 코드. */ code?: string }[];
     /** 21단계: 원정 명성(숙련 50 초기화 횟수) · 주간 리그(등급 · 정산한 주 · 지난 정산 · 최고 등급). */
     expeditionRenown?: number;
+    /** v3.434 숙련 50 시절(v3.432 이전)에 쌓은 명성 수: 명성 연결(체력 · 공격력)에서 뺍니다. */
+    expeditionRenownLegacy?: number;
     /** v3.432 숙련 최대 1000 이전 명성의 숙련 환산을 마침. */
     expeditionMasteryV2?: boolean;
     /** v3.432 원정대 세계석 보상(1/10)의 아직 주지 않은 소수 부분. */
