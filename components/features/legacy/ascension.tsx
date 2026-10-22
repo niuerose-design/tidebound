@@ -2,7 +2,7 @@
 /** v3.398 승천 카드: 조건 · 지금 받는 배율 · 받는 보상 · 유지 · 초기화와 확인 창. 설계는 docs/balance-rebirth.md 8·11·14절. 환생 50회부터(또는 한 번이라도 승천했으면) 보입니다. */
 import { Crown } from 'lucide-react';
 import type { State, Action } from '@/game/types';
-import { StatBar, ConfirmAction, formatExact } from '@/components/ui/game';
+import { StatBar, ConfirmAction, formatExact, Eyebrow } from '@/components/ui/game';
 import { ASCENSION, ASCENSION_RESEARCH, ascensionOf, ascensionRequirement, ascensionMastery, ascensionVow, lifetimeRebirths } from '@/game/data/ascension';
 import { researchById } from '@/game/data/economy';
 import { ODDS, oddsPercent } from '@/game/data/odds';
@@ -19,7 +19,7 @@ export function AscensionPanel({ s, send, busy }: { s: State; send: (a: Action) 
     return <Card className="border-gold-ink/40">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
             <div className="grid gap-2">
-                <span className="eyebrow">ASCENSION · {n + 1}번째 승천</span>
+                <Eyebrow>ASCENSION · {n + 1}번째 승천</Eyebrow>
                 <h2 className="font-display text-l font-bold">{ready ? '환생의 끝에 닿았습니다. 숙련을 들고 처음부터 다시 오를 수 있습니다' : `환생 ${need}회에 승천이 열립니다`}</h2>
                 <StatBar value={Math.min(s.rebirths, need)} max={need} tone="warn" label={`환생 ${fmt(s.rebirths)} / ${need}회`} showText={false}/>
                 <Note>승천할 때마다 필요한 환생 횟수가 오릅니다({ASCENSION.requirements.join(' → ')}). 환생은 {ASCENSION.rebirthCap}회까지이고, {ASCENSION.researchLockAt}회부터는 세계석 연구를 살 수 없습니다.{n > 0 && ` 지금 ${n}승천 · 숙련 ×${ascensionMastery(s)} · 서약 보상 ×${ascensionVow(s).toFixed(1)} · 누적 환생 ${fmt(lifetimeRebirths(s))}회.`}</Note>

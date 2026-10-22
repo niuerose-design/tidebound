@@ -11,7 +11,7 @@ import { JOBS, LINEAGES, WORLDS, lineageOf, jobById, type WorldId } from '@/game
 import { KOPRULU_REBIRTH } from '@/game/data/expansion-koprulu';
 import { jobMasteryTarget } from '@/game/systems/progression';
 import { noviceLife } from '@/game/systems/guidance';
-import { SectionHeader, ChoiceChips, formatExact } from '@/components/ui/game';
+import { SectionHeader, ChoiceChips, formatExact, Eyebrow } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { statusReader, finderJobs, searchJobs, shownLineageJobs, lineageInTab, tabJobCount, tabOf, JOB_TABS, jobTally, jobGoalOf, jobWorld, worldLineages, worldJobCount, type JobTabId, TOP_TAGS, type Finder } from '@/components/game/jobs/job-status';
@@ -110,7 +110,7 @@ function WorldBook({ s, currentWorld, onOpen }: { s: State; currentWorld: WorldI
     return <section className="grid gap-0 overflow-hidden rounded-l border border-line bg-surface-2 shadow-1 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]" aria-label="세계 목차">
         <div className="grid content-center justify-items-center gap-2 border-b border-line bg-surface-1 p-6 text-center md:border-b-0 md:border-r">
             <BookOpen size={30} className="text-accent"/>
-            <small className="eyebrow">VOCATION CHRONICLE</small>
+            <Eyebrow>VOCATION CHRONICLE</Eyebrow>
             <h2 className="font-display text-xl font-bold">모험가의 연대기</h2>
             <p className="text-s text-ink-2">세계마다 서로 다른 계보가 이어집니다. 읽을 세계를 고르세요.</p>
         </div>

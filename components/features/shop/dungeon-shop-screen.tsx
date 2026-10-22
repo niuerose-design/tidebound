@@ -5,7 +5,7 @@ import { Coins, Gem, Hexagon, Sparkles, Swords } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { SectionHeader, ConfirmAction, NumberTicker, formatExact } from '@/components/ui/game';
+import { SectionHeader, ConfirmAction, NumberTicker, formatExact, Eyebrow } from '@/components/ui/game';
 import { dungeonGoldMultiplier } from '@/game/systems/stats';
 import { dailyBonusLeft, boughtToday, growthOffer, onyxOffer, hunterBlock, allItems, qualityLines, lineQuality, QUALITY_PRICE } from '@/game/systems/dungeon-coins';
 import { coreForgeCost } from '@/game/systems/boss-loot';
@@ -85,7 +85,7 @@ function CoreTab({ s, send, busy, buy, now }: P & { send: Send; now: number }) {
             {s.coreSlot === x && <b className="justify-self-start rounded-s bg-accent px-1.5 text-xs text-accent-ink">장착</b>}
         </button>; })}</div>
         <article className={cn('grid gap-3 rounded-l border bg-surface-2 p-4 shadow-1', c.onyx ? 'border-[color:var(--rarity-primal)]/60' : 'border-line', !e && 'opacity-90')}>
-            <header className="flex flex-wrap items-center justify-between gap-2"><div className="min-w-0"><span className="eyebrow">{c.onyx ? `칠흑 보스코어 · ${c.boss} 격파` : c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</span><h2 className="font-display text-m font-bold" style={c.onyx ? { color: 'var(--rarity-primal)' } : undefined}>{c.name}</h2></div>
+            <header className="flex flex-wrap items-center justify-between gap-2"><div className="min-w-0"><Eyebrow>{c.onyx ? `칠흑 보스코어 · ${c.boss} 격파` : c.boss} · {e ? (worn ? '장착 중' : `보유 · 공명 ${Math.round(BOSS_CORE_RULES.resonance * 100)}%`) : '미획득'}</Eyebrow><h2 className="font-display text-m font-bold" style={c.onyx ? { color: 'var(--rarity-primal)' } : undefined}>{c.name}</h2></div>
                 {e && <Button type="button" size="sm" variant={worn ? 'outline' : 'default'} className={cn(!worn && 'bg-accent text-accent-ink hover:bg-accent/90')} disabled={busy} onClick={() => send({ type: 'equipCore', id: worn ? '' : id })}>{worn ? '해제' : '장착'}</Button>}</header>
             <p className="text-s leading-relaxed text-ink-2">{c.desc}</p>
             {e ? <>
@@ -104,10 +104,10 @@ function CoreTab({ s, send, busy, buy, now }: P & { send: Send; now: number }) {
             {c.floors && <p className="text-xs text-ink-3">무릉도장 층: 획득 {c.floors[0]}층 · 각성 {c.floors.slice(1).join(' · ')}층(최고 기록 기준){e && e.rank < BOSS_CORE_RULES.awakenMax ? ` · 다음 각성 ${c.floors[e.rank + 1]}층` : ''}</p>}
         </article>
         {onyxOff ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-l border border-[color:var(--rarity-primal)]/60 bg-surface-2 p-4 shadow-1">
-            <div className="min-w-0 flex-1"><span className="eyebrow">칠흑 보스코어 · {onyxOff.kind === 'awaken' ? '각성' : '제작'}</span><p className="text-s text-ink-2">칠흑 장신구와 같은 가격 · 같은 하루 횟수(칠흑 상품 합쳐 하루 {DUNGEON_SHOP_DAILY.onyxPerDay}번)입니다. {onyxOff.kind === 'awaken' ? `가진 마도서를 한 단계 각성합니다(지금 ${onyxOff.rank}/${ONYX.awakenMax}).` : '마도서를 바로 만듭니다.'}{onyxOff.reason ? ` · ${onyxOff.reason}` : ''}</p></div>
+            <div className="min-w-0 flex-1"><Eyebrow>칠흑 보스코어 · {onyxOff.kind === 'awaken' ? '각성' : '제작'}</Eyebrow><p className="text-s text-ink-2">칠흑 장신구와 같은 가격 · 같은 하루 횟수(칠흑 상품 합쳐 하루 {DUNGEON_SHOP_DAILY.onyxPerDay}번)입니다. {onyxOff.kind === 'awaken' ? `가진 마도서를 한 단계 각성합니다(지금 ${onyxOff.rank}/${ONYX.awakenMax}).` : '마도서를 바로 만듭니다.'}{onyxOff.reason ? ` · ${onyxOff.reason}` : ''}</p></div>
             <BuyButton disabled={busy || !!onyxOff.reason || coins < onyxOff.price} onClick={() => buy(`onyx:${ONYX_CORE_ID}`)}>{onyxOff.kind === 'awaken' ? '각성' : '제작'} · {fmt(onyxOff.price)} 주화</BuyButton>
         </div> : <div className="flex flex-wrap items-center justify-between gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1">
-            <div className="min-w-0 flex-1"><span className="eyebrow">랜덤 보스 코어 상자</span><p className="text-s text-ink-2">지역 던전 코어 7종 중 하나(무릉도장 코어는 층으로만). 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
+            <div className="min-w-0 flex-1"><Eyebrow>랜덤 보스 코어 상자</Eyebrow><p className="text-s text-ink-2">지역 던전 코어 7종 중 하나(무릉도장 코어는 층으로만). 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
             <BuyButton disabled={busy || !boxLeft || coins < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {fmt(DUNGEON_SHOP.coreBox)} 주화</BuyButton>
         </div>}
     </section>;

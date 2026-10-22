@@ -4,6 +4,7 @@
  * card: 사이드바 아래(데스크톱 · 메뉴 시트). strip: 모바일 하단 탭 위의 띠(전체가 버튼). 동기화 상태(재생 프레임 아님)만 읽습니다.
  */
 import { ChevronRight, Pause, Play } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { State } from '@/game/types';
 import { stageById, dungeonById } from '@/game/data/world';
 import { isHackerJob } from '@/game/data/hacker';
@@ -35,6 +36,6 @@ export function ActivityWidget({ s, setView, variant }: { s: State; setView: (v:
         <div className="flex items-center gap-2">{mark}<div className="min-w-0 flex-1 leading-tight"><div className="truncate text-s font-semibold text-ink-1">{a.title}</div><div className="truncate text-xs text-ink-3">{a.detail}</div></div></div>
         {!hacker && <StatBar value={s.exp} max={xpNeeded(s.level, s.rebirths, xpWall(s))} tone="exp" size="s" label={`Lv.${s.level}`} className="text-xs [&_.text-s]:text-xs"/>}
         {rate && <div className="font-num text-xs text-ink-3">{rate}</div>}
-        <button type="button" className="inline-flex h-9 items-center justify-center gap-1 rounded-m bg-accent-soft text-s font-semibold text-accent hover:brightness-110" onClick={() => setView('battle')}>사냥 보기<ChevronRight size={14}/></button>
+        <Button type="button" variant="ghost" size="sm" className="h-9 gap-1 rounded-m bg-accent-soft text-s font-semibold text-accent hover:bg-accent-soft hover:text-accent hover:brightness-110 pointer-coarse:min-h-11" onClick={() => setView('battle')}>사냥 보기<ChevronRight size={14}/></Button>
     </section>;
 }

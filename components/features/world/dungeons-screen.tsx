@@ -18,7 +18,7 @@ import { SceneFx, FoeCleave, SceneCombatHud, useCombatFx } from '@/components/ga
 import { SceneFoe, SceneMe, SceneLog, AzerothHud, SkillReceipt, CastFx, SceneDamage, SceneLoot, BossIntro, LevelUpFx } from '@/components/game/scene-stage';
 import { OtherworldHud } from '@/components/game/otherworld-hud';
 import { useNow } from '@/components/game/shared';
-import { SectionHeader, formatExact } from '@/components/ui/game';
+import { SectionHeader, formatExact, Eyebrow } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { PlaceCard, Badge, AutoRunStatus, field } from './parts';
@@ -82,7 +82,7 @@ function ActiveRun({ s, send, busy, playerStats }: { s: State; send: Send; busy:
     const repeatStatus = repeat ? (repeat.until ? `반복 중 · ${repeat.until}층까지` : repeat.climb ? '반복 중 · 단계 오르기' : repeat.left === null ? '반복 중 · 실패할 때까지' : repeat.left === 0 ? '반복 중 · 마지막 도전' : `반복 중 · 이후 ${repeat.left}회 더`) : '';
     return <section className="grid gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="진행 중인 던전">
         <header className="flex flex-wrap items-center justify-between gap-2">
-            <div title={d.description}><span className="eyebrow">ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</span><h2 className="font-display text-l font-bold">{d.name}{!!s.dungeon!.stage && s.dungeon!.stage > 1 && <b className="ml-2 text-m text-warn"> 나이트메어 {s.dungeon!.stage}단계</b>}{d.id === 'abyss' && <b className="ml-2 text-m text-accent"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2>{d.id === 'abyss' && <p className="text-xs text-ink-3">최고 기록 {s.abyssBest}층</p>}</div>
+            <div title={d.description}><Eyebrow>ACTIVE EXPEDITION{repeatStatus && ` · ${repeatStatus}`}</Eyebrow><h2 className="font-display text-l font-bold">{d.name}{!!s.dungeon!.stage && s.dungeon!.stage > 1 && <b className="ml-2 text-m text-warn"> 나이트메어 {s.dungeon!.stage}단계</b>}{d.id === 'abyss' && <b className="ml-2 text-m text-accent"> {s.dungeon!.depth || s.abyssBest + 1}층</b>}</h2>{d.id === 'abyss' && <p className="text-xs text-ink-3">최고 기록 {s.abyssBest}층</p>}</div>
             <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => send({ type: 'leaveDungeon' })}>던전 귀환</Button>
         </header>
         <section className={cn('battle-scene dungeon-scene mb-0! h-[420px]! md:h-[320px]! xl:h-[clamp(420px,calc(100vh/var(--ui-scale,1)-440px),560px)]!', !s.recovery && s.hp < playerStats.hp * .3 && 'danger')}><SceneBackdrop theme={backdropTheme(d.name)}/><div className="scene-shade"/><SceneFoe enemy={s.enemy} hidden={!!s.recovery} effect={combatFx}/><FoeCleave effect={combatFx} enemy={s.enemy}/><SceneFx effect={combatFx} boss={!!s.enemy?.boss} pnl={s.marketPnl || 0}/><SceneCombatHud enemy={s.enemy && !s.recovery ? s.enemy : null} effect={combatFx} combo={fxCombo}/>

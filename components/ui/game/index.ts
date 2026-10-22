@@ -9,7 +9,7 @@ export { TierBadge } from './tier-badge';
 export { LogFeed, type LogFeedItem } from './log-feed';
 export { ProgressRing } from './progress-ring';
 export { EmptyState } from './empty-state';
-export { SectionHeader } from './section-header';
+export { SectionHeader, Eyebrow } from './section-header';
 export { KeyValueList, type KeyValue } from './key-value-list';
 export { formatShort, formatExact, formatPercent } from './format';
 export { ChoiceChips, type Choice } from './choice-chips';

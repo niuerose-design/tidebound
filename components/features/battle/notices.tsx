@@ -4,6 +4,7 @@
  * 제단 알림(AltarNotice)은 제 모양을 가지고 있어 묶음 아래에 그대로 둡니다. 동기화 상태(base)만 봅니다.
  */
 import { memo, useEffect, useState, type ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import { Check, Leaf, Sparkles, Terminal } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { eventLabel } from '@/game/data/events';
@@ -41,7 +42,7 @@ export const Notices = memo(function Notices({ base: s, send, setView }: { base:
     const shown = open ? items : items.slice(0, 1);
     return <div className="grid gap-2" aria-live="polite">
         {shown.map(it => <div key={it.key} role="status" className={cn('flex items-center gap-2 rounded-m border px-3 py-2 text-s', TONE[it.tone])}><span className="shrink-0" aria-hidden="true">{it.icon}</span><span className="min-w-0 flex-1">{it.body}</span>{it.action}</div>)}
-        {items.length > 1 && <button type="button" className="min-h-6 justify-self-start text-xs text-ink-3 hover:text-ink-1 pointer-coarse:min-h-11" aria-expanded={open} onClick={() => setOpen(v => !v)}>{open ? '알림 접기' : `알림 ${items.length - 1}개 더 보기`}</button>}
+        {items.length > 1 && <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 justify-self-start text-ink-3 hover:text-ink-1" aria-expanded={open} onClick={() => setOpen(v => !v)}>{open ? '알림 접기' : `알림 ${items.length - 1}개 더 보기`}</Button>}
         {show('altar') && <AltarNotice s={s} setView={setView}/>}
     </div>;
 });

@@ -1,6 +1,7 @@
 'use client';
 /** v3.397 전직 화면 공용 조각: 목표 깃발 · 상태 표 · 계보 카드 · 직업(항로) 카드 · 열 제목. 판정은 components/game/jobs/job-status.ts 그대로. */
 import { Fragment, type ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
 import { ArrowDown, Compass, Flag } from 'lucide-react';
 import type { State } from '@/game/types';
 import { JOBS, type Job, type Lineage } from '@/game/data/classes';
@@ -67,7 +68,7 @@ export function RouteMap({ s, lineage, jobs, selectedId, onSelect }: { s: State;
 /** 빠른 찾기·검색 결과: 계열과 상관없이 모은 직업 카드 목록(② 칸 자리). */
 export function JobList({ s, title, jobs, selectedId, onSelect, onClear }: { s: State; title: string; jobs: Job[]; selectedId?: string; onSelect: (id: string) => void; onClear: () => void }) {
     return <section className="grid content-start gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label={title}>
-        <div className="flex flex-wrap items-center justify-between gap-2"><ColumnTitle no="②">{title} · {jobs.length}</ColumnTitle><button type="button" className="min-h-9 text-xs text-accent underline-offset-2 hover:underline" onClick={onClear}>항로도로 돌아가기</button></div>
+        <div className="flex flex-wrap items-center justify-between gap-2"><ColumnTitle no="②">{title} · {jobs.length}</ColumnTitle><Button type="button" variant="link" size="xs" className="h-auto min-h-9 px-1 text-xs text-accent pointer-coarse:min-h-11" onClick={onClear}>항로도로 돌아가기</Button></div>
         {jobs.length ? <div className="grid gap-2 sm:grid-cols-2">{jobs.map(j => <JobCard key={j.id} s={s} j={j} selected={j.id === selectedId} from={`${treeName(j.tree)}${jobRevealed(s, j) ? ` · ${j.role}` : ''}`} onSelect={onSelect}/>)}</div> : <p className="text-xs text-ink-3">해당하는 직업이 없습니다.</p>}
     </section>;
 }

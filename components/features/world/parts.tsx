@@ -1,6 +1,7 @@
 'use client';
 /** v3.395 사냥터 · 던전 공용 조각: 장소 카드 틀(번호 · 상태 배지 · 제목 · 설명 · 발), 장소 연구 줄, 자동 진행 상태. */
 import type { ReactNode } from 'react';
+import { Eyebrow } from '@/components/ui/game';
 import { Activity, Flag, Gauge, History, Lock, Target } from 'lucide-react';
 import type { State } from '@/game/types';
 import { PROGRESSION } from '@/game/data/progression';
@@ -16,7 +17,7 @@ export const field = 'h-9 rounded-m border border-line bg-surface-0 px-2 text-xs
 export function PlaceCard({ index, locked, state, eyebrow, title, description, tone, foot, children, as = 'div', onClick, disabled, className }: { index: number; locked?: boolean; state?: ReactNode; eyebrow: ReactNode; title: ReactNode; description: ReactNode; tone?: string; foot?: ReactNode; children?: ReactNode; as?: 'button' | 'div'; onClick?: () => void; disabled?: boolean; className?: string }) {
     const inner = <>
         <div className="flex items-center justify-between gap-2"><span className="font-num text-xs text-ink-3">{String(index + 1).padStart(2, '0')}</span>{locked ? <Lock size={16} className="text-ink-3" aria-label="잠김"/> : state}</div>
-        <div className="grid gap-0.5"><span className="eyebrow">{eyebrow}</span><h3 className="font-display text-m font-bold leading-tight">{title}</h3></div>
+        <div className="grid gap-0.5"><Eyebrow>{eyebrow}</Eyebrow><h3 className="font-display text-m font-bold leading-tight">{title}</h3></div>
         <p className="text-xs leading-relaxed text-ink-2">{description}</p>
         {foot && <div className="mt-auto grid gap-1 text-xs text-ink-3">{foot}</div>}
         {children}
@@ -62,7 +63,7 @@ export function AutoRunStatus({ s }: { s: State }) {
         { icon: <History size={14}/>, label: '마지막 종료 사유', value: s.runEnd ? s.runEnd.reason : '기록 없음', cls: 'text-ink-3' },
     ];
     return <section className="grid gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="자동 진행 상태">
-        <header className="flex flex-wrap items-center justify-between gap-2"><div><span className="eyebrow">AUTO RUN · 사냥 · 던전</span><h2 className="flex items-center gap-1.5 font-display text-m font-bold"><Activity size={16}/> 자동 진행</h2></div>
+        <header className="flex flex-wrap items-center justify-between gap-2"><div><Eyebrow>AUTO RUN · 사냥 · 던전</Eyebrow><h2 className="flex items-center gap-1.5 font-display text-m font-bold"><Activity size={16}/> 자동 진행</h2></div>
             <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-semibold', s.running ? 'bg-ok/15 text-ok' : 'bg-surface-3 text-ink-3')}><i className={cn('size-1.5 rounded-full', s.running ? 'bg-ok' : 'bg-ink-3')}/>{s.running ? '진행 중' : '멈춤'}</span></header>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">{items.map(x => <div key={x.label} className="rounded-m bg-surface-1 p-2.5"><span className="flex items-center gap-1 text-xs text-ink-3">{x.icon}{x.label}</span><p className={cn('mt-0.5 text-s', x.cls)}>{x.value}</p></div>)}</div>
     </section>;
