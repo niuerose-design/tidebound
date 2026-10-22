@@ -40,7 +40,7 @@ export const Notices = memo(function Notices({ base: s, send, setView }: { base:
     if (s.hackFeed?.root && show('hacker')) items.push({ key: 'root', tone: 'danger', icon: <Sparkles size={15}/>, body: <><b className="mr-1 font-semibold">ROOT ACCESS</b>[해커 {s.hackFeed.root.by}]이(가) 서버의 루트 권한을 얻었습니다.</> });
     if (!s.lastOffline && show('tip')) items.push({ key: 'tip', tone: 'ink', icon: <Leaf size={15}/>, body: tipAt(tip) });
     const shown = open ? items : items.slice(0, 1);
-    return <div className="grid gap-2" aria-live="polite">
+    return <div className="grid grid-cols-[minmax(0,1fr)] gap-2" aria-live="polite">
         {shown.map(it => <div key={it.key} role="status" className={cn('flex items-center gap-2 rounded-m border px-3 py-2 text-s', TONE[it.tone])}><span className="shrink-0" aria-hidden="true">{it.icon}</span><span className="min-w-0 flex-1">{it.body}</span>{it.action}</div>)}
         {items.length > 1 && <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 justify-self-start text-ink-3 hover:text-ink-1" aria-expanded={open} onClick={() => setOpen(v => !v)}>{open ? '알림 접기' : `알림 ${items.length - 1}개 더 보기`}</Button>}
         {show('altar') && <AltarNotice s={s} setView={setView}/>}

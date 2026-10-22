@@ -25,7 +25,7 @@ test('expedition traits: same unit counted once, tiers by count, boss/guard-only
     const built = X.buildSide(board, 'a');
     const pig = built.units[0], base = X.unitBaseStats(D.unitById('pig'), 1);
     assert.equal(pig.stats.attack, Math.round(base.attack * 1.45), 'charge 4: attack ×1.45');
-    // 수호 2: 수호만 받는 피해 −25%(v3.419). 보스 2: 보스만 체력 +30%.
+    // 수호 2: 수호만 받는 피해 −25%(v3.421). 보스 2: 보스만 체력 +30%.
     const g = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front' }, { unit: 'stoneGolem', star: 1, row: 'front' }, { unit: 'pig', star: 1, row: 'front' }], 'a');
     assert.equal(g.units[0].damageTaken, .25); assert.equal(g.units[2].damageTaken, undefined, 'non-guard untouched');
     // 초원 2가 같이 켜지지 않도록 세 번째 유닛은 숲(이블아이).
@@ -538,7 +538,7 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 10 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 5 }));
     assert.equal(D.shardChance(10, true), D.shardChance(5, true), 'core shard chance stays capped at the legend rate');
     // v3.417 성급 가치: ★3은 기본 능력치 ×4(웨이브 예산의 ★3 = 비용 × 4와 같은 값), 비용 1 ★3이 비용 4 ★1과 맞먹음.
-    // v3.419 시너지: 6단계 배율이 4단계보다 낮지 않음 · 제어(마나 억제 · 약화 · 시작 약화) · 역병(공격마다 중독) · 지하 공격 배율.
+    // v3.421 시너지: 6단계 배율이 4단계보다 낮지 않음 · 제어(마나 억제 · 약화 · 시작 약화) · 역병(공격마다 중독) · 지하 공격 배율.
     for (const id of ['charge', 'arcane']) { const t = D.TRAITS.find(x => x.id === id).tiers, k = id === 'charge' ? 'attack' : 'magic'; assert.ok(t[2].mult[k] >= t[1].mult[k], `${id} 6 ≥ 4`); }
     { const ctrl = [{ unit: 'slime', star: 1, row: 'front' }, { unit: 'curseEye', star: 1, row: 'back' }, { unit: 'mixedGolem', star: 1, row: 'front' }, { unit: 'memoryMonitor', star: 1, row: 'back' }], foe = [{ unit: 'pig', star: 1, row: 'front' }];
       const r = X.battle(ctrl, foe, mkRng(3)); assert.ok(r.log.some(l => l.includes('적 전체 약화 2턴')), 'control 4 opens with weaken'); assert.ok(r.frames.some(f => f.m === '제압'));

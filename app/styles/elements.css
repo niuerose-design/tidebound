@@ -4,6 +4,10 @@
   border-color:var(--border)
 }
 
+/* v3.419 Tailwind 그리드(.grid)의 칸 안 요소는 내용보다 좁아질 수 있게 합니다. 기본값(min-width:auto)이면 말줄임(truncate) 글 · 한 줄 알림이
+   칸을 글 길이만큼 넓혀 휴대폰 폭을 넘기고, iOS 사파리가 페이지 전체를 축소해 보여 줍니다. base 층이라 min-w-* 유틸리티가 있으면 그쪽이 이깁니다. */
+@layer base { .grid > * { min-width:0 } }
+
 body {
   margin:0;
   /* v3.387 바탕: 위쪽 청록 · 아래 오른쪽 금빛이 은은히 깔린 깊은 바다. 그 위에 아주 옅은 잡티(body::before)로 종이 같은 결을 줍니다. */

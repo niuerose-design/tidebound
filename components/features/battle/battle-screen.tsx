@@ -29,11 +29,11 @@ export function BattleScreen({ s: base, frames, busy, send, setView, onSwitchSlo
     const playerStats = useMemo(() => cachedStats(base), [base]);
     const show = useNotices();
     const st = stageById(s.stage)!;
-    return <div className="grid gap-3 text-ink-1" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
+    return <div className="grid grid-cols-[minmax(0,1fr)] gap-3 text-ink-1" style={{ '--stage-tone': st.tone } as React.CSSProperties}>
         <Summary base={base} setView={setView}/>
         <Notices base={base} send={send} setView={setView}/>
         {show('slots') && <SlotChips s={base} busy={busy} onSwitch={onSwitchSlot}/>}
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[256px_minmax(0,1fr)_300px]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[256px_minmax(0,1fr)_300px]">
             <aside className="hidden min-w-0 xl:order-1 xl:block"><PlayerCard s={s} a={playerStats} setView={setView}/></aside>
             <section className="order-1 flex min-w-0 flex-col gap-3 xl:order-2" aria-label="사냥 장면">
                 <PlayerCard s={s} a={playerStats} setView={setView} compact/>

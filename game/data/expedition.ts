@@ -125,7 +125,7 @@ export const unitById = (id: string) => ALL_UNITS.find(u => u.id === id);
 export type TraitTier = { count: number; bonus?: Partial<Stats>; mult?: Partial<Record<'hp' | 'attack' | 'magic', number>>; damageTaken?: number; flags?: string[]; only?: Role | 'backline' | 'boss' };
 export type TraitDef = { id: Origin | Role | Special; kind: 'origin' | 'role' | 'special'; name: string; tiers: TraitTier[] };
 export const TRAITS: TraitDef[] = [
-    // v3.419 시너지 균형(scripts/expedition-traits.mjs · expedition-sim.mjs): 효과가 거의 없던 시너지를 살림. 황야 2 .2 → .25 · 숲 2 · 4 체력 5% · 10% · 지하 2 · 4 공격 5% · 25%(4단계 상승분이 0이었음) ·
+    // v3.421 시너지 균형(scripts/expedition-traits.mjs · expedition-sim.mjs): 효과가 거의 없던 시너지를 살림. 황야 2 .2 → .25 · 숲 2 · 4 체력 5% · 10% · 지하 2 · 4 공격 5% · 25%(4단계 상승분이 0이었음) ·
     // 바다 4 속도 5 → 4 · 돌격 6 · 마력 6은 4보다 배율이 낮던 것을 4와 같게 · 마력 4 1.45 → 1.5 · 수호 .2 · .4 → .25 · .45 · 망령 흡혈 .15 · .35 → .2 · .4. 초원 4 · 황야 4는 따로 재면 커 보이지만 싼 조합의 후반을 받치는 값이라 그대로.
     { id: 'meadow', kind: 'origin', name: '초원', tiers: [{ count: 2, mult: { hp: 1.25 } }, { count: 4, mult: { hp: 1.6 }, flags: ['regen'] }] },
     { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .25 }, { count: 4, damageTaken: .45, mult: { attack: 1.2, magic: 1.2 }, flags: ['reflect'] }] },
@@ -137,7 +137,7 @@ export const TRAITS: TraitDef[] = [
     { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.45 }, bonus: { crit: .15 } }] },
     { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.5 } }, { count: 6, mult: { magic: 1.5 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .25, only: 'guard' }, { count: 4, damageTaken: .45, only: 'guard', flags: ['backline15'] }] },
-    // v3.419: 제어 · 역병은 기술로 거는 상태이상의 턴 · 중첩만 늘려 거의 효과가 없었음(2명 켬/끔 +1 · +0%p, 4단계 ‘저항 무시’는 구현도 없었음) → 적 마나 억제 · 공격마다 중독.
+    // v3.421: 제어 · 역병은 기술로 거는 상태이상의 턴 · 중첩만 늘려 거의 효과가 없었음(2명 켬/끔 +1 · +0%p, 4단계 ‘저항 무시’는 구현도 없었음) → 적 마나 억제 · 공격마다 중독.
     { id: 'control', kind: 'role', name: '제어', tiers: [{ count: 2, bonus: { stunBonus: 1, controlBonus: 1 }, flags: ['manaDrain20', 'shackle'] }, { count: 4, bonus: { stunBonus: 2, controlBonus: 2 }, flags: ['manaDrain40', 'shackle2', 'dread'] }] },
     { id: 'plague', kind: 'role', name: '역병', tiers: [{ count: 2, bonus: { poisonStackBonus: 1, dotTurnsBonus: 1 }, flags: ['blight'] }, { count: 4, bonus: { poisonStackBonus: 4, dotTurnsBonus: 2 }, flags: ['blight', 'spread'] }] },
     { id: 'wraith', kind: 'role', name: '망령', tiers: [{ count: 2, bonus: { lifesteal: .2 } }, { count: 4, bonus: { lifesteal: .4 }, flags: ['revive'] }] },
