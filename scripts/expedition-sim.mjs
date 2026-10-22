@@ -80,7 +80,7 @@ for (const comp of D.INTENDED_COMPS.filter(c => c.units.every(id => POOL.some(u 
     const avg = (ca, sa, cb, sb) => { let t = 0, m = 0; for (const a of POOL.filter(u => u.cost === ca)) for (const b of POOL.filter(u => u.cost === cb)) { t += duel({ unit: a.id, star: sa, row: 'front' }, { unit: b.id, star: sb, row: 'front' }); m++; } return Math.round(100 * t / m); };
     console.log('\n성급 가치(1대1)', [[1, 3, 4, 1], [2, 3, 5, 1], [3, 3, 5, 2]].map(([ca, sa, cb, sb]) => `비용 ${ca} ★${sa} ↔ 비용 ${cb} ★${sb} ${avg(ca, sa, cb, sb)}%`).join(' · '));
 }
-// v3.422 연습 원정대: 같은 라운드 웨이브와 비교한 승률(플레이어 = 그 라운드 배치 수 · 비용 상한의 무작위 보드, 싼 유닛 ★2 섞기). 목표: 입문 ≫ 웨이브, 중급 ≈ 웨이브 이상, 숙련 ≈ 웨이브 이하.
+// v3.423 연습 원정대: 같은 라운드 웨이브와 비교한 승률(플레이어 = 그 라운드 배치 수 · 비용 상한의 무작위 보드, 싼 유닛 ★2 섞기). 목표: 입문 ≫ 웨이브, 중급 ≈ 웨이브 이상, 숙련 ≈ 웨이브 이하.
 {
     const rounds = [2, 3, 5, 6, 7, 9, 10, 11];
     const board = (round, rng) => { const slots = X.STARTER_SLOTS[round] + (round <= 3 ? 1 : 0), maxC = round <= 2 ? 1 : round <= 4 ? 2 : round <= 6 ? 3 : round <= 9 ? 4 : 5, cand = POOL.filter(u => u.cost <= maxC), b = []; while (b.length < slots) { const u = cand[Math.floor(rng() * cand.length)]; if (!b.some(p => p.unit === u.id)) b.push({ unit: u.id, star: u.cost <= 2 && round >= 3 && rng() < .8 ? 2 : u.cost === 3 && round >= 7 && rng() < .4 ? 2 : 1, row: X.frontRole(u) ? 'front' : 'back' }); } return b; };

@@ -35,7 +35,7 @@ export async function pickGhosts(key: string, me: string, rng = Math.random, now
         accounts.add(snap.account);
         for (let round = 2; round <= EXPEDITION.rounds; round++) { if (isBossRound(round)) continue; const board = snap.boards?.[round]; if (board?.length) { const augments = snap.augs?.[round] || [], mods = combatMods(mergeMods([weeklyRuleById(snap.rule)?.mods, ...augments.map(augmentMods), ...masteryPerks(snap.mastery || 1).map(p => p.mods)])); (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0, account: snap.account, score: snap.score ?? expeditionScore(snap), ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) }); } }
     }
-    // v3.422 연습 원정대: 라운드마다 실제 후보가 fillTo명보다 적으면 모자란 만큼을 내 점수와 가까운 연습 원정대로 채웁니다(실제 기록이 쌓이면 빠짐).
+    // v3.423 연습 원정대: 라운드마다 실제 후보가 fillTo명보다 적으면 모자란 만큼을 내 점수와 가까운 연습 원정대로 채웁니다(실제 기록이 쌓이면 빠짐).
     // 이번 달 기록이 없는 모험가는 점수 0으로 봅니다(전에는 무작위 — 후보가 강한 한 명뿐이면 처음부터 그 사람을 만났음).
     const me0 = myScore ?? 0;
     let starters = 0;

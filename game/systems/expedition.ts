@@ -243,7 +243,7 @@ export function rollWave(round: number, rng: () => number, difficulty = 1, units
     return out;
 }
 export const frontRole = (def: UnitDef) => def.roles.some((r: Role) => r === 'guard' || r === 'charge');
-/** v3.422 연습 원정대 보드: 라운드의 배치 수(평균적인 레벨 진행) · 비용 상한 안에서 선호 순서대로 고르고, 웨이브 예산 × power를 넘지 않게 싼 유닛부터 ★을 올립니다. 숙련은 6라운드부터 아이템. 난수 없음(같은 라운드면 늘 같은 보드). */
+/** v3.423 연습 원정대 보드: 라운드의 배치 수(평균적인 레벨 진행) · 비용 상한 안에서 선호 순서대로 고르고, 웨이브 예산 × power를 넘지 않게 싼 유닛부터 ★을 올립니다. 숙련은 6라운드부터 아이템. 난수 없음(같은 라운드면 늘 같은 보드). */
 export const STARTER_SLOTS = [0, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8];
 export function starterBoard(g: StarterGhost, round: number): Placed[] {
     const r = Math.max(1, Math.min(EXPEDITION.rounds, round)), cap = Math.max(1, Math.round(WAVE_BUDGET[r] * g.power * (r <= 3 ? .7 : 1))); // 2 · 3라운드는 더 약하게(첫 고스트가 벽이 되지 않도록)

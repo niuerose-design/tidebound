@@ -455,7 +455,7 @@ export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 /** 고스트 보호: 같은 상대는 한 판에 maxSameRun번까지, 후보가 poolFull명 미만이면 고스트 확률을 비례해 낮춤(최저 poolMinChance 배), 상대 보드 가치가 그 라운드 웨이브 예산 × capMult를 넘으면 ★을 낮추고 그래도 넘으면 약한 유닛부터 뺌. */
 export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: 1.3, candidates: 3 };
 /**
- * v3.422 연습 원정대(입문 고스트): 이번 달 고스트 후보가 적으면 서버가 이 원정대들로 후보를 채웁니다. 라운드마다 실제 모험가가 STARTER_GHOST.fillTo명 이상이 되면 더 나오지 않습니다(유저 기록이 쌓이면 자연스럽게 대체).
+ * v3.423 연습 원정대(입문 고스트): 이번 달 고스트 후보가 적으면 서버가 이 원정대들로 후보를 채웁니다. 라운드마다 실제 모험가가 STARTER_GHOST.fillTo명 이상이 되면 더 나오지 않습니다(유저 기록이 쌓이면 자연스럽게 대체).
  * 보드는 systems/expedition.ts의 starterBoard가 라운드 웨이브 예산 × power에 맞춰 만들고, 후보는 시즌 점수(score)가 내 점수와 가까운 순이라 새 모험가는 입문 원정대부터 만납니다.
  * tier 1 입문 · 2 중급 · 3 숙련. 세기는 scripts/expedition-sim.mjs 끝의 ‘연습 원정대’ 표로 맞춥니다. units는 앞에서부터 배치하는 선호 순서(비용 제한에 걸리면 건너뜀).
  */

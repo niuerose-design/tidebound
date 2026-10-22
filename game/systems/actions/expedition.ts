@@ -315,7 +315,7 @@ export const expeditionActions: ActionHandlers = {
         const ghostKey = ghost ? ghost.account || ghost.name : '', seenCount = ghostKey ? (r.ghostSeen?.[ghostKey] || 0) : 0;
         const poolScale = ghost?.pool !== undefined ? Math.max(GHOST_GUARD.poolMinChance, Math.min(1, ghost.pool / GHOST_GUARD.poolFull)) : 1;
         const useGhost = !!ghost && seenCount < GHOST_GUARD.maxSameRun && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance) * poolScale;
-        // v3.422 연습 원정대: 보낸 보드 대신 여기서 다시 만듭니다(난이도 예산 배율 · 적 보정을 웨이브와 똑같이 받고, 보드를 바꿔 보낼 수 없음).
+        // v3.423 연습 원정대: 보낸 보드 대신 여기서 다시 만듭니다(난이도 예산 배율 · 적 보정을 웨이브와 똑같이 받고, 보드를 바꿔 보낼 수 없음).
         const starter = useGhost && ghost!.account?.startsWith(STARTER_GHOST.accountPrefix) ? starterGhostById(ghost!.account.slice(STARTER_GHOST.accountPrefix.length)) : undefined;
         if (starter) { ghost!.board = starterBoard({ ...starter, power: starter.power * difficultyOf(r.difficulty).budget }, r.round); delete ghost!.mods; }
         const capped = useGhost ? (starter ? { board: ghost!.board, scaled: false } : capGhostBoard(ghost!.board, r.round, r.difficulty || 1)) : null;

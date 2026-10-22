@@ -167,7 +167,7 @@ test('expedition season rows: sync keeps the best run of the month, ghosts exclu
         assert.equal(two.score, 536); assert.equal(two.ghostPoints, 30);
         await E.syncExpeditionRow('p2', mk('둘', 1, 2, { 2: [{ unit: 'kingClang', star: 1, row: 'front' }] }, true, 30, 2), now + 3); assert.equal((await E.listExpeditionBoard(key)).find(r => r.name === '둘').score, 536, 'idempotent per run');
         assert.equal(E.expeditionScore({ wins: 8, cleared: true, round: 8, ghostByRun: { a: 10, b: 20 } }), 888);
-        // v3.422: 연습 원정대가 후보를 채우므로 실제 계정만 골라 봅니다.
+        // v3.423: 연습 원정대가 후보를 채우므로 실제 계정만 골라 봅니다.
         const real = list => (list || []).filter(g => !g.account?.startsWith('starter:'));
         const ghosts = await E.pickGhosts(key, 'p1', () => 0); assert.equal(real(ghosts[2])[0].name, '둘', 'self excluded, other player picked'); assert.equal(real(ghosts[2])[0].mods, undefined, 'no augments: no mods'); assert.equal(real(ghosts[2])[0].wins, 5, 'ghost carries its best wins'); assert.equal(real(ghosts[2])[0].account, 'p2'); assert.equal(real(ghosts[3])[0].name, '둘'); assert.equal(ghosts[4], undefined, 'boss round: no ghosts'); assert.equal(ghosts.pool, 1 + 8, 'one other account + starters');
         const forTwo = await E.pickGhosts(key, 'p2', () => 0); assert.equal(real(forTwo[2])[0].name, '하나');
@@ -740,7 +740,7 @@ test('expedition stage 22 (small ghost pool): candidates per round pick the leas
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
 
-test('expedition v3.422 starter ghosts: data is valid, boards fit the round budget, fill thin pools nearest to my score and step aside as real boards accumulate, the handler rebuilds them at the run difficulty and gives no season ghost points', async () => {
+test('expedition v3.423 starter ghosts: data is valid, boards fit the round budget, fill thin pools nearest to my score and step aside as real boards accumulate, the handler rebuilds them at the run difficulty and gives no season ghost points', async () => {
     const { newState, act } = await import('./harness.mjs');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
@@ -757,7 +757,7 @@ test('expedition v3.422 starter ghosts: data is valid, boards fit the round budg
     const value = (tier, round) => Math.max(...D.STARTER_GHOSTS.filter(g => g.tier === tier).map(g => D.boardValue(X.starterBoard(g, round))));
     assert.ok(value(1, 9) < value(2, 9) && value(2, 9) <= value(3, 9) + 2, 'tiers grow');
     // 서버: 빈 달이면 연습 원정대만, 기록 없는 나는 점수 0 → 입문부터.
-    const file = path.join(os.tmpdir(), `tb-exp422-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
+    const file = path.join(os.tmpdir(), `tb-exp423-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     const now = 1_800_000_000_000;
     try {
         const E = await L.load('server/expedition'), T = await L.load('data/time'); const now2 = now + 400 * 86_400_000, key = T.monthKey(now2);
