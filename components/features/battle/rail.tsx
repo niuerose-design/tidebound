@@ -57,10 +57,11 @@ const PlacePicker = memo(function PlacePicker({ s, busy, send, setView }: { s: S
     return <section className="rounded-l border border-line bg-surface-2 p-3 shadow-1" aria-label="사냥터 · 던전 · 제단 고르기">
         <div className="mb-2 flex items-center gap-2">
             <Tabs value={tab} onValueChange={v => setTab(v as PlaceTab)} className="min-w-0 flex-1">
+                {/* v3.422 데스크톱 오른쪽 칸(300px)에서는 세 탭 그림을 숨겨야 ‘전체 지도’ 단추와 겹치지 않습니다. */}
                 <TabsList className="flex w-full">
-                    <TabsTrigger value="stage" className="flex-1 gap-1"><Map size={13}/>사냥터</TabsTrigger>
-                    <TabsTrigger value="dungeon" className="flex-1 gap-1"><Compass size={13}/>던전{s.dungeon && <span className="size-1.5 rounded-full bg-accent" aria-label="진행 중"/>}</TabsTrigger>
-                    <TabsTrigger value="altar" className="flex-1 gap-1"><Flame size={13}/>제단{s.altarStatus?.blessings.length ? <span className="size-1.5 rounded-full bg-gold-ink" aria-label="축복 진행 중"/> : null}</TabsTrigger>
+                    <TabsTrigger value="stage" className="flex-1 gap-1 lg:[&>svg]:hidden"><Map size={13}/>사냥터</TabsTrigger>
+                    <TabsTrigger value="dungeon" className="flex-1 gap-1 lg:[&>svg]:hidden"><Compass size={13}/>던전{s.dungeon && <span className="size-1.5 rounded-full bg-accent" aria-label="진행 중"/>}</TabsTrigger>
+                    <TabsTrigger value="altar" className="flex-1 gap-1 lg:[&>svg]:hidden"><Flame size={13}/>제단{s.altarStatus?.blessings.length ? <span className="size-1.5 rounded-full bg-gold-ink" aria-label="축복 진행 중"/> : null}</TabsTrigger>
                 </TabsList>
             </Tabs>
             <Button type="button" variant="ghost" size="xs" className="h-auto shrink-0 gap-0.5 px-0 py-1 text-xs text-accent has-[>svg]:px-0 hover:bg-transparent hover:text-ink-1 pointer-coarse:min-h-11" onClick={() => setView(link[0])}>{link[1]}<ChevronRight size={13}/></Button>

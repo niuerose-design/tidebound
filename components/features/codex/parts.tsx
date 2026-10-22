@@ -61,7 +61,7 @@ const MARK_COLOR: Record<string, string> = { golden: 'var(--gold-ink)', swarm: '
 export function VariantMarks({ s, id }: { s: State; id: string }) {
     const row = s.variantBook?.[id] || {}, golden = s.goldenBook?.[id] || 0;
     const marks = [{ id: 'golden', mark: '✦', name: '황금 개체', n: golden }, ...VARIANTS.map(v => ({ id: v.id, mark: v.mark, name: v.name, n: row[v.id] || 0 }))];
-    return <span className="inline-flex items-center gap-1" aria-label="변종 처치 기록">{marks.map(m => <span key={m.id} title={m.n ? `${m.name} ${m.n}회 처치` : `${m.name} · 아직 못 만남`} aria-label={m.n ? `${m.name} ${m.n}회` : `${m.name} 없음`}
+    return <span className="inline-flex flex-wrap items-center gap-1" aria-label="변종 처치 기록">{marks.map(m => <span key={m.id} title={m.n ? `${m.name} ${m.n}회 처치` : `${m.name} · 아직 못 만남`} aria-label={m.n ? `${m.name} ${m.n}회` : `${m.name} 없음`}
         className={cn('relative inline-grid size-5 place-items-center rounded-full border text-xs leading-none', m.n ? 'border-current bg-surface-3' : 'border-line text-ink-3/70')} style={m.n ? { color: MARK_COLOR[m.id] } : undefined}>{m.mark}
         {m.n > 1 && <b className="absolute -top-1.5 -right-1.5 rounded-full bg-surface-3 px-1 font-num text-[11px] leading-4 text-ink-1">{m.n > 99 ? '99+' : m.n}</b>}</span>)}</span>;
 }
