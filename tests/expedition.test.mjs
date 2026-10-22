@@ -538,6 +538,8 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 10 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 5 }));
     assert.equal(D.shardChance(10, true), D.shardChance(5, true), 'core shard chance stays capped at the legend rate');
     // v3.417 성급 가치: ★3은 기본 능력치 ×4(웨이브 예산의 ★3 = 비용 × 4와 같은 값), 비용 1 ★3이 비용 4 ★1과 맞먹음.
+    // v3.418 신전 2 · 4 체력 8%: 신전 2를 켠 보드는 팀 전체 체력이 8% 높음.
+    { const two = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }, { unit: 'pig', star: 1, row: 'front' }], 'a').units[2]; assert.equal(two.maxHp, Math.round(X.unitBaseStats(D.unitById('pig'), 1).hp * 1.08)); }
     assert.equal(D.EXPEDITION.star[3], 4); assert.equal(X.unitBaseStats(D.unitById('slime'), 3).hp, 4 * D.BASE_BY_COST[1].hp);
     { let w = 0; for (let k = 0; k < 40; k++) { const rng = mkRng(900 + k); if (X.battle([{ unit: 'pig', star: 3, row: 'front' }], [{ unit: 'manticore', star: 1, row: 'front' }], rng).winner === 'a') w++; } assert.ok(w >= 16, `cost-1 ★3 holds against cost-4 ★1 (${w}/40)`); }
 });
