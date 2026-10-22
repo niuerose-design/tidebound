@@ -1,11 +1,11 @@
-import { masteryXpFor, MASTERY_MAX, MASTERY_PERKS, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, nextSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, quarterKey, RENOWN, renownRewardMult, leagueTierName } from '@/game/data/expedition';
+import { masteryXpFor, MASTERY_MAX, MASTERY_PERKS, bossUnits, lockedBossUnits, CORE_SHARD, shardChance, CODEX_LINK_KILLS, BOSS_UNLOCK_KILLS, nextSetAt, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, leagueTierName } from '@/game/data/expedition';
 import { BOSS_CORES } from '@/game/data/boss-core';
 import { FoldSection, StatBar, ConfirmAction } from '@/components/ui/game';
 import type { PanelProps } from '@/components/game/panel-props';
 import { Head, Muted, Box } from './parts';
 import type { State } from '@/game/types';
 
-/** v3.413 성장 탭(expedition-screen.tsx 에서 분리): 원정 숙련 · 명성, 분기 세트 안내, 세트 숙련 · 리그, 본편 연결. */
+/** v3.413 성장 탭(expedition-screen.tsx 에서 분리): 원정 숙련 · 명성, 이번 주 세트 안내, 세트 숙련 · 리그, 본편 연결. */
 type Send = PanelProps['send'];
 type SetDef = ReturnType<typeof setById>;
 type Pool = ReturnType<typeof setUnits>;
@@ -22,15 +22,17 @@ export function MasteryBox({ s, send, busy }: { s: State; send: Send; busy: bool
     </Box>;
 }
 
-export function SetBanner({ curSet, upcoming, now }: { curSet: SetDef; upcoming: ReturnType<typeof nextSet>; now: number }) {
-    return <Box className="border-[#3a4a6a] bg-gradient-to-br from-surface-1 to-[#1b1733]" aria-label="분기 세트"><Head level={3} title={`${curSet.icon} ${curSet.name} 세트`} aside={`${now ? quarterKey(now) : ''}${upcoming ? ` · 다음: ${upcoming.icon} ${upcoming.name}(${upcoming.from})` : ''}`}/><Muted>{curSet.desc}</Muted></Box>;
+/** v3.430 주간 로테이션: 남은 시간 ‘n일 n시간’(한국 시간 월요일 0시에 바뀜). */
+const untilText = (ms: number) => { const h = Math.max(0, Math.floor(ms / 3_600_000)), d = Math.floor(h / 24); return d ? `${d}일 ${h % 24}시간` : `${h}시간`; };
+export function SetBanner({ curSet, upcoming, now }: { curSet: SetDef; upcoming?: SetDef; now: number }) {
+    return <Box className="border-[#3a4a6a] bg-gradient-to-br from-surface-1 to-[#1b1733]" aria-label="이번 주 세트"><Head level={3} title={`${curSet.icon} ${curSet.name} 세트 · 이번 주`} aside={now && upcoming ? `${untilText(nextSetAt(now) - now)} 뒤 ${upcoming.icon} ${upcoming.name}` : ''}/><Muted>{curSet.desc} 세트는 한국 시간 월요일 0시마다 바뀌고, 진행 중인 판은 시작한 세트 그대로 끝까지 갑니다.</Muted></Box>;
 }
 
-export function SetMasteryBox({ s, curSet, sm, now }: { s: State; curSet: SetDef; sm: { level: number; xp: number }; now: number }) {
-    return <Box aria-label="세트 숙련"><Head level={3} title={`${curSet.icon} ${curSet.name} 세트`} aside={now ? quarterKey(now) : ''}/><div className="flex items-baseline justify-between gap-2"><b className="text-s">세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small className="text-ink-3">{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
+export function SetMasteryBox({ s, curSet, sm }: { s: State; curSet: SetDef; sm: { level: number; xp: number }; now?: number }) {
+    return <Box aria-label="세트 숙련"><Head level={3} title={`${curSet.icon} ${curSet.name} 세트`} aside="이번 주 세트"/><div className="flex items-baseline justify-between gap-2"><b className="text-s">세트 숙련 {sm.level}{sm.level >= SET_MASTERY.max ? ' (완성)' : ''}</b><small className="text-ink-3">{sm.level < SET_MASTERY.max ? `${sm.xp} / ${setMasteryXpFor(sm.level)}` : '세트 칭호 획득'}</small></div>
         <StatBar tone="accent" size="s" showText={false} value={sm.level >= SET_MASTERY.max ? 1 : sm.xp} max={sm.level >= SET_MASTERY.max ? 1 : setMasteryXpFor(sm.level)}/>
         <p className="text-xs text-ink-2">주간 리그 · <b className="text-gold-ink">{leagueTierName(s.expeditionLeague?.tier)}</b>{s.expeditionLeague?.last ? ` · 지난주 ${s.expeditionLeague.last.rank}위/${s.expeditionLeague.last.size}명 · 세계석 +${s.expeditionLeague.last.pearls}` : ' · 이번 주 첫 전투 때 같은 등급 8명 조에 들어갑니다'} <small className="text-ink-3">(순위 화면 ‘원정 · 주간 리그’ · 1~2위 승급 · 7~8위 강등)</small></p>
-        <Muted>세트마다 처음부터. 숙련 경험치와 같이 오르고 {Object.entries(SET_MASTERY.rewards).map(([lv, p]) => `${lv}에 세계석 ${p}`).join(' · ')}, 20이면 칭호 {curSet.icon} {curSet.name}의 원정대.</Muted></Box>;
+        <Muted>세트마다 따로 쌓이고, 그 세트가 다시 돌아오면 이어서 오릅니다. 숙련 경험치와 같이 오르고 {Object.entries(SET_MASTERY.rewards).map(([lv, p]) => `${lv}에 세계석 ${p}`).join(' · ')}, 20이면 칭호 {curSet.icon} {curSet.name}의 원정대.</Muted></Box>;
 }
 
 export function LinkBox({ s, pool, chosenDiff }: { s: State; pool: Pool; chosenDiff: number }) {

@@ -7,9 +7,9 @@ const runs = Number(process.argv[2] || 300);
 const SET = process.env.EXP_SET || D.SETS[0].id, POOL = D.setUnits(SET); console.log(`세트 ${SET} · 유닛 ${POOL.length}종`);
 const mkRng = seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 const ROUND_LEVEL = [0, 2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8];
-// v3.426 EXP_ECON=1: 레벨을 공짜로 주지 않고 실제 경제로 올립니다 — 판 레벨 2에서 시작, 전투마다 라운드 경험치(EXPEDITION.xpPerRound, EXP_PASSIVE로 바꿔 볼 수 있음),
+// v3.426 실제 경제(v3.430부터 기본, EXP_ECON=0이면 공짜 레벨): 레벨을 공짜로 주지 않고 실제 경제로 올립니다 — 판 레벨 2에서 시작, 전투마다 라운드 경험치(EXPEDITION.xpPerRound, EXP_PASSIVE로 바꿔 볼 수 있음),
 // 유닛을 산 뒤 남은 골드로 경험치(4골드)를 ROUND_LEVEL 목표까지 삽니다. 기본(공짜 레벨)은 기획 목표 곡선, 이 모드는 실제 플레이에 가까운 값입니다.
-const ECON = process.env.EXP_ECON === '1';
+const ECON = process.env.EXP_ECON !== '0'; // v3.430: 기본을 실제 경제로(공짜 레벨 모드는 기본 골드 7에서 승률을 20%p쯤 부풀림). 공짜 레벨로 보려면 EXP_ECON=0.
 // EXP_PASSIVE='a,b'로 라운드 경험치(전투 뒤 a + b × (라운드 − 1))를 바꿔 볼 수 있습니다. 기본은 게임 데이터(roundXp).
 const [PA, PB] = process.env.EXP_PASSIVE !== undefined ? process.env.EXP_PASSIVE.split(',').map(Number).concat(0) : [D.EXPEDITION.roundXp?.base || 0, D.EXPEDITION.roundXp?.perRound || 0];
 const PASSIVE = `${PA} + ${PB || 0} × (라운드 − 1)`, passiveAt = round => PA + (PB || 0) * (round - 1);

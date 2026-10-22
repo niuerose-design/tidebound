@@ -127,6 +127,19 @@ export const EXTRA_UNITS: UnitDef[] = [
     { id: 'papulatus', name: '파풀라투스', monster: 'starfallSeraph', cost: 4, origin: 'temple', roles: ['arcane'], special: ['boss'], skill: 'papTimeStop' },
     // v3.429 세트 2부터: 신전에만 비용 1 유닛이 없어 초반에 신전 2를 켜기 어려웠음(비용 2 · 3 신전 유닛은 3 · 4라운드 상점 한 칸에 3.6% · 2%) → 시간의 신전 돌갑주 병사를 비용 1 신전 수호로.
     { id: 'memoryGuard', name: '기억의 수호병', monster: 'ttGuardian', cost: 1, origin: 'temple', roles: ['guard'], skill: 'foeWard' },
+    // v3.430 세트 3 ‘리프레의 날개’: 용 · 드레이크 · 와이번(빠지는 유닛과 비용 · 지역이 같은 칸을 채움).
+    { id: 'redTurtle', name: '레드 드래곤 터틀', monster: 'lfRedTurtle', cost: 2, origin: 'sea', roles: ['plague'], skill: 'foeBurn' },
+    { id: 'darkStoneGolem', name: '다크 스톤골렘', monster: 'ashRay', cost: 2, origin: 'wasteland', roles: ['control'], skill: 'foeCrush' },
+    { id: 'blueWyvern', name: '블루 와이번', monster: 'lfWyvern', cost: 2, origin: 'forest', roles: ['charge'], skill: 'foeShellRam' },
+    { id: 'blueTurtle', name: '블루 드래곤 터틀', monster: 'lfBlueTurtle', cost: 3, origin: 'sea', roles: ['guard'], skill: 'foeWard' },
+    { id: 'redDrake', name: '레드 드레이크', monster: 'cinderKoi', cost: 3, origin: 'underground', roles: ['arcane'], skill: 'foeBurn' },
+    // v3.430 세트 4 ‘시간의 신전’: 시간의 신전 · 아케인 리버(도도가 비용 1 신전).
+    { id: 'dodo', name: '도도', monster: 'ttDodo', cost: 1, origin: 'temple', roles: ['charge'], skill: 'foeShellRam' },
+    { id: 'chimera', name: '키메라', monster: 'ttChimera', cost: 3, origin: 'meadow', roles: ['wraith'], skill: 'onyxSoulDrain' },
+    { id: 'memoryKnight', name: '추억의 수호병', monster: 'arMemoryGuard', cost: 3, origin: 'wasteland', roles: ['control'], skill: 'foeSilence' },
+    { id: 'trueErda', name: '트루 에르다', monster: 'arTrueErda', cost: 4, origin: 'forest', roles: ['arcane'], skill: 'foeShock' },
+    { id: 'juniorNekki', name: '주니어 네키', monster: 'sulfurEel', cost: 2, origin: 'underground', roles: ['wraith'], skill: 'onyxSoulDrain' },
+    { id: 'wyvern', name: '와이번', monster: 'novaManta', cost: 2, origin: 'sea', roles: ['charge'], skill: 'foeHaste' },
 ];
 export const ALL_UNITS: UnitDef[] = [...UNITS, ...EXTRA_UNITS];
 export const unitById = (id: string) => ALL_UNITS.find(u => u.id === id);
@@ -183,6 +196,9 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
     { id: 'templeBoss', name: '신전 · 아케인 4 + 보스 2', units: ['erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul', 'blackMage', 'zakum', 'stoneGolem', 'seaGuard'] },
     // v3.429 세트 2(심해의 조류) 측정용: 비용 1 신전 수호(기억의 수호병)로 초반을 여는 신전 조합. 첫 세트에는 이 유닛이 없어 시뮬에서 빠집니다.
     { id: 'templeGuard', name: '신전 · 아케인 6 + 수호 2', units: ['memoryGuard', 'erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul', 'papulatus', 'blackMage', 'seaGuard'] },
+    // v3.430 세트 3 · 4 측정용(그 세트에서만 잴 수 있음).
+    { id: 'leafreDragons', name: '바다 · 용 6 + 역병 2', units: ['seacle', 'redTurtle', 'sharkUnit', 'blueTurtle', 'skelegon', 'manticore', 'blueWyvern', 'redDrake'] },
+    { id: 'timeKeepers', name: '신전 · 아케인 4 + 망령 4', units: ['dodo', 'kingClang', 'erdaSpirit', 'chimera', 'juniorNekki', 'vanishingSoul', 'lyka', 'blackMage'] },
 ];
 
 /**
@@ -201,6 +217,8 @@ export const ITEMS: ItemDef[] = [
     { id: 'thornMail', name: '가시 갑옷', desc: '받은 피해의 30%를 적에게 되돌려줌 · 최대 체력 20% 증가', reflect: .3, mult: { hp: 1.2 } },
     // 20단계 세트 전용(심해의 조류): 상자 기본 풀에 더해짐.
     { id: 'tidePearl', name: '조류의 진주', desc: '속도 +3 · 준 피해의 15%만큼 체력 회복', bonus: { speed: 3, lifesteal: .15 }, set: 'deepTide' },
+    { id: 'dragonScale', name: '용의 비늘', desc: '받는 피해 15% 감소 · 최대 체력 10% 증가', damageTaken: .15, mult: { hp: 1.1 }, set: 'leafre' },
+    { id: 'hourglass', name: '모래시계', desc: '마나 40을 채운 채 시작 · 속도 +2', startMana: 40, bonus: { speed: 2 }, set: 'timeTemple' },
     // 7단계 조합 아이템(상자에 안 나옴).
     { id: 'greatBlade', name: '대검', desc: '물리 공격력 80% 증가', mult: { attack: 1.8 }, tier: 2 },
     { id: 'archStaff', name: '대마법봉', desc: '마법 공격력 80% 증가', mult: { magic: 1.8 }, tier: 2 },
@@ -276,6 +294,8 @@ export const AUGMENTS: AugmentDef[] = [
     { id: 'treasury', name: '금고', desc: '라운드마다 골드 +4', tier: 3, kind: 'economy', mods: { goldPlus: 4 } },
     // 20단계 세트 전용(심해의 조류).
     { id: 'tideSurge', name: '조류 타기', desc: '뒷줄 유닛 공격력 15% 증가 · 모든 유닛 속도 +1', tier: 2, kind: 'combat', set: 'deepTide', mods: { backPower: 1.15, speed: 1 } },
+    { id: 'dragonHeart', name: '용의 심장', desc: '앞줄 유닛 체력 12% 증가 · 모든 유닛 속도 +1', tier: 2, kind: 'combat', set: 'leafre', mods: { frontHp: 1.12, speed: 1 } },
+    { id: 'timeLoop', name: '시간 되감기', desc: '모든 유닛의 마나가 25% 더 빨리 참', tier: 2, kind: 'combat', set: 'timeTemple', mods: { manaGain: 1.25 } },
 ];
 export const augmentById = (id: string) => { const base = id.split(':')[0]; return AUGMENTS.find(a => a.id === base); };
 /** 'traitPlus2:meadow' 같은 동적 증강의 보정. */
@@ -451,24 +471,33 @@ export const shardCoreFor = (unitId: string, rng: () => number) => SHARD_CORE_OF
 /** 도감 연결: 유닛 도감이 동 · 은 · 금에 닿을 때마다 그 유닛의 본편 몬스터 처치 수를 더해 줍니다(연구 단계가 빨라짐). */
 export const CODEX_LINK_KILLS = [50, 200, 500];
 
-// ───────────── 20단계: 분기 세트 ─────────────
-/** 분기 세트: 3~4개월마다 유닛 풀 일부 교체 + 세트 전용 증강 · 아이템. 판은 시작할 때의 세트(run.set)를 끝까지 쓰고, 도감 · 통계 · 고스트는 id 기준이라 세트가 바뀌어도 남습니다. */
-export type SetDef = { id: string; name: string; icon: string; /** 시작 분기 'YYYY-Qn'(한국 시간). */ from: string; desc: string; /** 기본 30종에서 빼는 id · 더하는 id(EXTRA_UNITS). */ remove?: string[]; add?: string[] };
+// ───────────── 20단계: 세트(v3.430부터 주간 로테이션) ─────────────
+/** 세트: 유닛 풀 일부 교체 + 세트 전용 증강 · 아이템(v3.430 전에는 분기마다, 지금은 매주 돌아감). 판은 시작할 때의 세트(run.set)를 끝까지 쓰고, 도감 · 통계 · 고스트는 id 기준이라 세트가 바뀌어도 남습니다. */
+export type SetDef = { id: string; name: string; icon: string; desc: string; /** 기본 30종에서 빼는 id · 더하는 id(EXTRA_UNITS). */ remove?: string[]; add?: string[] };
 export const SETS: SetDef[] = [
-    { id: 'genesis', name: '창세', icon: '🌊', from: '2026-Q4', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
+    { id: 'genesis', name: '창세', icon: '🌊', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
     // v3.429: 파란 버섯(비용 1 초원) 대신 기억의 수호병(비용 1 신전 수호). 이 세트는 초원 비용 1이 셋(슬라임 · 돼지 · 파란 버섯)이고 신전 비용 1은 없어, 바꿔 넣으면 풀 크기(30)를 지키면서 신전 초반을 엽니다.
     // 상점 시뮬(EXP_SET=deepTide): 신전 조합 72 → 75%(3 · 4라운드 66/59 → 73/69), 기억의 수호병을 쓰는 신전 조합 76~78%, 지하 조합 · 무작위 구매는 그대로.
-    { id: 'deepTide', name: '심해의 조류', icon: '🌑', from: '2027-Q1', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 뿔버섯 · 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+    { id: 'deepTide', name: '심해의 조류', icon: '🌑', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 뿔버섯 · 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+    // v3.430 세트 3 · 4: 빠지는 유닛과 같은 비용 · 지역 칸을 새 유닛으로 채워 비용 곡선 · 지역별 비용 1 · 역할 수(각 4 이상)를 지킵니다.
+    { id: 'leafre', name: '리프레의 날개', icon: '🐉', desc: '드래곤 터틀 · 와이번 · 레드 드레이크 · 다크 스톤골렘과 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘용의 심장’ · 아이템 ‘용의 비늘’.', remove: ['orangeMushroom', 'stoneGolem', 'curseEye', 'ligator', 'seaGuard', 'erdaSpirit'], add: ['redTurtle', 'darkStoneGolem', 'blueWyvern', 'blueTurtle', 'redDrake', 'memoryGuard'] },
+    { id: 'timeTemple', name: '시간의 신전', icon: '⏳', desc: '도도(비용 1 신전) · 키메라 · 추억의 수호병 · 트루 에르다 · 주니어 네키 · 와이번이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘시간 되감기’ · 아이템 ‘모래시계’.', remove: ['pig', 'mixedGolem', 'darkDrake', 'juniorWraith', 'sharkUnit', 'memoryMonitor'], add: ['dodo', 'memoryKnight', 'trueErda', 'juniorNekki', 'wyvern', 'chimera'] },
 ];
-/** 한국 시간 분기 키. */
-export const quarterKey = (now: number) => { const d = new Date(now + 9 * 3600_000); return `${d.getUTCFullYear()}-Q${1 + Math.floor(d.getUTCMonth() / 3)}`; };
-/** 지금 분기의 세트: from이 지금 분기 이하인 마지막 세트(없으면 첫 세트). */
-export const activeSet = (now: number) => { const q = quarterKey(now); return [...SETS].reverse().find(x => x.from <= q) || SETS[0]; };
+/**
+ * v3.430 주간 로테이션(전에는 분기마다 한 세트): 한국 시간 월요일 0시마다 SETS 순서대로 다음 세트로 넘어가고 끝까지 가면 처음으로 돌아갑니다.
+ * epoch = 2026-10-19(월) 0시(한국 시간)가 0번 주(창세). 판은 시작할 때의 세트(run.set)를 끝까지 씁니다.
+ */
+export const SET_ROTATION = { epoch: Date.UTC(2026, 9, 18, 15), weekMs: 7 * 86_400_000 };
+export const rotationIndex = (now: number) => Math.floor((now - SET_ROTATION.epoch) / SET_ROTATION.weekMs);
+const setAt = (index: number) => SETS[((index % SETS.length) + SETS.length) % SETS.length] || SETS[0];
+export const activeSet = (now: number) => setAt(rotationIndex(now));
+/** 다음 주 세트와 바뀌는 시각(다음 월요일 0시, 한국 시간). */
+export const nextSet = (now: number) => setAt(rotationIndex(now) + 1);
+export const nextSetAt = (now: number) => SET_ROTATION.epoch + (rotationIndex(now) + 1) * SET_ROTATION.weekMs;
 export const setById = (id?: string) => SETS.find(x => x.id === id) || SETS[0];
-export const nextSet = (now: number) => { const q = quarterKey(now); return SETS.find(x => x.from > q); };
 /** 세트의 유닛 풀. */
 export const setUnits = (setId?: string): UnitDef[] => { const d = setById(setId), out = UNITS.filter(u => !d.remove?.includes(u.id)); for (const id of d.add || []) { const u = unitById(id); if (u && !out.includes(u)) out.push(u); } return out; };
-/** 세트 숙련(세트마다 처음부터): 레벨 n → n+1에 150 + 50(n−1), 최대 20. 5 · 10 · 15 · 20에 세계석 10 · 20 · 30 · 50, 20이면 세트 칭호. */
+/** 세트 숙련(세트마다 따로): 레벨 n → n+1에 150 + 50(n−1), 최대 20. 5 · 10 · 15 · 20에 세계석 10 · 20 · 30 · 50, 20이면 세트 칭호. v3.430 주간 로테이션으로 세트가 다시 돌아오면 그 세트 숙련을 이어서 쌓습니다(expeditionSetMasteries). */
 export const SET_MASTERY = { max: 20, rewards: { 5: 10, 10: 20, 15: 30, 20: 50 } as Record<number, number> };
 export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 

@@ -35,9 +35,9 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
     const chosenDiff = Math.min(diff, unlocked), setDiff = (n: number) => { setDiffState(n); try { localStorage.setItem('exp-difficulty', String(n)); } catch { /* 저장 불가 */ } };
     // 11단계: 이번 주 규칙(출발 화면용, useNow는 처음엔 0이라 하이드레이션 뒤에 채워짐) · 숙련.
     const now = useNow(60_000), thisWeek = now ? weeklyRule(weekKey(now)).id : null;
-    // 20단계 분기 세트: 지금 세트 · 다음 세트 · 유닛 풀 · 세트 숙련(세트가 다르면 처음부터).
+    // 20단계 세트(v3.430 주간 로테이션): 이번 주 세트 · 다음 주 세트 · 유닛 풀 · 그 세트의 숙련(다른 세트 것은 expeditionSetMasteries에 보관).
     const curSet = now ? activeSet(now) : setById(undefined), upcoming = now ? nextSet(now) : undefined, pool = setUnits(curSet.id);
-    const sm = s.expeditionSetMastery && s.expeditionSetMastery.set === curSet.id ? s.expeditionSetMastery : { set: curSet.id, level: 1, xp: 0, claimed: [] as number[] };
+    const sm = s.expeditionSetMastery && s.expeditionSetMastery.set === curSet.id ? s.expeditionSetMastery : { set: curSet.id, level: 1, xp: 0, claimed: [] as number[], ...s.expeditionSetMasteries?.[curSet.id] };
     const weekRule = thisWeek ? weeklyRuleById(thisWeek) : undefined;
     // 13단계: 과제(일일 · 주간) · 도감.
     const q = s.expeditionQuests, stale = !!(q && now && (q.day !== dayKey(now) || q.week !== weekKey(now)));
