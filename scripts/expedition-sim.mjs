@@ -65,11 +65,18 @@ const ids = POOL.map(u => u.id), win = new Map(ids.map(id => [id, 0]));
 for (let i = 0; i < ids.length; i++) for (let j = 0; j < ids.length; j++) { if (i === j) continue; let w = 0; for (let k = 0; k < 20; k++) { const r = X.battle([{ unit: ids[i], star: 1, row: 'front' }], [{ unit: ids[j], star: 1, row: 'front' }], mkRng(i * 1000 + j * 31 + k)); if (r.winner === 'a') w++; } win.set(ids[i], win.get(ids[i]) + w / 20); }
 console.log('\n1대1 승률(★1, 29상대 평균) — 비용순');
 for (const u of [...POOL].sort((a, b) => a.cost - b.cost || win.get(b.id) - win.get(a.id))) console.log(`비용 ${u.cost}`, u.name.padEnd(8), String(Math.round(100 * win.get(u.id) / (ids.length - 1))).padStart(3) + '%');
-// v3.416 난이도 사다리: 의도한 조합(비용 1~2 ★3 · 그 위 ★2, 상위 아이템)으로 난이도별 8 · 11 · 12라운드 웨이브 승률. 증강 없이 잰 값. 목표: 전설(5) 100% · 초월(6) 대부분 · 천벌(7)부터 조합 · ★3 · 증강 완성도가 갈라 놓고, 무한(10)은 증강까지 갖춘 ★3 완성 보드만.
-const LADDER_ITEMS = ['greatBlade', 'archStaff', 'towerShield', 'citadel', 'doomSpear', 'bloodOrb', 'archStaff', 'galeHorn'];
+// v3.416 난이도 사다리: 의도한 조합(비용 1~2 ★3 · 그 위 ★2)으로 난이도별 8 · 11 · 12라운드 웨이브 승률. 증강 없이 잰 값.
+// v3.417: 아이템은 역할에 맞춰(수호 대방패 · 마력 대마법봉 · 그 밖 대검) 끼웁니다(칸 순서로 끼우면 조합마다 엉뚱한 아이템이 걸려 비교가 흐려짐). 조합의 비용 합을 함께 보여 줍니다 — 비싼 조합이 높은 단계에서 앞서는 것은 시너지가 아니라 비용 차이.
+const ladderItem = def => def.roles.includes('guard') ? 'towerShield' : def.roles.includes('arcane') ? 'archStaff' : 'greatBlade';
 console.log('\n난이도별 완성 편성 승률(8/11/12라운드)');
 for (const comp of D.INTENDED_COMPS.filter(c => c.units.every(id => POOL.some(u => u.id === id)))) {
-    const board = comp.units.map((id, i) => { const def = D.unitById(id); return { unit: id, star: def.cost <= 2 ? 3 : 2, row: X.frontRole(def) ? 'front' : 'back', item: LADDER_ITEMS[i % LADDER_ITEMS.length] }; });
+    const board = comp.units.map(id => { const def = D.unitById(id); return { unit: id, star: def.cost <= 2 ? 3 : 2, row: X.frontRole(def) ? 'front' : 'back', item: ladderItem(def) }; });
     const rate = (round, diff) => { let w = 0; const n = Math.max(40, Math.round(trials / 3)); for (let k = 0; k < n; k++) { const rng = mkRng(777 + k * 31 + round); if (X.battle(board, X.rollWave(round, rng, diff, POOL), rng, D.EXPEDITION.maxTurns, undefined, D.isBossRound(round), D.waveMods(round, diff)).winner === 'a') w++; } return Math.round(100 * w / n); };
-    console.log(comp.name.padEnd(28), D.DIFFICULTIES.filter(d => d.level >= 5).map(d => `${d.icon}${[8, 11, 12].map(r => rate(r, d.level)).join('/')}`).join(' '));
+    console.log(`${comp.name} (비용 ${comp.units.reduce((n, id) => n + D.unitById(id).cost, 0)})`.padEnd(32), D.DIFFICULTIES.filter(d => d.level >= 5).map(d => `${d.icon}${[8, 11, 12].map(r => rate(r, d.level)).join('/')}`).join(' '));
+}
+// v3.417 성급 가치: 같은 투자(★3 = 9장)라면 웨이브 예산(★3 = 비용 × 4)과 비슷하게 싸워야 합니다. 비용별 평균 1대1 승률(무승부 반).
+{
+    const duel = (a, b) => { let w = 0; for (let k = 0; k < 20; k++) { const rng = mkRng(5 + k); const r = X.battle([a], [b], rng).winner; w += r === 'a' ? 1 : r === 'draw' ? .5 : 0; } return w / 20; };
+    const avg = (ca, sa, cb, sb) => { let t = 0, m = 0; for (const a of POOL.filter(u => u.cost === ca)) for (const b of POOL.filter(u => u.cost === cb)) { t += duel({ unit: a.id, star: sa, row: 'front' }, { unit: b.id, star: sb, row: 'front' }); m++; } return Math.round(100 * t / m); };
+    console.log('\n성급 가치(1대1)', [[1, 3, 4, 1], [2, 3, 5, 1], [3, 3, 5, 2]].map(([ca, sa, cb, sb]) => `비용 ${ca} ★${sa} ↔ 비용 ${cb} ★${sb} ${avg(ca, sa, cb, sb)}%`).join(' · '));
 }
