@@ -130,7 +130,8 @@ export const TRAITS: TraitDef[] = [
     { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.4 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, flags: ['killStack'] }, { count: 4, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
     { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 5 }, flags: ['haste'] }] },
-    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, mult: { magic: 1.1 }, flags: ['startMana50'] }, { count: 4, mult: { magic: 1.15 }, bonus: { penetration: .4 }, flags: ['startMana100'] }] },
+    // v3.418: 신전 유닛은 마나를 채우기 전에 쓰러져 2단계 값이 낮았음(2명 켬/끔 차 +9%p, 초원 · 황야 · 바다는 +16~18) → 2단계 체력 8%로 +18%p. 4단계에도 같은 체력 8%(올리면서 잃지 않게). 4단계를 더 키우면 높은 난이도에서 이미 가장 센 후반이 더 세져서 그대로 둠.
+    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, mult: { magic: 1.1, hp: 1.08 }, flags: ['startMana50'] }, { count: 4, mult: { magic: 1.15, hp: 1.08 }, bonus: { penetration: .4 }, flags: ['startMana100'] }] },
     { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.25 }, bonus: { crit: .15 } }] },
     { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.45 } }, { count: 6, mult: { magic: 1.25 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .2, only: 'guard' }, { count: 4, damageTaken: .4, only: 'guard', flags: ['backline15'] }] },
