@@ -537,6 +537,9 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     assert.ok(D.themeById('abyss').unlocked({ expeditionAbyssBest: 20 }), 'old abyss theme keeps its 20-round bar'); assert.ok(!D.themeById('void').unlocked({ expeditionAbyssBest: 39 })); assert.ok(D.themeById('void').unlocked({ expeditionAbyssBest: 40 })); assert.ok(D.themeById('infinity').unlocked({ expeditionDiffClears: { 10: 1 } }));
     assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 10 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 5 }));
     assert.equal(D.shardChance(10, true), D.shardChance(5, true), 'core shard chance stays capped at the legend rate');
+    // v3.417 성급 가치: ★3은 기본 능력치 ×4(웨이브 예산의 ★3 = 비용 × 4와 같은 값), 비용 1 ★3이 비용 4 ★1과 맞먹음.
+    assert.equal(D.EXPEDITION.star[3], 4); assert.equal(X.unitBaseStats(D.unitById('slime'), 3).hp, 4 * D.BASE_BY_COST[1].hp);
+    { let w = 0; for (let k = 0; k < 40; k++) { const rng = mkRng(900 + k); if (X.battle([{ unit: 'pig', star: 3, row: 'front' }], [{ unit: 'manticore', star: 1, row: 'front' }], rng).winner === 'a') w++; } assert.ok(w >= 16, `cost-1 ★3 holds against cost-4 ★1 (${w}/40)`); }
 });
 
 test('expedition stage 17: ghost boards carry the opponent run mods (augments · weekly rule · mastery perks) — recorded per round, synced in the season row, sent with pickGhosts, validated and applied to side B in battle, and shown as foe augments', async () => {
