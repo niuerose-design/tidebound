@@ -627,6 +627,8 @@ export type State = {
     expeditionLeague?: { tier: number; claimed?: string; last?: import('./data/expedition').LeagueSettlement; best?: number };
     /** 20단계: 세트 숙련(세트가 바뀌면 처음부터) · 세트 숙련 20을 찍은 세트 id. */
     expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
+    /** v3.430 주간 로테이션: 지금 세트가 아닌 세트들의 숙련(세트가 다시 돌아오면 이어서). 지금 세트 것은 expeditionSetMastery. */
+    expeditionSetMasteries?: Record<string, { level: number; xp: number; claimed: number[] }>;
     expeditionSetDone?: Record<string, number>;
     /** 23단계: 공유 코드로 불러온 목표 보드(상점에 ‘목표’ 표시 · 모은 수 표시). */
     expeditionTarget?: { code: string; units: { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string }[]; set?: string; augments?: string[]; wins?: number; round?: number; author?: string; memo?: string };

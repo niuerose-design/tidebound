@@ -116,10 +116,11 @@ export function questProgress(s: State, now: number, key: QuestKey, n = 1) {
         if (st.n >= def.target) { st.done = true; s.pearls = (s.pearls || 0) + def.pearls; addMasteryXp(s, def.xp); addLog(s, `원정 과제 완료 · ${def.name} · 세계석 +${def.pearls} · 숙련 +${def.xp}`, 'reward'); }
     }
 }
-/** 20단계 세트 숙련: 영구 숙련과 같은 경험치를 받되 세트가 바뀌면 처음부터. 5 · 10 · 15 · 20에 세계석, 20이면 세트 완성 기록(칭호). */
+/** 20단계 세트 숙련: 영구 숙련과 같은 경험치를 받고 세트마다 따로 쌓입니다(v3.430: 세트가 다시 돌아오면 이어서). 5 · 10 · 15 · 20에 세계석, 20이면 세트 완성 기록(칭호). */
 export function addSetMasteryXp(s: State, xp: number, setId: string) {
     let m = s.expeditionSetMastery;
-    if (!m || m.set !== setId) m = s.expeditionSetMastery = { set: setId, level: 1, xp: 0, claimed: [] };
+    // v3.430 세트가 바뀌면 지금 숙련을 보관하고, 그 세트의 보관본이 있으면 이어서(없으면 처음부터).
+    if (!m || m.set !== setId) { const kept = s.expeditionSetMasteries ??= {}; if (m) kept[m.set] = { level: m.level, xp: m.xp, claimed: m.claimed }; const back = kept[setId]; delete kept[setId]; m = s.expeditionSetMastery = { set: setId, level: back?.level || 1, xp: back?.xp || 0, claimed: back?.claimed || [] }; }
     if (m.level >= SET_MASTERY.max) return;
     m.xp += xp; const before = m.level;
     while (m.level < SET_MASTERY.max && m.xp >= setMasteryXpFor(m.level)) { m.xp -= setMasteryXpFor(m.level); m.level++; }
