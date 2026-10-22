@@ -6,7 +6,8 @@ import 'server-only';
  */
 import { db } from './db';
 import { monthKey, previousMonthKey, weekKey, weekSeason } from '../data/time';
-import { seasonPearls, EXPEDITION, ABYSS, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement, encodeBoard, cleanShareText, SHARE_MEMO_MAX } from '../data/expedition';
+import { starterBoard } from '../systems/expedition';
+import { seasonPearls, EXPEDITION, ABYSS, STARTER_GHOSTS, STARTER_GHOST, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement, encodeBoard, cleanShareText, SHARE_MEMO_MAX } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
 
 export const expeditionSeason = (key: string) => 30_000_000 + Number(key.replace('-', ''));
@@ -34,13 +35,25 @@ export async function pickGhosts(key: string, me: string, rng = Math.random, now
         accounts.add(snap.account);
         for (let round = 2; round <= EXPEDITION.rounds; round++) { if (isBossRound(round)) continue; const board = snap.boards?.[round]; if (board?.length) { const augments = snap.augs?.[round] || [], mods = combatMods(mergeMods([weeklyRuleById(snap.rule)?.mods, ...augments.map(augmentMods), ...masteryPerks(snap.mastery || 1).map(p => p.mods)])); (pools[round] ??= []).push({ name: snap.name || '이름 없는 원정대', board, wins: snap.wins || 0, account: snap.account, score: snap.score ?? expeditionScore(snap), ...(mods ? { mods } : {}), ...(augments.length ? { augments } : {}) }); } }
     }
-    // 내 점수와 가까운 순으로 후보 3명(점수가 없으면 무작위 섞기). 후보 계정 수를 pool로 실어 화면 쪽이 확률을 낮출 수 있게 합니다.
+    // v3.423 연습 원정대: 라운드마다 실제 후보가 fillTo명보다 적으면 모자란 만큼을 내 점수와 가까운 연습 원정대로 채웁니다(실제 기록이 쌓이면 빠짐).
+    // 이번 달 기록이 없는 모험가는 점수 0으로 봅니다(전에는 무작위 — 후보가 강한 한 명뿐이면 처음부터 그 사람을 만났음).
+    const me0 = myScore ?? 0;
+    let starters = 0;
+    for (let round = 2; round <= EXPEDITION.rounds; round++) {
+        if (isBossRound(round)) continue;
+        const need = STARTER_GHOST.fillTo - (pools[round]?.length || 0); if (need <= 0) continue;
+        const pick = [...STARTER_GHOSTS].sort((a, b) => Math.abs(a.score - me0) - Math.abs(b.score - me0)).slice(0, need);
+        for (const g of pick) (pools[round] ??= []).push({ name: g.name, board: starterBoard(g, round), wins: g.wins, account: STARTER_GHOST.accountPrefix + g.id, score: g.score });
+        starters = Math.max(starters, pick.length);
+    }
+    // 내 점수와 가까운 순으로 후보 3명. 후보 수(실제 계정 + 연습 원정대)를 pool로 실어 화면 쪽이 확률을 정합니다.
     const out: Record<number, ExpeditionGhost[]> & { pool?: number } = {};
     for (const [round, pool] of Object.entries(pools)) {
-        const sorted = myScore !== undefined ? [...pool].sort((a, b) => Math.abs(a.score - myScore!) - Math.abs(b.score - myScore!)) : [...pool].sort(() => rng() - .5);
+        const dist = (g: ExpeditionGhost & { score: number }) => Math.abs(g.score - me0) + (g.account?.startsWith(STARTER_GHOST.accountPrefix) ? STARTER_GHOST.distancePenalty : 0);
+        const sorted = (myScore === undefined ? [...pool].sort(() => rng() - .5) : [...pool]).sort((a, b) => dist(a) - dist(b));
         out[Number(round)] = sorted.slice(0, GHOST_GUARD.candidates).map(g => { const copy: ExpeditionGhost & { score?: number } = { ...g }; delete copy.score; return copy; });
     }
-    out.pool = accounts.size;
+    out.pool = accounts.size + starters;
     return out;
 }
 /** 전투 · 종료 뒤 이번 달 행 갱신. 승수가 지난 최고 이상이면 보드 스냅샷도 바꿉니다. */

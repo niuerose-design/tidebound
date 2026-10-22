@@ -1,6 +1,5 @@
 'use client';
 /** v3.382 개체도감: 특별 도감 · 지역 → 장소 → 몬스터 카드 · 던전 보스 · 칠흑의 보스. 닫힌 구역은 마운트하지 않습니다(FoldSection). */
-import { Swords } from 'lucide-react';
 import type { State, Stats } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { FoldSection, RarityTag, TierBadge, formatExact } from '@/components/ui/game';
@@ -105,7 +104,7 @@ function BossBook({ s, send, busy, player }: { s: State; send: Send; busy: boole
     return <FoldSection title="던전 보스 도감" summary={`${done} / ${bosses.length}종 완성`}>
         <Grid>{bosses.map(f => { const n = s.book[f.id] || 0, p = profile(f.id), enemy = f.id === 'abyssSovereign' ? abyssEnemyStats(f, abyssReference(), 1, { boss: true, wave: 4 }) : scaledEnemyStats(f, { boss: true, wave: 4, tier: 0 }), revealed = bookRevealed(s, f.id);
             return <BookCard key={f.id} undiscovered={!n}>
-                <CardHead art={<div className="grid size-14 place-items-center text-ink-2"><Swords size={30}/></div>} title={f.name} tags={<><RarityTag rarity="legendary" label="전설 보스"/><VariantMarks s={s} id={f.id}/></>} count={n >= COMPLETE ? '완성' : `${n} / ${COMPLETE} 처치`}/>
+                <CardHead art={<MonsterArt id={f.id} size={56} boss/>} title={f.name} tags={<><RarityTag rarity="legendary" label="전설 보스"/><VariantMarks s={s} id={f.id}/></>} count={n >= COMPLETE ? '완성' : `${n} / ${COMPLETE} 처치`}/>
                 <Lore>{f.lore}</Lore>
                 {revealed ? <Trait title={p.name}>{p.hint}</Trait> : <LockedInfo n={n}/>}
                 <EcologyLine s={s} id={f.id}/>

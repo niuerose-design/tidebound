@@ -4,13 +4,13 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods,
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods, STARTER_GHOST,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
     activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
-import { rollShop, rollWave, battle, frontRole, activeTraits, WAVE_BUDGET } from '../expedition';
+import { rollShop, rollWave, battle, frontRole, activeTraits, WAVE_BUDGET, starterBoard, starterGhostById } from '../expedition';
 import { addLog } from '../state';
 import type { State, ExpeditionRun, ExpeditionPlaced, ExpeditionBench, ExpeditionStats, ExpeditionGhost } from '../../types';
 import type { ActionHandlers } from './types';
@@ -315,9 +315,12 @@ export const expeditionActions: ActionHandlers = {
         const ghostKey = ghost ? ghost.account || ghost.name : '', seenCount = ghostKey ? (r.ghostSeen?.[ghostKey] || 0) : 0;
         const poolScale = ghost?.pool !== undefined ? Math.max(GHOST_GUARD.poolMinChance, Math.min(1, ghost.pool / GHOST_GUARD.poolFull)) : 1;
         const useGhost = !!ghost && seenCount < GHOST_GUARD.maxSameRun && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance) * poolScale;
-        const capped = useGhost ? capGhostBoard(ghost!.board, r.round, r.difficulty || 1) : null;
+        // v3.423 연습 원정대: 보낸 보드 대신 여기서 다시 만듭니다(난이도 예산 배율 · 적 보정을 웨이브와 똑같이 받고, 보드를 바꿔 보낼 수 없음).
+        const starter = useGhost && ghost!.account?.startsWith(STARTER_GHOST.accountPrefix) ? starterGhostById(ghost!.account.slice(STARTER_GHOST.accountPrefix.length)) : undefined;
+        if (starter) { ghost!.board = starterBoard({ ...starter, power: starter.power * difficultyOf(r.difficulty).budget }, r.round); delete ghost!.mods; }
+        const capped = useGhost ? (starter ? { board: ghost!.board, scaled: false } : capGhostBoard(ghost!.board, r.round, r.difficulty || 1)) : null;
         if (useGhost) (r.ghostSeen ??= {})[ghostKey] = seenCount + 1;
-        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : waveMods(r.round, r.difficulty || 1));
+        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost && !starter ? ghost!.mods : waveMods(r.round, r.difficulty || 1));
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}), ...(capped?.scaled ? { scaled: true } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
@@ -328,7 +331,7 @@ export const expeditionActions: ActionHandlers = {
         { const active = activeTraits(r.board, mods), key = compKey(active); const comps = st.comps ??= {}, cw = st.compWins ??= {}; comps[key] = (comps[key] || 0) + 1; if (won) cw[key] = (cw[key] || 0) + 1;
           const keys = Object.keys(comps).filter(k => k !== key); if (keys.length >= COMP_KEYS_MAX) { const drop = keys.sort((x, y) => comps[x] - comps[y])[0]; delete comps[drop]; delete cw[drop]; }
           if (won) { questProgress(s, now, 'wins'); if (boss) questProgress(s, now, 'bossWins'); if (useGhost) questProgress(s, now, 'ghostWins'); if (active.some(t => t.tier >= 1 && t.trait.tiers[t.tier - 1].count >= 4)) questProgress(s, now, 'synergy4'); } }
-        if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } }
+        if (useGhost) { st.ghostFights++; if (won) { st.ghostWins++; if (!starter) r.ghostPoints = (r.ghostPoints || 0) + EXPEDITION.ghostPointPerWin * Math.max(1, ghost!.wins || 0); } } // 연습 원정대는 시즌 고스트 점수 없음
         // 6단계 상자 → 7단계 선택지: 이기면 서로 다른 기본 아이템 3개를 내밀고 하나를 고릅니다(가진 칸이 차 있으면 상자 없음).
         let box: string[] | undefined;
         if (won && boss && !abyss) r.acts = (r.acts || 0) + 1;
