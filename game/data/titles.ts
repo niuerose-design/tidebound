@@ -5,7 +5,7 @@
  */
 import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
-import { FEATS, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS } from './expedition';
+import { FEATS, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS, MASTERY_MAX, MASTERY_STEP, masteryTitleIcon } from './expedition';
 
 type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
 
@@ -17,7 +17,9 @@ export const TITLES: TitleDef[] = [
     { id: 'expMastery:2', name: '🧭 원정 견습', desc: '원정 숙련 2', group: '모험', achievement: 'expMastery:2' },
     { id: 'expMastery:20', name: '🏕 원정 베테랑', desc: '원정 숙련 20', group: '모험', achievement: 'expMastery:20' },
     { id: 'expMastery:40', name: '🚩 원정대장', desc: '원정 숙련 40', group: '모험', achievement: 'expMastery:40' },
-    { id: 'expMastery:50', name: '🌟 원정 전설', desc: '원정 숙련 50(최대)', group: '모험', achievement: 'expMastery:50' },
+    { id: 'expMastery:50', name: '🌟 원정 전설', desc: '원정 숙련 50', group: '모험', achievement: 'expMastery:50' },
+    // v3.432 숙련 100 · 200 · … · 1000.
+    ...Array.from({ length: MASTERY_MAX / MASTERY_STEP.titleEvery }, (_, i) => (i + 1) * MASTERY_STEP.titleEvery).map(n => ({ id: `expMastery:${n}`, name: `${masteryTitleIcon(n)} 원정 숙련 ${n}`, desc: `원정 숙련 ${n}${n === MASTERY_MAX ? '(최대)' : ''}`, group: '모험' as const, achievement: `expMastery:${n}` })),
     { id: 'expSeasonTop:1', name: '👑 원정 시즌 1위', desc: '월간 원정대 순위 1위', group: '모험', achievement: 'expSeasonTop:1' },
     { id: 'expSeasonTop:3', name: '🥇 시즌 3위 안의 원정대', desc: '월간 원정대 순위 3위 안', group: '모험', achievement: 'expSeasonTop:3' },
     { id: 'expCodex:30', name: '📘 원정 도감 완성', desc: '유닛 30종 모두 승리', group: '모험', achievement: 'expCodex:30' },

@@ -624,6 +624,10 @@ export type State = {
     expeditionRecent?: { at: number; round: number; wins: number; cleared: boolean; abyss: number; reward: number; why: string; difficulty?: number; /** 23단계: 그 판 마지막 보드의 공유 코드. */ code?: string }[];
     /** 21단계: 원정 명성(숙련 50 초기화 횟수) · 주간 리그(등급 · 정산한 주 · 지난 정산 · 최고 등급). */
     expeditionRenown?: number;
+    /** v3.432 숙련 최대 1000 이전 명성의 숙련 환산을 마침. */
+    expeditionMasteryV2?: boolean;
+    /** v3.432 원정대 세계석 보상(1/10)의 아직 주지 않은 소수 부분. */
+    expeditionPearlCarry?: number;
     expeditionLeague?: { tier: number; claimed?: string; last?: import('./data/expedition').LeagueSettlement; best?: number };
     /** 20단계: 세트 숙련(세트가 바뀌면 처음부터) · 세트 숙련 20을 찍은 세트 id. */
     expeditionSetMastery?: { set: string; level: number; xp: number; claimed: number[] };
@@ -1083,7 +1087,7 @@ export type ExpeditionRun = {
     mastery?: number;
 };
 /** 11단계 원정 숙련(계정 성장). */
-export type ExpeditionMastery = { level: number; xp: number; total: number };
+export type ExpeditionMastery = { level: number; xp: number; total: number; /** v3.432 지금까지 오른 가장 높은 숙련(특전 기준, 명성으로 되돌려도 남음). */ peak?: number };
 /** 12단계 전투 재생 프레임(작게 저장): t 턴 · a 행동 유닛('a0'~'b7' = 편 + 보드 번호) · d 대상 · v 피해 · c 치명 · k 처치 · s 종류(cast · reflect · revive · start · heal) · m 짧은 글(기술 이름 등) · th 대상 남은 체력 % · ah 행동 유닛 남은 체력 %(바뀌었을 때만). */
 export type ReplayFrame = { t: number; a: string; d?: string; v?: number; c?: 1; k?: 1; s?: 'cast' | 'reflect' | 'revive' | 'start' | 'heal' | 'miss'; m?: string; th?: number; ah?: number };
 /** 3단계: 원정대 누적 지표(운영 페이지 집계용). 라운드별 판 수 · 승 수(1~8), 배치한 유닛 수. */

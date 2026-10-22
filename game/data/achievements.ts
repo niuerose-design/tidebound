@@ -1,4 +1,4 @@
-import { FEATS, DIFFICULTIES, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS } from './expedition';
+import { FEATS, DIFFICULTIES, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS, MASTERY_MAX, MASTERY_STEP } from './expedition';
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
 import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
@@ -177,7 +177,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
     // 21단계: 명성 · 리그 등급 · 누적 이정표(수십 년 단위 목표) 명예 업적.
-    ...RENOWN.titles.map(n => ({ id: `expRenown:${n}`, honor: true, group: '모험' as const, title: `원정 명성 ${n}`, desc: `원정 숙련 50을 ${n}번 되돌려 명성 ${n}에 이릅니다.`, reward: {}, progress: (s: State) => s.expeditionRenown || 0, target: n })),
+    ...RENOWN.titles.map(n => ({ id: `expRenown:${n}`, honor: true, group: '모험' as const, title: `원정 명성 ${n}`, desc: `원정 숙련 ${MASTERY_MAX}을 ${n}번 되돌려 명성 ${n}에 이릅니다(v3.432 전에는 50).`, reward: {}, progress: (s: State) => s.expeditionRenown || 0, target: n })),
     ...[3, 4, 5].map(t => ({ id: `expLeague:${t}`, honor: true, group: '모험' as const, title: `주간 리그 ${LEAGUE.tiers[t - 1]}`, desc: `원정 주간 리그에서 ${LEAGUE.icons[t - 1]} ${LEAGUE.tiers[t - 1]} 등급에 오릅니다.`, reward: {}, progress: (s: State) => s.expeditionLeague?.best || 1, target: t })),
     ...MILESTONE_WINS.map(n => ({ id: `expTotalWins:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}승`, desc: `원정대 누적 ${n.toLocaleString()}승.`, reward: {}, progress: (s: State) => s.expeditionStats?.wins || 0, target: n })),
     ...MILESTONE_RUNS.map(n => ({ id: `expRuns:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}판`, desc: `원정대 누적 ${n.toLocaleString()}판.`, reward: {}, progress: (s: State) => s.expeditionStats?.runs || 0, target: n })),
@@ -187,7 +187,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...[3, 4, 5, 6, 7, 8, 9, 10].map(d => ({ id: `expDiff:${d}`, honor: true, group: '모험' as const, title: `난이도 ${DIFFICULTIES[d - 1].name} 완주`, desc: `원정대 난이도 ${DIFFICULTIES[d - 1].icon} ${DIFFICULTIES[d - 1].name}을(를) 완주합니다.`, reward: {}, progress: (s: State) => s.expeditionDiffClears?.[d] || 0, target: 1 })),
     // 15단계: 도전 기록(완주 조건) 명예 업적.
     ...['flawless', 'noItem', 'oneOrigin', 'cheap', 'abyss10', 'abyss20', /* v3.416 */ 'abyss30', 'abyss40', 'hardFlawless', 'apexClear'].map(id => { const f = FEATS.find(x => x.id === id)!; return { id: `expFeat:${id}`, honor: true, group: '모험' as const, title: `원정 · ${f.name}`, desc: `${f.desc}.`, reward: {}, progress: (s: State) => s.expeditionFeats?.[id] || 0, target: 1 }; }),
-    ...[2, 20, 40, 50].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
+    ...[2, 20, 40, 50, ...Array.from({ length: MASTERY_MAX / MASTERY_STEP.titleEvery }, (_, i) => (i + 1) * MASTERY_STEP.titleEvery)].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).
     ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월합니다(한계돌파 3단계 뒤 숙련 ×16).`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),

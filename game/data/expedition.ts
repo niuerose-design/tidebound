@@ -21,7 +21,7 @@ export const SPECIAL_NAMES: Record<Special, string> = { boss: '보스', onyx: '�
 
 export const EXPEDITION = {
     /** 10단계: 12라운드 · 3막(1~4 · 5~8 · 9~12). 각 막의 마지막 라운드는 보스 웨이브(고스트 없음)이고 이기면 막 보상 세계석 +actPearls. */
-    rounds: 12, actLength: 4, actPearls: 2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, baseGold: 7, interestPer: 10, interestMax: 5,
+    rounds: 12, actLength: 4, actPearls: .2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, /** v3.432 경험치 구매 한 번에 얻는 양(값은 xp 골드): 4골드 → 8(전에는 4). 라운드 경험치를 1 + (r − 1)로 줄인 대신 사는 쪽이 레벨을 따라가게. */ xpBuy: 8, baseGold: 7, interestPer: 10, interestMax: 5,
     /** 10단계 상점 시너지 슬롯: 2라운드부터 상점 마지막 칸은 보드의 시너지(다음 단계에 가장 가까운 것)를 늘리는 유닛이 나옵니다. */
     synergySlotRound: 2,
     /** 판 레벨(2~8)마다 배치 수. */
@@ -40,8 +40,10 @@ export const EXPEDITION = {
      *
      * v3.428 경험치를 짜게(롤토체스 원작처럼 골드로 사는 의미가 있도록): 라운드 경험치 4 + 2(r − 1) → 2 + 2(r − 1)(11라운드 뒤 +22). 사지 않으면 목표 곡선보다 대체로 1레벨 낮고 레벨 8은 마지막 라운드에야 됨. 대신 라운드 기본 골드 5 → 7.
      * 상점 시뮬(EXP_ECON=1, 시드 150판): 전체 승률은 그대로(유닛 먼저 58~68%), 경험치를 먼저 사는 쪽이 유닛 먼저보다 높아짐(무작위 72 : 66 — 전에는 65 : 65로 사도 이득이 없었음).
+     *
+     * v3.432 더 보수적으로(유저 요청 ‘1라운드에 1’): 1 + (라운드 − 1) — 1라운드 뒤 +1, 11라운드 뒤 +11. 사지 않으면 레벨 6 안팎에서 멈추므로 레벨은 거의 골드로 삽니다.
      */
-    roundXp: { base: 2, perRound: 2 },
+    roundXp: { base: 1, perRound: 1 },
     maxTurns: 40,
     /** 마나: 기본 공격 +10 · 피격 +5, 100에 기술 발동. */
     manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
@@ -52,7 +54,8 @@ export const EXPEDITION = {
     /** 4단계 시즌 점수: 최고 판 승수 × 100 + 완주 50 + 라운드 + 이긴 고스트의 승수 × ghostPointPerWin(이번 달 누적). */
     ghostPointPerWin: 10,
     /** 5단계(운영 결정): 하루 횟수 제한 없음. 보상은 세계석 — 승리마다 pearlsPerWin, 12라운드를 모두 마치면 +clearPearls, 막 보스마다 +actPearls(한 판 최대 12 + 6 + 4 = 22). */
-    pearlsPerWin: 1, clearPearls: 4,
+    /** v3.432 세계석 보상 1/10(운영 결정: 과함) — 승리 1 → .1 · 완주 4 → .4 · 막 보스 2 → .2 · 심연 보너스 5 → .5 · 과제 · 시즌 · 리그 · 세트 숙련도 1/10. 소수는 grantPearls가 모아 1이 될 때마다 줍니다. */
+    pearlsPerWin: .1, clearPearls: .4,
 };
 /** v3.426 그 라운드 전투를 마치면 받는 판 경험치. */
 export const roundXpFor = (round: number) => EXPEDITION.roundXp.base + EXPEDITION.roundXp.perRound * (round - 1);
@@ -61,7 +64,7 @@ export const actOf = (round: number) => Math.min(3, Math.ceil(round / EXPEDITION
 export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0;
 /** 15단계 심연: 12라운드를 완주한 뒤 ‘계속 가기’를 고르면 13라운드부터. 라운드마다 웨이브 예산 ×1.1, 4라운드마다 보스(★2, 24라운드부터 ★3), 고스트 없음, 최대 abyssMax라운드. 심연 5라운드마다 세계석 +abyssBonus.
  * v3.416 심연 확장: 끝을 20 → 40라운드로. 웨이브 예산은 20라운드 즈음 8칸 ★3에 닿아 더 오르지 않으므로, 심연 deepFrom라운드를 넘긴 뒤로는 적 체력 · 공격력이 라운드마다 deepHp · deepPower씩 붙습니다(복리 아님). */
-export const ABYSS = { max: 40, budgetGrowth: 1.1, bonusEvery: 5, bonus: 5, scorePerRound: 20, deepFrom: 20, deepHp: .05, deepPower: .03 };
+export const ABYSS = { max: 40, budgetGrowth: 1.1, bonusEvery: 5, bonus: .5, scorePerRound: 20, deepFrom: 20, deepHp: .05, deepPower: .03 };
 export const isAbyssRound = (round: number) => round > EXPEDITION.rounds;
 /** 15단계 도전 기록(완주 조건 칭호): 판이 끝날 때 판정해 expeditionFeats에 횟수를 쌓습니다. */
 export const FEATS: { id: string; name: string; desc: string; title: string }[] = [
@@ -239,8 +242,10 @@ export const EMBLEM_ROUND = 3;
 export const TIER2_ROUND = 6;
 /** 9단계 시즌 말 보상(세계석): 지난달 순위표 순위로. 표 밖(또는 순위 없음)은 마지막 줄. 다음 달 첫 ‘원정 출발’ 때 지급됩니다. */
 export const SEASON_REWARDS: { upto: number; pearls: number; label: string }[] = [
-    { upto: 1, pearls: 50, label: '1위' }, { upto: 3, pearls: 30, label: '2~3위' }, { upto: 10, pearls: 15, label: '4~10위' }, { upto: 30, pearls: 8, label: '11~30위' }, { upto: Infinity, pearls: 3, label: '그 외 참가' },
+    { upto: 1, pearls: 5, label: '1위' }, { upto: 3, pearls: 3, label: '2~3위' }, { upto: 10, pearls: 1.5, label: '4~10위' }, { upto: 30, pearls: .8, label: '11~30위' }, { upto: Infinity, pearls: .3, label: '그 외 참가' },
 ];
+/** v3.432 세계석 표시: 소수 첫째 자리까지(1/10 보상). */
+export const pearlText = (n: number) => String(Math.round(n * 10) / 10);
 export const seasonPearls = (rank: number) => SEASON_REWARDS.find(x => rank >= 1 && rank <= x.upto)?.pearls ?? SEASON_REWARDS[SEASON_REWARDS.length - 1].pearls;
 export type SeasonSettlement = { season: string; rank: number; total: number; wins: number; pearls: number };
 /** 7단계 조합표(순서 무관). 표에 없는 짝은 합칠 수 없습니다. */
@@ -263,6 +268,8 @@ export type RunMods = {
     frontHp?: number; backPower?: number; speed?: number; manaGain?: number; reflect?: number; bossGuard?: number; starPower?: number;
     /** v3.416 적 웨이브 전용(난이도 6~ · 깊은 심연): 전체 체력 배율 · 전체 물리/마법 공격력 배율. 고스트 보정(combatMods)에는 실리지 않습니다. */
     hpMult?: number; powerMult?: number;
+    /** v3.432 도감 성장: 내 보드 유닛별 승리 수(codexGrowth로 기본 체력 · 공격력 가산). mergeMods · 고스트 보정에는 실리지 않습니다. */
+    codex?: Record<string, number>;
     /** 경제: 라운드 골드 가산 · 이자 상한 가산 · 경험치 구매 가산 · 새로 고침 비용 · 벤치 가산 · 상자 선택지 가산 · 문장 매 라운드 · 증강 선택지 가산 · 막 보상 배율 · 고스트 확률 · 최대 턴. */
     goldPlus?: number; interestPlus?: number; xpPlus?: number; rerollCost?: number; benchPlus?: number; boxPlus?: number; emblemEvery?: boolean; augmentPlus?: number; actMult?: number; ghostChance?: number; maxTurns?: number;
 };
@@ -322,21 +329,25 @@ export const WEEKLY_RULES: WeeklyRule[] = [
 export function weeklyRule(weekKey: string): WeeklyRule { let h = 0; for (const ch of weekKey) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return WEEKLY_RULES[h % WEEKLY_RULES.length]; }
 export const weeklyRuleById = (id?: string) => WEEKLY_RULES.find(r => r.id === id);
 
-/** 원정 숙련(계정 성장): 판이 끝날 때 승리 × 10 + 막 보스 × 20 + 완주 50 경험치. 레벨 n → n+1에 100 + 50 × (n − 1). 최대 50. */
-export const MASTERY_MAX = 50;
+/**
+ * 원정 숙련(계정 성장): 판이 끝날 때 승리 × 10 + 막 보스 × 20 + 완주 50 경험치. 레벨 n → n+1에 100 + 50 × (n − 1).
+ * v3.432: 최대 50 → 1000(1~10년 과제). 1000까지 누적 약 2,500만 — 하루 30판(판당 400) 하는 모험가가 6년쯤, 하루 5판이면 10년에 500 안팎.
+ * 50 위로는 5레벨마다 아주 작은 특전(체력 · 공격력 +0.25% 번갈아, 1000이면 각 +27% 안팎), 100레벨마다 칭호.
+ */
+export const MASTERY_MAX = 1000;
 /** 21단계 명성: 숙련 50을 찍으면 ‘원정 명성’을 올리며 숙련을 1로 되돌릴 수 있습니다. 명성마다 다음 주기의 숙련 경험치 요구 +20%, 세계석 보상 +2%(명성 25까지 반영). 방치형 장르의 환생층(Cookie Clicker 승천 · Antimatter Dimensions 무한)과 같은 역할. */
 export const RENOWN = { xpGrowth: .2, rewardPer: .02, rewardCap: 25, titles: [1, 5, 10, 25, 50] };
 export const masteryXpFor = (level: number, renown = 0) => Math.round((100 + 50 * (level - 1)) * (1 + RENOWN.xpGrowth * Math.max(0, renown)));
 export const renownRewardMult = (renown = 0) => 1 + RENOWN.rewardPer * Math.min(RENOWN.rewardCap, Math.max(0, renown));
 /** 21단계 주간 리그: 같은 등급의 모험가 8명이 한 조. 주간 점수 = 그 주 최고 판 점수 + 그 주 승리 합. 1~2위 승급 · 7~8위(6명 이상인 조) 강등. */
-export const LEAGUE = { size: 8, tiers: ['브론즈', '실버', '골드', '다이아', '마스터'], icons: ['🥉', '🥈', '🥇', '💎', '👑'], rewards: [15, 10, 10, 5, 5, 2, 2, 2], promote: 2, demote: 2, demoteMin: 6 };
+export const LEAGUE = { size: 8, tiers: ['브론즈', '실버', '골드', '다이아', '마스터'], icons: ['🥉', '🥈', '🥇', '💎', '👑'], rewards: [1.5, 1, 1, .5, .5, .2, .2, .2], promote: 2, demote: 2, demoteMin: 6 };
 export const leagueTierName = (tier?: number) => `${LEAGUE.icons[Math.max(1, Math.min(LEAGUE.tiers.length, tier || 1)) - 1]} ${LEAGUE.tiers[Math.max(1, Math.min(LEAGUE.tiers.length, tier || 1)) - 1]}`;
 export type LeagueSettlement = { week: string; tier: number; rank: number; size: number; score: number; pearls: number; nextTier: number };
 /** 누적 이정표(수십 년 단위 목표): 총 승리 · 총 판 수. */
 export const MILESTONE_WINS = [1000, 10000, 100000];
 export const MILESTONE_RUNS = [100, 1000, 10000];
 export const masteryRunXp = (wins: number, acts: number, cleared: boolean) => wins * 10 + acts * 20 + (cleared ? 50 : 0);
-export type MasteryPerk = { level: number; id: string; name: string; desc: string; mods?: RunMods; startGold?: number; title?: string };
+export type MasteryPerk = { level: number; id: string; name: string; desc: string; mods?: RunMods; startGold?: number; title?: string; /** v3.432 5레벨마다 붙는 작은 특전(목록에서 묶어 보임). */ minor?: boolean };
 export const MASTERY_PERKS: MasteryPerk[] = [
     { level: 2, id: 'm2', name: '견습 원정가', desc: '칭호 🧭 원정 견습', title: 'expMastery:2' },
     { level: 5, id: 'm5', name: '노잣돈', desc: '시작 골드 +2', startGold: 2 },
@@ -349,7 +360,16 @@ export const MASTERY_PERKS: MasteryPerk[] = [
     { level: 40, id: 'm40', name: '원정대장', desc: '칭호 🚩 원정대장', title: 'expMastery:40' },
     { level: 50, id: 'm50', name: '전설', desc: '칭호 🌟 원정 전설 · 모든 유닛의 마나가 10% 더 빨리 참', mods: { manaGain: 1.1 }, title: 'expMastery:50' },
 ];
+// v3.432 장기 특전: 55 · 60 · … · 1000(5레벨마다) 체력 · 공격력 +0.25%를 번갈아(minor: 목록에서는 한 줄로 묶음), 100레벨마다 칭호.
+export const MASTERY_STEP = { every: 5, from: 55, pct: .0025, titleEvery: 100 };
+for (let lv = MASTERY_STEP.from; lv <= MASTERY_MAX; lv += MASTERY_STEP.every) {
+    const hp = (lv / MASTERY_STEP.every) % 2 === 1, title = lv % MASTERY_STEP.titleEvery === 0;
+    MASTERY_PERKS.push({ level: lv, id: `m${lv}`, name: title ? `숙련 ${lv}` : hp ? '단련' : '연마', desc: `${hp ? '모든 유닛 체력' : '모든 유닛 물리 · 마법 공격력'} ${MASTERY_STEP.pct * 100}% 증가${title ? ` · 칭호 ${masteryTitleIcon(lv)} 원정 숙련 ${lv}` : ''}`, mods: hp ? { hpMult: 1 + MASTERY_STEP.pct } : { powerMult: 1 + MASTERY_STEP.pct }, ...(title ? { title: `expMastery:${lv}` } : { minor: true }) });
+}
+export function masteryTitleIcon(lv: number) { return ['🎖', '🏅', '🥉', '🥈', '🥇', '💠', '👑', '🌠', '🪐', '♾'][Math.max(0, Math.min(9, Math.floor(lv / 100) - 1))]; }
 export const masteryPerks = (level: number) => MASTERY_PERKS.filter(p => p.level <= level);
+/** 장기 특전 누적(화면용): 체력 · 공격력 배율. */
+export const masteryGrowth = (level: number) => { const m = mergeMods(masteryPerks(level).filter(p => p.minor || p.level >= MASTERY_STEP.from).map(p => p.mods)); return { hp: m.hpMult || 1, power: m.powerMult || 1 }; };
 /** 17단계: 고스트에 실어 보내는 전투 보정(경제 · 상자 · 고스트 확률 · 턴은 뺌). 값은 범위를 잘라 위조를 막습니다. */
 export function combatMods(m: RunMods | undefined): RunMods | undefined {
     if (!m) return undefined;
@@ -387,24 +407,24 @@ export function mergeMods(list: (RunMods | undefined)[]): RunMods {
 export type QuestKey = 'wins' | 'ghostWins' | 'bossWins' | 'clears' | 'runs' | 'star3' | 'combines' | 'augments' | 'synergy4' | 'reach8' | 'emblems';
 export type QuestDef = { id: string; key: QuestKey; name: string; desc: string; target: number; period: 'daily' | 'weekly'; pearls: number; xp: number };
 export const EXPEDITION_QUESTS: QuestDef[] = [
-    // 일일(보상 세계석 3 · 숙련 30)
-    { id: 'd_wins5', key: 'wins', name: '다섯 번의 승리', desc: '라운드 5번 이기기', target: 5, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_ghost2', key: 'ghostWins', name: '모험가 사냥', desc: '다른 모험가의 원정대(고스트) 2번 이기기', target: 2, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_boss1', key: 'bossWins', name: '막 보스 격파', desc: '막 보스 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_star3', key: 'star3', name: '세 별', desc: '유닛을 ★3으로 1번 올리기', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_combine', key: 'combines', name: '대장간', desc: '아이템 조합 1번', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_augment2', key: 'augments', name: '선택의 순간', desc: '증강 2번 고르기', target: 2, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_synergy', key: 'synergy4', name: '완성된 조합', desc: '인원 4명 이상인 시너지를 켠 채 1번 이기기', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_reach8', key: 'reach8', name: '3막 진입', desc: '9라운드까지 가기', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    { id: 'd_emblem', key: 'emblems', name: '문장 수집', desc: '문장 1개 고르기', target: 1, period: 'daily', pearls: 3, xp: 30 },
-    // 주간(보상 세계석 10 · 숙련 150)
-    { id: 'w_wins30', key: 'wins', name: '서른 번의 승리', desc: '라운드 30번 이기기', target: 30, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_clear2', key: 'clears', name: '완주 두 번', desc: '12라운드 완주 2번', target: 2, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_boss6', key: 'bossWins', name: '보스 사냥 주간', desc: '막 보스 6번 이기기', target: 6, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_ghost10', key: 'ghostWins', name: '열 명의 모험가', desc: '고스트 10번 이기기', target: 10, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_runs5', key: 'runs', name: '다섯 판', desc: '원정 5판 마치기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_synergy5', key: 'synergy4', name: '조합의 달인', desc: '인원 4명 이상인 시너지를 켠 채 5번 이기기', target: 5, period: 'weekly', pearls: 10, xp: 150 },
-    { id: 'w_star3x3', key: 'star3', name: '별 셋 셋', desc: '유닛을 ★3으로 3번 올리기', target: 3, period: 'weekly', pearls: 10, xp: 150 },
+    // 일일(보상 세계석 .3 · 숙련 30, v3.432 전 3)
+    { id: 'd_wins5', key: 'wins', name: '다섯 번의 승리', desc: '라운드 5번 이기기', target: 5, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_ghost2', key: 'ghostWins', name: '모험가 사냥', desc: '다른 모험가의 원정대(고스트) 2번 이기기', target: 2, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_boss1', key: 'bossWins', name: '막 보스 격파', desc: '막 보스 1번 이기기', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_star3', key: 'star3', name: '세 별', desc: '유닛을 ★3으로 1번 올리기', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_combine', key: 'combines', name: '대장간', desc: '아이템 조합 1번', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_augment2', key: 'augments', name: '선택의 순간', desc: '증강 2번 고르기', target: 2, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_synergy', key: 'synergy4', name: '완성된 조합', desc: '인원 4명 이상인 시너지를 켠 채 1번 이기기', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_reach8', key: 'reach8', name: '3막 진입', desc: '9라운드까지 가기', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    { id: 'd_emblem', key: 'emblems', name: '문장 수집', desc: '문장 1개 고르기', target: 1, period: 'daily', pearls: .3, xp: 30 },
+    // 주간(보상 세계석 1 · 숙련 150, v3.432 전 10)
+    { id: 'w_wins30', key: 'wins', name: '서른 번의 승리', desc: '라운드 30번 이기기', target: 30, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_clear2', key: 'clears', name: '완주 두 번', desc: '12라운드 완주 2번', target: 2, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_boss6', key: 'bossWins', name: '보스 사냥 주간', desc: '막 보스 6번 이기기', target: 6, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_ghost10', key: 'ghostWins', name: '열 명의 모험가', desc: '고스트 10번 이기기', target: 10, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_runs5', key: 'runs', name: '다섯 판', desc: '원정 5판 마치기', target: 5, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_synergy5', key: 'synergy4', name: '조합의 달인', desc: '인원 4명 이상인 시너지를 켠 채 5번 이기기', target: 5, period: 'weekly', pearls: 1, xp: 150 },
+    { id: 'w_star3x3', key: 'star3', name: '별 셋 셋', desc: '유닛을 ★3으로 3번 올리기', target: 3, period: 'weekly', pearls: 1, xp: 150 },
 ];
 export const QUESTS_PER_PERIOD = 3;
 /** 일일 · 주간 과제 3개씩을 키(날짜 · 주) 해시로 고릅니다(모두에게 같은 과제). */
@@ -468,8 +488,13 @@ export const shardChance = (difficulty: number, abyss: boolean) => CORE_SHARD.ba
 export const SHARD_CORE_OF: Record<string, string> = { mushmom: 'grotto', zakum: 'ventCathedral', kingSlime: 'kelpCatacomb', zombieMushmom: 'cemetery', juniorBalrog: 'caldera', papulatus: 'starSanctum' };
 export const SHARD_CORE_POOL = ['grotto', 'kelpCatacomb', 'cemetery', 'caldera', 'temple', 'ventCathedral', 'starSanctum'];
 export const shardCoreFor = (unitId: string, rng: () => number) => SHARD_CORE_OF[unitId] || SHARD_CORE_POOL[Math.floor(rng() * SHARD_CORE_POOL.length)];
-/** 도감 연결: 유닛 도감이 동 · 은 · 금에 닿을 때마다 그 유닛의 본편 몬스터 처치 수를 더해 줍니다(연구 단계가 빨라짐). */
-export const CODEX_LINK_KILLS = [50, 200, 500];
+/** (v3.432까지) 도감 연결: 동 · 은 · 금마다 본편 처치 수 +50 · 200 · 500 — 도감 성장(CODEX_GROWTH)으로 바뀜. */
+/**
+ * v3.432 도감 성장(본편 처치 연결 대신): 그 유닛을 보드에 두고 이긴 라운드 수로 그 유닛만 아주 조금 강해집니다.
+ * 50승마다 기본 체력 +1, 100승마다 기본 주 공격력(마력은 마법, 나머지는 물리) +1. ★ 배율이 곱해집니다(★3이면 4배). 내 보드에만 붙고 고스트 · 웨이브에는 없습니다.
+ */
+export const CODEX_GROWTH = { hpEvery: 50, powerEvery: 100 };
+export const codexGrowth = (wins = 0) => ({ hp: Math.floor(Math.max(0, wins) / CODEX_GROWTH.hpEvery), power: Math.floor(Math.max(0, wins) / CODEX_GROWTH.powerEvery) });
 
 // ───────────── 20단계: 세트(v3.430부터 주간 로테이션) ─────────────
 /** 세트: 유닛 풀 일부 교체 + 세트 전용 증강 · 아이템(v3.430 전에는 분기마다, 지금은 매주 돌아감). 판은 시작할 때의 세트(run.set)를 끝까지 쓰고, 도감 · 통계 · 고스트는 id 기준이라 세트가 바뀌어도 남습니다. */
@@ -500,7 +525,7 @@ export const setById = (id?: string) => SETS.find(x => x.id === id) || SETS[0];
 /** 세트의 유닛 풀. */
 export const setUnits = (setId?: string): UnitDef[] => { const d = setById(setId), out = UNITS.filter(u => !d.remove?.includes(u.id)); for (const id of d.add || []) { const u = unitById(id); if (u && !out.includes(u)) out.push(u); } return out; };
 /** 세트 숙련(세트마다 따로): 레벨 n → n+1에 150 + 50(n−1), 최대 20. 5 · 10 · 15 · 20에 세계석 10 · 20 · 30 · 50, 20이면 세트 칭호. v3.430 주간 로테이션으로 세트가 다시 돌아오면 그 세트 숙련을 이어서 쌓습니다(expeditionSetMasteries). */
-export const SET_MASTERY = { max: 20, rewards: { 5: 10, 10: 20, 15: 30, 20: 50 } as Record<number, number> };
+export const SET_MASTERY = { max: 20, rewards: { 5: 1, 10: 2, 15: 3, 20: 5 } as Record<number, number> };
 export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 
 // ───────────── 22단계: 고스트 풀이 작을 때의 보호 ─────────────
