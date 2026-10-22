@@ -92,6 +92,8 @@ export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, boss
     });
     return { units, active, flags };
 }
+/** v3.419 역병 2 중독(기본 공격 · 기술 모두): 한 중첩 = 공격력(물리 · 마법 중 큰 쪽) × ratio, 매 턴. */
+export const BLIGHT = { ratio: .1, turns: 3, maxStacks: 4 };
 export type BattleResult = { winner: 'a' | 'b' | 'draw'; turns: number; hpLeft: { a: number; b: number }; log: string[]; events: CombatEvent[]; /** 12단계 재생 프레임(최대 REPLAY_FRAMES개, 넘치면 truncated). */ frames: ReplayFrame[]; truncated: boolean };
 /** 12단계: 저장 크기를 위해 재생 프레임은 이 수까지만 남깁니다(그 뒤는 결과만). */
 export const REPLAY_FRAMES = 160;
@@ -113,6 +115,11 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
     // 전투 시작 효과: 바다 · 용 4 가속 3턴(엔진 buffs.haste), 보스 4 포효(적 전체 약화 2턴).
     for (const [mine, theirs] of [[A, B], [B, A]] as const) {
         if (mine.flags.has('haste')) { for (const u of mine.units) (u.effects ??= {}).buffs = { ...(u.effects.buffs || {}), haste: { turns: 3, name: '가속', speedMultiplier: 1 + STATUS_TUNING.hasteMultiplier } }; if (mine.units[0]) frame({ t: 0, a: keyOf(mine.units[0], mine), s: 'start', m: '가속' }); }
+        // v3.419 제어: 적 전체 마나 획득 감소(2명 20% · 4명 40%).
+        const drain = mine.flags.has('manaDrain40') ? .6 : mine.flags.has('manaDrain20') ? .8 : 1;
+        if (drain < 1) for (const u of theirs.units) u.manaGain *= drain;
+        // v3.419 제어 4: 전투 시작 때 적 전체 약화 2턴.
+        if (mine.flags.has('dread')) { for (const u of theirs.units) (u.effects ??= {}).weaken = Math.max(u.effects.weaken || 0, 2); log.push('전투 시작 · 제어 · 적 전체 약화 2턴'); const c = mine.units.find(x => hasRole(x.placed, x.def, 'control')); if (c) frame({ t: 0, a: keyOf(c, mine), s: 'start', m: '제압' }); }
         if (mine.flags.has('roar')) { const boss = mine.units.find(u => u.def.special?.includes('boss')); for (const u of theirs.units) (u.effects ??= {}).weaken = Math.max(u.effects.weaken || 0, 2); log.push(`전투 시작 · ${boss?.name || '보스'} 포효 · 적 전체 약화 2턴`); if (boss) frame({ t: 0, a: keyOf(boss, mine), s: 'start', m: '포효' }); }
     }
     const alive = (side: UnitFighter[]) => side.some(u => u.hp > 0);
@@ -141,6 +148,13 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 if (u.hp !== selfBefore) f.ah = pct(u);
                 if (mineEvs.some(e => (e.healed || 0) > 0 || (e.drained || 0) > 0) && u.hp > selfBefore) f.s ??= 'heal';
                 frame(f);
+            }
+            // v3.419 제어: 제어 유닛의 공격이 맞으면 대상 약화(주는 피해 25% 감소) 2턴, 제어 4는 3턴.
+            if (dealt > 0 && target.hp > 0 && (mine.flags.has('shackle') || mine.flags.has('shackle2')) && hasRole(u.placed, u.def, 'control')) (target.effects ??= {}).weaken = Math.max(target.effects.weaken || 0, mine.flags.has('shackle2') ? 3 : 2);
+            // v3.419 역병 2: 역병 유닛의 공격이 맞으면 중독 1중첩(공격력의 BLIGHT.ratio, BLIGHT.turns턴, 최대 BLIGHT.maxStacks중첩 + 중첩 보너스).
+            if (dealt > 0 && target.hp > 0 && mine.flags.has('blight') && hasRole(u.placed, u.def, 'plague')) {
+                const fx = (target.effects ??= {}), cur = fx.poison, per = Math.max(1, Math.round(Math.max(u.stats.attack, u.stats.magic || 0) * BLIGHT.ratio));
+                fx.poison = { perStack: Math.max(per, cur?.perStack || 0), stacks: Math.min(BLIGHT.maxStacks + (u.stats.poisonStackBonus || 0), (cur?.stacks || 0) + 1), turns: Math.max(BLIGHT.turns + (u.stats.dotTurnsBonus || 0), cur?.turns || 0), hpRatio: cur?.hpRatio || 0 };
             }
             if (dealt > 0) {
                 target.charge = Math.min(EXPEDITION.manaCast, target.charge + EXPEDITION.manaPerHit * target.manaGain);
