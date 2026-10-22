@@ -16,6 +16,7 @@ import { SAVE_VERSION, PENETRATION, RARITIES } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
+import { unitById } from '../data/expedition';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
 /** v25.23 세계석 연구 ‘황금 개체’(base 8·step 5) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 function refundGoldenResearch(s: State) {
@@ -416,6 +417,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     }
     // v3.119 마력 옵션의 턴당 마나 회복이 위력 비례가 아니라 0.01 남짓으로 붙어 있던 장비를 바로잡습니다(최대 마나와 같은 굴림으로).
     if (s.version === SAVE_VERSION) fixFlowRegen(s);
+    if (s.version === SAVE_VERSION) revokeCodexLink(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
@@ -547,6 +549,23 @@ export function fixOverclockSpeed(s: State) {
             const quality = Math.min(HEIR_ROLL_TOP, Math.max(0, (roll - ROLL_MIN) / ROLL_SPAN));
             x.value = optionAtQuality(def, power, rarity, item!.level || 1, quality).value;
         }
+}
+/**
+ * v3.433 운영 결정: 원정 도감 연결(v3.354~3.431, 동 · 은 · 금마다 그 유닛의 본편 몬스터 처치 +50 · +200 · +500)로 받은 처치 수를 되돌립니다.
+ * 연결 기록(expeditionCodexLinked: 유닛 → 받은 단계)만큼 빼고(0 아래로는 안 감) 기록을 지웁니다. 기록이 없으면 아무것도 하지 않아 여러 번 불려도 한 번만 적용됩니다.
+ */
+const CODEX_LINK_KILLS_OLD = [50, 200, 500];
+export function revokeCodexLink(s: State) {
+    const linked = s.expeditionCodexLinked; if (!linked) return 0;
+    let removed = 0;
+    for (const [unitId, tier] of Object.entries(linked)) {
+        const def = unitById(unitId); if (!def) continue;
+        const given = CODEX_LINK_KILLS_OLD.slice(0, Math.max(0, Math.min(CODEX_LINK_KILLS_OLD.length, tier))).reduce((a, n) => a + n, 0), have = s.book[def.monster] || 0, take = Math.min(have, given);
+        if (take) { s.book[def.monster] = have - take; removed += take; }
+    }
+    delete s.expeditionCodexLinked;
+    if (removed) addLog(s, `원정 도감 연결 정리 · 연결로 받았던 본편 도감 처치 ${removed.toLocaleString()}을 되돌렸습니다(도감은 이제 원정대 유닛을 강하게 합니다)`, 'system');
+    return removed;
 }
 export function fixFlowRegen(s: State) {
     const def = affixDef('flow');
