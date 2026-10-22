@@ -7,26 +7,41 @@ const runs = Number(process.argv[2] || 300);
 const SET = process.env.EXP_SET || D.SETS[0].id, POOL = D.setUnits(SET); console.log(`세트 ${SET} · 유닛 ${POOL.length}종`);
 const mkRng = seed => () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
 const ROUND_LEVEL = [0, 2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8];
+// v3.426 EXP_ECON=1: 레벨을 공짜로 주지 않고 실제 경제로 올립니다 — 판 레벨 2에서 시작, 전투마다 라운드 경험치(EXPEDITION.xpPerRound, EXP_PASSIVE로 바꿔 볼 수 있음),
+// 유닛을 산 뒤 남은 골드로 경험치(4골드)를 ROUND_LEVEL 목표까지 삽니다. 기본(공짜 레벨)은 기획 목표 곡선, 이 모드는 실제 플레이에 가까운 값입니다.
+const ECON = process.env.EXP_ECON === '1';
+// EXP_PASSIVE='a,b'로 라운드 경험치(전투 뒤 a + b × (라운드 − 1))를 바꿔 볼 수 있습니다. 기본은 게임 데이터(roundXp).
+const [PA, PB] = process.env.EXP_PASSIVE !== undefined ? process.env.EXP_PASSIVE.split(',').map(Number).concat(0) : [D.EXPEDITION.roundXp?.base || 0, D.EXPEDITION.roundXp?.perRound || 0];
+const PASSIVE = `${PA} + ${PB || 0} × (라운드 − 1)`, passiveAt = round => PA + (PB || 0) * (round - 1);
+const LEVEL_FIRST = process.env.EXP_LEVEL_FIRST === '1', levelStats = [];
 /** 한 판: 전략 함수가 라운드마다 상점에서 살 유닛을 고릅니다. 벤치 · 성급 합치기 · 배치는 공통. */
 function play(strategy, rng, comp) {
     const owned = new Map(); // unit → count(★1 환산 장수)
     const results = [];
-    let gold = 0, streak = 0;
+    let gold = 0, streak = 0, lv = 2, xp = 0;
+    const levels = [];
     for (let round = 1; round <= D.EXPEDITION.rounds; round++) {
-        const level = ROUND_LEVEL[round];
+        const level = ECON ? lv : ROUND_LEVEL[round];
         gold += D.EXPEDITION.baseGold + Math.min(D.EXPEDITION.interestMax, Math.floor(gold / D.EXPEDITION.interestPer)) + Math.min(3, Math.max(0, streak - 1));
+        // EXP_ECON=1 · EXP_LEVEL_FIRST=1: 상점을 보기 전에 이번 라운드 목표 레벨까지 경험치를 먼저 삽니다(레벨 우선 플레이).
+        if (ECON && LEVEL_FIRST) { while (lv < 8 && lv < ROUND_LEVEL[round] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } } }
+        const levelNow = ECON ? lv : level;
         let rerolls = 0;
         for (let pass = 0; pass < 4; pass++) {
-            const shop = X.rollShop(level, rng, D.EXPEDITION.shopSize, round >= D.EXPEDITION.synergySlotRound ? place(owned, level, comp) : undefined, undefined, POOL);
-            const buys = strategy(shop, owned, gold, comp, round);
+            const shop = X.rollShop(levelNow, rng, D.EXPEDITION.shopSize, round >= D.EXPEDITION.synergySlotRound ? place(owned, levelNow, comp) : undefined, undefined, POOL);
+            const buys = strategy(shop, owned, gold, comp, round, levelNow);
             for (const id of buys) { const cost = D.unitById(id).cost; if (gold >= cost) { gold -= cost; owned.set(id, (owned.get(id) || 0) + 1); } }
             if (strategy === synergy && gold >= D.EXPEDITION.reroll + 2 && rerolls < 3) { gold -= D.EXPEDITION.reroll; rerolls++; continue; }
             break;
         }
-        const board = place(owned, level, comp);
+        if (ECON) while (lv < 8 && lv < ROUND_LEVEL[Math.min(D.EXPEDITION.rounds, round + 1)] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
+        const board = place(owned, ECON ? lv : level, comp);
+        levels.push(ECON ? lv : level);
         const r = X.battle(board, X.rollWave(round, rng, 1, POOL), rng);
         const won = r.winner === 'a'; results.push(won); streak = won ? streak + 1 : 0;
+        if (ECON) { xp += passiveAt(round); while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
     }
+    levelStats.push(levels);
     return results;
 }
 /** 보유 장수 → 성급(3장 = ★2, 9장 = ★3) → 비용 × 성급 높은 순으로 배치 수만큼. 목표 편성이 있으면 그 유닛을 먼저. */
@@ -37,11 +52,11 @@ function place(owned, level, comp) {
     return list.slice(0, slots).map(x => ({ unit: x.unit, star: x.star, row: X.frontRole(x.def) ? 'front' : 'back' }));
 }
 function random(shop, owned, gold) { const out = []; let g = gold; for (const id of shop) { const c = D.unitById(id).cost; if (g >= c) { out.push(id); g -= c; } } return out; }
-function synergy(shop, owned, gold, comp, round) {
+function synergy(shop, owned, gold, comp, round, level = ROUND_LEVEL[round]) {
     const out = []; let g = gold;
     for (const id of shop) { const c = D.unitById(id).cost; if (comp.units.includes(id) && g >= c && (owned.get(id) || 0) < 9) { out.push(id); g -= c; } }
     // 배치 칸이 비면 목표 밖 유닛이라도 싼 것부터 사서 채웁니다(빈 칸은 무조건 손해).
-    const slots = D.EXPEDITION.boardSlots[ROUND_LEVEL[round]], distinct = new Set([...owned.keys(), ...out]).size;
+    const slots = D.EXPEDITION.boardSlots[level], distinct = new Set([...owned.keys(), ...out]).size;
     if (distinct < slots) for (const id of [...shop].sort((a, b) => D.unitById(a).cost - D.unitById(b).cost)) { if (out.includes(id)) continue; const c = D.unitById(id).cost; if (g >= c && new Set([...owned.keys(), ...out]).size < slots) { out.push(id); g -= c; } }
     return out;
 }
@@ -52,6 +67,7 @@ function report(label, all) {
 }
 report('무작위 구매', Array.from({ length: runs }, (_, i) => play(random, mkRng(i * 7 + 1))));
 for (const comp of D.INTENDED_COMPS.filter(c => c.units.every(id => POOL.some(u => u.id === id)))) report(`시너지 · ${comp.name}`, Array.from({ length: runs }, (_, i) => play(synergy, mkRng(i * 13 + 5), comp)));
+if (ECON) { const avg = Array.from({ length: D.EXPEDITION.rounds }, (_, i) => (levelStats.reduce((n, l) => n + l[i], 0) / levelStats.length).toFixed(1)); console.log(`실제 경제 · 라운드 경험치 ${PASSIVE} · 평균 판 레벨`, avg.join(' '), `(목표 ${ROUND_LEVEL.slice(1).join(' ')})`); if (process.env.EXP_ONLY === '1') process.exit(0); }
 // 완성 편성의 힘: 8라운드 웨이브를 상대로 ‘의도한 조합’ 8유닛(비용 1 ★3 · 비용 2 ★2 · 그 위 ★1) 대 무작위 8유닛(같은 성급 규칙)의 승률. 기획 목표: 무작위 40% · 시너지 75%.
 const starOf = def => def.cost === 1 ? 3 : def.cost === 2 ? 2 : 1;
 const fixed = units => units.map(id => { const def = D.unitById(id); return { unit: id, star: starOf(def), row: X.frontRole(def) ? 'front' : 'back' }; });

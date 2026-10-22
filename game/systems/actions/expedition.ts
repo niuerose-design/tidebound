@@ -2,7 +2,7 @@
  * 원정대(오토배틀러) 2단계: 판 상태(State.expedition)와 행동. 8라운드 PvE · 고스트. 5단계부터 횟수 제한 없음, 보상은 승리마다 세계석(완주 보너스).
  * value 규칙 — expeditionBuy: 상점 칸 번호 · expeditionSell: 'bench:i' | 'board:i' · expeditionPlace: 'bench:i:front' | 'bench:i:back' | 'board:i'(벤치로).
  */
-import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
+import { EXPEDITION, roundXpFor, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods, STARTER_GHOST,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
@@ -18,6 +18,12 @@ import type { ActionHandlers } from './types';
 const run = (s: State): ExpeditionRun => { const r = s.expedition; if (!r || r.done) throw Error('진행 중인 원정이 없습니다.'); return r; };
 const slotsOf = (r: ExpeditionRun) => EXPEDITION.boardSlots[Math.min(EXPEDITION.boardSlots.length - 1, r.level)];
 /** 5단계: 보상 세계석 = 승수 × pearlsPerWin + (완주면 clearPearls). 환생 배율 없음. */
+/** 판 경험치를 더하고 레벨을 올립니다(최대 8, 최대 레벨이면 쌓지 않음). */
+function addRunXp(r: ExpeditionRun, n: number) {
+    if (r.level >= 8) return;
+    r.xp += n;
+    while (r.level < 8 && r.xp >= EXPEDITION.xpToLevel[r.level]) { r.xp -= EXPEDITION.xpToLevel[r.level]; r.level++; }
+}
 export const expeditionReward = (wins: number, cleared: boolean) => wins * EXPEDITION.pearlsPerWin + (cleared ? EXPEDITION.clearPearls : 0);
 /** 같은 유닛 · 같은 ★이 3개 모이면 한 단계 올립니다(보드에 있던 자리는 유지, 나머지는 사라짐). 더 합칠 것이 없을 때까지. */
 /** 9단계 시즌 정산 검증: 서버가 만든 값만 믿되 모양은 확인합니다. 세계석은 순위에서 다시 계산(값 위조 방지). */
@@ -283,8 +289,7 @@ export const expeditionActions: ActionHandlers = {
     },
     expeditionXp(s) {
         const r = run(s); if (r.level >= 8) throw Error('최대 레벨입니다.'); if (r.gold < EXPEDITION.xp) throw Error('골드가 부족합니다.');
-        r.gold -= EXPEDITION.xp; r.xp += EXPEDITION.xp + (runMods(r).xpPlus || 0);
-        while (r.level < 8 && r.xp >= EXPEDITION.xpToLevel[r.level]) { r.xp -= EXPEDITION.xpToLevel[r.level]; r.level++; }
+        r.gold -= EXPEDITION.xp; addRunXp(r, EXPEDITION.xp + (runMods(r).xpPlus || 0));
     },
     expeditionPlace(s, { a }) {
         const r = run(s), [where, iText, rowText] = String(a.value || '').split(':'), i = Number(iText);
@@ -344,6 +349,8 @@ export const expeditionActions: ActionHandlers = {
         // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).
         if (r.round === EXPEDITION.rounds) { if (won) { r.cleared = true; r.abyssChoice = true; r.round++; addLog(s, `원정대 완주 · 심연으로 계속 갈 수 있습니다(라운드마다 더 세지고 고스트 없음 · ${ABYSS.bonusEvery}라운드마다 세계석 +${ABYSS.bonus})`, 'reward'); return; } r.round++; finish(s, r, now, '완주'); return; }
         if (abyss && (r.abyss || 0) >= ABYSS.max) { r.round++; finish(s, r, now, '심연 끝'); return; }
+        // v3.426 라운드 경험치: 승패와 상관없이 전투를 마치면 받고, 다음 상점은 오른 레벨로 굴립니다.
+        if (r.level < 8) { const gained = roundXpFor(r.round); addRunXp(r, gained); r.last.xp = gained; }
         r.round++; r.gold += income(r); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, r.round >= EXPEDITION.synergySlotRound ? r.board : undefined, lockedBossUnits(s.book), setUnits(r.set));
         if (r.round === 9) questProgress(s, now, 'reach8');
         // 11단계: 2 · 5 · 8라운드 시작 때 증강 선택지. 15단계: 심연에서는 14 · 18 · 22…(4라운드마다) 3등급.

@@ -32,6 +32,13 @@ export const EXPEDITION = {
     star: [0, 1, 1.8, 4],
     /** 판 레벨별 경험치 목표(레벨 2 → 3 …). */
     xpToLevel: [0, 0, 2, 6, 10, 20, 36, 56, 80],
+    /**
+     * v3.426 라운드 경험치: 전투를 마칠 때마다(승패 무관) base + perRound × (라운드 − 1)을 공짜로 받습니다(1라운드 뒤 +4, 2라운드 뒤 +6 … 11라운드 뒤 +24).
+     * 웨이브(적 머릿수 1 + 라운드, 예산)는 판 레벨이 2 · 3 · 4 · 5 · 5 · 6 · 6 · 7 · 7 · 8로 오른다고 보고 맞춰져 있는데, 전에는 경험치를 골드로만 살 수 있어
+     * 실제 경제로는 레벨 4~5에 머물러 4라운드부터 거의 이기지 못했습니다(상점 시뮬 EXP_ECON=1: 전체 승률 4~9%). 이 값이면 사지 않아도 레벨이 그 곡선을 따라가고
+     * (11라운드에 8), 전체 승률이 공짜 레벨 기준(50~78%)보다 조금 낮은 45~73%가 됩니다. 경험치를 사면 그만큼 앞서 갑니다.
+     */
+    roundXp: { base: 4, perRound: 2 },
     maxTurns: 40,
     /** 마나: 기본 공격 +10 · 피격 +5, 100에 기술 발동. */
     manaPerAttack: 10, manaPerHit: 5, manaCast: 100,
@@ -44,6 +51,8 @@ export const EXPEDITION = {
     /** 5단계(운영 결정): 하루 횟수 제한 없음. 보상은 세계석 — 승리마다 pearlsPerWin, 12라운드를 모두 마치면 +clearPearls, 막 보스마다 +actPearls(한 판 최대 12 + 6 + 4 = 22). */
     pearlsPerWin: 1, clearPearls: 4,
 };
+/** v3.426 그 라운드 전투를 마치면 받는 판 경험치. */
+export const roundXpFor = (round: number) => EXPEDITION.roundXp.base + EXPEDITION.roundXp.perRound * (round - 1);
 /** 10단계: 라운드의 막(1~3)과 막 보스 라운드 여부. */
 export const actOf = (round: number) => Math.min(3, Math.ceil(round / EXPEDITION.actLength));
 export const isBossRound = (round: number) => round % EXPEDITION.actLength === 0;

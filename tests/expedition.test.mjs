@@ -870,3 +870,20 @@ test('expedition stage 23-3 (author memo): codes carry a UTF-8 author name and a
         const row = (await E.listExpeditionBoard(key)).find(x => x.id === 'm1'); const dec = D.decodeBoard(row.code); assert.equal(dec.author, '메모왕'); assert.equal(dec.memo, '뒷줄 마력 셋');
     } finally { delete process.env.TIDEBOUND_DEV_DB; try { fs.unlinkSync(file); } catch { /* 없음 */ } }
 });
+
+test('v3.426 round xp: every finished fight grants base + perRound × (round − 1) board xp (win or lose), levels carry into the next shop, none at level 8', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition');
+    const s = newState(0); s.level = 100; s.rebirths = 120;
+    const now = 1_800_000_000_000;
+    assert.equal(D.roundXpFor(1), D.EXPEDITION.roundXp.base); assert.equal(D.roundXpFor(11), D.EXPEDITION.roundXp.base + 10 * D.EXPEDITION.roundXp.perRound);
+    act(s, { type: 'expeditionStart' }, now, mkRng(3)); const r = s.expedition; delete r.rule;
+    r.board = [{ unit: 'slime', star: 1, row: 'front' }];
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3));
+    // 레벨 2 → 3에 2가 들고 남은 것이 쌓입니다(base 4 기준 레벨 3 · 경험치 2).
+    assert.equal(r.last.xp, D.roundXpFor(1)); assert.equal(r.level, 3); assert.equal(r.xp, D.roundXpFor(1) - D.EXPEDITION.xpToLevel[2]);
+    // 레벨 8이면 더 쌓지 않습니다.
+    r.level = 8; r.xp = 0; r.hp = 100; r.board = [{ unit: 'slime', star: 1, row: 'front' }];
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(4));
+    if (!r.done) { assert.equal(r.level, 8); assert.equal(r.xp, 0); assert.equal(r.last.xp, undefined); }
+});
