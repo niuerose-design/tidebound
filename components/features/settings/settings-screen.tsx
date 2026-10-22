@@ -18,7 +18,7 @@ import { SWARM_CAPS, swarmCapOf } from '@/game/data/variants';
 import { SLOT_COUNT, accountSlot, slotUnlocked, slotUnlockText } from '@/game/data/account';
 import { jobById } from '@/game/data/classes';
 import { dungeonById, stageById } from '@/game/data/world';
-import { useSkillFx, setSkillFx, useFxGlow, setFxGlow, useSceneLootSetting, setSceneLoot } from '@/components/game/skill-fx-setting';
+import { useSkillFx, setSkillFx, useFxGlow, setFxGlow, useSceneLootSetting, setSceneLoot, useExpeditionReplay, setExpeditionReplay } from '@/components/game/skill-fx-setting';
 import { useNotices, setNotice, NOTICE_KINDS } from '@/components/game/notice-settings';
 import { useStarSetting, setStarSetting } from '@/components/game/star-catch-setting';
 import { BACKDROP_LABELS, HERO_LABELS, WEAPON_LABELS, setHeroImage, setSceneLook, useHeroImage, useSceneLook, type HeroKindId, type WeaponId } from '@/components/game/scene-look-setting';
@@ -60,6 +60,7 @@ export function SettingsScreen({ s, busy, send, onSwitchSlot, onLogout, setView 
             <SkillFxRow/>
             <FxGlowRow/>
             <SceneLootRow/>
+            <ExpeditionReplayRow/>
             <SceneLookRows s={s}/>
         </Card>
         <Card id="notices" title="자동 사냥 화면 알림" description="메인 화면에 띄울 알림과 카드를 고릅니다. 꺼도 게임 진행 · 보상은 그대로이고, 같은 내용은 각 메뉴에서 볼 수 있습니다. 이 기기에만 저장됩니다.">
@@ -169,6 +170,10 @@ function SkillFxRow() {
 function FxGlowRow() {
     const on = useFxGlow(), fx = useSkillFx();
     return <ToggleRow device title="섬광 효과" desc={`스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광과, 4차 이상 스킬의 큰 원형 폭발광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.${fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 처음에는 꺼짐입니다.`} checked={on} onChange={setFxGlow}/>;
+}
+function ExpeditionReplayRow() {
+    const on = useExpeditionReplay();
+    return <ToggleRow device title="원정대 전투 장면" desc="원정대 전투가 끝날 때마다 재생을 엽니다. 끄면 결과 줄만 보이고, 보고 싶은 판은 결과 줄의 ‘재생 보기’로 열 수 있습니다. 전투 결과와 보상은 같습니다." checked={on} onChange={setExpeditionReplay}/>;
 }
 function SceneLootRow() {
     const on = useSceneLootSetting();

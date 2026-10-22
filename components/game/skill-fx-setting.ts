@@ -73,3 +73,22 @@ export function setSceneLoot(on: boolean) {
     try { localStorage.setItem(LOOT_KEY, on ? 'on' : 'off'); } catch { /* 저장소 없음: 이번 화면에서만 */ }
     window.dispatchEvent(new Event(LOOT_EVENT));
 }
+
+/**
+ * v3.426 원정대 전투 장면 켜기/끄기(이 기기에만 저장, 처음에는 켜짐). 켜져 있으면 전투가 끝날 때마다 재생이 열리고,
+ * 끄면 결과 줄만 보이고 ‘재생 보기’로 그 판을 따로 열 수 있습니다. 전투 결과 · 보상은 같습니다.
+ */
+const EXP_REPLAY_KEY = 'tidebound.expeditionReplay';
+const EXP_REPLAY_EVENT = 'tidebound:expeditionReplay';
+const expReplaySnapshot = () => { try { return localStorage.getItem(EXP_REPLAY_KEY) !== 'off'; } catch { return true; } };
+function subscribeExpReplay(fn: () => void) {
+    window.addEventListener('storage', fn); window.addEventListener(EXP_REPLAY_EVENT, fn);
+    return () => { window.removeEventListener('storage', fn); window.removeEventListener(EXP_REPLAY_EVENT, fn); };
+}
+/** 원정대 전투가 끝나면 재생을 자동으로 열지. */
+export function useExpeditionReplay() { return useSyncExternalStore(subscribeExpReplay, expReplaySnapshot, () => true); }
+/** 이 기기의 원정대 전투 장면 설정을 바꿉니다. */
+export function setExpeditionReplay(on: boolean) {
+    try { localStorage.setItem(EXP_REPLAY_KEY, on ? 'on' : 'off'); } catch { /* 저장소 없음: 이번 화면에서만 */ }
+    window.dispatchEvent(new Event(EXP_REPLAY_EVENT));
+}

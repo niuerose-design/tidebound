@@ -1053,7 +1053,7 @@ export type ExpeditionRun = {
     round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
     board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
     /** 마지막 전투 요약. 12단계: 상대 보드(foe)와 재생 프레임(frames)으로 화면이 전투를 애니메이션으로 다시 보여줍니다. 17단계: 고스트 상대의 증강(foeAugments). */
-    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean; foeAugments?: string[]; /** 22단계: 상대 보드가 라운드 기준보다 세서 ★을 낮췄으면 scaled. */ scaled?: boolean };
+    last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean; foeAugments?: string[]; /** 22단계: 상대 보드가 라운드 기준보다 세서 ★을 낮췄으면 scaled. */ scaled?: boolean; /** v3.426 이 전투를 마치고 받은 라운드 경험치. */ xp?: number };
     done?: boolean; reward?: number; startedAt: number;
     /** 3단계: 라운드마다 싸운 보드(고스트 스냅샷용) · 마지막 상대 이름. 17단계: 라운드마다 그때 가진 증강(고스트에 반영). */
     history?: Record<number, ExpeditionPlaced[]>;
