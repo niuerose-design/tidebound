@@ -98,7 +98,7 @@
 /* v3.368 사냥터 월드맵(components/game/world-map.tsx): 세계 탭 · SVG 지도 · 고른 사냥터 안내 줄. */
 .world-map { margin:0 0 18px; border:1px solid var(--border); border-radius:10px; background:var(--card); overflow:hidden; }
 .world-map-tabs { display:flex; border-bottom:1px solid var(--border); }
-.world-tab { flex:1; display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 14px; background:transparent; border:0; border-bottom:2px solid transparent; color:var(--muted); text-align:left; cursor:pointer; position:relative; }
+.world-tab { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:2px; padding:10px 14px; background:transparent; border:0; border-bottom:2px solid transparent; color:var(--muted); text-align:left; cursor:pointer; position:relative; }
 .world-tab small { font-size:11px; letter-spacing:.12em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
 .world-tab b { font-size:14px; color:var(--foreground); }
 .world-tab svg { position:absolute; right:12px; top:12px; color:var(--world-accent); }
