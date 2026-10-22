@@ -494,6 +494,8 @@ export const activeSet = (now: number) => setAt(rotationIndex(now));
 /** 다음 주 세트와 바뀌는 시각(다음 월요일 0시, 한국 시간). */
 export const nextSet = (now: number) => setAt(rotationIndex(now) + 1);
 export const nextSetAt = (now: number) => SET_ROTATION.epoch + (rotationIndex(now) + 1) * SET_ROTATION.weekMs;
+/** v3.431 로테이션 일정: 이번 주부터 한 바퀴(세트 수만큼) — 세트와 시작 시각(월요일 0시, 한국 시간). 도감의 ‘다음 로테이션’ 보기에 씁니다. */
+export const rotationSchedule = (now: number) => Array.from({ length: SETS.length }, (_, k) => ({ set: setAt(rotationIndex(now) + k), start: SET_ROTATION.epoch + (rotationIndex(now) + k) * SET_ROTATION.weekMs }));
 export const setById = (id?: string) => SETS.find(x => x.id === id) || SETS[0];
 /** 세트의 유닛 풀. */
 export const setUnits = (setId?: string): UnitDef[] => { const d = setById(setId), out = UNITS.filter(u => !d.remove?.includes(u.id)); for (const id of d.add || []) { const u = unitById(id); if (u && !out.includes(u)) out.push(u); } return out; };

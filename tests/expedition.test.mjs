@@ -635,6 +635,8 @@ test('expedition stage 20 (sets · v3.430 weekly rotation): active/next set by K
     assert.deepEqual([0, 1, 2, 3, 4, 5].map(k => D.activeSet(mon + k * WK + 3600_000).id), ['genesis', 'deepTide', 'leafre', 'timeTemple', 'genesis', 'deepTide'], 'cycles');
     assert.equal(D.activeSet(mon - 3600_000).id, 'timeTemple', 'before the epoch wraps backwards');
     assert.equal(D.nextSet(t('2026-10-20T03:00:00Z')).id, 'deepTide'); assert.equal(D.nextSetAt(t('2026-10-20T03:00:00Z')), mon + WK); assert.equal(D.nextSet(mon + 3 * WK).id, 'genesis');
+    // v3.431 로테이션 일정(도감의 다음 로테이션 보기): 이번 주부터 세트 수만큼, 주마다 시작 시각.
+    { const sch = D.rotationSchedule(mon + WK + 3600_000); assert.deepEqual(sch.map(x => x.set.id), ['deepTide', 'leafre', 'timeTemple', 'genesis']); assert.deepEqual(sch.map(x => x.start), [1, 2, 3, 4].map(k => mon + k * WK)); }
     // 풀: 기본 30 − 6 + 6 = 30, 쉬는 유닛은 빠지고 세트 유닛이 들어온다. unitById는 전체를 본다.
     const base = D.setUnits('genesis'), tide = D.setUnits('deepTide');
     assert.equal(base.length, 30); assert.equal(tide.length, 30); assert.ok(!tide.some(u => u.id === 'curseEye')); assert.ok(tide.some(u => u.id === 'papulatus')); assert.ok(D.unitById('kingSlime')); assert.ok(!base.some(u => u.id === 'kingSlime'));
