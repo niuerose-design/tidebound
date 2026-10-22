@@ -1076,6 +1076,8 @@ export type ExpeditionRun = {
     acts?: number;
     /** 16단계: 난이도(1~5, 없으면 1). */
     difficulty?: number;
+    /** v3.433 출발 때의 원정 명성(명성 연결 판 보정). */
+    renown?: number;
     /** 20단계: 이 판의 분기 세트 id(없으면 첫 세트). */
     set?: string;
     /** 15단계: 12라운드 완주 여부 · 완주 직후 심연 선택 대기 · 심연에서 이긴 라운드 수 · 이 판의 패배 수. */

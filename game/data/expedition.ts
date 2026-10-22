@@ -21,7 +21,7 @@ export const SPECIAL_NAMES: Record<Special, string> = { boss: '보스', onyx: '�
 
 export const EXPEDITION = {
     /** 10단계: 12라운드 · 3막(1~4 · 5~8 · 9~12). 각 막의 마지막 라운드는 보스 웨이브(고스트 없음)이고 이기면 막 보상 세계석 +actPearls. */
-    rounds: 12, actLength: 4, actPearls: .2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, /** v3.432 경험치 구매 한 번에 얻는 양(값은 xp 골드): 4골드 → 8(전에는 4). 라운드 경험치를 1 + (r − 1)로 줄인 대신 사는 쪽이 레벨을 따라가게. */ xpBuy: 8, baseGold: 7, interestPer: 10, interestMax: 5,
+    rounds: 12, actLength: 4, actPearls: .2, boardFront: 4, boardBack: 4, bench: 8, shopSize: 5, reroll: 2, xp: 4, /** 경험치 구매 한 번에 얻는 양(값은 xp 골드). v3.432에 8로 올렸다가 v3.433 운영 결정으로 다시 4골드 → 4. */ xpBuy: 4, baseGold: 7, interestPer: 10, interestMax: 5,
     /** 10단계 상점 시너지 슬롯: 2라운드부터 상점 마지막 칸은 보드의 시너지(다음 단계에 가장 가까운 것)를 늘리는 유닛이 나옵니다. */
     synergySlotRound: 2,
     /** 판 레벨(2~8)마다 배치 수. */
@@ -336,7 +336,9 @@ export const weeklyRuleById = (id?: string) => WEEKLY_RULES.find(r => r.id === i
  */
 export const MASTERY_MAX = 1000;
 /** 21단계 명성: 숙련 50을 찍으면 ‘원정 명성’을 올리며 숙련을 1로 되돌릴 수 있습니다. 명성마다 다음 주기의 숙련 경험치 요구 +20%, 세계석 보상 +2%(명성 25까지 반영). 방치형 장르의 환생층(Cookie Clicker 승천 · Antimatter Dimensions 무한)과 같은 역할. */
-export const RENOWN = { xpGrowth: .2, rewardPer: .02, rewardCap: 25, titles: [1, 5, 10, 25, 50] };
+export const RENOWN = { xpGrowth: .2, rewardPer: .02, rewardCap: 25, titles: [1, 5, 10, 25, 50], /** v3.433 명성 연결: 명성마다 판의 모든 유닛 체력 · 공격력 +1%(명성 rewardCap까지). */ combatPer: .01 };
+/** v3.433 명성 연결의 판 보정(내 보드에만, 고스트 보정에는 안 실림). */
+export const renownMods = (renown = 0): RunMods | undefined => { const n = Math.min(RENOWN.rewardCap, Math.max(0, Math.floor(renown))); return n ? { hpMult: 1 + RENOWN.combatPer * n, powerMult: 1 + RENOWN.combatPer * n } : undefined; };
 export const masteryXpFor = (level: number, renown = 0) => Math.round((100 + 50 * (level - 1)) * (1 + RENOWN.xpGrowth * Math.max(0, renown)));
 export const renownRewardMult = (renown = 0) => 1 + RENOWN.rewardPer * Math.min(RENOWN.rewardCap, Math.max(0, renown));
 /** 21단계 주간 리그: 같은 등급의 모험가 8명이 한 조. 주간 점수 = 그 주 최고 판 점수 + 그 주 승리 합. 1~2위 승급 · 7~8위(6명 이상인 조) 강등. */

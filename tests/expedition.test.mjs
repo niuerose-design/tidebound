@@ -99,8 +99,8 @@ test('expedition run: start → buy → merge stars → place → fight → fini
     act(s, { type: 'expeditionPlace', value: 'bench:0:front' }, now, rng); act(s, { type: 'expeditionPlace', value: 'bench:0:front' }, now, rng);
     assert.throws(() => act(s, { type: 'expeditionPlace', value: 'bench:0:back' }, now, rng), /배치는/); assert.equal(r.board.length, 2);
     act(s, { type: 'expeditionPlace', value: 'board:0' }, now, rng); assert.equal(r.board.length, 1); assert.equal(r.bench.length, 2);
-    // 경험치: 4 G → 8(v3.432) → 레벨 2 → 3(2) → 4(6).
-    r.gold = 10; act(s, { type: 'expeditionXp' }, now, rng); assert.equal(r.level, 4); assert.equal(r.xp, 0); assert.equal(r.gold, 6);
+    // 경험치: 4 G → 4(v3.433, 잠시 8이었음) → 레벨 2 → 3(목표 2), 남은 2.
+    r.gold = 10; act(s, { type: 'expeditionXp' }, now, rng); assert.equal(r.level, 3); assert.equal(r.xp, 2); assert.equal(r.gold, 6);
     // 전투 → 다음 라운드 · 수입 · 새 상점.
     (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, rng); assert.equal(r.round, 2); assert.ok(r.last && typeof r.last.won === 'boolean'); assert.ok(r.gold >= 6 + D.EXPEDITION.baseGold); assert.ok(r.shop.every(x => x === null || D.unitById(x)));
     // 포기 → 세계석 보상(승리당 .1, 완주 없음 — v3.432 1/10, 소수는 모았다가 지급) · 같은 날에도 바로 다시 출발.
@@ -802,9 +802,9 @@ test('expedition v3.428: stingy round xp (buying xp matters) with more base gold
     // 라운드 경험치만으로는 목표 곡선(웨이브가 전제하는 레벨)보다 대체로 1레벨 낮게 가고, 레벨 8은 마지막 라운드에야 — 사야 곡선을 따라감.
     const target = [2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8], passive = []; let lv = 2, xp = 0;
     for (let round = 1; round <= 12; round++) { passive.push(lv); xp += D.roundXpFor(round); while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
-    // v3.432: 더 보수적으로(1 + (r − 1)) — 사지 않으면 대부분 라운드에서 목표보다 낮고 레벨 6에서 멈춤. 대신 경험치 구매는 4골드 → 8.
+    // v3.432: 더 보수적으로(1 + (r − 1)) — 사지 않으면 대부분 라운드에서 목표보다 낮고 레벨 6에서 멈춤. 경험치 구매는 4골드 → 4(v3.433).
     assert.ok(passive.filter((l, i) => l < target[i]).length >= 10, `passive alone lags the curve: ${passive}`); assert.equal(Math.max(...passive), 6, 'passive alone tops out at 6');
-    assert.equal(D.roundXpFor(1), 1); assert.equal(D.roundXpFor(11), 11); assert.equal(D.EXPEDITION.baseGold, 7); assert.equal(D.EXPEDITION.xp, 4); assert.equal(D.EXPEDITION.xpBuy, 8);
+    assert.equal(D.roundXpFor(1), 1); assert.equal(D.roundXpFor(11), 11); assert.equal(D.EXPEDITION.baseGold, 7); assert.equal(D.EXPEDITION.xp, 4); assert.equal(D.EXPEDITION.xpBuy, 4, 'v3.433: back to 4 gold → 4');
     // 공격 종류: 마력 = 마법(기본 공격도 마법), 그 밖은 물리.
     for (const def of D.ALL_UNITS) { const magic = def.roles.includes('arcane'); assert.equal(D.damageType(def), magic ? 'magic' : 'physical', def.id); const f = X.buildSide([{ unit: def.id, star: 1, row: 'front' }], 'a').units[0]; assert.equal(!!f.magicBasic, magic, `${def.id} basic attack`); }
     assert.equal(D.damageType(D.unitById('evilEye')), 'magic'); assert.equal(D.damageType(D.unitById('pig')), 'physical');
@@ -842,6 +842,24 @@ test('expedition v3.432: mastery ladder to 1000 with small perks every 5 levels 
     const p = newState(0); p.pearls = 0; assert.equal(A.grantPearls(p, .3), 0); assert.equal(A.grantPearls(p, .3), 0); assert.equal(A.grantPearls(p, .4), 1); assert.equal(p.pearls, 1); assert.equal(p.expeditionPearlCarry, 0);
     assert.equal(A.grantPearls(p, 2.25), 2); near(p.expeditionPearlCarry, .25); assert.equal(D.pearlText(.30000000000000004), '0.3'); assert.equal(D.pearlText(2), '2');
     assert.ok(Math.abs(A.expeditionReward(12, true) - 1.6) < 1e-9, '12 wins + clear = 1.6 (was 16)'); assert.equal(D.EXPEDITION.actPearls, .2); assert.equal(D.ABYSS.bonus, .5);
+});
+
+test('expedition v3.433: renown link adds +1% hp/power per renown (capped) to my runs, the old codex kill link is taken back once on load, xp purchase is 4 gold → 4', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition'), X = await L.load('systems/expedition'), M = await L.load('systems/migrations');
+    assert.equal(D.renownMods(0), undefined); assert.deepEqual(D.renownMods(3), { hpMult: 1.03, powerMult: 1.03 }); assert.deepEqual(D.renownMods(99), { hpMult: 1.25, powerMult: 1.25 }, 'capped at 25');
+    const s = newState(0); s.level = 100; s.expeditionRenown = 10; s.expeditionMasteryV2 = true;
+    act(s, { type: 'expeditionStart' }, 1_800_000_000_000, mkRng(1)); const r = s.expedition; assert.equal(r.renown, 10);
+    const m = A.runMods(r), plain = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a', A.runMods({ ...r, renown: 0 })).units[0], linked = X.buildSide([{ unit: 'pig', star: 1, row: 'front' }], 'a', m).units[0];
+    assert.equal(linked.maxHp, Math.round(plain.maxHp * 1.1)); assert.ok(linked.stats.attack > plain.stats.attack);
+    assert.equal(D.EXPEDITION.xpBuy, 4);
+    // 도감 연결 회수: 단계만큼(50 · 250 · 750) 빼고 0 아래로는 안 가며, 기록을 지워 한 번만.
+    const t = newState(0); const pig = D.unitById('pig').monster, eye = D.unitById('evilEye').monster, boar = D.unitById('wildBoar').monster;
+    t.book[pig] = 1000; t.book[eye] = 100; t.book[boar] = 30; t.expeditionCodexLinked = { pig: 3, evilEye: 2, wildBoar: 1 };
+    assert.equal(M.revokeCodexLink(t), 750 + 100 + 30); assert.equal(t.book[pig], 250); assert.equal(t.book[eye], 0, 'never below 0'); assert.equal(t.book[boar], 0); assert.equal(t.expeditionCodexLinked, undefined);
+    assert.equal(M.revokeCodexLink(t), 0, 'once'); assert.equal(t.book[pig], 250);
+    // 불러올 때(migrateState) 적용.
+    const u = newState(0); u.book[pig] = 400; u.expeditionCodexLinked = { pig: 2 }; M.migrateState(u, 0); assert.equal(u.book[pig], 150); assert.equal(u.expeditionCodexLinked, undefined);
 });
 
 test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry a share code', async () => {
