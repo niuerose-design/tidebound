@@ -93,7 +93,7 @@ export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, boss
     return { units, active, flags };
 }
 /** v3.421 역병 2 중독(기본 공격 · 기술 모두): 한 중첩 = 공격력(물리 · 마법 중 큰 쪽) × ratio, 매 턴. */
-export const BLIGHT = { ratio: .1, turns: 3, maxStacks: 4 };
+export const BLIGHT = { ratio: .08, turns: 3, maxStacks: 4 };
 export type BattleResult = { winner: 'a' | 'b' | 'draw'; turns: number; hpLeft: { a: number; b: number }; log: string[]; events: CombatEvent[]; /** 12단계 재생 프레임(최대 REPLAY_FRAMES개, 넘치면 truncated). */ frames: ReplayFrame[]; truncated: boolean };
 /** 12단계: 저장 크기를 위해 재생 프레임은 이 수까지만 남깁니다(그 뒤는 결과만). */
 export const REPLAY_FRAMES = 160;

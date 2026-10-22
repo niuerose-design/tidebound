@@ -26,8 +26,8 @@ export const EXPEDITION = {
     synergySlotRound: 2,
     /** 판 레벨(2~8)마다 배치 수. */
     boardSlots: [0, 0, 2, 3, 4, 5, 6, 7, 8],
-    /** 판 레벨별 상점 등장 비중(비용 1~5). TFT 표준 곡선 차용. */
-    shopOdds: [[], [], [1, 0, 0, 0, 0], [.75, .25, 0, 0, 0], [.55, .3, .15, 0, 0], [.45, .33, .2, .02, 0], [.25, .4, .3, .05, 0], [.19, .3, .35, .15, .01], [.16, .2, .35, .25, .04]] as number[][],
+    /** 판 레벨별 상점 등장 비중(비용 1~5). TFT 표준 곡선 차용. v3.427: 레벨 6~8에서 비용 4 · 5를 조금 더(레벨 8 비용 5 4% → 8%) — 4 · 5비용에 기대는 조합(신전 · 숲)이 후반 핵심을 모으지 못하던 것. */
+    shopOdds: [[], [], [1, 0, 0, 0, 0], [.75, .25, 0, 0, 0], [.55, .3, .15, 0, 0], [.45, .33, .2, .02, 0], [.22, .38, .32, .07, .01], [.17, .27, .33, .2, .03], [.14, .18, .3, .3, .08]] as number[][],
     /** 성급 배율(★1 · ★2 · ★3). v3.417: ★3 3.2 → 4 — 9장을 모은 값이 웨이브 예산의 ★3 = 비용 × 4와 맞도록(비용 1 ★3 ↔ 비용 4 ★1 1대1 2% → 72%). */
     star: [0, 1, 1.8, 4],
     /** 판 레벨별 경험치 목표(레벨 2 → 3 …). */
@@ -140,9 +140,10 @@ export const TRAITS: TraitDef[] = [
     { id: 'wasteland', kind: 'origin', name: '황야', tiers: [{ count: 2, damageTaken: .25 }, { count: 4, damageTaken: .45, mult: { attack: 1.2, magic: 1.2 }, flags: ['reflect'] }] },
     { id: 'forest', kind: 'origin', name: '숲', tiers: [{ count: 2, mult: { magic: 1.2, hp: 1.05 } }, { count: 4, mult: { magic: 1.4, hp: 1.1 }, flags: ['manaBoost'] }] },
     { id: 'underground', kind: 'origin', name: '지하', tiers: [{ count: 2, mult: { attack: 1.05, magic: 1.05 }, flags: ['killStack'] }, { count: 4, mult: { attack: 1.25, magic: 1.25 }, flags: ['killStack'], bonus: { followUpBonus: .2 } }] },
-    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 2 } }, { count: 4, bonus: { speed: 4 }, flags: ['haste'] }] },
+    { id: 'sea', kind: 'origin', name: '바다 · 용', tiers: [{ count: 2, bonus: { speed: 1 } }, { count: 4, bonus: { speed: 3 }, flags: ['haste'] }] },
     // v3.418: 신전 유닛은 마나를 채우기 전에 쓰러져 2단계 값이 낮았음(2명 켬/끔 차 +9%p, 초원 · 황야 · 바다는 +16~18) → 2단계 체력 8%로 +18%p. 4단계에도 같은 체력 8%(올리면서 잃지 않게). 4단계를 더 키우면 높은 난이도에서 이미 가장 센 후반이 더 세져서 그대로 둠.
-    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, mult: { magic: 1.1, hp: 1.08 }, flags: ['startMana50'] }, { count: 4, mult: { magic: 1.15, hp: 1.08 }, bonus: { penetration: .4 }, flags: ['startMana100'] }] },
+    // v3.427 바다 · 신전 조합 차(상점 시뮬 79 : 50 → 75 : 60): 바다 2 · 4 속도 2 · 4 → 1 · 3(가속은 그대로, 2 → 4 상승이 커지도록), 신전 2 · 4 체력 15% · 시작 마나 100(첫 턴부터 기술), 역병 중독 10 → 8%(바다 조합의 역병 2), 레벨 6~8 고비용 확률 상향.
+    { id: 'temple', kind: 'origin', name: '신전 · 아케인', tiers: [{ count: 2, mult: { magic: 1.1, hp: 1.15 }, flags: ['startMana100'] }, { count: 4, mult: { magic: 1.15, hp: 1.15 }, bonus: { penetration: .4 }, flags: ['startMana100'] }] },
     { id: 'charge', kind: 'role', name: '돌격', tiers: [{ count: 2, mult: { attack: 1.2 } }, { count: 4, mult: { attack: 1.45 } }, { count: 6, mult: { attack: 1.45 }, bonus: { crit: .15 } }] },
     { id: 'arcane', kind: 'role', name: '마력', tiers: [{ count: 2, mult: { magic: 1.2 } }, { count: 4, mult: { magic: 1.5 } }, { count: 6, mult: { magic: 1.5 }, bonus: { penetration: .3 } }] },
     { id: 'guard', kind: 'role', name: '수호', tiers: [{ count: 2, damageTaken: .25, only: 'guard' }, { count: 4, damageTaken: .45, only: 'guard', flags: ['backline15'] }] },
@@ -155,7 +156,7 @@ export const TRAITS: TraitDef[] = [
 ];
 /** 기획서의 ‘의도한 조합’ 6개(균형 측정용 목표 편성). */
 /** 8단계 화면용: 시너지 단계 효과를 글로 풉니다(데이터에서 자동 생성 → 수치가 바뀌어도 설명이 어긋나지 않음). */
-const FLAG_DESC: Record<string, string> = { regen: '매 턴 최대 체력의 4%를 회복', reflect: '받은 피해의 25%를 공격한 적에게 되돌려줌', manaBoost: '마나가 25% 더 빨리 참', killStack: '적을 쓰러뜨릴 때마다 아군 전체 공격력 5% 증가', haste: '전투 시작 때 아군 전체 3턴 가속', startMana50: '마나 50을 채운 채 시작', startMana100: '마나를 가득 채운 채 시작(첫 턴부터 기술)', backline15: '뒷줄 유닛이 받는 피해 15% 감소', manaDrain20: '적 전체의 마나가 20% 느리게 참', manaDrain40: '적 전체의 마나가 40% 느리게 참', shackle: '제어 유닛의 공격이 맞은 적은 2턴 동안 주는 피해 25% 감소(약화)', shackle2: '제어 유닛의 공격이 맞은 적은 3턴 동안 주는 피해 25% 감소(약화)', dread: '전투 시작 때 적 전체를 2턴 약화', blight: '역병 유닛의 공격이 맞을 때마다 중독 1중첩(공격력의 10%, 3턴, 최대 4중첩)', spread: '쓰러진 적의 독 · 화상이 다른 적에게 옮겨감', revive: '망령 유닛이 쓰러지면 체력 30%로 한 번 되살아남', roar: '전투 시작 때 보스가 포효해 적 전체를 2턴 약화' };
+const FLAG_DESC: Record<string, string> = { regen: '매 턴 최대 체력의 4%를 회복', reflect: '받은 피해의 25%를 공격한 적에게 되돌려줌', manaBoost: '마나가 25% 더 빨리 참', killStack: '적을 쓰러뜨릴 때마다 아군 전체 공격력 5% 증가', haste: '전투 시작 때 아군 전체 3턴 가속', startMana50: '마나 50을 채운 채 시작', startMana100: '마나를 가득 채운 채 시작(첫 턴부터 기술)', backline15: '뒷줄 유닛이 받는 피해 15% 감소', manaDrain20: '적 전체의 마나가 20% 느리게 참', manaDrain40: '적 전체의 마나가 40% 느리게 참', shackle: '제어 유닛의 공격이 맞은 적은 2턴 동안 주는 피해 25% 감소(약화)', shackle2: '제어 유닛의 공격이 맞은 적은 3턴 동안 주는 피해 25% 감소(약화)', dread: '전투 시작 때 적 전체를 2턴 약화', blight: '역병 유닛의 공격이 맞을 때마다 중독 1중첩(공격력의 8%, 3턴, 최대 4중첩)', spread: '쓰러진 적의 독 · 화상이 다른 적에게 옮겨감', revive: '망령 유닛이 쓰러지면 체력 30%로 한 번 되살아남', roar: '전투 시작 때 보스가 포효해 적 전체를 2턴 약화' };
 const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}(먼저 움직임)`, crit: v => `치명타 확률 ${Math.round(v * 100)}% 증가`, penetration: v => `방어 관통 ${Math.round(v * 100)}% 증가`, followUpBonus: v => `추가타 위력 ${Math.round(v * 100)}% 증가`, lifesteal: v => `준 피해의 ${Math.round(v * 100)}%만큼 체력 회복(흡혈)`, stunBonus: v => `기절이 ${v}턴 더 오래감`, controlBonus: v => `제어 효과가 ${v}턴 더 오래감`, poisonStackBonus: v => `독을 ${v}중첩 더 걸음`, dotTurnsBonus: v => `지속 피해가 ${v}턴 더 오래감` };
 export function describeTier(t: TraitTier): string {
     const out: string[] = [];

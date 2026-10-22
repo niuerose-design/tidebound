@@ -64,7 +64,7 @@ test('expedition mana casting: skills fire only at 100 mana (basic +10 · hit +5
     const r = X.battle([{ unit: 'seaGuard', star: 3, row: 'front' }], [{ unit: 'seaGuard', star: 3, row: 'front' }], mkRng(11), 14);
     const casts = r.log.filter(l => l.includes('마나 시전'));
     assert.ok(casts.length >= 1, 'a cast happened'); assert.ok(casts[0].startsWith('8턴'), `first cast on turn 8: ${casts[0]}`); assert.ok(!r.log.slice(0, 14).some(l => l.includes('마나 시전')), 'no cast in the first seven turns');
-    const side = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }], 'a'); assert.equal(side.units[0].charge, 50, 'temple 2: start mana 50');
+    const side = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }], 'a'); assert.equal(side.units[0].charge, 100, 'temple 2: start mana 100 (v3.427)');
     const full = X.buildSide(['erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul'].map(u => ({ unit: u, star: 1, row: 'back' })), 'a'); assert.equal(full.units[0].charge, 100, 'temple 4: start mana 100');
     const forest = X.buildSide(['evilEye', 'curseEye', 'wraithUnit', 'darkDrake'].map(u => ({ unit: u, star: 1, row: 'back' })), 'a'); assert.equal(forest.units[0].manaGain, 1.25, 'forest 4: mana +25%');
     assert.ok(X.buildSide(['slime', 'orangeMushroom', 'pig', 'zombieMushroom'].map(u => ({ unit: u, star: 1, row: 'front' })), 'a').flags.has('regen'), 'meadow 4 regen flag');
@@ -548,8 +548,8 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     { const plague = [{ unit: 'orangeMushroom', star: 2, row: 'front' }, { unit: 'fireBoar', star: 2, row: 'front' }], foe = [{ unit: 'seaGuard', star: 3, row: 'front' }];
       const r = X.battle(plague, foe, mkRng(4)); assert.ok(r.log.some(l => l.includes('중독')), 'plague 2 attacks poison'); }
     { const ug = X.buildSide([{ unit: 'kingClang', star: 1, row: 'front' }, { unit: 'juniorWraith', star: 1, row: 'back' }], 'a').units[1]; assert.equal(ug.stats.magic, Math.round(X.unitBaseStats(D.unitById('juniorWraith'), 1).magic * 1.05)); }
-    // v3.418 신전 2 · 4 체력 8%: 신전 2를 켠 보드는 팀 전체 체력이 8% 높음.
-    { const two = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }, { unit: 'pig', star: 1, row: 'front' }], 'a').units[2]; assert.equal(two.maxHp, Math.round(X.unitBaseStats(D.unitById('pig'), 1).hp * 1.08)); }
+    // v3.418 · v3.427 신전 2 · 4 체력 15%: 신전 2를 켠 보드는 팀 전체 체력이 15% 높음.
+    { const two = X.buildSide([{ unit: 'erdaSpirit', star: 1, row: 'back' }, { unit: 'memoryMonitor', star: 1, row: 'back' }, { unit: 'pig', star: 1, row: 'front' }], 'a').units[2]; assert.equal(two.maxHp, Math.round(X.unitBaseStats(D.unitById('pig'), 1).hp * 1.15)); }
     assert.equal(D.EXPEDITION.star[3], 4); assert.equal(X.unitBaseStats(D.unitById('slime'), 3).hp, 4 * D.BASE_BY_COST[1].hp);
     { let w = 0; for (let k = 0; k < 40; k++) { const rng = mkRng(900 + k); if (X.battle([{ unit: 'pig', star: 3, row: 'front' }], [{ unit: 'manticore', star: 1, row: 'front' }], rng).winner === 'a') w++; } assert.ok(w >= 16, `cost-1 ★3 holds against cost-4 ★1 (${w}/40)`); }
 });
