@@ -858,6 +858,12 @@ test('expedition v3.433: renown link adds +1% hp/power per renown (capped) to my
     t.book[pig] = 1000; t.book[eye] = 100; t.book[boar] = 30; t.expeditionCodexLinked = { pig: 3, evilEye: 2, wildBoar: 1 };
     assert.equal(M.revokeCodexLink(t), 750 + 100 + 30); assert.equal(t.book[pig], 250); assert.equal(t.book[eye], 0, 'never below 0'); assert.equal(t.book[boar], 0); assert.equal(t.expeditionCodexLinked, undefined);
     assert.equal(M.revokeCodexLink(t), 0, 'once'); assert.equal(t.book[pig], 250);
+    // v3.434 옛 명성(숙련 50 시절)은 명성 연결에서 뺌: 불러올 때 지금 명성을 기록하고, 그 뒤 올린 명성만 체력 · 공격력.
+    const old = newState(0); delete old.expeditionRenownLegacy; /* v3.434 이전 세이브 */ old.level = 100; old.expeditionRenown = 12; M.migrateState(old, 0); assert.equal(old.expeditionRenownLegacy, 12); assert.equal(D.combatRenown(old), 0);
+    M.migrateState(old, 0); assert.equal(old.expeditionRenownLegacy, 12, 'recorded once');
+    act(old, { type: 'expeditionStart' }, 1_800_000_000_000, mkRng(1)); assert.equal(old.expedition.renown, undefined, 'legacy renown gives no combat bonus'); act(old, { type: 'expeditionQuit' }, 1_800_000_000_001, mkRng(1));
+    old.expeditionRenown = 13; assert.equal(D.combatRenown(old), 1); act(old, { type: 'expeditionStart' }, 1_800_000_000_002, mkRng(1)); assert.equal(old.expedition.renown, 1, 'renown earned at 1000 counts');
+    const brand = newState(0); M.migrateState(brand, 0); assert.equal(brand.expeditionRenownLegacy, 0);
     // 불러올 때(migrateState) 적용.
     const u = newState(0); u.book[pig] = 400; u.expeditionCodexLinked = { pig: 2 }; M.migrateState(u, 0); assert.equal(u.book[pig], 150); assert.equal(u.expeditionCodexLinked, undefined);
 });

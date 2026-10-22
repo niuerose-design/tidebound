@@ -6,7 +6,7 @@ import { EXPEDITION, pearlText, roundXpFor, isBossRound, actOf, unitById, sellPr
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods, STARTER_GHOST,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, 
-    activeSet, setById, setUnits, renownMods, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
+    activeSet, setById, setUnits, renownMods, combatRenown, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
@@ -270,7 +270,7 @@ export const expeditionActions: ActionHandlers = {
         // v3.432 특전은 지금까지 오른 가장 높은 숙련(peak) 기준 — 명성으로 1로 돌아가도 특전은 그대로(화면 안내와 같게).
         const mastery = Math.max(s.expeditionMastery?.level || 1, s.expeditionMastery?.peak || 0), rule = weeklyRule(weekKey(now));
         const set = activeSet(now);
-        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1), augments: [], rule: rule.id, mastery, set: set.id, ...(s.expeditionRenown ? { renown: s.expeditionRenown } : {}), ...(difficulty > 1 ? { difficulty } : {}) };
+        const r: ExpeditionRun = { round: 1, gold: 0, level: 2, xp: 0, hp: EXPEDITION.hp, wins: 0, streak: 0, board: [], bench: [], shop: [], startedAt: Math.max(now, (s.expedition?.startedAt || 0) + 1), augments: [], rule: rule.id, mastery, set: set.id, ...(combatRenown(s) ? { renown: combatRenown(s) } : {}), ...(difficulty > 1 ? { difficulty } : {}) };
         r.gold = income(r) + masteryPerks(mastery).reduce((n, p) => n + (p.startGold || 0), 0); r.shop = rollShop(r.level, rng, EXPEDITION.shopSize, undefined, lockedBossUnits(s.book), setUnits(r.set));
         s.expedition = r;
         addLog(s, `원정대 출발 · 1라운드 · ${set.icon} ${set.name} 세트${difficulty > 1 ? ` · 난이도 ${difficultyOf(difficulty).icon} ${difficultyOf(difficulty).name}` : ''} · 이번 주 규칙: ${rule.name}(${rule.desc})`, 'system');
