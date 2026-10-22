@@ -64,7 +64,7 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
             <TabsContent value="play" className="grid gap-3">{main}</TabsContent>
             <TabsContent value="quests"><Card aria-label="과제"><QuestBox q={q} stale={stale}/>{weekBanner}</Card></TabsContent>
             <TabsContent value="growth"><Card aria-label="성장"><Head title="성장" aside="숙련 · 특전 · 명성 · 세트 숙련 · 리그 · 본편 연결"/><MasteryBox s={s} send={send} busy={busy}/><SetMasteryBox s={s} curSet={curSet} sm={sm} now={now}/><LinkBox s={s} pool={pool} chosenDiff={chosenDiff}/></Card></TabsContent>
-            <TabsContent value="records"><Card aria-label="기록"><Head title="기록" aside="최근 판 · 도전 · 도감 · 시즌"/>{recent.length ? <RecentBox s={s} copy={copy} copied={copied}/> : <Note>아직 마친 판이 없습니다.</Note>}<FeatBox s={s}/><CodexBox s={s} curSet={curSet} pool={pool}/>{season}{rewardTable}</Card></TabsContent>
+            <TabsContent value="records"><Card aria-label="기록"><Head title="기록" aside="최근 판 · 도전 · 도감 · 시즌"/>{recent.length ? <RecentBox s={s} copy={copy} copied={copied}/> : <Note>아직 마친 판이 없습니다.</Note>}<FeatBox s={s}/><CodexBox s={s} curSet={curSet} pool={pool} now={now}/>{season}{rewardTable}</Card></TabsContent>
             <TabsContent value="style"><Card aria-label="꾸미기"><Head title="꾸미기 · 공유" aside="보드 공유 코드 · 테마 · 유닛 피부"/><ShareBox s={s} send={send} busy={busy} copy={copy} copied={copied}/><ThemeBox s={s} send={send} busy={busy} pool={pool}/></Card></TabsContent>
         </Tabs></div>;
     if (!r || (r.done && !r.reward && r.reward !== 0)) return shell(<Card>

@@ -211,6 +211,9 @@
 .exp-codex-unit { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 4px; border-radius:6px; background:#0f2227; border:1px solid #1f3a3b; border-left:3px solid var(--rarity, #5a6f71); text-align:center; min-width:0; }
 .exp-codex-unit b { font-size:11px; word-break:keep-all; } .exp-codex-unit small { font-size:11px; color:#9dadaf; }
 .exp-codex-unit.unseen { opacity:.45; filter:grayscale(.6); }
+/* v3.431 다음 로테이션 보기: 이번 주에 없는 유닛. */
+.exp-codex-unit { position:relative; } .exp-codex-unit.fresh { border-color:#6f8fd6; }
+.exp-codex-new { position:absolute; top:3px; right:3px; font-size:11px; line-height:1.2; padding:0 4px; border-radius:3px; background:#1d2c4d; color:#bcd0ff; font-weight:600; }
 .exp-codex-unit.tier-4 { box-shadow:0 0 0 1px #cfe6ff, 0 0 12px #cfe6ff66; } .exp-codex-unit.tier-5 { box-shadow:0 0 0 1px #9ad8ff, 0 0 14px #9ad8ff99; }
 .abyss-board tr.promote td:first-child { color:#8fe0ab; } .abyss-board tr.demote td:first-child { color:#e08a7a; }
 .exp-codex-unit.tier-1 { box-shadow:0 0 0 1px #b87333; } .exp-codex-unit.tier-2 { box-shadow:0 0 0 1px #b8c4c7, 0 0 6px #b8c4c733; } .exp-codex-unit.tier-3 { box-shadow:0 0 0 1px #e0b36a, 0 0 10px #e0b36a55; }
