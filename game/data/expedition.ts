@@ -118,13 +118,15 @@ export const UNITS: UnitDef[] = [
 ];
 /** 20단계 세트 전용 유닛(기본 30종 밖). 세트가 바뀌어도 옛 보드 · 도감 · 고스트가 풀리도록 unitById는 전체를 봅니다. */
 export const EXTRA_UNITS: UnitDef[] = [
-    // 세트 2 ‘심해의 조류’(2027-Q1): 던전 보스 4종(본편 처치로 해금 · 코어 조각 연결)과 버섯 2종.
+    // 세트 2 ‘심해의 조류’(2027-Q1): 던전 보스 4종(본편 처치로 해금 · 코어 조각 연결)과 버섯. v3.429부터 파란 버섯은 어느 세트에도 없고(옛 보드 · 도감용으로 남김) 기억의 수호병이 그 자리에.
     { id: 'blueMushroom', name: '파란 버섯', monster: 'seahorse', cost: 1, origin: 'meadow', roles: ['plague'], skill: 'foeBurn' },
     { id: 'hornMushroom', name: '뿔버섯', monster: 'needlefish', cost: 1, origin: 'wasteland', roles: ['charge'], skill: 'foeCrush' },
     { id: 'kingSlime', name: '킹 슬라임', monster: 'kelpHydra', cost: 2, origin: 'underground', roles: ['guard'], special: ['boss'], skill: 'foeTideSlam' },
     { id: 'zombieMushmom', name: '좀비 머쉬맘', monster: 'anchorWraith', cost: 3, origin: 'wasteland', roles: ['wraith'], special: ['boss'], skill: 'onyxSoulDrain' },
     { id: 'juniorBalrog', name: '주니어 발록', monster: 'magmaKraken', cost: 4, origin: 'underground', roles: ['charge'], special: ['boss'], skill: 'foeFrenzy' },
     { id: 'papulatus', name: '파풀라투스', monster: 'starfallSeraph', cost: 4, origin: 'temple', roles: ['arcane'], special: ['boss'], skill: 'papTimeStop' },
+    // v3.429 세트 2부터: 신전에만 비용 1 유닛이 없어 초반에 신전 2를 켜기 어려웠음(비용 2 · 3 신전 유닛은 3 · 4라운드 상점 한 칸에 3.6% · 2%) → 시간의 신전 돌갑주 병사를 비용 1 신전 수호로.
+    { id: 'memoryGuard', name: '기억의 수호병', monster: 'ttGuardian', cost: 1, origin: 'temple', roles: ['guard'], skill: 'foeWard' },
 ];
 export const ALL_UNITS: UnitDef[] = [...UNITS, ...EXTRA_UNITS];
 export const unitById = (id: string) => ALL_UNITS.find(u => u.id === id);
@@ -179,6 +181,8 @@ export const INTENDED_COMPS: { id: string; name: string; units: string[] }[] = [
     { id: 'undergroundCharge', name: '지하 4 + 돌격 6 + 자쿰', units: ['kingClang', 'juniorWraith', 'ligator', 'zakum', 'pig', 'wildBoar', 'sharkUnit', 'manticore'] },
     { id: 'seaCharge', name: '바다 · 용 4 + 돌격 4', units: ['seacle', 'sharkUnit', 'seaGuard', 'skelegon', 'manticore', 'pig', 'wildBoar', 'ligator'] },
     { id: 'templeBoss', name: '신전 · 아케인 4 + 보스 2', units: ['erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul', 'blackMage', 'zakum', 'stoneGolem', 'seaGuard'] },
+    // v3.429 세트 2(심해의 조류) 측정용: 비용 1 신전 수호(기억의 수호병)로 초반을 여는 신전 조합. 첫 세트에는 이 유닛이 없어 시뮬에서 빠집니다.
+    { id: 'templeGuard', name: '신전 · 아케인 6 + 수호 2', units: ['memoryGuard', 'erdaSpirit', 'memoryMonitor', 'lyka', 'vanishingSoul', 'papulatus', 'blackMage', 'seaGuard'] },
 ];
 
 /**
@@ -452,7 +456,9 @@ export const CODEX_LINK_KILLS = [50, 200, 500];
 export type SetDef = { id: string; name: string; icon: string; /** 시작 분기 'YYYY-Qn'(한국 시간). */ from: string; desc: string; /** 기본 30종에서 빼는 id · 더하는 id(EXTRA_UNITS). */ remove?: string[]; add?: string[] };
 export const SETS: SetDef[] = [
     { id: 'genesis', name: '창세', icon: '🌊', from: '2026-Q4', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
-    { id: 'deepTide', name: '심해의 조류', icon: '🌑', from: '2027-Q1', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 버섯 2종이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['blueMushroom', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+    // v3.429: 파란 버섯(비용 1 초원) 대신 기억의 수호병(비용 1 신전 수호). 이 세트는 초원 비용 1이 셋(슬라임 · 돼지 · 파란 버섯)이고 신전 비용 1은 없어, 바꿔 넣으면 풀 크기(30)를 지키면서 신전 초반을 엽니다.
+    // 상점 시뮬(EXP_SET=deepTide): 신전 조합 72 → 75%(3 · 4라운드 66/59 → 73/69), 기억의 수호병을 쓰는 신전 조합 76~78%, 지하 조합 · 무작위 구매는 그대로.
+    { id: 'deepTide', name: '심해의 조류', icon: '🌑', from: '2027-Q1', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 뿔버섯 · 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
 ];
 /** 한국 시간 분기 키. */
 export const quarterKey = (now: number) => { const d = new Date(now + 9 * 3600_000); return `${d.getUTCFullYear()}-Q${1 + Math.floor(d.getUTCMonth() / 3)}`; };

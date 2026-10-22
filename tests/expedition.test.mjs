@@ -793,6 +793,19 @@ test('expedition v3.428: stingy round xp (buying xp matters) with more base gold
     assert.equal(D.damageType(D.unitById('evilEye')), 'magic'); assert.equal(D.damageType(D.unitById('pig')), 'physical');
 });
 
+test('expedition v3.429: set 2 swaps in a cost-1 temple unit (pool size kept), the current set is unchanged, the new unit resolves for old data, and the set-2 temple comp is measurable only there', async () => {
+    const D = await L.load('data/expedition');
+    const g = D.setUnits('genesis'), t = D.setUnits('deepTide');
+    assert.equal(g.length, 30); assert.equal(t.length, 30, 'pool size kept');
+    assert.ok(!g.some(u => u.id === 'memoryGuard'), 'current set unchanged'); assert.ok(!g.some(u => u.origin === 'temple' && u.cost === 1));
+    const guard = t.find(u => u.id === 'memoryGuard'); assert.ok(guard && guard.cost === 1 && guard.origin === 'temple' && guard.roles.includes('guard'));
+    assert.ok(!t.some(u => u.id === 'blueMushroom'), 'blue mushroom rests'); assert.equal(t.filter(u => u.origin === 'meadow' && u.cost === 1).length, 2);
+    for (const origin of Object.keys(D.ORIGIN_NAMES)) assert.ok(t.some(u => u.origin === origin && u.cost === 1), `set 2 has a cost-1 ${origin}`);
+    assert.ok(D.unitById('blueMushroom') && D.unitById('memoryGuard'), 'both resolve for old boards and the codex');
+    const measurable = (pool, id) => D.INTENDED_COMPS.find(c => c.id === id).units.every(u => pool.some(x => x.id === u));
+    assert.ok(measurable(t, 'templeGuard') && !measurable(g, 'templeGuard'));
+});
+
 test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry a share code', async () => {
     const { newState, act } = await import('./harness.mjs');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
