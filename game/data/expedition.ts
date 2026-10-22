@@ -454,6 +454,28 @@ export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 // ───────────── 22단계: 고스트 풀이 작을 때의 보호 ─────────────
 /** 고스트 보호: 같은 상대는 한 판에 maxSameRun번까지, 후보가 poolFull명 미만이면 고스트 확률을 비례해 낮춤(최저 poolMinChance 배), 상대 보드 가치가 그 라운드 웨이브 예산 × capMult를 넘으면 ★을 낮추고 그래도 넘으면 약한 유닛부터 뺌. */
 export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: 1.3, candidates: 3 };
+/**
+ * v3.422 연습 원정대(입문 고스트): 이번 달 고스트 후보가 적으면 서버가 이 원정대들로 후보를 채웁니다. 라운드마다 실제 모험가가 STARTER_GHOST.fillTo명 이상이 되면 더 나오지 않습니다(유저 기록이 쌓이면 자연스럽게 대체).
+ * 보드는 systems/expedition.ts의 starterBoard가 라운드 웨이브 예산 × power에 맞춰 만들고, 후보는 시즌 점수(score)가 내 점수와 가까운 순이라 새 모험가는 입문 원정대부터 만납니다.
+ * tier 1 입문 · 2 중급 · 3 숙련. 세기는 scripts/expedition-sim.mjs 끝의 ‘연습 원정대’ 표로 맞춥니다. units는 앞에서부터 배치하는 선호 순서(비용 제한에 걸리면 건너뜀).
+ */
+export type StarterGhost = { id: string; name: string; tier: 1 | 2 | 3; power: number; score: number; wins: number; units: string[]; items?: string[] };
+/** fillTo: 라운드마다 실제 후보가 이 수보다 적으면 채움. distancePenalty: 후보 순서에서 연습 원정대의 점수 거리에 더하는 값(점수가 비슷한 실제 모험가가 있으면 그쪽을 먼저). */
+export const STARTER_GHOST = { fillTo: 8, accountPrefix: 'starter:', distancePenalty: 250 };
+export const STARTER_GHOSTS: StarterGhost[] = [
+    // 입문: 웨이브 예산의 55%(웨이브보다 확실히 약함).
+    { id: 'meadowPals', name: '연습 · 초원 친구들', tier: 1, power: .55, score: 200, wins: 2, units: ['slime', 'pig', 'orangeMushroom', 'blueMushroom', 'zombieMushroom', 'stoneGolem', 'mushmom', 'seaGuard'] },
+    { id: 'harborRookies', name: '연습 · 항구 신병', tier: 1, power: .55, score: 300, wins: 3, units: ['seacle', 'wildBoar', 'pig', 'sharkUnit', 'kingClang', 'seaGuard', 'skelegon', 'manticore'] },
+    { id: 'forestApprentice', name: '연습 · 숲의 견습생', tier: 1, power: .55, score: 400, wins: 4, units: ['evilEye', 'kingClang', 'erdaSpirit', 'curseEye', 'stoneGolem', 'wraithUnit', 'darkDrake', 'lyka'] },
+    // 중급: 웨이브 예산의 80%, 의도한 조합(웨이브와 비슷한 세기 — 조합 시너지가 켜져 있어 예산보다 셈).
+    { id: 'wastelandWatch', name: '연습 · 황야 경비대', tier: 2, power: .8, score: 700, wins: 6, units: ['wildBoar', 'skeletonSoldier', 'stoneGolem', 'kingClang', 'slime', 'mixedGolem', 'curseEye', 'seaGuard'] },
+    { id: 'tunnelRaiders', name: '연습 · 갱도 습격대', tier: 2, power: .8, score: 850, wins: 7, units: ['kingClang', 'pig', 'wildBoar', 'juniorWraith', 'sharkUnit', 'ligator', 'manticore', 'zakum'] },
+    { id: 'templeNovices', name: '연습 · 신전 수련생', tier: 2, power: .8, score: 1000, wins: 8, units: ['erdaSpirit', 'stoneGolem', 'memoryMonitor', 'seaGuard', 'lyka', 'vanishingSoul', 'blackMage', 'zakum'] },
+    // 숙련: 웨이브 예산의 80~85%, 6라운드부터 아이템 · 9라운드부터 ★3(웨이브보다 조금 셈).
+    { id: 'tideVeterans', name: '숙련 · 조류 노병', tier: 3, power: .85, score: 1250, wins: 10, units: ['seacle', 'pig', 'wildBoar', 'sharkUnit', 'seaGuard', 'ligator', 'skelegon', 'manticore'], items: ['greatBlade', 'towerShield', 'blade'] },
+    { id: 'graveChoir', name: '숙련 · 무덤 성가대', tier: 3, power: .8, score: 1400, wins: 11, units: ['slime', 'orangeMushroom', 'pig', 'skeletonSoldier', 'zombieMushroom', 'juniorWraith', 'mushmom', 'wraithUnit'], items: ['fang', 'shield', 'blade'] },
+    { id: 'arcaneCircle', name: '숙련 · 마력 결사', tier: 3, power: .8, score: 1600, wins: 12, units: ['evilEye', 'curseEye', 'erdaSpirit', 'kingClang', 'wraithUnit', 'darkDrake', 'lyka', 'blackMage'], items: ['archStaff', 'shield'] },
+];
 /** 보드 가치 = Σ 비용 × ★ 배수(1 · 2 · 4), 웨이브 예산과 같은 단위. */
 export const boardValue = (board: { unit: string; star: number }[]) => board.reduce((n, p) => n + (unitById(p.unit)?.cost || 0) * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
 

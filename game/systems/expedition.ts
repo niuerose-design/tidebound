@@ -8,7 +8,7 @@
 import type { Stats, CombatEvent, ReplayFrame } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, ABYSS, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, difficultyOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, ABYSS, STARTER_GHOSTS, boardValue, type StarterGhost, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, difficultyOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
@@ -243,3 +243,31 @@ export function rollWave(round: number, rng: () => number, difficulty = 1, units
     return out;
 }
 export const frontRole = (def: UnitDef) => def.roles.some((r: Role) => r === 'guard' || r === 'charge');
+/** v3.422 연습 원정대 보드: 라운드의 배치 수(평균적인 레벨 진행) · 비용 상한 안에서 선호 순서대로 고르고, 웨이브 예산 × power를 넘지 않게 싼 유닛부터 ★을 올립니다. 숙련은 6라운드부터 아이템. 난수 없음(같은 라운드면 늘 같은 보드). */
+export const STARTER_SLOTS = [0, 2, 2, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8];
+export function starterBoard(g: StarterGhost, round: number): Placed[] {
+    const r = Math.max(1, Math.min(EXPEDITION.rounds, round)), cap = Math.max(1, Math.round(WAVE_BUDGET[r] * g.power * (r <= 3 ? .7 : 1))); // 2 · 3라운드는 더 약하게(첫 고스트가 벽이 되지 않도록)
+    const maxCost = r <= 2 ? 1 : r <= 4 ? 2 : r <= 6 ? 3 : r <= 9 ? 4 : 5;
+    const picks = g.units.map(id => unitById(id)).filter((d): d is UnitDef => !!d && d.cost <= maxCost).slice(0, STARTER_SLOTS[r]);
+    // 선호 유닛이 모자라면(초반에 싼 유닛이 없는 조합) 같은 특성을 가진 유닛부터 채웁니다(정해진 순서라 늘 같은 보드).
+    if (picks.length < STARTER_SLOTS[r]) {
+        const keys = new Set(g.units.flatMap(id => { const d = unitById(id); return d ? [d.origin, ...d.roles] : []; }));
+        const fill = UNITS.filter(d => d.cost <= maxCost && !picks.includes(d)).sort((a, b) => Number(!(keys.has(a.origin) || a.roles.some(x => keys.has(x)))) - Number(!(keys.has(b.origin) || b.roles.some(x => keys.has(x)))) || b.cost - a.cost || a.id.localeCompare(b.id));
+        picks.push(...fill.slice(0, STARTER_SLOTS[r] - picks.length));
+    }
+    const out: Placed[] = picks.map(d => ({ unit: d.id, star: 1, row: frontRole(d) ? 'front' : 'back' }));
+    while (out.length > 1 && boardValue(out) > cap) out.pop();
+    // 싼 유닛부터 ★을 올리되 예산을 넘으면 멈춥니다(★2 = 비용 × 2, ★3 = × 4).
+    for (let pass = 0; pass < 2; pass++) for (const p of [...out].sort((a, b) => unitById(a.unit)!.cost - unitById(b.unit)!.cost)) {
+        if (p.star >= (g.tier === 3 && r >= 9 ? 3 : 2)) continue;
+        const prev = p.star; p.star = (p.star + 1) as 2 | 3; if (boardValue(out) > cap) p.star = prev;
+    }
+    // 아이템은 맞는 유닛에게: 마법 아이템은 마력 유닛, 방패 · 갑옷은 앞줄, 나머지는 앞에서부터 빈 유닛.
+    if (g.items?.length && r >= 6) for (const item of g.items.slice(0, r >= 9 ? 3 : 2)) {
+        const magic = !!itemById(item)?.mult?.magic, tank = !!itemById(item)?.damageTaken;
+        const fits = (p: Placed) => !p.item && (magic ? unitById(p.unit)!.roles.includes('arcane') : tank ? p.row === 'front' : !unitById(p.unit)!.roles.includes('arcane'));
+        const target = out.find(fits) || out.find(p => !p.item); if (target) target.item = item;
+    }
+    return out;
+}
+export const starterGhostById = (id: string) => STARTER_GHOSTS.find(g => g.id === id);
