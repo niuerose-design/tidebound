@@ -6,10 +6,10 @@
  */
 import { useState, type ReactNode } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { EXPEDITION, SEASON_REWARDS, weeklyRule, weeklyRuleById, ABYSS, DIFFICULTIES, difficultyOf, difficultyUnlocked, activeSet, nextSet, setById, setUnits } from '@/game/data/expedition';
+import { EXPEDITION, pearlText, SEASON_REWARDS, weeklyRule, weeklyRuleById, ABYSS, DIFFICULTIES, difficultyOf, difficultyUnlocked, activeSet, nextSet, setById, setUnits } from '@/game/data/expedition';
 import { weekKey, dayKey } from '@/game/data/time';
 import { useNow } from '@/components/game/shared';
-import { SectionHeader, FoldSection, formatExact as format } from '@/components/ui/game';
+import { SectionHeader, FoldSection } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { PanelProps } from '@/components/game/panel-props';
@@ -47,9 +47,9 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
 
     // 18단계(모바일 정리): 소개는 한 줄로 줄이고 긴 설명은 접어 둡니다.
     const introShort = `${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 유닛을 사서 보드에 놓고, 시너지를 켜고, 막 보스를 넘으세요.`;
-    const intro = <><SectionHeader as="h1" eyebrow="EXPEDITION" title="원정대" description={introShort}/><FoldSection level={3} title="규칙 자세히"><p className="text-xs leading-relaxed text-ink-2">{`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}. 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}</p></FoldSection></>;
+    const intro = <><SectionHeader as="h1" eyebrow="EXPEDITION" title="원정대" description={introShort}/><FoldSection level={3} title="규칙 자세히"><p className="text-xs leading-relaxed text-ink-2">{`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}(소수는 모았다가 1이 될 때마다 받음). 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}</p></FoldSection></>;
     // 9단계: 지난 시즌 정산 내역과 시즌 보상표.
-    const season = s.expeditionSeasonLast ? <Note tone="gold">지난 시즌 {s.expeditionSeasonLast.season} · {s.expeditionSeasonLast.rank ? `${s.expeditionSeasonLast.rank}위` : '순위 밖'} / {s.expeditionSeasonLast.total}명 · 최고 {s.expeditionSeasonLast.wins}승 · 세계석 +{s.expeditionSeasonLast.pearls} 받음</Note> : null;
+    const season = s.expeditionSeasonLast ? <Note tone="gold">지난 시즌 {s.expeditionSeasonLast.season} · {s.expeditionSeasonLast.rank ? `${s.expeditionSeasonLast.rank}위` : '순위 밖'} / {s.expeditionSeasonLast.total}명 · 최고 {s.expeditionSeasonLast.wins}승 · 세계석 +{pearlText(s.expeditionSeasonLast.pearls)} 받음</Note> : null;
     const rewardTable = <Note>월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</Note>;
     const questLabel = q ? `과제 ${questDone}/${questAll}` : '과제';
     const shell = (main: ReactNode) => <div className="grid gap-4 text-ink-1">{intro}
@@ -71,11 +71,11 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
         {season}{weekBanner}
         <SetBanner curSet={curSet} upcoming={upcoming} now={now}/><DiffPicker s={s} busy={busy} unlocked={unlocked} chosenDiff={chosenDiff} setDiff={setDiff}/>
         <Primary size="lg" className="justify-self-start" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</Primary>
-        <Note>유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨로 늘어납니다(전투를 마칠 때마다 경험치 +{EXPEDITION.roundXp.base}부터 라운드마다 +{EXPEDITION.roundXp.perRound}씩 더, 상점에서 {EXPEDITION.xp} G로 더 살 수 있음). 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</Note>
+        <Note>유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨로 늘어납니다(전투를 마칠 때마다 경험치 +{EXPEDITION.roundXp.base}부터 라운드마다 +{EXPEDITION.roundXp.perRound}씩 더, 상점에서 {EXPEDITION.xp} G마다 {EXPEDITION.xpBuy}씩 살 수 있음 — 레벨은 주로 사서 올립니다). 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</Note>
         {rewardTable}
     </Card>);
     if (r.done) return shell(<Card>
-        <h2 className="font-display text-l font-bold">원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{format(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
+        <h2 className="font-display text-l font-bold">원정 종료{r.difficulty && r.difficulty > 1 ? ` · ${difficultyOf(r.difficulty).icon} ${difficultyOf(r.difficulty).name}` : ''} · {r.wins}승{r.cleared ? ' · 완주' : ` · ${Math.min(r.round, EXPEDITION.rounds)}라운드까지`}{r.abyss ? ` · 심연 ${r.abyss}라운드` : ''}</h2><p>세계석 +{pearlText(r.reward || 0)}{r.cleared ? ` · 완주 +${EXPEDITION.clearPearls}` : ''}{r.acts ? ` · 막 보스 ${r.acts} × ${EXPEDITION.actPearls}` : ''}{r.abyss && Math.floor(r.abyss / ABYSS.bonusEvery) ? ` · 심연 보너스 +${Math.floor(r.abyss / ABYSS.bonusEvery) * ABYSS.bonus}` : ''}{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</p>
         <Row><Primary disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>바로 다시 출발 · {difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name}</Primary><Button type="button" size="sm" variant="outline" className="pointer-coarse:min-h-11" disabled={busy} onClick={() => send({ type: 'expeditionClear' })}>닫기</Button></Row>
         <SetBanner curSet={curSet} upcoming={upcoming} now={now}/><DiffPicker s={s} busy={busy} unlocked={unlocked} chosenDiff={chosenDiff} setDiff={setDiff}/>{recent.length ? <RecentBox s={s} copy={copy} copied={copied}/> : null}{weekBanner}
     </Card>);

@@ -8,7 +8,7 @@
 import type { Stats, CombatEvent, ReplayFrame } from '../types';
 import { actTurn, strike, fighterSpeed, type Fighter } from './combat';
 import { normalizeStats } from './stats';
-import { UNITS, TRAITS, EXPEDITION, ABYSS, STARTER_GHOSTS, boardValue, type StarterGhost, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, difficultyOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
+import { UNITS, TRAITS, EXPEDITION, ABYSS, STARTER_GHOSTS, boardValue, codexGrowth, type StarterGhost, BASE_BY_COST, DEFENSE_BY_COST, unitById, itemById, isBossRound, isAbyssRound, actOf, difficultyOf, type UnitDef, type TraitDef, type Role, type RunMods } from '../data/expedition';
 import { STATUS_TUNING } from '../data/balance';
 
 export type Placed = { unit: string; star: 1 | 2 | 3; row: 'front' | 'back'; item?: string };
@@ -53,6 +53,8 @@ export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, boss
     const active = activeTraits(board, mods), flags = tierFlags(active);
     const units = board.map(placed => {
         const def = unitById(placed.unit)!, base = unitBaseStats(def, placed.star);
+        // v3.432 도감 성장: 50승마다 체력 +1 · 100승마다 주 공격력 +1(★ 배율 곱).
+        if (mods?.codex?.[def.id]) { const g = codexGrowth(mods.codex[def.id]), st = EXPEDITION.star[placed.star], magic = def.roles.includes('arcane'); base.hp += Math.round(g.hp * st); if (magic) base.magic += Math.round(g.power * st); else base.attack += Math.round(g.power * st); }
         const stats: Record<string, number> = { ...base }, mult = { hp: 1, attack: 1, magic: 1 };
         let damageTaken = 0;
         const isBoss = !!def.special?.includes('boss');

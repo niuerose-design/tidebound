@@ -2,6 +2,7 @@
 import { loadGame } from './lib/game-modules.mjs';
 const L = loadGame();
 const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
+if (process.env.EXP_XPBUY) D.EXPEDITION.xpBuy = Number(process.env.EXP_XPBUY); // v3.432: 경험치 구매량 바꿔 보기
 const runs = Number(process.argv[2] || 300);
 // 20단계: EXP_SET=deepTide처럼 세트 id를 주면 그 세트 풀로 돌립니다(기본 첫 세트).
 const SET = process.env.EXP_SET || D.SETS[0].id, POOL = D.setUnits(SET); console.log(`세트 ${SET} · 유닛 ${POOL.length}종`);
@@ -24,7 +25,7 @@ function play(strategy, rng, comp) {
         const level = ECON ? lv : ROUND_LEVEL[round];
         gold += D.EXPEDITION.baseGold + Math.min(D.EXPEDITION.interestMax, Math.floor(gold / D.EXPEDITION.interestPer)) + Math.min(3, Math.max(0, streak - 1));
         // EXP_ECON=1 · EXP_LEVEL_FIRST=1: 상점을 보기 전에 이번 라운드 목표 레벨까지 경험치를 먼저 삽니다(레벨 우선 플레이).
-        if (ECON && LEVEL_FIRST) { while (lv < 8 && lv < ROUND_LEVEL[round] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } } }
+        if (ECON && LEVEL_FIRST) { while (lv < 8 && lv < ROUND_LEVEL[round] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xpBuy ?? D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } } }
         const levelNow = ECON ? lv : level;
         let rerolls = 0;
         for (let pass = 0; pass < 4; pass++) {
@@ -34,7 +35,7 @@ function play(strategy, rng, comp) {
             if (strategy === synergy && gold >= D.EXPEDITION.reroll + 2 && rerolls < 3) { gold -= D.EXPEDITION.reroll; rerolls++; continue; }
             break;
         }
-        if (ECON) while (lv < 8 && lv < ROUND_LEVEL[Math.min(D.EXPEDITION.rounds, round + 1)] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
+        if (ECON) while (lv < 8 && lv < ROUND_LEVEL[Math.min(D.EXPEDITION.rounds, round + 1)] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xpBuy ?? D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
         const board = place(owned, ECON ? lv : level, comp);
         levels.push(ECON ? lv : level);
         const r = X.battle(board, X.rollWave(round, rng, 1, POOL), rng);
