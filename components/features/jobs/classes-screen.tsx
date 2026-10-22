@@ -15,6 +15,7 @@ import { SectionHeader, ChoiceChips, formatExact, Eyebrow } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { statusReader, finderJobs, searchJobs, shownLineageJobs, lineageInTab, tabJobCount, tabOf, JOB_TABS, jobTally, jobGoalOf, jobWorld, worldLineages, worldJobCount, type JobTabId, TOP_TAGS, type Finder } from '@/components/game/jobs/job-status';
+import { useIsWide } from '@/components/game/use-mobile';
 import { cn } from '@/lib/utils';
 import { LineageCard, RouteMap, JobList, ColumnTitle } from './parts';
 import { JobCompare } from './job-compare';
@@ -31,6 +32,8 @@ export function ClassesScreen({ s, send, busy }: { s: State; send: Send; busy: b
     const [lineageId, setLineageId] = useState<string>(lineageOf(current));
     const [selectedId, setSelectedId] = useState(current.id);
     const [sheetOpen, setSheetOpen] = useState(false);
+    // v3.425 넓은 화면(xl)은 상세가 ③ 칸에 있어 아래 Sheet를 열지 않습니다. 열면 내용은 xl:hidden으로 숨고 어두운 막만 남아 화면이 암전됐습니다.
+    const wide = useIsWide();
     // v3.220 고른 세계. null이면 책(세계 목차)을 보여 줍니다.
     const [world, setWorld] = useState<WorldId | null>(null);
     // v3.242 첫 생의 초보자는 ‘처음 추천’ 모아 보기로 시작합니다(1차 직업이 70개가 넘음).
@@ -55,7 +58,7 @@ export function ClassesScreen({ s, send, busy }: { s: State; send: Send; busy: b
     const tally = jobTally(s), goal = jobGoalOf(s), goalStatus = goal ? statusReader(s)(goal) : null, goalReady = !!goalStatus && (goalStatus.status === 'ready' || goalStatus.status === 'mastered');
     const lineage = lineages.find(l => l.id === lineageId) || null;
     const selected = jobById(selectedId) || current;
-    const select = (id: string) => { setSelectedId(id); setSheetOpen(true); };
+    const select = (id: string) => { setSelectedId(id); if (!wide) setSheetOpen(true); };
     const openTree = (id: JobTabId) => {
         setTreeId(id);
         const first = LINEAGES.find(l => tabHas(id, l) && shownLineageJobs(s, l.id).some(j => j.id === s.job)) || LINEAGES.find(l => tabHas(id, l));
@@ -99,7 +102,7 @@ export function ClassesScreen({ s, send, busy }: { s: State; send: Send; busy: b
                 : <section className="grid content-start gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1"><ColumnTitle no="②">항로도</ColumnTitle><p className="text-xs text-ink-3">왼쪽에서 계보를 고르세요.</p></section>}
             <aside className="hidden min-w-0 xl:block">{detail()}</aside>
             {/* 좁은 화면: 직업을 고르면 아래에서 올라오는 창으로 상세를 봅니다. */}
-            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}><SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto border-line bg-surface-0 p-3 xl:hidden [&>button]:hidden"><SheetTitle className="sr-only">{selected.name} 상세</SheetTitle>{detail(() => setSheetOpen(false))}</SheetContent></Sheet>
+            <Sheet open={sheetOpen && !wide} onOpenChange={setSheetOpen}><SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto border-line bg-surface-0 p-3 xl:hidden [&>button]:hidden"><SheetTitle className="sr-only">{selected.name} 상세</SheetTitle>{detail(() => setSheetOpen(false))}</SheetContent></Sheet>
         </div>}
         <JobCompare s={s} jobs={compareIds.map(id => jobById(id)!)} onRemove={toggleCompare} onClear={() => setCompareIds([])}/>
     </div>;
