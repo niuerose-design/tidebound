@@ -172,6 +172,10 @@
 .exp-box-choice:hover:not(:disabled) { background:#3a3722; }
 @media (max-width:480px) { .exp-box-choices { grid-template-columns:1fr; } .exp-box-choice { flex-direction:row; align-items:center; justify-content:space-between; text-align:left; }}
 .exp-cell b { font-size:12px; line-height:1.2; text-align:center; word-break:keep-all; }
+/* v3.428 물리 · 마법 표시: 보드 칸은 왼쪽 위 모서리 기호, 벤치 · 상점은 기호 + 글(11px · 어두운 바탕 대비 4.5:1 이상). */
+.exp-dmg { display:inline-flex; align-items:center; gap:2px; font-size:11px; line-height:1.2; font-weight:600; white-space:nowrap; }
+.exp-dmg.physical { color:#f2b27a; } .exp-dmg.magic { color:#9cc0ff; }
+.exp-dmg.compact { position:absolute; left:3px; top:2px; padding:0 3px; border-radius:3px; background:rgba(7,16,18,.75); pointer-events:none; }
 .exp-cell small, .exp-bench small, .exp-card small { font-size:11px; color:#9dadaf; }
 .exp-cell:not(.empty), .exp-card:not(.sold), .exp-bench li { border-style:solid; border-left-width:3px; border-left-color:var(--rarity, #5a6f71); }
 .cost-1 { --rarity:#9dadaf; } .cost-2 { --rarity:#68b6ee; } .cost-3 { --rarity:#bf96ef; } .cost-4 { --rarity:#e7be71; } .cost-5 { --rarity:#f08a6c; }

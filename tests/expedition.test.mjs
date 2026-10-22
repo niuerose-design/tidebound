@@ -781,6 +781,18 @@ test('expedition v3.423 starter ghosts: data is valid, boards fit the round budg
     assert.ok(r.last.won); assert.equal(r.ghostPoints || 0, 0, 'no season ghost points from starters'); assert.equal(s.expeditionStats.ghostWins, 1);
 });
 
+test('expedition v3.428: stingy round xp (buying xp matters) with more base gold, and the physical/magic damage type follows the arcane role', async () => {
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition');
+    // 라운드 경험치만으로는 목표 곡선(웨이브가 전제하는 레벨)보다 대체로 1레벨 낮게 가고, 레벨 8은 마지막 라운드에야 — 사야 곡선을 따라감.
+    const target = [2, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8], passive = []; let lv = 2, xp = 0;
+    for (let round = 1; round <= 12; round++) { passive.push(lv); xp += D.roundXpFor(round); while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
+    assert.ok(passive.filter((l, i) => l < target[i]).length >= 6, `passive alone lags the curve: ${passive}`); assert.ok(passive.every((l, i) => l >= target[i] - 1), 'never more than one level behind');
+    assert.equal(passive.indexOf(8), 11, 'level 8 only in the last round'); assert.equal(D.roundXpFor(1), 2); assert.equal(D.EXPEDITION.baseGold, 7);
+    // 공격 종류: 마력 = 마법(기본 공격도 마법), 그 밖은 물리.
+    for (const def of D.ALL_UNITS) { const magic = def.roles.includes('arcane'); assert.equal(D.damageType(def), magic ? 'magic' : 'physical', def.id); const f = X.buildSide([{ unit: def.id, star: 1, row: 'front' }], 'a').units[0]; assert.equal(!!f.magicBasic, magic, `${def.id} basic attack`); }
+    assert.equal(D.damageType(D.unitById('evilEye')), 'magic'); assert.equal(D.damageType(D.unitById('pig')), 'physical');
+});
+
 test('expedition stage 23 (social · cosmetics): share code round-trips and rejects junk, target board marks progress, finished runs keep a code, themes unlock by renown/set/league/abyss/difficulty, server rows carry a share code', async () => {
     const { newState, act } = await import('./harness.mjs');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
