@@ -4,7 +4,7 @@
  */
 import { EXPEDITION, isBossRound, actOf, unitById, sellPrice, itemById, ITEM_HOLD, BOX_ITEMS, BOX_CHOICES, comboOf, EMBLEMS, EMBLEM_ROUND, TIER2_ROUND, ITEMS, seasonPearls, type SeasonSettlement,
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
-    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods,
+    pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, CODEX_LINK_KILLS, CODEX_TIERS, codexTier,
     activeSet, setById, setUnits, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
@@ -202,7 +202,12 @@ export function featsOf(r: ExpeditionRun): string[] {
     if (board.length && new Set(board.map(p => unitById(p.unit)?.origin)).size === 1) out.push('oneOrigin');
     if (board.length && board.every(p => (unitById(p.unit)?.cost || 9) <= 2)) out.push('cheap');
     if ((r.abyss || 0) >= 10) out.push('abyss10');
-    if ((r.abyss || 0) >= ABYSS.max) out.push('abyss20');
+    if ((r.abyss || 0) >= 20) out.push('abyss20');
+    // v3.416 확장 도전.
+    if ((r.abyss || 0) >= 30) out.push('abyss30');
+    if ((r.abyss || 0) >= ABYSS.max) out.push('abyss40');
+    if ((r.difficulty || 1) >= 6 && out.includes('flawless')) out.push('hardFlawless');
+    if ((r.difficulty || 1) >= DIFFICULTIES.length) out.push('apexClear');
     return out;
 }
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
@@ -312,7 +317,7 @@ export const expeditionActions: ActionHandlers = {
         const useGhost = !!ghost && seenCount < GHOST_GUARD.maxSameRun && rng() < (mods.ghostChance ?? EXPEDITION.ghostChance) * poolScale;
         const capped = useGhost ? capGhostBoard(ghost!.board, r.round, r.difficulty || 1) : null;
         if (useGhost) (r.ghostSeen ??= {})[ghostKey] = seenCount + 1;
-        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : undefined);
+        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), mods, boss, useGhost ? ghost!.mods : waveMods(r.round, r.difficulty || 1));
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
         r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}), ...(capped?.scaled ? { scaled: true } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
@@ -330,7 +335,7 @@ export const expeditionActions: ActionHandlers = {
         if (won && boss && wave[0]) rollShard(s, r, wave[0].unit, abyss, rng);
         if (won && abyss) r.abyss = (r.abyss || 0) + 1;
         if (!won) r.losses = (r.losses || 0) + 1;
-        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS(setById(r.set).id)], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - (EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit)); }
+        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS(setById(r.set).id)], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - Math.round((EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit) * (difficultyOf(r.difficulty).loss || 1))); }
         addLog(s, `원정대 ${abyss ? `심연 ${r.round - EXPEDITION.rounds}` : r.round}라운드${boss ? (abyss ? '(심연 보스)' : `(${actOf(r.round)}막 보스)`) : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, abyss ? `심연 ${r.round - EXPEDITION.rounds}라운드에서 탈락` : `${r.round}라운드에서 탈락`); return; }
         // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).

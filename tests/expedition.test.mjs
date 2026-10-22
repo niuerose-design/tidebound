@@ -485,8 +485,8 @@ test('expedition stage 15: clearing round 12 offers the abyss (continue or finis
 test('expedition stage 16: difficulty tiers scale waves and bosses, unlock by clearing the tier below, multiply rewards and mastery, record per-tier bests, add season score and titles', async () => {
     const { newState, act } = await import('./harness.mjs');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), E = await L.load('server/expedition'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
-    assert.equal(D.DIFFICULTIES.length, 5); assert.equal(D.difficultyOf(undefined).level, 1); assert.equal(D.difficultyOf(9).level, 1);
-    assert.equal(D.difficultyUnlocked(undefined), 1); assert.equal(D.difficultyUnlocked({ 1: 2 }), 2); assert.equal(D.difficultyUnlocked({ 1: 1, 2: 1, 3: 1 }), 4); assert.equal(D.difficultyUnlocked({ 1: 1, 5: 1 }), 5);
+    assert.equal(D.DIFFICULTIES.length, 10); assert.equal(D.difficultyOf(undefined).level, 1); assert.equal(D.difficultyOf(99).level, 1);
+    assert.equal(D.difficultyUnlocked(undefined), 1); assert.equal(D.difficultyUnlocked({ 1: 2 }), 2); assert.equal(D.difficultyUnlocked({ 1: 1, 2: 1, 3: 1 }), 4); assert.equal(D.difficultyUnlocked({ 1: 1, 5: 1 }), 6); assert.equal(D.difficultyUnlocked({ 10: 1 }), 10);
     const spent = w => w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
     for (const round of [6, 10, 12]) { const base = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k))))), hard = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k), 5)))); assert.ok(hard > base, `round ${round}: legend waves spend more (${hard} > ${base})`); assert.ok(spent(X.rollWave(round, mkRng(1), 5)) <= Math.round(X.WAVE_BUDGET[round] * 1.6)); }
     assert.equal(X.rollWave(8, mkRng(8), 4)[0].star, 2, 'nightmare act boss is ★2'); assert.equal(X.rollWave(8, mkRng(8), 3)[0].star, 1);
@@ -507,6 +507,36 @@ test('expedition stage 16: difficulty tiers scale waves and bosses, unlock by cl
     assert.equal(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }), 1000 + 50 + 12 + 240); assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 5 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 1 }), 'legend 10 wins beats normal 12 wins');
     assert.ok(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:5')); assert.ok(TT.TITLES.find(t => t.id === 'expDiff:4'));
     assert.equal(AC.ACHIEVEMENTS.find(a => a.id === 'expDiff:3').progress(s), 0);
+});
+
+test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and harsher losses, the abyss runs to 40 with deep-abyss growth, new feats · titles · themes', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition'), E = await L.load('server/expedition'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
+    // 단계가 오를수록 예산 · 보상 · 점수 · 적 보정이 오름.
+    for (let i = 1; i < D.DIFFICULTIES.length; i++) { const a = D.DIFFICULTIES[i - 1], b = D.DIFFICULTIES[i]; assert.equal(b.level, i + 1); assert.ok(b.budget > a.budget && b.reward > a.reward && b.score > a.score, `tier ${b.level} above ${a.level}`); }
+    assert.equal(D.waveMods(12, 5), undefined, 'legend and below: no foe mods'); assert.equal(D.waveMods(12, 6).hpMult, 1.15); assert.equal(D.waveMods(12, 10).powerMult, 1.8);
+    for (let d = 7; d <= 10; d++) assert.ok((D.waveMods(12, d).hpMult || 1) > (D.waveMods(12, d - 1).hpMult || 1));
+    assert.equal(X.rollWave(8, mkRng(8), 7)[0].star, 3, 'heaven-fall act boss is ★3'); assert.equal(X.rollWave(16, mkRng(16), 7)[0].star, 3, 'abyss bosses never below the tier boss star');
+    // 적 보정은 전투에서 B쪽 능력치로.
+    const board = [{ unit: 'zakum', star: 2, row: 'front' }], plain = X.buildSide(board, 'b').units[0], hard = X.buildSide(board, 'b', D.waveMods(12, 10)).units[0];
+    assert.ok(Math.abs(hard.maxHp - plain.maxHp * 1.8) <= 1, 'foe hp ×1.8'); assert.ok(hard.stats.attack > plain.stats.attack); assert.ok(hard.reflect > 0); assert.equal(D.combatMods({ hpMult: 3, powerMult: 3 }), undefined, 'foe-only mods never ride a ghost');
+    // 깊은 심연: 심연 20라운드를 넘기면 라운드마다 체력 · 공격력이 붙음(난이도 보정과 곱).
+    assert.equal(D.ABYSS.max, 40); assert.equal(D.waveMods(12 + 20, 1), undefined); assert.equal(D.waveMods(12 + 30, 1).hpMult, 1 + D.ABYSS.deepHp * 10); assert.ok(Math.abs(D.waveMods(12 + 30, 6).hpMult - 1.15 * (1 + D.ABYSS.deepHp * 10)) < 1e-9);
+    // 패배 피해 배율 · 실제 전투에 적 보정이 실림.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.expeditionDiffClears = { 9: 1 };
+    assert.equal(D.difficultyUnlocked(s.expeditionDiffClears), 10);
+    act(s, { type: 'expeditionStart', id: '10' }, now, mkRng(1)); const r = s.expedition; assert.equal(r.difficulty, 10); delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    r.board = [{ unit: 'slime', star: 1, row: 'front' }]; r.round = 3; r.hp = 100; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(3)); assert.ok(!r.last.won);
+    const survivors = Math.round(r.last.foe.length * (1 - r.last.hpLeft[1] / 100)); assert.ok(r.hp <= 100 - Math.round((D.EXPEDITION.lossBase + 3 * D.EXPEDITION.lossPerRound) * 1.5) + 1, `loss ×1.5 (hp ${r.hp}, survivors ${survivors})`);
+    // 도전 기록 · 칭호 · 업적 · 테마 · 시즌 점수.
+    const cleanRun = { cleared: true, wins: 12, losses: 0, difficulty: 10, history: { 12: [{ unit: 'zakum', star: 3, row: 'front', item: 'blade' }, { unit: 'lyka', star: 3, row: 'back' }] }, abyss: 40 };
+    assert.deepEqual(A.featsOf(cleanRun).sort(), ['abyss10', 'abyss20', 'abyss30', 'abyss40', 'apexClear', 'flawless', 'hardFlawless']);
+    assert.deepEqual(A.featsOf({ ...cleanRun, difficulty: 5, abyss: 25 }).sort(), ['abyss10', 'abyss20', 'flawless']);
+    for (const id of ['abyss30', 'abyss40', 'hardFlawless', 'apexClear']) { assert.ok(AC.ACHIEVEMENTS.find(a => a.id === `expFeat:${id}`), id); assert.ok(TT.TITLES.find(t => t.id === `expFeat:${id}`), id); }
+    for (let d = 6; d <= 10; d++) { assert.ok(AC.ACHIEVEMENTS.find(a => a.id === `expDiff:${d}`), `achievement ${d}`); assert.ok(TT.TITLES.find(t => t.id === `expDiff:${d}`), `title ${d}`); }
+    assert.ok(D.themeById('abyss').unlocked({ expeditionAbyssBest: 20 }), 'old abyss theme keeps its 20-round bar'); assert.ok(!D.themeById('void').unlocked({ expeditionAbyssBest: 39 })); assert.ok(D.themeById('void').unlocked({ expeditionAbyssBest: 40 })); assert.ok(D.themeById('infinity').unlocked({ expeditionDiffClears: { 10: 1 } }));
+    assert.ok(E.runScore({ wins: 10, cleared: true, round: 12, difficulty: 10 }) > E.runScore({ wins: 12, cleared: true, round: 12, difficulty: 5 }));
+    assert.equal(D.shardChance(10, true), D.shardChance(5, true), 'core shard chance stays capped at the legend rate');
 });
 
 test('expedition stage 17: ghost boards carry the opponent run mods (augments · weekly rule · mastery perks) — recorded per round, synced in the season row, sent with pickGhosts, validated and applied to side B in battle, and shown as foe augments', async () => {
@@ -718,7 +748,7 @@ test('expedition stage 23 (social · cosmetics): share code round-trips and reje
     r.board = [{ unit: 'pig', star: 1, row: 'front' }]; act(s, { type: 'expeditionQuit' }, now + 1, mkRng(1));
     assert.ok(s.expeditionRecent[0].code?.startsWith('TB1.')); assert.deepEqual(D.decodeBoard(s.expeditionRecent[0].code).units, [{ unit: 'pig', star: 1, row: 'front' }]);
     // 테마: 기본만 열림 → 조건별 해금 → 액션 · 잠긴 테마 거부 · 잠기면 기본으로 복귀.
-    assert.equal(D.EXP_THEMES.length, 8); assert.equal(D.EXP_THEMES.filter(t => t.unlocked({})).length, 1);
+    assert.equal(D.EXP_THEMES.length, 10); assert.equal(D.EXP_THEMES.filter(t => t.unlocked({})).length, 1);
     assert.throws(() => act(s, { type: 'expeditionTheme', value: 'tide' }, now, mkRng(1)), /잠겨/); assert.throws(() => act(s, { type: 'expeditionTheme', value: 'nope' }, now, mkRng(1)), /없는 테마/);
     s.expeditionRenown = 5; act(s, { type: 'expeditionTheme', value: 'ember' }, now, mkRng(1)); assert.equal(s.expeditionTheme, 'ember'); assert.equal(D.activeTheme(s).id, 'ember');
     s.expeditionRenown = 0; assert.equal(D.activeTheme(s).id, 'default', 'locked theme falls back');

@@ -80,6 +80,8 @@ export function buildSide(board: Placed[], side: 'a' | 'b', mods?: RunMods, boss
             if (mods.backPower && placed.row === 'back') { mult.attack *= mods.backPower; mult.magic *= mods.backPower; }
             if (mods.starPower && placed.star >= 2) { mult.hp *= mods.starPower; mult.attack *= mods.starPower; mult.magic *= mods.starPower; }
             if (mods.speed) stats.speed = (stats.speed || 0) + mods.speed;
+            if (mods.hpMult) mult.hp *= mods.hpMult;
+            if (mods.powerMult) { mult.attack *= mods.powerMult; mult.magic *= mods.powerMult; }
             if (mods.bossGuard && bossRound) damageTaken = 1 - (1 - damageTaken) * (1 - mods.bossGuard);
         }
         stats.hp = Math.round(stats.hp * mult.hp); stats.attack = Math.round(stats.attack * mult.attack); stats.magic = Math.round(stats.magic * mult.magic);
@@ -203,13 +205,14 @@ export const ACT_BOSSES = ['', 'mushmom', 'zakum', 'blackMage'];
 export const ABYSS_BOSSES = ['zakum', 'blackMage', 'lucid'];
 export const abyssBoss = (round: number) => ABYSS_BOSSES[Math.max(0, round / EXPEDITION.actLength - 4) % ABYSS_BOSSES.length];
 export function rollWave(round: number, rng: () => number, difficulty = 1, units: UnitDef[] = UNITS): Placed[] {
-    // 15단계 심연(13라운드~): 12라운드 예산 × 1.1^(n − 12), 보스는 4라운드마다 돌아가며 ★2(24라운드부터 ★3). 16단계 난이도: 예산 배율 · ★ 확률 가산 · 막 보스 ★.
+    // 15단계 심연(13라운드~): 12라운드 예산 × 1.1^(n − 12), 보스는 4라운드마다 돌아가며 ★2(24라운드부터 ★3). 16단계 난이도: 예산 배율 · ★ 확률 가산 · 막 보스 ★(심연 보스도 이보다 낮아지지 않음).
+    // v3.416 초월 단계 · 깊은 심연의 적 능력치 보정은 웨이브가 아니라 전투(waveMods → battle의 modsB)에서 붙습니다.
     const diff = difficultyOf(difficulty), abyss = isAbyssRound(round), depth = abyss ? round - EXPEDITION.rounds : 0;
     let budget = Math.round((abyss ? WAVE_BUDGET[EXPEDITION.rounds] * Math.pow(ABYSS.budgetGrowth, depth) : WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)]) * diff.budget);
     const maxCost = round <= 2 ? 1 : round <= 4 ? 2 : round <= 7 ? 3 : round <= 9 ? 4 : 5, slots = Math.min(8, 1 + round);
     const out: Placed[] = [];
     if (isBossRound(round)) {
-        const boss = unitById(abyss ? abyssBoss(round) : ACT_BOSSES[actOf(round)])!, star = (abyss ? (depth >= 12 ? 3 : 2) : diff.bossStar) as 1 | 2 | 3;
+        const boss = unitById(abyss ? abyssBoss(round) : ACT_BOSSES[actOf(round)])!, star = Math.max(diff.bossStar, abyss ? (depth >= 12 ? 3 : 2) : 1) as 1 | 2 | 3;
         out.push({ unit: boss.id, star, row: frontRole(boss) ? 'front' : 'back' });
         budget = Math.max(0, budget - boss.cost * (star === 3 ? 4 : star === 2 ? 2 : 1));
     }

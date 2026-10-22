@@ -30,6 +30,12 @@ export const TITLES: TitleDef[] = [
     { id: 'expDiff:3', name: '⚔ 정예 원정대', desc: '난이도 정예 완주', group: '모험', achievement: 'expDiff:3' },
     { id: 'expDiff:4', name: '🔥 악몽을 넘은 원정대', desc: '난이도 악몽 완주', group: '모험', achievement: 'expDiff:4' },
     { id: 'expDiff:5', name: '⚡ 전설의 원정대', desc: '난이도 전설 완주', group: '모험', achievement: 'expDiff:5' },
+    // v3.416 초월 단계.
+    { id: 'expDiff:6', name: '🌀 초월한 원정대', desc: '난이도 초월 완주', group: '모험', achievement: 'expDiff:6' },
+    { id: 'expDiff:7', name: '☄ 천벌을 견딘 원정대', desc: '난이도 천벌 완주', group: '모험', achievement: 'expDiff:7' },
+    { id: 'expDiff:8', name: '💀 종말을 넘은 원정대', desc: '난이도 종말 완주', group: '모험', achievement: 'expDiff:8' },
+    { id: 'expDiff:9', name: '🌋 혼돈을 다스린 원정대', desc: '난이도 혼돈 완주', group: '모험', achievement: 'expDiff:9' },
+    { id: 'expDiff:10', name: '♾ 무한의 원정대', desc: '난이도 무한 완주', group: '모험', achievement: 'expDiff:10' },
     ...FEATS.map(f => ({ id: `expFeat:${f.id}`, name: f.title, desc: `원정 ${f.desc}`, group: '모험' as const, achievement: `expFeat:${f.id}` })),
     { id: 'playtime:100', name: '🍁 메이플 월드에 사는 자', desc: '누적 플레이 100시간', group: '도전', achievement: 'playtime:100' },
     { id: 'playtime:500', name: '🌍 세계 그 자체', desc: '누적 플레이 500시간', group: '도전', achievement: 'playtime:500' },
