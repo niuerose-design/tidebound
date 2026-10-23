@@ -221,6 +221,11 @@ export function featsOf(r: ExpeditionRun): string[] {
     if ((r.difficulty || 1) >= DIFFICULTIES.length) out.push('apexClear');
     return out;
 }
+/** 판을 마칠 때 받는 세계석(소수 첫째 자리): 승리 · 완주 · 막 보스 · 심연 보너스 × 난이도 배율 × 명성 배율. v3.435 포기 확인 창 미리보기도 같은 값을 씁니다. */
+export function runReward(s: Pick<State, 'expeditionRenown'>, r: ExpeditionRun, cleared: boolean) {
+    const actPearls = EXPEDITION.actPearls * (runMods(r).actMult || 1), abyssBonus = Math.floor((r.abyss || 0) / ABYSS.bonusEvery) * ABYSS.bonus;
+    return Math.round((expeditionReward(r.wins, cleared) + (r.acts || 0) * actPearls + abyssBonus) * difficultyOf(r.difficulty).reward * renownRewardMult(s.expeditionRenown) * 10) / 10;
+}
 function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     r.done = true; delete r.box; delete r.abyssChoice; delete r.augmentOffer;
     const st = statsOf(s); st.runs++; st.wins += r.wins;
@@ -230,7 +235,7 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     const abyss = r.abyss || 0, abyssBonus = Math.floor(abyss / ABYSS.bonusEvery) * ABYSS.bonus;
     const diff = difficultyOf(r.difficulty);
     // v3.432 보상이 1/10이라 소수 첫째 자리까지(지급은 grantPearls가 모아서 정수로).
-    const reward = Math.round((expeditionReward(r.wins, !!cleared) + (r.acts || 0) * actPearls + abyssBonus) * diff.reward * renownRewardMult(s.expeditionRenown) * 10) / 10;
+    const reward = runReward(s, r, !!cleared);
     r.reward = reward; grantPearls(s, reward);
     if (cleared) (s.expeditionDiffClears ??= {})[diff.level] = (s.expeditionDiffClears[diff.level] || 0) + 1;
     { const best = (s.expeditionDiffBest ??= {})[diff.level] || { wins: 0, abyss: 0 }; best.wins = Math.max(best.wins, r.wins); best.abyss = Math.max(best.abyss, abyss); s.expeditionDiffBest[diff.level] = best; }
@@ -280,13 +285,17 @@ export const expeditionActions: ActionHandlers = {
         if (!Number.isInteger(i) || !id) throw Error('살 유닛을 고르세요.');
         const def = unitById(id)!;
         if (r.gold < def.cost) throw Error(`골드가 부족합니다(비용 ${def.cost}).`);
-        if (r.bench.length >= benchCap(r)) throw Error('벤치가 가득 찼습니다. 배치하거나 팔아서 자리를 비우세요.');
+        // v3.435 벤치가 가득해도 같은 유닛 ★1이 이미 2장 있으면(사자마자 ★2로 합쳐져 칸이 늘지 않음) 살 수 있습니다.
+        const completesMerge = [...r.board, ...r.bench].filter(x => x.unit === id && x.star === 1).length >= 2;
+        if (r.bench.length >= benchCap(r) && !completesMerge) throw Error('벤치가 가득 찼습니다. 배치하거나 팔아서 자리를 비우세요.');
         r.gold -= def.cost; r.shop[i] = null; r.bench.push({ unit: id, star: 1 }); mergeStars(r, () => questProgress(s, now, 'star3'));
     },
     expeditionSell(s, { a }) {
         const r = run(s), [where, iText] = String(a.value || '').split(':'), i = Number(iText);
         const list: (ExpeditionPlaced | ExpeditionBench)[] = where === 'board' ? r.board : where === 'bench' ? r.bench : [];
         const x = list[i]; if (!x) throw Error('팔 유닛을 고르세요.');
+        // v3.435 판 아이템은 돌아오므로 가진 칸(ITEM_HOLD)이 가득하면 팔 수 없습니다(해제와 같은 규칙, 전에는 5/4처럼 한도를 넘었음).
+        if (x.item && (r.items?.length || 0) >= ITEM_HOLD) throw Error(`아이템 칸이 가득 차(${ITEM_HOLD}개) 아이템을 낀 유닛은 팔 수 없습니다. 아이템을 장착 · 조합해 칸을 비우거나, 먼저 다른 유닛에 옮겨 끼우세요.`);
         r.gold += sellPrice(unitById(x.unit)!.cost, x.star);
         if (x.item) (r.items ??= []).push(x.item);
         if (where === 'board') r.board.splice(i, 1); else r.bench.splice(i, 1);

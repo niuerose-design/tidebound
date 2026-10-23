@@ -974,3 +974,22 @@ test('v3.426 round xp: every finished fight grants base + perRound × (round −
     (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(4));
     if (!r.done) { assert.equal(r.level, 8); assert.equal(r.xp, 0); assert.equal(r.last.xp, undefined); }
 });
+
+test('v3.435 expedition fixes: full item slots block selling an itemed unit, a full bench still buys a unit that merges at once, quit preview equals the paid reward', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
+    const now = 1_800_000_000_000, basic = D.BOX_ITEMS(D.SETS[0].id).map(x => x.id);
+    const fresh = () => { const s = newState(0); s.level = 100; s.rebirths = 100; act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; delete r.augmentOffer; return [s, r]; };
+    // 아이템 칸이 가득하면 아이템 낀 유닛은 못 팔고, 아이템이 없으면 팔 수 있습니다.
+    { const [s, r] = fresh(); r.items = basic.slice(0, D.ITEM_HOLD); r.bench = [{ unit: 'pig', star: 1, item: basic[4] }, { unit: 'slime', star: 1 }];
+      assert.throws(() => act(s, { type: 'expeditionSell', value: 'bench:0' }, now, mkRng(2)), /아이템 칸이 가득/); assert.equal(r.items.length, D.ITEM_HOLD);
+      act(s, { type: 'expeditionSell', value: 'bench:1' }, now, mkRng(2)); assert.equal(r.bench.length, 1); }
+    // 벤치가 가득해도 같은 유닛 ★1 두 장이 있으면 사서 ★2로 합칩니다. 아니면 거부.
+    { const [s, r] = fresh(); const cap = A.benchCap(r); r.bench = [{ unit: 'pig', star: 1 }, { unit: 'pig', star: 1 }, ...Array.from({ length: cap - 2 }, () => ({ unit: 'slime', star: 2 }))]; r.gold = 10; r.shop = ['pig', 'evilEye', null, null, null];
+      assert.throws(() => act(s, { type: 'expeditionBuy', value: '1' }, now, mkRng(2)), /벤치가 가득/);
+      act(s, { type: 'expeditionBuy', value: '0' }, now, mkRng(2)); assert.ok(r.bench.some(x => x.unit === 'pig' && x.star === 2)); assert.ok(r.bench.length <= cap); }
+    // 포기 미리보기(runReward)와 실제 지급이 같습니다(난이도 배율 · 막 보스 포함).
+    { const s = newState(0); s.level = 100; s.rebirths = 100; s.expeditionDiffClears = { 1: 1, 2: 1, 3: 1, 4: 1 }; act(s, { type: 'expeditionStart', id: '5' }, now, mkRng(1)); const r = s.expedition; delete r.augmentOffer;
+      r.wins = 7; r.acts = 1; const preview = A.runReward(s, r, false); act(s, { type: 'expeditionQuit' }, now, mkRng(2));
+      assert.equal(r.reward, preview); assert.ok(preview > A.expeditionReward(7, false), 'difficulty and act bosses count'); }
+});
