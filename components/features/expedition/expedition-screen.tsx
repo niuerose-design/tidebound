@@ -71,7 +71,7 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
         {season}{weekBanner}
         <SetBanner curSet={curSet} upcoming={upcoming} now={now}/><DiffPicker s={s} busy={busy} unlocked={unlocked} chosenDiff={chosenDiff} setDiff={setDiff}/>
         <Primary size="lg" className="justify-self-start" disabled={busy} onClick={() => send({ type: 'expeditionStart', id: String(chosenDiff) })}>{difficultyOf(chosenDiff).icon} {difficultyOf(chosenDiff).name} 난이도로 원정 출발{s.expeditionBest ? ` · 최고 ${s.expeditionBest}승` : ''}</Primary>
-        <Note>유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨로 늘어납니다(전투를 마칠 때마다 경험치 +{EXPEDITION.roundXp.base}부터 라운드마다 +{EXPEDITION.roundXp.perRound}씩 더, 상점에서 {EXPEDITION.xp} G마다 {EXPEDITION.xpBuy}씩 살 수 있음 — 레벨은 주로 사서 올립니다). 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</Note>
+        <Note>유닛 {pool.length}종({curSet.name} 세트) · 지역 6 · 역할 6. 보드는 앞줄 4 · 뒷줄 4칸이고 배치 수는 판 레벨로 늘어납니다(전투를 마칠 때마다 경험치 +{EXPEDITION.roundXp.base}부터 라운드마다 +{EXPEDITION.roundXp.perRound}씩 더, 상점에서 {EXPEDITION.xp} G마다 {EXPEDITION.xpBuy}씩 살 수 있음 — 레벨은 주로 사서 올립니다). 라운드 수입은 기본 {EXPEDITION.baseGold} G + 이자(10 G마다 1, 최대 {EXPEDITION.interestMax}) + 연승 · 연패 보너스(2 · 3 · 4번 이어지면 +1 · +2 · +3)입니다. 수호 · 돌격은 앞줄, 마력 · 망령은 뒷줄이 유리합니다.</Note>
         {rewardTable}
     </Card>);
     if (r.done) return shell(<Card>

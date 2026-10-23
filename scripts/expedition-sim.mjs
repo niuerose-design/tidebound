@@ -14,16 +14,18 @@ const ECON = process.env.EXP_ECON !== '0'; // v3.430: 기본을 실제 경제로
 // EXP_PASSIVE='a,b'로 라운드 경험치(전투 뒤 a + b × (라운드 − 1))를 바꿔 볼 수 있습니다. 기본은 게임 데이터(roundXp).
 const [PA, PB] = process.env.EXP_PASSIVE !== undefined ? process.env.EXP_PASSIVE.split(',').map(Number).concat(0) : [D.EXPEDITION.roundXp?.base || 0, D.EXPEDITION.roundXp?.perRound || 0];
 const PASSIVE = `${PA} + ${PB || 0} × (라운드 − 1)`, passiveAt = round => PA + (PB || 0) * (round - 1);
+// v3.436 EXP_NO_LOSS_STREAK=1이면 연패 보너스 없이(이전 규칙) 잽니다.
+const NO_LOSS_STREAK = process.env.EXP_NO_LOSS_STREAK === '1';
 const LEVEL_FIRST = process.env.EXP_LEVEL_FIRST === '1', levelStats = [];
 /** 한 판: 전략 함수가 라운드마다 상점에서 살 유닛을 고릅니다. 벤치 · 성급 합치기 · 배치는 공통. */
 function play(strategy, rng, comp) {
     const owned = new Map(); // unit → count(★1 환산 장수)
     const results = [];
-    let gold = 0, streak = 0, lv = 2, xp = 0;
+    let gold = 0, streak = 0, lossStreak = 0, lv = 2, xp = 0;
     const levels = [];
     for (let round = 1; round <= D.EXPEDITION.rounds; round++) {
         const level = ECON ? lv : ROUND_LEVEL[round];
-        gold += D.EXPEDITION.baseGold + Math.min(D.EXPEDITION.interestMax, Math.floor(gold / D.EXPEDITION.interestPer)) + Math.min(3, Math.max(0, streak - 1));
+        gold += D.EXPEDITION.baseGold + Math.min(D.EXPEDITION.interestMax, Math.floor(gold / D.EXPEDITION.interestPer)) + Math.min(3, Math.max(0, Math.max(streak, NO_LOSS_STREAK ? 0 : lossStreak) - 1));
         // EXP_ECON=1 · EXP_LEVEL_FIRST=1: 상점을 보기 전에 이번 라운드 목표 레벨까지 경험치를 먼저 삽니다(레벨 우선 플레이).
         if (ECON && LEVEL_FIRST) { while (lv < 8 && lv < ROUND_LEVEL[round] && gold >= D.EXPEDITION.xp) { gold -= D.EXPEDITION.xp; xp += D.EXPEDITION.xpBuy ?? D.EXPEDITION.xp; while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } } }
         const levelNow = ECON ? lv : level;
@@ -39,7 +41,7 @@ function play(strategy, rng, comp) {
         const board = place(owned, ECON ? lv : level, comp);
         levels.push(ECON ? lv : level);
         const r = X.battle(board, X.rollWave(round, rng, 1, POOL), rng);
-        const won = r.winner === 'a'; results.push(won); streak = won ? streak + 1 : 0;
+        const won = r.winner === 'a'; results.push(won); streak = won ? streak + 1 : 0; lossStreak = won ? 0 : lossStreak + 1;
         if (ECON) { xp += passiveAt(round); while (lv < 8 && xp >= D.EXPEDITION.xpToLevel[lv]) { xp -= D.EXPEDITION.xpToLevel[lv]; lv++; } }
     }
     levelStats.push(levels);

@@ -1058,7 +1058,7 @@ export type ExpeditionPlaced = { unit: string; star: 1 | 2 | 3; row: 'front' | '
 export type ExpeditionBench = { unit: string; star: 1 | 2 | 3; item?: string };
 /** 원정대 한 판의 상태(하루 1판, 8라운드). */
 export type ExpeditionRun = {
-    round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number;
+    round: number; gold: number; level: number; xp: number; hp: number; wins: number; streak: number; /** v3.436 연패 수(이기면 지움). 연승과 같은 보너스 골드. */ lossStreak?: number;
     board: ExpeditionPlaced[]; bench: ExpeditionBench[]; shop: (string | null)[];
     /** 마지막 전투 요약. 12단계: 상대 보드(foe)와 재생 프레임(frames)으로 화면이 전투를 애니메이션으로 다시 보여줍니다. 17단계: 고스트 상대의 증강(foeAugments). */
     last?: { won: boolean; turns: number; hpLeft: [number, number]; log: string[]; opponent?: string; foe?: ExpeditionPlaced[]; frames?: ReplayFrame[]; truncated?: boolean; foeAugments?: string[]; /** 22단계: 상대 보드가 라운드 기준보다 세서 ★을 낮췄으면 scaled. */ scaled?: boolean; /** v3.426 이 전투를 마치고 받은 라운드 경험치. */ xp?: number };
