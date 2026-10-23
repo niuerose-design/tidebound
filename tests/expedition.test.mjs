@@ -993,3 +993,20 @@ test('v3.435 expedition fixes: full item slots block selling an itemed unit, a f
       r.wins = 7; r.acts = 1; const preview = A.runReward(s, r, false); act(s, { type: 'expeditionQuit' }, now, mkRng(2));
       assert.equal(r.reward, preview); assert.ok(preview > A.expeditionReward(7, false), 'difficulty and act bosses count'); }
 });
+
+test('v3.436 loss streak: consecutive losses add the same bonus gold as win streaks (2 · 3 · 4+ → +1 · +2 · +3), a win clears it', async () => {
+    const { newState, act } = await import('./harness.mjs');
+    const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
+    assert.deepEqual([0, 1, 2, 3, 4, 9].map(A.streakGold), [0, 0, 1, 2, 3, 3]);
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.rebirths = 100;
+    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule;
+    // 아주 약한 보드로 일부러 집니다(체력은 넉넉히).
+    const lose = () => { r.board = [{ unit: 'slime', star: 1, row: 'front' }]; r.hp = 100; r.gold = 0; delete r.augmentOffer; delete r.box; const round = r.round; (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(round)); return r.last.won; };
+    r.round = 5; let losses = 0;
+    for (let k = 0; k < 4; k++) { if (!lose()) losses++; else losses = 0; }
+    if (losses >= 2) { assert.equal(r.lossStreak, losses); assert.equal(r.streak, 0); assert.ok(r.gold >= D.EXPEDITION.baseGold + A.streakGold(losses), `income includes loss streak bonus (gold ${r.gold})`); }
+    // 이기면 연패가 지워집니다.
+    r.lossStreak = 3; r.board = [{ unit: 'blackMage', star: 3, row: 'front' }]; r.round = 1; r.hp = 100; delete r.augmentOffer; delete r.box;
+    (clearOffer(s), act)(s, { type: 'expeditionFight' }, now, mkRng(7));
+    if (r.last.won) { assert.equal(r.lossStreak, undefined); assert.equal(r.streak >= 1, true); }
+});

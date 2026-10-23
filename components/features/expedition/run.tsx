@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Coins, Heart, Swords, Flag, Sparkles } from 'lucide-react';
 import { EXPEDITION, pearlText, ORIGIN_NAMES, ROLE_NAMES, SPECIAL_NAMES, unitById, sellPrice, itemById, ITEM_HOLD, comboOf, ITEMS, describeTier, EMBLEM_ROUND, TIER2_ROUND, isBossRound, actOf, augmentById, augmentName, augmentDesc, weeklyRuleById, ABYSS, isAbyssRound, difficultyOf, setById, encodeBoard, targetProgress, activeTheme, activeSkin } from '@/game/data/expedition';
 import { activeTraits, traitKeys, ACT_BOSSES, abyssBoss } from '@/game/systems/expedition';
-import { runReward, runMods, benchCap } from '@/game/systems/actions/expedition';
+import { runReward, runMods, benchCap, streakGold } from '@/game/systems/actions/expedition';
 import { enemySkillById } from '@/game/data/encounters';
 import { FoldSection, StatBar, ConfirmAction } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
@@ -57,7 +57,7 @@ export function RunView({ s, send, busy, r, copy, copied }: { s: State; send: Se
             <Tile icon={<Heart size={16}/>} label="원정 체력">{r.hp}<StatBar tone="hp" size="s" showText={false} value={r.hp} max={100} className="mt-1"/></Tile>
             <Tile icon={<Coins size={16}/>} label="판 골드">{r.gold}</Tile>
             <Tile icon={<Sparkles size={16}/>} label="판 레벨">{r.level} <small className="text-xs font-normal text-ink-3">· 배치 {r.board.length}/{slots}</small><small className="block text-xs font-normal text-ink-3">{r.level >= 8 ? '최대 레벨' : `경험치 ${r.xp}/${EXPEDITION.xpToLevel[r.level]}`}</small></Tile>
-            <Tile icon={<Swords size={16}/>} label="전적">{r.wins}승 <small className="text-xs font-normal text-ink-3">· 연승 {r.streak}</small></Tile>
+            <Tile icon={<Swords size={16}/>} label="전적">{r.wins}승 <small className="text-xs font-normal text-ink-3" title="연승 · 연패가 2 · 3 · 4번 이어지면 다음 라운드 수입 +1 · +2 · +3 G">· {r.lossStreak ? `연패 ${r.lossStreak}` : `연승 ${r.streak}`}{streakGold(Math.max(r.streak, r.lossStreak || 0)) ? ` (+${streakGold(Math.max(r.streak, r.lossStreak || 0))} G)` : ''}</small></Tile>
         </div>
         <ol className={`exp-progress${inAbyss ? ' abyss' : ''}`} aria-label="라운드 진행">{Array.from({ length: EXPEDITION.rounds }, (_, i) => i + 1).map(n => { const boss = isBossRound(n), won = r.history?.[n] && n < r.round ? (n === r.round - 1 ? r.last?.won : undefined) : undefined; return <li key={n} className={`${n < r.round ? 'past' : n === r.round ? 'now' : ''}${boss ? ' boss' : ''}`} title={boss ? `${actOf(n)}막 보스 ${unitById(ACT_BOSSES[actOf(n)])?.name}` : `${n}라운드`}>{boss ? <UnitArt def={unitById(ACT_BOSSES[actOf(n)])!} size={18}/> : n}{won === false ? <i/> : null}</li>; })}</ol>
         <p className={`exp-todo${r.box?.length || r.augmentOffer?.length ? ' urgent' : bossNext ? ' boss' : ''}`} role="status">다음 할 일 · {todo}</p>

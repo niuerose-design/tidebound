@@ -93,7 +93,9 @@ export function runMods(r: Pick<ExpeditionRun, 'rule' | 'augments' | 'mastery' |
     return mergeMods([weeklyRuleById(r.rule)?.mods, ...(r.augments || []).map(augmentMods), ...masteryPerks(r.mastery || 1).map(p => p.mods), renownMods(r.renown)]);
 }
 export const benchCap = (r: ExpeditionRun) => EXPEDITION.bench + (runMods(r).benchPlus || 0);
-const income = (r: ExpeditionRun) => { const m = runMods(r); return EXPEDITION.baseGold + (m.goldPlus || 0) + Math.min(EXPEDITION.interestMax + (m.interestPlus || 0), Math.floor(r.gold / EXPEDITION.interestPer)) + Math.min(3, Math.max(0, r.streak - 1)); };
+/** 연승 · 연패 보너스 골드: 2연속 +1, 3연속 +2, 4연속 이상 +3. v3.436 연패에도 같은 값(이기든 지든 흐름을 이어 가면 수입이 늘어남). */
+export const streakGold = (n: number) => Math.min(3, Math.max(0, n - 1));
+const income = (r: ExpeditionRun) => { const m = runMods(r); return EXPEDITION.baseGold + (m.goldPlus || 0) + Math.min(EXPEDITION.interestMax + (m.interestPlus || 0), Math.floor(r.gold / EXPEDITION.interestPer)) + streakGold(Math.max(r.streak, r.lossStreak || 0)); };
 /** 11단계 증강 선택지: 라운드 등급(2 → 1 · 5 → 2 · 8 → 3)의 증강 가운데 아직 안 고른 것 3개(+숙련 특전). 동적 ‘문양’은 보드에서 다음 단계에 가장 가까운 시너지로 구체화하고, 맞는 시너지가 없으면 뺍니다. */
 export function rollAugments(r: ExpeditionRun, rng: () => number): string[] {
     const tier = (isAbyssRound(r.round) ? 3 : AUGMENT_ROUNDS.indexOf(r.round) + 1) as 1 | 2 | 3, taken = new Set((r.augments || []).map(id => id.split(':')[0]));
@@ -360,7 +362,7 @@ export const expeditionActions: ActionHandlers = {
         if (won && boss && wave[0]) rollShard(s, r, wave[0].unit, abyss, rng);
         if (won && abyss) r.abyss = (r.abyss || 0) + 1;
         if (!won) r.losses = (r.losses || 0) + 1;
-        if (won) { r.wins++; r.streak++; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS(setById(r.set).id)], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.hp = Math.max(0, r.hp - Math.round((EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit) * (difficultyOf(r.difficulty).loss || 1))); }
+        if (won) { r.wins++; r.streak++; delete r.lossStreak; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS(setById(r.set).id)], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.lossStreak = (r.lossStreak || 0) + 1; r.hp = Math.max(0, r.hp - Math.round((EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit) * (difficultyOf(r.difficulty).loss || 1))); }
         addLog(s, `원정대 ${abyss ? `심연 ${r.round - EXPEDITION.rounds}` : r.round}라운드${boss ? (abyss ? '(심연 보스)' : `(${actOf(r.round)}막 보스)`) : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, abyss ? `심연 ${r.round - EXPEDITION.rounds}라운드에서 탈락` : `${r.round}라운드에서 탈락`); return; }
         // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).
