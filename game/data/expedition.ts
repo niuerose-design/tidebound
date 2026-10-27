@@ -455,18 +455,20 @@ export const COMP_KEYS_MAX = 40;
 export type DifficultyDef = { level: number; name: string; icon: string; /** 웨이브 예산 배율 · 적 ★ 확률 가산 · 막 보스 ★ · 보상(세계석 · 숙련) 배율 · 시즌 점수 가산 · 설명. */ budget: number; starPlus: number; bossStar: 1 | 2 | 3; reward: number; score: number; desc: string;
     /** v3.416 초월 단계(6~10): 웨이브(고스트 제외)에 붙는 적 보정 · 패배 때 판 체력 손실 배율. 예산만으로는 8칸 ★3에서 더 세지지 않아 적 능력치를 직접 올립니다. */
     foe?: RunMods; loss?: number };
+// v3.437 사다리 재조정: 경제를 조인 뒤(경험치 1 + (r − 1) · 구매 4) 천벌(7)이 1~6%로 깰 수 없었음(실제 경제 상점 시뮬, 아이템 · 증강 없는 봇). 예산 배율 · ★ 확률 · 적 보정을 모두 한 단계쯤 낮춤.
+// 결과(웨이브 예산 85%와 함께, 12라운드): 봇은 일반 36~60 · 천벌 3~10%. 현실적인 고수 보드(조합 ★2 · 아이템 4 · 증강 2)는 전설 99~100 · 천벌 54~94 · 종말 13~68 · 무한 0%(패치 전 천벌 0%), 최고 빌드(★3 · 상위 아이템 8 · 증강 3)는 종말 100 · 무한 5~96%.
 export const DIFFICULTIES: DifficultyDef[] = [
     { level: 1, name: '일반', icon: '🌱', budget: 1, starPlus: 0, bossStar: 1, reward: 1, score: 0, desc: '기본 난이도' },
-    { level: 2, name: '숙련', icon: '🌿', budget: 1.12, starPlus: .05, bossStar: 1, reward: 1.25, score: 60, desc: '적이 12% 더 강하고 ★ 유닛이 5% 더 자주 나옴' },
-    { level: 3, name: '정예', icon: '⚔', budget: 1.25, starPlus: .1, bossStar: 1, reward: 1.5, score: 120, desc: '적이 25% 더 강하고 ★ 유닛이 10% 더 자주 나옴' },
-    { level: 4, name: '악몽', icon: '🔥', budget: 1.4, starPlus: .15, bossStar: 2, reward: 1.8, score: 180, desc: '적이 40% 더 강하고 ★ 유닛이 15% 더 자주 나옴 · 막 보스 ★2' },
-    { level: 5, name: '전설', icon: '⚡', budget: 1.6, starPlus: .2, bossStar: 2, reward: 2.2, score: 240, desc: '적이 60% 더 강하고 ★ 유닛이 20% 더 자주 나옴 · 막 보스 ★2' },
+    { level: 2, name: '숙련', icon: '🌿', budget: 1.08, starPlus: .03, bossStar: 1, reward: 1.25, score: 60, desc: '적이 8% 더 강하고 ★ 유닛이 3% 더 자주 나옴' },
+    { level: 3, name: '정예', icon: '⚔', budget: 1.16, starPlus: .06, bossStar: 1, reward: 1.5, score: 120, desc: '적이 16% 더 강하고 ★ 유닛이 6% 더 자주 나옴' },
+    { level: 4, name: '악몽', icon: '🔥', budget: 1.25, starPlus: .09, bossStar: 2, reward: 1.8, score: 180, desc: '적이 25% 더 강하고 ★ 유닛이 9% 더 자주 나옴 · 막 보스 ★2' },
+    { level: 5, name: '전설', icon: '⚡', budget: 1.35, starPlus: .12, bossStar: 2, reward: 2.2, score: 240, desc: '적이 35% 더 강하고 ★ 유닛이 12% 더 자주 나옴 · 막 보스 ★2' },
     // v3.416 초월 단계: 전설을 완주한 모험가를 위한 5단계. 적 능력치 · 속도 · 마나가 직접 오르고, 패배 때 판 체력을 더 잃습니다.
-    { level: 6, name: '초월', icon: '🌀', budget: 1.75, starPlus: .25, bossStar: 2, reward: 2.5, score: 320, desc: '적이 75% 더 강하고 ★ 유닛이 25% 더 자주 나옴 · 적 체력 · 공격력 15% 증가 · 막 보스 ★2', foe: { hpMult: 1.15, powerMult: 1.15 } },
-    { level: 7, name: '천벌', icon: '☄', budget: 1.9, starPlus: .3, bossStar: 3, reward: 2.8, score: 400, desc: '적이 90% 더 강하고 ★ 유닛이 30% 더 자주 나옴 · 적 체력 · 공격력 30% 증가 · 적 속도 +1 · 막 보스 ★3', foe: { hpMult: 1.3, powerMult: 1.3, speed: 1 } },
-    { level: 8, name: '종말', icon: '💀', budget: 2.05, starPlus: .35, bossStar: 3, reward: 3.1, score: 480, desc: '적이 2배 이상 강하고 ★ 유닛이 35% 더 자주 나옴 · 적 체력 · 공격력 45% 증가 · 적 속도 +2 · 적 마나 20% 빨리 참 · 막 보스 ★3 · 패배 피해 25% 증가', foe: { hpMult: 1.45, powerMult: 1.45, speed: 2, manaGain: 1.2 }, loss: 1.25 },
-    { level: 9, name: '혼돈', icon: '🌋', budget: 2.2, starPlus: .4, bossStar: 3, reward: 3.4, score: 560, desc: '적이 2배 이상 강하고 ★ 유닛이 40% 더 자주 나옴 · 적 체력 · 공격력 60% 증가 · 적 속도 +2 · 적 마나 30% 빨리 참 · 적이 받은 피해 10% 반격 · 막 보스 ★3 · 패배 피해 40% 증가', foe: { hpMult: 1.6, powerMult: 1.6, speed: 2, manaGain: 1.3, reflect: .1 }, loss: 1.4 },
-    { level: 10, name: '무한', icon: '♾', budget: 2.4, starPlus: .45, bossStar: 3, reward: 3.8, score: 650, desc: '적이 2.4배 강하고 ★ 유닛이 45% 더 자주 나옴 · 적 체력 · 공격력 80% 증가 · 적 속도 +3 · 적 마나 40% 빨리 참 · 적이 받은 피해 15% 반격 · 막 보스 ★3 · 패배 피해 50% 증가', foe: { hpMult: 1.8, powerMult: 1.8, speed: 3, manaGain: 1.4, reflect: .15 }, loss: 1.5 },
+    { level: 6, name: '초월', icon: '🌀', budget: 1.45, starPlus: .15, bossStar: 2, reward: 2.5, score: 320, desc: '적이 45% 더 강하고 ★ 유닛이 15% 더 자주 나옴 · 적 체력 · 공격력 8% 증가 · 막 보스 ★2', foe: { hpMult: 1.08, powerMult: 1.08 } },
+    { level: 7, name: '천벌', icon: '☄', budget: 1.55, starPlus: .18, bossStar: 2, reward: 2.8, score: 400, desc: '적이 55% 더 강하고 ★ 유닛이 18% 더 자주 나옴 · 적 체력 · 공격력 15% 증가 · 적 속도 +1 · 막 보스 ★2', foe: { hpMult: 1.15, powerMult: 1.15, speed: 1 } },
+    { level: 8, name: '종말', icon: '💀', budget: 1.65, starPlus: .21, bossStar: 3, reward: 3.1, score: 480, desc: '적이 65% 더 강하고 ★ 유닛이 21% 더 자주 나옴 · 적 체력 · 공격력 22% 증가 · 적 속도 +1 · 적 마나 10% 빨리 참 · 막 보스 ★3 · 패배 피해 25% 증가', foe: { hpMult: 1.22, powerMult: 1.22, speed: 1, manaGain: 1.1 }, loss: 1.25 },
+    { level: 9, name: '혼돈', icon: '🌋', budget: 1.8, starPlus: .24, bossStar: 3, reward: 3.4, score: 560, desc: '적이 80% 더 강하고 ★ 유닛이 24% 더 자주 나옴 · 적 체력 · 공격력 38% 증가 · 적 속도 +2 · 적 마나 20% 빨리 참 · 적이 받은 피해 5% 반격 · 막 보스 ★3 · 패배 피해 40% 증가', foe: { hpMult: 1.38, powerMult: 1.38, speed: 2, manaGain: 1.2, reflect: .05 }, loss: 1.4 },
+    { level: 10, name: '무한', icon: '♾', budget: 2, starPlus: .28, bossStar: 3, reward: 3.8, score: 650, desc: '적이 2배 강하고 ★ 유닛이 28% 더 자주 나옴 · 적 체력 · 공격력 55% 증가 · 적 속도 +3 · 적 마나 40% 빨리 참 · 적이 받은 피해 15% 반격 · 막 보스 ★3 · 패배 피해 50% 증가', foe: { hpMult: 1.55, powerMult: 1.55, speed: 3, manaGain: 1.4, reflect: .15 }, loss: 1.5 },
 ];
 export const difficultyOf = (level?: number) => DIFFICULTIES.find(d => d.level === (level || 1)) || DIFFICULTIES[0];
 /** 열린 최고 난이도: 완주한 최고 단계 + 1(최대 DIFFICULTIES.length). */
@@ -534,7 +536,14 @@ export const setMasteryXpFor = (level: number) => 150 + 50 * (level - 1);
 
 // ───────────── 22단계: 고스트 풀이 작을 때의 보호 ─────────────
 /** 고스트 보호: 같은 상대는 한 판에 maxSameRun번까지, 후보가 poolFull명 미만이면 고스트 확률을 비례해 낮춤(최저 poolMinChance 배), 상대 보드 가치가 그 라운드 웨이브 예산 × capMult를 넘으면 ★을 낮추고 그래도 넘으면 약한 유닛부터 뺌. */
-export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: 1.3, candidates: 3 };
+/**
+ * v3.437 고스트 상한 재조정: 상한이 예산 × 1.3이고 아이템 · 시너지 · 증강은 그대로라, 일반 난이도에서 심연 20단계 모험가의 고스트는 중간 보드가 0%(같은 라운드 웨이브는 30~57%)였음.
+ * 이제 상한 = 그 라운드 웨이브 예산 × 난이도 배율 × capMult(.8), 가치에 아이템(1단계 2 · 2단계 4 · 문장 1)을 넣고 넘치면 아이템부터 벗김. 난이도 modsFrom(3) 아래에서는 상대의 증강 · 규칙 · 숙련 보정을 붙이지 않고, 6단계 이상의 적 보정(waveMods)은 웨이브처럼 고스트에도 붙음.
+ * 측정(중간 보드 승률, 라운드 5 · 7 · 9 · 11): 일반 웨이브 63 80 73 73 ↔ 고스트 98 99 76 79, 정예 웨이브 31 59 42 43 ↔ 고스트 95 54 11 35(전에는 모든 난이도에서 0 0 0 0).
+ */
+export const GHOST_GUARD = { maxSameRun: 2, poolFull: 4, poolMinChance: .5, capMult: .8, candidates: 3, itemValue: { 1: 2, 2: 4, emblem: 1 } as Record<string, number>, modsFrom: 3 };
+/** 고스트 상한용 보드 가치 = 유닛 가치(boardValue) + 아이템 가치. */
+export const ghostValue = (board: { unit: string; star: number; item?: string }[]) => boardValue(board) + board.reduce((n, p) => { const it = p.item ? itemById(p.item) : undefined; return n + (it ? GHOST_GUARD.itemValue[String(it.tier || 1)] || 0 : 0); }, 0);
 /**
  * v3.423 연습 원정대(입문 고스트): 이번 달 고스트 후보가 적으면 서버가 이 원정대들로 후보를 채웁니다. 라운드마다 실제 모험가가 STARTER_GHOST.fillTo명 이상이 되면 더 나오지 않습니다(유저 기록이 쌓이면 자연스럽게 대체).
  * 보드는 systems/expedition.ts의 starterBoard가 라운드 웨이브 예산 × power에 맞춰 만들고, 후보는 시즌 점수(score)가 내 점수와 가까운 순이라 새 모험가는 입문 원정대부터 만납니다.

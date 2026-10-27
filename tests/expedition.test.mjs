@@ -494,7 +494,7 @@ test('expedition stage 16: difficulty tiers scale waves and bosses, unlock by cl
     assert.equal(D.DIFFICULTIES.length, 10); assert.equal(D.difficultyOf(undefined).level, 1); assert.equal(D.difficultyOf(99).level, 1);
     assert.equal(D.difficultyUnlocked(undefined), 1); assert.equal(D.difficultyUnlocked({ 1: 2 }), 2); assert.equal(D.difficultyUnlocked({ 1: 1, 2: 1, 3: 1 }), 4); assert.equal(D.difficultyUnlocked({ 1: 1, 5: 1 }), 6); assert.equal(D.difficultyUnlocked({ 10: 1 }), 10);
     const spent = w => w.reduce((n, p) => n + D.unitById(p.unit).cost * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1), 0);
-    for (const round of [6, 10, 12]) { const base = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k))))), hard = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k), 5)))); assert.ok(hard > base, `round ${round}: legend waves spend more (${hard} > ${base})`); assert.ok(spent(X.rollWave(round, mkRng(1), 5)) <= Math.round(X.WAVE_BUDGET[round] * 1.6)); }
+    for (const round of [6, 10, 12]) { const base = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k))))), hard = Math.max(...Array.from({ length: 6 }, (_, k) => spent(X.rollWave(round, mkRng(round * 7 + k), 5)))); assert.ok(hard > base, `round ${round}: legend waves spend more (${hard} > ${base})`); assert.ok(spent(X.rollWave(round, mkRng(1), 5)) <= Math.round(X.WAVE_BUDGET[round] * D.difficultyOf(5).budget)); }
     assert.equal(X.rollWave(8, mkRng(8), 4)[0].star, 2, 'nightmare act boss is ★2'); assert.equal(X.rollWave(8, mkRng(8), 3)[0].star, 1);
     const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.pearls = 0;
     assert.throws(() => act(s, { type: 'expeditionStart', id: '2' }, now, mkRng(1)), /열립니다/, 'tier 2 locked until tier 1 is cleared');
@@ -520,14 +520,14 @@ test('expedition v3.416: transcendent difficulties 6~10 add foe stat mods and ha
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition'), E = await L.load('server/expedition'), TT = await L.load('data/titles'), AC = await L.load('data/achievements');
     // 단계가 오를수록 예산 · 보상 · 점수 · 적 보정이 오름.
     for (let i = 1; i < D.DIFFICULTIES.length; i++) { const a = D.DIFFICULTIES[i - 1], b = D.DIFFICULTIES[i]; assert.equal(b.level, i + 1); assert.ok(b.budget > a.budget && b.reward > a.reward && b.score > a.score, `tier ${b.level} above ${a.level}`); }
-    assert.equal(D.waveMods(12, 5), undefined, 'legend and below: no foe mods'); assert.equal(D.waveMods(12, 6).hpMult, 1.15); assert.equal(D.waveMods(12, 10).powerMult, 1.8);
+    assert.equal(D.waveMods(12, 5), undefined, 'legend and below: no foe mods'); assert.equal(D.waveMods(12, 6).hpMult, 1.08); assert.equal(D.waveMods(12, 10).powerMult, 1.55);
     for (let d = 7; d <= 10; d++) assert.ok((D.waveMods(12, d).hpMult || 1) > (D.waveMods(12, d - 1).hpMult || 1));
-    assert.equal(X.rollWave(8, mkRng(8), 7)[0].star, 3, 'heaven-fall act boss is ★3'); assert.equal(X.rollWave(16, mkRng(16), 7)[0].star, 3, 'abyss bosses never below the tier boss star');
+    assert.equal(X.rollWave(8, mkRng(8), 7)[0].star, 2, 'heaven-fall act boss is ★2 (v3.437)'); assert.equal(X.rollWave(8, mkRng(8), 8)[0].star, 3, 'doom act boss is ★3'); assert.equal(X.rollWave(16, mkRng(16), 8)[0].star, 3, 'abyss bosses never below the tier boss star');
     // 적 보정은 전투에서 B쪽 능력치로.
     const board = [{ unit: 'zakum', star: 2, row: 'front' }], plain = X.buildSide(board, 'b').units[0], hard = X.buildSide(board, 'b', D.waveMods(12, 10)).units[0];
-    assert.ok(Math.abs(hard.maxHp - plain.maxHp * 1.8) <= 1, 'foe hp ×1.8'); assert.ok(hard.stats.attack > plain.stats.attack); assert.ok(hard.reflect > 0); assert.equal(D.combatMods({ hpMult: 3, powerMult: 3 }), undefined, 'foe-only mods never ride a ghost');
+    assert.ok(Math.abs(hard.maxHp - plain.maxHp * D.waveMods(12, 10).hpMult) <= 1, 'foe hp × difficulty 10 mult'); assert.ok(hard.stats.attack > plain.stats.attack); assert.ok(hard.reflect > 0); assert.equal(D.combatMods({ hpMult: 3, powerMult: 3 }), undefined, 'foe-only mods never ride a ghost');
     // 깊은 심연: 심연 20라운드를 넘기면 라운드마다 체력 · 공격력이 붙음(난이도 보정과 곱).
-    assert.equal(D.ABYSS.max, 40); assert.equal(D.waveMods(12 + 20, 1), undefined); assert.equal(D.waveMods(12 + 30, 1).hpMult, 1 + D.ABYSS.deepHp * 10); assert.ok(Math.abs(D.waveMods(12 + 30, 6).hpMult - 1.15 * (1 + D.ABYSS.deepHp * 10)) < 1e-9);
+    assert.equal(D.ABYSS.max, 40); assert.equal(D.waveMods(12 + 20, 1), undefined); assert.equal(D.waveMods(12 + 30, 1).hpMult, 1 + D.ABYSS.deepHp * 10); assert.ok(Math.abs(D.waveMods(12 + 30, 6).hpMult - 1.08 * (1 + D.ABYSS.deepHp * 10)) < 1e-9);
     // 패배 피해 배율 · 실제 전투에 적 보정이 실림.
     const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.expeditionDiffClears = { 9: 1 };
     assert.equal(D.difficultyUnlocked(s.expeditionDiffClears), 10);
@@ -574,8 +574,9 @@ test('expedition stage 17: ghost boards carry the opponent run mods (augments ·
     assert.ok(buffed.hpLeft.b > plain.hpLeft.b || buffed.winner === 'b', 'side B mods apply');
     assert.equal(X.buildSide(same, 'b', { traitPlus: { meadow: 1 } }).active.find(t => t.trait.id === 'meadow').count, 2, 'B side trait plus');
     // 판: 라운드별 증강 기록 · 고스트 상대의 증강이 r.last.foeAugments로.
-    const now = 1_800_000_000_000, s = newState(0); s.level = 100;
-    act(s, { type: 'expeditionStart' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
+    // v3.437: 상대 증강은 난이도 3(정예)부터 붙으므로 정예 판으로 검사.
+    const now = 1_800_000_000_000, s = newState(0); s.level = 100; s.expeditionDiffClears = { 2: 1 };
+    act(s, { type: 'expeditionStart', id: '3' }, now, mkRng(1)); const r = s.expedition; delete r.rule; s.expeditionQuests.daily = []; s.expeditionQuests.weekly = [];
     r.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r.augments = ['coinPurse']; r.round = 3;
     const ghostJson = JSON.stringify({ 3: { name: '상대', board: [{ unit: 'slime', star: 1, row: 'front' }], mods: { speed: 2 }, augments: ['quickFeet'] } });
     let used = false; for (let seed = 1; seed <= 20 && !used; seed++) { r.round = 3; (clearOffer(s), act)(s, { type: 'expeditionFight', value: ghostJson }, now + seed, mkRng(seed)); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1)); if (r.last.opponent) used = true; }
@@ -722,11 +723,14 @@ test('expedition stage 22 (small ghost pool): candidates per round pick the leas
     const { newState, act } = await import('./harness.mjs');
     const fs = await import('node:fs'), os = await import('node:os'), path = await import('node:path');
     const D = await L.load('data/expedition'), X = await L.load('systems/expedition'), A = await L.load('systems/actions/expedition');
-    // capGhostBoard: 2라운드(예산 5 × 1.3 = 6.5 → 6)에 ★3 자쿰(20) → ★을 내리고 그래도 넘으면 약한 유닛부터 뺀다.
+    // capGhostBoard(v3.437): 2라운드 상한 = 예산 5 × .8 = 4. ★3 자쿰(20) → 아이템 → ★ → 약한 유닛 순으로 뺀다.
     const strong = [{ unit: 'zakum', star: 3, row: 'front' }, { unit: 'pig', star: 3, row: 'front' }, { unit: 'slime', star: 1, row: 'back' }];
-    const c2 = A.capGhostBoard(strong, 2, 1); assert.equal(c2.scaled, true); assert.ok(D.boardValue(c2.board) <= Math.round(X.WAVE_BUDGET[2] * 1.3), `value ${D.boardValue(c2.board)}`); assert.ok(c2.board.length >= 1);
+    const c2 = A.capGhostBoard(strong, 2, 1); assert.equal(c2.scaled, true); assert.ok(D.ghostValue(c2.board) <= Math.round(X.WAVE_BUDGET[2] * D.GHOST_GUARD.capMult) || (c2.board.length === 1 && c2.board[0].star === 1), `value ${D.ghostValue(c2.board)} (상한 아래이거나 ★1 한 명)`); assert.ok(c2.board.length >= 1);
     const c12 = A.capGhostBoard([{ unit: 'pig', star: 2, row: 'front' }, { unit: 'slime', star: 1, row: 'back' }], 12, 1); assert.equal(c12.scaled, false, 'weak board untouched'); assert.deepEqual(c12.board.map(p => p.star), [2, 1]);
-    const c12e = A.capGhostBoard(strong, 12, 5); assert.ok(D.boardValue(c12e.board) <= Math.round(X.WAVE_BUDGET[12] * 1.6 * 1.3));
+    const c12e = A.capGhostBoard(strong, 12, 5); assert.ok(D.ghostValue(c12e.board) <= Math.round(X.WAVE_BUDGET[12] * D.difficultyOf(5).budget * D.GHOST_GUARD.capMult));
+    // v3.437 아이템은 가치에 들어가고(1단계 2 · 2단계 4 · 문장 1) 넘치면 아이템부터 벗는다.
+    const geared = [{ unit: 'pig', star: 2, row: 'front', item: 'greatBlade' }, { unit: 'slime', star: 2, row: 'back', item: 'emblem_meadow' }, { unit: 'seacle', star: 1, row: 'back', item: 'blade' }];
+    assert.equal(D.ghostValue(geared), 2 + 4 + 2 + 1 + 1 + 2); const cg = A.capGhostBoard(geared, 4, 1); assert.equal(cg.scaled, true); assert.ok(cg.board.every(p => p.star === (p.unit === 'seacle' ? 1 : 2)), 'items go before stars'); assert.ok(D.ghostValue(cg.board) <= Math.round(X.WAVE_BUDGET[4] * .8));
     // parseGhost: 후보 셋 중 이 판에서 가장 적게 만난 계정, pool 전달.
     const value = JSON.stringify({ pool: 2, 3: [{ name: 'A', account: 'a', board: [{ unit: 'pig', star: 1, row: 'front' }] }, { name: 'B', account: 'b', board: [{ unit: 'slime', star: 1, row: 'front' }] }] });
     assert.equal(A.parseGhost(value, 3).name, 'A'); assert.equal(A.parseGhost(value, 3, { a: 2 }).name, 'B'); assert.equal(A.parseGhost(value, 3).pool, 2); assert.equal(A.parseGhost(value, 3).account, 'a');
@@ -743,7 +747,7 @@ test('expedition stage 22 (small ghost pool): candidates per round pick the leas
     r.round = 6; delete r.ghostSeen; clearOffer(s); act(s, { type: 'expeditionFight', value: one(6) }, now + 6, () => .4); assert.equal(r.last.opponent, undefined, 'pool 1 halves the chance'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
     r.round = 7; clearOffer(s); act(s, { type: 'expeditionFight', value: JSON.stringify({ pool: 4, 7: [{ name: '넷', account: 'four', board: [{ unit: 'slime', star: 1, row: 'front' }] }] }) }, now + 7, () => .4); assert.equal(r.last.opponent, '넷'); if (r.box) act(s, { type: 'expeditionSkipBox' }, now, mkRng(1));
     // 센 고스트는 ★이 깎이고 scaled 표시.
-    r.round = 2; clearOffer(s); delete r.ghostSeen; act(s, { type: 'expeditionFight', value: JSON.stringify({ pool: 4, 2: [{ name: '강자', account: 'str', board: strong }] }) }, now + 8, zero); assert.equal(r.last.opponent, '강자'); assert.equal(r.last.scaled, true); assert.ok(D.boardValue(r.last.foe) <= Math.round(X.WAVE_BUDGET[2] * 1.3));
+    r.round = 2; clearOffer(s); delete r.ghostSeen; act(s, { type: 'expeditionFight', value: JSON.stringify({ pool: 4, 2: [{ name: '강자', account: 'str', board: strong }] }) }, now + 8, zero); assert.equal(r.last.opponent, '강자'); assert.equal(r.last.scaled, true); assert.ok(D.ghostValue(r.last.foe) <= Math.round(X.WAVE_BUDGET[2] * D.GHOST_GUARD.capMult) || (r.last.foe.length === 1 && r.last.foe[0].star === 1), 'capped or a single ★1 unit');
     // 서버: 후보는 내 점수와 가까운 순으로 최대 3명, pool은 다른 계정 수.
     const file = path.join(os.tmpdir(), `tb-exp22-${Date.now()}.json`); process.env.TIDEBOUND_DEV_DB = file;
     try {
@@ -864,6 +868,12 @@ test('expedition v3.433: renown link adds +1% hp/power per renown (capped) to my
     act(old, { type: 'expeditionStart' }, 1_800_000_000_000, mkRng(1)); assert.equal(old.expedition.renown, undefined, 'legacy renown gives no combat bonus'); act(old, { type: 'expeditionQuit' }, 1_800_000_000_001, mkRng(1));
     old.expeditionRenown = 13; assert.equal(D.combatRenown(old), 1); act(old, { type: 'expeditionStart' }, 1_800_000_000_002, mkRng(1)); assert.equal(old.expedition.renown, 1, 'renown earned at 1000 counts');
     const brand = newState(0); M.migrateState(brand, 0); assert.equal(brand.expeditionRenownLegacy, 0);
+    // v3.437 고스트 보정: 난이도 1 · 2에서는 상대 증강이 붙지 않고(표시도 없음), 3부터 붙으며, 6단계 이상은 웨이브와 같은 적 보정이 고스트에도 붙는다.
+    const gz = JSON.stringify({ pool: 9, 3: [{ name: '증강맨', account: 'aug', board: [{ unit: 'slime', star: 1, row: 'front' }], augments: ['frontWall'], mods: { frontHp: 1.15 } }] });
+    const g1 = newState(0); g1.level = 100; g1.expeditionMasteryV2 = true; act(g1, { type: 'expeditionStart' }, 1_800_000_000_000, mkRng(1)); const rg = g1.expedition; delete rg.rule; rg.board = [{ unit: 'zakum', star: 3, row: 'front' }]; rg.round = 3;
+    clearOffer(g1); act(g1, { type: 'expeditionFight', value: gz }, 1_800_000_000_001, () => 0); assert.equal(rg.last.opponent, '증강맨'); assert.equal(rg.last.foeAugments, undefined, 'normal: ghost augments not applied');
+    const g3 = newState(0); g3.level = 100; g3.expeditionMasteryV2 = true; g3.expeditionDiffClears = { 2: 1 }; act(g3, { type: 'expeditionStart', id: '3' }, 1_800_000_000_000, mkRng(1)); const r3g = g3.expedition; delete r3g.rule; r3g.board = [{ unit: 'zakum', star: 3, row: 'front' }]; r3g.round = 3;
+    clearOffer(g3); act(g3, { type: 'expeditionFight', value: gz }, 1_800_000_000_001, () => 0); assert.equal(r3g.last.opponent, '증강맨'); assert.deepEqual(r3g.last.foeAugments, ['frontWall'], 'elite: ghost augments applied');
     // 불러올 때(migrateState) 적용.
     const u = newState(0); u.book[pig] = 400; u.expeditionCodexLinked = { pig: 2 }; M.migrateState(u, 0); assert.equal(u.book[pig], 150); assert.equal(u.expeditionCodexLinked, undefined);
 });

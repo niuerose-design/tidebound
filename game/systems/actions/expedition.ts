@@ -6,7 +6,7 @@ import { EXPEDITION, pearlText, roundXpFor, isBossRound, actOf, unitById, sellPr
     AUGMENTS, AUGMENT_ROUNDS, augmentById, augmentMods, augmentName, weeklyRule, weeklyRuleById, masteryPerks, masteryXpFor, masteryRunXp, MASTERY_MAX, MASTERY_PERKS, mergeMods, type RunMods,
     pickQuests, questById, compKey, COMP_KEYS_MAX, type QuestKey, ABYSS, isAbyssRound, FEATS, DIFFICULTIES, difficultyOf, difficultyUnlocked, combatMods, waveMods, STARTER_GHOST,
     lockedBossUnits, CORE_SHARD, shardChance, shardCoreFor, 
-    activeSet, setById, setUnits, renownMods, combatRenown, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, boardValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
+    activeSet, setById, setUnits, renownMods, combatRenown, SET_MASTERY, setMasteryXpFor, RENOWN, renownRewardMult, LEAGUE, leagueTierName, type LeagueSettlement, GHOST_GUARD, ghostValue, encodeBoard, decodeBoard, themeById, UNIT_SKINS, setMasteryBest, skinById, skinUnlocked, cleanShareText, SHARE_MEMO_MAX } from '../../data/expedition';
 import { grantBossCore } from '../boss-loot';
 import { BOSS_CORES } from '../../data/boss-core';
 import { weekKey, dayKey } from '../../data/time';
@@ -194,10 +194,14 @@ export function rollShard(s: State, r: ExpeditionRun, bossUnit: string, abyss: b
 // v3.432: 19단계 도감 연결(동 · 은 · 금마다 본편 처치 수)은 도감 성장(codexGrowth: 그 유닛의 체력 · 공격력)으로 바꿨습니다. 이미 받은 처치 수는 그대로입니다.
 /** 22단계 고스트 보호: 상대 보드 가치가 그 라운드 웨이브 예산(난이도 반영) × capMult를 넘으면 ★을 낮추고, 그래도 넘으면 가치가 낮은 유닛부터 뺍니다(최소 1명). 바뀌었으면 scaled. */
 export function capGhostBoard(board: ExpeditionPlaced[], round: number, difficulty = 1): { board: ExpeditionPlaced[]; scaled: boolean } {
+    // v3.437: 상한 = 웨이브 예산 × 난이도 배율 × .8, 아이템 가치 포함. 넘치면 아이템(비싼 것부터) → ★(가치 큰 유닛부터) → 약한 유닛 순으로 뺍니다(최소 1명).
     const cap = Math.round(WAVE_BUDGET[Math.min(WAVE_BUDGET.length - 1, round)] * difficultyOf(difficulty).budget * GHOST_GUARD.capMult);
     const out = board.map(p => ({ ...p })); let scaled = false;
     const value = (p: ExpeditionPlaced) => (unitById(p.unit)?.cost || 0) * (p.star === 3 ? 4 : p.star === 2 ? 2 : 1);
-    while (boardValue(out) > cap) {
+    const itemValue = (p: ExpeditionPlaced) => { const it = p.item ? itemById(p.item) : undefined; return it ? GHOST_GUARD.itemValue[String(it.tier || 1)] || 0 : 0; };
+    while (ghostValue(out) > cap) {
+        const withItem = out.filter(p => p.item).sort((a, b) => itemValue(b) - itemValue(a))[0];
+        if (withItem) { delete withItem.item; scaled = true; continue; }
         const starred = out.filter(p => p.star > 1).sort((a, b) => value(b) - value(a))[0];
         if (starred) { starred.star = (starred.star - 1) as 1 | 2; scaled = true; continue; }
         if (out.length <= 1) break;
@@ -344,9 +348,12 @@ export const expeditionActions: ActionHandlers = {
         if (starter) { ghost!.board = starterBoard({ ...starter, power: starter.power * difficultyOf(r.difficulty).budget }, r.round); delete ghost!.mods; }
         const capped = useGhost ? (starter ? { board: ghost!.board, scaled: false } : capGhostBoard(ghost!.board, r.round, r.difficulty || 1)) : null;
         if (useGhost) (r.ghostSeen ??= {})[ghostKey] = seenCount + 1;
-        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), { ...mods, codex: s.expeditionStats?.unitWins }, boss, useGhost && !starter ? ghost!.mods : waveMods(r.round, r.difficulty || 1));
+        // v3.437 고스트 보정: 난이도 modsFrom(3)부터만 상대의 증강 · 규칙 · 숙련 보정을 붙이고, 6단계 이상의 적 보정(waveMods)은 웨이브와 똑같이 고스트에도 붙습니다.
+        const ghostMods = useGhost && !starter && (r.difficulty || 1) >= GHOST_GUARD.modsFrom ? ghost!.mods : undefined;
+        const foeMods = useGhost && !starter ? (() => { const m = mergeMods([ghostMods, waveMods(r.round, r.difficulty || 1)]); return Object.keys(m).length ? m : undefined; })() : waveMods(r.round, r.difficulty || 1);
+        const wave = useGhost ? capped!.board : rollWave(r.round, rng, r.difficulty || 1, setUnits(r.set)), result = battle(r.board, wave, rng, Math.min(EXPEDITION.maxTurns, mods.maxTurns ?? EXPEDITION.maxTurns), { ...mods, codex: s.expeditionStats?.unitWins }, boss, foeMods);
         const won = result.winner === 'a', survivors = result.winner === 'a' ? 0 : Math.round(wave.length * (1 - result.hpLeft.b));
-        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}), ...(capped?.scaled ? { scaled: true } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
+        r.last = { won, turns: result.turns, hpLeft: [Math.round(result.hpLeft.a * 100), Math.round(result.hpLeft.b * 100)], log: result.log.slice(-30), ...(useGhost ? { opponent: ghost!.name, ...(ghostMods && ghost!.augments?.length ? { foeAugments: ghost!.augments } : {}), ...(capped?.scaled ? { scaled: true } : {}) } : {}), foe: wave.map(p => ({ ...p })), frames: result.frames, ...(result.truncated ? { truncated: true } : {}) };
         (r.history ??= {})[r.round] = r.board.map(p => ({ ...p }));
         if (r.augments?.length) (r.augHistory ??= {})[r.round] = [...r.augments];
         const st = statsOf(s); st.roundPlays[r.round] = (st.roundPlays[r.round] || 0) + 1; if (won) st.roundWins[r.round] = (st.roundWins[r.round] || 0) + 1;
