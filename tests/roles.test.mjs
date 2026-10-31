@@ -46,3 +46,20 @@ test('v3.80 role-unique effects stay with their role (docs/concept.md 11.3): swa
     }
     assert.deepEqual(bad, []);
 });
+
+test('v3.441 role targets: every combat sub role has a target with its main metric banded, border/training/none have none, and floors are rates', async () => {
+    const { SUB_ROLES, ROLE_TARGETS } = await load('data/roles');
+    for (const [sub, def] of Object.entries(SUB_ROLES)) {
+        const t = ROLE_TARGETS[sub];
+        if (def.role === 'border' || def.role === 'none') { assert.equal(t, undefined, `${sub}: 경계 · 수련 · 역할 없음은 목표가 없어야 함`); continue; }
+        assert.ok(t, `${sub}: 목표 없음`);
+        assert.ok(t.bands[t.main], `${sub}: 주 지표 ${t.main}의 구간이 없음`);
+        for (const [k, [lo, hi]] of Object.entries(t.bands)) { assert.ok(['speed', 'bossSpeed', 'survive', 'gain'].includes(k), `${sub}/${k}`); assert.ok(lo > 0 && lo < hi, `${sub}/${k}: ${lo}~${hi}`); }
+        for (const v of Object.values(t.floors || {})) assert.ok(v > 0 && v <= 1, `${sub}: 최소선은 0~1 비율`);
+    }
+    // 딜러는 속도, 탱커 · 힐러는 생존, 유틸리티는 획득이 주 지표(11.4).
+    for (const sub of ['physical', 'magic']) assert.equal(ROLE_TARGETS[sub].main, 'speed');
+    assert.equal(ROLE_TARGETS.status.main, 'bossSpeed');
+    for (const sub of ['reflect', 'control', 'drain', 'morph', 'absorb', 'healer']) assert.equal(ROLE_TARGETS[sub].main, 'survive');
+    assert.equal(ROLE_TARGETS.utility.main, 'gain');
+});
