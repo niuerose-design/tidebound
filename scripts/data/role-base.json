@@ -1,0 +1,54 @@
+{
+ "_note": "v3.443 역할 측정 기준값(같은 차수 물리 · 마법 딜러 중앙값). v3.442(2026-10-31) 전체 측정에서 고정. 상향만 하는 패치가 중앙값을 끌어올려 목표가 달아나지 않게 고정하고, 다시 재려면 node scripts/check-roles.mjs --rebase.",
+ "base": {
+  "0": {
+   "huntTurns": 27.116666666666667,
+   "bossTurns": 17.95,
+   "survive": 0.6938718662952645,
+   "dealers": 1,
+   "gain": 2.55
+  },
+  "1": {
+   "huntTurns": 7.75,
+   "bossTurns": 6,
+   "survive": 0.44090064995357464,
+   "dealers": 19,
+   "gain": 2.588973799126637
+  },
+  "2": {
+   "huntTurns": 7.25,
+   "bossTurns": 11.55,
+   "survive": 0.6127113823665393,
+   "dealers": 20,
+   "gain": 2.5500539052219358
+  },
+  "3": {
+   "huntTurns": 6.158333333333333,
+   "bossTurns": 8.875,
+   "survive": 0.7453539640680684,
+   "dealers": 18,
+   "gain": 2.550789355108141
+  },
+  "4": {
+   "huntTurns": 9.0375,
+   "bossTurns": 13.85,
+   "survive": 0.6345032272936838,
+   "dealers": 21,
+   "gain": 2.55
+  },
+  "5": {
+   "huntTurns": 4.725,
+   "bossTurns": 11.1,
+   "survive": 0.7982728322538534,
+   "dealers": 23,
+   "gain": 2.3
+  },
+  "6": {
+   "huntTurns": 25.475,
+   "bossTurns": 23.7,
+   "survive": 0.001114660621049739,
+   "dealers": 1,
+   "gain": 2.3
+  }
+ }
+}

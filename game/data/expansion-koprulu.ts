@@ -77,8 +77,8 @@ export const KOPRULU_SKILLS: Skill[] = [
     { ...A, ...split, id: 'irOrbitalStrike', name: '궤도 타격', desc: '', level: 70, job: 'irClusterMarshal', chance: .5, cooldown: 5, multiplier: 4.4, cost: 6, manaCost: 38, penetrationBonus: .2, fx: 'star', masteryMilestones: M5 },
     { ...A, ...physical, id: 'irLastCharge', name: '최후의 돌격', desc: '', level: 70, job: 'irClusterMarshal', chance: .5, cooldown: 5, multiplier: 3.6, cost: 6, extraAttacks: 1, extraAttackMultiplier: .5, damageBonusCondition: 'lowHp', conditionalDamageBonus: .8, fx: 'quake', masteryMilestones: M5 },
     { ...A, ...physical, id: 'irScorchedEarth', name: '초토화', desc: '', level: 70, job: 'irClusterMarshal', chance: .5, cooldown: 5, multiplier: 3.0, cost: 6, effect: 'burn', statusTurns: 3, fx: 'fire', masteryMilestones: M5 },
-    { ...P, id: 'irMarshalBaton', name: '원수의 지휘봉', desc: '물리 공격과 치명 피해가 크게 오릅니다.', level: 70, job: 'irClusterMarshal', cost: 3, bonus: { attack: 70, critDamage: .15 }, masteryMilestones: M5 },
-    { ...P, id: 'irStarBanner', name: '성단 깃발', desc: '보스·사냥감에게 주는 피해와 연속 행동 확률이 오릅니다.', level: 70, job: 'irClusterMarshal', cost: 3, bonus: { bossDamage: .08, chainBonus: .03 }, masteryMilestones: M5 },
+    { ...P, id: 'irMarshalBaton', name: '원수의 지휘봉', desc: '물리 공격과 치명 피해가 크게 오릅니다.', level: 70, job: 'irClusterMarshal', cost: 3, bonus: { attack: 450, crit: .1, critDamage: .4 } /* v3.443 성단 원수 0.42: 액티브 셋이 모두 각성기(10턴부터)라 그 전에는 평타만 */, masteryMilestones: M5 },
+    { ...P, id: 'irStarBanner', name: '성단 깃발', desc: '보스·사냥감에게 주는 피해와 연속 행동 확률이 오릅니다.', level: 70, job: 'irClusterMarshal', cost: 3, bonus: { bossDamage: .08, chainBonus: .03, attack: 200 } /* v3.443 */, masteryMilestones: M5 },
     { ...P, id: 'irUnbroken', name: '꺾이지 않는 전선', desc: '최대 체력과 물리 방어가 크게 오릅니다. 전선은 사령관이 서 있는 한 물러나지 않습니다.', level: 70, job: 'irClusterMarshal', cost: 3, bonus: { hp: 300, defense: 40 }, masteryMilestones: M5 },
     // 포자 수집가 (hvSporeGatherer)
     { ...A, ...magic, id: 'hvSporeShot', name: '포자 발사', desc: '', level: 10, job: 'hvSporeGatherer', chance: .5, cooldown: 3, multiplier: 1.25, cost: 2, manaCost: 8, fx: 'venom' },
