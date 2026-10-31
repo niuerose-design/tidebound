@@ -42,7 +42,7 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     thunderPsalm: { chance: .55, multiplier: 3.5, scalingRatio: .16, manaCost: 28 },
     moonTide: { chance: .6, multiplier: 2, manaCost: 20, healRatio: .2 },
     reefPulse: { chance: .55, multiplier: 1.25, manaCost: 14, healRatio: .16 },
-    bellCrash: { chance: .26, multiplier: 1.5, scalingRatio: .02 },
+    bellCrash: { chance: .3, multiplier: 1.7, scalingRatio: .02 }, // v3.440 카이저 2차 역전 패치(1.07배)
     // v21 수호 계열: 물리 방어 비례 피해(방어 친화도 적용).
     thornCounter: { chance: .26, multiplier: 1.8, scaling: 'defense', scalingRatio: 1.2 },
     loadedHook: { chance: .3, multiplier: 1.05, cooldown: 2, drainRatio: .1 },
@@ -51,7 +51,8 @@ export const ACTIVE_SKILL_BALANCE: Record<string, Partial<Skill>> = {
     electricBite: { chance: .28, multiplier: 1.75, damageType: 'physical' },
     tentacleBarrage: { chance: .22, multiplier: 1.05, extraAttackMultiplier: .45 },
     sovereignSilence: { chance: .5, multiplier: 1.05, manaCost: 16 },
-    borrowedTentacles: { chance: .26, multiplier: 1.6, extraAttackMultiplier: .7 },
+    // v3.440 역전 패치: 오닉스 드래곤 라이더(3차)가 미르 조련사(2차)보다 약했음(0.59배).
+    borrowedTentacles: { chance: .32, cooldown: 4, multiplier: 2.6, extraAttackMultiplier: .7 },
     ...EXPANSION_BALANCE,
     ...LINEAGE_BALANCE,
     ...V24_BALANCE,

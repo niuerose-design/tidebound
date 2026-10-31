@@ -139,7 +139,7 @@ export const LINEAGE_SKILLS: Skill[] = [
     { ...A, ...spear, id: 'currentThrust', name: '해류 찌르기', desc: '', level: 10, job: 'tideLancer', chance: .5, cooldown: 3, multiplier: 1.2, cost: 2, manaCost: 8 },
     { ...P, id: 'lancerPoise', name: '창기병의 균형', desc: '최대 체력과 최대 마나가 오릅니다.', level: 10, job: 'tideLancer', cost: 2, bonus: { hp: 60, mana: 10 } },
     { ...A, ...spear, id: 'dragonDive', name: '좀비 루팡 급강하', desc: '', level: 25, job: 'seaDragoon', chance: .5, cooldown: 3, multiplier: 1.3, cost: 3, manaCost: 13, effect: 'weaken' },
-    { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오르고, 보낸 턴 3,000마다 최대 체력이 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10 }, perCount: [{ source: 'turns', per: 3000, bonus: { hp: 4.5 }, cap: 1000 }] },
+    { ...P, id: 'wyrmScale', name: '용린', desc: '최대 체력과 물리 방어가 오르고, 보낸 턴 3,000마다 최대 체력이 오릅니다.', level: 25, job: 'seaDragoon', cost: 2, bonus: { hp: 120, defense: 10, attack: 24 }, perCount: [{ source: 'turns', per: 3000, bonus: { hp: 4.5 }, cap: 1000 }] },
     { ...A, ...spear, id: 'thunderLance', name: '뇌창', desc: '', level: 40, job: 'stormDragoon', chance: .5, cooldown: 4, multiplier: 2.1, cost: 4, manaCost: 20, penetrationBonus: .15 },
     { ...P, id: 'stormRider', name: '폭풍 기수', desc: '물리 공격과 속도가 오르고, 쓰러진 횟수 3회마다 물리 공격이 오릅니다.', level: 40, job: 'stormDragoon', cost: 3, bonus: { attack: 24, speed: 6 }, perCount: [{ source: 'deaths', per: 3, bonus: { attack: 1.5 }, cap: 1000 }] },
     { ...A, ...spear, id: 'leviathanCharge', name: '용왕 대돌격', desc: '', level: 55, job: 'abyssDragonLord', chance: .5, cooldown: 4, multiplier: 2.1, cost: 5, manaCost: 26, effect: 'stun', extraAttacks: 1, masteryMilestones: M4 },
