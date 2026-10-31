@@ -12,12 +12,15 @@ import { random, arg, loadout, median } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats, goldMultiplier, expMultiplier } = await load('systems/stats');
-const { strike, fighterSpeed } = await load('systems/combat');
+const { actTurn, actsFirst } = await load('systems/combat');
+const { playerFighter } = await load('systems/turn');
+const { FUEL } = await load('data/otherworld');
+const noop = () => {};
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 const { MONSTERS, swarmHpMultiplier } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { skillMasteryRanks, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, roleOf, SUB_ROLES } = await load('data/roles');
 
 const SEEDS = Number(arg('--seeds', 30)), MAX_TURNS = 400, SWARM = 5, DUNGEON_WAVES = 3;
@@ -30,7 +33,10 @@ const TIERS = {
     3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], boss: 'templeOracle', tier: 0 },
     4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'abyssSovereign', tier: 0 },
     5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'ventColossus', tier: 2 },
+    // v3.439 6차(초월자, Lv.100 전직): 한 단계 아래 사냥터(기억의 길) 몬스터, 보스는 녹슨 제독(Lv.104), 적 단계 3.
+    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], boss: 'aoRustAdmiral', tier: 3 },
 };
+const tierOf = tier => { if (TIERS[tier]) return TIERS[tier]; const top = Math.max(...Object.keys(TIERS).map(Number)); console.warn(`! ${tier}차 측정 조건이 없어 ${top}차 조건으로 잽니다 — TIERS에 추가하세요.`); return TIERS[top]; };
 function attributesFor(j, level) {
     const own = SKILLS.filter(sk => sk.job === j.id && sk.type === 'active');
     const ownMagic = own.filter(sk => (sk.damageType === 'magic') !== (sk.scaling === 'swap')).length, ownPhysical = own.length - ownMagic;
@@ -42,7 +48,8 @@ function attributesFor(j, level) {
     out.vit += total - used;
     return { attrs: out, magic };
 }
-const player = (st, s, hp = st.hp, mana = st.mana) => ({ name: 'player', stats: st, hp, mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice });
+// v3.439 실제 엔진의 참가자(직업 · 연료 · 각성기 · 추가 판정 · 제약 포함)로, 전투도 엔진의 actTurn으로.
+const player = (st, s, hp = st.hp, mana = st.mana) => ({ ...playerFighter(s, st, s.skills), hp, mana, cooldowns: {}, effects: {}, stun: 0 });
 function foe(id, tier, swarm = 1) {
     const base = scaledEnemyStats(MONSTERS.find(f => f.id === id), { tier });
     const st = swarm > 1 ? { ...base, hp: Math.round(base.hp * swarmHpMultiplier(swarm)) } : base;
@@ -51,13 +58,14 @@ function foe(id, tier, swarm = 1) {
 /** 한 판: 끝난 뒤 [이김, 턴, 남은 체력, 남은 마나]. */
 function duel(a, b, rng) {
     let n = 0;
-    while (a.hp > 0 && b.hp > 0 && n < MAX_TURNS) { n++; const first = fighterSpeed(a) >= fighterSpeed(b) ? a : b, second = first === a ? b : a; strike(first, second, rng); if (first.hp > 0 && second.hp > 0) strike(second, first, rng); }
+    while (a.hp > 0 && b.hp > 0 && n < MAX_TURNS) { n++; const first = actsFirst(a, b) ? a : b, second = first === a ? b : a; actTurn(first, second, rng, noop); if (first.hp > 0 && second.hp > 0) actTurn(second, first, rng, noop); }
     return { won: a.hp > 0 && b.hp <= 0, turns: n };
 }
 const score = (win, hpLeft, turns) => turns > 0 ? win * (0.5 + hpLeft / 2) / turns : 0;
 function measure(j) {
-    const T = TIERS[j.tier], s = newState(0), { attrs, magic } = attributesFor(j, T.level);
+    const T = tierOf(j.tier), s = newState(0), { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
+    s.fuel = FUEL.cap; // 연료 직업은 연료를 가득 채운 몸으로.
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
     loadout(s, j, magic);

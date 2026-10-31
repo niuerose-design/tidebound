@@ -9,14 +9,17 @@ import { random, loadout, median } from './lib/sim.mjs';
 const { load } = loadGame();
 const { newState } = await load('systems/engine');
 const { stats } = await load('systems/stats');
-const { strike, fighterSpeed } = await load('systems/combat');
+const { actTurn, actsFirst } = await load('systems/combat');
+const { playerFighter } = await load('systems/turn');
+const { FUEL } = await load('data/otherworld');
+const noop = () => {};
 const { SKILLS } = await load('data/skills');
 const { JOBS, lineageOf } = await load('data/classes');
 /** v3.61 외길 계보 → 몰아 주는 능력치. */
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 const { MONSTERS } = await load('data/world');
 const { scaledEnemyStats, profile } = await load('data/encounters');
-const { skillMasteryRanks, jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
+const { jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('systems/progression');
 
 const MASTERED = process.argv.includes('--mastered'), SKILL_MASTERED = process.argv.includes('--skill-mastered');
 const SEEDS = 60, MAX_TURNS = 300;
@@ -28,7 +31,11 @@ const TIERS = {
     3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], tier: 0 },
     4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 0 },
     5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 2 },
+    // v3.439 6차(초월자, Lv.100 전직): 한 단계 아래 사냥터(기억의 길 Lv.88~92) 몬스터, 적 단계 3.
+    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], tier: 3 },
 };
+/** v3.439 표에 없는 차수는 죽지 않고 가장 높은 차수 조건으로 재며 알립니다(6차가 추가된 뒤 이 스크립트가 한동안 죽어 있었음). */
+const tierOf = tier => { if (TIERS[tier]) return TIERS[tier]; const top = Math.max(...Object.keys(TIERS).map(Number)); console.warn(`! ${tier}차 측정 조건이 없어 ${top}차 조건으로 잽니다 — TIERS에 추가하세요.`); return TIERS[top]; };
 /** 능력치 배분: 직업 보정이 큰 쪽(물리/마법)을 주 능력치로. 총량은 레벨당 4. */
 function attributesFor(j, level) {
     // 주 피해 유형: 자기 액티브 기술의 피해 유형을 먼저 보고, 액티브가 없으면 직업 보정이 큰 쪽.
@@ -48,10 +55,11 @@ function fight(st, s, foeId, tier) {
     const monster = MONSTERS.find(f => f.id === foeId), foe = scaledEnemyStats(monster, { tier });
     let wins = 0, turns = 0, hpLeft = 0;
     for (let seed = 1; seed <= SEEDS; seed++) {
-        const a = { name: 'player', stats: st, hp: st.hp, mana: st.mana, skills: s.skills, cooldowns: {}, stun: 0, effects: {}, ranks: s.learned, mastery: skillMasteryRanks(s), practice: s.skillPractice };
+        // v3.439 실제 엔진의 참가자(직업 · 연료 · 각성기 · 추가 판정 · 제약 포함)로, 전투도 엔진의 actTurn으로.
+        const a = { ...playerFighter(s, st, s.skills), hp: st.hp, mana: st.mana, cooldowns: {}, effects: {}, stun: 0 };
         const b = { name: 'foe', stats: foe, hp: foe.hp, mana: 100, skills: profile(foeId).skills, magicBasic: profile(foeId).magicBasic, cooldowns: {}, stun: 0, effects: {} };
         const rng = random(seed); let n = 0;
-        while (a.hp > 0 && b.hp > 0 && n < MAX_TURNS) { n++; const first = fighterSpeed(a) >= fighterSpeed(b) ? a : b, second = first === a ? b : a; strike(first, second, rng); if (first.hp > 0 && second.hp > 0) strike(second, first, rng); }
+        while (a.hp > 0 && b.hp > 0 && n < MAX_TURNS) { n++; const first = actsFirst(a, b) ? a : b, second = first === a ? b : a; actTurn(first, second, rng, noop); if (first.hp > 0 && second.hp > 0) actTurn(second, first, rng, noop); }
         const won = a.hp > 0 && b.hp <= 0; wins += won ? 1 : 0; turns += n; hpLeft += Math.max(0, a.hp) / st.hp;
     }
     return { win: wins / SEEDS, turns: turns / SEEDS, hpLeft: hpLeft / SEEDS };
@@ -62,6 +70,7 @@ function evaluate(j, T) {
     const { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
+    s.fuel = FUEL.cap; // 연료 직업(해커 · 요원 · 펀드매니저 계열)은 연료를 가득 채운 몸으로.
     // v3.198 숙달 수가 전직 조건인 직업(방랑 계보의 만능 · 백수)은 그만큼 다른 직업을 숙달한 몸으로 잽니다(0개로 재면 들어갈 수 없는 몸이라 크게 약하게 나옴).
     for (const x of JOBS.filter(x => x.id !== j.id).slice(0, j.requiresMastered || 0)) s.jobMastery[x.id] = jobMasteryTarget(x);
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = SKILL_MASTERED ? masteryMilestonesFor(sk).at(-1) : 0; }
@@ -72,7 +81,7 @@ function evaluate(j, T) {
     const win = avg('win'), turns = avg('turns'), hpLeft = avg('hpLeft');
     return { tier: j.tier, id: j.id, name: j.name, tree: j.tree, magic, skills: s.skills.length, hp: Math.round(st.hp), atk: Math.round(magic ? st.magic : st.attack), win, turns, hpLeft, score: win * (0.5 + hpLeft / 2) / turns };
 }
-const rows = JOBS.map(j => evaluate(j, TIERS[j.tier]));
+const rows = JOBS.map(j => evaluate(j, tierOf(j.tier)));
 const pct = n => `${Math.round(n * 100)}%`;
 console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}${SKILL_MASTERED ? ' · 스킬 숙련 완료' : ''}, 시드 ${SEEDS}, 상대별 평균)`);
 const report = {};
@@ -82,8 +91,8 @@ for (const tier of Object.keys(TIERS).map(Number)) {
     group.forEach(r => r.rel = r.score / med);
     group.sort((a, b) => b.rel - a.rel);
     const spread = group.length < 2 ? 1 : group.at(-1).rel > 0 ? group[0].rel / group.at(-1).rel : Infinity;
-    report[tier] = { level: TIERS[tier].level, jobs: group.length, medianWin: median(group.map(r => r.win)), medianTurns: median(group.map(r => r.turns)), spread, high: group.filter(r => r.rel >= 1.5).map(r => r.id), low: group.filter(r => r.rel <= 0.6).map(r => r.id) };
-    console.log(`\n■ ${tier}차 · Lv.${TIERS[tier].level} · ${group.length}개 · 중앙 승률 ${pct(report[tier].medianWin)} · 중앙 처치 ${report[tier].medianTurns.toFixed(1)}턴 · 최고/최저 ${spread.toFixed(2)}배`);
+    report[tier] = { level: tierOf(tier).level, jobs: group.length, medianWin: median(group.map(r => r.win)), medianTurns: median(group.map(r => r.turns)), spread, high: group.filter(r => r.rel >= 1.5).map(r => r.id), low: group.filter(r => r.rel <= 0.6).map(r => r.id) };
+    console.log(`\n■ ${tier}차 · Lv.${tierOf(tier).level} · ${group.length}개 · 중앙 승률 ${pct(report[tier].medianWin)} · 중앙 처치 ${report[tier].medianTurns.toFixed(1)}턴 · 최고/최저 ${spread.toFixed(2)}배`);
     for (const r of group) {
         const flag = r.rel >= 1.5 ? '▲' : r.rel <= 0.6 ? '▼' : ' ';
         console.log(`${flag} ${r.name.padEnd(10, '　')} ${r.tree.padEnd(8)} ${r.magic ? '마법' : '물리'} 승률 ${pct(r.win).padStart(4)} · ${r.turns.toFixed(1).padStart(5)}턴 · 남은 체력 ${pct(r.hpLeft).padStart(4)} · 상대 ${r.rel.toFixed(2)} · 스킬 ${r.skills}`);
@@ -94,7 +103,7 @@ for (const tier of Object.keys(TIERS).map(Number)) {
 const chain = [];
 for (const j of JOBS.filter(x => x.parent)) {
     const parent = JOBS.find(x => x.id === j.parent); if (!parent || parent.tier >= j.tier) continue;
-    const T = TIERS[j.tier], child = evaluate(j, T), base = evaluate(parent, T);
+    const T = tierOf(j.tier), child = evaluate(j, T), base = evaluate(parent, T);
     chain.push({ id: j.id, name: j.name, tier: j.tier, parent: parent.id, parentName: parent.name, parentTier: parent.tier, ratio: base.score > 0 ? child.score / base.score : Infinity, child, base });
 }
 chain.sort((a, b) => a.ratio - b.ratio);
@@ -108,9 +117,9 @@ report.chain = chain.map(c => ({ id: c.id, parent: c.parent, ratio: c.ratio }));
 // 하위 직업이 상위 직업 평균만큼 강하면, 숙련 조건이 무거운 의도된 경우가 아닌 한 수치 조정 대상입니다.
 console.log(`\n■ 상위 차수 비교 (한 단계 위 차수 조건에서 그 차수 중앙값 대비, 0.90배 이상 ★)`);
 const cross = [];
-for (const tier of [1, 2, 3, 4]) {
+for (const tier of [1, 2, 3, 4, 5]) {
     const upper = rows.filter(r => r.tier === tier + 1); if (!upper.length) continue;
-    const T = TIERS[tier + 1], upperMed = median(upper.map(r => r.score));
+    const T = tierOf(tier + 1), upperMed = median(upper.map(r => r.score));
     for (const j of JOBS.filter(x => x.tier === tier)) {
         const r = evaluate(j, T), rel = r.score / upperMed;
         cross.push({ id: j.id, name: j.name, tier, rel, win: r.win, turns: r.turns });
