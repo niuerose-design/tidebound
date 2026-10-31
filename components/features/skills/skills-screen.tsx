@@ -101,19 +101,20 @@ export function SkillsScreen({ s, send, busy }: { s: State; send: Send; busy: bo
                 <label className="relative min-w-0 flex-1 basis-64"><Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden/><input type="search" className={cn(field, 'w-full pl-8')} value={query} placeholder="스킬 이름 · 효과 · 직업으로 검색 (예: 기절, 흡혈, 마법사)" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
                 <label className="grid gap-0.5 text-xs text-ink-3">정렬<select className={field} value={sort} aria-label="스킬 정렬" onChange={e => setSort(e.target.value as SkillSort)}>{(Object.keys(SORT_LABEL) as SkillSort[]).map(k => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}</select></label>
             </div>
+            {/* v3.444 켜진 필터 칩을 다시 누르면 해제(기본값으로). 묶기는 켬/끔 토글. */}
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <ChoiceChips label="종류" value={kind} onChange={v => setKind(v as SkillKind)} options={(Object.keys(KIND_LABEL) as SkillKind[]).map(k => ({ value: k, label: KIND_LABEL[k] }))}/>
-                <ChoiceChips label="효과" value={damage} onChange={v => setDamage(v as SkillDamage)} options={(Object.keys(DAMAGE_LABEL) as SkillDamage[]).map(k => ({ value: k, label: DAMAGE_LABEL[k] }))}/>
+                <ChoiceChips label="종류" value={kind} onChange={v => setKind(v === kind ? 'all' : v as SkillKind)} options={(Object.keys(KIND_LABEL) as SkillKind[]).map(k => ({ value: k, label: KIND_LABEL[k] }))}/>
+                <ChoiceChips label="효과" value={damage} onChange={v => setDamage(v === damage ? 'all' : v as SkillDamage)} options={(Object.keys(DAMAGE_LABEL) as SkillDamage[]).map(k => ({ value: k, label: DAMAGE_LABEL[k] }))}/>
                 {filtersOn && <Button type="button" size="sm" variant="ghost" onClick={() => { setQuery(''); setKind('all'); setDamage('all'); setSort('default'); setFilter('all'); }}>필터 초기화</Button>}
                 <span className="ml-auto font-num text-xs text-ink-3">{list.length}종 표시{q ? ' · 검색 중에는 모든 직업의 기술을 봅니다' : ''}</span>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <ChoiceChips label="범위" value={scope} onChange={setScope} options={scopes.map(([v, l]) => ({ value: v, label: l }))}/>
+                <ChoiceChips label="범위" value={scope} onChange={v => setScope(v === scope ? 'current' : v)} options={scopes.map(([v, l]) => ({ value: v, label: l }))}/>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                <ChoiceChips label="상태" value={filter} onChange={setFilter} options={[{ value: 'all', label: '모두' }, { value: 'usable', label: '사용 가능' }, { value: 'unlearned', label: '미해금' }]}/>
+                <ChoiceChips label="상태" value={filter} onChange={v => setFilter(v === filter ? 'all' : v)} options={[{ value: 'all', label: '모두' }, { value: 'usable', label: '사용 가능' }, { value: 'unlearned', label: '미해금' }]}/>
                 <ChoiceChips label="보기" value={view} onChange={setView} options={[{ value: 'simple', label: '간단히' }, { value: 'detail', label: '자세히' }]}/>
-                <ChoiceChips label="묶기" value={grouped ? 'on' : 'off'} onChange={v => setGrouped(v === 'on')} options={[{ value: 'on', label: '계보별 묶기' }]}/>
+                <ChoiceChips label="묶기" value={grouped ? 'on' : 'off'} onChange={() => setGrouped(g => !g)} options={[{ value: 'on', label: '계보별 묶기' }]}/>
             </div>
             {scope === 'hidden' && !q && <p className="text-xs text-ink-3">숨긴 스킬은 다른 범위에서 보이지 않습니다(장착 중인 스킬과 검색 결과는 예외). 카드의 눈 모양 버튼으로 다시 보이게 할 수 있습니다.</p>}
         </section>
