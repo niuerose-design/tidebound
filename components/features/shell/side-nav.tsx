@@ -1,6 +1,6 @@
 'use client';
 /** v3.386 재설계 4단계 셸: 사이드바(데스크톱 고정 · 모바일 시트). shadcn Sidebar 위에 토큰 유틸리티만 씁니다. */
-import { ChevronRight, Leaf, Lock, LogOut, Swords } from 'lucide-react';
+import { ChevronRight, Leaf, Lock, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { GAME_BUILD } from '@/game/data/update-log';
@@ -35,8 +35,6 @@ export function SideNav({ view, setView, s, onLogout }: { view: string; setView:
             {s && view !== 'battle' && <ActivityWidget s={s} setView={go} variant="card"/>}
             <div className="grid gap-1 text-xs text-ink-3">
                 <small className="tracking-[.1em]">OPEN BETA · v{GAME_BUILD}</small>
-                {/* v3.367 전기(턴제 전술) 모드는 독립 화면(/tactics)입니다. 본편 세이브와 섞이지 않습니다. */}
-                {s && <a className="inline-flex min-h-8 items-center gap-1.5 text-ink-2 underline-offset-2 hover:text-ink-1 hover:underline pointer-coarse:min-h-11" href="/tactics"><Swords size={13}/> 판게아 전기 (턴제 전술) 열기</a>}
                 {onLogout && <Button type="button" variant="ghost" size="xs" className="h-auto px-1.5 py-1 text-xs pointer-coarse:min-h-11 justify-self-start gap-1.5 text-ink-2 hover:text-ink-1" onClick={onLogout}><LogOut size={13}/> 로그아웃</Button>}
             </div>
         </SidebarFooter>
