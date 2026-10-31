@@ -123,7 +123,7 @@ export const V24_SKILLS: Skill[] = [
     { ...A, ...magic, id: 'pastLifeEcho', name: '전생의 메아리', desc: '', level: 55, job: 'samsaraArchivist', chance: .5, cooldown: 4, multiplier: 2.7, cost: 4, manaCost: 22, masteryMilestones: M4 },
     { ...P, id: 'karmaRecord', name: '업보의 기록', desc: '마법 공격이 오르고, 환생할 때마다 마법 공격과 체력이 쌓입니다.', level: 55, job: 'samsaraArchivist', cost: 3, bonus: { magic: 50 }, perRebirth: { magic: 3, hp: 15 }, masteryMilestones: M4 },
     { ...A, ...magic, id: 'aeonRecall', name: '영겁 회상', desc: '', level: 70, job: 'aeonChronicler', chance: .5, cooldown: 4, multiplier: 3.8, cost: 5, manaCost: 30, masteryMilestones: M5 },
-    { ...P, id: 'aeonLedger', name: '영겁의 장부', desc: '마법 공격이 오르고, 환생할 때마다 두 공격과 체력이 쌓입니다.', level: 70, job: 'aeonChronicler', cost: 3, bonus: { magic: 90 }, perRebirth: { magic: 6, attack: 6, hp: 30 }, masteryMilestones: M5 },
+    { ...P, id: 'aeonLedger', name: '영겁의 장부', desc: '마법 공격이 오르고, 환생할 때마다 두 공격과 체력이 쌓입니다.', level: 70, job: 'aeonChronicler', cost: 3, bonus: { magic: 500 } /* v3.442 90 → 500 (에반 5차 0.57) */, perRebirth: { magic: 6, attack: 6, hp: 30 }, masteryMilestones: M5 },
     { ...P, id: 'aeonsInsight', name: '영겁의 통찰', desc: '대기만성: 처음에는 AP가 크고 효과가 작지만, 숙련할수록 AP가 줄고 두 공격과 경험치 획득이 크게 오릅니다.', level: 70, job: 'aeonChronicler', cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 }, masteryMilestones: LATE,
         levelEffects: [{ cost: 8, bonus: { attack: 15, magic: 15, expBonus: .05 } }, { cost: 7, bonus: { attack: 60, magic: 60, expBonus: .1 } }, { cost: 5, bonus: { attack: 150, magic: 150, expBonus: .2 } }, { cost: 2, bonus: { attack: 280, magic: 280, expBonus: .3 } }] },
     // 방어

@@ -3,7 +3,7 @@
 //   speed     일반 사냥 처치 속도 = 딜러 중앙 처치 턴 ÷ 내 처치 턴 — 딜러의 주 지표
 //   bossSpeed 보스 1:1 처치 속도 × 승률 — 상태이상 딜러의 주 지표
 //   survive   보스 1:1 · ×5 무리 · 쉬지 않고 3연전의 남은 체력 평균(0~1 절대값) — 탱커 · 힐러의 주 지표
-//   gain      speed × 획득 배율(골드 · 경험치 평균 + 드롭 + 던전 주화/2 + 변종/2 + 황금 ×20), 딜러 중앙 = 1 — 유틸리티의 주 지표
+//   gain      speed × 획득 배율(골드 · 경험치 평균 + 드롭 + 던전 주화/2 + 변종/4 + 황금 ×10), 딜러 중앙 = 1 — 유틸리티의 주 지표
 //   최소선     사냥 승률 · 보스 승률(data/roles.ts ROLE_TARGETS.floors)
 // 사용: node scripts/check-roles.mjs [--json out.json] [--seeds N]
 import fs from 'node:fs';
@@ -85,26 +85,29 @@ function measure(j) {
         cleared += (ok ? w : w - 1) / DUNGEON_WAVES; alive += ok ? 1 : 0; hpEnd += ok ? Math.max(0, hp) / st.hp : 0;
     }
     out.dungeon = { alive: alive / SEEDS, cleared: cleared / SEEDS, hpLeft: hpEnd / SEEDS, score: cleared / SEEDS * (0.5 + hpEnd / SEEDS / 2) };
-    // v3.441 획득 배율 = 골드 · 경험치 배율 평균 + 장비 드롭 + 던전 주화/2 + 변종 조우/2 + 황금 개체 ×20(운영 가중치: 유틸리티의 드롭 · 변종 · 황금 장치를 골드 · 경험치와 한 줄에 놓기 위해).
-    const gainMult = (goldMultiplier(s) + expMultiplier(s)) / 2 + (st.dropBonus || 0) + (st.dungeonGoldBonus || 0) / 2 + (st.variantFind || 0) / 2 + (st.goldenFind || 0) * 20;
+    // v3.441 획득 배율 = 골드 · 경험치 배율 평균 + 장비 드롭 + 던전 주화/2 + 변종 조우/4 + 황금 개체 ×10(운영 가중치: 유틸리티의 드롭 · 변종 · 황금 장치를 골드 · 경험치와 한 줄에 놓기 위해).
+    const gainMult = (goldMultiplier(s) + expMultiplier(s)) / 2 + (st.dropBonus || 0) + (st.dungeonGoldBonus || 0) / 2 + (st.variantFind || 0) / 4 + (st.goldenFind || 0) * 10;
     out.gain = { mult: gainMult, score: out.hunt.score * gainMult };
     const sub = subRoleOf(j, lineageOf(j));
     // v3.441 측정 밖 장치: 지원(다른 분신에게 주는 효과)만 있는 직업, 기록 비례(사냥 · 종 · 도감 · 숙달 수 · 변종 · 까미 · 누리 · 코어 · 제단 …) 패시브가 핵인 직업은 이 몸(기록 0)으로는 못 재므로 목표 판정에서 빼고 ◇로 표시.
     const own = SKILLS.filter(sk => sk.job === j.id), passives = own.filter(sk => sk.type === 'passive');
-    const device = passives.some(sk => sk.support || sk.supportAmp || sk.supportCostCut) ? 'support' : passives.some(sk => (sk.perCount || []).some(p => RECORD_SOURCES.has(p.source))) ? 'record' : null;
+    const device = passives.some(sk => sk.support || sk.supportAmp || sk.supportCostCut) ? 'support' : passives.some(sk => (sk.perCount || []).some(p => RECORD_SOURCES.has(p.source))) ? 'record' : passives.some(sk => sk.masteryGain) ? 'mastery' : null;
     return { id: j.id, name: j.name, tier: j.tier, lineage: lineageOf(j), sub, role: roleOf(sub), device, out };
 }
 // v3.80 옛 독립 수련(retired)은 전직할 수 없어 재지 않습니다.
-const rows = JOBS.filter(j => !j.retired).map(measure);
+// v3.442 --only a,b,c --base full.json: 몇 직업만 재고 기준값(딜러 중앙)은 전체 측정 JSON에서 가져옵니다(수치 패치 때 빨리 돌리기).
+const ONLY = arg('--only') ? new Set(arg('--only').split(',')) : null, BASE_FILE = arg('--base');
+const rows = JOBS.filter(j => !j.retired && (!ONLY || ONLY.has(j.id))).map(measure);
 // v3.441 기준 = 같은 차수 물리 · 마법 딜러의 중앙값(data/roles.ts ROLE_TARGETS 설명). 전 직업 중앙값으로 재면 딜러가 차수의 절반이라 딜러 절반이 구조적으로 '목표 미달'이 됐음.
 // 지표: speed 사냥 처치 속도(딜러 중앙 처치 턴 ÷ 내 처치 턴) · bossSpeed 보스 처치 속도(진 판이 있으면 승률을 곱함) · survive 보스 · 무리 · 던전의 남은 체력 평균(절대값) · gain speed × 골드 · 경험치 배율(딜러 중앙 = 1).
 const DEALER = new Set(['physical', 'magic']);
 const surviveOf = o => (o.boss.hpLeft + o.swarm.hpLeft + o.dungeon.hpLeft) / 3;
-const base = {};
+const base = BASE_FILE ? JSON.parse(fs.readFileSync(BASE_FILE, 'utf8')).report.base : {};
 for (const tier of Object.keys(TIERS).map(Number)) {
     const g = rows.filter(r => r.tier === tier), d = g.filter(r => DEALER.has(r.sub)).length ? g.filter(r => DEALER.has(r.sub)) : g;
-    const b = base[tier] = { huntTurns: median(d.map(r => r.out.hunt.turns)) || 1, bossTurns: median(d.map(r => r.out.boss.turns)) || 1, survive: median(d.map(r => surviveOf(r.out))) || 1, dealers: d.length };
-    b.gain = median(d.map(r => b.huntTurns / r.out.hunt.turns * r.out.gain.mult)) || 1;
+    if (!g.length) continue;
+    const b = base[tier] ??= { huntTurns: median(d.map(r => r.out.hunt.turns)) || 1, bossTurns: median(d.map(r => r.out.boss.turns)) || 1, survive: median(d.map(r => surviveOf(r.out))) || 1, dealers: d.length };
+    b.gain ??= median(d.map(r => b.huntTurns / r.out.hunt.turns * r.out.gain.mult)) || 1;
     for (const r of g) {
         r.speed = b.huntTurns / r.out.hunt.turns;
         r.bossSpeed = b.bossTurns / r.out.boss.turns * r.out.boss.win;
@@ -126,7 +129,7 @@ for (const sub of Object.keys(SUB_ROLES)) {
     console.log(`\n■ ${SUB_ROLES[sub].name} · ${g.length}개 · 주 지표 ${LABEL[main]} · 목표 ${bandText}${t?.floors ? ` · 최소선 ${Object.entries(t.floors).map(([k, v]) => `${k === 'huntWin' ? '사냥 승률' : '보스 승률'} ${pct(v)}`).join(' · ')}` : ''} · 최고/최저 ${f2(spread)}배`);
     report[sub] = { count: g.length, main, spread, out: [] };
     for (const r of g) {
-        const flags = r.device ? [r.device === 'support' ? '◇지원 직업(다른 분신 효과, 측정 밖)' : '◇기록 장치(측정 몸 기록 0)'] : t ? [...Object.entries(t.bands).map(([k, [lo, hi]]) => r[k] < lo ? `▼${LABEL[k]}` : r[k] > hi ? `▲${LABEL[k]}` : ''), ...Object.entries(t.floors || {}).map(([k, v]) => r[k] < v ? `✕${k === 'huntWin' ? '사냥승률' : '보스승률'}` : '')].filter(Boolean) : [];
+        const flags = r.device ? [r.device === 'support' ? '◇지원 직업(다른 분신 효과, 측정 밖)' : r.device === 'mastery' ? '◇숙련 획득 장치(획득 지표에 없음)' : '◇기록 장치(측정 몸 기록 0)'] : t ? [...Object.entries(t.bands).map(([k, [lo, hi]]) => r[k] < lo ? `▼${LABEL[k]}` : r[k] > hi ? `▲${LABEL[k]}` : ''), ...Object.entries(t.floors || {}).map(([k, v]) => r[k] < v ? `✕${k === 'huntWin' ? '사냥승률' : '보스승률'}` : '')].filter(Boolean) : [];
         if (flags.length && !r.device) report[sub].out.push({ id: r.id, flags });
         if (r.device) (report[sub].unmeasured ??= []).push(r.id);
         console.log(`${flags.length ? '!' : ' '} ${r.tier}차 ${r.name.padEnd(12, '　')} 속도 ${f2(r.speed)}(${pct(r.out.hunt.win)}) 보스 ${f2(r.bossSpeed)}(${pct(r.out.boss.win)}) 생존 ${f2(r.survive)} 획득 ${f2(r.gain)}(×${f2(r.out.gain.mult)}) 무리 ${pct(r.out.swarm.win)} 던전 ${pct(r.out.dungeon.cleared)} ${flags.join(' ')}`);

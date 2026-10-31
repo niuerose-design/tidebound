@@ -33,14 +33,14 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     jackpotStrike: { multiplier: 3.5, gamble: { min: .1, max: 2.1, accuracy: .1 }, scaling: 'luck', scalingRatio: .3 },
     allOrNothing: { chance: .24, cooldown: 6, multiplier: 2.6, drainRatio: .35, allIn: { hpRatio: .3, hpScale: 1.6, manaScale: 3 }, gamble: { min: .6, max: 1.8 }, scaling: 'luck', scalingRatio: .8 },
     // ── 로그(섀도어): 보유 골드를 태우는 메소 익스플로전(goldSpend) ──
-    relicToss: { chance: .26, cooldown: 3, multiplier: 1.3, goldSpend: { ratio: .005, capAttack: .25, scale: 1 } },
+    relicToss: { chance: .32, cooldown: 3, multiplier: 1.6, goldSpend: { ratio: .005, capAttack: .25, scale: 1 } },
     spoilsStrike: { goldSpend: { ratio: .01, capAttack: .4, scale: 1 } },
     treasureStrike: { goldSpend: { ratio: .01, capAttack: .6, scale: 1 } },
     hoardCrush: { goldSpend: { ratio: .02, capAttack: 1.2, scale: 1 } },
     // ── 와일드헌터 (2차): 도감 기록 비례 ──
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 해적(캡틴): 보유 골드 비례(골드 투척은 v3.156에 섀도어 메소 익스플로전으로 옮김) ──
-    coinToss: { chance: .26, cooldown: 3, multiplier: 1.15, scaling: 'gold', scalingRatio: .04 },
+    coinToss: { chance: .35, cooldown: 3, multiplier: 1.5, scaling: 'gold', scalingRatio: .04 }, // v3.442 유틸리티 속도 패치(해적(캡틴) 0.71)
     ledgerStrike: { chance: .5, cooldown: 3, multiplier: 1.5, manaCost: 4, scaling: 'gold', scalingRatio: .05 }, // v3.440 건슬링거 역전 패치(1.03배)
     coinBarrage: { scaling: 'gold', scalingRatio: .06 },
     goldenTempest: { scaling: 'gold', scalingRatio: .07 },
@@ -66,25 +66,25 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     fortuneFavor: { desc: '치명 피해와 치명타 확률이 오릅니다.', bonus: { critDamage: .3, crit: .03 } },
     divineLuck: { desc: '치명타와 치명 피해가 크게 오릅니다.', bonus: { crit: .08, critDamage: .45 } },
     // 로그(섀도어): 변종·황금 개체를 찾아내는 계보. 변종 조우 확률과 황금 개체 확률을 올리고, 변종·황금 처치 기록마다 강해집니다.
-    salvageSense: { desc: '변종 조우 확률 +20%, 처치 골드 +10%, 명중 +3%p, 치명타 +1%p. 메소 익스플로전이 태울 골드를 벌어 옵니다.', bonus: { variantFind: .2, goldBonus: .1, accuracy: .03, crit: .01 } },
-    rareSense: { desc: '변종 조우 확률 +30%, 황금 개체 확률 +0.3%p, 처치 골드 +12%, 치명타 +1%p.', bonus: { variantFind: .3, goldenFind: .003, goldBonus: .12, crit: .01 } },
-    deepSalvage: { desc: '변종 조우 확률 +40%, 황금 개체 확률 +0.5%p, 처치 골드 +15%, 두 방어 +20.', bonus: { variantFind: .4, goldenFind: .005, goldBonus: .15, defense: 20, resist: 20 } },
+    salvageSense: { desc: '변종 조우 확률 +20%, 처치 골드 +10%, 명중 +3%p, 치명타 +1%p. 메소 익스플로전이 태울 골드를 벌어 옵니다.', bonus: { variantFind: .2, goldBonus: .1, accuracy: .03, crit: .01, attack: 10 } }, // v3.442 물리 공격 +10 (로그(섀도어) 0.83)
+    rareSense: { desc: '변종 조우 확률 +30%, 황금 개체 확률 +0.3%p, 처치 골드 +12%, 치명타 +1%p, 물리 공격 +30.', bonus: { variantFind: .3, goldenFind: .003, goldBonus: .12, crit: .01, attack: 30 } }, // v3.442 유틸리티 속도 패치(시프 0.57)
+    deepSalvage: { desc: '변종 조우 확률 +40%, 황금 개체 확률 +0.5%p, 처치 골드 +15%, 두 방어 +20, 물리 공격 +50.', bonus: { variantFind: .4, goldenFind: .005, goldBonus: .15, defense: 20, resist: 20, attack: 50 } }, // v3.442 (시프마스터 0.38)
     kingsHoard: { desc: '변종 조우 확률 +60%, 황금 개체 확률 +1%p, 처치 골드 +20%, 물리 공격 +60.', bonus: { variantFind: .6, goldenFind: .01, goldBonus: .2, attack: 60 } },
-    legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p, 처치 골드 +30%, 물리 공격 +120, 최대 체력 +300.', bonus: { variantFind: 1, goldenFind: .02, goldBonus: .3, attack: 120, hp: 300 } },
+    legendHoard: { desc: '변종 조우 확률 +100%, 황금 개체 확률 +2%p, 처치 골드 +30%, 물리 공격 +200, 최대 체력 +300.', bonus: { variantFind: 1, goldenFind: .02, goldBonus: .3, attack: 200, hp: 300 } }, // v3.442 120 → 200 (섀도어 5차 0.44)
     // 해적(캡틴): 수집가의 드롭을 넘겨받음
-    salvageContract: { desc: '골드 획득 +15%, 던전 주화 +8%, 장비 드롭 확률 +45%.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
-    goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
-    portLedger: { desc: '골드 획득·장비 드롭·명중과 물리 공격·치명타가 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03, attack: 40, crit: .02 } }, // v3.440 역전 패치: 무역상(2차)이 해적(캡틴)(1차)보다 약했음(0.98배). 흥정 갈고리가 상태기(피해 없음)라 장부에 공격을 실음
-    tradeWind: { desc: '골드·던전 주화 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
+    salvageContract: { desc: '골드 획득 +15%, 던전 주화 +8%, 장비 드롭 확률 +45%, 물리 공격 +10.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03, attack: 10 } }, // v3.442
+    goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 70 } /* v3.442 20 → 70 (건슬링거 0.61) */, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
+    portLedger: { desc: '골드 획득·장비 드롭·명중과 물리 공격·치명타가 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03, attack: 60, crit: .02 } }, // v3.442 40 → 60 (무역상 0.66). v3.440 역전 패치: 무역상(2차)이 해적(캡틴)(1차)보다 약했음(0.98배). 흥정 갈고리가 상태기(피해 없음)라 장부에 공격을 실음
+    tradeWind: { desc: '골드·던전 주화 획득과 장비 드롭, 마법 공격이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06, magic: 30 } }, // v3.442 마법 +30 (발키리 0.53 · 4차 캡틴도 쓰므로 조금만)
     tradeEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
-    goldenEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, magic: 110 } },
+    goldenEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, magic: 180 } }, // v3.442 110 → 180 (캡틴 5차 0.50)
     // 패스파인더: 경험치(렐릭의 힘의 재료) + 평평한 능력치. 기록 비례 성장은 와일드헌터 · 섀도어 · 에반과 겹쳐 v3.153에 뺌.
-    voyageReview: { desc: '획득 경험치 +12%. 경험치 보너스(환생 · 연구 몫 제외)가 렐릭의 힘이 되어 패스파인더 기술의 피해를 올립니다.', bonus: { expBonus: .08 } },
+    voyageReview: { desc: '획득 경험치 +12%, 두 공격 +12. 경험치 보너스(환생 · 연구 몫 제외)가 렐릭의 힘이 되어 패스파인더 기술의 피해를 올립니다.', bonus: { expBonus: .08, attack: 12, magic: 12 } }, // v3.442 두 공격 +12(상위 차수가 함께 쓰므로 조금만 · 1차 속도는 직업 보정으로)
     chronicleStudy: { desc: '획득 경험치 +18%, 두 공격 +16, 최대 체력 +60. 숙련할수록 경험치와 능력치가 더 오릅니다.', bonus: { expBonus: .12, attack: 16, magic: 16, hp: 60 } },
     swiftQuill: { desc: '속도와 경험치 획득이 오릅니다.', bonus: { speed: 8, expBonus: .03 } },
-    starLog: { desc: '경험치 획득과 마법 공격 · 마법 방어가 오릅니다.', bonus: { expBonus: .06, magic: 40, resist: 10 } },
+    starLog: { desc: '경험치 획득과 마법 공격 · 마법 방어가 오릅니다.', bonus: { expBonus: .06, magic: 40, resist: 10 } }, // v3.442 유지(4차가 함께 쓰는 패시브), 3차 속도는 직업 배율 · 별자리 화살로 (패스파인더 3차 0.44)
     starChart: { desc: '경험치 획득과 마법 공격 · 최대 체력이 오릅니다.', bonus: { expBonus: .15, magic: 90, hp: 200 } },
-    cosmicChart: { desc: '경험치 획득이 크게 오르고 마법 공격 · 최대 체력 · 치명타가 오릅니다.', bonus: { expBonus: .25, magic: 180, hp: 400, crit: .04 } },
+    cosmicChart: { desc: '경험치 획득이 크게 오르고 마법 공격 · 최대 체력 · 치명타가 오릅니다.', bonus: { expBonus: .25, magic: 240, hp: 400, crit: .04 } }, // v3.442 180 → 240 (패스파인더 5차 0.63)
     // 와일드헌터 (1차): 사냥 기록·지정 몬스터
     titanFieldNotes: { perCount: [{ source: 'hunt', per: 10, bonus: { attack: 1, magic: 1 }, cap: 10 }] },
     serpentFolklore: { perCount: [{ source: 'species', per: 30, bonus: { magic: 2, resist: 1 }, cap: 15 }, { source: 'codex', per: 4, bonus: { magic: 2 }, cap: 15 }] },

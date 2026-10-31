@@ -92,7 +92,7 @@ SKILLS.push(
     { id: 'pearlLedger', name: '진주 장부', desc: '획득 경험치가 오릅니다. 숙련할수록 장착 AP가 3 → 0으로 줄고 경험치 · 골드 보너스가 커집니다.', type: 'passive', level: 25, job: 'pearlBroker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { expBonus: .06, magic: 24, penetration: .06 }, levelEffects: [{ cost: 3, bonus: { expBonus: .06, magic: 24, penetration: .06 } }, { cost: 3, bonus: { expBonus: .08, goldBonus: .04, magic: 24, penetration: .06 } }, { cost: 2, bonus: { expBonus: .1, goldBonus: .08, magic: 24, penetration: .06 } }, { cost: 1, bonus: { expBonus: .12, goldBonus: .1, magic: 24, penetration: .06 } }, { cost: 0, bonus: { expBonus: .15, goldBonus: .12, dungeonGoldBonus: .1, magic: 24, penetration: .06 } }] }, // v3.440 역전 패치: 에반 2차가 1차보다 약했음(0.68배) — 1차 패시브(마법 22 · 관통 8%)만큼은 전투력을 잇도록 마법 24 · 관통 6%
     { id: 'salvageContract', name: '인양 계약', desc: '골드 획득 +10%, 던전 주화 +8%.', type: 'passive', level: 10, job: 'salvageMerchant', chance: 0, cooldown: 0, multiplier: 0, cost: 2, bonus: { goldBonus: .1, dungeonGoldBonus: .08 } },
     { id: 'rareSense', name: '전리품 감지', desc: '장비 드롭 확률 +50%, 처치 골드 +4%. 몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.', type: 'passive', level: 25, job: 'rareTracker', chance: 0, cooldown: 0, multiplier: 0, cost: 3, bonus: { dropBonus: .05, goldBonus: .04 } },
-    { id: 'memoryOfTides', name: '윤회의 조류 기록', desc: '마법 공격 +40, 던전 주화 +10%. 환생할 때마다 두 공격 +5·최대 체력 +18·두 방어 +1(최대 12회). 지난 생의 기록이 다음 생의 힘이 됩니다.', type: 'passive', level: 40, job: 'abyssArchivist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { magic: 40, dungeonGoldBonus: .1 }, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 5, magic: 5, hp: 18, defense: 1, resist: 1 }, cap: 12 }] },
+    { id: 'memoryOfTides', name: '윤회의 조류 기록', desc: '마법 공격 +80, 던전 주화 +10%. 환생할 때마다 두 공격 +5·최대 체력 +18·두 방어 +1(최대 12회). 지난 생의 기록이 다음 생의 힘이 됩니다.', type: 'passive', level: 40, job: 'abyssArchivist', chance: 0, cooldown: 0, multiplier: 0, cost: 4, bonus: { magic: 80, dungeonGoldBonus: .1 } /* v3.442 40 → 80 (에반 3차 0.51) */, perCount: [{ source: 'rebirth', per: 1, bonus: { attack: 5, magic: 5, hp: 18, defense: 1, resist: 1 }, cap: 12 }] },
     { id: 'electricBite', name: '귀참', desc: '물리 공격 피해, 3턴 감속. 동굴 수호자의 기술을 물어뜯는 기술로 계승합니다.', type: 'active', level: 25, job: 'stormEel', chance: .28, cooldown: 4, multiplier: 1.75, effect: 'slow', damageType: 'physical', statusTurns: 3, cost: 4, manaCost: 9 },
     { id: 'tentacleBarrage', name: '폭류권', desc: '물리 공격 150% 피해 후 추가타 1회. 보스의 기술을 배웁니다.', type: 'active', level: 40, rebirth: 1, job: 'krakenkin', chance: .26, cooldown: 6, multiplier: 1.5, extraAttacks: 1, extraAttackMultiplier: .5, cost: 6, manaCost: 8 },
 );
@@ -317,7 +317,7 @@ normalizeSkillMastery(SKILLS);
  * 원본 수치는 그대로 두고 불러올 때 한 번 곱합니다(같은 객체를 두 번 곱하지 않음). 설명 글의 숫자는 곱한 값으로 적습니다.
  * 변종·황금 확률 · 숙련 획득 같은 다른 유틸리티 효과는 그대로입니다.
  */
-export const UTILITY_GAIN_SCALE = 1.5;
+export const UTILITY_GAIN_SCALE = 1.5; // v3.442 검토: 승산 구조 · ×2 모두 4~5차(패시브 4~5개 중첩)에서 딜러 중앙의 1.5~2.7배로 넘쳐 되돌림. 1~2차의 획득 부족은 처치 속도(0.6~0.7)가 원인이라 속도로 맞춤
 const GAIN_KEYS = new Set(['goldBonus', 'expBonus', 'dropBonus']);
 const gainScaled = new WeakSet<object>();
 export function scaleUtilityGain(list: Skill[]) {
