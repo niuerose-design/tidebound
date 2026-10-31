@@ -100,10 +100,10 @@ export const LINEAGE_SKILLS: Skill[] = [
     // 물리
     { ...A, ...physical, id: 'jointLock', name: '관절 꺾기', desc: '', level: 25, job: 'grappler', chance: .26, cooldown: 3, multiplier: 1.5, cost: 3, effect: 'slow', statusTurns: 2, damageBonusCondition: 'controlled', conditionalDamageBonus: .3 },
     { ...P, id: 'lifeCurrentFlow', name: '생명의 흐름', desc: '턴마다 체력이 회복되고 회복량이 오릅니다.', level: 25, job: 'tideMender', cost: 2, bonus: { hpRegen: 3, healBonus: .1 } },
-    { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 90, defense: 15, resist: 5 } },
+    { ...P, id: 'grappleStance', name: '붙잡는 자세', desc: '최대 체력과 물리 방어가 오릅니다.', level: 25, job: 'grappler', cost: 2, bonus: { hp: 220, defense: 45, resist: 15 } /* v3.443 탱커 생존 패치(브롤러 0.72) */ },
     // 마법
-    { ...A, ...magic, id: 'corrosiveBloom', name: '부식의 개화', desc: '', level: 40, job: 'brineSavant', chance: .52, cooldown: 4, multiplier: 1.2, cost: 4, manaCost: 20, scaling: 'arcane' },
-    { ...P, id: 'philosopherSalt', name: '현자의 소금', desc: '마법 공격이 오르고, 기본 공격(마력 평타)이 명중하면 부식을 겁니다.', level: 40, job: 'brineSavant', cost: 3, bonus: { magic: 30 }, basicEffect: 'corrode' },
+    { ...A, ...magic, id: 'corrosiveBloom', name: '부식의 개화', desc: '', level: 40, job: 'brineSavant', chance: .52, cooldown: 4, multiplier: 1.8 /* v3.443 1.2 → 1.8 */, cost: 4, manaCost: 20, scaling: 'arcane' },
+    { ...P, id: 'philosopherSalt', name: '현자의 소금', desc: '마법 공격이 오르고, 기본 공격(마력 평타)이 명중하면 부식을 겁니다.', level: 40, job: 'brineSavant', cost: 3, bonus: { magic: 90 } /* v3.443 일리움 3차 0.46 */, basicEffect: 'corrode' },
     // 방어
     { ...A, ...magic, id: 'tidalRenewal', name: '조류의 소생', desc: '', level: 40, job: 'tideHealer', chance: .55, cooldown: 4, multiplier: 1.8, cost: 4, manaCost: 18, effect: 'heal' },
     { ...P, id: 'deepCurrentBalm', name: '등대 연고', desc: '최대 체력과 마법 방어가 오릅니다.', level: 40, job: 'tideHealer', cost: 3, bonus: { hp: 200, resist: 18 } },

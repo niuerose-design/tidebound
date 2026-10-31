@@ -5,7 +5,7 @@
 //   survive   보스 1:1 · ×5 무리 · 쉬지 않고 3연전의 남은 체력 평균(0~1 절대값) — 탱커 · 힐러의 주 지표
 //   gain      speed × 획득 배율(골드 · 경험치 평균 + 드롭 + 던전 주화/2 + 변종/4 + 황금 ×10), 딜러 중앙 = 1 — 유틸리티의 주 지표
 //   최소선     사냥 승률 · 보스 승률(data/roles.ts ROLE_TARGETS.floors)
-// 사용: node scripts/check-roles.mjs [--json out.json] [--seeds N]
+// 사용: node scripts/check-roles.mjs [--json out.json] [--seeds N] [--only id,id] [--base 기준.json | --rebase]
 import fs from 'node:fs';
 import { loadGame } from './lib/game-modules.mjs';
 import { random, arg, loadout, median } from './lib/sim.mjs';
@@ -24,6 +24,8 @@ const { jobFactor, masteryMilestonesFor } = await load('systems/progression');
 const { subRoleOf, roleOf, SUB_ROLES, ROLE_TARGETS } = await load('data/roles');
 
 const SEEDS = Number(arg('--seeds', 30)), MAX_TURNS = 400, SWARM = 5, DUNGEON_WAVES = 3;
+/** v3.443 직업 자체가 본편 장치(세계석 보유량 등)에 비례해 이 몸으로는 못 재는 직업. */
+const DEVICE_JOBS = { pearlMiner: '세계석 보유량' };
 const RECORD_SOURCES = new Set(['hunt', 'species', 'codex', 'mastered', 'variant', 'kkami', 'nuri', 'onyx', 'onyxRanks', 'onyxOwned', 'cores', 'coreRanks', 'altar', 'abyssBest', 'essenceSpent']); // 환생 수(rebirth)는 측정 몸에 있어(환생 10) 뺌
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 // check-job-balance와 같은 차수 조건. 보스는 그 레벨 근처 사냥터 보스.
@@ -91,18 +93,20 @@ function measure(j) {
     const sub = subRoleOf(j, lineageOf(j));
     // v3.441 측정 밖 장치: 지원(다른 분신에게 주는 효과)만 있는 직업, 기록 비례(사냥 · 종 · 도감 · 숙달 수 · 변종 · 까미 · 누리 · 코어 · 제단 …) 패시브가 핵인 직업은 이 몸(기록 0)으로는 못 재므로 목표 판정에서 빼고 ◇로 표시.
     const own = SKILLS.filter(sk => sk.job === j.id), passives = own.filter(sk => sk.type === 'passive');
-    const device = passives.some(sk => sk.support || sk.supportAmp || sk.supportCostCut) ? 'support' : passives.some(sk => (sk.perCount || []).some(p => RECORD_SOURCES.has(p.source))) ? 'record' : passives.some(sk => sk.masteryGain) ? 'mastery' : null;
+    const device = DEVICE_JOBS[j.id] ? 'record' : passives.some(sk => sk.support || sk.supportAmp || sk.supportCostCut) ? 'support' : passives.some(sk => (sk.perCount || []).some(p => RECORD_SOURCES.has(p.source))) ? 'record' : passives.some(sk => sk.masteryGain) ? 'mastery' : null;
     return { id: j.id, name: j.name, tier: j.tier, lineage: lineageOf(j), sub, role: roleOf(sub), device, out };
 }
 // v3.80 옛 독립 수련(retired)은 전직할 수 없어 재지 않습니다.
 // v3.442 --only a,b,c --base full.json: 몇 직업만 재고 기준값(딜러 중앙)은 전체 측정 JSON에서 가져옵니다(수치 패치 때 빨리 돌리기).
-const ONLY = arg('--only') ? new Set(arg('--only').split(',')) : null, BASE_FILE = arg('--base');
+// v3.443 기준값은 scripts/data/role-base.json에 고정(상향만 하는 패치가 딜러 중앙값을 끌어올려 목표가 달아나지 않게). --rebase면 이번 측정으로 새로 잡고, --base 파일.json이면 그 파일의 기준값을 씁니다.
+const ONLY = arg('--only') ? new Set(arg('--only').split(',')) : null, BASE_FILE = process.argv.includes('--rebase') ? null : arg('--base', new URL('./data/role-base.json', import.meta.url).pathname);
 const rows = JOBS.filter(j => !j.retired && (!ONLY || ONLY.has(j.id))).map(measure);
 // v3.441 기준 = 같은 차수 물리 · 마법 딜러의 중앙값(data/roles.ts ROLE_TARGETS 설명). 전 직업 중앙값으로 재면 딜러가 차수의 절반이라 딜러 절반이 구조적으로 '목표 미달'이 됐음.
 // 지표: speed 사냥 처치 속도(딜러 중앙 처치 턴 ÷ 내 처치 턴) · bossSpeed 보스 처치 속도(진 판이 있으면 승률을 곱함) · survive 보스 · 무리 · 던전의 남은 체력 평균(절대값) · gain speed × 골드 · 경험치 배율(딜러 중앙 = 1).
 const DEALER = new Set(['physical', 'magic']);
 const surviveOf = o => (o.boss.hpLeft + o.swarm.hpLeft + o.dungeon.hpLeft) / 3;
-const base = BASE_FILE ? JSON.parse(fs.readFileSync(BASE_FILE, 'utf8')).report.base : {};
+const base = BASE_FILE ? (f => f.base || f.report.base)(JSON.parse(fs.readFileSync(BASE_FILE, 'utf8'))) : {};
+if (BASE_FILE) console.log(`기준값: ${BASE_FILE}`);
 for (const tier of Object.keys(TIERS).map(Number)) {
     const g = rows.filter(r => r.tier === tier), d = g.filter(r => DEALER.has(r.sub)).length ? g.filter(r => DEALER.has(r.sub)) : g;
     if (!g.length) continue;

@@ -517,9 +517,9 @@ test('v3.151 Illium: arcane-ratio scaling, basic attacks corrode, corrosion cuts
     const t3 = target({ corrode: 2 }); strike(fighter([]), t3, () => 0); const corroded = 1e6 - t3.hp;
     const expect = (100 + 200 * 2) / (100 + 200 * (1 - STATUS_TUNING.corrodeResist) * 2); assert.ok(Math.abs(corroded / plain - expect) < .03, `corroded ${plain} → ${corroded}`);
     assert.ok(Math.abs(fighterSpeed(target({ corrode: 1 })) / fighterSpeed(target()) - (1 - STATUS_TUNING.corrodeSpeed)) < 1e-9);
-    // 평타 계수 기준값: 크래프트: 롱기누스 = 마법 × (0.7 + 0.5) × 1.2.
+    // 평타 계수 기준값: 크래프트: 롱기누스 = 마법 × (0.7 + 0.5) × 1.8(v3.443 1.2 → 1.8, 일리움 3차 속도 패치).
     const t4 = target(); const e4 = []; strike(fighter(['corrosiveBloom']), t4, () => 0, e4); const t5 = target(); strike(fighter([]), t5, () => 0);
-    assert.ok(Math.abs((1e6 - t4.hp) / (1e6 - t5.hp) - 1.2) < .03, `arcane scaling ${1e6 - t5.hp} → ${1e6 - t4.hp}`);
+    assert.ok(Math.abs((1e6 - t4.hp) / (1e6 - t5.hp) - 1.8) < .03, `arcane scaling ${1e6 - t5.hp} → ${1e6 - t4.hp}`);
     // 그라비티 코어(각성): 본타 + 추가타 4회 = 5타.
     const t6 = target(); const e6 = []; strike(fighter(['grandTransmutation']), t6, () => 0, e6, false, false, { id: 'grandTransmutation', index: 0, count: 1, kind: 'awaken' }); assert.equal(e6[0].hits.length, 5); assert.ok(t6.effects.corrode >= STATUS_TUNING.corrodeTurns, `corroded ${t6.effects.corrode}`);
     // 자기 버프 틀: 옛 가속(effects.haste)은 buffs.haste로 옮겨 속도에 곱하고, 자기 행동마다 1턴씩 줄어듭니다.
