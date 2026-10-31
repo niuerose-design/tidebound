@@ -75,3 +75,24 @@ export function subRoleOf(j: Pick<Job, 'id' | 'subRole'>, lineageId: string): Su
     return j.subRole ?? ROLE_BY_JOB[j.id] ?? ROLE_BY_LINEAGE[lineageId] ?? 'none';
 }
 export const roleOf = (sub: SubRoleId) => SUB_ROLES[sub].role;
+
+/**
+ * v3.441 역할별 측정 목표(docs/concept.md 11.4). scripts/check-roles.mjs가 읽고 tests/roles.test.mjs가 모양을 검사합니다. 전투 판정에는 쓰지 않습니다.
+ * 기준: 같은 차수 **물리 · 마법 딜러의 중앙값 = 1.00**(전 직업 중앙값이 아님 — 딜러가 차수의 절반이라 전 직업 중앙값으로 재면 딜러 절반은 구조적으로 '목표 미달'이 됐음).
+ * 지표: speed 사냥 처치 속도(딜러 중앙 처치 턴 ÷ 내 처치 턴) · bossSpeed 보스 1:1 처치 속도 · survive 보스 · 무리 ×5 · 던전 3연전의 남은 체력 평균(0~1, 절대값) · gain speed × 골드 · 경험치 배율(딜러 중앙 = 1).
+ * 최소선(floor): huntWin 사냥 승률 · bossWin 보스 승률(0~1 절대값). 경계(border*) · 수련 · 역할 없음은 목표 없이 표에만 나옵니다.
+ */
+export type RoleMetric = 'speed' | 'bossSpeed' | 'survive' | 'gain';
+export type RoleTarget = { main: RoleMetric; bands: Partial<Record<RoleMetric, [number, number]>>; floors?: { huntWin?: number; bossWin?: number } };
+export const ROLE_TARGETS: Partial<Record<SubRoleId, RoleTarget>> = {
+    physical: { main: 'speed', bands: { speed: [0.7, 1.4] }, floors: { huntWin: .95, bossWin: .7 } },
+    magic: { main: 'speed', bands: { speed: [0.7, 1.4] }, floors: { huntWin: .95, bossWin: .7 } },
+    status: { main: 'bossSpeed', bands: { bossSpeed: [1.0, 1.5], speed: [0.7, 1.1] }, floors: { huntWin: .95 } },
+    reflect: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    control: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    drain: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    morph: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    absorb: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    healer: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.6, 0.9] } },
+    utility: { main: 'gain', bands: { gain: [1.0, 1.3], speed: [0.6, 1.0] } },
+};
