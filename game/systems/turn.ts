@@ -74,6 +74,16 @@ function repairState(s: State, now?: number) {
     if (fixed.length) addLog(s, `전투 상태를 복구했습니다 (${fixed.join('·')}).`, 'system');
     return fixed;
 }
+/**
+ * v3.439 본편 전투의 플레이어 참가자. tickTurn이 쓰고, 밸런스 점검 스크립트(scripts/check-job-balance · check-roles)도 같은 참가자로 재도록 공개합니다
+ * (전에는 스크립트가 참가자를 따로 만들어 직업 · 연료 · 각성기 · 추가 판정이 빠진 채 쟀음). ecology가 없으면 도감 생태 보정 없이 만듭니다.
+ */
+export function playerFighter(s: State, a = stats(s), usable = s.skills.filter(id => canUse(s, id)), ecology?: ReturnType<typeof bookEcology>): Fighter {
+    const skillFinal = extremeFinalTable(s, usable), extremeFx = extremeFxTable(s, usable);
+    // v3.231 이계 전투 직업: 연료 자동 충전 → 연료 · 탄창 · 트레이더 손익을 전투원에 싣습니다.
+    const ow = { ...otherworldFighter(s, usable), ...azerothFighter(s, usable) };
+    return { name: s.name, job: s.job, cores: regionCores(s).length, onyx: wornOnyx(s), stats: a, hp: s.hp, skills: usable, cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(skillFinal ? { skillFinal } : {}), ...(extremeFx ? { extremeFx } : {}), ...(ecology?.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job), ...ow };
+}
 function tickTurn(s: State, rng: () => number) {
     s.turn++;
     s.playMs = (s.playMs || 0) + BALANCE.turnMs;
@@ -101,10 +111,8 @@ function tickTurn(s: State, rng: () => number) {
     const e = s.enemy!;
     const enemyHpBefore = e.hp, playerHpBefore = s.hp;
     const ecology = bookEcology(s, e.id);
-    const usable = s.skills.filter(id => canUse(s, id)), skillFinal = extremeFinalTable(s, usable), extremeFx = extremeFxTable(s, usable);
-    // v3.231 이계 전투 직업: 연료 자동 충전 → 연료 · 탄창 · 트레이더 손익을 전투원에 싣습니다.
-    const ow = { ...otherworldFighter(s, usable), ...azerothFighter(s, usable) };
-    const player: Fighter = { name: s.name, job: s.job, cores: regionCores(s).length, onyx: wornOnyx(s), stats: a, hp: s.hp, skills: usable, cooldowns: s.cooldowns, extraRolls: extraRollLevel(s), stun: s.playerStun, mana: s.mana, effects: s.effects, ranks: s.learned, mastery: lazySkillMasteryRanks(s), gold: s.gold, ...(skillFinal ? { skillFinal } : {}), ...(extremeFx ? { extremeFx } : {}), ...(ecology.stages ? { damageDealt: ecology.dealt, damageTaken: ecology.taken } : {}), ...constraintFields(s.job), ...ow };
+    const usable = s.skills.filter(id => canUse(s, id));
+    const player = playerFighter(s, a, usable, ecology);
     const enemy: Fighter = { foe: true, foeId: e.id, name: enemyLabel(e), stats: e.combatStats || { hp: e.maxHp, attack: e.attack, defense: e.defense, crit: 0 }, hp: e.hp, skills: e.skills || [], cooldowns: e.cooldowns || {}, stun: e.stun, mana: e.mana, effects: e.effects || {}, prey: e.boss || SKILL_FORMULA.designatedSpecies.includes(e.id), ...(profile(e.id).magicBasic ? { magicBasic: true } : {}), ...(profile(e.id).splitBasic ? { splitBasic: true } : {}), ...(e.swarm ? { swarm: e.swarm } : {}), ...(e.dotHpCap ? { dotHpCap: e.dotHpCap } : {}) };
     const first = actsFirst(player, enemy) ? player : enemy, second = first === player ? enemy : player;
     // 빠른 쪽이 먼저 행동(연속 행동 포함)하고, 둘 다 살아 있으면 느린 쪽도 같은 방식으로 행동합니다.
