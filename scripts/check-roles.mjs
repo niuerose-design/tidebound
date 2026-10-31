@@ -26,15 +26,16 @@ const { subRoleOf, roleOf, SUB_ROLES } = await load('data/roles');
 const SEEDS = Number(arg('--seeds', 30)), MAX_TURNS = 400, SWARM = 5, DUNGEON_WAVES = 3;
 const ONE_STAT = { brawnFisher: 'str', nimbleAngler: 'dex', manaDevotee: 'int', stillAngler: 'wis', bulkyFisher: 'vit', luckyAngler: 'luk' };
 // check-job-balance와 같은 차수 조건. 보스는 그 레벨 근처 사냥터 보스.
+// v3.440 ap: 차수별 장착 AP(기본 6 + 환생 10 + 차수가 오를수록 연구 · 업적 AP). 전에는 모두 16이라 5차가 각성기 + 패시브를 끼면 계보 액티브를 못 넣어 4차보다 약하게 나왔음(실제 5차 몸은 연구 · 업적 AP가 있음).
 const TIERS = {
-    0: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], boss: 'grottoWarden', tier: 0 },
-    1: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], boss: 'grottoWarden', tier: 0 },
-    2: { level: 40, foes: ['viper', 'squid', 'leviathan'], boss: 'magmaKraken', tier: 0 },
-    3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], boss: 'templeOracle', tier: 0 },
-    4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'abyssSovereign', tier: 0 },
-    5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'ventColossus', tier: 2 },
+    0: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], boss: 'grottoWarden', tier: 0, ap: 16 },
+    1: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], boss: 'grottoWarden', tier: 0, ap: 16 },
+    2: { level: 40, foes: ['viper', 'squid', 'leviathan'], boss: 'magmaKraken', tier: 0, ap: 18 },
+    3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], boss: 'templeOracle', tier: 0, ap: 20 },
+    4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'abyssSovereign', tier: 0, ap: 24 },
+    5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], boss: 'ventColossus', tier: 2, ap: 28 },
     // v3.439 6차(초월자, Lv.100 전직): 한 단계 아래 사냥터(기억의 길) 몬스터, 보스는 녹슨 제독(Lv.104), 적 단계 3.
-    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], boss: 'aoRustAdmiral', tier: 3 },
+    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], boss: 'aoRustAdmiral', tier: 3, ap: 32 },
 };
 const tierOf = tier => { if (TIERS[tier]) return TIERS[tier]; const top = Math.max(...Object.keys(TIERS).map(Number)); console.warn(`! ${tier}차 측정 조건이 없어 ${top}차 조건으로 잽니다 — TIERS에 추가하세요.`); return TIERS[top]; };
 function attributesFor(j, level) {
@@ -66,6 +67,7 @@ function measure(j) {
     const T = tierOf(j.tier), s = newState(0), { attrs, magic } = attributesFor(j, T.level);
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.fuel = FUEL.cap; // 연료 직업은 연료를 가득 채운 몸으로.
+    s.permanent = { ...s.permanent, ap: Math.max(0, (T.ap || 16) - 16) }; // 차수별 AP(연구 AP 칸으로)
     s.jobMastery = { [j.id]: 0 };
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = masteryMilestonesFor(sk).at(-1); }
     loadout(s, j, magic);

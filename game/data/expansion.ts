@@ -177,7 +177,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...A, ...physical, id: 'tempoSong', name: '박자의 노래', desc: '', level: 10, job: 'bard', chance: .28, cooldown: 4, multiplier: .9, cost: 2, effect: 'haste' },
     { ...P, id: 'lullaby', name: '길 위의 노래', desc: '경험치 획득과 속도가 오릅니다.', level: 10, job: 'bard', cost: 2, bonus: { expBonus: .05, speed: 6 } },
     { ...A, ...magic, id: 'discord', name: '불협화음', desc: '', level: 25, job: 'minstrel', chance: .5, cooldown: 4, multiplier: 1.2, cost: 3, manaCost: 12, effect: 'silence' },
-    { ...P, id: 'encore', name: '앙코르', desc: '골드·경험치 획득과 마력 평타 계수가 오릅니다.', level: 25, job: 'minstrel', cost: 2, bonus: { goldBonus: .08, expBonus: .06, arcaneRatioBonus: .3 } },
+    { ...P, id: 'encore', name: '앙코르', desc: '골드·경험치 획득과 마력 평타 계수가 오릅니다.', level: 25, job: 'minstrel', cost: 2, bonus: { goldBonus: .08, expBonus: .06, arcaneRatioBonus: .3, magic: 30 } },
     { ...A, ...magic, id: 'epicBallad', name: '영웅 서사시', desc: '', level: 40, job: 'legendBard', chance: .5, cooldown: 4, multiplier: 1.6, cost: 4, manaCost: 18, effect: 'haste' },
     { ...P, id: 'legendAura', name: '전설의 울림', desc: '경험치·드롭·명중·회피가 오릅니다.', level: 40, job: 'legendBard', cost: 3, bonus: { expBonus: .1, dropBonus: .03, accuracy: .06, evasion: .04 } },
     // 능력치 패시브 직업

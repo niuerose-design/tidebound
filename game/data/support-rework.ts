@@ -41,7 +41,7 @@ export const SUPPORT_BALANCE: Record<string, Partial<Skill>> = {
     sigilShock: { chance: .5, cooldown: 3, multiplier: 1.2, manaCost: 4, preyBonus: .6, scaling: 'codex', scalingRatio: .008 },
     // ── 해적(캡틴): 보유 골드 비례(골드 투척은 v3.156에 섀도어 메소 익스플로전으로 옮김) ──
     coinToss: { chance: .26, cooldown: 3, multiplier: 1.15, scaling: 'gold', scalingRatio: .04 },
-    ledgerStrike: { chance: .5, cooldown: 3, multiplier: 1.3, manaCost: 4, scaling: 'gold', scalingRatio: .05 },
+    ledgerStrike: { chance: .5, cooldown: 3, multiplier: 1.5, manaCost: 4, scaling: 'gold', scalingRatio: .05 }, // v3.440 건슬링거 역전 패치(1.03배)
     coinBarrage: { scaling: 'gold', scalingRatio: .06 },
     goldenTempest: { scaling: 'gold', scalingRatio: .07 },
     goldenStorm: { scaling: 'gold', scalingRatio: .08 },
@@ -74,7 +74,7 @@ export const SUPPORT_PASSIVES: Record<string, Partial<Skill>> = {
     // 해적(캡틴): 수집가의 드롭을 넘겨받음
     salvageContract: { desc: '골드 획득 +15%, 던전 주화 +8%, 장비 드롭 확률 +45%.', bonus: { goldBonus: .1, dungeonGoldBonus: .08, dropBonus: .03 } },
     goldMemory: { desc: '골드·드롭·명중과 마법 공격이 오르고, 보유 골드 자릿수마다 두 공격이 오릅니다.', bonus: { goldBonus: .15, dropBonus: .04, accuracy: .05, magic: 20 }, perCount: [{ source: 'gold', per: 1, bonus: { attack: 2, magic: 2 }, cap: 9 }] },
-    portLedger: { desc: '골드 획득·장비 드롭·명중이 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03 } },
+    portLedger: { desc: '골드 획득·장비 드롭·명중과 물리 공격·치명타가 오릅니다.', bonus: { goldBonus: .08, dropBonus: .03, accuracy: .03, attack: 40, crit: .02 } }, // v3.440 역전 패치: 무역상(2차)이 해적(캡틴)(1차)보다 약했음(0.98배). 흥정 갈고리가 상태기(피해 없음)라 장부에 공격을 실음
     tradeWind: { desc: '골드·던전 주화 획득과 장비 드롭이 오릅니다.', bonus: { goldBonus: .15, dungeonGoldBonus: .1, dropBonus: .06 } },
     tradeEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .2, dungeonGoldBonus: .15, dropBonus: .06, magic: 60 } },
     goldenEmpire: { desc: '골드·던전 주화·장비 드롭과 마법 공격이 오릅니다.', bonus: { goldBonus: .3, dungeonGoldBonus: .2, dropBonus: .1, magic: 110 } },

@@ -24,15 +24,16 @@ const { jobMasteryTarget, jobFactor, masteryMilestonesFor } = await load('system
 const MASTERED = process.argv.includes('--mastered'), SKILL_MASTERED = process.argv.includes('--skill-mastered');
 const SEEDS = 60, MAX_TURNS = 300;
 // 차수별 레벨과 상대. 장비·연구 없이 싸우므로 그 레벨 사냥터보다 한 단계 낮은 어종으로 맞췄습니다(중앙 직업이 대부분 이기는 정도).
+// v3.440 ap: 차수별 장착 AP(기본 6 + 환생 10 + 차수가 오를수록 연구 · 업적 AP). 전에는 모두 16이라 5차가 각성기 + 패시브를 끼면 계보 액티브를 못 넣어 4차보다 약하게 나왔음(실제 5차 몸은 연구 · 업적 AP가 있음).
 const TIERS = {
-    0: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], tier: 0 },
-    1: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], tier: 0 },
-    2: { level: 40, foes: ['viper', 'squid', 'leviathan'], tier: 0 },
-    3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], tier: 0 },
-    4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 0 },
-    5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 2 },
+    0: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], tier: 0, ap: 16 },
+    1: { level: 15, foes: ['seahorse', 'needlefish', 'tidejelly'], tier: 0, ap: 16 },
+    2: { level: 40, foes: ['viper', 'squid', 'leviathan'], tier: 0, ap: 18 },
+    3: { level: 50, foes: ['moonfish', 'dragon', 'ancient'], tier: 0, ap: 20 },
+    4: { level: 60, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 0, ap: 24 },
+    5: { level: 75, foes: ['starKoi', 'prismRay', 'voidGuppy', 'abyssManta'], tier: 2, ap: 28 },
     // v3.439 6차(초월자, Lv.100 전직): 한 단계 아래 사냥터(기억의 길 Lv.88~92) 몬스터, 적 단계 3.
-    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], tier: 3 },
+    6: { level: 100, foes: ['ttMonitor', 'ttGuardian', 'ttChimera', 'ttDodo'], tier: 3, ap: 32 },
 };
 /** v3.439 표에 없는 차수는 죽지 않고 가장 높은 차수 조건으로 재며 알립니다(6차가 추가된 뒤 이 스크립트가 한동안 죽어 있었음). */
 const tierOf = tier => { if (TIERS[tier]) return TIERS[tier]; const top = Math.max(...Object.keys(TIERS).map(Number)); console.warn(`! ${tier}차 측정 조건이 없어 ${top}차 조건으로 잽니다 — TIERS에 추가하세요.`); return TIERS[top]; };
@@ -71,6 +72,7 @@ function evaluate(j, T) {
     Object.assign(s, { level: T.level, rebirths: 10, job: j.id, attributes: attrs, equipment: {}, inventory: [], permanent: {}, book: {}, unlockedJobs: JOBS.map(x => x.id) });
     s.jobMastery = { [j.id]: MASTERED ? jobMasteryTarget(j) : 0 };
     s.fuel = FUEL.cap; // 연료 직업(해커 · 요원 · 펀드매니저 계열)은 연료를 가득 채운 몸으로.
+    s.permanent = { ...s.permanent, ap: Math.max(0, (T.ap || 16) - 16) }; // 차수별 AP(연구 AP 칸으로)
     // v3.198 숙달 수가 전직 조건인 직업(방랑 계보의 만능 · 백수)은 그만큼 다른 직업을 숙달한 몸으로 잽니다(0개로 재면 들어갈 수 없는 몸이라 크게 약하게 나옴).
     for (const x of JOBS.filter(x => x.id !== j.id).slice(0, j.requiresMastered || 0)) s.jobMastery[x.id] = jobMasteryTarget(x);
     for (const sk of SKILLS) { s.learned[sk.id] = 1; s.skillPractice[sk.id] = SKILL_MASTERED ? masteryMilestonesFor(sk).at(-1) : 0; }
@@ -81,7 +83,9 @@ function evaluate(j, T) {
     const win = avg('win'), turns = avg('turns'), hpLeft = avg('hpLeft');
     return { tier: j.tier, id: j.id, name: j.name, tree: j.tree, magic, skills: s.skills.length, hp: Math.round(st.hp), atk: Math.round(magic ? st.magic : st.attack), win, turns, hpLeft, score: win * (0.5 + hpLeft / 2) / turns };
 }
-const rows = JOBS.map(j => evaluate(j, tierOf(j.tier)));
+// v3.440 --only a,b,c: 그 직업과 선행 직업만 재서(역전 점검 · 상위 차수 비교만) 수치 패치 때 빨리 돌립니다.
+const ONLY = process.argv.includes('--only') ? new Set(process.argv[process.argv.indexOf('--only') + 1].split(',').flatMap(id => { const j = JOBS.find(x => x.id === id); return j ? [j.id, j.parent].filter(Boolean) : []; })) : null;
+const rows = (ONLY ? JOBS.filter(j => ONLY.has(j.id)) : JOBS).map(j => evaluate(j, tierOf(j.tier)));
 const pct = n => `${Math.round(n * 100)}%`;
 console.log(`직업 밸런스 (${MASTERED ? '숙달' : '숙달 전'}${SKILL_MASTERED ? ' · 스킬 숙련 완료' : ''}, 시드 ${SEEDS}, 상대별 평균)`);
 const report = {};

@@ -83,8 +83,8 @@ test('v3.172 blaster recoil gauge: damage taken fills charge by max-hp share, cy
     const C = await load('game/systems/combat.js'), R = await load('game/data/roles.js');
     assert.equal(R.subRoleOf(job('bulkyFisher'), lineageOf(job('bulkyFisher'))), 'borderRecoil'); assert.equal(job('ironBastion').tier, 5); assert.equal(job('ironBastion').parent, 'mountainBody');
     const sk = id => SKILLS.find(x => x.id === id);
-    assert.deepEqual(['thickBuild', 'wallOfFlesh', 'mountainHeart', 'ironShell'].map(id => sk(id).recoilGauge), [.12, .1, .08, .06]);
-    assert.equal(sk('landslide').chargeNeed, 3); assert.equal(sk('bunkerBuster').chargeNeed, 5); assert.ok(['bodySlam', 'massiveCharge', 'landslide', 'bunkerBuster'].every(id => sk(id).scalingAttack > 0));
+    assert.deepEqual(['thickBuild', 'wallOfFlesh', 'mountainHeart', 'ironShell'].map(id => sk(id).recoilGauge), [.12, .1, .05, .04]); // v3.440 3차 · 5차 게이지 8% · 6% → 5% · 4%
+    assert.equal(sk('landslide').chargeNeed, 2); // v3.440 3 → 2 assert.equal(sk('bunkerBuster').chargeNeed, 5); assert.ok(['bodySlam', 'massiveCharge', 'landslide', 'bunkerBuster'].every(id => sk(id).scalingAttack > 0));
     const base = { hp: 1000, attack: 100, magic: 100, defense: 0, resist: 0, crit: 0, accuracy: 9, evasion: 0, speed: 10, mana: 1000, manaRegen: 0 };
     const mk = (skills, extra = {}) => ({ name: 'A', stats: { ...base, ...extra }, hp: extra.hp || 1000, mana: 1000, skills, cooldowns: {}, stun: 0, effects: {}, ranks: Object.fromEntries(skills.map(id => [id, 1])), mastery: {}, practice: {} });
     // 100 피해 × 2 = 200 ≥ 1000 × 12% → 충전 1, 나머지 80 이월. 두 패시브면 작은 비율(10%)만.

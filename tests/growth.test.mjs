@@ -115,8 +115,8 @@ test('Boss techniques unlock at native job mastery and SP cannot skip first acqu
  s.running=true;s.hp=stats(s).hp;s.enemy={id:'minnow',name:'test',hp:1,maxHp:1,attack:0,defense:0,exp:1,gold:1,boss:false,stun:0};
  tick(s,()=>.5);assert.equal(s.jobMastery.echoTamer,6000);assert.equal(s.learned.sovereignSilence,1);assert.equal(s.sp,20);assert.equal(s.skillPractice.sovereignSilence||0,0);assert.equal(canUse(s,'sovereignSilence'),true);
  act(s,{type:'inheritSkill',id:'sovereignSilence'},0);assert.equal(s.sp,19);
- s.job='abyssMimic';s.rebirths=1;s.jobMastery.abyssMimic=19999;act(s,{type:'pause'},0);assert.equal(s.learned.borrowedTentacles,undefined);
- s.jobMastery.abyssMimic=20000;act(s,{type:'pause'},0);assert.equal(s.learned.borrowedTentacles,1);
+ // v3.440 모사한 촉수 난무는 직업 숙련 해금(20,000)을 없애 전직하면 바로 배웁니다(이 직업의 유일한 액티브).
+ s.job='abyssMimic';s.rebirths=1;s.jobMastery.abyssMimic=0;act(s,{type:'pause'},0);assert.equal(s.learned.borrowedTentacles,1);assert.equal(canUse(s,'borrowedTentacles'),true);
 });
 test('Research skill conditions and boss origins reference actual game data',()=>{
  for(const sk of SKILLS){if(sk.masteryGain){assert.equal(sk.masteryGain.bonusByLevel.length,maxSkillLevel(sk)+1);for(const id of sk.masteryGain.enemyIds||[])assert.ok(MONSTERS.some(f=>f.id===id));}if(sk.unlockJobMastery)assert.ok(sk.job&&sk.sourceEnemySkill);}
