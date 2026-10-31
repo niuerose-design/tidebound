@@ -5,7 +5,7 @@
  * 서버에 저장되는 항목(이름 · 자동 장치 · 확인 · 무리 규모 · 청산)은 send(action), 이 기기에만 남는 항목(연출 · 알림 · 스타캐치)은 각 localStorage 스토어입니다.
  */
 import { useRef, useState, type ReactNode } from 'react';
-import { HelpCircle, LogOut, ScrollText, Swords, UserRound } from 'lucide-react';
+import { HelpCircle, LogOut, ScrollText, UserRound } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -74,9 +74,6 @@ export function SettingsScreen({ s, busy, send, onSwitchSlot, onLogout, setView 
             <Row title="도움말 · 업데이트 내역" desc="게임 안내와 최근 바뀐 내용.">
                 <Button type="button" variant="outline" onClick={() => setView('help')}><HelpCircle/>도움말</Button>
                 <Button type="button" variant="outline" onClick={() => setView('updates')}><ScrollText/>업데이트 내역</Button>
-            </Row>
-            <Row title="판게아 전기" desc="독립 턴제 전술 모드입니다. 본편 세이브와 섞이지 않습니다.">
-                <Button asChild variant="outline"><a href="/tactics"><Swords/>전기 열기</a></Button>
             </Row>
         </Card>
     </div>;
