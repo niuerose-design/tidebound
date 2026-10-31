@@ -84,15 +84,16 @@ export const roleOf = (sub: SubRoleId) => SUB_ROLES[sub].role;
  */
 export type RoleMetric = 'speed' | 'bossSpeed' | 'survive' | 'gain';
 export type RoleTarget = { main: RoleMetric; bands: Partial<Record<RoleMetric, [number, number]>>; floors?: { huntWin?: number; bossWin?: number } };
+// v3.442 운영 결정: 탱커의 사냥 속도는 목표를 두지 않습니다(반사 · 제어 탱커가 딜러보다 빨리 처치하는 것은 그대로 둠). 힐러 · 유틸리티의 속도 구간은 유지.
 export const ROLE_TARGETS: Partial<Record<SubRoleId, RoleTarget>> = {
     physical: { main: 'speed', bands: { speed: [0.7, 1.4] }, floors: { huntWin: .95, bossWin: .7 } },
     magic: { main: 'speed', bands: { speed: [0.7, 1.4] }, floors: { huntWin: .95, bossWin: .7 } },
     status: { main: 'bossSpeed', bands: { bossSpeed: [1.0, 1.5], speed: [0.7, 1.1] }, floors: { huntWin: .95 } },
-    reflect: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
-    control: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
-    drain: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
-    morph: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
-    absorb: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.5, 0.9] } },
+    reflect: { main: 'survive', bands: { survive: [0.85, 1] } },
+    control: { main: 'survive', bands: { survive: [0.85, 1] } },
+    drain: { main: 'survive', bands: { survive: [0.85, 1] } },
+    morph: { main: 'survive', bands: { survive: [0.85, 1] } },
+    absorb: { main: 'survive', bands: { survive: [0.85, 1] } },
     healer: { main: 'survive', bands: { survive: [0.85, 1], speed: [0.6, 0.9] } },
     utility: { main: 'gain', bands: { gain: [1.0, 1.3], speed: [0.6, 1.0] } },
 };
