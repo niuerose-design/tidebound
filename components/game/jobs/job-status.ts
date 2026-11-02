@@ -1,6 +1,6 @@
 /** 직업 화면 공용 계산. 게임 판정(progression)을 그대로 쓰고, 화면용 상태 이름만 붙입니다. */
 import type { State } from '@/game/types';
-import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, worldOf, type Job, type JobTreeId, type WorldId, jobById } from '@/game/data/classes';
+import { JOBS, JOB_TREES, LINEAGES, lineageOf, jobTags, worldOf, jobWorldOf, type Job, type JobTreeId, type WorldId, jobById } from '@/game/data/classes';
 import { catalogRevealed } from '@/game/data/catalog';
 import { jobRequirements, jobMastered, jobCombatMultiplier, jobFlatBonus } from '@/game/systems/progression';
 import { secretJob } from '@/game/systems/reveal';
@@ -105,7 +105,8 @@ export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId)
 /** v3.168 직업이 든 계보의 계열. 계보가 직업과 다른 탭에 있을 수 있습니다(초보자 계보는 ??? 탭, 직업 tree는 복합). */
 export const lineageTreeOf = (j: Job) => LINEAGES.find(l => l.id === lineageOf(j))?.tree ?? j.tree;
 /** v3.220 직업 · 계보의 세계(책의 장). 계열 탭은 메이플 월드 안의 구분이고, 아제로스 계보는 계열 탭에 들어가지 않습니다. */
-export const jobWorld = (j: Job): WorldId => worldOf(LINEAGES.find(l => l.id === lineageOf(j)));
+/** v3.445 업적과 같은 함수(classes.ts jobWorldOf)로 셉니다. */
+export const jobWorld = (j: Job): WorldId => jobWorldOf(j);
 const lineageWorld = (l: { id: string }) => worldOf(LINEAGES.find(x => x.id === l.id));
 /** 이 세계에서 보이는 계보(드러난 직업이 있는 것만). */
 export const worldLineages = (s: State, world: WorldId) => LINEAGES.filter(l => worldOf(l) === world && shownLineageJobs(s, l.id).length > 0);
