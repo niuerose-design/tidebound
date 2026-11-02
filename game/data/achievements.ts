@@ -1,9 +1,9 @@
 import { FEATS, DIFFICULTIES, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS, MASTERY_MAX, MASTERY_STEP } from './expedition';
 import type { State } from '../types';
 import { BASE_STAGES, PLAIN_DUNGEONS, MONSTERS, dungeonById } from './world';
-import { JOBS, jobById, LINEAGES, lineageOf, worldOf, type WorldId } from './classes';
+import { JOBS, jobById, jobWorldOf, AZEROTH_JOB_COUNT, type WorldId } from './classes';
 import { STORY } from './story';
-import { jobMastered, masteredJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken, extremeStage, coreTranscendOf } from '../systems/progression';
+import { jobMastered, masteredJobCount, unlockedJobCount, ACHIEVEMENT_AP, attributes, completedStages, extremeBroken, extremeStage, coreTranscendOf } from '../systems/progression';
 import { MIMIC } from './mimic';
 import { EXP_NURI } from './exp-nuri';
 import { ESSENCE_SLIME } from './essence-slime';
@@ -63,12 +63,13 @@ const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
 const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
 const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다(세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리).`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6 }, { pearls: 10, sp: 1 }, { pearls: 12 }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
-/** v3.240 직업이 속한 세계(계보의 world). */
-const lineageWorld = new Map(LINEAGES.map(l => [l.id, worldOf(l)]));
-const jobWorld = (id: string): WorldId => { const j = jobById(id); return j ? lineageWorld.get(lineageOf(j)) ?? 'maple' : 'maple'; };
-const worldJobs = (w: WorldId) => JOBS.filter(j => !j.retired && jobWorld(j.id) === w);
-const unlockedIn = (w: WorldId) => (s: State) => (s.unlockedJobs || []).filter(id => jobWorld(id) === w && !jobById(id)?.retired).length;
-const masteredWorlds = (s: State) => (['maple', 'azeroth', 'otherworld'] as const).filter(w => JOBS.some(j => jobWorld(j.id) === w && jobMastered(s, j))).length;
+/**
+ * v3.240 세계별 직업. v3.445 세계는 jobWorldOf로 부를 때 찾습니다: 아제로스 히든 계보는 카탈로그·서버 등록으로 나중에 들어오므로 모듈 시작 때 표를 굳히면 메이플로 잘못 세었습니다(목표 화면 ‘아제로스 직업 5개’가 1 / 5).
+ * 이계 직업은 공개 표라 수를 세고, 아제로스는 화면이 히든 직업을 다 모르므로 AZEROTH_JOB_COUNT(서버 표와 같은지 테스트)로 목표를 둡니다.
+ */
+const worldJobs = (w: WorldId) => JOBS.filter(j => !j.retired && jobWorldOf(j) === w);
+const unlockedIn = (w: WorldId) => (s: State) => unlockedJobCount(s, w);
+const masteredWorlds = (s: State) => (['maple', 'azeroth', 'otherworld'] as const).filter(w => JOBS.some(j => jobWorldOf(j) === w && jobMastered(s, j))).length;
 const honor = (list: Achievement[]) => list.map(a => ({ ...a, honor: true, reward: {} }));
 const tiers = (s: State) => Math.max(0, ...(s.unlockedJobs || []).map(id => jobById(id)?.tier || 0));
 
@@ -146,7 +147,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('nuri', '사냥', n => `경험의 누리 ${n}마리`, n => `경험의 누리를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[EXP_NURI.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('slime', '사냥', n => `정수의 슬라임 ${n}마리`, n => `정수의 슬라임을 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[ESSENCE_SLIME.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('king', '사냥', n => `대왕 ${n}마리`, n => `대왕 까미 · 대왕 누리 · 대왕 정수 슬라임을 합쳐 ${n}마리 잡습니다(v3.161).`, [1, 10, 30], s => KING_IDS.reduce((a, id) => a + (s.book?.[id] || 0), 0), i => [{ pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 15, sp: 2 }][i]),
-    ...series('jobs', '숙련', n => `직업 ${n}개 해금`, n => `직업 ${n}개를 해금합니다.`, [10, 30, 80], s => (s.unlockedJobs || []).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('jobs', '숙련', n => `직업 ${n}개 전직`, n => `서로 다른 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [10, 30, 80], s => unlockedJobCount(s), i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('learned', '숙련', n => `스킬 ${n}개 습득`, n => `SP로 스킬 ${n}개를 배웁니다.`, [10, 30, 80], s => Object.values(s.learned || {}).filter(n => n > 0).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.74 극한돌파 달성(보상 없음 · 명예 업적). 달성하면 운영자에게 문의합니다.
     { id: 'reenlist:1', honor: true, group: '계급' as const, title: '재입대', desc: '중장에서 재입대해 이등병부터 다시 오릅니다(v3.160).', reward: {}, progress: (s: State) => rankState(s).reenlist || 0, target: 1 },
@@ -168,8 +169,9 @@ export const ACHIEVEMENTS: Achievement[] = [
     /** v3.28 해킹 X 루트 권한을 한 번 쓰면 칭호 root(보상은 칭호뿐: 해커는 다른 재화를 얻지 않음). */
     { id: 'hacker:root', group: '도전', title: 'root', desc: '해킹 X 루트 권한을 실행합니다.', reward: {}, progress: s => (s.hacker?.roots || 0) > 0 ? 1 : 0, target: 1 },
     // v3.240 명예 업적(보상 없음 · 업적 보너스 집계 제외): 아제로스 · 이계 · 한계돌파 · 이계 연료 · 증권거래소 · 승천 · 스토리 · 결투 레이팅 · 겹영창.
-    ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개`, n => `아제로스 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('azeroth').length], unlockedIn('azeroth'), () => ({}))),
-    ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개`, n => `이계 직업 ${n}개를 해금합니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
+    // v3.445 ‘해금’ 대신 전직 화면과 같은 ‘전직해 본’으로: 한 번이라도 전직한 직업 수이며 숙달과는 다릅니다.
+    ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개 전직`, n => `아제로스 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [1, 5, AZEROTH_JOB_COUNT], unlockedIn('azeroth'), () => ({}))),
+    ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개 전직`, n => `이계 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
     // 11단계 원정 숙련(명예 업적 → 칭호).
     // 13단계: 시즌 순위 · 도감 명예 업적.
     { id: 'expSeasonTop:1', honor: true, group: '모험' as const, title: '원정 시즌 1위', desc: '월간 원정대 순위 1위로 시즌을 마칩니다(다음 달 첫 출발 때 정산).', reward: {}, progress: (s: State) => s.expeditionSeasonBest === 1 ? 1 : 0, target: 1 },

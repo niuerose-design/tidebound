@@ -6,7 +6,7 @@ import { supportAP } from './support';
 import type { State, Attribute, Skill, Stats } from '../types';
 import { PROGRESSION, emptyAttributes, STAT_LABELS, formatStat, ATTRIBUTE_NAMES } from '../data/progression';
 import { BALANCE, SKILL_FORMULA } from '../data/balance';
-import { Job, JobStatKey, jobById, lineageOf, worldOf, LINEAGES } from '../data/classes';
+import { Job, JobStatKey, jobById, lineageOf, jobWorldOf, type WorldId } from '../data/classes';
 import { SKILLS, skillById } from '../data/skills';
 import { BASE_STAGES, MONSTERS } from '../data/world';
 import { unlockFor, UNLOCK_LABEL } from '../data/unlock-info';
@@ -190,7 +190,7 @@ export function coreTranscendOf(s: Pick<State, 'skillPractice' | 'refineBase' | 
 export function coreScale(sk: Pick<Skill, 'job' | 'masteryMilestones'>, userJob: string | undefined, mastery = 0, transcend = 0) {
     const owner = sk.job ? jobById(sk.job) : undefined, user = userJob ? jobById(userJob) : undefined;
     // v3.231 이계도 계보 전용(다른 계보는 0). 시작값은 메이플처럼 70%.
-    const world = owner ? worldOf(LINEAGES.find(l => l.id === lineageOf(owner))) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
+    const world = owner ? jobWorldOf(owner) : 'maple', azeroth = world === 'azeroth', home = !owner || !user || lineageOf(owner) === lineageOf(user);
     if (world !== 'maple' && !home) return 0;
     const base = azeroth ? CORE_PASSIVE.azerothBase : CORE_PASSIVE.base, steps = masteryMilestonesFor(sk as Skill).length;
     const grown = base + (1 - base) * Math.min(1, Math.max(0, mastery) / steps);
@@ -408,6 +408,11 @@ export function skillRankHint(sk: Skill, rank: number, mastery = 0) {
 export const jobMastered = (s: Pick<State, 'jobMastery'> & Partial<Pick<State, 'masteryKept'>>, j: Job) => (s.jobMastery?.[j.id] || 0) >= jobMasteryTarget(j) || !!s.masteryKept?.includes(j.id);
 /** 숙달(숙련 목표 달성)한 직업 수. 떠돌이 모험가의 패시브와 숨은 조건이 셉니다. v3.69 옛 수련(retired)은 세지 않습니다(숙달할 직업 21개 감소, 기존 세이브도 같은 기준). */
 export const masteredJobCount = (s: Pick<State, 'jobMastery'>) => Object.keys(s.jobMastery || {}).filter(id => { const j = jobById(id); return !!j && !j.retired && jobMastered(s, j); }).length;
+/**
+ * v3.445 전직해 본 직업 수: unlockedJobs 가운데 지금 표에 있는(통폐합으로 지워지지 않은) 직업. world를 주면 그 세계의 직업만.
+ * 업적(직업 N개 전직 · 아제로스 · 이계 직업 N개)과 전직 화면의 ‘전직해 본’이 같은 기준입니다. 해금 = 한 번이라도 전직한 것이며 숙달과는 다릅니다.
+ */
+export const unlockedJobCount = (s: Pick<State, 'unlockedJobs'>, world?: WorldId) => (s.unlockedJobs || []).filter(id => { const j = jobById(id); return !!j && !j.retired && (!world || jobWorldOf(j) === world); }).length;
 /** v3.221 끼지 않은 지역 보스 코어의 공명 비율: 현재 직업 특성(어둠의 추종자 30%)이 있으면 그 값. */
 export const coreResonanceOf = (s: Pick<State, 'job'>) => jobById(s.job)?.coreResonance ?? BOSS_CORE_RULES.resonance;
 /** v3.327 전직 조건이 보는 기본 능력치: 기본 + 직접 투자 + 포식 + 보스 코어(칸 100% · 공명). 수련 패시브 몫은 넣지 않습니다(장착을 바꾸면 조건이 흔들리므로). */

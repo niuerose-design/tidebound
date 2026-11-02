@@ -390,6 +390,11 @@ export const WORLDS: { id: WorldId; name: string; subtitle: string; description:
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
 export const AZEROTH_MASTERY_SCALE = 10;
+/**
+ * v3.445 아제로스 직업 수(참모 계보 6 + 히든 계보 9). 히든 직업은 서버 전용 표(secret/jobs.ts)라 화면은 드러난 것만 알기 때문에,
+ * ‘아제로스 직업 모두’ 업적의 목표(업적 id)는 세지 않고 이 값을 씁니다. tests/azeroth.test.mjs가 서버 표의 실제 수와 같은지 검사합니다.
+ */
+export const AZEROTH_JOB_COUNT = 15;
 /** v3.309 궁극의 모험가(초보자 계보 히든 5차)의 숙달 목표 · 궁극의 유산 숙련 단계 배율: 5차를 다 돌아 본 사람의 긴 목표라 아제로스처럼 메이플 5차의 10배. */
 export const ULTIMATE_MASTERY_SCALE = 10;
 /** 계보가 속한 세계(없으면 메이플 월드). */
@@ -450,7 +455,20 @@ for (const lineage of LINEAGES) lineage.summary = MAPLE_LINEAGE_SUMMARY[lineage.
  */
 export function registerLineages(list: Lineage[]) {
     for (const l of list) { const i = LINEAGES.findIndex(x => x.id === l.id); if (i >= 0) LINEAGES[i] = l; else LINEAGES.splice(LINEAGES.findIndex(x => x.id === 'mystery-independent'), 0, l); }
+    lineageWorldCache.clear();
 }
+/**
+ * v3.445 계보 id → 세계. 비밀 계보(아제로스 히든)는 모듈을 다 읽은 뒤 registerLineages로 들어오므로, 표를 모듈 시작 때 굳히지 않고 부를 때 찾습니다(등록되면 캐시를 비움).
+ * 업적(아제로스 직업 N개)과 전직 화면이 같은 함수를 써서 같은 수를 셉니다.
+ */
+const lineageWorldCache = new Map<string, WorldId>();
+export function worldOfLineage(id: string): WorldId {
+    let w = lineageWorldCache.get(id);
+    if (w === undefined) { w = worldOf(LINEAGES.find(l => l.id === id)); lineageWorldCache.set(id, w); }
+    return w;
+}
+/** 직업이 속한 세계(계보의 world, 없으면 메이플 월드). */
+export const jobWorldOf = (job: Job): WorldId => worldOfLineage(lineageOf(job));
 /** 직업의 계보 id. lineage가 있으면 그 값, 상위·하위가 없는 1차 직업은 `${tree}-independent`, 그 밖에는 루트 조상 id. */
 export function lineageOf(job: Job): string {
     // v27.62 직업의 부모·계열은 데이터가 정해지면 바뀌지 않아 한 번 계산한 계보를 기억합니다(전직 화면이 렌더마다 수천 번 부름).
