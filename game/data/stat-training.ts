@@ -39,6 +39,6 @@ export const STAT_TRAINING_JOBS: Job[] = STATS.flatMap(({ stat, label, parent, t
     lineage: `${tree}-independent`, subRole: 'training', masteryTarget: step.target, masteryBoost: 0,
 })));
 export const STAT_TRAINING_SKILLS: Skill[] = STATS.flatMap(({ stat, label }) => STAT_TRAINING_STEPS.map((step, i): Skill => ({
-    id: `${stat}Drill${i + 1}`, name: `${label} 단련 ${step.roman}`, desc: `${label}이(가) ${step.attr} 오릅니다(배분 능력치처럼 모든 파생 수치에 반영). 숙련 단계마다 +25%.`,
+    id: `${stat}Drill${i + 1}`, name: `${label} 단련 ${step.roman}`, desc: `${label}이(가) ${step.attr} 오릅니다. 배분 능력치처럼 모든 파생 수치에 반영되고, 숙련 단계마다 +25%.`,
     type: 'passive', level: 10, job: jobId(stat, i), chance: 0, cooldown: 0, multiplier: 0, cost: step.cost, attrBonus: { [stat]: step.attr }, masteryMilestones: [...step.milestones],
 })));

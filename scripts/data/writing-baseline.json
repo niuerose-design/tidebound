@@ -11,7 +11,7 @@
    "long": 2
   },
   "components/features/battle/arena.tsx": {
-   "paren": 2
+   "paren": 1
   },
   "components/features/battle/dock.tsx": {
    "paren": 3
@@ -23,18 +23,18 @@
    "paren": 2
   },
   "components/features/character/breakdown.tsx": {
-   "paren": 10,
+   "paren": 9,
    "long": 1,
    "dots": 1
   },
   "components/features/character/character-screen.tsx": {
-   "paren": 9
+   "paren": 6
   },
   "components/features/character/cosmetics-screen.tsx": {
    "paren": 6
   },
   "components/features/codex/monster-book.tsx": {
-   "paren": 15
+   "paren": 14
   },
   "components/features/codex/parts.tsx": {
    "paren": 3
@@ -59,7 +59,7 @@
    "paren": 1
   },
   "components/features/expedition/run.tsx": {
-   "paren": 10,
+   "paren": 9,
    "dots": 1,
    "long": 1
   },
@@ -85,7 +85,7 @@
    "paren": 8
   },
   "components/features/help/topics/combat.tsx": {
-   "paren": 14,
+   "paren": 13,
    "long": 2,
    "dots": 1
   },
@@ -116,7 +116,7 @@
    "dots": 2
   },
   "components/features/inventory/inventory-screen.tsx": {
-   "paren": 5
+   "paren": 3
   },
   "components/features/jobs/job-compare.tsx": {
    "paren": 1
@@ -187,7 +187,7 @@
    "paren": 1
   },
   "components/features/skills/skill-card.tsx": {
-   "paren": 4
+   "paren": 3
   },
   "components/features/skills/skills-screen.tsx": {
    "paren": 2
@@ -223,28 +223,16 @@
    "dots": 1
   },
   "components/game/scene-look-setting.ts": {
-   "paren": 4
-  },
-  "game/data/achievements.ts": {
-   "paren": 25
-  },
-  "game/data/balance.ts": {
-   "paren": 5,
-   "long": 3
-  },
-  "game/data/boss-core.ts": {
    "paren": 3
   },
+  "game/data/balance.ts": {
+   "long": 1
+  },
   "game/data/classes.ts": {
-   "paren": 3,
    "long": 1
   },
   "game/data/economy.ts": {
-   "paren": 17,
-   "long": 4
-  },
-  "game/data/encounters.ts": {
-   "paren": 1
+   "long": 3
   },
   "game/data/expansion-defense.ts": {
    "paren": 5,
@@ -278,31 +266,18 @@
    "dots": 7
   },
   "game/data/gear.ts": {
-   "paren": 17,
    "long": 1
   },
   "game/data/otherworld.ts": {
    "long": 8,
    "paren": 17
   },
-  "game/data/progression.ts": {
-   "paren": 4
-  },
-  "game/data/rank.ts": {
-   "paren": 1
-  },
   "game/data/skill-balance.ts": {
-   "paren": 22
-  },
-  "game/data/skills.ts": {
-   "paren": 5
+   "paren": 4
   },
   "game/data/specials.ts": {
    "long": 2,
    "paren": 16
-  },
-  "game/data/stat-training.ts": {
-   "paren": 1
   },
   "game/data/story.ts": {
    "paren": 2
@@ -310,21 +285,11 @@
   "game/data/support-rework.ts": {
    "paren": 8
   },
-  "game/data/tips.ts": {
-   "paren": 3
-  },
-  "game/data/titles.ts": {
-   "paren": 1
-  },
   "game/data/training.ts": {
    "paren": 8
   },
   "game/data/variants.ts": {
-   "paren": 2,
    "long": 1
-  },
-  "game/data/whistle.ts": {
-   "paren": 1
   },
   "game/systems/actions/build.ts": {
    "paren": 2
@@ -337,7 +302,7 @@
    "paren": 9
   },
   "game/systems/actions/hacker.ts": {
-   "paren": 7
+   "paren": 6
   },
   "game/systems/actions/lifecycle.ts": {
    "dots": 1,
@@ -356,10 +321,10 @@
    "paren": 1
   },
   "game/systems/combat.ts": {
-   "paren": 3
+   "paren": 2
   },
   "game/systems/commerce.ts": {
-   "paren": 13,
+   "paren": 11,
    "dots": 2
   },
   "game/systems/duel.ts": {
@@ -374,9 +339,6 @@
   "game/systems/encounter.ts": {
    "dots": 2,
    "paren": 11
-  },
-  "game/systems/equipment.ts": {
-   "paren": 1
   },
   "game/systems/expedition.ts": {
    "paren": 1
@@ -406,7 +368,7 @@
    "paren": 4
   },
   "game/systems/skill-description.ts": {
-   "paren": 82,
+   "paren": 80,
    "dots": 3,
    "long": 6
   }

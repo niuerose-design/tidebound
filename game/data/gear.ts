@@ -78,21 +78,21 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'lucky', name: '행운', stat: 'crit', kind: 'percent', base: .015, description: '치명타 확률이 오릅니다.' },
     { id: 'brutal', name: '잔혹', stat: 'critDamage', kind: 'percent', base: .1, weight: .4, description: '치명 피해가 오릅니다.' },
     { id: 'piercing', name: '관통', stat: 'penetration', kind: 'percent', /* v3.84 .025 × 2 */ base: .05, description: '방어 관통이 오릅니다.' },
-    { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다 (장비 흡혈 합계 최대 10%p).' },
+    { id: 'leech', name: '흡혈', stat: 'lifesteal', kind: 'percent', base: .015, description: '준 피해의 일부를 회복합니다. 장비 흡혈 합계는 최대 10%p.' },
     { id: 'drift', name: '회피', stat: 'evasion', kind: 'percent', base: .02, retired: true, description: '회피가 오릅니다. 지금은 감각으로 합쳐져 새로 붙지 않습니다.' },
     // v3.72 명중 · 회피 통합 옵션: 두 수치를 함께 굴립니다(예전 정밀 · 회피 한 줄씩과 같은 크기).
     { id: 'sense', name: '감각', stat: 'accuracy', kind: 'percent', base: .03, stat2: 'evasion', base2: .02, rollBoth: true, description: '명중과 회피가 함께 오릅니다.' },
     { id: 'swift', name: '신속', stat: 'speed', kind: 'percent', base: 2, description: '속도가 오릅니다.' },
     { id: 'venom', name: '고통', stat: 'dotBonus', kind: 'percent', base: .06, description: '출혈·중독·화상 피해가 모두 늘어납니다.' },
-    { id: 'spiked', name: '가시', stat: 'thorns', kind: 'percent', base: .04, description: '맞을 때 물리 방어 비례 반격 (방어 친화도 적용).' },
+    { id: 'spiked', name: '가시', stat: 'thorns', kind: 'percent', base: .04, description: '맞을 때 물리 방어에 비례해 반격합니다. 방어 친화도가 적용됩니다.' },
     // v3.72 룬은 마력 평타가 켜짐/꺼짐 판정이라 마법 직업에는 효과가 없고 물리 직업은 평타가 마력 평타로 바뀌어 손해였습니다. 새로 붙지 않습니다.
     { id: 'runic', name: '룬', stat: 'arcaneStrike', kind: 'percent', base: .03, retired: true, description: '마법 직업의 마력 평타 확률이 오릅니다. 지금은 새로 붙지 않습니다.' },
     { id: 'scholar', name: '학식', stat: 'expBonus', kind: 'percent', base: .03, description: '경험치 획득이 늘어납니다.' },
     { id: 'golden', name: '황금', stat: 'goldBonus', kind: 'percent', base: .04, description: '처치 골드가 늘어납니다.' },
     { id: 'seeker', name: '탐색', stat: 'dropBonus', kind: 'percent', base: .01, description: '장비 드롭 확률이 늘어납니다(상대 증가).' },
     // 양날 옵션: 큰 이득 + 손해. v3.71 이득과 손해를 함께 ×1.5(맞는 빌드엔 확실한 이득, 안 맞으면 확실한 손해).
-    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.405, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용(마법 직업에는 공격 이득이 거의 없음). 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
-    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -1.98, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다. 마법 직업용(물리 직업에는 공격 이득이 거의 없음). 체력 손해는 장비 위력에 비례하고 굴림 없이 고정이며, 연구 · 직업의 체력 배율이 곱해져 실제 최대 체력은 표시보다 크게 줄어듭니다.' },
+    { id: 'berserk', name: '광전사', stat: 'attack', kind: 'flat', base: 1.35, stat2: 'defense', base2: -.405, description: '물리 공격이 크게 오르지만 물리 방어가 줄어듭니다. 물리 직업용이라 마법 직업에는 공격 이득이 거의 없습니다. 방어 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
+    { id: 'glassCannon', name: '유리 대포', stat: 'magic', kind: 'flat', base: 1.35, stat2: 'hp', base2: -1.98, description: '마법 공격이 크게 오르지만 최대 체력이 줄어듭니다. 마법 직업용이라 물리 직업에는 공격 이득이 거의 없습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정이며, 연구 · 직업의 체력 배율이 곱해져 실제 최대 체력은 표시보다 크게 줄어듭니다.' },
     { id: 'bulwark', name: '성벽', stat: 'defense', kind: 'flat', base: .81, stat2: 'speed', base2: -6, description: '물리 방어가 크게 오르지만 느려집니다. 속도 손해는 고정 폭입니다.' },
     { id: 'gambit', name: '도박수', stat: 'crit', kind: 'percent', base: .075, stat2: 'accuracy', base2: -.09, description: '치명타가 크게 오르지만 명중이 줄어듭니다. 치명타 100%를 아직 못 채운 캐릭터에게 이득이고, 명중 손해는 고정 폭입니다.' },
     { id: 'bloodPact', name: '피의 계약', stat: 'lifesteal', kind: 'percent', base: .0525, stat2: 'hp', base2: -1.35, uncapped: true, description: '흡혈이 크게 오르지만 최대 체력이 줄어듭니다. 이 흡혈은 장비 · 전체 흡혈 상한을 받지 않습니다. 체력 손해는 장비 위력에 비례하고 굴림 없이 고정입니다.' },
@@ -100,8 +100,8 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.197 가중치를 따로 둡니다(기본 1이라 일반 옵션만큼 나와 태초 5개 중 1개꼴로 초월이 붙었음): 초월 .2(태초 약 4~5%), 나머지 .4.
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
     { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, weight: .2, description: '고대 이상. 체력 · 마나 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
-    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, weight: .4, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다(다른 보스 피해와 곱연산, 지속 피해에는 붙지 않음).' },
-    { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, weight: .4, description: '고대 이상. 연속 행동 확률이 오릅니다(속도와 무관).' },
+    { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, weight: .4, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다. 다른 보스 피해와 곱하고, 지속 피해에는 붙지 않습니다.' },
+    { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, weight: .4, description: '고대 이상. 연속 행동 확률이 오릅니다. 속도와는 무관합니다.' },
     { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, weight: .4, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },
     // v3.5 망토 전용 옵션: 몬스터 상태이상 저항. 수치 = 18.8% × (레벨/100)² × 등급 품질 × 굴림, 착용 시 별당 +3%(다른 옵션과 달리 별 보정), 합계 최대 50%(Lv.100 태초 22성 ≈ 50%).
     // v3.75 태초 · 칠흑 전용 희귀 옵션(옵션 6줄짜리 장비에서만, 출현은 ODDS.affix.rare). 수련 · 전공은 고정 +1.
@@ -111,16 +111,16 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'distill', name: '정수', stat: 'essenceBonus', kind: 'percent', base: .23, rare: true, minRarity: 6, description: '태초 · 칠흑. 장비를 분해할 때 받는 정수가 늘어납니다.' },
     // v3.75 꽝 옵션: 효과가 거의 없는 줄. 옵션 재설정으로 바꿉니다.
     { id: 'ornate', name: '장식', stat: 'ornament', kind: 'percent', base: 1, fixed: true, junk: true, description: '꽝. 효과는 없고 장비 이름 앞에 ‘반짝이는’이 붙습니다.' },
-    { id: 'pinch', name: '한 줌', stat: 'hp', kind: 'flat', base: 1, fixed: true, junk: true, description: '꽝. 최대 체력 +1(장비 위력과 무관).' },
+    { id: 'pinch', name: '한 줌', stat: 'hp', kind: 'flat', base: 1, fixed: true, junk: true, description: '꽝. 최대 체력 +1. 장비 위력과 무관합니다.' },
     { id: 'steadfast', name: '불굴', stat: 'statusResist', kind: 'percent', base: STATUS_RESIST_BASE, onlySlot: 'cape', levelPower: 2, description: '망토 전용. 몬스터가 거는 기절·침묵·출혈·중독·화상·약화·감속을 이 확률로 무효화합니다. 별마다 +3%, 최대 50%.' },
     // v3.12 칠흑 장신구 고유 옵션(규칙). onlyOrigin 'onyx'라 어디서도 굴리지 않고 onyxAccessory가 직접 붙입니다.
     { id: 'onyxThorns', name: '공포의 가시', stat: 'thorns', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 맞을 때 물리 방어 비례 반격 +10%p.' },
-    { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 연속 행동 확률 +10%p(속도와 무관).' },
+    { id: 'onyxChain', name: '지휘관의 박자', stat: 'chainBonus', kind: 'rule', base: .1, onlyOrigin: 'onyx', description: '칠흑. 연속 행동 확률 +10%p. 속도와는 무관합니다.' },
     { id: 'onyxControl', name: '거미의 실', stat: 'statusResist', kind: 'rule', base: .15, stat2: 'controlBonus', base2: 1, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +15%p, 내 기절·침묵·감속 지속 +1턴.' },
     { id: 'onyxArcane', name: '몽환의 마력', stat: 'arcaneStrike', kind: 'rule', base: .1, stat2: 'arcaneRatioBonus', base2: .1, onlyOrigin: 'onyx', description: '칠흑. 마력 평타 확률 +10%p, 마력 평타 배율 +10%p.' },
     { id: 'onyxWard', name: '사령의 가호', stat: 'statusResist', kind: 'rule', base: .2, stat2: 'hpRegen', base2: 15, onlyOrigin: 'onyx', description: '칠흑. 상태이상 저항 +20%p, 턴당 체력 회복 +15.' },
     // v3.276 고통의 근원(진 힐라): 흡혈은 장비 흡혈 상한을 받지 않습니다(피의 계약과 같은 uncapped).
-    { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', kind: 'rule', base: .05, stat2: 'executeBonus', base2: .05, uncapped: true, onlyOrigin: 'onyx', description: '칠흑. 흡혈 +5%p(장비 흡혈 상한 없음), 빈사 판정 기준 +5%p.' },
+    { id: 'onyxSoul', name: '영혼 착취', stat: 'lifesteal', kind: 'rule', base: .05, stat2: 'executeBonus', base2: .05, uncapped: true, onlyOrigin: 'onyx', description: '칠흑. 흡혈 +5%p, 빈사 판정 기준 +5%p. 이 흡혈은 장비 흡혈 상한을 넘습니다.' },
     { id: 'onyxBoss', name: '태양의 분노', stat: 'bossDamage', kind: 'rule', base: .15, onlyOrigin: 'onyx', description: '칠흑. 보스·사냥감에게 주는 피해 +15%.' },
     { id: 'onyxGenesis', name: '창세의 힘', stat: 'allStats', kind: 'rule', base: .05, onlyOrigin: 'onyx', description: '칠흑. 체력·마나·물리/마법 공격·물리/마법 방어 +5%.' },
     // v25.8 무릉도장 전용 옵션: 무릉도장 드롭에만 붙고 일반 옵션보다 강했습니다. v3.188 운영 결정으로 퇴역(retired): 새로 붙지 않고, 이미 붙은 줄은 그대로 작동합니다.
@@ -129,14 +129,14 @@ export const AFFIX_POOL: AffixDef[] = [
     { id: 'abyssBreath', name: '심연의 숨', stat: 'lifesteal', kind: 'percent', base: .018, onlyOrigin: 'abyss', retired: true, description: '옛 무릉도장 옵션. 흡혈이 오르고, 새로 붙지 않습니다. 장비 흡혈 합계는 최대 10%p.' },
     { id: 'abyssWeight', name: '심연의 무게', stat: 'penetration', kind: 'percent', /* v3.84 .04 × 2 */ base: .08, onlyOrigin: 'abyss', retired: true, description: '옛 무릉도장 옵션. 방어 관통이 크게 오르고, 새로 붙지 않습니다.' },
     // 규칙 옵션 (영웅 이상, 장비당 1개)
-    { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴 (합계 최대 +1).' },
-    { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴 (합계 최대 +1).' },
-    { id: 'lingering', name: '잔류', stat: 'dotTurnsBonus', kind: 'rule', base: 1, minRarity: 3, description: '출혈·중독·화상 지속 +1턴 (합계 최대 +2).' },
-    { id: 'saturate', name: '포화', stat: 'poisonStackBonus', kind: 'rule', base: 1, minRarity: 3, description: '중독 최대 중첩 +1 (합계 최대 +3).' },
-    { id: 'runeCore', name: '룬 핵', stat: 'arcaneRatioBonus', kind: 'rule', base: .1, minRarity: 3, description: '마력 평타 계수 +0.1 (합계 최대 +0.3).' },
-    { id: 'echoing', name: '메아리', stat: 'followUpBonus', kind: 'rule', base: .1, minRarity: 3, description: '추가타 위력 +10%p (합계 최대 +30%p).' },
-    { id: 'mending', name: '치유', stat: 'healBonus', kind: 'rule', base: .15, minRarity: 3, description: '회복 기술 회복량 +15% (합계 최대 +50%).' },
-    { id: 'reaper', name: '처형', stat: 'executeBonus', kind: 'rule', base: .05, minRarity: 3, description: '빈사 판정 기준 +5%p (합계 최대 +15%p).' },
+    { id: 'concuss', name: '뇌진탕', stat: 'stunBonus', kind: 'rule', base: 1, minRarity: 3, description: '기절 지속 +1턴. 합계 최대 +1.' },
+    { id: 'binding', name: '속박', stat: 'controlBonus', kind: 'rule', base: 1, minRarity: 3, description: '침묵·감속 지속 +1턴. 합계 최대 +1.' },
+    { id: 'lingering', name: '잔류', stat: 'dotTurnsBonus', kind: 'rule', base: 1, minRarity: 3, description: '출혈·중독·화상 지속 +1턴. 합계 최대 +2.' },
+    { id: 'saturate', name: '포화', stat: 'poisonStackBonus', kind: 'rule', base: 1, minRarity: 3, description: '중독 최대 중첩 +1. 합계 최대 +3.' },
+    { id: 'runeCore', name: '룬 핵', stat: 'arcaneRatioBonus', kind: 'rule', base: .1, minRarity: 3, description: '마력 평타 계수 +0.1. 합계 최대 +0.3.' },
+    { id: 'echoing', name: '메아리', stat: 'followUpBonus', kind: 'rule', base: .1, minRarity: 3, description: '추가타 위력 +10%p. 합계 최대 +30%p.' },
+    { id: 'mending', name: '치유', stat: 'healBonus', kind: 'rule', base: .15, minRarity: 3, description: '회복 기술 회복량 +15%. 합계 최대 +50%.' },
+    { id: 'reaper', name: '처형', stat: 'executeBonus', kind: 'rule', base: .05, minRarity: 3, description: '빈사 판정 기준 +5%p. 합계 최대 +15%p.' },
     // ── v3.367 코프룰루 구역 옵션 56종(tools/content-kit 생성): 고정 8 · 비율 20 · 양손 4 · 양날 8 · 고대 전용 6 · 태초 전용 4 · 규칙 4 · 꽝 2 ──
     // 일반 옵션은 가중치 ×.4: 풀이 두 배로 커져도 규칙 옵션(◆)이 태초 장비의 약 36%에 붙는 v3.133 기준이 유지되게(tests/ascension ‘rule options draw at weight .25’).
     { id: 'bulk', name: '육중', stat: 'hp', kind: 'flat', base: .54, stat2: 'defense', base2: .108, rollBoth: true, weight: .4, description: '최대 체력과 물리 방어를 함께 올립니다. 느린 대신 단단한 외골격의 옵션.' },

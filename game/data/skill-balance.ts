@@ -87,7 +87,7 @@ function applyStatusRules(sk: Skill, tier: number) {
         sk.chance = Math.min(sk.chance, STATUS_ONLY_MAX_CHANCE);
         sk.cooldown = Math.max(sk.cooldown, sk.statusTurns);
         delete sk.damageBonusCondition; delete sk.conditionalDamageBonus; delete sk.extraAttacks; delete sk.penetrationBonus;
-        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
+        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}, 약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}.`;
         return;
     }
     // 1~3차 연계 공격기(제어·출혈·약화 중인 적 추가 피해)는 상태이상 없이 피해만 줍니다. 상태는 같은 계보의 보조기가 겁니다.
@@ -105,13 +105,13 @@ const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', ca
 function progressDesc(sk: Skill) {
     let out = '';
     if (sk.scaling && PROGRESS_SOURCE[sk.scaling]) out += ` 피해 × (1 + ${PROGRESS_SOURCE[sk.scaling]} × ${sk.scalingRatio}).`;
-    if (sk.dice) out += ` ${ATTRIBUTE_NAMES[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개(최대 ${sk.dice.max}개)를 굴려 가장 높은 눈으로 피해 ×${sk.dice.low}~×${sk.dice.high}.`;
+    if (sk.dice) out += ` ${ATTRIBUTE_NAMES[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개씩, 최대 ${sk.dice.max}개를 굴려 가장 높은 눈으로 피해 ×${sk.dice.low}~×${sk.dice.high}.`;
     if (sk.gamble && sk.gamble.min !== sk.gamble.max) out += ` 쓸 때마다 피해 ×${sk.gamble.min}~${sk.gamble.max}${sk.gamble.accuracy ? ` · 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p` : ''} 무작위.`;
-    if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 (건 체력 × ${sk.allIn.hpScale} + 건 마나 × ${sk.allIn.manaScale})를 피해에 더합니다.`;
-    if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%(최대 ${[sk.goldSpend.capAttack ? `${sk.damageType === 'magic' ? '마법' : '물리'} 공격 × ${sk.goldSpend.capAttack}` : '', sk.goldSpend.cap ? sk.goldSpend.cap.toLocaleString() : ''].filter(Boolean).join(' · ')})를 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
+    if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 건 체력 × ${sk.allIn.hpScale}과 건 마나 × ${sk.allIn.manaScale}를 피해에 더합니다.`;
+    if (sk.goldSpend) out += ` 보유 골드 ${Math.round(sk.goldSpend.ratio * 1000) / 10}%를, 최대 ${[sk.goldSpend.capAttack ? `${sk.damageType === 'magic' ? '마법' : '물리'} 공격 × ${sk.goldSpend.capAttack}` : '', sk.goldSpend.cap ? sk.goldSpend.cap.toLocaleString() : ''].filter(Boolean).join(' · ')}까지 던져 × ${sk.goldSpend.scale}만큼 피해에 더합니다.`;
     if (sk.preyBonus) out += ` 보스·지정 몬스터에게 피해 +${Math.round(sk.preyBonus * 100)}%.`;
     if (sk.allIn?.heal) out += ` 건 마나 × ${sk.allIn.heal}만큼 회복.`;
-    if (sk.recoil) out += ` 준 피해의 ${Math.round(sk.recoil * 100)}%를 자신도 받습니다(체력 1 아래로는 안 내려감).`;
+    if (sk.recoil) out += ` 준 피해의 ${Math.round(sk.recoil * 100)}%를 자신도 받습니다. 체력 1 아래로는 내려가지 않습니다.`;
     if (sk.sureHit) out += ' 반드시 명중합니다.';
     if (sk.extraTurn) out += ' 곧바로 한 번 더 행동합니다.';
     if (sk.sealPower) out += ` 이번 전투에 새긴 인 1개마다 피해 +${Math.round(sk.sealPower * 100)}%.`;
@@ -172,12 +172,12 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
-        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'arcane' ? '마력 평타 계수 기준값' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격(고정 피해 · 방어 무시)` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
-        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : sk.manaBurn ? ` + 태운 마나(현재 마나 ${Math.round(sk.manaBurn * 100)}%) × ${sk.burnScale ?? SKILL_FORMULA.manaBurnScale}` : '';
+        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'arcane' ? '마력 평타 계수 기준값' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격 · 고정 피해 · 방어 무시` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
+        const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : sk.manaBurn ? ` + 현재 마나의 ${Math.round(sk.manaBurn * 100)}%를 태워 × ${sk.burnScale ?? SKILL_FORMULA.manaBurnScale}` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' }[sk.effect as 'stun'];
         if (sk.timeRewind) { sk.desc = '피해 없이 내 체력·마나를 가득 채우고 대기 중인 내 기술을 되돌립니다. 전투당 1회.'; continue; }
         if (sk.statusOnly) {
-            sk.desc = `피해 없이 ${sk.alsoEffect ? '중독·화상(중첩)' : statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 피해(방어 무시).` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 피해(방어 무시).` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 피해(방어 무시).` : ''}`;
+            sk.desc = `피해 없이 ${sk.alsoEffect ? '중독·화상(중첩)' : statusName} ${sk.statusTurns}턴.${sk.effect === 'bleed' ? ` 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.bleedRatio} 방어 무시 피해.` : sk.effect === 'poison' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.poisonRatio} 방어 무시 피해.` : sk.effect === 'burn' ? ` 중첩당 턴마다 (${source}${scaling}) × ${sk.dotRatio ?? SKILL_FORMULA.burnRatio} 방어 무시 피해.` : ''}`;
             if (sk.gamble?.accuracy) sk.desc += ` 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p 무작위.`;
             if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·중독·감속 해제.';
             if (sk.outsiderChance !== undefined) sk.desc += ` 다른 계보가 계승하면 발동률 ×${sk.outsiderChance}.`;
@@ -194,25 +194,25 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         // v3.132 장착 효과가 있는 액티브(도트 퍼니셔)는 무엇이 오르는지 적습니다.
         if (sk.bonus) sk.desc += ` 장착하면 ${Object.keys(sk.bonus).map(k => STAT_LABELS[k as keyof typeof STAT_LABELS]).join('·')}이 오릅니다.`;
         if (sk.outsiderChance !== undefined) sk.desc += ` 다른 계보가 계승하면 발동률 ×${sk.outsiderChance}.`;
-        if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴${sk.dotFinisher.fullReset ? '(대기 초기화)' : ''}, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
+        if (sk.dotFinisher) sk.desc += ` 적의 중독·화상 중첩에 비례해 ${Math.round(sk.dotFinisher.hitMultiplier * 100)}% 위력 추가타 최대 ${sk.dotFinisher.maxHits}회. 둘 다 최대 중첩이면 ${sk.dotFinisher.maxHits}회와 기절 ${sk.dotFinisher.fullStun}턴${sk.dotFinisher.fullReset ? ' · 대기 초기화' : ''}, 일부면 ${Math.round(sk.dotFinisher.maxHits / 2)}~${sk.dotFinisher.maxHits - 1}회와 기절 ${sk.dotFinisher.partStun}턴.`;
         if (sk.damageBonusCondition === 'statuses') sk.desc += ` 적에게 걸린 상태이상 1종마다 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         else if (sk.damageBonusCondition) sk.desc += ` ${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '기절·침묵·감속', lowHp: '빈사' }[sk.damageBonusCondition]} 상태의 적에게 피해 +${Math.round((sk.conditionalDamageBonus || 0) * 100)}%.`;
         if (sk.extraAttacks) sk.desc += ` ${Math.round((sk.extraAttackMultiplier ?? .65) * 100)}% 위력으로 추가 공격 ${sk.extraAttacks}회.`;
         if (sk.cleanseSelf) sk.desc += ' 발동 시 자신의 출혈·감속 해제.';
-        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}(약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}).`;
+        if (sk.charge) sk.desc += ` 명중하면 충전 +${sk.charge}, 약화된 적이면 +${sk.charge + SKILL_FORMULA.charge.weakenedExtra}.`;
         if (sk.chargeNeed) sk.desc += ` 충전 ${sk.chargeNeed}중첩 이상에서만 나가고, 중첩을 모두 소모해 중첩당 피해 +${Math.round((sk.chargeBonus || 0) * 100)}%.`;
         if (sk.chargeHits) sk.desc += ` 명중하면 충전(회피 반격)을 모두 소모해 중첩당 추가타 +${sk.chargeHits}.`;
-        if (sk.hpCost) sk.desc += ` 마나 대신 현재 체력의 ${Math.round(sk.hpCost * 100)}%를 바칩니다(체력 1은 남음).`;
+        if (sk.hpCost) sk.desc += ` 마나 대신 현재 체력의 ${Math.round(sk.hpCost * 100)}%를 바칩니다. 체력 1은 남습니다.`;
         if (sk.manaBurn) sk.desc += ` 고정 마나 소모 없이 현재 마나의 ${Math.round(sk.manaBurn * 100)}%를 태워 그만큼 피해에 더합니다.`;
-        if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%(화상은 사라짐).`;
+        if (sk.burnConsume) sk.desc += ` 명중한 적의 화상 중첩을 모두 터뜨려 중첩당 피해 +${Math.round(sk.burnConsume * 100)}%. 화상은 사라집니다.`;
         if (sk.selfBuff) sk.desc += ` 쓰면 자기 버프 ${sk.selfBuff.name ?? sk.selfBuff.id} ${sk.selfBuff.turns}턴.`;
         if (sk.extendBuffs) sk.desc += ` 살아 있는 자기 버프를 모두 ${sk.extendBuffs}턴 연장.`;
         if (sk.requiresBuff) sk.desc += ` ${sk.requiresBuff === 'spectre' ? '변신' : sk.requiresBuff} 중에만 나갑니다.`;
-        if (sk.balanceBonus) sk.desc += ` 여섯 능력치가 고를수록(최저 ÷ 최고) 최대 +${Math.round(sk.balanceBonus * 100)}%.`;
+        if (sk.balanceBonus) sk.desc += ` 여섯 능력치가 고를수록 최대 +${Math.round(sk.balanceBonus * 100)}%. 비율은 최저 ÷ 최고.`;
         sk.desc += progressDesc(sk);
         if (sk.condition === 'wounded') sk.desc += ' 체력 70% 이하에서 시도.';
         if (sk.condition === 'healthyTarget') sk.desc += ' 적 체력 60% 이상에서 시도.';
     }
     // v3.86 각성기 설명 앞에 [각성]을 붙입니다(위에서 설명을 다시 썼으므로).
-    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '') + (sk.wardPierce?.length && !(sk.desc || '').includes('각성 관통') ? ` 각성 관통(숙련 단계별 ${sk.wardPierce.map(p => `${Math.round(p * 100)}%`).join('/')}).` : '');
+    for (const sk of skills) if (sk.awaken) sk.desc = awakenDesc(sk.desc || '') + (sk.wardPierce?.length && !(sk.desc || '').includes('각성 관통') ? ` 각성 관통은 숙련 단계별 ${sk.wardPierce.map(p => `${Math.round(p * 100)}%`).join('/')}.` : '');
 }

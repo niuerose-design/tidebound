@@ -31,7 +31,7 @@ export const ENEMY_SKILLS: Skill[] = [
     { id: 'papRift', name: '차원의 균열', desc: '마법 공격 195% 피해 + 3턴 약화. 방어 57% 관통.', type: 'active', level: 1, chance: .28, cooldown: 4, multiplier: 1.95, penetrationBonus: .57, damageType: 'magic', effect: 'weaken', statusTurns: 3, manaCost: 0 },
     { id: 'papAlarm', name: '알람 폭발', desc: '복합 피해 210%. 물리·마법 방어를 절반씩 적용합니다. 방어 57% 관통.', type: 'active', level: 1, chance: .26, cooldown: 6, multiplier: 2.1, penetrationBonus: .57, damageType: 'split', manaCost: 0 },
     // v3.278 스우 · 데미안.
-    { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 195% 피해 + 3턴 부식(물리 · 마법 방어와 속도 감소). 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.95, penetrationBonus: .57, effect: 'corrode', statusTurns: 3, manaCost: 0 },
+    { id: 'onyxGravity', name: '중력 붕괴', desc: '물리 공격 195% 피해 + 3턴 부식. 부식은 물리 · 마법 방어와 속도를 깎습니다. 방어 57% 관통.', type: 'active', level: 1, chance: .3, cooldown: 5, multiplier: 1.95, penetrationBonus: .57, effect: 'corrode', statusTurns: 3, manaCost: 0 },
     { id: 'onyxBrand', name: '낙인', desc: '복합 피해 250% + 3턴 출혈. 물리 · 마법 방어를 절반씩 적용합니다.', type: 'active', level: 1, chance: .3, cooldown: 4, multiplier: 2.5, damageType: 'split', effect: 'bleed', statusTurns: 3, manaCost: 0 },
     // v3.311 핑크빈(월드보스 넷째) 고유 기술: 버팀(無 · 리인카네이션)을 꿰뚫는 심판 · 침묵 광선. 면역은 석상의 가호(data/altar.ts raidImmunity)로 소환마다 바뀝니다.
     { id: 'pbJudgement', name: '석상의 심판', desc: '물리 공격 260% 피해. 방어 57% 관통. 이 일격에 쓰러지면 체력 1로 버티는 효과(無 등)가 발동하지 않습니다.', type: 'active', level: 1, chance: .26, cooldown: 5, multiplier: 2.6, penetrationBonus: .57, ignoreStand: true, manaCost: 0 },
