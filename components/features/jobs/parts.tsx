@@ -15,16 +15,20 @@ export const ColumnTitle = ({ no, children, className }: { no: string; children:
 export const STATUS_CLS: Record<string, string> = { current: 'text-accent', mastered: 'text-gold-ink', ready: 'text-ok', near: 'text-warn', locked: 'text-ink-3', secret: 'text-ink-3' };
 const tierRange = (tiers: number[]) => { const lo = Math.max(1, tiers[0]), hi = tiers.at(-1)!; return hi <= 0 ? '시작' : lo === hi ? `${hi}차` : `${lo}~${hi}차`; };
 
-/** ① 계보 카드(세로 목록). 계보명 · 차수 점(해금한 차수 채움) · 상태 한 줄. 목표 직업이 든 계보에는 깃발. */
+/**
+ * ① 계보 줄(세로 목록). v3.452 두 줄로: 그림 · 계보명 · [현재] · 전직해 본 n / m, 아래에 차수 점 · 차수 범위 · 상태(전직 가능 k · 거의 다 됨 k).
+ * 문장(‘현재 직업이 있는 계보’) 대신 수와 표식만 둡니다(docs/writing.md 4단계). 목표 직업이 든 계보에는 깃발.
+ */
 export function LineageCard({ s, lineage, accent, selected, onOpen }: { s: State; lineage: Lineage; accent: string; selected: boolean; onOpen: () => void }) {
     const read = statusReader(s), sum = lineageSummary(s, lineage.id, read);
     const independent = lineage.id.endsWith('-independent');
     const near = sum.jobs.filter(j => read(j).status === 'near').length, goal = jobGoalOf(s), hasGoal = !!goal && sum.jobs.some(j => j.id === goal.id);
-    const status = sum.current ? '현재 직업이 있는 계보' : sum.ready ? `전직 가능 ${sum.ready}` : near ? `거의 다 됨 ${near}` : `전직해 본 ${sum.unlocked} / ${sum.total}`;
-    return <button type="button" className={cn('grid w-full gap-1 rounded-m border p-2.5 text-left outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-accent/50', selected ? 'border-accent/70 bg-accent-soft' : 'border-line bg-surface-1 hover:bg-surface-3/60')} style={{ borderLeftColor: accent, borderLeftWidth: 3 }} aria-pressed={selected} onClick={onOpen}>
-        <strong className="flex items-center gap-2 text-s">{sum.jobs[0] && <JobArt job={sum.jobs[0]} size={28}/>}<span className="truncate">{lineage.name}</span>{hasGoal && <GoalFlag/>}{sum.current && <span className="ml-auto rounded-s bg-accent px-1.5 text-xs text-accent-ink">현재</span>}</strong>
-        {independent ? <small className="text-xs text-ink-3">{lineage.summary}</small> : <span className="flex items-center gap-1" aria-label="해금한 차수">{sum.tiers.filter(t => t.tier > 0).map(t => <i key={t.tier} className={cn('size-1.5 rounded-full', t.reached ? 'bg-accent' : 'bg-line-strong')}/>)}<em className="ml-1 text-xs not-italic text-ink-3">{tierRange(sum.tiers.map(t => t.tier))}</em></span>}
-        <small className={cn('text-xs', sum.ready ? 'text-ok' : 'text-ink-3')}>{status}{!sum.current && (sum.ready || near) ? ` · 전직해 본 ${sum.unlocked} / ${sum.total}` : ''}</small>
+    const status = sum.ready ? { text: `전직 가능 ${sum.ready}`, cls: 'text-ok' } : near ? { text: `거의 다 됨 ${near}`, cls: 'text-warn' } : null;
+    return <button type="button" className={cn('grid w-full gap-1 rounded-m border px-2.5 py-2 text-left outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-accent/50', selected ? 'border-accent/70 bg-accent-soft' : 'border-line bg-surface-1 hover:bg-surface-3/60')} style={{ borderLeftColor: accent, borderLeftWidth: 3 }} aria-pressed={selected} onClick={onOpen}>
+        <span className="flex items-center gap-2">{sum.jobs[0] && <JobArt job={sum.jobs[0]} size={24}/>}<strong className="min-w-0 truncate text-s">{lineage.name}</strong>{hasGoal && <GoalFlag/>}{sum.current && <span className="rounded-s bg-accent px-1.5 text-xs text-accent-ink">현재</span>}
+            {!independent && <span className="ml-auto shrink-0 font-num text-xs tabular-nums text-ink-2" aria-label={`전직해 본 직업 ${sum.unlocked} / ${sum.total}`}>{sum.unlocked} <span className="text-ink-3">/ {sum.total}</span></span>}</span>
+        {independent ? <small className="text-xs text-ink-3">{lineage.summary}</small>
+            : <span className="flex items-center gap-1 text-xs text-ink-3"><span className="inline-flex items-center gap-1" aria-label="전직해 본 차수">{sum.tiers.filter(t => t.tier > 0).map(t => <i key={t.tier} className={cn('size-1.5 rounded-full', t.reached ? 'bg-accent' : 'bg-line-strong')}/>)}</span><em className="ml-0.5 not-italic">{tierRange(sum.tiers.map(t => t.tier))}</em>{status && <small className={cn('ml-auto text-xs', status.cls)}>{status.text}</small>}</span>}
     </button>;
 }
 

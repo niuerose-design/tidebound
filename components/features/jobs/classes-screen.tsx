@@ -74,23 +74,30 @@ export function ClassesScreen({ s, send, busy }: { s: State; send: Send; busy: b
     const detail = (onClose?: () => void) => <JobDetail key={selected.id} j={selected} s={s} send={send} busy={busy} onClose={onClose} onCompare={toggleCompare} compared={compareIds.includes(selected.id)} compareFull={compareIds.length >= 3}/>;
     return <div className="grid gap-5 text-ink-1">
         <SectionHeader as="h1" eyebrow="VOCATION TREE" title="직업 계보도"/>
-        <section className="flex flex-wrap items-center gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="현재 직업">
-            <Compass size={24} className="shrink-0 text-accent"/>
-            <div className="grid min-w-0 flex-1 gap-0.5"><small className="text-xs text-ink-3">현재 직업</small><h2 className="font-display text-l font-bold">{current.name}</h2><p className="text-xs text-ink-2">숙련 {fmt(s.jobMastery[s.job] || 0)} / {fmt(jobMasteryTarget(current))} · 전직해 본 직업 {tally.unlocked} / {tally.total} · 숙달 {tally.mastered} / {tally.total}</p>
-                <p className={cn('inline-flex items-center gap-1 text-xs', goalReady ? 'text-ok' : 'text-ink-3')}><Flag size={12}/> {goal && goalStatus ? <>목표 <b className="text-ink-1">{goal.name}</b> · {goalReady ? '지금 전직할 수 있습니다' : `조건 ${goalStatus.missing.length}개 남음${goalStatus.missing[0] ? ` · ${goalStatus.missing[0].label}` : ''}`}</> : '목표 직업 없음 · 직업 상세에서 ‘목표로 설정’'}</p></div>
-            <div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={showCurrent}>현재 직업 보기</Button>{goal && <Button type="button" size="sm" variant="outline" onClick={showGoal}>목표 보기</Button>}</div>
+        <section className="grid gap-2 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="현재 직업">
+            <div className="flex flex-wrap items-center gap-3">
+                <Compass size={24} className="shrink-0 text-accent"/>
+                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2 gap-y-0.5"><small className="text-xs text-ink-3">현재 직업</small><h2 className="font-display text-l font-bold">{current.name}</h2></div>
+                <div className="flex flex-wrap gap-2"><Button type="button" size="sm" variant="outline" onClick={showCurrent}>현재 직업 보기</Button>{goal && <Button type="button" size="sm" variant="outline" onClick={showGoal}>목표 보기</Button>}</div>
+            </div>
+            <dl className="grid grid-cols-3 gap-2 text-xs">
+                <div className="min-w-0"><dt className="text-ink-3">숙련</dt><dd className="font-num tabular-nums text-ink-1">{fmt(s.jobMastery[s.job] || 0)} <span className="text-ink-3">/ {fmt(jobMasteryTarget(current))}</span></dd></div>
+                <div className="min-w-0"><dt className="text-ink-3">전직해 본</dt><dd className="font-num tabular-nums text-ink-1">{tally.unlocked} <span className="text-ink-3">/ {tally.total}</span></dd></div>
+                <div className="min-w-0"><dt className="text-ink-3">숙달</dt><dd className="font-num tabular-nums text-ink-1">{tally.mastered} <span className="text-ink-3">/ {tally.total}</span></dd></div>
+            </dl>
+            <p className={cn('inline-flex items-center gap-1 text-xs', goalReady ? 'text-ok' : 'text-ink-3')}><Flag size={12}/> {goal && goalStatus ? <>목표 <b className="text-ink-1">{goal.name}</b> · {goalReady ? '지금 전직할 수 있습니다' : `조건 ${goalStatus.missing.length}개 남음${goalStatus.missing[0] ? ` · ${goalStatus.missing[0].label}` : ''}`}</> : '목표 직업 없음. 직업 상세에서 정합니다.'}</p>
         </section>
         <div className="grid gap-3 lg:grid-cols-[auto_minmax(0,1fr)] lg:items-start">
             <ChoiceChips label="빠른 찾기" value={finder || ''} onChange={v => { setFinder(v === finder ? null : v as Finder); setQuery(''); setTag(''); }} options={finders.map(kind => ({ value: kind, label: `${FINDER_LABEL[kind]} ${finderCounts[kind]}` }))}/>
             <div className="grid gap-2 sm:grid-cols-[minmax(0,260px)_minmax(0,1fr)] sm:items-center">
                 <label className="relative block"><Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3"/><input type="search" className={field} value={query} placeholder="직업 이름 검색" aria-label="직업 이름 검색" onChange={e => { setQuery(e.target.value); setFinder(null); }}/></label>
-                <ChoiceChips label="태그 필터" value={tag} onChange={v => { setTag(v === tag ? '' : v); setFinder(null); }} options={TOP_TAGS.map(t => ({ value: t, label: `#${t}` }))}/>
+                <ChoiceChips label="태그 필터" className="-mx-4 flex-nowrap overflow-x-auto px-4 pb-1 [&>button]:shrink-0 sm:mx-0 sm:flex-wrap sm:px-0 sm:pb-0" value={tag} onChange={v => { setTag(v === tag ? '' : v); setFinder(null); }} options={TOP_TAGS.map(t => ({ value: t, label: `#${t}` }))}/>
             </div>
         </div>
         {world && !found && <div className="flex flex-wrap items-center gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setWorld(null)}><ChevronLeft size={14}/> 세계 목차</Button><span className="inline-flex items-center gap-1 rounded-s border px-2 py-1 text-xs font-semibold" style={{ borderColor: worldInfo!.accent, color: worldInfo!.accent }}><BookOpen size={14}/> {worldInfo!.name}</span></div>}
         {!world && !found ? <WorldBook s={s} currentWorld={jobWorld(current)} onOpen={openWorld}/> : <div className="grid items-start gap-4 lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)_380px]">
-            <section className="grid content-start gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="계보 카드">
-                <ColumnTitle no="①">계보 카드</ColumnTitle>
+            <section className="grid content-start gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="계보">
+                <ColumnTitle no="①">계보</ColumnTitle>
                 {world === 'maple' || !world ? <><ChoiceChips label="직업 계열" value={treeId} onChange={v => openTree(v as JobTabId)} options={JOB_TABS.map(t => ({ value: t.id, label: `${t.name} ${tabJobCount(s, t.id)}`, style: t.id === treeId ? { borderColor: t.accent } : undefined }))}/>
                     <p className="border-l-2 pl-2 text-xs leading-relaxed text-ink-2" style={{ borderLeftColor: tree.accent }}>{tree.description}</p></>
                     : <p className="border-l-2 pl-2 text-xs leading-relaxed text-ink-2" style={{ borderLeftColor: worldInfo!.accent }}>{worldInfo!.description}</p>}
