@@ -13,22 +13,22 @@ import type { Skill } from '../types';
 
 type TrainingJob = { id: string; name: string; title: string; desc: string; tree: JobTreeId; requires: Partial<Record<'str' | 'dex' | 'int' | 'vit' | 'wis' | 'luk', number>> };
 const RAW: TrainingJob[] = [
-    { id: 'trainingPhysical', name: '물리 수련', title: '일곱 가지 몸놀림', desc: '물리 계열의 기초 패시브 넷(공격 · 치명/명중 · 관통 · 흡혈)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'physical', requires: { str: 10 } },
-    { id: 'trainingMagic', name: '마법 수련', title: '서재와 명상의 나날', desc: '마법 계열의 기초 패시브 넷(마법 공격 · 마나 · 마력 평타 · 마법 방어)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'magic', requires: { int: 10 } },
-    { id: 'trainingDefense', name: '방어 수련', title: '단단해지는 법', desc: '방어 계열의 기초 패시브 넷(물리 방어 · 마법 방어 · 체력 회복 · 두 방어)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'defense', requires: { vit: 10 } },
-    { id: 'trainingStatus', name: '상태이상 수련', title: '독과 피의 기초', desc: '상태이상 계열의 기초 패시브 넷(지속 피해 둘 · 명중/회피 · 지속 시간)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'status', requires: { luk: 10 } },
-    { id: 'trainingHybrid', name: '복합 수련', title: '두 손을 함께 쓰는 법', desc: '복합 계열의 기초 패시브 넷(물리·마법 공격 · 체력/마나 · 명중/속도 · 두 회복)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'hybrid', requires: { str: 8, int: 8 } },
-    { id: 'trainingSupport', name: '보조 수련', title: '발걸음과 지도', desc: '보조 계열의 기초 패시브 넷(드롭/골드 · 회피/속도 · 경험치 · 명중/치명)을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'support', requires: { dex: 10 } },
+    { id: 'trainingPhysical', name: '물리 수련', title: '일곱 가지 몸놀림', desc: '물리 계열의 기초 패시브 넷, 공격 · 치명/명중 · 관통 · 흡혈을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'physical', requires: { str: 10 } },
+    { id: 'trainingMagic', name: '마법 수련', title: '서재와 명상의 나날', desc: '마법 계열의 기초 패시브 넷, 마법 공격 · 마나 · 마력 평타 · 마법 방어를 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'magic', requires: { int: 10 } },
+    { id: 'trainingDefense', name: '방어 수련', title: '단단해지는 법', desc: '방어 계열의 기초 패시브 넷, 물리 방어 · 마법 방어 · 체력 회복 · 두 방어를 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'defense', requires: { vit: 10 } },
+    { id: 'trainingStatus', name: '상태이상 수련', title: '독과 피의 기초', desc: '상태이상 계열의 기초 패시브 넷, 지속 피해 둘 · 명중/회피 · 지속 시간을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'status', requires: { luk: 10 } },
+    { id: 'trainingHybrid', name: '복합 수련', title: '두 손을 함께 쓰는 법', desc: '복합 계열의 기초 패시브 넷, 물리·마법 공격 · 체력/마나 · 명중/속도 · 두 회복을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'hybrid', requires: { str: 8, int: 8 } },
+    { id: 'trainingSupport', name: '보조 수련', title: '발걸음과 지도', desc: '보조 계열의 기초 패시브 넷, 드롭/골드 · 회피/속도 · 경험치 · 명중/치명을 모은 수련 직업입니다. 직접 사냥하면 약하고, 패시브는 계승해서 씁니다.', tree: 'support', requires: { dex: 10 } },
 ];
 /**
  * v3.300 수련 직업 제약: 수련 직업으로 있는 동안만(패시브를 계승해 쓰는 다른 직업은 없음). 계열마다 하나, 수련(1차) → 능력치 수련 I · II · III으로 갈수록 셉니다.
  * 막기(물리 · 마법)는 70 · 80 · 90 · 100%, 나머지는 60 · 70 · 80 · 90%.
  */
 const TRAINING_RESTRAINT: Record<Exclude<JobTreeId, 'mystery'>, { steps: number[]; label: string }> = {
-    physical: { steps: [.7, .8, .9, 1], label: '마법 공격(마법 피해 · 복합 피해의 마법 몫)' },
+    physical: { steps: [.7, .8, .9, 1], label: '마법 공격 · 복합 피해의 마법 몫' },
     magic: { steps: [.7, .8, .9, 1], label: '물리 공격(물리 피해)' },
     defense: { steps: [.6, .7, .8, .9], label: '물리 방어 · 마법 방어' },
-    status: { steps: [.6, .7, .8, .9], label: '지속 피해(출혈 · 중독 · 화상)' },
+    status: { steps: [.6, .7, .8, .9], label: '지속 피해 · 출혈 · 중독 · 화상' },
     hybrid: { steps: [.6, .7, .8, .9], label: '물리 공격 · 마법 공격' },
     support: { steps: [.6, .7, .8, .9], label: '경험치 · 골드 · 장비 획득' },
 };

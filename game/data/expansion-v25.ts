@@ -33,7 +33,7 @@ export const V25_JOBS: NewJob[] = [
 
 export const V25_SKILLS: Skill[] = [
     // ── 玄: 無 → 虛 → 斬 → 血 → 縛 → 刹 → 魂 → 天 ──
-    { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다(전투당 6번, 숙련 1단계마다 +2번). 함께 새긴 글자 수에 비례해 횟수·회복이 줄어, 無만 새기면 전투당 1번·회복 없음입니다.', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
+    { ...P, ...GLYPH, id: 'glyphNothing', name: '無', desc: '체력이 1 아래로 내려가지 않습니다. 쓰러질 피해를 받으면 체력 1로 버티고 최대 체력의 25%를 되찾습니다. 전투당 6번, 숙련 1단계마다 +2번. 함께 새긴 글자 수에 비례해 횟수·회복이 줄어, 無만 새기면 전투당 1번·회복 없음입니다.', cost: 1, lastStand: { charges: 6, chargesPerLevel: 2, heal: .25 } },
     { ...GLYPH_A, id: 'glyphVoid', name: '虛', desc: '', unlockAfter: { skill: 'glyphNothing', level: 1 } },
     { ...GLYPH_A, id: 'glyphCut', name: '斬', desc: '', unlockAfter: { skill: 'glyphVoid', level: 1 } },
     { ...GLYPH_A, id: 'glyphBlood', name: '血', desc: '', unlockAfter: { skill: 'glyphCut', level: 1 } },
