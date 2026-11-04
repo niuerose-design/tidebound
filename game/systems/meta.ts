@@ -29,9 +29,15 @@ export const tailwindLevel = (s: Pick<State, 'rebirths'> & Partial<Pick<State, '
 export const tailwindActive = (s: Pick<State, 'rebirths' | 'level'> & Partial<Pick<State, 'rebirthLog'>>) => (s.rebirths || 0) > 0 && s.level < tailwindLevel(s);
 /** v3.23 목표 레벨 너머 벽(OVER_TARGET). 배율은 고정입니다. */
 export const xpWall = (s: Pick<State, 'rebirths'>): XpTargetWall => ({ target: rebirthLevel(s), growth: OVER_TARGET.growth });
-export const rebirthReward = (s: Pick<State, 'level' | 'rebirths'>) => Math.floor(s.level / 10) + Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20)));
+/**
+ * 환생 세계석 = 레벨 ÷ 10 + 환생 횟수 보상. 횟수 보상은 REBIRTH_PEARL_LINEAR회까지 회당 1, 그 뒤로는 넘친 횟수의 제곱근만 더합니다(의도한 완만화 · 환생 파워 억제, docs/balance-rebirth.md).
+ * 예: 20회 20 · 29회 23 · 36~44회 24 · 45회 25 · 101회 29 · 200회 33. v3.446 환생 카드 · 도움말이 이 규칙을 그대로 보여 줍니다.
+ */
+export const REBIRTH_PEARL_LINEAR = 20;
+export const rebirthCountPearls = (rebirths: number) => Math.min(REBIRTH_PEARL_LINEAR, rebirths) + Math.floor(Math.sqrt(Math.max(0, rebirths - REBIRTH_PEARL_LINEAR)));
+export const rebirthReward = (s: Pick<State, 'level' | 'rebirths'>) => Math.floor(s.level / 10) + rebirthCountPearls(s.rebirths);
 /** 환생 세계석의 구성. 합계는 rebirthReward와 같습니다. */
-export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ level: Math.floor(s.level / 10), count: Math.min(20, s.rebirths) + Math.floor(Math.sqrt(Math.max(0, s.rebirths - 20))) });
+export const rebirthRewardParts = (s: Pick<State, 'level' | 'rebirths'>) => ({ level: Math.floor(s.level / 10), count: rebirthCountPearls(s.rebirths) });
 export const rebirthAP = (s: State) => Math.min(ECONOMY.rebirthAPCap, s.rebirths);
 /**
  * v3.313 도전 보너스(docs/endgame-challenge-plan.md PR D): 사냥터 난이도 상한 = 환생 + 도전 보너스(최대 ECONOMY.tideCap).
