@@ -19,7 +19,7 @@ export function HelpScreen({ s }: { s?: State }) {
     // v3.49 정보 비공개(10.2-7)가 켜져 있으면 드롭·등급·정수·변종·칠흑 확률과 공식을 뺍니다. 전투 수치는 그대로.
     const swarm = VARIANTS.find(v => v.id === 'swarm')!, secret = catalogNow().secret;
     return <div className="grid gap-4 text-ink-1">
-        <SectionHeader as="h1" eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제는 모두 접혀 있습니다. 제목을 누르면 펼치고 다시 누르면 접습니다."/>
+        <SectionHeader as="h1" eyebrow="ADVENTURER'S MANUAL" title="모험 도움말" description="주제를 펼치고 궁금한 질문을 누르세요."/>
         <AttributesTopic/>
         <CombatTopic/>
         <StatusTopic/>
