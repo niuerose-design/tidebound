@@ -62,7 +62,7 @@ const raidBest = (id: string) => (s: State) => s.raidBest?.[id] || 0;
 const modeName = (mode: DungeonMode) => DUNGEON_MODES.find(m => m.id === mode)!.name;
 /** v27.81 계급 업적: 계급 경험치(세어진 처치 수)가 그 계급의 누적 필요치에 닿으면 달성합니다. */
 const RANK_STEPS = ['pvt1', 'sgt', 'ssg', 'smaj', 'lt2', 'maj', 'bg', 'ltg'] as const;
-const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다(세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리).`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6 }, { pearls: 10, sp: 1 }, { pearls: 12 }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
+const rankAchievements: Achievement[] = RANK_STEPS.map((id, i) => { const index = RANKS.findIndex(r => r.id === id), r = RANKS[index]; return { id: `rank:${id}`, group: '계급' as const, title: `${r.name} 진급`, desc: `계급 ${r.name}에 오릅니다. 세어진 처치 ${RANK_CUMULATIVE[index].toLocaleString()}마리.`, reward: [{ pearls: 2 }, { pearls: 4 }, { pearls: 6 }, { pearls: 10, sp: 1 }, { pearls: 12 }, { pearls: 15, ap: 1 }, { pearls: 25, sp: 1 }, { pearls: 40, ap: 1, sp: 1 }][i], progress: s => rankState(s).exp, target: RANK_CUMULATIVE[index] }; });
 /**
  * v3.240 세계별 직업. v3.445 세계는 jobWorldOf로 부를 때 찾습니다: 아제로스 히든 계보는 카탈로그·서버 등록으로 나중에 들어오므로 모듈 시작 때 표를 굳히면 메이플로 잘못 세었습니다(목표 화면 ‘아제로스 직업 5개’가 1 / 5).
  * 이계 직업은 공개 표라 수를 세고, 아제로스는 화면이 히든 직업을 다 모르므로 AZEROTH_JOB_COUNT(서버 표와 같은지 테스트)로 목표를 둡니다.
@@ -89,7 +89,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('kills', '사냥', n => `처치 ${n.toLocaleString()}마리`, n => `누적 ${n.toLocaleString()}마리를 처치합니다.`, [100, 1000, 5000, 20000, 100000, 500000], kills, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 4 }, { pearls: 8 }, { pearls: 15, ap: 1 }, { pearls: 30, sp: 1 }][i]),
     ...series('codex', '모험', n => `도감 ${n}종`, n => `서로 다른 몬스터 ${n}종을 발견합니다.`, [10, 20, 30, 47, CODEX_MONSTERS.length], codex, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }][i]),
     ...series('stages', '모험', n => `사냥터 ${n}곳`, n => `사냥터 ${n}곳에서 사냥합니다.`, [3, 6, 9, BASE_STAGES.length], s => BASE_STAGES.filter(st => s.voyage?.[`stage:${st.id}`] !== undefined).length, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }][i]),
-    ...series('clears', '던전', n => `던전 정복 ${n}회`, n => `던전을 ${n}회 정복합니다(무릉도장 포함).`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5 }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
+    ...series('clears', '던전', n => `던전 정복 ${n}회`, n => `무릉도장을 포함해 던전을 ${n}회 정복합니다.`, [1, 10, 50, 200, 1000], clears, i => [{ pearls: 1 }, { pearls: 2 }, { pearls: 5 }, { pearls: 8 }, { pearls: 15, ap: 1 }][i]),
     ...series('bosses', '던전', n => `보스 ${n.toLocaleString()}마리`, n => `던전 보스를 ${n.toLocaleString()}마리 처치합니다.`, [10, 100, 500, 2000], bosses, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 20, sp: 1 }][i]),
     ...series('duels', '사냥', n => `결투 승리 ${n}회`, n => `랭크 결투에서 ${n}번 이깁니다.`, [10, 100, 500], s => s.wins || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, ap: 1 }][i]),
     ...series('dungeons', '던전', n => `던전 ${n}곳 정복`, n => `서로 다른 던전 ${n}곳을 정복합니다.`, [3, 5, 7, PLAIN_DUNGEONS.length], s => PLAIN_DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).length, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 15, ap: 1 }][i]),
@@ -107,38 +107,38 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('nightmareStage', '던전', n => `${modeName('nightmare')} ${n}단계 정복`, n => `지역 던전 하나를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [3, 5, 10], nightmareStageBest, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('nightmareStageAll', '던전', n => `${modeName('nightmare')} ${n}단계 · ${MODE_DUNGEONS}곳`, n => `지역 던전 ${MODE_DUNGEONS}곳 모두를 ${modeName('nightmare')} ${n}단계로 정복합니다.`, [5, 10], nightmareStageAll, () => ({})).map(a => ({ ...a, honor: true })),
     // v3.311 월드보스 소환 단계 격파 참여(명예 · 보상 없음, docs/endgame-challenge-plan.md PR C). 핑크빈은 1단계부터.
-    ...honor(series('raidZakum', '도전', n => `자쿰 ${n}단계 격파`, n => `${n}단계 자쿰 격파에 참여합니다(한 번이라도 때린 뒤 격파).`, [5, 10], raidBest('zakum'), () => ({}))),
+    ...honor(series('raidZakum', '도전', n => `자쿰 ${n}단계 격파`, n => `${n}단계 자쿰을 한 번이라도 때리고 격파에 함께합니다.`, [5, 10], raidBest('zakum'), () => ({}))),
     ...honor(series('raidHorntail', '도전', n => `혼테일 ${n}단계 격파`, n => `${n}단계 혼테일 격파에 참여합니다.`, [3, 5, 10], raidBest('horntail'), () => ({}))),
     ...honor(series('raidPinkBean', '도전', n => n === 1 ? '핑크빈 격파' : `핑크빈 ${n}단계 격파`, n => n === 1 ? '핑크빈 격파에 참여합니다.' : `${n}단계 핑크빈 격파에 참여합니다.`, [1, 3, 5, 10], raidBest('pinkBean'), () => ({}))),
     ...rankAchievements,
-    ...series('rankPoints', '계급', n => `진급 포인트 ${n}P 사용`, n => `특전에 진급 포인트를 ${n}P 쓰고 있습니다(초기화해도 달성 기록은 남음).`, [5, 20, RANK_TOTAL_POINTS], rankPointsSpent, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20, sp: 1 }][i]),
+    ...series('rankPoints', '계급', n => `진급 포인트 ${n}P 사용`, n => `특전에 진급 포인트를 ${n}P 씁니다. 초기화해도 달성 기록은 남습니다.`, [5, 20, RANK_TOTAL_POINTS], rankPointsSpent, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20, sp: 1 }][i]),
     ...series('rebirths', '환생', n => `환생 ${n}회`, n => `${n}번째 환생을 마칩니다.`, [1, 3, 5, 10, 20, 50], s => s.rebirths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 5 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, ap: 1, sp: 2 }][i]),
     // v25.21 ‘도전’ 탭: 플레이 시간과 장기 누적 기록. 다른 묶음과 달리 별도 탭에서 봅니다.
-    ...series('playtime', '도전', n => `모험 ${n.toLocaleString()}시간`, n => `자동 사냥·던전으로 누적 ${n.toLocaleString()}시간을 보냅니다(부재중 정산 포함).`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, sp: 1, ap: 1 }][i]),
+    ...series('playtime', '도전', n => `모험 ${n.toLocaleString()}시간`, n => `부재중 정산을 포함해 자동 사냥·던전으로 ${n.toLocaleString()}시간을 보냅니다.`, [1, 10, 50, 100, 500, 1000], playHours, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 6 }, { pearls: 10, ap: 1 }, { pearls: 20 }, { pearls: 40, sp: 1, ap: 1 }][i]),
     ...series('turns', '도전', n => `${n.toLocaleString()}턴`, n => `전투 턴을 누적 ${n.toLocaleString()}번 진행합니다.`, [10000, 100000, 1000000], s => s.turn || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, ap: 1 }][i]),
-    ...series('attr', '도전', n => `능력치 ${n} 돌파`, n => `기본 능력치 하나를 ${n} 이상으로 올립니다(직접 투자 + 성장).`, [100, 300, 500], s => Math.max(0, ...Object.values(attributes(s))), i => [{ pearls: 3 }, { pearls: 8, ap: 1 }, { pearls: 20, sp: 1, ap: 1 }][i]),
+    ...series('attr', '도전', n => `능력치 ${n} 돌파`, n => `직접 투자와 성장을 합쳐 기본 능력치 하나를 ${n} 이상으로 올립니다.`, [100, 300, 500], s => Math.max(0, ...Object.values(attributes(s))), i => [{ pearls: 3 }, { pearls: 8, ap: 1 }, { pearls: 20, sp: 1, ap: 1 }][i]),
     ...series('hpmax', '도전', n => `최대 체력 ${n.toLocaleString()}`, n => `최종 최대 체력이 ${n.toLocaleString()}을 넘습니다.`, [10000, 50000, 200000], s => readStats(s).hp, i => [{ pearls: 3 }, { pearls: 10 }, { pearls: 25, ap: 1 }][i]),
     ...series('manamax', '도전', n => `최대 마나 ${n.toLocaleString()}`, n => `최종 최대 마나가 ${n.toLocaleString()}을 넘습니다.`, [5000, 50000], s => readStats(s).mana, i => [{ pearls: 3 }, { pearls: 12, ap: 1 }][i]),
     // v3.6 스타포스 업적: 시도·성공·실패·파괴·쓴 골드·최고 별. 기록은 환생해도 남습니다.
     ...series('starTries', '강화', n => `스타포스 ${n.toLocaleString()}회 시도`, n => `스타포스 강화를 누적 ${n.toLocaleString()}번 시도합니다.`, [100, 1000, 10000], s => sf(s).tries, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }][i]),
     ...series('starSuccess', '강화', n => `강화 성공 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 성공합니다.`, [50, 500, 5000], s => sf(s).success, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
     ...series('starFail', '강화', n => `강화 실패 ${n.toLocaleString()}회`, n => `스타포스 강화에 누적 ${n.toLocaleString()}번 실패(유지·하락)합니다. 실패도 모험입니다.`, [50, 500, 5000], s => sf(s).fail, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
-    ...series('starDestroy', '강화', n => `장비 파괴 ${n}회`, n => `스타포스 강화로 장비를 ${n}번 잃습니다(유물의 12성 회귀 포함).`, [1, 10, 50], s => sf(s).destroy, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 12 }][i]),
+    ...series('starDestroy', '강화', n => `장비 파괴 ${n}회`, n => `스타포스 강화로 장비를 ${n}번 잃습니다. 유물의 12성 회귀도 셉니다.`, [1, 10, 50], s => sf(s).destroy, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 12 }][i]),
     ...series('starGold', '강화', n => `강화에 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `스타포스 강화에 골드를 누적 ${n.toLocaleString()} G 씁니다.`, [1e7, 1e8, 1e9, 1e10], s => sf(s).gold, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }, { pearls: 20, ap: 1 }][i]),
     // v3.20 스타포스 흐름 업적: 연속 성공(10성 이상) · 연속 실패 · 하락 · 찬스 타임 · 스타캐치 · 15성 이상 성공.
-    ...series('starStreak', '강화', n => `${n}연속 성공`, n => `10성 이상에서 스타포스 강화를 ${n}번 연속으로 성공합니다(실패·파괴가 나면 다시 셉니다).`, [3, 5, 8], s => sf(s).bestStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),
-    ...series('starFailStreak', '강화', n => `${n}연속 실패`, n => `스타포스 강화에 ${n}번 연속으로 실패합니다(유지·하락·파괴). 불운도 기록입니다.`, [5, 10, 15], s => sf(s).bestFailStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15 }][i]),
+    ...series('starStreak', '강화', n => `${n}연속 성공`, n => `10성 이상에서 스타포스 강화를 ${n}번 연속으로 성공합니다. 실패하거나 파괴되면 다시 셉니다.`, [3, 5, 8], s => sf(s).bestStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15, sp: 1 }][i]),
+    ...series('starFailStreak', '강화', n => `${n}연속 실패`, n => `스타포스 강화에 ${n}번 연속으로 실패합니다. 유지 · 하락 · 파괴 모두 셉니다. 불운도 기록입니다.`, [5, 10, 15], s => sf(s).bestFailStreak || 0, i => [{ pearls: 2 }, { pearls: 6 }, { pearls: 15 }][i]),
     ...series('starDrops', '강화', n => `강화 하락 ${n.toLocaleString()}회`, n => `스타포스 강화 실패로 별이 ${n.toLocaleString()}번 떨어집니다.`, [10, 100, 1000], s => sf(s).drops || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
-    ...series('starChance', '강화', n => `찬스 타임 ${n.toLocaleString()}회`, n => `두 번 연속 하락 뒤 찾아오는 찬스 타임(100% 성공)을 ${n.toLocaleString()}번 씁니다.`, [1, 10, 100], s => sf(s).chance || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
+    ...series('starChance', '강화', n => `찬스 타임 ${n.toLocaleString()}회`, n => `두 번 연속 하락 뒤 찾아오는 찬스 타임을 ${n.toLocaleString()}번 씁니다. 찬스 타임은 반드시 성공합니다.`, [1, 10, 100], s => sf(s).chance || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10 }][i]),
     ...series('starCatch', '강화', n => `스타캐치 ${n.toLocaleString()}회`, n => `스타캐치 미니게임에서 별을 ${n.toLocaleString()}번 잡고 강화합니다.`, [10, 100, 1000], s => sf(s).catches || 0, i => [{ pearls: 1 }, { pearls: 4 }, { pearls: 10, sp: 1 }][i]),
     ...series('starHigh', '강화', n => `고성 강화 ${n.toLocaleString()}회 성공`, n => `15성 이상에서 스타포스 강화에 ${n.toLocaleString()}번 성공합니다.`, [10, 50, 200], s => sf(s).high || 0, i => [{ pearls: 3 }, { pearls: 8 }, { pearls: 20 }][i]),
-    ...series('star', '강화', n => `${n}성 달성`, n => `장비 하나를 ${n}성까지 강화합니다(가방·착용 장비 기준).`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15 }][i]),
+    ...series('star', '강화', n => `${n}성 달성`, n => `가방이나 착용 중인 장비 하나를 ${n}성까지 강화합니다.`, [10, 15, 20, 22], bestStar, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8, sp: 1 }, { pearls: 15 }][i]),
     // v3.12 칠흑 장신구 수집(보유 수, 환생 유지).
     // v3.15 칠흑은 한 종마다 업적(SP·AP 번갈아), 7종 완성은 큰 보상. v3.276 마도서 포함 9종까지(9종 완성도 큰 보상).
     ...series('onyx', '사냥', n => `칠흑 ${n}종`, n => `무리 서식지의 칠흑 보스를 쓰러뜨려 칠흑 장신구 · 칠흑 보스코어를 합쳐 ${n}종 보유합니다.`, [1, 2, 3, 4, 5, 6, 7, 8, 9], onyxOwned, i => [{ pearls: 3, sp: 1 }, { pearls: 5, ap: 1 }, { pearls: 8, sp: 1 }, { pearls: 10, ap: 1 }, { pearls: 15, sp: 1 }, { pearls: 20, ap: 1 }, { pearls: 50, sp: 2, ap: 2 }, { pearls: 30, sp: 1 }, { pearls: 80, sp: 2, ap: 2 }][i]),
     ...series('deaths', '도전', n => `쓰러짐 ${n}회`, n => `${n}번 쓰러지고도 다시 출항합니다.`, [10, 100, 1000], s => s.deaths || 0, i => [{ pearls: 1 }, { pearls: 3 }, { pearls: 8 }][i]),
-    ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다(환생 전 기록 포함).`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
-    ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 장비 ${n}종(부위 × 등급)을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('level', '모험', n => `Lv.${n}`, n => `최고 레벨 ${n}에 도달합니다. 환생 전 기록도 셉니다.`, [30, 50, 70, 85, 100], s => s.peakLevel || s.level, i => [{ pearls: 2 }, { pearls: 4 }, { pearls: 8, sp: 1 }, { pearls: 12, ap: 1 }, { pearls: 25, sp: 1 }][i]),
+    ...series('items', '모험', n => `물건도감 ${n}종`, n => `물건도감에 부위와 등급이 다른 장비 ${n}종을 등록합니다.`, [8, 16, 28], s => Object.keys(s.itemBook || {}).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.38 장소 완성 장착 AP(곳마다 +1). 1·4·14곳만 보상 업적, 나머지 단계는 명예 업적(칭호, 업적 보너스 집계 제외).
     ...series('regions', '모험', n => `지역 연구 ${n}곳 완성`, n => `사냥터 ${n}곳의 모든 몬스터 도감을 완성합니다.`, BASE_STAGES.map((_, i) => i + 1), s => completedStages(s).length, i => i === 0 ? { pearls: 2, ap: 1 } : i === 3 ? { pearls: 6, ap: 1 } : i === BASE_STAGES.length - 1 ? { pearls: 12, sp: 1, ap: 1 } : { ap: 1 }).map(a => [1, 4, BASE_STAGES.length].includes(a.target) ? a : { ...a, honor: true }),
     ...series('golden', '사냥', n => `황금 개체 ${n}마리`, n => `황금 개체를 ${n}마리 처치합니다.`, [1, 10, 100], goldens, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
@@ -147,18 +147,18 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('nuri', '사냥', n => `경험의 누리 ${n}마리`, n => `경험의 누리를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[EXP_NURI.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('slime', '사냥', n => `정수의 슬라임 ${n}마리`, n => `정수의 슬라임을 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[ESSENCE_SLIME.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('king', '사냥', n => `대왕 ${n}마리`, n => `대왕 까미 · 대왕 누리 · 대왕 정수 슬라임을 합쳐 ${n}마리 잡습니다.`, [1, 10, 30], s => KING_IDS.reduce((a, id) => a + (s.book?.[id] || 0), 0), i => [{ pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 15, sp: 2 }][i]),
-    ...series('jobs', '숙련', n => `직업 ${n}개 전직`, n => `서로 다른 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [10, 30, 80], s => unlockedJobCount(s), i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
+    ...series('jobs', '숙련', n => `직업 ${n}개 전직`, n => `서로 다른 직업 ${n}개에 전직해 봅니다.`, [10, 30, 80], s => unlockedJobCount(s), i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('learned', '숙련', n => `스킬 ${n}개 습득`, n => `SP로 스킬 ${n}개를 배웁니다.`, [10, 30, 80], s => Object.values(s.learned || {}).filter(n => n > 0).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.74 극한돌파 달성(보상 없음 · 명예 업적). 달성하면 운영자에게 문의합니다.
     { id: 'reenlist:1', honor: true, group: '계급' as const, title: '재입대', desc: '중장에서 재입대해 이등병부터 다시 오릅니다.', reward: {}, progress: (s: State) => rankState(s).reenlist || 0, target: 1 },
-    { id: 'extremeBreak', honor: true, group: '숙련' as const, title: '극한돌파', desc: '액티브 스킬 하나를 극한돌파합니다(숙련 1억 · 전용 연출 해금).', reward: {}, progress: (s: State) => Object.keys(s.skillPractice || {}).some(id => extremeBroken(s, id)) ? 1 : 0, target: 1 },
+    { id: 'extremeBreak', honor: true, group: '숙련' as const, title: '극한돌파', desc: '액티브 스킬 하나의 숙련을 1억까지 쌓아 극한돌파하고 전용 연출을 엽니다.', reward: {}, progress: (s: State) => Object.keys(s.skillPractice || {}).some(id => extremeBroken(s, id)) ? 1 : 0, target: 1 },
     // v3.38 던전 첫 정복 SP 업적.
     ...PLAIN_FIRST_CLEAR.map(([id, sp]) => ({ id: `firstClear:${id}`, group: '던전' as const, title: `${DUNGEON_NAME(id)} 첫 정복`, desc: `${DUNGEON_NAME(id)}을(를) 처음 정복합니다.`, reward: { sp }, progress: (s: State) => (s.clears?.[id] || 0) > 0 ? 1 : 0, target: 1 })),
     // v3.205 보스 코어 명예 업적(보상 없음 · 칭호만). 보유 종 수, 각성을 끝까지 마친 코어 수.
     ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `던전 보스 코어 ${n}종을 보유합니다.`, [1, 4, 7], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
     // v3.208 무릉도장 코어 3종 · 전체 10종 보유(명예).
     ...series('abyssCore', '던전', n => `무릉 코어 ${n}종`, n => `무릉도장 코어 ${n}종을 모두 얻습니다.`, [3, 4], s => ABYSS_CORE_IDS.filter(id => s.bossCores?.[id] !== undefined).length, () => ({})).map(a => ({ ...a, honor: true })),
-    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `보스 코어 ${n}종(지역 던전 · 무릉도장)을 모두 보유합니다.`, [10], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
+    ...series('bossCore', '던전', n => `보스 코어 ${n}종`, n => `지역 던전과 무릉도장의 보스 코어 ${n}종을 모두 보유합니다.`, [10], s => dungeonCores(s).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('coreAwaken', '던전', n => `완전 각성 코어 ${n}종`, n => `보스 코어 ${n}종을 각성 ${BOSS_CORE_RULES.awakenMax}단계까지 올립니다.`, [1, 7], s => dungeonCores(s).filter(id => coreEntry(s.bossCores![id])!.rank >= BOSS_CORE_RULES.awakenMax).length, () => ({})).map(a => ({ ...a, honor: true })),
     ...series('dungeonsTen', '던전', n => `던전 ${n}곳 10회 정복`, n => `서로 다른 던전 ${n}곳을 각각 10번 이상 정복합니다.`, [3, PLAIN_DUNGEONS.length], dungeonsAt(10), i => [{ pearls: 5 }, { pearls: 12, sp: 1 }][i]),
     ...series('dungeonsHundred', '던전', n => `던전 ${n}곳 100회 정복`, n => `서로 다른 던전 ${n}곳을 각각 100번 이상 정복합니다.`, [1, PLAIN_DUNGEONS.length], dungeonsAt(100), i => [{ pearls: 5 }, { pearls: 20, ap: 1, sp: 1 }][i]),
@@ -170,11 +170,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'hacker:root', group: '도전', title: 'root', desc: '해킹 X 루트 권한을 실행합니다.', reward: {}, progress: s => (s.hacker?.roots || 0) > 0 ? 1 : 0, target: 1 },
     // v3.240 명예 업적(보상 없음 · 업적 보너스 집계 제외): 아제로스 · 이계 · 한계돌파 · 이계 연료 · 증권거래소 · 승천 · 스토리 · 결투 레이팅 · 겹영창.
     // v3.445 ‘해금’ 대신 전직 화면과 같은 ‘전직해 본’으로: 한 번이라도 전직한 직업 수이며 숙달과는 다릅니다.
-    ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개 전직`, n => `아제로스 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [1, 5, AZEROTH_JOB_COUNT], unlockedIn('azeroth'), () => ({}))),
-    ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개 전직`, n => `이계 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
+    ...honor(series('azerothJobs', '숙련', n => `아제로스 직업 ${n}개 전직`, n => `아제로스 직업 ${n}개에 전직해 봅니다.`, [1, 5, AZEROTH_JOB_COUNT], unlockedIn('azeroth'), () => ({}))),
+    ...honor(series('otherworldJobs', '숙련', n => `이계 직업 ${n}개 전직`, n => `이계 직업 ${n}개에 전직해 봅니다.`, [1, 5, worldJobs('otherworld').length], unlockedIn('otherworld'), () => ({}))),
     // 11단계 원정 숙련(명예 업적 → 칭호).
     // 13단계: 시즌 순위 · 도감 명예 업적.
-    { id: 'expSeasonTop:1', honor: true, group: '모험' as const, title: '원정 시즌 1위', desc: '월간 원정대 순위 1위로 시즌을 마칩니다(다음 달 첫 출발 때 정산).', reward: {}, progress: (s: State) => s.expeditionSeasonBest === 1 ? 1 : 0, target: 1 },
+    { id: 'expSeasonTop:1', honor: true, group: '모험' as const, title: '원정 시즌 1위', desc: '월간 원정대 순위 1위로 시즌을 마칩니다. 다음 달 첫 출발 때 정산합니다.', reward: {}, progress: (s: State) => s.expeditionSeasonBest === 1 ? 1 : 0, target: 1 },
     { id: 'expSeasonTop:3', honor: true, group: '모험' as const, title: '원정 시즌 3위 안', desc: '월간 원정대 순위 3위 안으로 시즌을 마칩니다.', reward: {}, progress: (s: State) => s.expeditionSeasonBest && s.expeditionSeasonBest <= 3 ? 1 : 0, target: 1 },
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
@@ -189,12 +189,12 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...[3, 4, 5, 6, 7, 8, 9, 10].map(d => ({ id: `expDiff:${d}`, honor: true, group: '모험' as const, title: `난이도 ${DIFFICULTIES[d - 1].name} 완주`, desc: `원정대 난이도 ${DIFFICULTIES[d - 1].icon} ${DIFFICULTIES[d - 1].name}을(를) 완주합니다.`, reward: {}, progress: (s: State) => s.expeditionDiffClears?.[d] || 0, target: 1 })),
     // 15단계: 도전 기록(완주 조건) 명예 업적.
     ...['flawless', 'noItem', 'oneOrigin', 'cheap', 'abyss10', 'abyss20', /* v3.416 */ 'abyss30', 'abyss40', 'hardFlawless', 'apexClear'].map(id => { const f = FEATS.find(x => x.id === id)!; return { id: `expFeat:${id}`, honor: true, group: '모험' as const, title: `원정 · ${f.name}`, desc: `${f.desc}.`, reward: {}, progress: (s: State) => s.expeditionFeats?.[id] || 0, target: 1 }; }),
-    ...[2, 20, 40, 50, ...Array.from({ length: MASTERY_MAX / MASTERY_STEP.titleEvery }, (_, i) => (i + 1) * MASTERY_STEP.titleEvery)].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다(판이 끝날 때 승리 · 막 보스 · 완주로 경험치).`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
+    ...[2, 20, 40, 50, ...Array.from({ length: MASTERY_MAX / MASTERY_STEP.titleEvery }, (_, i) => (i + 1) * MASTERY_STEP.titleEvery)].map(n => ({ id: `expMastery:${n}`, honor: true, group: '모험' as const, title: `원정 숙련 ${n}`, desc: `원정대 숙련 레벨 ${n}에 오릅니다. 경험치는 판이 끝날 때 승리 · 막 보스 · 완주로 쌓입니다.`, reward: {}, progress: (s: State) => s.expeditionMastery?.level || 1, target: n })),
     { id: 'threeWorlds', honor: true, group: '숙련', title: '세 세계의 모험가', desc: '메이플 · 아제로스 · 이계 직업을 각각 하나 이상 숙달합니다.', reward: {}, progress: masteredWorlds, target: 3 },
     // v3.316 핵심 패시브 초월 · 극한 단계(명예, docs/endgame-challenge-plan.md PR F).
-    ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월합니다(한계돌파 3단계 뒤 숙련 ×16).`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
-    ...honor(series('coreTranscend2', '숙련', n => `핵심 패시브 초월 2단계 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월 2단계(숙련 ×32)까지 올립니다.`, [1, 5], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 2).length, () => ({}))),
-    ...honor(series('extremeStage', '숙련', n => `극한 ${n}단계`, n => `액티브 스킬 하나를 극한 ${n}단계(숙련 ${[1, 2, 4, 7, 10][n - 1]}억)까지 올립니다.`, [3, 5], s => Math.max(0, ...Object.keys(s.skillPractice || {}).map(id => extremeStage(s, id))), () => ({}))),
+    ...honor(series('coreTranscend', '숙련', n => `핵심 패시브 초월 ${n}개`, n => `5차 핵심 패시브 ${n}개를 초월합니다. 한계돌파 3단계 뒤 숙련 ×16이 초월입니다.`, [1, 5, 10], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 1).length, () => ({}))),
+    ...honor(series('coreTranscend2', '숙련', n => `핵심 패시브 초월 2단계 ${n}개`, n => `5차 핵심 패시브 ${n}개를 숙련 ×32, 초월 2단계까지 올립니다.`, [1, 5], s => Object.keys(s.skillPractice || {}).filter(id => coreTranscendOf(s, id) >= 2).length, () => ({}))),
+    ...honor(series('extremeStage', '숙련', n => `극한 ${n}단계`, n => `액티브 스킬 하나를 숙련 ${[1, 2, 4, 7, 10][n - 1]}억, 극한 ${n}단계까지 올립니다.`, [3, 5], s => Math.max(0, ...Object.keys(s.skillPractice || {}).map(id => extremeStage(s, id))), () => ({}))),
     ...honor(series('limitBreak', '숙련', n => `한계돌파 ${n}개`, n => `스킬 ${n}개를 한계돌파합니다.`, [1, 5, 20], s => Object.values(s.limitBreaks || {}).filter(n => n > 0).length, () => ({}))),
     ...honor(series('fuel', '도전', n => `연료에 세계석 ${n.toLocaleString()}`, n => `이계 연료 충전에 세계석을 누적 ${n.toLocaleString()}개 씁니다.`, [1000, 10000, 100000], s => s.fuelBought || 0, () => ({}))),
     ...honor(series('marketProfit', '도전', n => `실현 수익 ${n >= 1e8 ? `${n / 1e8}억` : `${n / 1e4}만`} G`, n => `증권거래소에서 판매로 확정한 수익이 누적 ${n.toLocaleString()} G를 넘습니다.`, [1e6, 1e8, 1e10], s => Math.max(0, s.market?.realized || 0), () => ({}))),
@@ -203,8 +203,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...honor(series('story', '모험', n => `이야기 ${n}장면`, n => `스토리 장면 ${n}개를 엽니다.`, [10, 20, 39, STORY.length], s => Object.keys(s.story || {}).length, () => ({}))),
     ...honor(series('rating', '사냥', n => `결투 레이팅 ${n.toLocaleString()}`, n => `랭크 결투 레이팅 ${n.toLocaleString()}에 오릅니다.`, [1500, 2000, 2500], s => s.rating || 0, () => ({}))),
     ...honor(series('chant', '숙련', n => `사중 영창 ${n.toLocaleString()}회`, n => `동시 시전으로 주문 4개 이상을 한 행동에 ${n.toLocaleString()}번 함께 냅니다.`, [1, 100, 1000], s => s.chantFull || 0, () => ({}))),
-    { id: 'star:25', honor: true, group: '강화', title: '25성 달성', desc: '장비 하나를 25성까지 강화합니다(가방 · 착용 장비 기준).', reward: {}, progress: bestStar, target: 25 },
-    { id: 'chant:five', honor: true, group: '숙련', title: '오중 영창', desc: '동시 시전으로 주문 5개를 한 행동에 함께 냅니다(추가 판정 필요).', reward: {}, progress: s => s.chantBest || 0, target: 5 },
+    { id: 'star:25', honor: true, group: '강화', title: '25성 달성', desc: '가방이나 착용 중인 장비 하나를 25성까지 강화합니다.', reward: {}, progress: bestStar, target: 25 },
+    { id: 'chant:five', honor: true, group: '숙련', title: '오중 영창', desc: '추가 판정을 켜고 동시 시전으로 주문 5개를 한 행동에 함께 냅니다.', reward: {}, progress: s => s.chantBest || 0, target: 5 },
     { id: 'warden:all', group: '숙련', title: '모든 세계의 수호자', desc: '방어 계열 직업 3개를 숙달합니다.', reward: { pearls: 6 }, progress: s => JOBS.filter(j => j.tree === 'defense' && jobMastered(s, j)).length, target: 3 },
 ];
 for (const a of ACHIEVEMENTS) if (a.reward.ap) ACHIEVEMENT_AP[a.id] = a.reward.ap;

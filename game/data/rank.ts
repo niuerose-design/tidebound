@@ -42,7 +42,7 @@ type RankPerkDef = { id: RankPerkId; name: string; desc: (level: number) => stri
 type RankPerkId = 'tally' | 'drill' | 'medal' | 'supply';
 export const RANK_PERKS: RankPerkDef[] = [
     { id: 'tally', name: '전과 기록', desc: l => `처치 1마리를 계급 경험치 ${1 + l}마리로 셉니다`, max: 10, cost: 1, per: 1 },
-    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}(직업·장착 스킬 모두, 배율과 무관한 고정값)`, max: 12, cost: 1, per: 1 },
+    { id: 'drill', name: '숙련 훈련', desc: l => `처치 숙련 기본 획득 +${l}. 직업과 장착 스킬 모두에, 배율과 무관한 고정값으로`, max: 12, cost: 1, per: 1 },
     { id: 'medal', name: '전공 훈장', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 SP +1`, max: 9, cost: 1, per: .001 },
     { id: 'supply', name: '보급품', desc: l => `사냥터 처치마다 ${(l * .1).toFixed(1)}% 확률로 세계석 +1`, max: 10, cost: 1, per: .001 },
 ];

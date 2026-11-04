@@ -10,7 +10,7 @@ type WhistleKind = 'mimic' | 'nuri' | 'slime';
 type WhistleTarget = { id: WhistleKind; name: string; /** 메뉴용 짧은 이름. */ short: string; minLevel: number; minKills: number; /** 한 줄 보상 설명(도움말). */ reward: string };
 export const WHISTLE_TARGETS: readonly WhistleTarget[] = [
     { id: 'mimic', name: '숙련의 까미', short: '까미', minLevel: MIMIC.minLevel, minKills: MIMIC.minKills, reward: `숙련 로또 ${MIMIC.tiers.map(t => `${t.label} ${t.mastery.toLocaleString()}`).join(' · ')}` },
-    { id: 'nuri', name: '경험의 누리', short: '누리', minLevel: EXP_NURI.minLevel, minKills: EXP_NURI.minKills, reward: `경험치 로또 Lv 필요량 ${EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}%`).join(' · ')}(또는 출현 ${EXP_NURI.tiers.map(t => Math.round(t.pct * EXP_NURI.encountersPerPct)).join(' · ')}회분)` },
+    { id: 'nuri', name: '경험의 누리', short: '누리', minLevel: EXP_NURI.minLevel, minKills: EXP_NURI.minKills, reward: `경험치 로또 Lv 필요량 ${EXP_NURI.tiers.map(t => `${t.label} ${Math.round(t.pct * 100)}%`).join(' · ')}, 출현으로는 ${EXP_NURI.tiers.map(t => Math.round(t.pct * EXP_NURI.encountersPerPct)).join(' · ')}회분` },
     { id: 'slime', name: '정수의 슬라임', short: '정수 슬라임', minLevel: ESSENCE_SLIME.minLevel, minKills: ESSENCE_SLIME.minKills, reward: `정수 로또 난이도 묶음 ${ESSENCE_SLIME.tiers.map(t => `${t.label} ×${t.mul}`).join(' · ')}` },
 ];
 export const whistleTarget = (id: string) => WHISTLE_TARGETS.find(t => t.id === id);

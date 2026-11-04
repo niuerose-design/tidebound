@@ -191,7 +191,7 @@ JOBS.push(
     { id: 'krakenSlayer', name: '크라켄 처형자', title: '거대한 심장을 꿰뚫는다', desc: '높은 체력의 적에게만 진짜 힘을 내는 3차 직업. 명중 페널티가 있습니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .12, bonus: { attack: 86, hp: 90, defense: 2 }, tier: 3, level: 40, parent: 'whaler', requires: { str: 50, dex: 35 }, mastery: 150, role: '처형·출혈', tree: 'physical', penalties: { accuracy: -.04 } },
     { id: 'needleDancer', name: '바늘 무희', title: '한 걸음마다 약점을 남긴다', desc: '회피·치명·출혈로 몰아치는 고속 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .25, bonus: { attack: 47 }, tier: 3, level: 40, parent: 'corsair', requires: { dex: 50, luk: 38 }, mastery: 150, role: '회피·치명', tree: 'physical' },
     { id: 'runeSwell', name: '문양 파도술사', title: '룬을 물결에 새긴다', desc: '마법 공격과 약화 확률을 균형 있게 끌어올리는 주문 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .02, bonus: { magic: 18, hp: 10, resist: 2 }, tier: 2, level: 25, parent: 'tide', requires: { int: 25, wis: 25 }, mastery: 75, role: '약화·마나', tree: 'magic' },
-    { id: 'saltAlchemist', name: '염수 연금술사', title: '소금으로 갑옷을 녹인다', desc: '부식(방어 · 속도 감소)을 걸고 평타 계수를 더 올리는 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 24, resist: 1 }, tier: 2, level: 25, parent: 'currentScholar', requires: { int: 28, luk: 22 }, mastery: 75, role: '부식·마력 평타', tree: 'magic' },
+    { id: 'saltAlchemist', name: '염수 연금술사', title: '소금으로 갑옷을 녹인다', desc: '방어와 속도를 깎는 부식을 걸고 평타 계수를 더 올리는 2차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .05, bonus: { magic: 24, resist: 1 }, tier: 2, level: 25, parent: 'currentScholar', requires: { int: 28, luk: 22 }, mastery: 75, role: '부식·마력 평타', tree: 'magic' },
     { id: 'stormScribe', name: '폭풍 필경사', title: '번개를 문장으로 봉인한다', desc: '한 번의 주문에 모든 마나를 태우는 고점형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: .08, bonus: { magic: 89, resist: 4 }, tier: 3, level: 40, parent: 'tempest', requires: { int: 50, wis: 34 }, mastery: 150, role: '마나·폭발', tree: 'magic' },
     { id: 'lunarOracle', name: '월광 예언자', title: '달의 조수로 미래를 고친다', desc: '높은 회복력과 저항을 얻지만 물리 공격에 약한 유지형 3차 직업입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 55, hp: 175, resist: 16 }, tier: 3, level: 40, parent: 'oracle', requires: { wis: 50, vit: 35 }, mastery: 150, role: '회복·저항', tree: 'magic' },
     { id: 'reefMedic', name: '암초 의무관', title: '상처를 산호로 꿰맨다', desc: '작은 회복을 자주 발동해 자동 전투의 안정성을 높이는 보조 분기입니다.', attack: 1, magic: 1, hp: 1, defense: 1, resist: 1, crit: 0, bonus: { magic: 2, hp: 65, defense: 4, resist: 3 }, tier: 2, level: 25, parent: 'seagrassKeeper', requires: { vit: 28, wis: 22 }, mastery: 75, role: '회복·흡혈', tree: 'defense' },
@@ -385,7 +385,7 @@ export const WORLDS: { id: WorldId; name: string; subtitle: string; description:
     // v3.231 제3장 이계: 세계석만 내면 들어오는 세계(Job.pearlCost). 기존과 다른 규칙으로 움직이는 계보들.
     { id: 'otherworld', name: '이계', subtitle: '세계석이 여는 세계', description: '세계석을 내면 다른 조건 없이 들어오는 세계입니다. 이계의 직업은 기존과 전혀 다른 규칙으로 움직이고, 전투 직업은 세계석을 연료로 태웁니다. 해커 · 요원 · 트레이더 계보가 있습니다.', accent: '#3fc7c0' },
     // v3.367 제4장 코프룰루 구역: 판게아 바다 너머 별의 바다. 판게아 고유 이름의 계보 2개(강철 보병 · 군체 조율사).
-    { id: 'koprulu', name: '코프룰루 구역', subtitle: '별의 바다 너머', description: '바다 위에도 바다가 있습니다. 부서진 궤도 정거장에서 주운 교범과 늪의 포자로 싸우는 두 계보가 있는 세계입니다. 사냥터와 같이 환생 50회부터 전직할 수 있고(4차 52회 · 5차 62회), 그 전에는 미리 볼 수만 있습니다.', accent: '#a784c9' },
+    { id: 'koprulu', name: '코프룰루 구역', subtitle: '별의 바다 너머', description: '바다 위에도 바다가 있습니다. 부서진 궤도 정거장에서 주운 교범과 늪의 포자로 싸우는 두 계보가 있는 세계입니다. 사냥터와 같이 환생 50회부터 전직할 수 있고, 4차는 52회 · 5차는 62회부터입니다. 그 전에는 미리 볼 수만 있습니다.', accent: '#a784c9' },
 ];
 export type Lineage = { id: string; name: string; tree: JobTreeId; summary: string; world?: WorldId };
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
@@ -427,7 +427,7 @@ export const LINEAGES: Lineage[] = [
     independent('status'),
     /** v3.168 초보자 계보는 ??? 탭에 둡니다(직업의 tree는 복합 그대로: 숙련 진행판 · 계열 집중은 그대로). */
     { id: 'fisher', name: '무직', tree: 'mystery', summary: '모든 모험의 출발점입니다. 공용 기술로 첫 전직을 준비합니다.' },
-    { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '여섯 능력치를 고르게 키울수록 세지고, 명중 · 회피로 버티다 회피를 무시하는 고정 피해 레이저(메가 스매셔)를 쏘는 경계 계보입니다.' },
+    { id: 'wanderer', name: '이형 항해자 계보', tree: 'hybrid', summary: '여섯 능력치를 고르게 키울수록 세지고, 명중 · 회피로 버티다 회피를 무시하는 고정 피해 레이저 ‘메가 스매셔’를 쏘는 경계 계보입니다.' },
     { id: 'spellbladeNovice', name: '마검 수련생 계보', tree: 'hybrid', summary: '마나 대신 현재 체력의 일부를 바쳐 베는 피의 딜러 계보입니다. 피가 줄수록 피해가 커지고(피의 분노), 흡혈로 바친 피를 되찾습니다.' },
     NEW_LINEAGES.tideLancer,
     NEW_LINEAGES.runesmith,

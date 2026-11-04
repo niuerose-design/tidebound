@@ -17,8 +17,8 @@ export const BOSS_CORES: Record<string, BossCore> = {
     grotto: { name: '머쉬맘의 포자 코어', boss: '머쉬맘', desc: '보스 · 사냥감 피해 +5%, 최대 체력 +2,000 · 최대 마나 +300.', bonus: { bossDamage: .05, hp: 2000, mana: 300 } },
     kelpCatacomb: { name: '킹 슬라임의 점액 코어', boss: '킹 슬라임', desc: '보스 · 사냥감 피해 +5%, 상태이상(지속) 피해 +10%.', bonus: { bossDamage: .05, dotBonus: .1 } },
     cemetery: { name: '좀비 머쉬맘의 저주 코어', boss: '좀비 머쉬맘', desc: '보스 · 사냥감 피해 +5%, 기절 지속 +1턴.', bonus: { bossDamage: .05, stunBonus: 1 } },
-    caldera: { name: '주니어 발록의 불씨 코어', boss: '주니어 발록', desc: '보스 · 사냥감 피해 +5%, 지속 피해(출혈 · 중독 · 화상) 지속 +1턴.', bonus: { bossDamage: .05, dotTurnsBonus: 1 } },
-    temple: { name: '엘리쟈의 바람 코어', boss: '엘리쟈', desc: '보스 · 사냥감 피해 +5%, 방어 관통 +10%p(관통 상한 안).', bonus: { bossDamage: .05, penetration: .1 } },
+    caldera: { name: '주니어 발록의 불씨 코어', boss: '주니어 발록', desc: '보스 · 사냥감 피해 +5%, 출혈 · 중독 · 화상 지속 +1턴.', bonus: { bossDamage: .05, dotTurnsBonus: 1 } },
+    temple: { name: '엘리쟈의 바람 코어', boss: '엘리쟈', desc: '보스 · 사냥감 피해 +5%, 방어 관통 +10%p. 관통 상한은 넘지 않습니다.', bonus: { bossDamage: .05, penetration: .1 } },
     ventCathedral: { name: '자쿰의 팔 코어', boss: '자쿰', desc: '보스 · 사냥감 피해 +5%, 추가타 위력 +10%p.', bonus: { bossDamage: .05, followUpBonus: .1 } },
     starSanctum: { name: '파풀라투스의 시계 코어', boss: '파풀라투스', desc: '보스 · 사냥감 피해 +5%, 연속 행동 확률 +3%p.', bonus: { bossDamage: .05, chainBonus: .03 } },
     // v3.367 코프룰루 지역 던전 코어.
@@ -28,7 +28,7 @@ export const BOSS_CORES: Record<string, BossCore> = {
     // 층은 기준 몸 측정(check-bosses --abyss-max, 중앙값 R10 32 · R30 41 · R50 48 · R100 53층)으로 정했습니다.
     abyssTrainee: { name: '수련생의 띠 코어', boss: '무릉 수련생', desc: '보스 · 사냥감 피해 +5%, 명중 +10%.', bonus: { bossDamage: .05, accuracy: .1 }, floors: [25, 28, 31, 34, 37, 40] },
     abyssMaster: { name: '사범의 권법 코어', boss: '무릉 사범', desc: '보스 · 사냥감 피해 +5%, 치명 피해 +15%p.', bonus: { bossDamage: .05, critDamage: .15 }, floors: [40, 42, 44, 46, 48, 50] },
-    abyssMugong: { name: '무공의 일격 코어', boss: '무공', desc: '보스 · 사냥감 피해 +8%, 방어 관통 +15%p(관통 상한 안).', bonus: { bossDamage: .08, penetration: .15 }, floors: [50, 51, 52, 53, 54, 55] },
+    abyssMugong: { name: '무공의 일격 코어', boss: '무공', desc: '보스 · 사냥감 피해 +8%, 방어 관통 +15%p. 관통 상한은 넘지 않습니다.', bonus: { bossDamage: .08, penetration: .15 }, floors: [50, 51, 52, 53, 54, 55] },
     // v3.314 넷째 무릉 코어(docs/endgame-challenge-plan.md PR E): 55층 위에 코어가 없어 70 · 76 · 82 · 88 · 94 · 100층에. 환생 100 빌림 몸이 56층이라 6차급 목표입니다.
     abyssGrandmaster: { name: '도장주의 비전 코어', boss: '도장의 주인', desc: '보스 · 사냥감 피해 +10%, 치명 피해 +10%p, 명중 +10%.', bonus: { bossDamage: .1, critDamage: .1, accuracy: .1 }, floors: [70, 76, 82, 88, 94, 100] },
     // v3.276 칠흑 보스코어(기획: 윌 격파 보상). 칠흑 수집 9종에 들어갑니다(data/onyx ONYX_CORE_ID).
