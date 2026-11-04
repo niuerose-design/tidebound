@@ -25,7 +25,7 @@ export function PlayerCard({ s, a, setView, compact = false }: { s: State; a: Co
     if (compact) return <button type="button" className="flex w-full items-center gap-3 rounded-l border border-line bg-surface-2 p-3 text-left shadow-1 xl:hidden" onClick={() => setView('character')} aria-label="나의 모험가 능력치 보기">
         <ProgressRing value={s.exp / Math.max(1, need)} size={44} stroke={4} color="var(--gold-ink)" label="경험치"><span className="font-num text-xs">{s.level}</span></ProgressRing>
         <span className="grid min-w-0 flex-1 gap-1">
-            <span className="flex flex-wrap items-baseline gap-x-2"><strong className="truncate text-s font-semibold text-ink-1">{s.name}</strong><small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회</small><span className="ml-auto font-num text-xs text-ink-2">전투력 {formatShort(power(a))}</span></span>
+            <span className="flex flex-wrap items-baseline gap-x-2"><strong className="min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{s.name}</strong><small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회</small><span className="ml-auto font-num text-xs text-ink-2">전투력 {formatShort(power(a))}</span></span>
             <span className="grid grid-cols-2 gap-2"><StatBar value={s.hp} max={a.hp} tone="hp" size="s" showText={false} label="체력"/><StatBar value={s.mana} max={a.mana} tone="mp" size="s" showText={false} label="마나"/></span>
         </span>
         <ChevronRight size={16} className="shrink-0 text-ink-3"/>
@@ -49,7 +49,7 @@ export function PlayerCard({ s, a, setView, compact = false }: { s: State; a: Co
             const item = s.equipment[id], color = item ? rarityVar(item.onyx ? 'primal' : rarityKey(item.rarity)) : undefined;
             return <button key={id} type="button" className="flex items-center gap-2 rounded-m border border-line bg-surface-1 p-2 text-left hover:border-line-strong" onClick={() => setView('inventory')}>
                 <ItemSlot rarity={item ? (item.onyx ? 'primal' : rarityKey(item.rarity)) : undefined} empty={!item} label={label} size="s">{item?.onyx ? <OnyxArt id={item.onyx} size={26}/> : item ? <GearArt slot={id} rarity={item.rarity} style={item.style} size={30}/> : <SlotIcon slot={id} size={16}/>}</ItemSlot>
-                <span className="grid min-w-0"><small className="text-xs text-ink-3">{label}</small><strong className="truncate text-xs font-semibold text-ink-1" style={{ color }}>{item?.name || '빈 슬롯'}</strong></span>
+                <span className="grid min-w-0"><small className="text-xs text-ink-3">{label}</small><strong className="min-w-0 [overflow-wrap:anywhere] text-xs font-semibold text-ink-1" style={{ color }}>{item?.name || '빈 슬롯'}</strong></span>
             </button>; })}</div>
     </section>;
 }

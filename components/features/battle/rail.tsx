@@ -41,7 +41,7 @@ function Feed({ s }: { s: State }) {
             <TabsList className="mb-2 flex w-full">{FEED_TABS.map(({ id, label, Icon }) => <TabsTrigger key={id} value={id} className="flex-1 gap-1"><Icon size={13}/>{label}</TabsTrigger>)}</TabsList>
         </Tabs>
         {tab === 'chat' ? <ChatPanel open playerName={s.name} guildName={s.guildMember?.name}/> : tab === 'news' ? <NewsFeed open/> : <>
-            {latestReward && <Button type="button" variant="ghost" size="xs" className="mb-2 flex h-auto w-full min-w-0 items-center justify-start gap-1.5 rounded-m bg-accent-soft px-2 py-1.5 text-left text-xs whitespace-normal text-accent hover:bg-accent-soft hover:brightness-110 pointer-coarse:min-h-11" onClick={() => pick('reward')} title="획득 기록 보기"><Sparkles size={12} className="shrink-0"/><span className="min-w-0 truncate">{latestReward.text}</span></Button>}
+            {latestReward && <Button type="button" variant="ghost" size="xs" className="mb-2 flex h-auto w-full min-w-0 items-center justify-start gap-1.5 rounded-m bg-accent-soft px-2 py-1.5 text-left text-xs whitespace-normal text-accent hover:bg-accent-soft hover:brightness-110 pointer-coarse:min-h-11" onClick={() => pick('reward')} title="획득 기록 보기"><Sparkles size={12} className="shrink-0"/><span className="min-w-0 min-w-0 [overflow-wrap:anywhere]">{latestReward.text}</span></Button>}
             <div className="log-list rail-log max-h-72 overflow-y-auto text-xs" role="log" aria-label={tab === 'battle' ? '최근 전투 기록' : '최근 획득 기록'}>{lines.length ? withTurnDividers(lines, log => <JournalLine key={log.id} log={log} playerName={s.name}/>) : <p className="py-4 text-center text-xs text-ink-3">{tab === 'battle' ? '자동 사냥을 시작하면 전투 기록이 표시됩니다.' : '처치 보상과 획득 기록이 여기에 쌓입니다.'}</p>}</div>
         </>}
     </FoldSection>;
@@ -83,7 +83,7 @@ const PlacePicker = memo(function PlacePicker({ s, busy, send, setView }: { s: S
 function PlaceRow({ index, title, sub, selected, locked, badge, disabled, onClick, children }: { index?: string; title: string; sub: string; selected?: boolean; locked?: boolean; badge?: string; disabled?: boolean; onClick: () => void; children?: React.ReactNode }) {
     return <button type="button" aria-pressed={selected} disabled={disabled} onClick={onClick} className={cn('flex min-h-10 w-full items-center gap-2 rounded-m border px-2 py-1 text-left text-xs transition-colors', selected ? 'border-accent/60 bg-accent-soft text-ink-1' : 'border-transparent bg-surface-1 text-ink-2 hover:border-line-strong', locked && 'opacity-60', disabled && !locked && !selected && 'opacity-70')}>
         {index && <span className="w-5 shrink-0 font-num text-ink-3">{index}</span>}
-        <span className="grid min-w-0 flex-1"><strong className="truncate font-semibold">{title}</strong><small className="truncate text-xs text-ink-3">{sub}</small>{children}</span>
+        <span className="grid min-w-0 flex-1"><strong className="min-w-0 [overflow-wrap:anywhere] font-semibold">{title}</strong><small className="min-w-0 [overflow-wrap:anywhere] text-xs text-ink-3">{sub}</small>{children}</span>
         {locked ? <Lock size={12} className="shrink-0 text-ink-3"/> : badge ? <span className="shrink-0 rounded-s bg-surface-3 px-1.5 py-0.5 font-num text-xs text-accent">{badge}</span> : selected ? <span className="size-2 shrink-0 rounded-full bg-accent"/> : null}
     </button>;
 }

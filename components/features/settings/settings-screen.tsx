@@ -132,7 +132,7 @@ function SlotsRow({ s, busy, onSwitchSlot }: { s: State; busy: boolean; onSwitch
             return <li key={slot} className={cn('flex min-h-11 items-center gap-3 rounded-m border border-line bg-surface-1 px-3 py-2', slot === current && 'border-accent/60', !open && 'opacity-70')}>
                 <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-3 font-num text-xs text-ink-2" aria-hidden>{slot}</span>
                 <div className="min-w-0 flex-1">
-                    <div className="truncate text-s font-semibold text-ink-1">{info ? info.name : open ? '새 모험가' : '잠김'}</div>
+                    <div className="min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{info ? info.name : open ? '새 모험가' : '잠김'}</div>
                     <div className="text-xs text-ink-3">{info ? `Lv.${info.level} ${job} · 환생 ${info.rebirths}회` : open ? '처음부터 새로 시작합니다' : slotUnlockText(slot)}</div>
                 </div>
                 {slot === current ? <span className="rounded-s bg-accent-soft px-2 py-1 text-xs font-semibold text-accent">플레이 중</span>

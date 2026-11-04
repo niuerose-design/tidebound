@@ -50,6 +50,10 @@ node scripts/check-writing.mjs --update   # 줄인 뒤 기준 갱신(늘리는 �
    - 사냥(v3.454): 휴대폰에서 모험가 카드 바로 아래에 장면이 오고, 난이도와 실시간 효율은 그 아래(상태 중심). 4단계 끝.
 5. **도움말 재구성** — effect · condition · limit 세 칸 틀을 버리고 질문형 항목으로. (완료, v3.455) 41개 규칙 카드가 “환생하면 무엇을 받고 무엇이 남나요?” 같은 질문 줄이 되고, 누르면 답 문단이 펼쳐집니다. 주제 요약은 제목 아래 줄로.
 
+## 글씨를 자르지 않기
+
+화면 문장은 PC든 휴대폰이든 잘리지 않고 줄을 바꿉니다. `truncate` · `text-ellipsis` · `whitespace-nowrap`을 문장이나 이름에 쓰지 않고, 좁은 칸에서는 `min-w-0 [overflow-wrap:anywhere]`로 줄을 바꿉니다(v3.456에서 화면 29곳을 바꿈). 짧은 수치(‘방금’, ‘3 / 5’)에는 `whitespace-nowrap`을 써도 됩니다.
+
 ## 점검에서 빼는 파일
 
 `game/data/update-log.ts`(패치 노트), `game/systems/migrations.ts`(세이브 이행 로그), 테스트.

@@ -24,7 +24,7 @@ export function Hotbar({ s, effect, setView }: { s: State; effect: CombatFx[]; s
                 effects={[`발동 ${Math.round(effective.chance * 100)}%`, `대기 ${sk.awaken ? `시작 ${sk.awaken.start}턴` : `${effective.cooldown}턴`}`, ...((effective.manaCost || 0) > 0 ? [`마나 ${formatExact(effective.manaCost!)}`] : [])]} source={<span className={cooling ? 'text-warn' : 'text-ok'}>{state} · 눌러서 스킬 편성</span>}>
                 <button type="button" className={cn('relative grid h-12 w-[68px] place-items-center content-center gap-0.5 overflow-hidden rounded-m border bg-surface-1 px-1 text-ink-1 transition-colors', cooling ? 'border-line' : 'border-accent/70 shadow-[0_0_8px_var(--accent-soft)]', sk.awaken && 'border-gold-ink/70')} aria-label={`${sk.name} ${state}`} onClick={go}>
                     <span className={cn('grid place-items-center [&_img]:size-5 [&_svg]:size-5', cooling && 'opacity-45')}><SkillIcon id={id} size={20}/></span>
-                    <small className={cn('block max-w-full truncate text-xs leading-tight text-ink-2', cooling && 'opacity-45')}>{sk.name}</small>
+                    <small className={cn('block max-w-full min-w-0 [overflow-wrap:anywhere] text-xs leading-tight text-ink-2', cooling && 'opacity-45')}>{sk.name}</small>
                     {cooling && <b className="absolute right-0.5 top-0.5 min-w-4 rounded-s bg-surface-0/90 px-1 font-num text-xs font-bold text-gold-ink">{wait}</b>}
                     {hit !== undefined && <i key={hit} className="pointer-events-none absolute inset-0 rounded-m border-2 border-gold-ink/90 shadow-[0_0_12px_var(--gold-ink)] animate-out fade-out-0 zoom-out-95 fill-mode-forwards duration-500 motion-reduce:hidden" aria-hidden="true"/>}
                 </button>

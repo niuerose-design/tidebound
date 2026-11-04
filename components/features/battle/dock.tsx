@@ -19,8 +19,8 @@ export function Dock({ s, busy, send, setView, effect }: { s: State; busy: boole
     const eyebrow = d ? `${d.id === 'abyss' ? `${s.dungeon!.depth || s.abyssBest + 1}층 · ` : ''}${d.name} · ${s.dungeon!.wave + 1} / ${d.monsters.length} 전투` : `STAGE ${String(STAGES.indexOf(st) + 1).padStart(2, '0')} · Lv. ${st.level}+`;
     return <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-l border bg-surface-1 p-3 shadow-1" style={{ borderColor: 'color-mix(in srgb, var(--stage-tone, var(--line)) 55%, var(--line))' }}>
         <div className="grid min-w-0 flex-[1_1_200px] gap-0.5">
-            <span className="truncate font-display text-xs tracking-[.14em]" style={{ color: 'var(--stage-tone, var(--accent))' }}>{eyebrow}</span>
-            <strong className="truncate text-m font-semibold text-ink-1">{d ? d.name : st.name}</strong>
+            <span className="min-w-0 [overflow-wrap:anywhere] font-display text-xs tracking-[.14em]" style={{ color: 'var(--stage-tone, var(--accent))' }}>{eyebrow}</span>
+            <strong className="min-w-0 [overflow-wrap:anywhere] text-m font-semibold text-ink-1">{d ? d.name : st.name}</strong>
         </div>
         <Hotbar s={s} effect={effect} setView={setView}/>
         <div className="ml-auto flex flex-wrap items-center justify-end gap-1.5">

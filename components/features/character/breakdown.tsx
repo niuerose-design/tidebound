@@ -31,7 +31,7 @@ export function FoldRow({ label, value, rows, note, className }: { label: ReactN
     const [open, setOpen] = useState(false);
     return <Collapsible open={open} onOpenChange={setOpen} className={cn('border-b border-line/60', className)}>
         <CollapsibleTrigger className="flex min-h-9 w-full items-center justify-between gap-3 rounded-s py-1 text-left text-s outline-none hover:text-ink-1 focus-visible:ring-[3px] focus-visible:ring-accent/50">
-            <span className="inline-flex min-w-0 items-center gap-1 text-ink-2"><span className="truncate">{label}</span><ChevronDown size={12} className={cn('shrink-0 transition-transform', open && 'rotate-180')} aria-hidden/></span>
+            <span className="inline-flex min-w-0 items-center gap-1 text-ink-2"><span className="min-w-0 [overflow-wrap:anywhere]">{label}</span><ChevronDown size={12} className={cn('shrink-0 transition-transform', open && 'rotate-180')} aria-hidden/></span>
             <strong className="shrink-0 font-num text-ink-1">{value}</strong>
         </CollapsibleTrigger>
         <CollapsibleContent>

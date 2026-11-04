@@ -57,39 +57,30 @@
    "dots": 1
   },
   "components/features/help/topics/altar.tsx": {
-   "paren": 17,
    "dots": 4,
    "long": 9
   },
-  "components/features/help/topics/attributes.tsx": {
-   "paren": 8
-  },
   "components/features/help/topics/combat.tsx": {
-   "paren": 13,
+   "paren": 3,
    "long": 2,
    "dots": 1
   },
   "components/features/help/topics/growth.tsx": {
-   "paren": 19,
+   "paren": 1,
    "long": 15,
-   "dots": 5
+   "dots": 4
   },
   "components/features/help/topics/hunting.tsx": {
-   "paren": 11,
    "long": 6,
-   "dots": 2
+   "dots": 2,
+   "paren": 1
   },
   "components/features/help/topics/jobs.tsx": {
-   "paren": 1,
    "long": 1
   },
   "components/features/help/topics/skills.tsx": {
-   "paren": 10,
    "long": 4,
    "dots": 1
-  },
-  "components/features/help/topics/status.tsx": {
-   "paren": 1
   },
   "components/features/jobs/job-compare.tsx": {
    "paren": 1
