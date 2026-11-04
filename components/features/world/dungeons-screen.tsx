@@ -95,7 +95,7 @@ function ActiveRun({ s, send, busy, playerStats }: { s: State; send: Send; busy:
             const done = wave > index, current = wave === index, boss = index === d.monsters.length - 1;
             const def = boss && d.bossMonster ? monsterById(d.bossMonster) : monsterById(id);
             return <li key={`${id}-${index}`} className={cn('flex min-w-24 shrink-0 flex-col items-center gap-1 rounded-m border px-2 py-2 text-center', current ? 'border-accent/70 bg-accent-soft' : done ? 'border-line bg-surface-1 opacity-60' : 'border-line bg-surface-1', boss && 'border-danger/50')}>
-                <MonsterArt id={def?.id || id} boss={boss} size={boss ? 40 : 28}/><span className={cn('text-xs', boss ? 'font-semibold text-danger' : 'text-ink-3')}>{boss ? 'BOSS' : `W${index + 1}`}</span><strong className="truncate text-xs">{def?.name || id}</strong>
+                <MonsterArt id={def?.id || id} boss={boss} size={boss ? 40 : 28}/><span className={cn('text-xs', boss ? 'font-semibold text-danger' : 'text-ink-3')}>{boss ? 'BOSS' : `W${index + 1}`}</span><strong className="min-w-0 [overflow-wrap:anywhere] text-xs">{def?.name || id}</strong>
             </li>; })}</ol>
     </section>;
 }

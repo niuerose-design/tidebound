@@ -14,7 +14,7 @@ export function StatusTopic() {
                 <small className="text-xs text-ink-3">{status.detail}</small>
             </article>)}</div>
         </div>)}
-        <p className="text-xs leading-relaxed text-ink-3"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뜁니다(중독은 계속 쌓임). 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로 저항합니다(최대 50%). 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
+        <p className="text-xs leading-relaxed text-ink-3"><b>공통</b> 이미 걸린 상태이상은 다시 걸지 않고 그 기술을 건너뛰고, 중독만 계속 쌓입니다. 망토의 ‘불굴’ 옵션은 몬스터가 거는 상태이상을 그 확률로, 최대 50%까지 저항합니다. 풀린 뒤 기절 {STATUS_TUNING.immuneTurns.stun}턴, 그 밖 {STATUS_TUNING.immuneTurns.slow}턴은 같은 상태이상에 면역입니다.</p>
     </Topic>
     );
 }

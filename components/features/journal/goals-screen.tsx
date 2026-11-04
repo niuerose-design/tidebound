@@ -91,7 +91,7 @@ function FeatRow({ row, progress, visited, send, busy }: { row: FeatRowData; pro
     const p = allDone ? cur.target : Math.min(cur.target, progress(cur)), v = visited?.(cur), reward = rewardText(cur.reward);
     return <li className={cn('grid gap-1.5 border-b border-line py-2.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_6rem] sm:items-center sm:gap-3', allDone && claimable === 0 && 'opacity-80')}>
         <div className="min-w-0">
-            <div className="flex items-center gap-2">{row.series && <StepPips done={doneCount} total={row.steps.length}/>}<strong className="min-w-0 truncate text-s">{cur.title}</strong>{allDone && claimable === 0 && <Check size={13} className="shrink-0 text-ok" aria-label="완료"/>}</div>
+            <div className="flex items-center gap-2">{row.series && <StepPips done={doneCount} total={row.steps.length}/>}<strong className="min-w-0 min-w-0 [overflow-wrap:anywhere] text-s">{cur.title}</strong>{allDone && claimable === 0 && <Check size={13} className="shrink-0 text-ok" aria-label="완료"/>}</div>
             <p className="text-xs leading-relaxed text-ink-3">{cur.desc}</p>
             {v && v.length ? <small className="text-xs text-ink-3">다녀온 곳: {v.join(' · ')}</small> : null}
         </div>

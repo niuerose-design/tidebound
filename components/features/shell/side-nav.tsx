@@ -26,7 +26,7 @@ export function SideNav({ view, setView, s, onLogout }: { view: string; setView:
             <SidebarGroupLabel className="font-display text-xs tracking-[.14em] text-ink-3">{group.label}</SidebarGroupLabel>
             <SidebarMenu>{group.items.filter(item => !item.hidden?.(s)).map(({ id, name, Icon, unlock, views }) => { const lock = unlock ? unlock(s) : null, active = views ? views.includes(view) : view === id; return <SidebarMenuItem key={id}>
                 <SidebarMenuButton isActive={active} aria-current={active ? 'page' : undefined} className={cn('h-10 gap-3 rounded-m px-3 text-s text-ink-2 hover:bg-surface-3 hover:text-ink-1 data-[active=true]:bg-accent-soft data-[active=true]:font-semibold data-[active=true]:text-accent', lock && 'text-ink-3')} title={lock ? `${lock}부터 쓸 수 있는 화면입니다. 미리 볼 수는 있습니다.` : undefined} onClick={() => go(id)}>
-                    <Icon size={17}/><span className="truncate">{name}</span>{lock ? <small className="ml-auto inline-flex items-center gap-0.5 text-xs text-ink-3"><Lock size={11}/>{lock}</small> : active && <ChevronRight size={14} className="ml-auto opacity-70"/>}
+                    <Icon size={17}/><span className="min-w-0 [overflow-wrap:anywhere]">{name}</span>{lock ? <small className="ml-auto inline-flex items-center gap-0.5 text-xs text-ink-3"><Lock size={11}/>{lock}</small> : active && <ChevronRight size={14} className="ml-auto opacity-70"/>}
                 </SidebarMenuButton>
             </SidebarMenuItem>; })}</SidebarMenu>
         </SidebarGroup>)}</SidebarContent>

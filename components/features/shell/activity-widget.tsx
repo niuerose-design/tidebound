@@ -29,11 +29,11 @@ export function ActivityWidget({ s, setView, variant }: { s: State; setView: (v:
     const mark = <span className={cn('grid shrink-0 place-items-center rounded-full', variant === 'strip' ? 'size-8' : 'size-7', s.running ? 'bg-accent-soft text-accent' : 'bg-surface-3 text-ink-3')} aria-hidden="true">{s.running ? <Play size={13}/> : <Pause size={13}/>}</span>;
     if (variant === 'strip') return <button type="button" className="flex h-12 w-full items-center gap-3 border-t border-line bg-surface-2 px-4 text-left" onClick={() => setView('battle')} aria-label={`지금 진행: ${a.title}, ${a.detail}. 자동 사냥 화면 열기`}>
         {mark}
-        <span className="min-w-0 flex-1 leading-tight"><span className="block truncate text-s font-semibold text-ink-1">{a.title}</span><span className="block truncate text-xs text-ink-3">{rate || a.detail}</span></span>
+        <span className="min-w-0 flex-1 leading-tight"><span className="block min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{a.title}</span><span className="block min-w-0 [overflow-wrap:anywhere] text-xs text-ink-3">{rate || a.detail}</span></span>
         <ChevronRight size={16} className="shrink-0 text-ink-3"/>
     </button>;
     return <section className="grid gap-2 rounded-m border border-line bg-surface-2 p-3" aria-label="지금 진행">
-        <div className="flex items-center gap-2">{mark}<div className="min-w-0 flex-1 leading-tight"><div className="truncate text-s font-semibold text-ink-1">{a.title}</div><div className="truncate text-xs text-ink-3">{a.detail}</div></div></div>
+        <div className="flex items-center gap-2">{mark}<div className="min-w-0 flex-1 leading-tight"><div className="min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{a.title}</div><div className="min-w-0 [overflow-wrap:anywhere] text-xs text-ink-3">{a.detail}</div></div></div>
         {!hacker && <StatBar value={s.exp} max={xpNeeded(s.level, s.rebirths, xpWall(s))} tone="exp" size="s" label={`Lv.${s.level}`} className="text-xs [&_.text-s]:text-xs"/>}
         {rate && <div className="font-num text-xs text-ink-3">{rate}</div>}
         <Button type="button" variant="ghost" size="sm" className="h-9 gap-1 rounded-m bg-accent-soft text-s font-semibold text-accent hover:bg-accent-soft hover:text-accent hover:brightness-110 pointer-coarse:min-h-11" onClick={() => setView('battle')}>사냥 보기<ChevronRight size={14}/></Button>

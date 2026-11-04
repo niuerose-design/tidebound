@@ -40,7 +40,7 @@ export function InventoryScreen({ s, send, busy }: { s: State; send: Send; busy:
     const shown = s.inventory.map((item, index) => ({ item, index })).filter(({ item }) => (slot === 'all' || item.slot === slot) && (rarity < 0 || item.rarity === rarity) && (!upgradesOnly || (preview.get(item.id)?.gain || 0) > 0) && (!q || item.name.toLowerCase().includes(q) || RARITIES[item.rarity].name.includes(q) || SLOTS[item.slot].includes(q) || (item.relic ? '유물'.includes(q) : false)))
         .sort((a, b) => sort === 'power' ? b.item.power * starMultiplier(b.item.enhance || 0) - a.item.power * starMultiplier(a.item.enhance || 0) || b.item.rarity - a.item.rarity : sort === 'rarity' ? b.item.rarity - a.item.rarity || b.item.power - a.item.power : sort === 'level' ? b.item.level - a.item.level || b.item.power - a.item.power : sort === 'recent' ? b.index - a.index : a.item.name.localeCompare(b.item.name, 'ko'))
         .map(x => x.item);
-    const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key} className="whitespace-nowrap">{STAT_LABELS[key as keyof Stats]} <b className="font-num tabular-nums text-ink-1">{statDeltaDisplay(key, value as number)}</b></span>);
+    const topStats = (item: Item) => byStatOrder(Object.entries(itemStats(item))).slice(0, STAT_PREVIEW).map(([key, value]) => <span key={key} className="min-w-0">{STAT_LABELS[key as keyof Stats]} <b className="font-num tabular-nums text-ink-1">{statDeltaDisplay(key, value as number)}</b></span>);
     const openedWorn = SLOT_IDS.map(id => s.equipment[id]).find(w => w && w.id === open);
     const filtersOn = slot !== 'all' || rarity >= 0 || upgradesOnly || !!q;
     const detail = (item: Item, equipped: boolean) => {
@@ -72,7 +72,7 @@ export function InventoryScreen({ s, send, busy }: { s: State; send: Send; busy:
                         <ItemMeta item={worn}/>
                         <span className="flex flex-wrap gap-x-3 text-xs text-ink-3">{topStats(worn)}</span>
                     </button> : <p className="min-h-11 text-s text-ink-3">비어 있음</p>}
-                    {up ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-m bg-surface-1 px-2 py-1.5 text-xs"><span className="flex min-w-0 items-center gap-1 text-ink-2"><ArrowUpRight size={13} className="shrink-0 text-ok"/>추천 <b className="truncate text-ink-1">{up.name}</b><GainBadge gain={preview.get(up.id)!.gain}/></span><Button type="button" size="xs" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</Button></div>
+                    {up ? <div className="flex flex-wrap items-center justify-between gap-2 rounded-m bg-surface-1 px-2 py-1.5 text-xs"><span className="flex min-w-0 items-center gap-1 text-ink-2"><ArrowUpRight size={13} className="shrink-0 text-ok"/>추천 <b className="min-w-0 [overflow-wrap:anywhere] text-ink-1">{up.name}</b><GainBadge gain={preview.get(up.id)!.gain}/></span><Button type="button" size="xs" disabled={busy} onClick={() => send({ type: 'equip', id: up.id })}>바로 장착</Button></div>
                         : <p className="text-xs text-ink-3">가방에 더 좋은 {SLOTS[id]} 없음</p>}
                 </article>; })}
         </section>

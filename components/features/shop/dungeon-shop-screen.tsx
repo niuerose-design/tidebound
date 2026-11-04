@@ -80,8 +80,8 @@ function CoreTab({ s, send, busy, buy, now }: P & { send: Send; now: number }) {
     return <section aria-label="보스 코어" className="grid gap-3">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6" role="tablist" aria-label="보스 코어 고르기">{ids.map(x => { const xe = coreEntry(s.bossCores?.[x]), on = x === id, bc = BOSS_CORES[x]; return <button key={x} type="button" role="tab" aria-selected={on} onClick={() => { setPick(x); setLine(0); }}
             className={cn('grid min-h-11 content-start gap-1 rounded-m border p-2 text-left outline-none focus-visible:ring-[3px] focus-visible:ring-accent/50', on ? 'border-accent/70 bg-accent-soft' : 'border-line bg-surface-2 hover:bg-surface-3/60', !xe && 'opacity-70', bc.onyx && 'border-l-[3px] border-l-[color:var(--rarity-primal)]')}>
-            <span className="flex items-center gap-2">{bc.onyx ? <OnyxArt id={x} size={22}/> : <Hexagon size={18} className="text-accent"/>}<small className="truncate text-xs text-ink-3">{bc.floors ? `무릉 ${bc.floors[0]}층` : bc.onyx ? `칠흑 · ${bc.boss}` : bc.boss}</small></span>
-            <span className="flex items-center justify-between gap-1"><b className="truncate text-xs">{bc.name}</b>{xe ? pips(xe.rank) : <em className="text-xs not-italic text-ink-3">미획득</em>}</span>
+            <span className="flex items-center gap-2">{bc.onyx ? <OnyxArt id={x} size={22}/> : <Hexagon size={18} className="text-accent"/>}<small className="min-w-0 [overflow-wrap:anywhere] text-xs text-ink-3">{bc.floors ? `무릉 ${bc.floors[0]}층` : bc.onyx ? `칠흑 · ${bc.boss}` : bc.boss}</small></span>
+            <span className="flex items-center justify-between gap-1"><b className="min-w-0 [overflow-wrap:anywhere] text-xs">{bc.name}</b>{xe ? pips(xe.rank) : <em className="text-xs not-italic text-ink-3">미획득</em>}</span>
             {s.coreSlot === x && <b className="justify-self-start rounded-s bg-accent px-1.5 text-xs text-accent-ink">장착</b>}
         </button>; })}</div>
         <article className={cn('grid gap-3 rounded-l border bg-surface-2 p-4 shadow-1', c.onyx ? 'border-[color:var(--rarity-primal)]/60' : 'border-line', !e && 'opacity-90')}>

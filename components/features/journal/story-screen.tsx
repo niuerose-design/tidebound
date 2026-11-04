@@ -57,7 +57,7 @@ function Scene({ id, title, date, fresh, lines }: { id: string; title: string; d
     const [open, setOpen] = useState(false);
     return <Collapsible open={open} onOpenChange={setOpen} className="rounded-m border border-line bg-surface-1">
         <CollapsibleTrigger className="flex min-h-11 w-full items-center gap-2 rounded-m px-3 py-2 text-left outline-none hover:bg-surface-3/60 focus-visible:ring-[3px] focus-visible:ring-accent/50">
-            <h3 className="inline-flex min-w-0 flex-1 items-center gap-2 font-display text-s font-semibold"><span className="truncate">{title}</span>{fresh && <New/>}</h3><time className="font-num text-xs text-ink-3">{date}</time><ChevronDown size={16} className={cn('shrink-0 text-ink-3 transition-transform', open && 'rotate-180')} aria-hidden/>
+            <h3 className="inline-flex min-w-0 flex-1 items-center gap-2 font-display text-s font-semibold"><span className="min-w-0 [overflow-wrap:anywhere]">{title}</span>{fresh && <New/>}</h3><time className="font-num text-xs text-ink-3">{date}</time><ChevronDown size={16} className={cn('shrink-0 text-ink-3 transition-transform', open && 'rotate-180')} aria-hidden/>
         </CollapsibleTrigger>
         <CollapsibleContent><div className="grid gap-2 border-t border-line px-3 py-3"><SceneArt id={id} title={title}/>{lines.map((line, i) => <p key={i} className="text-s leading-relaxed text-ink-2">{line}</p>)}</div></CollapsibleContent>
     </Collapsible>;
