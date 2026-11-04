@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { PanelProps } from '@/components/game/panel-props';
 import { useNow } from '@/components/game/shared';
-import { SectionHeader, StatBar, ConfirmAction, ChoiceChips, formatExact as format } from '@/components/ui/game';
+import { SectionHeader, StatBar, ConfirmAction, ChoiceChips, formatExact as format, FinePrint } from '@/components/ui/game';
 import { Tile } from '@/components/features/shop/parts';
 import { Card, Head, Note, Box, Row, Form, Primary, Sm, Link, field } from './parts';
 import { cn } from '@/lib/utils';
@@ -61,7 +61,18 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
         <Card>
             <Head title="침투 작전" aside={<>오늘 남은 입장 {Math.max(0, entriesLeft)} / {cap}{h.botnet?.day === dayKey(now) ? ' (봇넷 +2)' : ''}{s.hackFeed?.traced?.day === dayKey(now) ? ' (역추적당함)' : ''}</>}/>
             {!infil ? <>
-                <Note>서버 노드를 한 칸씩 뚫습니다. 방화벽(서로 다른 숫자 자물쇠: 자리·숫자가 맞으면 S, 숫자만 맞으면 B) · 포트 스캔(UP·DOWN) · 수열(다음 수) · 진법 변환(2진수·16진수를 10진수로) · 암호 해독(알파벳을 몇 칸 밀어 둔 단어)이 섞여 나오고, 깊이 5부터 패스워드 재조합(글자 순서를 섞은 단어) · 최단 경로(숫자 격자에서 가장 작은 합)도 나옵니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</Note>
+                <Note>서버 노드를 한 칸씩 뚫습니다. 깊을수록 보상이 커지고, 언제든 이탈해 쌓인 보상을 받습니다. 시도를 다 쓰면 추적당해 {Math.round(traceKeep(s) * 100)}%만 회수합니다.</Note>
+                <FinePrint summary="노드 종류">
+                    <ul>
+                        <li>방화벽: 서로 다른 숫자 자물쇠. 자리와 숫자가 맞으면 S, 숫자만 맞으면 B.</li>
+                        <li>포트 스캔: UP · DOWN.</li>
+                        <li>수열: 다음 수.</li>
+                        <li>진법 변환: 2진수 · 16진수를 10진수로.</li>
+                        <li>암호 해독: 알파벳을 몇 칸 밀어 둔 단어.</li>
+                        <li>패스워드 재조합: 글자 순서를 섞은 단어. 깊이 5부터.</li>
+                        <li>최단 경로: 숫자 격자에서 가장 작은 합. 깊이 5부터.</li>
+                    </ul>
+                </FinePrint>
                 <Primary type="button" className="justify-self-start" disabled={busy || !isHacker || entriesLeft <= 0} onClick={() => send({ type: 'infilStart' })}>침투 시작</Primary>
             </> : <div className="grid gap-2.5">
                 <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><b className="text-s font-semibold">노드 {infil.depth + 1} · {NODE_LABEL[infil.node.kind](infil.node.size)}</b><span className="text-xs text-ink-3">남은 시도 {infil.node.max - infil.node.tries} · 쌓인 보상 비트 {infil.bank.bits} · 권한 {infil.bank.exp}</span></div>
@@ -177,7 +188,11 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
         {/* v3.57 정보 해킹: 서버가 데이터에서 만든 비밀 조각 하나(드롭·확률 · 출현 가중치 · 히든 직업 조건). 퍼뜨리기는 방송 탈취·채팅으로. */}
         {n >= 1 && <Card>
             <Head title="정보 해킹" aside={<>알아낸 정보 {leaks.length}개 · 최근 {HACKER.leak.keep}개까지 보관</>}/>
-            <Note>서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다: 장비 드롭·등급·까미·누리·칠흑·변종·감정 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 숨은 조건. 퍼뜨릴지는 해커가 정합니다(방송 탈취·채팅). 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</Note>
+            <Note>서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다. 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</Note>
+            <FinePrint summary="빼낼 수 있는 것">
+                <p>장비 드롭 · 등급 · 감정 확률, 까미 · 누리 · 칠흑 · 변종 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 숨은 조건.</p>
+                <p>퍼뜨릴지는 해커가 정합니다. 방송 탈취나 채팅으로.</p>
+            </FinePrint>
             <Primary type="button" className="justify-self-start" disabled={busy || !isHacker || busted || (used.leak || 0) >= cap2(HACKER.leak.perDay(n)) || h.bits < cost(HACKER.leak.bits)} onClick={() => run('leak')}>정보 해킹</Primary>
             {leaks.length > 0 && <ul className="grid max-h-80 gap-1.5 overflow-auto">{leaks.map(l => <li key={l.id} className="flex items-start justify-between gap-2.5 rounded-m border border-line bg-surface-1 px-2.5 py-2 text-s leading-relaxed"><span>{l.text}</span><Link title="복사해서 채팅에 붙여 넣을 수 있습니다" onClick={() => { try { void navigator.clipboard?.writeText(l.text); } catch { /* 복사 불가 */ } }}>복사</Link></li>)}</ul>}
         </Card>}
@@ -203,7 +218,12 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
 
         <Card>
             <Head title="신원 조작" aside={<>{level >= 3 ? '3단계 · 항목 선택 · 미끼 정보' : level === 2 ? '2단계 · 항목 선택' : level === 1 ? '1단계 · 전부 숨김' : '꺼짐(장착·숙련 1단계 필요)'}</>}/>
-            <Note>고른 모험가 한 명(나도 가능)의 랭킹·무릉도장·해커 순위 정보를 ???로 가립니다. 기간은 시간 단위로 정하고 0이면 무기한입니다. 결투 계산에는 영향이 없고, 크래킹을 당하면 그동안 풀리며, 화이트 해커가 되돌릴 수 있습니다. 랭킹 행의 ‘신원 조작’ 버튼은 무기한으로 겁니다. 숙련 {HACKER.spoof.decoyLevel}단계부터 가린 이름·직업·레벨 자리에 ??? 대신 미끼 정보(가짜 값)를 보여 줄 수 있습니다(크래킹하면 진짜가 드러남). 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)}</Note>
+            <Note>고른 모험가 한 명의 랭킹 · 무릉도장 · 해커 순위 정보를 ???로 가립니다. 나도 고를 수 있습니다. 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)}</Note>
+            <FinePrint summary="기간 · 해제 · 미끼">
+                <p>기간은 시간 단위로 정하고 0이면 무기한입니다. 랭킹 행의 ‘신원 조작’ 버튼은 무기한으로 겁니다.</p>
+                <p>결투 계산에는 영향이 없습니다. 크래킹을 당하면 그동안 풀리고, 화이트 해커가 되돌릴 수 있습니다.</p>
+                <p>숙련 {HACKER.spoof.decoyLevel}단계부터 가린 이름 · 직업 · 레벨 자리에 ??? 대신 가짜 값인 미끼 정보를 보여 줄 수 있습니다. 크래킹하면 진짜가 드러납니다.</p>
+            </FinePrint>
             {level >= 2 && <ChoiceChips label="공개로 남길 항목" value={showList} disabled={busy} onChange={v => togglePrivacy(v as PrivacyField)} options={PRIVACY_FIELDS.map(f => ({ value: f, label: `${PRIVACY_LABELS[f]} ${show.has(f) ? '공개' : '숨김'}` }))}/>}
             {level >= HACKER.spoof.decoyLevel && <Row role="group" aria-label="미끼 정보">
                 <input className={field} value={decoy.name} maxLength={12} onChange={e => setDecoy({ ...decoy, name: e.target.value.replace(/[\n\r<>|,]/g, '') })} placeholder="미끼 이름(비우면 ???)" aria-label="미끼 이름"/>

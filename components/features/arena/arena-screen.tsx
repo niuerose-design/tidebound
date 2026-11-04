@@ -18,7 +18,7 @@ import { normalizeStats } from '@/game/systems/stats';
 import { STAT_LABELS, statDisplay } from '@/game/data/progression';
 import { vowBadgeLabel } from '@/game/systems/vows';
 import { SkillIcon, useNow } from '@/components/game/shared';
-import { SectionHeader, EmptyState, formatExact, formatShort } from '@/components/ui/game';
+import { SectionHeader, EmptyState, formatExact, formatShort, FinePrint } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 const format = formatExact;
@@ -201,7 +201,11 @@ function AbyssBoard({ s, abyss, reload }: { s: State; abyss: { week: string; row
     const mine = s.abyssWeek, rewards = [1, 2, 3, 10, 50].map(r => `${r === 1 ? '1위' : r === 2 ? '2위' : r === 3 ? '3위' : `${r}위 안`} ${abyssWeeklyPearls(r)}`).join(' · ');
     return <Card>
         <Head icon={<ArrowUpRight size={16}/>} title={<>이번 주 무릉도장 최고 층{abyss ? ` · ${abyss.week}` : ''}</>} onReload={reload}/>
-        <Note>무릉도장(환생 3회)에서 이번 주에 정복한 가장 깊은 층으로 겨룹니다. 한국 시간 월요일 0시에 새 주가 시작되고, 지난주 보상은 다음 행동 때 자동 지급: {rewards} · 참가 1세계석. 내 기록은 심연을 정복하면 바로 올라갑니다.</Note>
+        <Note>이번 주에 무릉도장에서 정복한 가장 깊은 층으로 겨룹니다. 참가 1세계석.</Note>
+        <FinePrint summary="주간 규칙 · 보상">
+            <p>무릉도장은 환생 3회부터 들어갑니다. 내 기록은 심연을 정복하면 바로 올라갑니다.</p>
+            <p>한국 시간 월요일 0시에 새 주가 시작되고, 지난주 보상은 다음 행동 때 자동으로 들어옵니다: {rewards}.</p>
+        </FinePrint>
         {mine && <Mine>내 이번 주 기록 <b>{mine.best}층</b>{mine.dirty ? ' · 올리는 중' : ''}</Mine>}
         {!abyss ? <Note>불러오는 중…</Note> : !abyss.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 주에 무릉도장을 정복한 모험가가 없습니다. 첫 기록을 남겨 보세요."/> :
         <div className="overflow-x-auto"><Table className="min-w-[520px]"><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>층</TableHead><TableHead>직업</TableHead><TableHead>환생</TableHead></TableRow></TableHeader>
@@ -225,7 +229,12 @@ function HackerBoard({ s, send, busy }: { s: State; send: PanelProps['send']; bu
     const rival = canAttack(s) && (s.hacker?.tier || 0) >= 1, today = s.hacker?.day === dayKey(clock), used = today ? s.hacker?.used || {} : {}, bits = s.hacker?.bits || 0;
     return <Card>
         <Head icon={<ArrowUpRight size={16}/>} title={<>이번 달 해커 순위{board ? ` · ${board.month}` : ''}</>} onReload={load}/>
-        <Note>점수 = 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 한국 시간 매월 1일에 새로 셉니다. 신원 조작으로 가린 이름은 ???로 보입니다. 해커·블랙 해커는 다른 해커를 역추적(오늘 침투 입장 −1)하거나 과부하(브루트포스 비트 절반 2시간)로 견제할 수 있습니다(각각 하루 1회, 블랙 해커는 2회, 화이트 해커 방화벽이 하루 한 번 막음).</Note>
+        <Note>점수 = 침투 작전 최고 깊이 ×10 + 해킹 실행 ×5 + 화이트 해커 복구 ×5. 한국 시간 매월 1일에 새로 셉니다.</Note>
+        <FinePrint summary="견제 규칙">
+            <p>신원 조작으로 가린 이름은 ???로 보입니다.</p>
+            <p>해커와 블랙 해커는 다른 해커를 견제할 수 있습니다. 역추적은 상대의 오늘 침투 입장을 1 줄이고, 과부하는 상대의 브루트포스 비트를 2시간 동안 절반으로 만듭니다.</p>
+            <p>각각 하루 1회, 블랙 해커는 2회. 화이트 해커의 방화벽이 하루 한 번 막습니다.</p>
+        </FinePrint>
         {mine && <Mine>내 이번 달 기록 <b>깊이 {mine.depth} · 해킹 {mine.hacks} · 복구 {mine.restores}</b></Mine>}
         {error ? <Note tone="danger">{error}</Note> : !board ? <Note>불러오는 중…</Note> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 침투 작전·해킹을 한 해커가 없습니다."/> :
         <div className="overflow-x-auto"><Table className="min-w-[520px]"><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>해커</TableHead><TableHead>점수</TableHead><TableHead>깊이</TableHead><TableHead>해킹</TableHead><TableHead>복구</TableHead>{rival && <TableHead>견제</TableHead>}</TableRow></TableHeader>
@@ -248,7 +257,12 @@ function LeagueBoard({ s }: { s: State }) {
     const tier = board?.tier || s.expeditionLeague?.tier || 1;
     return <Card>
         <Head icon={<ArrowUpRight size={16}/>} title={<>원정 주간 리그 · {leagueTierName(tier)}{board ? ` · ${board.week}` : ''}</>} onReload={load}/>
-        <Note>같은 등급의 모험가 {LEAGUE.size}명이 한 조(이번 주 첫 전투 순서). 점수 = 이번 주 최고 판 점수 + 끝난 판들의 승리 합. 한국 시간 월요일에 끝나고 다음 ‘원정 출발’ 때 정산: 1~{LEAGUE.promote}위 승급 · {LEAGUE.size - LEAGUE.demote + 1}~{LEAGUE.size}위({LEAGUE.demoteMin}명 이상인 조) 강등 · 세계석 {LEAGUE.rewards.join(' · ')}. 등급: {LEAGUE.tiers.map((t, i) => `${LEAGUE.icons[i]} ${t}`).join(' → ')}.{s.expeditionLeague?.best ? ` 내 최고 등급 ${leagueTierName(s.expeditionLeague.best)}.` : ''}</Note>
+        <Note>같은 등급의 모험가 {LEAGUE.size}명이 한 조로 겨룹니다. 점수 = 이번 주 최고 판 점수 + 끝난 판들의 승리 합.{s.expeditionLeague?.best ? ` 내 최고 등급 ${leagueTierName(s.expeditionLeague.best)}.` : ''}</Note>
+        <FinePrint summary="조 · 정산 규칙">
+            <p>조는 이번 주 첫 전투 순서로 묶입니다. 등급: {LEAGUE.tiers.map((t, i) => `${LEAGUE.icons[i]} ${t}`).join(' → ')}.</p>
+            <p>한국 시간 월요일에 끝나고 다음 ‘원정 출발’ 때 정산합니다. 1~{LEAGUE.promote}위 승급, {LEAGUE.size - LEAGUE.demote + 1}~{LEAGUE.size}위 강등. 강등은 {LEAGUE.demoteMin}명 이상인 조에서만.</p>
+            <p>세계석 {LEAGUE.rewards.join(' · ')}.</p>
+        </FinePrint>
         {error ? <Note tone="danger">{error}</Note> : !board ? <Note>불러오는 중…</Note> : !board.joined ? <Empty title="아직 조에 들어가지 않았습니다" description="이번 주 원정 전투를 한 번 하면 같은 등급 조에 들어갑니다."/> :
         <div className="overflow-x-auto"><Table className="min-w-[520px]"><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>최고 판</TableHead><TableHead>승리</TableHead><TableHead>판</TableHead></TableRow></TableHeader>
         <TableBody>{board.rows.map(r => <TableRow key={r.id} className={cn(r.self && 'bg-accent-soft', r.rank <= LEAGUE.promote ? 'text-ok' : board.rows.length >= LEAGUE.demoteMin && r.rank > board.rows.length - LEAGUE.demote ? 'text-danger' : '')}><TableCell className="font-num">{r.rank}{r.rank <= LEAGUE.promote ? ' ▲' : board.rows.length >= LEAGUE.demoteMin && r.rank > board.rows.length - LEAGUE.demote ? ' ▼' : ''}</TableCell><TableCell><strong>{r.name}{r.self ? ' (나)' : ''}</strong></TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.bestRun}</TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.runs}</TableCell></TableRow>)}</TableBody></Table></div>}
@@ -265,7 +279,14 @@ function ExpeditionBoard({ s }: { s: State }) {
     }, [nonce]);
     return <Card>
         <Head icon={<ArrowUpRight size={16}/>} title={<>이번 달 원정대 순위{board ? ` · ${board.month}` : ''}</>} onReload={load}/>
-        <Note>점수는 이번 달에 가장 잘한 판으로 셉니다: 승리 1번에 100점, 완주 50점, 닿은 라운드만큼 1점씩, 난이도 보너스(숙련 60 · 정예 120 · 악몽 180 · 전설 240), 심연 1라운드마다 20점. 여기에 다른 모험가의 원정대를 이길 때마다 받는 점수(상대 승수 × 10)가 이번 달 내내 쌓입니다. 한국 시간 매월 1일에 처음부터 다시 셉니다. 순위에 오른 보드는 다른 모험가의 원정에 2라운드부터 상대로 나옵니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''} 월말 순위 보상(세계석, 다음 달 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</Note>
+        <Note>점수는 이번 달에 가장 잘한 판으로 셉니다. 한국 시간 매월 1일에 처음부터 다시 셉니다.{s.expeditionBest ? ` 내 최고 ${s.expeditionBest}승.` : ''}</Note>
+        <FinePrint summary="점수 · 보상 규칙">
+            <p>승리 1번에 100점, 완주 50점, 닿은 라운드마다 1점, 심연 1라운드마다 20점.</p>
+            <p>난이도 보너스: 숙련 60 · 정예 120 · 악몽 180 · 전설 240.</p>
+            <p>다른 모험가의 원정대를 이길 때마다 상대 승수 × 10점이 이번 달 내내 쌓입니다.</p>
+            <p>순위에 오른 보드는 다른 모험가의 원정에 2라운드부터 상대로 나옵니다.</p>
+            <p>월말 순위 보상은 세계석이고 다음 달 첫 출발 때 들어옵니다: {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</p>
+        </FinePrint>
         {error ? <Note tone="danger">{error}</Note> : !board ? <Note>불러오는 중…</Note> : !board.rows.length ? <Empty title="아직 기록이 없습니다" description="이번 달에 원정을 다녀온 모험가가 없습니다."/> :
         <div className="overflow-x-auto"><Table className="min-w-[520px]"><TableHeader><TableRow><TableHead>순위</TableHead><TableHead>모험가</TableHead><TableHead>점수</TableHead><TableHead>승</TableHead><TableHead>완주</TableHead><TableHead>라운드</TableHead><TableHead>고스트</TableHead><TableHead>판</TableHead><TableHead>코드</TableHead></TableRow></TableHeader>
         <TableBody>{board.rows.map(r => <TableRow key={r.id} className={cn(r.self && 'bg-accent-soft')}><TableCell className="font-num">{r.rank}</TableCell><TableCell><strong>{r.name}{r.self ? ' (나)' : ''}</strong></TableCell><TableCell><b>{r.score}</b></TableCell><TableCell>{r.wins}</TableCell><TableCell>{r.difficulty && r.difficulty > 1 ? `${difficultyOf(r.difficulty).icon} ` : ''}{r.cleared ? '완주' : '-'}</TableCell><TableCell>{r.round}{r.abyss ? <small> +심연 {r.abyss}</small> : null}</TableCell><TableCell>{r.ghostPoints ? `+${r.ghostPoints}` : '-'}</TableCell><TableCell>{r.runs}</TableCell><TableCell>{r.code ? <Link title="이 보드의 공유 코드를 복사합니다(원정대 출발 화면의 ‘보드 공유’에 붙여 넣으면 목표 보드가 됩니다)" onClick={() => copy(r.id, r.code!)}>{copied === r.id ? '복사됨' : '복사'}</Link> : '-'}</TableCell></TableRow>)}</TableBody></Table></div>}

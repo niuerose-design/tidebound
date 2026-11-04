@@ -7,7 +7,7 @@ import { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, CHALLENGE_GROUP, achievementTotals, a
 import { goalText, DAILY_ALL_BONUS, WEEKLY_ALL_BONUS, type GoalBoard } from '@/game/data/goals';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { SectionHeader, FoldSection, StatBar, KeyValueList } from '@/components/ui/game';
+import { SectionHeader, FoldSection, StatBar, KeyValueList, FinePrint } from '@/components/ui/game';
 import { unclaimedAchievements } from '@/game/systems/progress';
 import { useNow } from '@/components/game/shared';
 import { dayKey, nextDailyReset, nextWeeklyReset, KST } from '@/game/data/time';
@@ -32,7 +32,11 @@ export function GoalsScreen({ s, send, busy }: P) {
             </TabsList>
             <TabsContent value="goals" className="grid gap-3">
                 <div className="grid gap-3 lg:grid-cols-2"><GoalBoardView title="오늘의 모험 목표" which="daily" board={s.daily} bonus={DAILY_ALL_BONUS} today={today} send={send} busy={busy}/><GoalBoardView title="이번 주 모험 목표" which="weekly" board={s.weekly} bonus={WEEKLY_ALL_BONUS} today={today} send={send} busy={busy}/></div>
-                <Note>목표는 한국 시간 자정·월요일에 바뀌고, 채우면 보상이 바로 들어옵니다. 지난 목표는 사라집니다. ↻ 다시 뽑기는 목표마다 하루 1회(주간 목표도 날마다 1회)이며 같은 판의 다른 목표와 겹치지 않는 것으로 바뀌고 진행은 0부터입니다.</Note>
+                <Note>목표는 한국 시간 자정과 월요일에 바뀌고, 채우면 보상이 바로 들어옵니다. 지난 목표는 사라집니다.</Note>
+                <FinePrint summary="다시 뽑기 규칙">
+                    <p>↻ 다시 뽑기는 목표마다 하루 1회이고, 주간 목표도 날마다 1회입니다.</p>
+                    <p>같은 판의 다른 목표와 겹치지 않는 것으로 바뀌고, 진행은 0부터입니다.</p>
+                </FinePrint>
             </TabsContent>
             <TabsContent value="feats" className="grid gap-3">
                 <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-m font-bold">업적 <span className="font-num text-xs font-normal text-ink-3">{Object.keys(feats).length} / {ACHIEVEMENTS.length}</span></h2>{pending.length > 0 && <Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: 'all' })}>보상 모두 받기 · {pending.length}개</Button>}</div>

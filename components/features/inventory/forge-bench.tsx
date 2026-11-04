@@ -7,7 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Item, State, Stats } from '@/game/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ConfirmAction, KeyValueList, formatExact } from '@/components/ui/game';
+import { ConfirmAction, KeyValueList, formatExact, FinePrint } from '@/components/ui/game';
 import { useStarSetting, starSound } from '@/components/game/star-catch-setting';
 import { cn } from '@/lib/utils';
 import { isOnyxUnique } from '@/game/data/onyx';
@@ -83,7 +83,13 @@ function EquipmentForge({ s, send, busy, item }: Props) {
             {canSafeguard(star) && <label htmlFor={`guard-${item.id}`} className="flex min-h-9 items-center justify-between gap-3 text-s text-ink-2"><span>파괴 방지 (비용 ×{STARFORCE.safeguardCost})</span><Switch id={`guard-${item.id}`} checked={safeguard} onCheckedChange={setSafeguard}/></label>}
             {catching ? <StarCatch bonus={STARFORCE.catchBonus} onResult={fire}/> : <Button type="button" disabled={busy || star >= max || s.gold < cost} onClick={() => catchOn && !chance ? setCatching(true) : fire(false)}>{star >= max ? '최대 강화' : `${star + 1}성 강화 · ${fmt(cost)} G${catchOn && !chance ? ' · 스타캐치' : ''}`}</Button>}
             {star < max && researchRank(s, 'autoStar') > 0 && <AutoStar s={s} send={send} busy={busy} item={item} safeguard={guard}/>}
-            <Fold label="강화 규칙"><Note>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}~{STARFORCE.gainTopFrom}성 +{STARFORCE.gainHigh * 100}%/성, {STARFORCE.gainTopFrom + 1}성부터 +{STARFORCE.gainTop * 100}%/성. {STARFORCE.dropFrom}성부터 실패하면 1성 하락({STARFORCE.safeStars.join(' · ')}성은 유지), 15성부터 파괴 확률이 붙습니다. {STARFORCE.gainTopFrom}성부터는 성공 3 · 2 · 1%의 극한 구간입니다(스타캐치는 성공률 ×{STARFORCE.catchTopScale}). 파괴된 장비는 사라지고 유물 · 계승 · 칠흑은 {STARFORCE.relicResetStar}성({STARFORCE.relicResetHighFrom}성 이상이면 {STARFORCE.relicResetHigh}성)으로 돌아갑니다. 판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.</Note></Fold>
+            <Fold label="강화 규칙">
+                <Note>1~{STARFORCE.gainHighFrom}성 기본 수치 +{STARFORCE.gainLow * 100}%/성, {STARFORCE.gainHighFrom + 1}~{STARFORCE.gainTopFrom}성 +{STARFORCE.gainHigh * 100}%/성, {STARFORCE.gainTopFrom + 1}성부터 +{STARFORCE.gainTop * 100}%/성.</Note>
+                <Note>{STARFORCE.dropFrom}성부터 실패하면 1성 하락, {STARFORCE.safeStars.join(' · ')}성은 유지. 15성부터 파괴 확률이 붙습니다.</Note>
+                <Note>{STARFORCE.gainTopFrom}성부터는 성공 3 · 2 · 1%의 극한 구간입니다. 스타캐치는 성공률 ×{STARFORCE.catchTopScale}.</Note>
+                <Note>파괴된 장비는 사라집니다. 유물 · 계승 · 칠흑은 {STARFORCE.relicResetStar}성으로, {STARFORCE.relicResetHighFrom}성 이상이면 {STARFORCE.relicResetHigh}성으로 돌아갑니다.</Note>
+                <Note>판매하면 강화 비용의 {ECONOMY.saleEnhanceRefund * 100}%를 돌려받습니다.</Note>
+            </Fold>
         </Box>
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
         {canResetGear(item) && (item.rerolls || item.refines) ? <Box title="비용 초기화"><Note>재설정 {item.rerolls || 0}회 · 재련 {item.refines || 0}회 → 0 (다음 재설정 · 재련이 기본 비용으로)</Note>
@@ -147,7 +153,11 @@ function RelicImprint({ s, send, busy, item }: Props) {
             {picked && <><Note>{affixDef(picked.affix.id)?.description}</Note>{preview && <DeltaList title={`이 유물을 ${SLOTS[item.slot]} 칸에 장착했을 때 최종 능력치 변화 · 전투력 ${preview.gain >= 0 ? '+' : '−'}${fmt(Math.abs(preview.gain))}`} delta={preview.delta}/>}</>}
             {blocked && <Note tone="danger">{blocked}</Note>}
         </> : <Note>같은 부위의 옵션 달린 장비(보호 제외)가 가방에 있어야 이식할 수 있습니다.</Note>}
-        <Note>고정 수치 옵션은 원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산하고, 장비 레벨이 유물과 다르면 유물 레벨에 맞춰 환산해 새깁니다. 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}. 이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</Note>
+        <Note>고정 수치 옵션은 유물 등급과 레벨에 맞춰 환산해 새깁니다. 이식 비용은 소비하는 장비의 옵션 재설정 골드 ×{RELIC_GROWTH.imprintCost}.</Note>
+        <FinePrint summary="환산 · 유지 규칙">
+            <p>원래 장비에서와 같은 효과가 되도록 유물 등급에 맞춰 환산하고, 장비 레벨이 유물과 다르면 유물 레벨에 맞춰 환산합니다.</p>
+            <p>이식 옵션과 성은 환생해도 남고, 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다.</p>
+        </FinePrint>
     </Box>;
 }
 

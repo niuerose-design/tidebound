@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { SectionHeader, StatBar, ChoiceChips, FoldSection, formatExact } from '@/components/ui/game';
+import { SectionHeader, StatBar, ChoiceChips, FoldSection, formatExact, FinePrint } from '@/components/ui/game';
 import { formatRemaining } from '@/components/game/shared';
 import { ALTAR, josa, altarCooldownMs, BLESSINGS, BLESSING_MAX_LEVEL, BLESSING_HIGH_FROM, BLESSING_HIGH_MINUTES, RAID, RAIDS, RAID_STAGE, RAID_STAGE_REWARD, SUMMON_GAUGE_IDS, raidRespawnMs, respawnLabel, gaugeTakesGold, isRaidGauge, offeringPoints, blessingJumpCost, type AltarGaugeId, type BlessingId, type RaidHitSummary, raidById } from '@/game/data/altar';
 import { power, stats } from '@/game/systems/stats';
@@ -202,7 +202,14 @@ export function AltarScreen({ s, busy, info, error, load, act, result, clearResu
                         <small className="text-xs text-ink-3">{raid.alive ? `떠나기까지 ${remaining(raid.until - now)} · 모든 모험가의 피해가 함께 쌓입니다` : `격파! 마지막 일격 ${raid.slayer || '—'} · 참여한 모험가는 다음 동기화 때 보상을 받습니다`}</small></div>
                     {raid.alive && <Primary className="h-10" disabled={busy || raidWait > 0} onClick={() => void act({ action: 'raid', id: raid.id })}>{raidWait > 0 ? `${remaining(raidWait)} 뒤 다시 도전` : '월드보스에게 도전'}</Primary>}
                     <FoldSection level={3} title="규칙" className="bg-surface-1">
-                        <Note>도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다. 같은 날 격파된 뒤 다시 나타나면 한 단계 올라(체력 ×{RAID_STAGE.hp} · 공격 ×{RAID_STAGE.attack}, 최대 {RAID_STAGE.max}단계) 점점 잡기 어려워지고, 첫 소환부터 하루가 지나면 1단계로 돌아갑니다. 지속 피해의 체력 비례분은 1단계 체력 기준입니다. 격파 보상 · 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''} (한 번이라도 때린 모험가 전원, 단계마다 세계석 +{RAID_STAGE_REWARD.pearlsPerStage}) · 마지막 일격 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가({RAID_STAGE_REWARD.slayerSpFrom}단계부터 SP +1).{raid.immune ? ` 석상의 가호: 이번 소환은 ${raid.immune === 'magic' ? '마법 공격(직접 피해 · 추가타 · 그 공격이 거는 출혈 · 중독 · 화상 · 넘친 회복)' : '물리 공격(직접 피해 · 추가타 · 그 공격이 거는 출혈 · 중독 · 화상 · 반격)'}을 전혀 받지 않습니다. 복합 피해 공격은 절반이 들어가고 상태이상도 겁니다. 석상의 심판에 쓰러지면 無로도 버티지 못합니다.` : ''}</Note>
+                        <Note>도전은 {RAID.cooldownMs / 60000}분에 한 번, 한 번에 최대 {RAID.maxTurns}턴. 깎은 체력은 그대로 남아 다음 모험가가 이어서 때립니다.</Note>
+                        {raid.immune && <Note>석상의 가호: 이번 소환은 {raid.immune === 'magic' ? '마법' : '물리'} 공격을 전혀 받지 않습니다. 그 공격의 추가타와 지속 피해{raid.immune === 'magic' ? ', 넘친 회복' : ', 반격'}도 막힙니다. 복합 피해 공격은 절반이 들어가고 상태이상도 겁니다. 석상의 심판에 쓰러지면 無로도 버티지 못합니다.</Note>}
+                        <FinePrint summary="단계 · 보상 규칙">
+                            <p>같은 날 격파된 뒤 다시 나타나면 한 단계 올라 체력 ×{RAID_STAGE.hp} · 공격 ×{RAID_STAGE.attack}로 어려워집니다. 최대 {RAID_STAGE.max}단계. 첫 소환부터 하루가 지나면 1단계로 돌아갑니다.</p>
+                            <p>지속 피해의 체력 비례분은 1단계 체력 기준입니다.</p>
+                            <p>격파 보상: 세계석 +{raid.reward.pearls}{raid.reward.sp ? ` · SP +${raid.reward.sp}` : ''}. 한 번이라도 때린 모험가 전원이 받고, 단계마다 세계석 +{RAID_STAGE_REWARD.pearlsPerStage}.</p>
+                            <p>마지막 일격: 세계석 +{raid.slayerBonus.pearls}{raid.slayerBonus.sp ? ` · SP +${raid.slayerBonus.sp}` : ''} 추가. {RAID_STAGE_REWARD.slayerSpFrom}단계부터 SP +1.</p>
+                        </FinePrint>
                     </FoldSection>
                     {result && result.dealt !== undefined && <ResultBox win={!!result.slain} turns={result.turns} logs={result.logs} onClose={clearResult} title={result.slain ? result.slayer ? '격파 · 마지막 일격!' : '격파 · 함께 쓰러뜨렸습니다' : `피해 ${fmt(result.dealt)} · 남은 체력 ${fmt(result.remaining || 0)}`}/>}
                     <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="inline-flex items-center gap-1 text-s font-semibold"><Trophy size={14}/> 피해 순위</h3><span className="text-xs text-ink-3">{raid.me.dealt ? `내 피해 ${fmt(raid.me.dealt)} · ${raid.me.rank}위 · ${raid.me.hits}회` : '아직 때리지 않음'}</span></div>
@@ -210,7 +217,11 @@ export function AltarScreen({ s, busy, info, error, load, act, result, clearResu
                         <TableBody>{raid.board.map(r => { const key = `${raid.id}:${r.rank}`, open = openHit === key; return <Fragment key={r.rank}><TableRow className={cn(r.self && 'bg-accent-soft')}><TableCell className="font-num">{r.rank}</TableCell><TableCell>{r.name}{r.self ? ' (나)' : ''} <button type="button" className="ml-1 min-h-9 text-xs text-accent underline-offset-2 hover:underline" aria-expanded={open} onClick={() => setOpenHit(open ? '' : key)}>{open ? '접기' : '기록'}</button></TableCell><TableCell className="font-num"><b>{fmt(r.dealt)}</b></TableCell><TableCell className="font-num">{r.hits}</TableCell></TableRow>
                             {open && <TableRow><TableCell colSpan={4}><RaidHitLog key={`${raid.gen}:${r.rank}:${r.last?.at || 0}`} raidId={raid.id} rank={r.rank} last={r.last}/></TableCell></TableRow>}</Fragment>; })}</TableBody></Table>
                         : <Note>아직 아무도 때리지 않았습니다. 첫 피해를 넣어 보세요.</Note>}
-                </> : <Note>{raidById(raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {fmt(raidGauge?.points || 0)} / {fmt(raidGauge?.cost || 0)} · {raidGauge?.next || ''}. 보스마다 따로 소환되고(발록 6 · 자쿰 12 · 혼테일 24시간 머묾), 여러 보스가 동시에 나타날 수 있습니다. 모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</Note>}
+                </> : <><Note>{raidById(raidTab)?.name}은(는) 지금 나타나 있지 않습니다. 소환 게이지 {fmt(raidGauge?.points || 0)} / {fmt(raidGauge?.cost || 0)} · {raidGauge?.next || ''}.</Note>
+                    <FinePrint summary="소환 규칙">
+                        <p>보스마다 따로 소환되고, 발록 6 · 자쿰 12 · 혼테일 24시간 머뭅니다. 여러 보스가 동시에 나타날 수 있습니다.</p>
+                        <p>모든 모험가의 피해가 하나의 체력에 쌓이고, 격파하면 때린 모험가 전원이 보상을 받습니다.</p>
+                    </FinePrint></>}
             </Card>
         </div>
     </div>;

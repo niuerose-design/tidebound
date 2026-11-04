@@ -2,13 +2,11 @@
  "note": "docs/writing.md 래칫 기준: 파일마다 지금 남아 있는 위반 수. 줄이면 node scripts/check-writing.mjs --update 로 다시 씁니다. 늘리지 않습니다.",
  "files": {
   "components/features/altar/altar-screen.tsx": {
-   "paren": 13,
-   "dots": 2
+   "paren": 10
   },
   "components/features/arena/arena-screen.tsx": {
-   "paren": 10,
-   "dots": 1,
-   "long": 2
+   "paren": 6,
+   "dots": 1
   },
   "components/features/battle/arena.tsx": {
    "paren": 1
@@ -45,7 +43,7 @@
    "long": 1
   },
   "components/features/expedition/expedition-screen.tsx": {
-   "paren": 4,
+   "paren": 3,
    "dots": 3,
    "long": 1
   },
@@ -53,28 +51,22 @@
    "paren": 6
   },
   "components/features/expedition/records.tsx": {
-   "paren": 3
+   "paren": 2
   },
   "components/features/expedition/replay.tsx": {
    "paren": 1
   },
   "components/features/expedition/run.tsx": {
-   "paren": 9,
-   "dots": 1,
-   "long": 1
-  },
-  "components/features/expedition/style.tsx": {
-   "long": 2,
+   "paren": 7,
    "dots": 1
   },
   "components/features/hacker/crew-screen.tsx": {
-   "long": 2,
-   "paren": 3
+   "long": 1,
+   "paren": 2
   },
   "components/features/hacker/hacker-screen.tsx": {
-   "paren": 19,
-   "dots": 1,
-   "long": 3
+   "paren": 16,
+   "dots": 1
   },
   "components/features/help/topics/altar.tsx": {
    "paren": 17,
@@ -128,8 +120,7 @@
    "paren": 1
   },
   "components/features/journal/goals-screen.tsx": {
-   "paren": 2,
-   "long": 1
+   "paren": 1
   },
   "components/features/journal/story-screen.tsx": {
    "dots": 1
@@ -143,12 +134,7 @@
    "dots": 2
   },
   "components/features/legacy/automation.tsx": {
-   "paren": 4,
-   "long": 1
-  },
-  "components/features/legacy/rebirth-history.tsx": {
-   "paren": 1,
-   "long": 1
+   "paren": 4
   },
   "components/features/legacy/rebirth-screen.tsx": {
    "paren": 6
