@@ -148,12 +148,8 @@
   "components/features/market/market-screen.tsx": {
    "paren": 4
   },
-  "components/features/records/live-rates-card.tsx": {
-   "paren": 2,
-   "long": 1
-  },
   "components/features/records/stats-screen.tsx": {
-   "paren": 2
+   "paren": 1
   },
   "components/features/settings/settings-screen.tsx": {
    "paren": 6,
