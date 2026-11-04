@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EXPEDITION, pearlText, unitById, CODEX_TIERS, codexTier, FEATS, difficultyOf, codexGrowth, CODEX_GROWTH, setById, setUnits, rotationSchedule, lockedBossUnits } from '@/game/data/expedition';
-import { FoldSection, ChoiceChips } from '@/components/ui/game';
+import { FoldSection, ChoiceChips, FinePrint } from '@/components/ui/game';
 import { cn } from '@/lib/utils';
 import { UnitArt } from './replay';
 import { tags, Note, Link } from './parts';
@@ -32,7 +32,12 @@ export function CodexBox({ s, curSet, pool, now }: { s: State; curSet: SetDef; p
     const locked = lockedBossUnits(s.book);
     const md = (t: number) => { const d = new Date(t + 9 * 3600_000); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`; };
     return <FoldSection level={3} defaultOpen title="유닛 도감" summary={`${curSet.icon} ${curSet.name} ${pool.filter(u => unitWins[u.id] > 0).length}/${pool.length} 승리 · 금 ${Object.values(unitWins).filter(n => codexTier(n) >= 3).length}`}>
-        <Note>보드에 두고 이긴 라운드 수로 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}. 30종 모두 이기면 칭호 📘, 금 5종이면 🏅. 그 유닛은 {CODEX_GROWTH.hpEvery}승마다 기본 체력 +1, {CODEX_GROWTH.powerEvery}승마다 기본 공격력 +1로 조금씩 강해집니다(★ 배율이 곱해짐, 내 보드에만). 세트는 한국 시간 월요일 0시마다 바뀝니다.</Note>
+        <Note>보드에 두고 이긴 라운드 수로 유닛 숙달이 오릅니다: {CODEX_TIERS.map(t => `${t.name} ${t.wins}승`).join(' · ')}.</Note>
+        <FinePrint summary="숙달 보상">
+            <p>30종 모두 이기면 칭호 📘, 금 5종이면 🏅.</p>
+            <p>숙달한 유닛은 {CODEX_GROWTH.hpEvery}승마다 기본 체력 +1, {CODEX_GROWTH.powerEvery}승마다 기본 공격력 +1. ★ 배율이 곱해지고 내 보드에만 적용됩니다.</p>
+            <p>세트는 한국 시간 월요일 0시마다 바뀝니다.</p>
+        </FinePrint>
         {schedule.length > 1 ? <ChoiceChips label="로테이션 세트" value={String(pick)} onChange={v => setPick(Number(v))} options={schedule.map((x, k) => ({ value: String(k), label: `${k === 0 ? '이번 주' : `${md(x.start)}~`} ${x.set.icon} ${x.set.name}` }))}/> : null}
         <Note>{pick === 0 ? `${viewSet.icon} ${viewSet.name}: ${viewSet.desc}` : `${md(shown.start)}(월) 0시부터 ${viewSet.icon} ${viewSet.name}: 이번 주에 없는 유닛 ${viewPool.filter(u => !thisWeek.has(u.id)).length}종(‘새로’ 표시)${resting.length ? ` · 쉬는 유닛 ${resting.map(u => u.name).join(' · ')}` : ''}.`}{pick === 0 && setById(curSet.id).remove?.length ? ` 이번 세트에서 쉬는 유닛: ${setById(curSet.id).remove!.map(id => unitById(id)?.name).join(' · ')}(기록은 남고 다른 세트에 돌아옴).` : ''}</Note>
         <div className="exp-codex-grid">{[...viewPool].sort((a, b) => a.cost - b.cost).map(def => { const w = unitWins[def.id] || 0, tier = codexTier(w), fresh = pick > 0 && !thisWeek.has(def.id); return <div key={def.id} className={`exp-codex-unit cost-${def.cost} tier-${tier}${w || fresh ? '' : ' unseen'}${fresh ? ' fresh' : ''}`} title={`${def.name} · ${tags(def)} · 배치 ${unitUse[def.id] || 0} · 승리 ${w}`}>{fresh ? <span className="exp-codex-new">새로</span> : null}<UnitArt def={def} size={26}/><b>{def.name}</b><small>{tags(def)}</small>{w >= CODEX_GROWTH.hpEvery ? <small className="text-ok">체력 +{codexGrowth(w).hp}{codexGrowth(w).power ? ` · 공격 +${codexGrowth(w).power}` : ''}</small> : null}<small>{w ? `${w}승${tier ? ` · ${CODEX_TIERS[tier - 1].name}` : ''}` : unitUse[def.id] ? '아직 승리 없음' : fresh ? (locked.has(def.id) ? '🔒 본편 처치 필요' : `${md(shown.start)}부터 상점에`) : '미등록'}</small></div>; })}</div>

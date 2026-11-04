@@ -2,6 +2,7 @@
 /** v3.398 승천 편의(자동 환생 · 연구 구매 예약 · 사냥터 자동 따라가기 · 숙련 순회 전직). 서버 행동(autoRebirth · researchPlan · autoFollow · rotation)은 전과 같습니다. */
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, Compass, ListOrdered, RefreshCw, Repeat, X } from 'lucide-react';
+import { FinePrint } from '@/components/ui/game';
 import type { Action, State } from '@/game/types';
 import { RESEARCH, RESEARCH_TABS, researchById } from '@/game/data/economy';
 import { ASCENSION, ASCENSION_PERKS, ascended, ascensionPerk } from '@/game/data/ascension';
@@ -76,7 +77,10 @@ export function RotationPanel({ s, send, busy }: Props) {
     const at = choices.includes(rule.at) ? rule.at : choices[0], label = (x: 'mastered' | number) => x === 'mastered' ? '숙달 즉시' : `단련 ${x}단계`;
     const next = open ? nextRotationJob(s) : null;
     return <Card locked={!open} title="숙련 순회 전직" icon={<Repeat size={16}/>} aside={open ? (rule.on ? '켜짐' : '꺼짐') : `승천 ${ASCENSION_PERKS.rotation}회부터`}>
-        <Note>지금 직업이 정한 시점에 닿으면, 바꿀 수 있는 숙달 전 직업 중 낮은 차수부터 자동으로 전직하고 추천 편성을 장착합니다. 전직 시점은 승천 2회에 단련 1단계 고정, 3회부터 숙달 즉시·단련 1~3단계, 4회 1~5단계, 5회 1~7단계까지 고를 수 있습니다.</Note>
+        <Note>지금 직업이 정한 시점에 닿으면, 바꿀 수 있는 숙달 전 직업 중 낮은 차수부터 자동으로 전직하고 추천 편성을 장착합니다.</Note>
+        <FinePrint summary="고를 수 있는 시점">
+            <p>승천 2회는 단련 1단계 고정. 3회부터 숙달 즉시와 단련 1~3단계, 4회 1~5단계, 5회 1~7단계까지 고를 수 있습니다.</p>
+        </FinePrint>
         {open && <><Row>
             <Field label="전직 시점"><select className={field} value={String(at)} disabled={busy || choices.length < 2} onChange={e => send({ type: 'rotation', id: rule.on ? 'on' : 'off', value: e.target.value })}>{choices.map(x => <option key={String(x)} value={String(x)}>{label(x)}</option>)}</select></Field>
             <Toggle on={rule.on} disabled={busy} onClick={() => send({ type: 'rotation', id: rule.on ? 'off' : 'on', value: String(at) })}/>

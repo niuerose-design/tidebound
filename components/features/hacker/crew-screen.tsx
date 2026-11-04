@@ -6,7 +6,7 @@
 import type { PanelProps } from '@/components/game/panel-props';
 import { useEffect, useState } from 'react';
 import { Copy, Check, Crown, Users, Terminal } from 'lucide-react';
-import { SectionHeader, StatBar, ConfirmAction, formatExact as format } from '@/components/ui/game';
+import { SectionHeader, StatBar, ConfirmAction, formatExact as format, FinePrint } from '@/components/ui/game';
 import { CREW, CREW_MODULES } from '@/game/data/crew';
 import { isHackerJob } from '@/game/data/hacker';
 import type { CrewInfo } from '@/components/game/use-game';
@@ -48,11 +48,20 @@ export function CrewScreen({ s, busy, info, error, load, act }: Props) {
             <StatBar tone="accent" size="s" value={Math.min(c.op.targets[2], c.op.nodes)} max={c.op.targets[2]} label={`뚫은 노드 ${format(c.op.nodes)} / ${format(c.op.goal)} (목표)`}/>
             <ol className="grid gap-1.5 sm:grid-cols-3">{c.op.targets.map((need, i) => { const r = CREW.op.reward(i + 1); return <li key={i} className={cn('grid gap-0.5 rounded-m border border-line bg-surface-1 px-2.5 py-2 text-xs', c.op.steps > i && 'border-ok/60 bg-ok/10')}>
                 <b>{c.op.steps > i ? <span className="text-ok">✓ </span> : null}{i + 1}단계 · 노드 {format(need)}</b><small className="text-ink-3">조직원 비트 +{r.bits} · 권한 +{r.exp} · 조직 자금 +{r.fund}</small></li>; })}</ol>
-            <Note>조직원이 각자 침투 작전에서 뚫은 노드(이탈·추적 모두)가 합산됩니다. 내 기여 {format(c.op.mine)}노드{c.op.pending ? ` · 아직 올리지 않은 ${c.op.pending}노드는 침투 작전이 끝나면 올라갑니다` : ''}. 단계 보상은 그 주에 1노드 이상 뚫은 조직원이 다음 동기화 때 받고, 지난주 보상도 한 주 동안 받을 수 있습니다. 주 중에 조직원이 들어오면 목표가 그만큼 늘어납니다.</Note>
+            <Note>조직원이 각자 침투 작전에서 뚫은 노드가 합산됩니다. 내 기여 {format(c.op.mine)}노드{c.op.pending ? ` · 아직 올리지 않은 ${c.op.pending}노드는 침투 작전이 끝나면 올라갑니다` : ''}.</Note>
+            <FinePrint summary="집계 · 보상 규칙">
+                <p>이탈한 작전과 추적당한 작전의 노드를 모두 셉니다.</p>
+                <p>단계 보상은 그 주에 1노드 이상 뚫은 조직원이 다음 동기화 때 받고, 지난주 보상도 한 주 동안 받을 수 있습니다.</p>
+                <p>주 중에 조직원이 들어오면 목표가 그만큼 늘어납니다.</p>
+            </FinePrint>
         </Card>
         <Card>
             <Head title="조직 모듈" aside={`슬롯 ${c.modules.length} / ${c.slots}(조직 등급만큼) · 다음 주 유지비 ${format(c.upkeep)} · 조직 자금 ${format(c.vault)}`}/>
-            <Note>조직장이 켜고 끕니다. 켤 때 그 주 유지비를 내고, 월요일 0시마다 조직 자금에서 다시 냅니다. 조직 자금이 모자라면 뒤에 켠 모듈부터 꺼지고, 끈 모듈의 유지비는 돌려받지 않습니다. 효과는 해커 계열 조직원에게만 적용됩니다.</Note>
+            <Note>조직장이 켜고 끕니다. 효과는 해커 계열 조직원에게만 적용됩니다.</Note>
+            <FinePrint summary="유지비 규칙">
+                <p>켤 때 그 주 유지비를 내고, 월요일 0시마다 조직 자금에서 다시 냅니다.</p>
+                <p>조직 자금이 모자라면 뒤에 켠 모듈부터 꺼지고, 끈 모듈의 유지비는 돌려받지 않습니다.</p>
+            </FinePrint>
             <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">{CREW_MODULES.filter(m => !m.side || m.side === c.side).map(m => { const on = c.modules.includes(m.id); return <Box key={m.id} on={on}>
                 <b>{m.name}{m.side ? ` · ${c.sideName} 전용` : ''}</b><small>{m.desc} · 주간 유지비 {m.upkeep}</small>
                 {c.leader ? <Sm className={cn('justify-self-start', on && 'border-accent bg-accent text-accent-ink hover:bg-accent/90')} aria-pressed={on} disabled={busy || (!on && (c.modules.length >= c.slots || c.vault < m.upkeep))} onClick={() => act({ action: 'module', target: m.id })}>{on ? '가동 중 · 끄기' : '켜기'}</Sm>

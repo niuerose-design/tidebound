@@ -15,3 +15,4 @@ export { formatShort, formatExact, formatPercent } from './format';
 export { ChoiceChips, type Choice } from './choice-chips';
 export { FoldSection } from './fold-section';
 export { ConfirmAction } from './confirm-action';
+export { FinePrint } from './fine-print';

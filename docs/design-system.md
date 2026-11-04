@@ -35,6 +35,7 @@
 | `LogFeed` | 가상 스크롤 기록, 자동 따라가기 + 멈춤 감지, 종류 필터 | `role="log"` · `aria-live` |
 | `ProgressRing` | 둥근 진행도 | `role="progressbar"` |
 | `EmptyState` · `SectionHeader` · `KeyValueList` | 빈 화면 · 구역 제목 · 이름/값 목록 | 제목 계층 `h1~h3` |
+| `FinePrint` | 자세한 규칙 접기(v3.450, docs/writing.md 3단계). 화면 안내문은 한 문장, 나머지는 이 안에 `<p>` 하나에 한 뜻씩 | 기본 `<details>` · 머리줄 44pt(손가락 기기) · 초점 테두리 |
 | `formatShort` · `formatExact` · `formatPercent` | 숫자 표기 | |
 
 규칙: feature(화면) 컴포넌트는 shadcn 기본 + 이 조각만 조합하고 새 스타일을 정의하지 않습니다. 파괴적 행동은 확인 Dialog + 되돌리기 토스트(sonner), 로딩은 Skeleton.
