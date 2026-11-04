@@ -1,5 +1,6 @@
 'use client';
 /** v3.401 목표 · 업적(새 토대): 오늘/이번 주 목표판, 업적 묶음과 보상 받기, 업적 보너스. 서버 행동(rerollGoal · claimAchievement · tutorial)은 전과 같습니다. */
+import { createContext, useContext } from 'react';
 import { Check, Clock, RefreshCw } from 'lucide-react';
 import type { State, Action } from '@/game/types';
 import { BASE_STAGES, DUNGEONS } from '@/game/data/world';
@@ -18,11 +19,12 @@ type P = { s: State; send: Send; busy: boolean };
 const BONUS_KEYS = ['attack', 'magic', 'hp', 'defense', 'resist'] as const;
 const BONUS_LABEL: Record<typeof BONUS_KEYS[number], string> = { attack: '물리 공격', magic: '마법 공격', hp: '최대 체력', defense: '물리 방어', resist: '마법 방어' };
 const Note = ({ children }: { children: React.ReactNode }) => <p className="text-xs leading-relaxed text-ink-3">{children}</p>;
+type Feat = typeof ACHIEVEMENTS[number];
 
 export function GoalsScreen({ s, send, busy }: P) {
     const pending = unclaimedAchievements(s), feats = s.achievements || {}, today = dayKey(s.lastTick || 0);
     return <div className="grid gap-4 text-ink-1">
-        <SectionHeader as="h1" eyebrow="GOALS & FEATS" title="목표 · 업적" description="오늘의 목표와 주간 목표, 업적, 업적으로 받은 영구 보너스입니다. 업적은 환생 후에도 유지되고 보상은 여기서 받습니다."
+        <SectionHeader as="h1" eyebrow="GOALS & FEATS" title="목표 · 업적" description="업적은 환생해도 남고, 보상은 여기서 받습니다."
             actions={(!s.tutorial || s.tutorial.skipped || s.tutorial.hidden) && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => send({ type: 'tutorial', id: 'show' })}>모험 안내 다시 보기</Button>}/>
         <Tabs defaultValue={pending.length ? 'feats' : 'goals'} className="grid gap-4">
             <TabsList className="h-auto flex-wrap">
@@ -42,7 +44,7 @@ export function GoalsScreen({ s, send, busy }: P) {
                 <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-m font-bold">업적 <span className="font-num text-xs font-normal text-ink-3">{Object.keys(feats).length} / {ACHIEVEMENTS.length}</span></h2>{pending.length > 0 && <Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: 'all' })}>보상 모두 받기 · {pending.length}개</Button>}</div>
                 <AchievementGroups s={s} send={send} busy={busy}/>
             </TabsContent>
-            <TabsContent value="bonus"><AchievementBonus s={s}/></TabsContent>
+            <TabsContent value="bonus"><AchievementBonus s={s} send={send} busy={busy}/></TabsContent>
         </Tabs>
     </div>;
 }
@@ -63,42 +65,80 @@ function GoalBoardView({ title, which, board, bonus, today, send, busy }: { titl
     </FoldSection>;
 }
 
+/**
+ * v3.451 업적 줄(docs/writing.md 4단계 · 기록은 표): 카드 격자 대신 한 줄에 한 업적. 같은 묶음의 단계(처치 100 · 1,000 · 5,000 …)는 한 줄로 합쳐
+ * 지금 단계의 제목 · 설명 · 진행과 단계 점을 보여 줍니다. 344장이 120여 줄이 됩니다. 보상은 줄마다 받습니다(단계 묶음은 'kills:*'로 한 번에).
+ */
+type FeatRowData = { key: string; steps: Feat[]; series: boolean };
+function featRows(items: Feat[]): FeatRowData[] {
+    const rows: FeatRowData[] = [], byPrefix = new Map<string, FeatRowData>();
+    for (const a of items) {
+        const [prefix, suffix] = a.id.split(':');
+        if (suffix && /^\d+$/.test(suffix)) { const row = byPrefix.get(prefix); if (row) { row.steps.push(a); row.series = true; continue; } const fresh = { key: `${prefix}:*`, steps: [a], series: false }; byPrefix.set(prefix, fresh); rows.push(fresh); }
+        else rows.push({ key: a.id, steps: [a], series: false });
+    }
+    return rows;
+}
+/** 단계 점: 지난 단계 ● · 지금 ◐ · 남은 ○. 글자 없이 색만 쓰지 않도록 aria-label 로 단계 수를 읽습니다. */
+function StepPips({ done, total }: { done: number; total: number }) {
+    if (total > 10) return <span className="shrink-0 font-num text-xs tabular-nums text-ink-3">{done}/{total}</span>;
+    return <span className="inline-flex shrink-0 items-center gap-0.5" role="img" aria-label={`${total}단계 중 ${done}단계 달성`}>{Array.from({ length: total }, (_, i) => <span key={i} className={cn('size-1.5 rounded-full', i < done ? 'bg-ok' : i === done ? 'border border-accent' : 'bg-surface-3')}/>)}</span>;
+}
+function FeatRow({ row, progress, visited, send, busy }: { row: FeatRowData; progress: (a: Feat) => number; visited?: (a: Feat) => string[] | null; send: Send; busy: boolean }) {
+    const { feats, claimed } = useFeatState();
+    const doneCount = row.steps.filter(a => feats[a.id] !== undefined).length, allDone = doneCount === row.steps.length;
+    const cur = row.steps[Math.min(doneCount, row.steps.length - 1)], claimable = row.steps.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length;
+    const p = allDone ? cur.target : Math.min(cur.target, progress(cur)), v = visited?.(cur), reward = rewardText(cur.reward);
+    return <li className={cn('grid gap-1.5 border-b border-line py-2.5 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_9rem_9rem_6rem] sm:items-center sm:gap-3', allDone && claimable === 0 && 'opacity-80')}>
+        <div className="min-w-0">
+            <div className="flex items-center gap-2">{row.series && <StepPips done={doneCount} total={row.steps.length}/>}<strong className="min-w-0 truncate text-s">{cur.title}</strong>{allDone && claimable === 0 && <Check size={13} className="shrink-0 text-ok" aria-label="완료"/>}</div>
+            <p className="text-xs leading-relaxed text-ink-3">{cur.desc}</p>
+            {v && v.length ? <small className="text-xs text-ink-3">다녀온 곳: {v.join(' · ')}</small> : null}
+        </div>
+        <div className="flex items-center gap-3 sm:contents">
+            <StatBar size="s" tone={allDone ? 'exp' : 'accent'} value={p} max={cur.target} label={row.series ? `${doneCount + (allDone ? 0 : 1)}단계` : undefined} className="min-w-0 flex-1"/>
+            <small className="shrink-0 text-xs text-gold-ink sm:text-right">{reward}</small>
+            <span className="flex shrink-0 justify-end">{claimable > 0 && <Button type="button" size="xs" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: row.series ? row.key : cur.id })}>보상 받기{claimable > 1 ? ` · ${claimable}` : ''}</Button>}</span>
+        </div>
+    </li>;
+}
+/** 줄마다 상태를 다시 읽지 않도록 묶음 단위로 한 번 넘깁니다. */
+const FeatState = createContext<{ feats: Record<string, number>; claimed: Record<string, boolean> }>({ feats: {}, claimed: {} });
+const useFeatState = () => useContext(FeatState);
+
 /** 업적 묶음(접었다 펼침)과 보상 받기. */
 function AchievementGroups({ s, send, busy }: P) {
     const got = s.voyage || {}, feats = s.achievements || {}, claimed = s.achievementClaims || {};
     // v3.93 같은 묶음의 단계들은 진행도를 한 번만 계산합니다.
     const progress = progressReader(s);
-    /** 업적 ‘사냥터 N곳’·‘던전 N곳’ 카드에 붙는 방문 기록. */
-    const visited = (a: { id: string }) => a.id.startsWith('stages:') ? BASE_STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
-    return <>{ACHIEVEMENT_GROUPS.map(g => { const items = ACHIEVEMENTS.filter(a => a.group === g), doneCount = items.filter(a => feats[a.id] !== undefined).length, claimable = items.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length;
-        return <FoldSection key={g} title={g} defaultOpen={claimable > 0} summary={`${doneCount} / ${items.length}${claimable ? ` · 받을 보상 ${claimable}개` : ''}${g === CHALLENGE_GROUP ? ` · 플레이 ${Math.floor((s.playMs || 0) / 3_600_000).toLocaleString()}시간 · ${(s.turn || 0).toLocaleString()}턴 · 쓰러짐 ${(s.deaths || 0).toLocaleString()}회` : ''}`}>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{items.map(a => { const done = feats[a.id] !== undefined, isClaimed = !!claimed[a.id], p = Math.min(a.target, progress(a)), v = visited(a);
-                return <article key={a.id} className={cn('grid content-start gap-1.5 rounded-m border p-3', isClaimed ? 'border-ok/40 bg-ok/5' : done ? 'border-accent/60 bg-accent-soft' : 'border-line bg-surface-1')}>
-                    <div className="flex items-start justify-between gap-2"><strong className="text-s">{a.title}</strong>{isClaimed ? <Check size={14} className="shrink-0 text-ok"/> : done ? <Button type="button" size="xs" className="shrink-0 bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" disabled={busy} onClick={() => send({ type: 'claimAchievement', id: a.id })}>보상 받기</Button> : null}</div>
-                    <p className="text-xs leading-relaxed text-ink-2">{a.desc}</p>
-                    {v && v.length ? <small className="text-xs text-ink-3">다녀온 곳: {v.join(' · ')}</small> : null}
-                    <StatBar size="s" tone={done ? 'exp' : 'accent'} value={p} max={a.target} label="달성"/>
-                    <small className="text-xs text-gold-ink">{rewardText(a.reward)}</small>
-                </article>; })}</div>
-        </FoldSection>; })}</>;
+    /** 업적 ‘사냥터 N곳’·‘던전 N곳’ 줄에 붙는 방문 기록. */
+    const visited = (a: Feat) => a.id.startsWith('stages:') ? BASE_STAGES.filter(st => got[`stage:${st.id}`] !== undefined).map(st => st.name) : a.id.startsWith('dungeons:') ? DUNGEONS.filter(d => (s.clears?.[d.id] || 0) > 0).map(d => d.name) : null;
+    return <FeatState.Provider value={{ feats, claimed }}>{ACHIEVEMENT_GROUPS.map(g => { const items = ACHIEVEMENTS.filter(a => a.group === g), doneCount = items.filter(a => feats[a.id] !== undefined).length, claimable = items.filter(a => feats[a.id] !== undefined && !claimed[a.id]).length;
+        return <FoldSection key={g} title={g} defaultOpen={claimable > 0} summary={`${doneCount} / ${items.length}${claimable ? ` · 받을 보상 ${claimable}개` : ''}`} extra={g === CHALLENGE_GROUP ? `플레이 ${Math.floor((s.playMs || 0) / 3_600_000).toLocaleString()}시간 · ${(s.turn || 0).toLocaleString()}턴 · 쓰러짐 ${(s.deaths || 0).toLocaleString()}회` : undefined}>
+            <ul className="grid">{featRows(items).map(row => <FeatRow key={row.key} row={row} progress={progress} visited={visited} send={send} busy={busy}/>)}</ul>
+        </FoldSection>; })}</FeatState.Provider>;
 }
 
 /** 업적 보너스 탭: 받은 업적 수에 따른 업적 보너스(최대와 비교), 장착 AP, 받은 세계석·SP, 장착 AP가 붙은 업적 목록. */
-function AchievementBonus({ s }: { s: State }) {
+function AchievementBonus({ s, send, busy }: P) {
     const feats = s.achievements || {}, claimed = s.achievementClaims || {};
     const totals = achievementTotals(s), max = achievementMaxTotals();
     const claimedList = ACHIEVEMENTS.filter(a => claimed[a.id]);
     const pearls = claimedList.reduce((a, x) => a + (x.reward.pearls || 0), 0), sp = claimedList.reduce((a, x) => a + (x.reward.sp || 0), 0);
     const permanent = ACHIEVEMENTS.filter(a => a.reward.ap);
+    const progress = progressReader(s);
     const pct = (n: number) => `${Math.round(n * 100)}%`;
     return <div className="grid gap-3">
         <section className="grid gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1">
             <header className="flex flex-wrap items-center justify-between gap-2"><h2 className="font-display text-m font-bold">영구 보너스</h2><span className="text-xs text-ink-3">받은 업적의 보상만 셉니다 · 환생해도 유지</span></header>
-            <KeyValueList columns={2} items={[{ key: '장착 AP', value: `+${totals.ap} / ${max.ap}` }, ...BONUS_KEYS.map(k => ({ key: BONUS_LABEL[k], value: `+${pct(totals.bonus[k])} / ${pct(max.bonus[k])}` }))]}/>
-            <Note>업적 보너스는 받은 업적 1개마다 {BONUS_KEYS.map(k => `${BONUS_LABEL[k]} +${(ACHIEVEMENT_BONUS_PER[k] * 100).toFixed(2)}%`).join(' · ')}씩 쌓이고, 최종 능력치에 한 번 곱합니다. 받은 업적 {claimedList.length} / {ACHIEVEMENTS.length}개(명예 업적 {claimedList.filter(x => x.honor).length}개는 업적 보너스에서 제외) · 세계석 {pearls.toLocaleString()} · SP {sp} 수령.</Note>
+            <KeyValueList columns={2} items={[{ key: '장착 AP', value: `+${totals.ap} / ${max.ap}` }, { key: '받은 업적', value: `${claimedList.length} / ${ACHIEVEMENTS.length}` }, { key: '받은 세계석', value: pearls.toLocaleString() }, { key: '받은 SP', value: String(sp) }, ...BONUS_KEYS.map(k => ({ key: BONUS_LABEL[k], value: `+${pct(totals.bonus[k])} / ${pct(max.bonus[k])}` }))]}/>
+            <Note>업적 보너스는 받은 업적 1개마다 쌓이고, 최종 능력치에 한 번 곱합니다. 명예 업적 {claimedList.filter(x => x.honor).length}개는 보너스에서 빠집니다.</Note>
+            <FinePrint summary="업적 1개당 보너스">
+                <p>{BONUS_KEYS.map(k => `${BONUS_LABEL[k]} +${(ACHIEVEMENT_BONUS_PER[k] * 100).toFixed(2)}%`).join(', ')}.</p>
+            </FinePrint>
         </section>
         <FoldSection title="장착 AP가 붙은 업적" summary={`${permanent.filter(a => claimed[a.id]).length} / ${permanent.length} 수령`} defaultOpen>
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{permanent.map(a => { const done = feats[a.id] !== undefined, isClaimed = !!claimed[a.id]; return <article key={a.id} className={cn('grid content-start gap-1 rounded-m border p-3', isClaimed ? 'border-ok/40 bg-ok/5' : done ? 'border-accent/60 bg-accent-soft' : 'border-line bg-surface-1')}><div className="flex items-start justify-between gap-2"><strong className="text-s">{a.title}</strong>{isClaimed ? <Check size={14} className="text-ok"/> : <small className="text-xs text-ink-3">{done ? '받기 전' : '미달성'}</small>}</div><p className="text-xs leading-relaxed text-ink-2">{a.desc}</p><small className="text-xs text-gold-ink">{rewardText({ ap: a.reward.ap })}</small></article>; })}</div>
+            <FeatState.Provider value={{ feats, claimed }}><ul className="grid">{permanent.map(a => <FeatRow key={a.id} row={{ key: a.id, steps: [a], series: false }} progress={progress} send={send} busy={busy}/>)}</ul></FeatState.Provider>
         </FoldSection>
     </div>;
 }

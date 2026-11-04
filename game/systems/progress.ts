@@ -27,8 +27,10 @@ export function syncAchievements(s: State, log: (text: string) => void) {
 /** 해금했지만 아직 받지 않은 업적. */
 export const unclaimedAchievements = (s: Pick<State, 'achievements' | 'achievementClaims'>) => Object.keys(s.achievements || {}).filter(id => !s.achievementClaims?.[id] && achievementById(id));
 /** 보상 받기: id 하나 또는 'all'. 세계석·SP는 여기서 더하고, 영구 AP·배율은 받은 업적만 셉니다. */
+/** v3.451 보상 받기: 'all' 전부, 'kills:*' 같은 단계 묶음 전부(목표 화면의 업적 줄), 그 밖에는 그 업적 하나. */
 export function claimAchievements(s: State, id: string) {
-    const ids = id === 'all' ? unclaimedAchievements(s) : unclaimedAchievements(s).filter(x => x === id);
+    const unclaimed = unclaimedAchievements(s);
+    const ids = id === 'all' ? unclaimed : id.endsWith(':*') ? unclaimed.filter(x => x.startsWith(id.slice(0, -1))) : unclaimed.filter(x => x === id);
     if (!ids.length) throw Error('받을 업적 보상이 없습니다.');
     s.achievementClaims ??= {};
     let pearls = 0, sp = 0;

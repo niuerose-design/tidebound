@@ -273,7 +273,7 @@ export const lifecycleActions: ActionHandlers = {
         if (!choices.includes(at) || (id !== 'on' && id !== 'off')) throw Error('지금 승천 횟수로 고를 수 있는 전직 시점이 아닙니다.');
         s.rotation = { on: id === 'on', at };
     },
-    /** v25.6 업적 보상 받기: id 또는 'all'. */
+    /** v25.6 업적 보상 받기: id · 'all' · v3.451 'kills:*'(단계 묶음). */
     claimAchievement(s, { id }) {
         const got = claimAchievements(s, id);
         addLog(s, `업적 보상 ${got.count}개 · 세계석 +${got.pearls}${got.sp ? ` · SP +${got.sp}` : ''}`, 'reward');
