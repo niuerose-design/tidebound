@@ -216,6 +216,8 @@ test('v25.6 achievements pay out once with permanent bonuses; daily/weekly goals
     assert.ok(s.achievements['kills:100'] !== undefined && s.achievements['kills:1000'] !== undefined && s.achievements['rebirths:3'] !== undefined);
     assert.equal(s.pearls, pearls, 'unlocking pays nothing until claimed'); assert.equal(logs.length, 1, 'first sync is one summary line');
     act(s, { type: 'claimAchievement', id: 'kills:100' }, 0); assert.equal(s.pearls - pearls, 1);
+    // v3.451 단계 묶음 수령: 'kills:*'는 남은 처치 단계(1,000마리)만 받고 다른 묶음은 건드리지 않습니다.
+    act(s, { type: 'claimAchievement', id: 'kills:*' }, 0); assert.equal(s.pearls - pearls, 1 + 2, 'series claim pays the kill steps only'); assert.ok(!s.achievementClaims['rebirths:3']);
     act(s, { type: 'claimAchievement', id: 'all' }, 0); assert.equal(s.pearls - pearls, 1 + 2 + 1 + 3, 'claim all pays the rest once');
     assert.throws(() => act(s, { type: 'claimAchievement', id: 'all' }, 0), /없습니다/);
     s.kills = 20000; syncAchievements(s, t => logs.push(t)); assert.ok(logs.some(t => t.includes('처치 20,000마리')) && logs.some(t => t.includes('일병 진급')), 'kills unlock the kill series and the rank series');
