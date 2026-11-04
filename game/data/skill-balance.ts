@@ -100,11 +100,11 @@ function applyStatusRules(sk: Skill, tier: number) {
     if (cap !== undefined && tier <= 2) sk.multiplier = Math.min(sk.multiplier, cap);
 }
 
-const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: 'log10(누적 처치 + 1)', hunt: '√(던전 클리어 + 보스 처치)', gold: 'log10(보유 골드 + 1)', relic: '렐릭의 힘' };
+const PROGRESS_SOURCE: Record<string, string> = { codex: '도감 기록 수', catch: '누적 처치 자릿수', hunt: '던전 클리어와 보스 처치를 더한 수의 제곱근', gold: '보유 골드 자릿수', relic: '렐릭의 힘' };
 /** v24.2 진행도·도박·올인·골드 기술의 한 줄 설명. */
 function progressDesc(sk: Skill) {
     let out = '';
-    if (sk.scaling && PROGRESS_SOURCE[sk.scaling]) out += ` 피해 × (1 + ${PROGRESS_SOURCE[sk.scaling]} × ${sk.scalingRatio}).`;
+    if (sk.scaling && PROGRESS_SOURCE[sk.scaling]) out += ` ${PROGRESS_SOURCE[sk.scaling]} 1마다 피해 +${Math.round(sk.scalingRatio! * 100)}%.`;
     if (sk.dice) out += ` ${ATTRIBUTE_NAMES[sk.dice.attribute]} ${sk.dice.per}마다 주사위 1개씩, 최대 ${sk.dice.max}개를 굴려 가장 높은 눈으로 피해 ×${sk.dice.low}~×${sk.dice.high}.`;
     if (sk.gamble && sk.gamble.min !== sk.gamble.max) out += ` 쓸 때마다 피해 ×${sk.gamble.min}~${sk.gamble.max}${sk.gamble.accuracy ? ` · 명중 ±${Math.round(sk.gamble.accuracy * 100)}%p` : ''} 무작위.`;
     if (sk.allIn) out += ` 현재 체력 ${Math.round(sk.allIn.hpRatio * 100)}%와 남은 마나를 모두 걸고 건 체력 × ${sk.allIn.hpScale}과 건 마나 × ${sk.allIn.manaScale}를 피해에 더합니다.`;
@@ -172,7 +172,7 @@ export function tuneActiveSkills(skills: Skill[], tierOf: (sk: Skill) => number 
         if (tierOf(sk) >= SKILL_FORMULA.awaken.tier && !sk.dotFinisher) awakenSkill(sk);
         // Numeric descriptions are rendered from the effective values in the UI.
         // Keep exported base descriptions truthful as well.
-        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'arcane' ? '마력 평타 계수 기준값' : sk.scaling === 'dual' ? '(물리 + 마법 공격) ÷ 2' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '물리 공격(마법 피해)' : '마법 공격(물리 피해)') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격 · 고정 피해 · 방어 무시` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
+        const source = sk.scaling === 'attr' && sk.scalingAttribute ? `${ATTRIBUTE_NAMES[sk.scalingAttribute]} × ${sk.scalingRatio ?? 1}${sk.scalingAttack ? ` + 물리 공격 × ${sk.scalingAttack}` : ''}` : sk.scaling === 'arcane' ? '마력 평타 계수 기준값' : sk.scaling === 'dual' ? '물리 공격과 마법 공격의 평균' : sk.scaling === 'swap' ? (sk.damageType === 'magic' ? '마법 피해로 바꾼 물리 공격' : '물리 피해로 바꾼 마법 공격') : sk.damageType === 'fixed' ? `${sk.baseStat === 'magic' ? '마법' : '물리'} 공격 · 고정 피해 · 방어 무시` : sk.damageType === 'magic' ? '마법 공격' : '물리 공격';
         const scaling = sk.scaling === 'hp' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'mana' ? ` + 최대 마나 ${(sk.scalingRatio! * 100).toFixed(1)}%` : sk.scaling === 'hybrid' ? ` + 최대 체력 ${(sk.scalingRatio! * 100).toFixed(1)}% + 최대 마나 ${(sk.scalingRatio! * 200).toFixed(1)}%` : sk.scaling === 'resist' ? ` + 마법 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 결계 친화도` : sk.scaling === 'defense' ? ` + 물리 방어 ${(sk.scalingRatio! * 100).toFixed(0)}% × 방어 친화도` : sk.manaBurn ? ` + 현재 마나의 ${Math.round(sk.manaBurn * 100)}%를 태워 × ${sk.burnScale ?? SKILL_FORMULA.manaBurnScale}` : '';
         const statusName = sk.effect === 'bleed' && sk.dotName ? sk.dotName : { stun: '기절', bleed: '출혈', poison: '중독(중첩)', burn: '화상(중첩)', weaken: '약화', silence: '침묵', slow: '감속', haste: '가속', corrode: '부식' }[sk.effect as 'stun'];
         if (sk.timeRewind) { sk.desc = '피해 없이 내 체력·마나를 가득 채우고 대기 중인 내 기술을 되돌립니다. 전투당 1회.'; continue; }

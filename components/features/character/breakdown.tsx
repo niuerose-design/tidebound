@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 
 /** 상한이나 적용 방식이 헷갈리는 능력치의 설명. 펼치면 아래에 보입니다. */
 const STAT_NOTES: Partial<Record<keyof CombatStats, string>> = {
-    speed: `속도 자체에는 상한이 없고 최소 1입니다. 효과는 상대 속도와의 비율로 정해져 비율이 커질수록 한계에 닿습니다. 연속 행동 확률 = ${BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도)라 상대의 ${Math.round(2 ** (1 / BALANCE.chainCoefficient))}배에서 100%가 되고, 명중 보정은 약 1.7배에서 +6%p로 멈춥니다. 한 턴에 최대 ${BALANCE.chainMaxActions}번 행동. 가속 ×${1 + STATUS_TUNING.hasteMultiplier} · 감속 ×${1 - STATUS_TUNING.slowMultiplier}.`,
+    speed: `속도 자체에는 상한이 없고 최소 1입니다. 효과는 상대 속도와의 비율로 정해져 비율이 커질수록 한계에 닿습니다. 연속 행동 확률은 내 속도를 상대 속도로 나눈 비율의 log₂에 ${BALANCE.chainCoefficient}을 곱한 값이라 상대의 ${Math.round(2 ** (1 / BALANCE.chainCoefficient))}배에서 100%가 되고, 명중 보정은 약 1.7배에서 +6%p로 멈춥니다. 한 턴에 최대 ${BALANCE.chainMaxActions}번 행동. 가속 ×${1 + STATUS_TUNING.hasteMultiplier} · 감속 ×${1 - STATUS_TUNING.slowMultiplier}.`,
     hpRegen: `연속 · 추가 행동을 포함해 행동할 때마다 이만큼 체력을 되찾습니다. 최대 체력을 넘지 않습니다. 체질 1마다 +${ATTRIBUTE_EFFECTS.vit.hpRegen}, 소수점은 버립니다.`,
     manaRegen: '연속 · 추가 행동을 포함해 행동할 때마다 이만큼 마나를 되찾습니다. 최대 마나를 넘지 않습니다.',
     evasion: '회피 수치는 50%를 넘으면 효율이 줄어 90%에 수렴합니다. 실제 적중률 = 상대 명중 − 내 회피 + 속도 보정(1~99.5%).',

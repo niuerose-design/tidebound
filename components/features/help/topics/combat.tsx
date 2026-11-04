@@ -16,7 +16,7 @@ export function CombatTopic() {
         </div>
         <div className="grid gap-1.5">
             <Rule icon={<Zap size={19}/>} q="누가 먼저 움직이나요?" title="속도 · 연속 행동"
-                effect={`상대보다 빠르면 행동할 때마다 확률로 한 번 더 움직입니다. 확률 = ${BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도).`}
+                effect={`상대보다 빠르면 행동할 때마다 확률로 한 번 더 움직입니다. 확률은 내 속도를 상대 속도로 나눈 비율의 log₂에 ${BALANCE.chainCoefficient}을 곱한 값입니다.`}
                 condition={`${[1.5, 2, 4].map(r => `속도 ${r}배 ${Math.round(Math.min(1, BALANCE.chainCoefficient * Math.log2(r)) * 100)}%`).join(' · ')}. 추가 행동도 온전한 행동이라 대기·회복·지속 피해가 한 칸씩 진행됩니다.`}
                 limit={`한 턴에 최대 ${BALANCE.chainMaxActions}번. 속도에 상한은 없지만 효과는 4배에서 멈춥니다.`}/>
             <Rule icon={<Crosshair size={19}/>} q="공격은 왜 빗나가나요?" title="명중 · 회피"
@@ -31,7 +31,7 @@ export function CombatTopic() {
         <FoldSection level={3} title={<span className="inline-flex flex-wrap items-center gap-2 [&_svg]:size-4 [&_svg]:text-accent [&_span]:text-xs [&_span]:font-normal [&_span]:text-ink-3"><Sparkles size={15}/> 피해의 종류 <span>물리, 마법, 복합, 고정 지속 피해, 마력 평타, 능력치 비례</span></span>}>
             <div className="grid gap-1.5">
                 <Rule icon={<Swords size={19}/>} q="물리 피해는 어떻게 계산하나요?" title="물리 피해"
-                    effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
+                    effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다. 물리 방어 × 2를 100에 더한 수로 100을 나눈 비율만 남아, 물리 방어 50이면 절반, 150이면 4분의 1입니다."
                     condition="명중은 기본 공식 그대로이고 회피가 전부 적용됩니다. 기본 공격과 대부분의 검·격투 계열 기술이 여기에 속합니다."
                     limit={`방어 관통은 출처끼리 곱연산으로 합치고, 스킬 보너스까지 합계 최대 85%입니다. 관통만큼 상대 방어를 무시합니다.`}/>
                 <Rule icon={<Droplets size={19}/>} q="지속 피해는 어떻게 계산하나요?" title="지속 피해 (고정 피해)"
@@ -39,7 +39,7 @@ export function CombatTopic() {
                     condition="물리·마법 방어, 방어 관통, 회피, 반격, 몬스터 연구 효과, 흡혈이 모두 적용되지 않습니다. 기절 중에도 들어갑니다."
                     limit="풀린 뒤 1턴의 면역, 정화 기술, 無처럼 쓰러지지 않는 장치로만 막을 수 있습니다. 중독은 중첩마다, 출혈은 한 번만 최대 체력 1%분을 더합니다."/>
                 <Rule icon={<Sparkles size={19}/>} q="마법 피해는 어떻게 계산하나요?" title="마법 피해"
-                    effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 마법 방어 × 2). 마나를 씁니다."
+                    effect="마법 공격 × 스킬 배율. 상대의 마법 방어로 줄어듭니다. 마법 방어 × 2를 100에 더한 수로 100을 나눈 비율만 남아, 마법 방어 50이면 절반입니다. 마나를 씁니다."
                     condition="상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다. 물리 방어가 높은 단단한 껍질 몬스터에 유리하고, 마법 방어가 높은 마력 생물에는 불리합니다."
                     limit="마나가 모자라면 그 기술은 건너뛰고 다음 기술이나 기본 공격으로 넘어갑니다."/>
                 <Rule icon={<Shield size={19}/>} q="복합 피해는 무엇인가요?" title="복합 피해"

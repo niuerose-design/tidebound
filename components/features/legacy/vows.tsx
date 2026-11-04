@@ -8,7 +8,7 @@ import { Card, Note, Toggle } from './parts';
 
 export const VOW_TEXT: Record<VowId, (s: State) => string> = {
     breath: (s: State) => `쓰러지면 이번 생을 처음부터 다시 시작합니다. 환생 횟수와 세계석은 그대로이고 서약은 풀립니다. 한 번도 쓰러지지 않고 환생하면 환생 세계석 +${Math.round(breathBonus(s) * 100)}%.`,
-    rough: (s: State) => `1·2·3단계마다 사냥터 난이도 하한 ${ROUGH.floor.join('·')}, 미만이면 보상이 꺼지고, 장비 능력치 -${ROUGH.gear.map(n => n * 100).join('·')}%, 처치 후 회복·흡혈·체력 재생 -${ROUGH.heal.map(n => n * 100).join('·')}%. 보상: 골드·장비 드롭 확률 ×(1 + ${Math.round(50 * vowBoost(s, 'rough'))}% × 단계), 드롭 상한 뒤에 곱합니다.`,
+    rough: (s: State) => `1·2·3단계마다 사냥터 난이도 하한 ${ROUGH.floor.join('·')}, 미만이면 보상이 꺼지고, 장비 능력치 -${ROUGH.gear.map(n => n * 100).join('·')}%, 처치 후 회복·흡혈·체력 재생 -${ROUGH.heal.map(n => n * 100).join('·')}%. 보상: 골드와 장비 드롭 확률이 단계마다 +${Math.round(50 * vowBoost(s, 'rough'))}%씩 커지고, 이 배율은 드롭 상한 뒤에 곱합니다.`,
     restraint: (s: State) => `1·2·3단계마다 장착 AP -${RESTRAINT.ap.join('·')}, 액티브·패시브 장착 각각 최대 ${RESTRAINT.slots.join('·')}개. 보상: 경험치 ×${RESTRAINT.exp.map(n => (1 + n * vowBoost(s, 'restraint')).toFixed(1)).join('·')}, 다른 경험치 배율과 곱연산.`,
 };
 export function VowPanel({ s, send, busy }: { s: State; send: (a: Action) => void; busy: boolean }) {
