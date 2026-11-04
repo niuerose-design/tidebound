@@ -29,7 +29,7 @@ export function grantOnyx(s: State, itemId: string, level: number, rng: () => nu
     item.affixes = rollAffixes(ONYX.affixes + 1, item.power, item.origin, rng, item.affixes!, 'charm', lv, item.rarity);
     tuneOnyx(item);
     s.inventory.push(item); s.itemBook ??= {}; s.itemBook[onyxCodexKey(itemId)] = true;
-    addLog(s, `✦ ${source} · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 (칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종) · 물건 도감 자동 등록`, 'reward');
+    addLog(s, `✦ ${source} · 칠흑 장신구 ‘${item.name}’ 획득! 환생해도 남습니다 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종 · 물건 도감 자동 등록`, 'reward');
     return 'new' as const;
 }
 
@@ -52,7 +52,7 @@ export function receiveOnyx(s: State, item: Item) {
     // v3.125 금고에 들어가 있던 장신구도 지금 위력 계수에 맞춥니다.
     tuneOnyx(got);
     s.inventory.push(got); s.itemBook ??= {}; s.itemBook[onyxCodexKey(item.onyx!)] = true; (s.onyxGift ??= {})[item.onyx!] = 0;
-    addLog(s, `✦ 계정 금고에서 칠흑 장신구 ‘${got.name}’을(를) 꺼냈습니다 (칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종)`, 'reward');
+    addLog(s, `✦ 계정 금고에서 칠흑 장신구 ‘${got.name}’을(를) 꺼냈습니다 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종`, 'reward');
     return 'new' as const;
 }
 

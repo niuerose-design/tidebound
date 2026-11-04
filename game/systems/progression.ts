@@ -84,7 +84,7 @@ export function limitBreakNext(s: State, id: string) {
     const sk = skillById(id), stage = limitBreakOwned(s, id) + 1, lb = PROGRESSION.limitBreak;
     if (!sk || stage > lb.max) return { stage, sp: 0, practice: 0, ok: false, reason: stage > lb.max ? '한계돌파 최대 단계입니다.' : '스킬을 찾을 수 없습니다.' };
     const last = masteryMilestonesFor(sk).at(-1)!, practice = last * lb.practiceMultiple[stage - 1], sp = lb.sp[stage - 1], have = refinePractice(s, id);
-    const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘리미터 해제’ ${stage}단계 필요 (지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 (지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
+    const reason = !(s.learned?.[id] > 0) ? '먼저 습득해야 합니다.' : skillMasteryLevel(have, masteryMilestonesFor(sk)) < maxSkillLevel(sk) ? '실전 숙련을 끝까지 채워야 합니다.' : researchRank(s, 'limitBreak') < stage ? `세계석 연구 ‘리미터 해제’ ${stage}단계 필요 · 지금 ${researchRank(s, 'limitBreak')}단계)` : have < practice ? `실전 숙련 ${practice.toLocaleString()} 필요 · 지금 ${have.toLocaleString()})` : s.sp < sp ? `SP ${sp} 필요` : '';
     return { stage, sp, practice, ok: !reason, reason };
 }
 /** SP and mastery unlock the SAME stages. Neither locks out the other. v27.6 숙련(한계돌파 포함)이 최대를 넘으면 그만큼 더 올라갑니다. */
@@ -97,7 +97,7 @@ export function apSources(s: State): { id: string; label: string; value: number 
         { id: 'rebirth', label: '환생 횟수', value: rebirthAP(s) },
         { id: 'research', label: '세계석 연구 ‘영혼 확장 I · II’', value: researchAP(s) },
         { id: 'achievement', label: '업적', value: achievementAP(s) },
-        { id: 'account', label: '계정(분신 숙달 직업)', value: accountAP(s) },
+        { id: 'account', label: '계정 · 분신 숙달 직업', value: accountAP(s) },
         { id: 'support', label: '분신 지원(작전참모)', value: supportAP(s) },
         { id: 'restraint', label: '절제 서약', value: -restraintAP(s) },
     ];
@@ -391,7 +391,7 @@ export function masteryGainBonus(sk: Skill, level: number) {
 }
 export function skillRankDeltas(sk: Skill, rank: number, mastery = 0): SkillRankDelta[] {
     // v3.169 능력치 수련 패시브의 능력치는 숙련 단계로만 자랍니다(SP 강화는 장착 AP만). 다음 숙련 단계의 값을 보여 줍니다.
-    if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery), effectiveSkill(sk, 1, mastery + 1)).map(d => ({ ...d, label: `${d.label}(숙련 Lv.${mastery} → ${mastery + 1})` }));
+    if (sk.attrBonus) return mastery >= 4 ? [] : skillDeltas(effectiveSkill(sk, 1, mastery), effectiveSkill(sk, 1, mastery + 1)).map(d => ({ ...d, label: `${d.label} · 숙련 Lv.${mastery} → ${mastery + 1}` }));
     const level = skillLevel(sk, rank, mastery);
     if (level >= maxSkillLevel(sk))
         return [];

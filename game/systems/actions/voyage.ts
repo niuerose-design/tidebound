@@ -24,7 +24,7 @@ export const voyageActions: ActionHandlers = {
     start(s, { now }) {
         s.running = true;
         s.lastTick = now;
-        addLog(s, isHackerJob(s.job) ? '브루트포스를 시작했습니다(방치 중 비트·권한 경험치).' : '자동 사냥을 시작했습니다.');
+        addLog(s, isHackerJob(s.job) ? '브루트포스를 시작했습니다. 방치 중에도 비트와 권한 경험치가 쌓입니다.' : '자동 사냥을 시작했습니다.');
     },
     pause(s) {
         s.running = false;
@@ -77,7 +77,7 @@ export const voyageActions: ActionHandlers = {
         // v26.5 사냥터 난이도 조건이 있는 몬스터는 그 난이도부터만 집중 사냥할 수 있습니다(조용히 무작위로 빠지지 않도록 막습니다).
         const need = id === 'all' ? 0 : monsterById(id)?.minTier || 0;
         if (need > encounterTier(s))
-            throw Error(`${monsterById(id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다(지금 ${encounterTier(s)}).`);
+            throw Error(`${monsterById(id)?.name}은(는) 사냥터 난이도 ${need}부터 나타납니다. 지금 ${encounterTier(s)}.`);
         s.target = id === 'all' ? null : id;
         s.enemy = null;
     },

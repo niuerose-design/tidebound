@@ -226,9 +226,9 @@ function rareFights(s: State, rolls: { onyx: number; special: number; variant: n
         batch.exp += Math.max(0, gained);
     }
     const n = (k: string) => batch.count[k] || 0, parts = [
-        n('mimic') + n('kingMimic') ? `숙련의 까미 ${n('mimic') + n('kingMimic')}마리${n('kingMimic') ? `(대왕 ${n('kingMimic')})` : ''}` : '',
-        n('nuri') + n('kingNuri') ? `경험의 누리 ${n('nuri') + n('kingNuri')}마리${n('kingNuri') ? `(대왕 ${n('kingNuri')})` : ''}` : '',
-        n('slime') + n('kingSlime') ? `정수의 슬라임 ${n('slime') + n('kingSlime')}마리${n('kingSlime') ? `(대왕 ${n('kingSlime')})` : ''}` : '',
+        n('mimic') + n('kingMimic') ? `숙련의 까미 ${n('mimic') + n('kingMimic')}마리${n('kingMimic') ? ` · 대왕 ${n('kingMimic')}` : ''}` : '',
+        n('nuri') + n('kingNuri') ? `경험의 누리 ${n('nuri') + n('kingNuri')}마리${n('kingNuri') ? ` · 대왕 ${n('kingNuri')}` : ''}` : '',
+        n('slime') + n('kingSlime') ? `정수의 슬라임 ${n('slime') + n('kingSlime')}마리${n('kingSlime') ? ` · 대왕 ${n('kingSlime')}` : ''}` : '',
     ].filter(Boolean), gains = [batch.mastery ? `숙련 +${batch.mastery.toLocaleString()}` : '', batch.exp ? `경험치 +${batch.exp.toLocaleString()}` : '', batch.essence ? `정수 +${batch.essence.toLocaleString()}` : ''].filter(Boolean);
     if (parts.length || batch.missed) addLog(s, `✦ 부재중 특별 몬스터 · ${parts.length ? `${parts.join(' · ')} 처치` : '처치 없음'}${gains.length ? ` · ${gains.join(' · ')}` : ''}${batch.missed ? ` · 놓침 ${batch.missed}` : ''}`, 'reward');
     // 싸우던 몬스터로 돌아갑니다. 무리는 싸운 턴 수로 숙련 · 계급을 세므로, 희귀 전투로 흐른 턴만큼 등장 턴을 미룹니다.

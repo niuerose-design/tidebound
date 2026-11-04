@@ -254,7 +254,7 @@ function finish(s: State, r: ExpeditionRun, now: number, why: string) {
     const reached = Math.min(r.round, EXPEDITION.rounds + abyss + (r.last?.won === false && isAbyssRound(r.round) ? 1 : 0));
     const code = r.board.length ? encodeBoard(r.board, { set: r.set, augments: r.augments, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, author: s.name, memo: s.expeditionShareMemo }) : '';
     (s.expeditionRecent ??= []).unshift({ at: now, round: Math.min(reached, EXPEDITION.rounds + ABYSS.max), wins: r.wins, cleared: !!cleared, abyss, reward, why, ...(diff.level > 1 ? { difficulty: diff.level } : {}), ...(code ? { code } : {}) }); s.expeditionRecent.splice(8);
-    addLog(s, `원정대 ${why}${diff.level > 1 ? ` · ${diff.icon} ${diff.name}(보상 ×${diff.reward})` : ''} · ${r.wins}승 · 세계석 +${pearlText(reward)}${cleared ? ` (완주 +${pearlText(EXPEDITION.clearPearls)})` : ''}${r.acts ? ` (막 보스 ${r.acts} × ${pearlText(actPearls)})` : ''}${abyss ? ` (심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${pearlText(abyssBonus)}` : ''})` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
+    addLog(s, `원정대 ${why}${diff.level > 1 ? ` · ${diff.icon} ${diff.name} · 보상 ×${diff.reward}` : ''} · ${r.wins}승 · 세계석 +${pearlText(reward)}${cleared ? ` · 완주 +${pearlText(EXPEDITION.clearPearls)}` : ''}${r.acts ? ` · 막 보스 ${r.acts} × ${pearlText(actPearls)}` : ''}${abyss ? ` · 심연 ${abyss}라운드${abyssBonus ? ` · 보너스 +${pearlText(abyssBonus)}` : ''}` : ''} · 숙련 +${mxp}${feats.length ? ` · 도전 기록: ${feats.map(id => FEATS.find(f => f.id === id)?.name || id).join(', ')}` : ''}`, 'reward');
 }
 
 export const expeditionActions: ActionHandlers = {
@@ -273,7 +273,7 @@ export const expeditionActions: ActionHandlers = {
         if (settle && s.expeditionSeasonClaimed !== settle.season) {
             if (settle.rank) s.expeditionSeasonBest = s.expeditionSeasonBest ? Math.min(s.expeditionSeasonBest, settle.rank) : settle.rank;
             s.expeditionSeasonClaimed = settle.season; s.expeditionSeasonLast = settle; grantPearls(s, settle.pearls);
-            addLog(s, `원정대 ${settle.season} 시즌 정산 · ${settle.rank ? `${settle.rank}위` : '순위 밖'}(${settle.total}명 중) · 최고 ${settle.wins}승 · 세계석 +${pearlText(settle.pearls)}`, 'reward');
+            addLog(s, `원정대 ${settle.season} 시즌 정산 · ${settle.rank ? `${settle.rank}위` : '순위 밖'} · ${settle.total}명 중 · 최고 ${settle.wins}승 · 세계석 +${pearlText(settle.pearls)}`, 'reward');
         }
         // 16단계: 난이도는 a.id(‘1’~‘5’). 열리지 않은 단계는 거부.
         const difficulty = Math.max(1, Math.min(DIFFICULTIES.length, Math.floor(Number(a.id) || 1)));
@@ -290,7 +290,7 @@ export const expeditionActions: ActionHandlers = {
         const r = run(s), i = Number(a.value), id = r.shop[i];
         if (!Number.isInteger(i) || !id) throw Error('살 유닛을 고르세요.');
         const def = unitById(id)!;
-        if (r.gold < def.cost) throw Error(`골드가 부족합니다(비용 ${def.cost}).`);
+        if (r.gold < def.cost) throw Error(`골드가 부족합니다. 비용 ${def.cost}.`);
         // v3.435 벤치가 가득해도 같은 유닛 ★1이 이미 2장 있으면(사자마자 ★2로 합쳐져 칸이 늘지 않음) 살 수 있습니다.
         const completesMerge = [...r.board, ...r.bench].filter(x => x.unit === id && x.star === 1).length >= 2;
         if (r.bench.length >= benchCap(r) && !completesMerge) throw Error('벤치가 가득 찼습니다. 배치하거나 팔아서 자리를 비우세요.');
@@ -319,7 +319,7 @@ export const expeditionActions: ActionHandlers = {
         if (where === 'bench') {
             const x = r.bench[i]; if (!x) throw Error('배치할 유닛을 고르세요.');
             const row = rowText === 'front' || rowText === 'back' ? rowText : frontRole(unitById(x.unit)!) ? 'front' : 'back';
-            if (r.board.length >= slotsOf(r)) throw Error(`배치는 ${slotsOf(r)}명까지입니다(판 레벨 ${r.level}).`);
+            if (r.board.length >= slotsOf(r)) throw Error(`배치는 ${slotsOf(r)}명까지입니다. 판 레벨 ${r.level}.`);
             if (r.board.filter(b => b.row === row).length >= (row === 'front' ? EXPEDITION.boardFront : EXPEDITION.boardBack)) throw Error(`${row === 'front' ? '앞줄' : '뒷줄'}이 가득 찼습니다.`);
             r.bench.splice(i, 1); r.board.push({ unit: x.unit, star: x.star, row, ...(x.item ? { item: x.item } : {}) });
         } else if (where === 'board') {
@@ -370,10 +370,10 @@ export const expeditionActions: ActionHandlers = {
         if (won && abyss) r.abyss = (r.abyss || 0) + 1;
         if (!won) r.losses = (r.losses || 0) + 1;
         if (won) { r.wins++; r.streak++; delete r.lossStreak; if ((r.items?.length || 0) < ITEM_HOLD) { const pool = [...BOX_ITEMS(setById(r.set).id)], choices = BOX_CHOICES + (mods.boxPlus || 0), emblem = r.round >= EMBLEM_ROUND || !!mods.emblemEvery; box = []; if (r.round >= TIER2_ROUND) { const top = ITEMS.filter(x => x.tier === 2); box.push(top[Math.floor(rng() * top.length)].id); } while (box.length < choices - (emblem ? 1 : 0) && pool.length) box.push(pool.splice(Math.floor(rng() * pool.length), 1)[0].id); if (emblem) box.push(pickEmblem(r, rng)); r.box = box; } } else { r.streak = 0; r.lossStreak = (r.lossStreak || 0) + 1; r.hp = Math.max(0, r.hp - Math.round((EXPEDITION.lossBase + r.round * EXPEDITION.lossPerRound + Math.max(0, wave.length - survivors) * EXPEDITION.lossPerUnit) * (difficultyOf(r.difficulty).loss || 1))); }
-        addLog(s, `원정대 ${abyss ? `심연 ${r.round - EXPEDITION.rounds}` : r.round}라운드${boss ? (abyss ? '(심연 보스)' : `(${actOf(r.round)}막 보스)`) : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
+        addLog(s, `원정대 ${abyss ? `심연 ${r.round - EXPEDITION.rounds}` : r.round}라운드${boss ? (abyss ? ' · 심연 보스' : ` · ${actOf(r.round)}막 보스`) : ''} ${won ? '승리' : '패배'}${useGhost ? ` · 상대 ${ghost!.name}` : ''} · ${result.turns}턴 · 남은 체력 ${r.hp}${box ? ` · 상자: ${box.map(id => itemById(id)!.name).join(' / ')} 중 하나` : ''}`, won ? 'reward' : 'battle');
         if (r.hp <= 0) { finish(s, r, now, abyss ? `심연 ${r.round - EXPEDITION.rounds}라운드에서 탈락` : `${r.round}라운드에서 탈락`); return; }
         // 15단계: 12라운드를 이기면 완주. 바로 끝내지 않고 ‘심연으로 계속 / 보상 받고 마치기’를 고르게 합니다(패배로 12라운드를 넘기면 그냥 종료).
-        if (r.round === EXPEDITION.rounds) { if (won) { r.cleared = true; r.abyssChoice = true; r.round++; addLog(s, `원정대 완주 · 심연으로 계속 갈 수 있습니다(라운드마다 더 세지고 고스트 없음 · ${ABYSS.bonusEvery}라운드마다 세계석 +${ABYSS.bonus})`, 'reward'); return; } r.round++; finish(s, r, now, '완주'); return; }
+        if (r.round === EXPEDITION.rounds) { if (won) { r.cleared = true; r.abyssChoice = true; r.round++; addLog(s, `원정대 완주 · 심연으로 계속 갈 수 있습니다. 라운드마다 더 세지고 고스트가 없으며, ${ABYSS.bonusEvery}라운드마다 세계석 +${ABYSS.bonus}`, 'reward'); return; } r.round++; finish(s, r, now, '완주'); return; }
         if (abyss && (r.abyss || 0) >= ABYSS.max) { r.round++; finish(s, r, now, '심연 끝'); return; }
         // v3.426 라운드 경험치: 승패와 상관없이 전투를 마치면 받고, 다음 상점은 오른 레벨로 굴립니다.
         if (r.level < 8) { const gained = roundXpFor(r.round); addRunXp(r, gained); r.last.xp = gained; }

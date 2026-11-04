@@ -47,9 +47,9 @@ export function enterDungeon(s: State, id: string, repeat?: Repeat, mode: Dungeo
 }
 function repeatLabel(r?: Repeat) {
     if (!r) return '';
-    if (r.until) return ` (반복 · ${r.until}층까지)`;
-    if (r.climb) return ' (반복 · 단계 오르기)';
-    return r.left === null ? ' (반복 · 실패할 때까지)' : r.left === 0 ? ' (반복 · 마지막 도전)' : ` (반복 · 이후 ${r.left}회 더)`;
+    if (r.until) return ` · 반복 · ${r.until}층까지`;
+    if (r.climb) return ' · 반복 · 단계 오르기';
+    return r.left === null ? ' · 반복 · 실패할 때까지' : r.left === 0 ? ' · 반복 · 마지막 도전' : ` · 반복 · 이후 ${r.left}회 더`;
 }
 /** 반복 도전이 끝나면 사냥터로 돌아가 자동 사냥을 이어갑니다. */
 /** 정복한 뒤 다음 도전을 잇습니다. v3.310 mode · stage는 방금 정복한 던전의 것(s.dungeon은 이미 비움), climb이면 다음 단계로. */

@@ -129,86 +129,35 @@
   "game/data/variants.ts": {
    "long": 1
   },
-  "game/systems/actions/build.ts": {
-   "paren": 2
-  },
   "game/systems/actions/dungeon-shop.ts": {
-   "paren": 6,
    "dots": 1
   },
   "game/systems/actions/expedition.ts": {
-   "paren": 9
+   "dots": 1
   },
   "game/systems/actions/hacker.ts": {
-   "paren": 6
+   "dots": 1
   },
   "game/systems/actions/lifecycle.ts": {
-   "dots": 1,
-   "paren": 3
-  },
-  "game/systems/actions/voyage.ts": {
-   "paren": 2
-  },
-  "game/systems/automation.ts": {
-   "paren": 1
-  },
-  "game/systems/boss-loot.ts": {
-   "paren": 2
-  },
-  "game/systems/combat-status.ts": {
-   "paren": 1
-  },
-  "game/systems/combat.ts": {
-   "paren": 2
+   "dots": 1
   },
   "game/systems/commerce.ts": {
-   "paren": 11,
    "dots": 2
   },
-  "game/systems/duel.ts": {
-   "paren": 2
-  },
-  "game/systems/dungeon-coins.ts": {
-   "paren": 2
-  },
-  "game/systems/dungeon-run.ts": {
-   "paren": 5
-  },
   "game/systems/encounter.ts": {
-   "dots": 2,
-   "paren": 11
-  },
-  "game/systems/expedition.ts": {
-   "paren": 1
+   "dots": 2
   },
   "game/systems/guidance.ts": {
    "dots": 1,
-   "long": 3,
-   "paren": 5
-  },
-  "game/systems/hacker.ts": {
-   "paren": 2
+   "long": 3
   },
   "game/systems/market.ts": {
-   "paren": 4,
-   "dots": 1
-  },
-  "game/systems/news.ts": {
-   "paren": 2
-  },
-  "game/systems/offline-sample.ts": {
-   "paren": 3
-  },
-  "game/systems/onyx-grant.ts": {
-   "paren": 2
-  },
-  "game/systems/progression.ts": {
-   "paren": 4
+   "dots": 2
   },
   "game/systems/skill-description.ts": {
-   "paren": 80,
-   "dots": 3,
-   "long": 6
+   "paren": 12,
+   "dots": 4,
+   "long": 7
   }
  }
 }

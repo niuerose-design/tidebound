@@ -173,7 +173,7 @@ export function battle(boardA: Placed[], boardB: Placed[], rng: () => number, ma
                 if (mine.flags.has('spread')) { const fx = target.effects || {}, next = pickTarget(foes, rng); if (next && (fx.poison || fx.burn)) { next.effects ??= {}; if (fx.poison && !next.effects.poison) next.effects.poison = { ...fx.poison }; if (fx.burn && !next.effects.burn) next.effects.burn = { ...fx.burn }; log.push(`${turns}턴 · ${target.name}의 역병이 ${next.name}에게 전파`); } }
                 // 망령 4: 쓰러진 망령이 전투당 1회 체력 30%로 부활.
                 const theirs = target.side === 'a' ? A : B;
-                if (theirs.flags.has('revive') && hasRole(target.placed, target.def, 'wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활(체력 30%)`); frame({ t: turns, a: keyOf(target, theirs), s: 'revive', ah: pct(target), m: '부활' }); }
+                if (theirs.flags.has('revive') && hasRole(target.placed, target.def, 'wraith') && !target.revived) { target.revived = true; target.hp = Math.round(target.maxHp * .3); target.effects = {}; target.stun = 0; log.push(`${turns}턴 · ${target.name} 부활, 체력 30%`); frame({ t: turns, a: keyOf(target, theirs), s: 'revive', ah: pct(target), m: '부활' }); }
             }
             if (!alive(A.units) || !alive(B.units)) break;
         }

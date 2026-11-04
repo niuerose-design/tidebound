@@ -107,8 +107,8 @@ export function recordRankedDuel(s: State, now: number, opponentId: string) {
 export function raidBreakdown(result: Pick<DuelResult, 'rounds'>, playerName: string, maxRows = 8) {
     const sum = new Map<string, number>(), put = (label: string, n: number | undefined) => { if (n && n > 0) sum.set(label, (sum.get(label) || 0) + n); };
     for (const { event: e } of result.rounds || []) {
-        if (e.actor === playerName) { put(e.skillName || '기본 공격', e.total); put('넘친 회복 피해', e.holy); if (e.onset) put('지속 피해 (출혈 · 중독 · 화상)', e.onset.value); }
-        else { if (e.dot) put('지속 피해 (출혈 · 중독 · 화상)', e.dot.value); put('반격', e.reflected); }
+        if (e.actor === playerName) { put(e.skillName || '기본 공격', e.total); put('넘친 회복 피해', e.holy); if (e.onset) put('지속 피해 · 출혈 · 중독 · 화상', e.onset.value); }
+        else { if (e.dot) put('지속 피해 · 출혈 · 중독 · 화상', e.dot.value); put('반격', e.reflected); }
     }
     const rows = [...sum].map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
     return rows.length > maxRows ? [...rows.slice(0, maxRows - 1), { label: '기타', value: rows.slice(maxRows - 1).reduce((n, r) => n + r.value, 0) }] : rows;

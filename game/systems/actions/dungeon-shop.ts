@@ -16,7 +16,7 @@ import type { State } from '../../types';
 import type { ActionHandlers } from './types';
 
 function pay(s: State, price: number) {
-    if ((s.dungeonCoins || 0) < price) throw Error(`던전 주화가 부족합니다 (필요 ${price.toLocaleString()}).`);
+    if ((s.dungeonCoins || 0) < price) throw Error(`던전 주화가 부족합니다. ${price.toLocaleString()} 필요.`);
     s.dungeonCoins = (s.dungeonCoins || 0) - price;
 }
 function room(s: State) {
@@ -40,7 +40,7 @@ export const dungeonShopActions: ActionHandlers = {
         }
         if (id === 'coreBox') {
             // v3.202 랜덤 보스 코어 상자: 지역 던전 7종 중 하나를(v3.208 무릉 코어는 층으로만) 고르게(없으면 획득, 있으면 각성 · 다 찼으면 세계석). 하루 1번.
-            if (boughtToday(s, 'coreBox', now) >= DUNGEON_SHOP_DAILY.coreBoxPerDay) throw Error(`보스 코어 상자는 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번까지입니다(한국 시간 자정에 초기화).`);
+            if (boughtToday(s, 'coreBox', now) >= DUNGEON_SHOP_DAILY.coreBoxPerDay) throw Error(`보스 코어 상자는 하루 ${DUNGEON_SHOP_DAILY.coreBoxPerDay}번까지이고 한국 시간 자정에 다시 찹니다.`);
             pay(s, DUNGEON_SHOP.coreBox);
             countBought(s, 'coreBox', now);
             const ids = REGION_CORE_IDS, pick = ids[Math.min(ids.length - 1, Math.floor(rng() * ids.length))];
@@ -64,7 +64,7 @@ export const dungeonShopActions: ActionHandlers = {
             // v3.201 전설 이상 확정, 내 레벨 기준. 고대 · 태초는 일반 드롭 하나와 비슷한 확률(GEAR_BOX).
             const before = s.inventory.length, rarity = rollGearBoxRarity(rng);
             drop(s, dropLevel(s, s.level, 0), rng, true, undefined, rarity);
-            addLog(s, `던전 주화 상점 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 주화 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' (자동 판매 · 분해 설정으로 처리됨)'}`, 'reward');
+            addLog(s, `던전 주화 상점 · 전설 이상 장비 상자 개봉 · ${RARITIES[rarity].name} · 주화 -${DUNGEON_SHOP.gearBox.toLocaleString()}${s.inventory.length > before ? '' : ' · 자동 판매 · 분해 설정으로 처리'}`, 'reward');
             return;
         }
         if (id === 'hunter') {
@@ -88,7 +88,7 @@ export const dungeonShopActions: ActionHandlers = {
             const good = id as QualityGood, [itemId, line] = String(a.value || '').split('|'), index = Number(line);
             const item = allItems(s).find(x => x.id === itemId);
             if (!item) throw Error('장비를 찾을 수 없습니다.');
-            if (!Number.isInteger(index) || !qualityLines(item, good).includes(index)) throw Error('수치를 올릴 수 있는 옵션 칸을 고르세요(규칙 · 고정 · 장식 옵션과 이미 목표 이상인 줄은 제외).');
+            if (!Number.isInteger(index) || !qualityLines(item, good).includes(index)) throw Error('수치를 올릴 수 있는 옵션 칸을 고르세요. 규칙 · 고정 · 장식 옵션과 이미 목표 이상인 줄은 고를 수 없습니다.');
             const price = QUALITY_PRICE[good], before = Math.round((lineQuality(item, index) || 0) * 100);
             pay(s, price);
             const { after } = applyQuality(item, index, good, rng), now = Math.round((lineQuality(item, index) || 0) * 100);
@@ -115,7 +115,7 @@ export const dungeonShopActions: ActionHandlers = {
         const kind = mode as CoreForge, blocked = coreForgeBlock(s, id, index, kind);
         if (blocked) throw Error(blocked);
         const cost = coreForgeCost(s, id);
-        if ((s.essence || 0) < cost) throw Error(`정수가 부족합니다 (필요 ${cost.toLocaleString()}).`);
+        if ((s.essence || 0) < cost) throw Error(`정수가 부족합니다. ${cost.toLocaleString()} 필요.`);
         s.essence = (s.essence || 0) - cost;
         const r = forgeCore(s, id, index, kind, rng, true);
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 능력치 ${kind === 'reroll' ? '재설정' : '재련'} · ${r.before} → ${r.after} · 정수 -${cost.toLocaleString()}`, 'reward');
@@ -125,7 +125,7 @@ export const dungeonShopActions: ActionHandlers = {
         const e = coreEntry(s.bossCores?.[id]);
         if (!BOSS_CORES[id] || !e) throw Error('가진 보스 코어만 초기화할 수 있습니다.');
         if (!e.forges) throw Error('정수로 손본 적이 없어 초기화할 비용이 없습니다.');
-        if (s.pearls < CORE_FORGE.resetPearls) throw Error(`세계석이 부족합니다 (필요 ${CORE_FORGE.resetPearls}).`);
+        if (s.pearls < CORE_FORGE.resetPearls) throw Error(`세계석이 부족합니다. ${CORE_FORGE.resetPearls} 필요.`);
         s.pearls -= CORE_FORGE.resetPearls;
         s.bossCores![id] = { rank: e.rank, attrs: e.attrs };
         addLog(s, `보스 코어 칸 · ${BOSS_CORES[id].name} 비용 초기화 · ${e.forges}회 → 0 · 세계석 -${CORE_FORGE.resetPearls}`, 'reward');

@@ -210,11 +210,11 @@ export const lifecycleActions: ActionHandlers = {
         const day = dayKey(now), used = s.whistleDay?.key === day ? s.whistleDay.used : 0;
         if (used >= WHISTLE.perDay) throw Error(`호루라기는 하루 ${WHISTLE.perDay}번까지입니다.`);
         if (!whistleOk(s, target)) throw Error(`${target.name}은(는) Lv.${target.minLevel} · 누적 처치 ${target.minKills.toLocaleString()}마리부터 부를 수 있습니다.`);
-        if (s.sp < WHISTLE.sp) throw Error(`SP가 부족합니다(필요 ${WHISTLE.sp}).`);
+        if (s.sp < WHISTLE.sp) throw Error(`SP가 부족합니다. ${WHISTLE.sp} 필요.`);
         s.sp -= WHISTLE.sp;
         s.whistle = target.id;
         s.whistleDay = { key: day, used: used + 1 };
-        addLog(s, `호루라기 · 다음 사냥터 출현에 ${target.name}이(가) 나타납니다 · SP -${WHISTLE.sp} (오늘 ${used + 1} / ${WHISTLE.perDay})`, 'reward');
+        addLog(s, `호루라기 · 다음 사냥터 출현에 ${target.name}이(가) 나타납니다 · SP -${WHISTLE.sp} · 오늘 ${used + 1} / ${WHISTLE.perDay}`, 'reward');
     },
     /** v3.160 재입대: 중장에서 계급을 이등병으로 되돌리고 재입대 횟수만큼 진급 포인트를 영구로 더 받습니다. 특전은 초기화(포인트는 새 계급 기준으로 다시 찍음). */
     reenlist(s) {
@@ -222,7 +222,7 @@ export const lifecycleActions: ActionHandlers = {
         if (s.running || s.dungeon) throw Error('자동 사냥을 멈추고 던전에서 나온 뒤 재입대하세요.');
         const n = reenlistCount(s) + 1;
         s.rank = { exp: 0, perks: {}, reenlist: n };
-        addLog(s, `✦ 재입대 ${n}회 · 계급이 ${RANKS[0].name}으로 돌아가고 진급 포인트 +${REENLIST_BONUS_POINTS}(영구, 합계 +${n * REENLIST_BONUS_POINTS}). 특전은 다시 찍으세요.`, 'reward');
+        addLog(s, `✦ 재입대 ${n}회 · 계급이 ${RANKS[0].name}으로 돌아가고 진급 포인트 +${REENLIST_BONUS_POINTS}, 영구이고 합계 +${n * REENLIST_BONUS_POINTS}. 특전은 다시 찍으세요.`, 'reward');
     },
     /** v3.31 승천. */
     ascend(s, { now }) { ascend(s, now); },

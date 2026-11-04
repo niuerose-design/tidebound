@@ -378,7 +378,7 @@ function followUps(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent
         from = a.skills.indexOf(next.id) + 1;
         const more: CombatEvent[] = [];
         const text = act(a, b, rng, more, false, false, { id: next.id, index: i + 1, count: 1, kind: 'followUp', power: R.power[i] });
-        onAction(`${text} · 추가 판정${rolls > 1 ? ` ${i + 1}` : ''} (위력 ${Math.round(R.power[i] * 100)}%)`, more[0]);
+        onAction(`${text} · 추가 판정${rolls > 1 ? ` ${i + 1}` : ''} · 위력 ${Math.round(R.power[i] * 100)}%`, more[0]);
     }
 }
 /** v3.231 무한 탄창 중이면 이 행동 뒤에 탄창 순서대로 shots발을 더 쏩니다(탄은 쓰지 않고 연료는 씀). 행동마다 남은 수가 1 줄어듭니다. */
@@ -433,7 +433,7 @@ function awaken(a: Fighter, b: Fighter, rng: () => number, first: CombatEvent | 
             const more2: CombatEvent[] = [];
             const t2 = act(a, b, rng, more2, false, false, { id: id2, index: 0, count: 1, kind: 'awaken', power: base.chainAwaken.power, free: true });
             chained++;
-            onAction(`${t2} · 연계 각성 (위력 ${Math.round(base.chainAwaken.power * 100)}%)`, more2[0]);
+            onAction(`${t2} · 연계 각성 · 위력 ${Math.round(base.chainAwaken.power * 100)}%`, more2[0]);
         }
     }
 }

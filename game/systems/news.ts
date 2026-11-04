@@ -42,9 +42,9 @@ export const NEWS_TEXT = {
     star22: (n: string) => `${josa(n, '이가')} 장비를 22성까지 강화했습니다.`,
     general: (n: string, rank: string) => `${josa(n, '이가')} ${rank}(으)로 진급했습니다.`,
     reenlist: (n: string, count: number) => `${josa(n, '이가')} ${count}번째 재입대를 했습니다. 중장에서 이등병부터 다시 오릅니다.`,
-    core: (n: string, core: string, owned: number) => `${josa(n, '이가')} 보스 코어 ‘${core}’${particle(core, '을를')} 얻었습니다. (보유 ${owned}/${Object.keys(BOSS_CORES).length}종)`,
+    core: (n: string, core: string, owned: number) => `${josa(n, '이가')} 보스 코어 ‘${core}’${particle(core, '을를')} 얻었습니다 · 보유 ${owned}/${Object.keys(BOSS_CORES).length}종`,
     onyxAwaken: (n: string, item: string, rank: number) => `${josa(n, '이가')} 칠흑 장신구 ‘${item}’${particle(item, '을를')} 각성 ${rank}단계로 올렸습니다.`,
-    coreAwaken: (n: string, core: string) => `${josa(n, '이가')} 보스 코어 ‘${core}’${particle(core, '을를')} 완전 각성(${BOSS_CORE_RULES.awakenMax}단계)했습니다.`,
+    coreAwaken: (n: string, core: string) => `${josa(n, '이가')} 보스 코어 ‘${core}’${particle(core, '을를')} ${BOSS_CORE_RULES.awakenMax}단계 완전 각성했습니다.`,
 } satisfies Record<NewsKind, (n: string, ...a: never[]) => string>;
 /** 지난 표시 뒤로 새로 생긴 소식을 찾고 표시를 지금 상태로 옮깁니다. */
 export function collectNews(s: State, now: number): NewsEvent[] {

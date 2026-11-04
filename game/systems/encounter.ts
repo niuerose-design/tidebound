@@ -371,13 +371,13 @@ export function reward(s: State, rng: () => number) {
     if (size > 1 || rankMul > 1) { const raw = (size > 1 ? swarmRankKills(size, swarmTurns) : 1) * valor * (1 + rankPerkLevel(s, 'tally')) * rankMul + (rk.frac || 0), gain = Math.floor(raw); rk.exp += gain; rk.frac = raw - gain; }
     else rk.exp += valor * (1 + rankPerkLevel(s, 'tally'));
     s.rank = rk;
-    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} (능력치 · 치장 화면의 계급에서 사용)`, 'reward'); }
+    if (rankIndex(rk.exp) > rankBefore) { const r = RANKS[rankIndex(rk.exp)]; addLog(s, `✦ ${r.name}(으)로 진급! 진급 포인트 +${r.points} · 능력치 · 치장 화면의 계급에서 씁니다`, 'reward'); }
     // v27.22 숙련의 까미: 로또 숙련을 이번 처치 숙련에 더합니다(직업·장착 스킬 모두). v3.30 처치 줄의 ‘숙련 +N’은 당첨분을 합친 값입니다.
     let mimicBonus = 0;
     // v3.221 황금 올가미 표식이 남은 까미는 그 확률로 로또가 한 단계 위로 굴러갑니다.
     if (e.id === MIMIC.id) { const rolled = rollMimicMastery(rng, s), up = (e.effects?.jackpotUp || 0) > 0 && rng() < e.effects!.jackpotUp! && upgradeMimicTier(rolled) !== rolled, t = up ? upgradeMimicTier(rolled) : rolled; if (up) addLog(s, `✦ 황금 올가미 · 숙련 로또 ${rolled.label} → ${t.label}`, 'reward'); mimicBonus = t.mastery; addLog(s, `✦ 숙련의 까미 · ${t.label}당첨! 직업·장착 스킬 숙련 +${t.mastery.toLocaleString()}`, 'reward'); }
     // v3.161 대왕 까미: ‘대’ × KING.rewardMul 확정(난수 없음).
-    else if (e.id === KING.mimic.id) { mimicBonus = MIMIC.tiers[2].mastery * KING.rewardMul; addLog(s, `👑 대왕 까미 격파! 직업·장착 스킬 숙련 +${mimicBonus.toLocaleString()} (대 당첨 ×${KING.rewardMul} 확정)`, 'reward'); }
+    else if (e.id === KING.mimic.id) { mimicBonus = MIMIC.tiers[2].mastery * KING.rewardMul; addLog(s, `👑 대왕 까미 격파! 직업·장착 스킬 숙련 +${mimicBonus.toLocaleString()} · 대 당첨 ×${KING.rewardMul} 확정`, 'reward'); }
     // v3.31 승천 숙련 배율(1회당 +100%, 5회 ×6)은 까미 당첨분까지 합친 이번 처치 숙련에 곱합니다(v3.107 계급 특전 숙련 훈련은 빼고 뒤에 더함). 다른 배율은 까미에 걸지 않습니다.
     const practiceTotal = Math.floor((researched.total + mimicBonus) * ascensionMastery(s)) + drillMastery;
     // v3.31 행운의 편지 10단계 · 편지 수신인: 까미 당첨 숙련(승천 배율 적용 뒤)의 1%를 해금했지만 숙달하지 않은 다른 직업 하나에 덤으로 줍니다.
@@ -439,18 +439,18 @@ export function reward(s: State, rng: () => number) {
         const times = Math.round(t.pct * EXP_NURI.encountersPerPct), byField = Math.floor(stageEncounterExp(s, won) * times), bonus = Math.max(1, byLevel, byField);
         s.exp += bonus;
         const how = byField > byLevel ? `이 사냥터 출현 ${times}회분` : `Lv.${s.level} 필요량의 ${Math.round(t.pct * 100)}%`;
-        addLog(s, king ? `👑 대왕 누리 격파! 경험치 +${bonus.toLocaleString()} (${how} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} (${how})`, 'reward');
+        addLog(s, king ? `👑 대왕 누리 격파! 경험치 +${bonus.toLocaleString()} · ${how} · 대 당첨 ×${KING.rewardMul} 확정` : `✦ 경험의 누리 · ${t.label}당첨! 경험치 +${bonus.toLocaleString()} · ${how}`, 'reward');
     }
     // v3.161 정수의 슬라임: 이 난이도의 정수 묶음 × 등급 배수. 대왕은 ‘대’ × KING.rewardMul 확정.
     if (e.id === ESSENCE_SLIME.id || e.id === KING.slime.id) {
         const king = e.id === KING.slime.id, bundle = slimeBundle(encounterTier(s)), t = king ? { mul: ESSENCE_SLIME.tiers[2].mul * KING.rewardMul, label: '대왕' } : rollSlimeTier(rng);
         const got = Math.max(1, bundle * t.mul);
         s.essence = (s.essence || 0) + got;
-        addLog(s, king ? `👑 대왕 정수 슬라임 격파! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul} · 대 당첨 ×${KING.rewardMul} 확정)` : `✦ 정수의 슬라임 · ${t.label}당첨! 정수 +${got.toLocaleString()} (묶음 ${bundle} × ${t.mul})`, 'reward');
+        addLog(s, king ? `👑 대왕 정수 슬라임 격파! 정수 +${got.toLocaleString()} · 묶음 ${bundle} × ${t.mul} · 대 당첨 ×${KING.rewardMul} 확정` : `✦ 정수의 슬라임 · ${t.label}당첨! 정수 +${got.toLocaleString()} · 묶음 ${bundle} × ${t.mul}`, 'reward');
     }
     if (dungeonRun) addLog(s, `${enemyLabel(e)} 처치`, 'reward');
     else addLog(s, `${golden ? '✦ 황금 ' : ''}${enemyLabel(e)} 처치 · +${gold} G · +${exp} EXP${practiceTotal > 0 ? ` · 숙련 +${practiceTotal}` : ''}${golden ? ' · 황금 개체 골드 10배' : ''}${big > 1 ? ` · 큰 무리 보상 ×${big}` : ''}${vdef && e.variant !== 'swarm' ? ` · 변종 보상 ×${rewardMult}${bookPer > 1 ? ` · 도감 +${bookPer}` : ''}` : ''}`, 'reward');
-    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} (기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''})`, 'skill');
+    if (masteryReward.bonus) addLog(s, `${masteryReward.source} · 직업·장착 스킬 숙련 +${practice} · 기본 ${masteryReward.base} + 보너스 ${masteryReward.bonus}${size > 1 ? ` · 무리 ×${+masteryHeads.toFixed(2)}` : ''}${researched.extra ? ` · 끝없는 수련 +${researched.extra}` : ''}`, 'skill');
     // v3.12 칠흑 보스 처치: drop 확률로 그 보스의 장신구 1개(dropPity번째 연속 미획득 격파는 확정, 종당 1개, 이미 있으면 세계석). 환생해도 남습니다.
     // v3.276 보스마다 주는 것이 장신구 또는 칠흑 보스코어(윌 · 저주받은 마도서)입니다. 천장(onyxMiss)은 보스별 그대로.
     if (e.onyx) {
@@ -463,10 +463,10 @@ export function reward(s: State, rng: () => number) {
             if (rank < ONYX.awakenMax && hit) { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파 · 세계석 +${ONYX.duplicatePearls}`); }
             else {
                 if (rank < ONYX.awakenMax) s.onyxMiss[e.onyx] = miss + 1;
-                addLog(s, `✦ ${bossDef.name} 격파 · ${prize}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` (각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity})` : ' (각성 완료)'}`, 'reward');
+                addLog(s, `✦ ${bossDef.name} 격파 · ${prize}은(는) 이미 있어 세계석 +${ONYX.duplicatePearls}${rank < ONYX.awakenMax ? ` · 각성 ${rank}/${ONYX.awakenMax} · 연속 미획득 ${miss + 1}/${ONYX.dropPity}` : ' · 각성 완료'}`, 'reward');
             }
         }
-        else if (!hit) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · ${prize}을(를) 남기지 않았습니다 (연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정)`, 'reward'); }
+        else if (!hit) { s.onyxMiss[e.onyx] = miss + 1; addLog(s, `✦ ${bossDef.name} 격파 · ${prize}을(를) 남기지 않았습니다 · 연속 미획득 ${miss + 1}/${ONYX.dropPity} · ${ONYX.dropPity}번째는 확정`, 'reward'); }
         else { s.onyxMiss[e.onyx] = 0; grantOnyxDrop(s, bossDef, level, rng, `${bossDef.name} 격파`); }
     }
     const monster = monsterById(e.id)!;
@@ -529,14 +529,14 @@ export function reward(s: State, rng: () => number) {
             }
             if (first && d.id !== 'abyss')
                 s.pearls += d.pearls;
-            if (noviceMarketLocked(s)) addLog(s, '새 메뉴가 열렸습니다 · 증권거래소(던전 주화로 거래)', 'system');
+            if (noviceMarketLocked(s)) addLog(s, '새 메뉴가 열렸습니다 · 증권거래소 · 던전 주화로 거래', 'system');
             s.clears[d.id] = (s.clears[d.id] || 0) + 1;
             if (s.dungeon.mode && s.dungeon.mode !== 'normal') { s.modeClears ??= {}; const row = (s.modeClears[s.dungeon.mode] ??= {}); row[d.id] = (row[d.id] || 0) + 1; }
             if (nmStage >= 1 && s.dungeon.mode === 'nightmare' && d.id !== 'abyss' && nmStage > (s.nightmareBest?.[d.id] || 0)) { (s.nightmareBest ??= {})[d.id] = nmStage; addLog(s, `${d.name} 나이트메어 ${nmStage}단계 첫 정복${nmStage < DUNGEON_STAGE.max ? ` · ${nmStage + 1}단계가 열립니다` : ' · 최고 단계'}`, 'reward'); }
             // 희귀 이상 확정 장비: 첫 정복, 무릉도장 5층마다. v3.201 반복 정복 확률 드롭은 없앴습니다(주화 상점 장비 상자로).
             if (first || (d.id === 'abyss' && depth % 5 === 0))
                 drop(s, dropLevel(s, dLevel, tier), rng, true);
-            addLog(s, `${d.name}${nmStage > 1 ? ` 나이트메어 ${nmStage}단계` : ''} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} (보유 ${(s.dungeonCoins || 0).toLocaleString()})${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
+            addLog(s, `${d.name}${nmStage > 1 ? ` 나이트메어 ${nmStage}단계` : ''} 정복! 던전 주화 +${coins.toLocaleString()}${bonus ? ` · 오늘 보너스 ${DAILY_BONUS.clears - dailyBonusLeft(s, s.lastTick)}/${DAILY_BONUS.clears}` : ''} · 보유 ${(s.dungeonCoins || 0).toLocaleString()}${first && d.id !== 'abyss' ? ` · 첫 클리어 +${d.pearls} 세계석` : ''}`, 'reward');
             const repeat = s.dungeon.repeat, mode = s.dungeon.mode;
             s.dungeon = null;
             s.running = false;
@@ -557,5 +557,5 @@ export function noteExtreme(s: State, id: string, before: number) {
         addLog(s, `✦ ${name} 극한돌파! 전용 연출이 열렸습니다 · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
         return;
     }
-    if (now > before) addLog(s, `✦ ${name} 극한 ${now}단계 (숙련 ${EXTREME_STAGES[now - 1].toLocaleString()}) · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
+    if (now > before) addLog(s, `✦ ${name} 극한 ${now}단계 · 숙련 ${EXTREME_STAGES[now - 1].toLocaleString()} · 최종 피해 +${Math.round((extremeFinalMultiplier(now) - 1) * 100)}%`, 'reward');
 }
