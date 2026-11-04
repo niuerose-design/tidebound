@@ -149,7 +149,7 @@ function AutoDeviceRow({ s, busy, send, device, title, verb, on, action }: { s: 
     const max = autoMaxGrade(researchRank(s, AUTO_RESEARCH[device])), mine = autoGrades(s, device), other = autoGrades(s, device === 'salvage' ? 'vend' : 'salvage'), otherName = device === 'salvage' ? '판매기' : '분해기';
     const id = `toggle-${action}`;
     return <>
-        <Row title={title} htmlFor={id} desc={`고른 등급의 드롭을 바로 ${verb}합니다. 자동 ${otherName}와 함께 켤 수 있고, 한 등급은 한쪽에만 고를 수 있고, 같은 등급이면 분해가 먼저입니다. 태초 · 칠흑 · 잠금 장비 · 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.${max < 5 ? ` 연구 2단계에서 ${RARITIES[4].name} · ${RARITIES[5].name}도 고를 수 있습니다.` : ''}`}>
+        <Row title={title} htmlFor={id} desc={`고른 등급의 드롭을 바로 ${verb}합니다. 자동 ${otherName}와 함께 켤 수 있고, 한 등급은 한쪽에만 고를 수 있고, 같은 등급이면 분해가 먼저입니다. 태초, 칠흑, 잠금 장비, 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.${max < 5 ? ` 연구 2단계에서 ${RARITIES[4].name} · ${RARITIES[5].name}도 고를 수 있습니다.` : ''}`}>
             <span className="w-9 text-right font-num text-xs text-ink-3" aria-hidden>{on ? '켜짐' : '꺼짐'}</span>
             <Switch id={id} checked={on} disabled={busy} onCheckedChange={v => send({ type: action, value: v ? 'on' : 'off' })}/>
         </Row>
@@ -166,7 +166,7 @@ function SkillFxRow() {
 }
 function FxGlowRow() {
     const on = useFxGlow(), fx = useSkillFx();
-    return <ToggleRow device title="섬광 효과" desc={`스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광과, 4차 이상 스킬의 큰 원형 폭발광입니다. 눈이 부시면 끄세요. 투사체 · 파편 · 고리 · 어두워지는 연출은 그대로입니다.${fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 처음에는 꺼짐입니다.`} checked={on} onChange={setFxGlow}/>;
+    return <ToggleRow device title="섬광 효과" desc={`스킬 연출 중 배경과 상대 카드가 원형으로 밝아졌다 퍼지는 섬광과, 4차 이상 스킬의 큰 원형 폭발광입니다. 눈이 부시면 끄세요. 투사체, 파편, 고리, 어두워지는 연출은 그대로입니다.${fx ? '' : ' 스킬 이펙트가 꺼져 있어 지금은 섬광도 나오지 않습니다.'} 처음에는 꺼짐입니다.`} checked={on} onChange={setFxGlow}/>;
 }
 function ExpeditionReplayRow() {
     const on = useExpeditionReplay();
@@ -174,7 +174,7 @@ function ExpeditionReplayRow() {
 }
 function SceneLootRow() {
     const on = useSceneLootSetting();
-    return <ToggleRow device title="몬스터 쪽 보상 알림" desc="몬스터를 쓰러뜨리면 그 자리에 경험치 · 골드 · 숙련 · 획득한 것이 떠오릅니다. 켜 두면 캐릭터 옆 전투 기록에는 전투 줄만 나오고, 끄면 보상 줄이 전투 기록으로 돌아옵니다. 움직임 줄이기를 켠 기기에서는 알림이 뜨지 않아 전투 기록에 나옵니다. 처음에는 켜짐입니다." checked={on} onChange={setSceneLoot}/>;
+    return <ToggleRow device title="몬스터 쪽 보상 알림" desc="몬스터를 쓰러뜨리면 그 자리에 경험치, 골드, 숙련, 획득한 것이 떠오릅니다. 켜 두면 캐릭터 옆 전투 기록에는 전투 줄만 나오고, 끄면 보상 줄이 전투 기록으로 돌아옵니다. 움직임 줄이기를 켠 기기에서는 알림이 뜨지 않아 전투 기록에 나옵니다. 처음에는 켜짐입니다." checked={on} onChange={setSceneLoot}/>;
 }
 /** v3.268 전투 장면 꾸미기: 배경 · 캐릭터 모양 · 무기 · 직접 올린 그림(이 기기에만 저장)과 작은 미리보기. */
 function SceneLookRows({ s }: { s: State }) {
@@ -183,7 +183,7 @@ function SceneLookRows({ s }: { s: State }) {
     const auto = backdropTheme(d ? d.name : st?.region, st?.name), job = jobById(s.job);
     const upload = async (f: File | null | undefined) => { if (!f) return; setError(await setHeroImage(f) ?? ''); if (file.current) file.current.value = ''; };
     const select = 'h-10 w-full rounded-m border border-line bg-surface-0 px-2 text-s text-ink-1 outline-none focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/40 disabled:opacity-50';
-    return <Row device title="전투 장면 꾸미기" desc="전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 160×220 안으로 줄여 저장되어 서고, 요원 · 트레이더 · 해커 · 광부 · 포식자 · 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다." stack>
+    return <Row device title="전투 장면 꾸미기" desc="전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 160×220 안으로 줄여 저장되어 서고, 요원, 트레이더, 해커, 광부, 포식자, 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다." stack>
         <div className="grid w-full gap-4 sm:grid-cols-[1fr_200px]">
             <div className="grid gap-3 sm:grid-cols-2">
                 <label className="grid gap-1 text-xs text-ink-3">배경<select className={select} value={look.backdrop} onChange={e => setSceneLook({ backdrop: e.target.value as BackdropTheme | 'auto' })}>

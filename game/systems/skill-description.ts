@@ -158,7 +158,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         const damage = `${typeWord}${base.length > 1 ? `(${base.join(' + ')})` : base[0]}의 ${number((sk.multiplier || 1) * 100)}%로 때립니다${sk.id === 'crush' ? `. 물리 방어 × ${number(SKILL_FORMULA.crushDefense)}를 더합니다` : ''}`;
         out.push(sk.timeRewind ? `직접 피해 없음. ${sk.condition === 'wounded' ? `체력이 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때만 나가고, ` : ''}내 체력·마나를 가득 채우고 이 기술 말고 대기 중인 내 기술을 모두 되돌립니다. 각성기는 제외합니다. 상대는 그대로입니다. 전투당 1회이고 쓸 때마다 직업 숙련 +${TIME_MACHINE_MASTERY}.` : sk.statusOnly ? '직접 피해 없음.' : `${damage}.`);
         if (sk.scaling === 'codex') out.push(`발견한 몬스터와 등록한 물건의 도감 기록 1개마다 피해가 ${skillPercent(sk.scalingRatio ?? 0)} 커집니다.`);
-        if (sk.scaling === 'relic') out.push(`피해 × (1 + 렐릭의 힘 × ${number(sk.scalingRatio ?? 0)}) · 렐릭의 힘 = 획득 경험치 보너스 중 스킬 · 장비 · 직업 몫이고 환생 · 연구는 뺍니다. 경험치 보너스 +100%마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
+        if (sk.scaling === 'relic') out.push(`피해 × (1 + 렐릭의 힘 × ${number(sk.scalingRatio ?? 0)}) · 렐릭의 힘 = 획득 경험치 보너스 중 스킬, 장비, 직업 몫이고 환생과 연구는 뺍니다. 경험치 보너스 +100%마다 +${skillPercent(sk.scalingRatio ?? 0)}`);
         if (sk.scaling === 'hunt') out.push(`피해 × (1 + √(던전 클리어 + 보스 처치) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'variant') out.push(`피해 × (1 + √(변종·황금 처치 수) × ${number(sk.scalingRatio ?? 0)})`);
         if (sk.scaling === 'mastered') out.push(`숙달한 직업 1개마다 피해 +${skillPercent(sk.scalingRatio ?? 0)}`);
@@ -197,7 +197,7 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
         if (sk.cleanseSelf) out.push('발동하면 내 출혈·중독·감속이 풀립니다.');
         if (sk.scaling === 'resist') out.push('결계 친화도: 직업의 마법 방어 배율이 높을수록 1에 가깝고(결계 계열), 다른 직업이 계승하면 최소 20%만 발휘');
         if (sk.scaling === 'defense') out.push('방어 친화도: 직업의 물리 방어 배율이 높을수록 1에 가깝고(수호 계열), 다른 직업이 계승하면 최소 20%만 발휘');
-        if (sk.damageBonusCondition === 'statuses') out.push(`헥스 수집: 상대에게 걸린 상태이상 종류, 곧 기절 · 침묵 · 약화 · 감속 · 부식 · 출혈/저주 · 중독 · 화상 가운데 1개마다 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커지고 4종이면 +${skillPercent((sk.conditionalDamageBonus || 0) * 4)}입니다.`);
+        if (sk.damageBonusCondition === 'statuses') out.push(`헥스 수집: 상대에게 걸린 상태이상 종류, 곧 기절, 침묵, 약화, 감속, 부식, 출혈/저주, 중독, 화상 가운데 1개마다 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커지고 4종이면 +${skillPercent((sk.conditionalDamageBonus || 0) * 4)}입니다.`);
         else if (sk.damageBonusCondition) out.push(sk.damageBonusCondition === 'lowHp' ? `체력이 ${skillPercent(SKILL_FORMULA.lowHpThreshold)} 이하인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.` : `${{ bleeding: '출혈·중독·화상', weakened: '약화', controlled: '침묵·감속' }[sk.damageBonusCondition]} 중인 적에게는 직접 피해가 ${skillPercent(sk.conditionalDamageBonus || 0)} 커집니다.`);
         if (sk.effect === 'heal') out.push(`${sk.condition === 'wounded' ? `체력이 ${skillPercent(SKILL_FORMULA.woundedThreshold)} 이하일 때 ` : ''}먼저 최대 체력의 ${skillPercent(sk.healRatio ?? SKILL_FORMULA.healRatio)}를 회복하고 공격합니다. 체력이 ${skillPercent(SKILL_FORMULA.healThreshold)} 이상일 때 쓰면 회복 직업이 아닌 한 피해가 ×${number(SKILL_FORMULA.idleHealDamage)}로 줄어듭니다.`);
         if (sk.effect === 'stun') out.push(`맞히면 ${sk.statusTurns ?? 1}턴 기절시킵니다.`);
@@ -244,16 +244,16 @@ export function skillEffectLines(sk: Skill, level = 0): string[] {
     if (sk.basicEffect) out.push(`장착하면 마력 평타를 포함한 기본 공격이 명중할 때 ${STATUS_WORD[sk.basicEffect]} ${sk.statusTurns ?? (sk.basicEffect === 'corrode' ? STATUS_TUNING.corrodeTurns : 1)}턴을 겁니다. 저항과 면역 규칙은 그대로입니다.`);
     // v3.86 각성기: 턴 단위 판정·대기, 실패 보정, 상태이상 지속 배율.
     if (sk.awaken) out.push(`[각성] 행동마다가 아니라 턴마다 따로 판정해, 연속 행동은 빼고 확정 추가 행동은 넣어, 다른 액티브와 같은 턴에 함께 나갑니다. 대기 ${sk.cooldown}턴은 ${sk.awaken.start ? `결투 · 제단 · 월드보스 전투, 던전 입장, 쓰러짐, 전직 뒤에는 꽉 찬 채로 시작해 ${sk.awaken.start}턴 뒤부터` : '비어 있어 처음부터'} 판정합니다. 실패할 때마다 다음 판정 확률에 기본 발동률을 더해 최대 100%까지 오릅니다. 한 턴에 각성기는 하나만 나가고, 각성기로 쓰러뜨리면 대기가 ${SKILL_FORMULA.awaken.kill}턴만 돕니다. 대기 초기화 효과는 각성기 대기를 ${SKILL_FORMULA.awaken.reset}턴 줄입니다.${sk.awaken.statusScale ? ` 거는 상태이상 지속 ×${sk.awaken.statusScale}, 패시브 보너스 포함.` : ''}`);
-    if (sk.wardPierce?.length) out.push(`각성 관통: 이 기술이 건 상태이상은 숙련 단계별 ${sk.wardPierce.map(p => skillPercent(p)).join(' → ')} 확률로 상태이상 면역을 무시하고, 몬스터의 각성, 곧 정화를 버팁니다. 출혈 · 중독 · 화상 · 감속 · 약화가 해당합니다. 버틴 상태이상에는 각성 면역도 걸리지 않습니다.`);
+    if (sk.wardPierce?.length) out.push(`각성 관통: 이 기술이 건 상태이상은 숙련 단계별 ${sk.wardPierce.map(p => skillPercent(p)).join(' → ')} 확률로 상태이상 면역을 무시하고, 몬스터의 각성, 곧 정화를 버팁니다. 출혈, 중독, 화상, 감속, 약화가 해당합니다. 버틴 상태이상에는 각성 면역도 걸리지 않습니다.`);
     if (sk.multicast && !sk.awaken) out.push(`동시 시전: 이 기술이 먼저 성공하면 편성의 다른 동시 시전 기술도 각자 발동률로 한 행동에 함께 나갑니다. 최대 ${SKILL_FORMULA.multicast.max}개이고 추가 판정 단계마다 +1. 함께 나간 종류 하나마다 각 주문 피해 +${skillPercent(SKILL_FORMULA.multicast.damagePerCast)}, 재사용 대기 +${SKILL_FORMULA.multicast.cooldownStep}, 마나 +${skillPercent(SKILL_FORMULA.multicast.manaScale)}`);
     if (sk.tagBonus) out.push(`태그 전환: 알파 기술 다음에 베타 기술을, 베타 기술 다음에 알파 기술을 쓰면 그 기술의 피해가 ${skillPercent(sk.tagBonus)} 커집니다. 여러 개면 가장 큰 값만.`);
     if (sk.borrowedDiscount) out.push(`떠돌이의 요령: 방랑 계보 직업일 때, 다른 계보 직업에서 계승한 스킬의 장착 AP가 ${sk.borrowedDiscount} 줄어듭니다. 최소 1이고 AP가 1 이하인 스킬은 그대로입니다. 다른 계보 직업이 이 패시브를 계승해 끼면 할인은 없습니다.`);
     if (sk.cooldownReset) out.push(`${({ crit: '치명타가 터지면', kill: '상대를 쓰러뜨리면', chain: '연속 행동마다' })[sk.cooldownReset.on]} ${sk.cooldownReset.chance >= 1 ? '항상' : `${skillPercent(sk.cooldownReset.chance)} 확률로`} ${({ longest: '가장 긴 재사용 대기 하나', first: '편성 순서 첫 번째 대기 중인 기술', all: '모든 재사용 대기' })[sk.cooldownReset.pick]}를 초기화`);
-    if (sk.lastStand) out.push(`체력이 1 아래로 내려가지 않음 · 추가타 · 지속 피해 · 반격을 포함한 쓰러질 피해를 받으면 체력 1로 버티고${sk.lastStand.heal ? ` 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번${sk.lastStand.chargesPerLevel ? ` · 숙련 1단계마다 +${sk.lastStand.chargesPerLevel}번` : ''}`);
+    if (sk.lastStand) out.push(`체력이 1 아래로 내려가지 않음 · 추가타, 지속 피해, 반격을 포함한 쓰러질 피해를 받으면 체력 1로 버티고${sk.lastStand.heal ? ` 최대 체력 ${skillPercent(sk.lastStand.heal)} 회복` : ''} · 전투당 ${sk.lastStand.charges}번${sk.lastStand.chargesPerLevel ? ` · 숙련 1단계마다 +${sk.lastStand.chargesPerLevel}번` : ''}`);
     if (sk.sealFinale) out.push(`일곱 글자를 모두 장착하고 한 전투에 여섯 글자를 모두 쓰면 발동: (물리 공격 + 마법 공격) × (${number(sk.sealFinale.base)} + 일곱 글자와 天의 숙련 합 × ${number(sk.sealFinale.perLevel)}) 고정 피해 · 기절 ${sk.sealFinale.stun}턴 · 인 초기화`);
     if (sk.unlockAfter) out.push(`해금: ${skillById(sk.unlockAfter.skill)?.name || sk.unlockAfter.skill} 숙련 Lv.${sk.unlockAfter.level}`);
     if (sk.perRebirth) out.push(`환생 1회마다 ${byStatOrder(Object.entries(sk.perRebirth)).map(([key, n]) => skillBonusText(key, n as number)).join(' · ')} · 최대 ${SKILL_FORMULA.perRebirthCap}회`);
-    if (sk.penaltyRelief) out.push(`현재 직업의 체력 · 공격 · 방어 배율의 마이너스 보정 ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
+    if (sk.penaltyRelief) out.push(`현재 직업의 체력, 공격, 방어 배율의 마이너스 보정 ${skillPercent(sk.penaltyRelief)} 회복 · 여러 개면 가장 큰 값만`);
     // v3.137 페널티 회복형 성장 스킬의 첫 단계(회복 0 · 보너스 없음)도 무엇을 하는지 적습니다.
     else if (sk.levelEffects?.some(l => l.penaltyRelief)) out.push('아직 직업 마이너스 보정을 되찾지 못함 · 숙련하면 단계별로 회복');
     // v3.321 · v3.322 계승 효율: 간단히 보기와 같은 한 줄(inheritText). 궁극의 모험가는 핵심 패시브 칸 밖의 수치 · 피해 배율이 깎이지 않습니다.

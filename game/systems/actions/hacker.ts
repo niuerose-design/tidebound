@@ -27,7 +27,7 @@ const DECOY_NAME = /^[^\n\r<>|,]{1,12}$/;
 function parseDecoy(level: number, show: PrivacyField[], name: string, job: string, lv: string) {
     if (!name && !job && !lv) return '';
     if (level < HACKER.spoof.decoyLevel) throw Error(`미끼 정보는 신원 조작 숙련 ${HACKER.spoof.decoyLevel}단계부터 쓸 수 있습니다.`);
-    if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자로, 줄바꿈 · 꺾쇠 · | · 쉼표 없이 쓰세요.');
+    if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자로, 줄바꿈과 꺾쇠, | 기호, 쉼표 없이 쓰세요.');
     const decoyJob = job ? jobById(job) : undefined;
     if (job && (!decoyJob || decoyJob.hidden)) throw Error('미끼 직업을 다시 고르세요. 숨은 직업은 안 됩니다.');
     const n = lv ? Number(lv) : 0;

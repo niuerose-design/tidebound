@@ -98,7 +98,7 @@ export const inMysteryTab = (s: State, l: { id: string; tree: string }) => {
  * 직업의 tree(전투 · 숙련 집중 계열)는 그대로라 숙련 진행판 · 계열 집중 서약에는 영향이 없고, 전직 화면의 묶음만 다릅니다.
  */
 export type JobTabId = JobTreeId | 'monostat';
-const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle: '능력치 하나', description: '능력치 하나만 키워 전직하는 외길 계보의 모음입니다. 그 능력치 자체가 피해가 되고, 계열은 물리 · 마법 · 방어 · 상태이상 · 보조 가운데 원래 계열을 따릅니다.', accent: '#d6a3c4' };
+const MONOSTAT_TAB = { id: 'monostat' as const, name: '외길', subtitle: '능력치 하나', description: '능력치 하나만 키워 전직하는 외길 계보의 모음입니다. 그 능력치 자체가 피해가 되고, 계열은 물리, 마법, 방어, 상태이상, 보조 가운데 원래 계열을 따릅니다.', accent: '#d6a3c4' };
 export const JOB_TABS: { id: JobTabId; name: string; subtitle: string; description: string; accent: string }[] = [...JOB_TREES, MONOSTAT_TAB];
 const monostatIds = new Set(MONOSTAT_LINEAGES.map(l => l.id));
 export const monostatLineage = (lineageId: string) => monostatIds.has(lineageId);

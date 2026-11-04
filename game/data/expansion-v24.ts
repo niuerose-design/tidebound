@@ -49,7 +49,7 @@ export const V24_JOBS: NewJob[] = [
 
     // ── 복합 ──────────────────────────────────────────────
     { id: 'abyssHybrid', name: '피조류 혼합체', title: '피와 마나가 한 몸에서 끓는다', desc: '제논 계보의 환생 후 4차 직업입니다. 홀로그램 그래피티는 명중이 높고 여섯 능력치가 고를수록 세집니다. 비율은 최저 ÷ 최고 × 50%. 패시브 멀티래터럴로 체력 · 두 공격 · 모든 능력치를 올립니다.', ...neutral, attack: 1.35, magic: 1.2, hp: 1.35, defense: 1.08, ...T4, parent: 'bloodTide', requires: { str: 52, vit: 46 }, requiresSkillMastery: { redWake: 3 }, role: 'HP·흡혈', tree: 'hybrid' },
-    { id: 'aberrantKing', name: '이형의 왕', title: '어느 바다에도 속하지 않는 왕', desc: '제논 계보의 5차 직업입니다. 각성 메가 스매셔는 회피를 무시하고 반드시 맞는 고정 피해 레이저로, 여섯 능력치가 고를수록 +60%. 패시브 하이브리드 디펜시브로 체력 · 마나 · 회피 · 모든 능력치를 올립니다.', ...neutral, attack: 1.42, magic: 1.3, hp: 1.45, defense: 1.1, resist: 1.08, ...T5, parent: 'abyssHybrid', requires: { str: 64, vit: 56, int: 40 }, requiresSkillMastery: { lifeTorrent: 3 }, role: 'HP·MP 최상위', tree: 'hybrid' },
+    { id: 'aberrantKing', name: '이형의 왕', title: '어느 바다에도 속하지 않는 왕', desc: '제논 계보의 5차 직업입니다. 각성 메가 스매셔는 회피를 무시하고 반드시 맞는 고정 피해 레이저로, 여섯 능력치가 고를수록 +60%. 패시브 하이브리드 디펜시브로 체력, 마나, 회피, 모든 능력치를 올립니다.', ...neutral, attack: 1.42, magic: 1.3, hp: 1.45, defense: 1.1, resist: 1.08, ...T5, parent: 'abyssHybrid', requires: { str: 64, vit: 56, int: 40 }, requiresSkillMastery: { lifeTorrent: 3 }, role: 'HP·MP 최상위', tree: 'hybrid' },
     { id: 'resonanceMaster', name: '공명 장인', title: '쇠와 룬이 함께 운다', desc: '메카닉 계보의 환생 후 4차 직업입니다. 로봇 런처: RM7으로 상대를 약화시키며 충전을 쌓고, 패시브로 마법 공격 · 두 방어 · 반격을 올립니다.', ...neutral, attack: 1, magic: 1.3, hp: 1.25, defense: 1.35, resist: 1.15, ...T4, parent: 'resonanceEngineer', requires: { int: 50, vit: 44 }, requiresSkillMastery: { resonantCannon: 3 }, role: '경계·약화 충전', tree: 'hybrid' },
     { id: 'runeCreator', name: '룬의 창조주', title: '새 문자를 바다에 새긴다', desc: '충전 5중첩부터 나가 중첩을 모두 쏟아내는 메탈아머 전탄발사와 마법 공격 · 방어 · 관통 · 반격 패시브로 메카닉 계보의 정점에 선 5차 직업입니다.', ...neutral, attack: 1, magic: 1.35, hp: 1.3, defense: 1.45, resist: 1.2, crit: .05, ...T5, parent: 'resonanceMaster', requires: { int: 62, vit: 52 }, requiresSkillMastery: { resonanceBurst: 3 }, role: '경계 최상위·전탄발사', tree: 'hybrid' },
 
@@ -156,7 +156,7 @@ export const V24_SKILLS: Skill[] = [
     { ...P, id: 'harmonicPlate', name: '공명 갑판', desc: '마법 공격 · 두 방어 · 반격이 오릅니다.', level: 55, job: 'resonanceMaster', cost: 3, bonus: { magic: 50, defense: 50, resist: 50, thorns: .25 }, masteryMilestones: M4 },
     // 전탄발사는 고정 피해(방어 · 마법 방어 무시), 기준값은 마법 공격 + 물리 방어 비례.
     { ...A, ...forgeBlast, damageType: 'fixed', baseStat: 'magic', id: 'genesisRune', name: '창세 룬', desc: '', level: 70, job: 'runeCreator', chance: .5, cooldown: 5, multiplier: 2, cost: 6, manaCost: 20, scalingRatio: .8, effect: 'stun', chargeNeed: 5, chargeBonus: .1, masteryMilestones: M5 },
-    { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '마법 공격 · 물리 방어 · 방어 관통 · 반격이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { magic: 110, defense: 60, penetration: .05, thorns: .3 }, masteryMilestones: M5 },
+    { ...P, id: 'creatorRune', name: '창조주의 문장', desc: '마법 공격, 물리 방어, 방어 관통, 반격이 오릅니다.', level: 70, job: 'runeCreator', cost: 3, bonus: { magic: 110, defense: 60, penetration: .05, thorns: .3 }, masteryMilestones: M5 },
     // 보조
     { ...A, ...physical, id: 'fateRoll', name: '운명의 주사위', desc: '', level: 55, job: 'fateGambler', chance: .27, cooldown: 4, multiplier: 2.5, cost: 5, accuracyBonus: .06, masteryMilestones: M4 },
     { ...P, id: 'fortuneFavor', name: '행운의 총애', desc: '치명 피해와 골드 획득이 오릅니다.', level: 55, job: 'fateGambler', cost: 3, bonus: { critDamage: .3, goldBonus: .15 }, masteryMilestones: M4 },

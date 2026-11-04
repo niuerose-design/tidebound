@@ -28,7 +28,7 @@ export function StoryScreen({ s }: { s: State }) {
     }, [s.name, openKey]);
     const fresh = seen ? unlocked.filter(x => !seen.has(x.id)).length : 0;
     return <div className="grid gap-4 text-ink-1">
-        <SectionHeader as="h1" eyebrow="ADVENTURE JOURNAL" title="모험 일지" description="판게아를 여행하며 지나온 이야기입니다. 새 지역 · 보스 · 전직 · 환생 같은 이정표를 넘으면 장면이 하나씩 열립니다. 이야기는 환생 · 승천해도 남습니다."/>
+        <SectionHeader as="h1" eyebrow="ADVENTURE JOURNAL" title="모험 일지" description="판게아를 여행하며 지나온 이야기입니다. 새 지역, 보스, 전직, 환생 같은 이정표를 넘으면 장면이 하나씩 열립니다. 이야기는 환생 · 승천해도 남습니다."/>
         <section className="flex items-center gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1" aria-label="스토리 진행">
             <BookOpen size={20} className="shrink-0 text-accent"/>
             <div className="grid min-w-0 flex-1 gap-1"><span className="text-s">열린 이야기 <b className="font-num">{unlocked.length}</b> / {STORY.length}{fresh > 0 && <em className="ml-2 text-xs not-italic text-accent">새 이야기 {fresh}편</em>}</span><StatBar size="s" tone="exp" value={unlocked.length} max={STORY.length} showText={false}/></div>
