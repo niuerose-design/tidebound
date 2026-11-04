@@ -146,11 +146,11 @@ export const ACHIEVEMENTS: Achievement[] = [
     ...series('mimic', '사냥', n => `숙련의 까미 ${n}마리`, n => `숙련의 까미를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[MIMIC.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('nuri', '사냥', n => `경험의 누리 ${n}마리`, n => `경험의 누리를 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[EXP_NURI.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('slime', '사냥', n => `정수의 슬라임 ${n}마리`, n => `정수의 슬라임을 ${n}마리 잡습니다.`, [1, 10, 50], s => s.book?.[ESSENCE_SLIME.id] || 0, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
-    ...series('king', '사냥', n => `대왕 ${n}마리`, n => `대왕 까미 · 대왕 누리 · 대왕 정수 슬라임을 합쳐 ${n}마리 잡습니다(v3.161).`, [1, 10, 30], s => KING_IDS.reduce((a, id) => a + (s.book?.[id] || 0), 0), i => [{ pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 15, sp: 2 }][i]),
+    ...series('king', '사냥', n => `대왕 ${n}마리`, n => `대왕 까미 · 대왕 누리 · 대왕 정수 슬라임을 합쳐 ${n}마리 잡습니다.`, [1, 10, 30], s => KING_IDS.reduce((a, id) => a + (s.book?.[id] || 0), 0), i => [{ pearls: 5 }, { pearls: 10, sp: 1 }, { pearls: 15, sp: 2 }][i]),
     ...series('jobs', '숙련', n => `직업 ${n}개 전직`, n => `서로 다른 직업 ${n}개에 전직해 봅니다(전직 화면의 ‘전직해 본’ 수 · 숙달과는 다름).`, [10, 30, 80], s => unlockedJobCount(s), i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     ...series('learned', '숙련', n => `스킬 ${n}개 습득`, n => `SP로 스킬 ${n}개를 배웁니다.`, [10, 30, 80], s => Object.values(s.learned || {}).filter(n => n > 0).length, i => [{ pearls: 2 }, { pearls: 5 }, { pearls: 10, sp: 1 }][i]),
     // v3.74 극한돌파 달성(보상 없음 · 명예 업적). 달성하면 운영자에게 문의합니다.
-    { id: 'reenlist:1', honor: true, group: '계급' as const, title: '재입대', desc: '중장에서 재입대해 이등병부터 다시 오릅니다(v3.160).', reward: {}, progress: (s: State) => rankState(s).reenlist || 0, target: 1 },
+    { id: 'reenlist:1', honor: true, group: '계급' as const, title: '재입대', desc: '중장에서 재입대해 이등병부터 다시 오릅니다.', reward: {}, progress: (s: State) => rankState(s).reenlist || 0, target: 1 },
     { id: 'extremeBreak', honor: true, group: '숙련' as const, title: '극한돌파', desc: '액티브 스킬 하나를 극한돌파합니다(숙련 1억 · 전용 연출 해금).', reward: {}, progress: (s: State) => Object.keys(s.skillPractice || {}).some(id => extremeBroken(s, id)) ? 1 : 0, target: 1 },
     // v3.38 던전 첫 정복 SP 업적.
     ...PLAIN_FIRST_CLEAR.map(([id, sp]) => ({ id: `firstClear:${id}`, group: '던전' as const, title: `${DUNGEON_NAME(id)} 첫 정복`, desc: `${DUNGEON_NAME(id)}을(를) 처음 정복합니다.`, reward: { sp }, progress: (s: State) => (s.clears?.[id] || 0) > 0 ? 1 : 0, target: 1 })),
@@ -179,7 +179,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     { id: 'expCodex:30', honor: true, group: '모험' as const, title: '원정 도감 완성', desc: '원정대 유닛 30종을 모두 보드에 두고 한 번 이상 이깁니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n > 0).length, target: 30 },
     { id: 'expCodexGold:5', honor: true, group: '모험' as const, title: '다섯 유닛의 주인', desc: '유닛 5종을 도감 금(200승)까지 숙달합니다.', reward: {}, progress: (s: State) => Object.values(s.expeditionStats?.unitWins || {}).filter(n => n >= 200).length, target: 5 },
     // 21단계: 명성 · 리그 등급 · 누적 이정표(수십 년 단위 목표) 명예 업적.
-    ...RENOWN.titles.map(n => ({ id: `expRenown:${n}`, honor: true, group: '모험' as const, title: `원정 명성 ${n}`, desc: `원정 숙련 ${MASTERY_MAX}을 ${n}번 되돌려 명성 ${n}에 이릅니다(v3.432 전에는 50).`, reward: {}, progress: (s: State) => s.expeditionRenown || 0, target: n })),
+    ...RENOWN.titles.map(n => ({ id: `expRenown:${n}`, honor: true, group: '모험' as const, title: `원정 명성 ${n}`, desc: `원정 숙련 ${MASTERY_MAX}을 ${n}번 되돌려 명성 ${n}에 이릅니다.`, reward: {}, progress: (s: State) => s.expeditionRenown || 0, target: n })),
     ...[3, 4, 5].map(t => ({ id: `expLeague:${t}`, honor: true, group: '모험' as const, title: `주간 리그 ${LEAGUE.tiers[t - 1]}`, desc: `원정 주간 리그에서 ${LEAGUE.icons[t - 1]} ${LEAGUE.tiers[t - 1]} 등급에 오릅니다.`, reward: {}, progress: (s: State) => s.expeditionLeague?.best || 1, target: t })),
     ...MILESTONE_WINS.map(n => ({ id: `expTotalWins:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}승`, desc: `원정대 누적 ${n.toLocaleString()}승.`, reward: {}, progress: (s: State) => s.expeditionStats?.wins || 0, target: n })),
     ...MILESTONE_RUNS.map(n => ({ id: `expRuns:${n}`, honor: true, group: '모험' as const, title: `원정 ${n.toLocaleString()}판`, desc: `원정대 누적 ${n.toLocaleString()}판.`, reward: {}, progress: (s: State) => s.expeditionStats?.runs || 0, target: n })),

@@ -13,7 +13,8 @@
     "test": "node tests/run.mjs",
     "test:unit": "vitest run",
     "checks": "node scripts/run-checks.mjs",
-    "check:secrets": "node scripts/check-secrets.mjs"
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:writing": "node scripts/check-writing.mjs"
   },
   "dependencies": {
     "@tanstack/react-virtual": "^3.14.19",

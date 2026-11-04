@@ -52,7 +52,7 @@ export const TITLES: TitleDef[] = [
     // v3.276 칠흑 9종(장신구 8 + 저주받은 마도서).
     { id: 'onyx:9', name: '◆ 칠흑의 지배자', desc: '칠흑 9종 보유', group: '사냥', achievement: 'onyx:9' },
     { id: 'star:22', name: '★ 스물두 별', desc: '장비 하나를 22성까지 강화', group: '강화', achievement: 'star:22' },
-    { id: 'star:25', name: '★ 별을 다 채운 자', desc: '장비 하나를 25성까지 강화(v3.241)', group: '강화', achievement: 'star:25' },
+    { id: 'star:25', name: '★ 별을 다 채운 자', desc: '장비 하나를 25성까지 강화', group: '강화', achievement: 'star:25' },
     { id: 'starDestroy:50', name: '☆ 별이 부서져도', desc: '강화로 장비 50개를 잃고도 계속 두드림', group: '강화', achievement: 'starDestroy:50' },
     // v3.205 보스 코어 칭호(명예 업적).
     { id: 'bossCore:1', name: '💠 코어의 계승자', desc: '보스 코어 첫 획득', group: '던전', achievement: 'bossCore:1' },
