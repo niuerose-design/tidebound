@@ -41,7 +41,7 @@ test('v3.335 초월자 combat: two awakenings a turn, chain awaken fires the oth
     // 초월자(턴당 2개): 연계 각성 → x · y가 연계로 이어지고(대기 · 마나 소모 없음), 그 뒤 x가 자기 각성으로 한 번 더(총 각성 2 · 연계 2).
     const a = fighter('transcendent', ['chainAwaken', x.id, y.id, 'fusion']); assert.equal(a.awakenPerTurn, 2);
     const logs = run(a);
-    assert.equal(logs.filter(t => / · 각성$/.test(t)).length, 2, logs.join('\n')); assert.equal(logs.filter(t => /연계 각성 \(위력 60%\)/.test(t)).length, 2, logs.join('\n'));
+    assert.equal(logs.filter(t => / · 각성$/.test(t)).length, 2, logs.join('\n')); assert.equal(logs.filter(t => /연계 각성 · 위력 60%/.test(t)).length, 2, logs.join('\n'));
     // 융합: 장착 액티브의 계보가 둘(x · y, 자기 계보 fisher 제외)이라 각성기 대기 −2 → 10 − 2 = 8. 연계로 이어진 y는 대기 · 마나를 쓰지 않음(0 그대로).
     assert.equal(a.cooldowns.chainAwaken, 8, JSON.stringify(a.cooldowns)); assert.equal(a.cooldowns[x.id], 8); assert.equal(a.cooldowns[y.id], 0);
     const manaSpent = 2000 - a.mana, expected = Sk.skillById('chainAwaken').manaCost + (x.manaCost || 0); assert.equal(manaSpent, expected, `mana ${manaSpent} vs ${expected}: chained casts are free`);
@@ -49,5 +49,5 @@ test('v3.335 초월자 combat: two awakenings a turn, chain awaken fires the oth
     const b = fighter('transcendent', ['chainAwaken', x.id, y.id]); run(b); assert.equal(b.cooldowns.chainAwaken, 10);
     // 연계는 편성 순서대로 최대 3개: 각성기 넷을 끼워도 세 번째까지만 잇고 넷째(w)는 안 이어집니다(대기 0 그대로, 자기 각성도 턴당 2개 한도에 걸려 안 나감).
     const c = fighter('transcendent', ['chainAwaken', x.id, y.id, z.id, w.id]); const logs2 = run(c);
-    assert.equal(logs2.filter(t => /연계 각성 \(위력 60%\)/.test(t)).length, 3, logs2.join('\n')); assert.equal(c.cooldowns[w.id], 0);
+    assert.equal(logs2.filter(t => /연계 각성 · 위력 60%/.test(t)).length, 3, logs2.join('\n')); assert.equal(c.cooldowns[w.id], 0);
 });

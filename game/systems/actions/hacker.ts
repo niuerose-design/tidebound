@@ -18,7 +18,7 @@ function parsePlace(value: string) {
     const [kind, ...rest] = value.split(':'), id = rest.join(':');
     if (kind === 'stage' && !!stageById(id) && id !== STAGES[0].id) return `stage:${id}`;
     if (kind === 'dungeon' && !!dungeonById(id)) return `dungeon:${id}`;
-    throw Error('사냥터나 던전을 고르세요(첫 사냥터 제외).');
+    throw Error('사냥터나 던전을 고르세요. 첫 사냥터는 안 됩니다.');
 }
 
 /** v3.28 미끼 이름: 12자까지, 구분 문자(| ,)·줄바꿈·꺾쇠 제외, ???는 쓸 수 없음. */
@@ -27,9 +27,9 @@ const DECOY_NAME = /^[^\n\r<>|,]{1,12}$/;
 function parseDecoy(level: number, show: PrivacyField[], name: string, job: string, lv: string) {
     if (!name && !job && !lv) return '';
     if (level < HACKER.spoof.decoyLevel) throw Error(`미끼 정보는 신원 조작 숙련 ${HACKER.spoof.decoyLevel}단계부터 쓸 수 있습니다.`);
-    if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자(줄바꿈·꺾쇠·|·쉼표 제외)로 쓰세요.');
+    if (name && (!DECOY_NAME.test(name) || name.includes('???'))) throw Error('미끼 이름은 1~12자로, 줄바꿈 · 꺾쇠 · | · 쉼표 없이 쓰세요.');
     const decoyJob = job ? jobById(job) : undefined;
-    if (job && (!decoyJob || decoyJob.hidden)) throw Error('미끼 직업을 다시 고르세요(숨은 직업 제외).');
+    if (job && (!decoyJob || decoyJob.hidden)) throw Error('미끼 직업을 다시 고르세요. 숨은 직업은 안 됩니다.');
     const n = lv ? Number(lv) : 0;
     if (lv && (!Number.isInteger(n) || n < 1 || n > HACKER.spoof.decoyMaxLevel)) throw Error(`미끼 레벨은 1~${HACKER.spoof.decoyMaxLevel}로 쓰세요.`);
     const out = [name, show.includes('job') ? '' : job, show.includes('level') || !n ? '' : String(n)];
@@ -80,7 +80,7 @@ export const hackerActions: ActionHandlers = {
         }
         if (run.node.tries >= run.node.max) {
             const keep = traceKeep(s), bits = Math.floor(run.bank.bits * keep), exp = Math.floor(run.bank.exp * keep);
-            addLog(s, `추적당했습니다! 정답은 ${nodeAnswer(run)} · 깊이 ${run.depth} · 보상 ${Math.round(keep * 100)}%만 회수 (비트 +${bits} · 권한 +${exp})`, 'system');
+            addLog(s, `추적당했습니다! 정답은 ${nodeAnswer(run)} · 깊이 ${run.depth} · 보상 ${Math.round(keep * 100)}%만 회수 · 비트 +${bits} · 권한 +${exp}`, 'system');
             h.infil = null;
             gainHacker(s, bits, exp);
         }
@@ -131,7 +131,7 @@ export const hackerActions: ActionHandlers = {
         };
         if (id === 'broadcast') {
             offense(); need(HACK_TIER.broadcast);
-            if (!BROADCAST_PATTERN.test(value)) throw Error(`방송 문구는 1~${HACKER.broadcast.maxLength}자(줄바꿈·꺾쇠 제외)로 쓰세요.`);
+            if (!BROADCAST_PATTERN.test(value)) throw Error(`방송 문구는 1~${HACKER.broadcast.maxLength}자로, 줄바꿈과 꺾쇠 없이 쓰세요.`);
             daily('broadcast', HACKER.broadcast.perDay(n), '방송 탈취'); pay(HACKER.broadcast.bits);
             if (busted()) return;
             h.pending = { kind: 'broadcast', value, minutes: HACKER.broadcast.minutes(n) };
@@ -227,7 +227,7 @@ export const hackerActions: ActionHandlers = {
         if (id === 'ddos') {
             // v3.28 해킹 IX DDoS: 값 = exp | gold | drop. 주 1회.
             need(HACK_TIER.ddos);
-            if (!(HACKER.ddos.kinds as readonly string[]).includes(value)) throw Error('열 이벤트(경험치·골드·드롭)를 고르세요.');
+            if (!(HACKER.ddos.kinds as readonly string[]).includes(value)) throw Error('경험치 · 골드 · 드롭 가운데 열 이벤트를 고르세요.');
             const week = weekKey(now), done = h.ddos?.week === week ? h.ddos.n : 0;
             if (done >= HACKER.ddos.perWeek() * (black ? HACKER.black.cap : 1)) throw Error('이번 주의 DDoS 횟수를 모두 썼습니다.');
             pay(HACKER.ddos.bits); h.ddos = { week, n: done + 1 };

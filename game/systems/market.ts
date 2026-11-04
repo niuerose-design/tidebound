@@ -120,19 +120,19 @@ export const marketActions: ActionHandlers = {
         const qty = qtyOf(a.value), w = marketWindow(now), price = w.rows[w.rows.length - 1][STOCKS.indexOf(def)], held = m.holdings[def.id];
         if (side === 'buy') {
             const c = buyCost(price, qty, feeScaleOf(s));
-            if ((s.dungeonCoins || 0) < c.total) throw Error(`던전 주화가 부족합니다 (필요 ${c.total.toLocaleString()}).`);
+            if ((s.dungeonCoins || 0) < c.total) throw Error(`던전 주화가 부족합니다. ${c.total.toLocaleString()} 필요.`);
             s.dungeonCoins = (s.dungeonCoins || 0) - c.total;
             s.market = m;
             m.holdings[def.id] = { qty: (held?.qty || 0) + qty, cost: (held?.cost || 0) + c.total };
-            addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매수 · ${price.toLocaleString()} · 주화 -${c.total.toLocaleString()} (수수료 ${c.fee})`, 'system');
+            addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매수 · ${price.toLocaleString()} · 주화 -${c.total.toLocaleString()} · 수수료 ${c.fee}`, 'system');
             return;
         }
-        if (!held || held.qty < qty) throw Error(`${def.name}을(를) ${qty.toLocaleString()}주 갖고 있지 않습니다(보유 ${(held?.qty || 0).toLocaleString()}주).`);
+        if (!held || held.qty < qty) throw Error(`${def.name}을(를) ${qty.toLocaleString()}주 갖고 있지 않습니다. 보유 ${(held?.qty || 0).toLocaleString()}주.`);
         const g = sellGain(price, qty, feeScaleOf(s)), part = held.qty === qty ? held.cost : Math.round(held.cost * qty / held.qty), pnl = g.net - part;
         s.dungeonCoins = (s.dungeonCoins || 0) + g.net;
         if (held.qty === qty) delete m.holdings[def.id]; else m.holdings[def.id] = { qty: held.qty - qty, cost: held.cost - part };
         m.realized = (m.realized || 0) + pnl;
-        addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매도 · ${price.toLocaleString()} · 주화 +${g.net.toLocaleString()} (수수료 ${g.fee}) · 손익 ${pnl >= 0 ? '+' : ''}${pnl.toLocaleString()}`, pnl >= 0 ? 'reward' : 'system');
+        addLog(s, `증권거래소 · ${def.name} ${qty.toLocaleString()}주 매도 · ${price.toLocaleString()} · 주화 +${g.net.toLocaleString()} · 수수료 ${g.fee} · 손익 ${pnl >= 0 ? '+' : ''}${pnl.toLocaleString()}`, pnl >= 0 ? 'reward' : 'system');
     },
 };
 

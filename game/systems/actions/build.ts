@@ -30,7 +30,7 @@ export const buildActions: ActionHandlers = {
         if (!Number.isInteger(n) || n < 1) throw Error('충전할 세계석 수를 적으세요.');
         const used = chargeFuel(s, n);
         if (!used) throw Error((s.fuel || 0) >= FUEL.cap ? '연료가 가득 찼습니다.' : '세계석이 없습니다.');
-        addLog(s, `세계석 ${used.toLocaleString()}개를 연료로 충전했습니다(연료 ${(s.fuel || 0).toLocaleString()}).`, 'system');
+        addLog(s, `세계석 ${used.toLocaleString()}개를 연료로 충전했습니다. 연료 ${(s.fuel || 0).toLocaleString()}.`, 'system');
     },
     /** v3.231 자동 충전: value = 남길 세계석 수, 빈 값이면 끔. */
     fuelAuto(s, { a }) {
@@ -107,7 +107,7 @@ export const buildActions: ActionHandlers = {
         const def = RANK_PERKS.find(p => p.id === id);
         if (!def) throw Error('알 수 없는 특전입니다.');
         if (rankPerkLevel(s, def.id) >= def.max) throw Error('최대 단계입니다.');
-        if (rankPointsFree(s) < def.cost) throw Error(`진급 포인트가 부족합니다 (필요 ${def.cost}).`);
+        if (rankPointsFree(s) < def.cost) throw Error(`진급 포인트가 부족합니다. ${def.cost} 필요.`);
         rk.perks = { ...rk.perks, [def.id]: rankPerkLevel(s, def.id) + 1 }; s.rank = rk;
     },
     /** v27.80 이름 옆에 칭호/계급장 중 무엇을 보일지. */

@@ -148,9 +148,9 @@ test('v3.212 boss core news: a new core and a full awakening (rank 5) announce o
  const s=newState(0);s.bossCores={grotto:{rank:0,attrs:[]}};N.collectNews(s,0);delete s.newsMark.cores;delete s.newsMark.coreFull;
  s.bossCores.cemetery={rank:5,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'old mark: only fills in the cores');assert.deepEqual(s.newsMark.cores.sort(),['cemetery','grotto']);
  s.bossCores.temple={rank:0,attrs:[]};let ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['core']);
- assert.equal(ev[0].text('영희'),`영희가 보스 코어 ‘${B.BOSS_CORES.temple.name}’를 얻었습니다. (보유 3/${Object.keys(B.BOSS_CORES).length}종)`);
+ assert.equal(ev[0].text('영희'),`영희가 보스 코어 ‘${B.BOSS_CORES.temple.name}’를 얻었습니다 · 보유 3/${Object.keys(B.BOSS_CORES).length}종`);
  s.bossCores.grotto.rank=4;assert.deepEqual(N.collectNews(s,0),[],'awaken below max is quiet');
- s.bossCores.grotto.rank=5;ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['coreAwaken']);assert.ok(ev[0].text('철수').endsWith('완전 각성(5단계)했습니다.'));
+ s.bossCores.grotto.rank=5;ev=N.collectNews(s,0);assert.deepEqual(ev.map(e=>e.kind),['coreAwaken']);assert.ok(ev[0].text('철수').endsWith('5단계 완전 각성했습니다.'));
  s.bossCores.caldera={rank:0,attrs:[]};assert.deepEqual(N.collectNews(s,0),[],'same kind once a day');
  s.bossCores.starSanctum=3;assert.equal(N.collectNews(s,86_400_000*2).length,1,'next day again (old number entry too)');
 });

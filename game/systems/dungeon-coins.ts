@@ -46,7 +46,7 @@ export function countBought(s: State, key: DailyKey, now: number) {
 export function growthOffer(s: State, good: GrowthGood, now: number) {
     const g = GROWTH_GOODS[good], gold = bestHourly(s.goldLog, s.playMs) * g.hours, exp = bestHourly(s.expLog, s.playMs) * g.hours;
     const reason = (s.rebirths || 0) >= GROWTH_MAX_REBIRTHS ? `환생 ${GROWTH_MAX_REBIRTHS}회 미만만 살 수 있습니다.`
-        : boughtToday(s, good, now) >= g.perDay ? `하루 ${g.perDay}번까지입니다(한국 시간 자정에 초기화).`
+        : boughtToday(s, good, now) >= g.perDay ? `하루 ${g.perDay}번까지이고 한국 시간 자정에 다시 찹니다.`
         : gold <= 0 && exp <= 0 ? '최근 24시간 사냥 기록이 없습니다. 사냥터에서 잠시 사냥한 뒤 사세요.' : undefined;
     return { gold, exp, price: g.price, hours: g.hours, left: Math.max(0, g.perDay - boughtToday(s, good, now)), reason };
 }
@@ -72,7 +72,7 @@ export function onyxOffer(s: State, itemId: string, now?: number) {
         : !def.boss ? '지금은 얻을 수 없는 칠흑 장신구입니다.'
         : !(s.onyxBook?.[def.boss]) ? '그 칠흑 보스를 한 번 이상 처치해야 열립니다.'
         : own && rank >= ONYX.awakenMax ? '각성을 모두 마쳤습니다.'
-        : now !== undefined && onyxBoughtToday(s, now) >= DUNGEON_SHOP_DAILY.onyxPerDay ? `칠흑 상품은 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번까지입니다(한국 시간 자정에 초기화).` : undefined;
+        : now !== undefined && onyxBoughtToday(s, now) >= DUNGEON_SHOP_DAILY.onyxPerDay ? `칠흑 상품은 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번까지이고 한국 시간 자정에 다시 찹니다.` : undefined;
     return { kind, price, rank, reason };
 }
 /** 포식자 각인을 받을 수 있는 장비인지. 못 받으면 이유. */

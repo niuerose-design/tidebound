@@ -89,7 +89,7 @@ export function runRotation(s: State, rng: () => number) {
     buildActions.job(s, { a: { type: 'job', id: next.id }, id: next.id, now: s.lastTick, rng });
     s.running = running;
     s.skills = recommendLoadout(s);
-    addLog(s, `숙련 순회 전직 · ${from} → ${next.name} (추천 편성 장착)`, 'system');
+    addLog(s, `숙련 순회 전직 · ${from} → ${next.name} · 추천 편성 장착`, 'system');
     return true;
 }
 

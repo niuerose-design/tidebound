@@ -154,7 +154,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
         if (s.inventory.length + count > inventoryCap()) throw Error(count > 1 ? `가방에 ${count}칸이 필요합니다. 장비를 정리하세요.` : '가방을 비운 뒤 감정하세요.');
         if (s.gold < each.gold * count) throw Error('골드가 부족합니다.');
-        if ((s.essence || 0) < each.essence * count) throw Error(`정수가 부족합니다(필요 ${each.essence * count}).`);
+        if ((s.essence || 0) < each.essence * count) throw Error(`정수가 부족합니다. ${each.essence * count} 필요.`);
         const results: Item[] = [];
         for (let i = 0; i < count; i++) {
             spend(each.gold); s.essence = (s.essence || 0) - each.essence;
@@ -180,7 +180,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (s.inventory.length >= inventoryCap()) throw Error('가방에 한 칸이 필요합니다. 장비를 정리하세요.');
         const each = affix ? imprintGambleCost(s) : { gold: gambleCost(s), essence: 0 };
         if (s.gold < each.gold || each.gold > limit) throw Error('골드가 부족합니다.');
-        if ((s.essence || 0) < each.essence) throw Error(`정수가 부족합니다(필요 ${each.essence}).`);
+        if ((s.essence || 0) < each.essence) throw Error(`정수가 부족합니다. ${each.essence} 필요.`);
         let tries = 0, spent = 0, essence = 0, registered = 0, hit: Item | undefined;
         const tally = [0, 0, 0, 0, 0, 0, 0];
         while (tries < AUTO_APPRAISAL_MAX && s.gold >= each.gold && spent + each.gold <= limit && (s.essence || 0) >= each.essence) {
@@ -243,7 +243,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
                 throw Error(`${x.name} 옵션은 수치가 고정이라 재련해도 바뀌지 않습니다.`);
             const cost = refineCost(item, s);
             if ((s.essence || 0) < cost.essence)
-                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요 (필요 ${cost.essence.toLocaleString()}).`);
+                throw Error(`정수가 부족합니다. 장비를 분해해 모으세요. ${cost.essence.toLocaleString()} 필요.`);
             s.essence = (s.essence || 0) - cost.essence;
             item.refines = (item.refines || 0) + 1;
             // v3.125 원시 고대 · 계승 태초 · 칠흑은 보통 최고의 1.5배 폭(수치 150%)까지 굴립니다(refineTopOf).
@@ -314,7 +314,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         }
         s.researchResetUsed = true;
         s.pearls += refund;
-        return `${tab.name} 연구 재분배 · 세계석 +${refund} (100% 반환)`;
+        return `${tab.name} 연구 재분배 · 세계석 +${refund} · 100% 반환`;
     }
     // v3.333 상점 정수 구매: value = 개수('10' · '100' · '1000' · 'max'). 정수 1개 = 랜덤 뽑기 골드 × ESSENCE_SHOP.gambleRatio.
     if (a.type === 'buyEssence') {
@@ -322,10 +322,10 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!Number.isInteger(count) || count < 1) throw Error('살 정수 개수를 고르세요.');
         if (count > ESSENCE_SHOP.maxCount) throw Error(`한 번에 ${ESSENCE_SHOP.maxCount.toLocaleString()}개까지 살 수 있습니다.`);
         const gold = price * count;
-        if (s.gold < gold) throw Error(`골드가 부족합니다(정수 ${count.toLocaleString()}개 = ${gold.toLocaleString()} G).`);
+        if (s.gold < gold) throw Error(`골드가 부족합니다. 정수 ${count.toLocaleString()}개는 ${gold.toLocaleString()} G.`);
         spend(gold);
         s.essence = (s.essence || 0) + count;
-        return `정수 ${count.toLocaleString()}개 구매 · -${gold.toLocaleString()} G (개당 ${price.toLocaleString()} G)`;
+        return `정수 ${count.toLocaleString()}개 구매 · -${gold.toLocaleString()} G · 개당 ${price.toLocaleString()} G`;
     }
     if (a.type === 'buyRelic') {
         const r = RELICS.find(x => x.id === id);
@@ -366,7 +366,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!stop) stop = `시도 ${AUTO_STAR_MAX_TRIES}회 한도`;
         if (!count.tries) throw Error(stop === '골드 부족' ? '골드가 부족합니다.' : stop);
         const now = s.inventory.includes(item) || Object.values(s.equipment).includes(item) ? `★${item.enhance || 0}` : '소멸';
-        return `${item.name} 자동 강화 · ${stop} · ★${from} → ${now} · 시도 ${count.tries}회(성공 ${count.success} · 하락 ${count.drop} · 유지 ${count.keep}${count.destroy ? ` · 파괴 ${count.destroy}` : ''}) · -${count.gold.toLocaleString()} G`;
+        return `${item.name} 자동 강화 · ${stop} · ★${from} → ${now} · 시도 ${count.tries}회 · 성공 ${count.success} · 하락 ${count.drop} · 유지 ${count.keep}${count.destroy ? ` · 파괴 ${count.destroy}` : ''} · -${count.gold.toLocaleString()} G`;
     }
     if (a.type === 'levelUp') {
         // v3.5 장비 레벨 올리기(+10, 내 레벨까지). 위력이 오르고 별은 0으로 돌아갑니다.
@@ -412,7 +412,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         relic.affixes = lines.filter(Boolean);
         s.inventory = s.inventory.filter(x => x.id !== source.id);
         const gauge = primalGaugeGain(s, [source]);
-        return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` (${before.name} 대체)` : ''} · ${source.name} 소비 · -${cost} G${primalGaugeNote(s, gauge)}`;
+        return `${relic.name} 옵션 이식 · ${affix.name}${before ? ` · ${before.name} 대체` : ''} · ${source.name} 소비 · -${cost} G${primalGaugeNote(s, gauge)}`;
     }
     if (a.type === 'removeImprint') {
         // v3.82 이식 옵션 지우기: value = 칸 번호(0~2). 무료이고 되돌릴 수 없습니다(그 칸은 비고, 다시 이식할 수 있음).
@@ -436,7 +436,7 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!item.rerolls && !item.refines)
             throw Error('재련 · 재설정한 적이 없어 초기화할 비용이 없습니다.');
         if (s.pearls < GEAR_RESET_PEARLS)
-            throw Error(`세계석이 부족합니다(필요 ${GEAR_RESET_PEARLS}).`);
+            throw Error(`세계석이 부족합니다. ${GEAR_RESET_PEARLS} 필요.`);
         s.pearls -= GEAR_RESET_PEARLS;
         const fixed = (item.affixes || []).filter(x => item.onyx && x.rule), count = (item.affixes || []).length - fixed.length;
         if (item.affixes?.length) item.affixes = rollAffixes(fixed.length + count, item.power, item.origin, rng, fixed, item.slot, item.level, item.rarity).map(x => fixed.includes(x) ? x : refineOption(x, item.power, item.rarity, () => 1, item.level));
@@ -452,13 +452,13 @@ export function commerce(s: State, a: Action, rng: () => number): string | null 
         if (!item)
             throw Error('장비를 찾을 수 없습니다.');
         if (item.rarity !== rarity || item.relic || item.onyx)
-            throw Error(kind === 'ancient' ? '원시 각성은 고대 등급 장비만 할 수 있습니다.' : '태초 계승은 태초 등급 장비만 할 수 있습니다(칠흑 장신구 제외).');
+            throw Error(kind === 'ancient' ? '원시 각성은 고대 등급 장비만 할 수 있습니다.' : '태초 계승은 태초 등급 장비만 할 수 있고 칠흑 장신구는 안 됩니다.');
         if (item.heir)
             throw Error('이미 계승한 장비입니다.');
         if (kind === 'ancient') {
             const cost = awakenEssence(s.rebirths);
             if ((s.essence || 0) < cost)
-                throw Error(`정수가 부족합니다(필요 ${cost.toLocaleString()}).`);
+                throw Error(`정수가 부족합니다. ${cost.toLocaleString()} 필요.`);
             s.essence = (s.essence || 0) - cost;
         }
         else {

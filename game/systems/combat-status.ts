@@ -12,7 +12,7 @@ export function visibleStatuses(effects: StatusEffects = {}, stun = 0, recent: C
     // v3.151 자기 버프(가속 제외): 이름과 남은 턴.
     for (const [id, b] of Object.entries(effects.buffs || {})) if (id !== 'haste' && b.turns > 0) rows.push({ id, label: b.name ?? id, turns: b.turns });
     // v3.143 충전 중첩(메카닉): 턴이 아니라 중첩 수를 보여 줍니다.
-    if (effects.charge) rows.push({ id: 'charge', label: `충전 ×${effects.charge}`, turns: 0, detail: `${effects.charge}중첩 (최대 ${SKILL_FORMULA.charge.max})` });
+    if (effects.charge) rows.push({ id: 'charge', label: `충전 ×${effects.charge}`, turns: 0, detail: `${effects.charge}중첩, 최대 ${SKILL_FORMULA.charge.max}` });
     // A one-action stun may be consumed inside the same server round. Keep its
     // witnessed event beside the name briefly instead of losing the indication.
     for (const fx of recent) {

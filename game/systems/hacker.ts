@@ -136,7 +136,7 @@ function puzzleOf(seed: number, depth: number, kind: PromptKind): { prompt: stri
         const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], letters = [...word];
         for (let i = letters.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [letters[i], letters[j]] = [letters[j], letters[i]]; }
         const mixed = letters.join('') === word ? word.slice(1) + word[0] : letters.join('');
-        return { prompt: `${mixed} (글자 순서를 섞은 단어)`, answer: word };
+        return { prompt: `${mixed} · 글자 순서를 섞은 단어`, answer: word };
     }
     if (kind === 'seq') {
         const types = ['add', ...(d >= 3 ? ['mul'] : []), ...(d >= 5 ? ['alt'] : []), ...(d >= 7 ? ['fib'] : []), ...(d >= 9 ? ['square'] : [])], type = types[Math.floor(r() * types.length)];
@@ -153,7 +153,7 @@ function puzzleOf(seed: number, depth: number, kind: PromptKind): { prompt: stri
         return { prompt: hex ? `0x${value.toString(16).toUpperCase()}` : `0b${value.toString(2)}`, answer: String(value) };
     }
     const word = CIPHER_WORDS[Math.floor(r() * CIPHER_WORDS.length)], max = d < 6 ? 3 : 25, k = pick(r, 1, max);
-    return { prompt: `${shiftWord(word, k)} (알파벳을 1~${max}칸 밀어 둔 단어)`, answer: word };
+    return { prompt: `${shiftWord(word, k)} · 알파벳을 1~${max}칸 밀어 둔 단어`, answer: word };
 }
 /**
  * v3.26 노드 종류: 1번째는 방화벽, 2번째는 포트 스캔, 3번째부터 홀수 칸은 방화벽·암호 해독, 짝수 칸은 포트 스캔·수열·진법 변환.
