@@ -98,7 +98,7 @@ export function SkillsScreen({ s, send, busy }: { s: State; send: Send; busy: bo
         <Loadout s={s} send={send} busy={busy} recommended={recommended}/>
         <section aria-label="스킬 찾기" className="grid gap-3 rounded-l border border-line bg-surface-2 p-3 shadow-1">
             <div className="flex flex-wrap items-center gap-2">
-                <label className="relative min-w-0 flex-1 basis-64"><Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden/><input type="search" className={cn(field, 'w-full pl-8')} value={query} placeholder="스킬 이름 · 효과 · 직업으로 검색 (예: 기절, 흡혈, 마법사)" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
+                <label className="relative min-w-0 flex-1 basis-64"><Search size={15} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden/><input type="search" className={cn(field, 'w-full pl-8')} value={query} placeholder="스킬 이름 · 효과 · 직업으로 검색. 예: 기절, 흡혈, 마법사" aria-label="스킬 검색" onChange={e => setQuery(e.target.value)}/></label>
                 <label className="grid gap-0.5 text-xs text-ink-3">정렬<select className={field} value={sort} aria-label="스킬 정렬" onChange={e => setSort(e.target.value as SkillSort)}>{(Object.keys(SORT_LABEL) as SkillSort[]).map(k => <option key={k} value={k}>{SORT_LABEL[k]}</option>)}</select></label>
             </div>
             {/* v3.444 켜진 필터 칩을 다시 누르면 해제(기본값으로). 묶기는 켬/끔 토글. */}
@@ -116,7 +116,7 @@ export function SkillsScreen({ s, send, busy }: { s: State; send: Send; busy: bo
                 <ChoiceChips label="보기" value={view} onChange={setView} options={[{ value: 'simple', label: '간단히' }, { value: 'detail', label: '자세히' }]}/>
                 <ChoiceChips label="묶기" value={grouped ? 'on' : 'off'} onChange={() => setGrouped(g => !g)} options={[{ value: 'on', label: '계보별 묶기' }]}/>
             </div>
-            {scope === 'hidden' && !q && <p className="text-xs text-ink-3">숨긴 스킬은 다른 범위에서 보이지 않습니다(장착 중인 스킬과 검색 결과는 예외). 카드의 눈 모양 버튼으로 다시 보이게 할 수 있습니다.</p>}
+            {scope === 'hidden' && !q && <p className="text-xs text-ink-3">숨긴 스킬은 다른 범위에서 보이지 않고, 장착 중인 스킬과 검색 결과만 예외입니다. 카드의 눈 모양 버튼으로 다시 보이게 할 수 있습니다.</p>}
         </section>
         {!list.length && <p className="rounded-m bg-surface-2 p-4 text-s text-ink-3">조건에 맞는 기술이 없습니다. {q ? '다른 검색어를 써 보세요.' : scope === 'hidden' ? '숨긴 스킬이 없습니다. 카드의 눈 모양 버튼으로 자주 안 보는 스킬을 숨길 수 있습니다.' : '범위를 ‘전체 계보’로 바꾸거나 필터를 초기화해 보세요.'}</p>}
         {grouped ? [...new Map(list.map(sk => [groupOf(sk).key, groupOf(sk)])).values()].sort((a, b) => a.order - b.order).map(g => { const items = list.filter(sk => groupOf(sk).key === g.key); return <FoldSection key={g.key} title={g.name} defaultOpen={g.order <= 1} summary={`액티브 ${items.filter(sk => sk.type === 'active').length} · 패시브 ${items.filter(sk => sk.type === 'passive').length} · 장착 ${items.filter(sk => s.skills.includes(sk.id)).length}`}>{cards(g.key, items)}</FoldSection>; })

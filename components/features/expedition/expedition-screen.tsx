@@ -43,14 +43,14 @@ export function ExpeditionScreen({ s, send, busy }: PanelProps) {
     const q = s.expeditionQuests, stale = !!(q && now && (q.day !== dayKey(now) || q.week !== weekKey(now)));
     const questDone = q ? [...q.daily, ...q.weekly].filter(x => x.done).length : 0, questAll = q ? q.daily.length + q.weekly.length : 0;
     const recent = s.expeditionRecent || [];
-    const weekBanner = weekRule ? <Note tone="info">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="text-ink-3">(매주 월요일 바뀜 · 판을 시작할 때 규칙이 붙어 끝까지 유지)</small></Note> : null;
+    const weekBanner = weekRule ? <Note tone="info">이번 주 규칙 · <b>{weekRule.name}</b> · {weekRule.desc} <small className="text-ink-3">매주 월요일 바뀌고, 판을 시작할 때 규칙이 붙어 끝까지 유지됩니다</small></Note> : null;
 
     // 18단계(모바일 정리): 소개는 한 줄로 줄이고 긴 설명은 접어 둡니다.
     const introShort = `${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 유닛을 사서 보드에 놓고, 시너지를 켜고, 막 보스를 넘으세요.`;
-    const intro = <><SectionHeader as="h1" eyebrow="EXPEDITION" title="원정대" description={introShort}/><FoldSection level={3} title="규칙 자세히"><p className="text-xs leading-relaxed text-ink-2">{`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 다른 모험가의 원정대(2라운드부터)와 싸웁니다. 막 끝(4 · 8 · 12라운드)에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}(소수는 모았다가 1이 될 때마다 받음). 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}</p></FoldSection></>;
+    const intro = <><SectionHeader as="h1" eyebrow="EXPEDITION" title="원정대" description={introShort}/><FoldSection level={3} title="규칙 자세히"><p className="text-xs leading-relaxed text-ink-2">{`${EXPEDITION.rounds}라운드 · 3막 오토배틀러. 라운드마다 받는 골드로 상점에서 유닛을 사 보드에 배치하고 웨이브 · 2라운드부터는 다른 모험가의 원정대와 싸웁니다. 막 끝인 4 · 8 · 12라운드에는 보스가 나옵니다. 같은 유닛 3개는 ★이 오르고, 지역 · 역할이 겹치면 시너지가 켜집니다. 승리마다 세계석 ${EXPEDITION.pearlsPerWin}, 막 보스 +${EXPEDITION.actPearls}, 완주 +${EXPEDITION.clearPearls}. 소수는 모았다가 1이 될 때마다 받습니다. 2 · 5 · 8라운드에는 판 전체에 걸리는 증강을 고르고, 주마다 규칙이 바뀝니다. 횟수 제한은 없습니다.`}</p></FoldSection></>;
     // 9단계: 지난 시즌 정산 내역과 시즌 보상표.
     const season = s.expeditionSeasonLast ? <Note tone="gold">지난 시즌 {s.expeditionSeasonLast.season} · {s.expeditionSeasonLast.rank ? `${s.expeditionSeasonLast.rank}위` : '순위 밖'} / {s.expeditionSeasonLast.total}명 · 최고 {s.expeditionSeasonLast.wins}승 · 세계석 +{pearlText(s.expeditionSeasonLast.pearls)} 받음</Note> : null;
-    const rewardTable = <Note>월간 순위 보상(한국 시간 매월 1일 이후 첫 출발 때 지급): {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</Note>;
+    const rewardTable = <Note>월간 순위 보상, 한국 시간 매월 1일 이후 첫 출발 때 지급: {SEASON_REWARDS.map(x => `${x.label} ${x.pearls}`).join(' · ')}.</Note>;
     const questLabel = q ? `과제 ${questDone}/${questAll}` : '과제';
     const shell = (main: ReactNode) => <div className="grid gap-4 text-ink-1">{intro}
         <Tabs value={tab} onValueChange={setTab} className="grid gap-3">

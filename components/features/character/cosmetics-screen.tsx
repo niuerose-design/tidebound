@@ -1,5 +1,5 @@
 'use client';
-/** v3.392 치장(새 토대): 칭호와 계급. 이름 옆에는 칭호나 계급장 중 하나를 보여 줍니다(채팅도 같음). 칭호는 업적으로, 계급은 처치한 마릿수로 얻습니다. */
+/** v3.392 치장(새 토대): 칭호와 계급. 이름 옆에는 칭호나 계급장 중 하나를 보여 주고 채팅도 같습니다. 칭호는 업적으로, 계급은 처치한 마릿수로 얻습니다. */
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, Medal } from 'lucide-react';
 import type { State, Action } from '@/game/types';
@@ -21,7 +21,7 @@ export function CosmeticsScreen({ s, send, busy }: { s: State; send: Send; busy:
     useEffect(() => { const t = setTimeout(() => { try { if (localStorage.getItem(FLOW_KEY) === 'row') setFlow('row'); } catch { /* 저장소 없음 */ } }, 0); return () => clearTimeout(t); }, []);
     const pickFlow = (v: string) => { setFlow(v as 'column' | 'row'); try { localStorage.setItem(FLOW_KEY, v); } catch { /* 저장소 없음 */ } };
     return <div className="grid gap-5 text-ink-1">
-        <SectionHeader as="h1" eyebrow="APPEARANCE" title="칭호와 계급" description="이름 옆에는 칭호나 계급장 중 하나를 보여 줍니다(채팅도 같음). 칭호는 업적으로, 계급은 처치한 마릿수로 얻습니다."/>
+        <SectionHeader as="h1" eyebrow="APPEARANCE" title="칭호와 계급" description="이름 옆에는 칭호나 계급장 중 하나를 보여 주고 채팅도 같습니다. 칭호는 업적으로, 계급은 처치한 마릿수로 얻습니다."/>
         <div className="grid items-start gap-4 lg:grid-cols-2">
             <FoldSection title="칭호" summary={`${current ? `표시 중 · ${current}` : '표시 안 함'} · ${owned.size} / ${TITLES.length} 획득`} defaultOpen>
                 <div className="mb-3 flex flex-wrap gap-2">
@@ -36,7 +36,7 @@ export function CosmeticsScreen({ s, send, busy }: { s: State; send: Send; busy:
                     <Button type="button" variant="outline" size="sm" aria-pressed={badge === 'rank'} className={cn(badge === 'rank' && 'border-accent text-accent')} disabled={busy || badge === 'rank'} onClick={() => send({ type: 'badge', id: 'rank' })}>이름 옆에 계급장 표시</Button>
                     <Button type="button" variant="outline" size="sm" disabled={busy || earned === free} title="쓴 진급 포인트를 모두 돌려받습니다 (무료)" onClick={() => send({ type: 'rankPerk', id: 'reset' })}>특전 초기화</Button>
                 </div>
-                <div className="mb-3 flex flex-wrap items-center gap-3 rounded-m bg-surface-1 p-3" title={`계급표(각 계급까지 추가 처치 수): ${RANKS.map((r, i) => `${r.name}${i ? ` ${r.need.toLocaleString()}` : ''}`).join(' → ')}`}>
+                <div className="mb-3 flex flex-wrap items-center gap-3 rounded-m bg-surface-1 p-3" title={`계급표, 각 계급까지 추가 처치 수: ${RANKS.map((r, i) => `${r.name}${i ? ` ${r.need.toLocaleString()}` : ''}`).join(' → ')}`}>
                     <RankInsignia index={p.index} size={44} title={p.rank.name} ring={reenlisted}/>
                     <div className="grid min-w-0 flex-1 gap-1">
                         <b className="text-s font-semibold">{p.rank.name}{reenlisted ? <small className="ml-1 text-xs font-normal text-gold-ink">★ 재입대 {reenlisted}회 · 진급 포인트 +{reenlisted * REENLIST_BONUS_POINTS}</small> : null}</b>
@@ -45,11 +45,11 @@ export function CosmeticsScreen({ s, send, busy }: { s: State; send: Send; busy:
                     </div>
                     {/* v3.165 재입대: 중장일 때만 켜집니다(자동 사냥 중 · 던전 안에서는 꺼짐). */}
                     <ConfirmAction label="재입대" icon={<Medal size={14}/>} title="재입대" variant="outline" className="border-danger/60 text-danger"
-                        hint={!top ? `${RANKS[RANKS.length - 1].name}에서만 재입대할 수 있습니다. 계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다(지금 +${reenlisted * REENLIST_BONUS_POINTS}).` : s.running || s.dungeon ? '자동 사냥을 멈추고 던전 밖에서 재입대할 수 있습니다.' : `계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다(지금 +${reenlisted * REENLIST_BONUS_POINTS}). 특전은 초기화되어 새 계급 기준으로 다시 찍습니다.`}
-                        description={`계급 ${p.rank.name} → ${RANKS[0].name}. 특전 초기화 · 진급 포인트 영구 +${REENLIST_BONUS_POINTS}(${reenlisted + 1}회째). 되돌릴 수 없습니다.`} disabled={busy || !top || s.running || !!s.dungeon} onConfirm={() => send({ type: 'reenlist' })} confirmLabel="재입대"/>
+                        hint={!top ? `${RANKS[RANKS.length - 1].name}에서만 재입대할 수 있습니다. 계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다. 지금 +${reenlisted * REENLIST_BONUS_POINTS}.` : s.running || s.dungeon ? '자동 사냥을 멈추고 던전 밖에서 재입대할 수 있습니다.' : `계급을 ${RANKS[0].name}으로 되돌리고 진급 포인트를 영구로 +${REENLIST_BONUS_POINTS} 받습니다. 지금 +${reenlisted * REENLIST_BONUS_POINTS}. 특전은 초기화되어 새 계급 기준으로 다시 찍습니다.`}
+                        description={`계급 ${p.rank.name} → ${RANKS[0].name}. 특전 초기화 · 진급 포인트 영구 +${REENLIST_BONUS_POINTS}, ${reenlisted + 1}회째. 되돌릴 수 없습니다.`} disabled={busy || !top || s.running || !!s.dungeon} onConfirm={() => send({ type: 'reenlist' })} confirmLabel="재입대"/>
                 </div>
                 <ul className="mb-4 grid gap-1.5">{RANK_PERKS.map(perk => { const level = rankPerkLevel(s, perk.id), maxed = level >= perk.max; return <li key={perk.id} className={cn('flex items-center gap-3 rounded-m border border-line bg-surface-1 p-2.5', !level && 'opacity-80')}>
-                    <div className="min-w-0 flex-1"><div className="text-s font-semibold">{perk.name} <span className="font-num text-xs text-ink-3">{level}/{perk.max}</span></div><div className="text-xs text-ink-3">{perk.desc(Math.max(1, level))}{level ? '' : ' (1단계 기준)'}</div></div>
+                    <div className="min-w-0 flex-1"><div className="text-s font-semibold">{perk.name} <span className="font-num text-xs text-ink-3">{level}/{perk.max}</span></div><div className="text-xs text-ink-3">{perk.desc(Math.max(1, level))}{level ? '' : ' · 1단계 기준'}</div></div>
                     <Button type="button" variant={maxed ? 'outline' : 'default'} size="sm" className={cn(!maxed && 'bg-accent text-accent-ink hover:bg-accent/90')} disabled={busy || maxed || free < perk.cost} onClick={() => send({ type: 'rankPerk', id: perk.id })}>{maxed ? '최대' : '올리기 · 1P'}</Button>
                 </li>; })}</ul>
                 <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h3 className="text-s font-semibold">계급 흐름도 <small className="font-normal text-ink-3">계급 이름 아래는 그 계급에 오르는 누적 처치 수</small></h3><ChoiceChips label="흐름도 방향" value={flow} onChange={pickFlow} options={[{ value: 'column', label: '세로' }, { value: 'row', label: '가로' }]}/></div>

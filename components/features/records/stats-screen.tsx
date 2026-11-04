@@ -28,7 +28,7 @@ export function StatsScreen({ s }: { s: State }) {
         <SectionHeader as="h1" eyebrow="STATISTICS" title="통계" description="지금까지 쌓은 모험의 기록입니다."/>
         <section className="rounded-l border border-line bg-surface-2 p-4 shadow-1"><LiveRatesCard s={s}/></section>
         <Block title="모험" open rows={[
-            ['사냥 시간(부재중 포함)', formatDuration(s.playMs || 0)],
+            ['사냥 시간 · 부재중 포함', formatDuration(s.playMs || 0)],
             ['누적 처치', `${fmt(s.kills)}마리`],
             ['쓰러짐', `${fmt(s.deaths)}회`],
             ['환생', `${fmt(s.rebirths)}회`],

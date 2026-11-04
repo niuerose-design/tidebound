@@ -53,9 +53,9 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
             <StatBar tone="accent" size="s" value={Math.min(need, into)} max={need} label="다음 권한 등급까지"/>
             {(s.hackFeed?.overloadUntil || 0) > now && <Note tone="danger">다른 해커의 과부하 · {new Date(s.hackFeed!.overloadUntil!).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 브루트포스 비트 절반</Note>}
             {black && <Note>블랙 해커 · 해킹 하루 횟수 ×{HACKER.black.cap} · 비트 ×{HACKER.black.cost} · 실패 확률 {Math.round(HACKER.black.fail(n) * 100)}%(실패하면 추적: 이름 공지 · {s.skills.includes('wipeTrace') ? HACKER.black.wipedHours : HACKER.black.traceHours}시간 해킹 불가)</Note>}
-            {busted && <Note tone="danger">추적당했습니다 · {new Date(h.bustedUntil!).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 해킹할 수 없습니다(정산·신원 조작은 가능).</Note>}
+            {busted && <Note tone="danger">추적당했습니다 · {new Date(h.bustedUntil!).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 해킹할 수 없습니다. 정산과 신원 조작은 됩니다.</Note>}
             {botnetOn(s, now) && <Note>봇넷 가동 중 · {new Date(h.botnet!.until).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}까지 브루트포스 ×{HACKER.botnet.rate}</Note>}
-            {isHacker && <Note>{s.running ? '브루트포스 실행 중' : '자동 사냥을 켜면 브루트포스가 돌아갑니다'} · 2초마다 비트 +{Number((HACKER.brute.bits * (loadout.includes('cryptoMiner') ? 1.3 : 1) * (botnetOn(s, now) ? HACKER.botnet.rate : 1)).toFixed(3))} · 권한 +{HACKER.brute.exp * (botnetOn(s, now) ? HACKER.botnet.rate : 1)} (오프라인 정산 포함)</Note>}
+            {isHacker && <Note>{s.running ? '브루트포스 실행 중' : '자동 사냥을 켜면 브루트포스가 돌아갑니다'} · 2초마다 비트 +{Number((HACKER.brute.bits * (loadout.includes('cryptoMiner') ? 1.3 : 1) * (botnetOn(s, now) ? HACKER.botnet.rate : 1)).toFixed(3))} · 권한 +{HACKER.brute.exp * (botnetOn(s, now) ? HACKER.botnet.rate : 1)} 오프라인 정산 포함</Note>}
         </Card>
 
         <Card>
@@ -77,7 +77,7 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
             </> : <div className="grid gap-2.5">
                 <div className="flex flex-wrap justify-between gap-x-3 gap-y-1"><b className="text-s font-semibold">노드 {infil.depth + 1} · {NODE_LABEL[infil.node.kind](infil.node.size)}</b><span className="text-xs text-ink-3">남은 시도 {infil.node.max - infil.node.tries} · 쌓인 보상 비트 {infil.bank.bits} · 권한 {infil.bank.exp}</span></div>
                 {infil.node.prompt && (infil.node.kind === 'path'
-                    ? <div className="grid gap-1"><small className="text-xs text-ink-3">왼쪽 위에서 오른쪽 아래까지 오른쪽·아래로만 움직일 때, 지나는 칸(처음·끝 포함) 합의 최솟값</small><pre className="m-0 font-mono text-m leading-relaxed text-accent">{infil.node.prompt.split(' / ').join('\n')}</pre></div>
+                    ? <div className="grid gap-1"><small className="text-xs text-ink-3">왼쪽 위에서 오른쪽 아래까지 오른쪽·아래로만 움직일 때, 처음과 끝을 포함해 지나는 칸 합의 최솟값</small><pre className="m-0 font-mono text-m leading-relaxed text-accent">{infil.node.prompt.split(' / ').join('\n')}</pre></div>
                     : <p className="m-0 font-mono text-l tracking-[.06em] text-accent">{infil.node.prompt}</p>)}
                 {infil.node.history.length > 0 && <ol className="grid gap-1 rounded-m border border-line bg-surface-0 p-2.5 font-mono text-s">{infil.node.history.map((x, i) => <li key={i} className="flex justify-between gap-2.5"><code>{x.guess}</code><b className={x.hint === 'OPEN' ? 'text-ok' : 'text-gold-ink'}>{x.hint}</b></li>)}</ol>}
                 <Form onSubmit={e => { e.preventDefault(); if (!guess.trim()) return; send({ type: 'infilGuess', value: guess.trim() }); setGuess(''); }}>
@@ -95,9 +95,9 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 {!white && <>
                 <Box>
                     <b>방송 탈취 · I</b>
-                    <small>이벤트 배너를 {HACKER.broadcast.minutes(n)}분 동안 원하는 문구로 덮어씁니다. 문구 앞에는 [해커 {s.name}] 서명이 고정됩니다(루트킷이면 ???). 다른 해커의 방송이 떠 있는 동안은 쓸 수 없습니다. 비트 {cost(HACKER.broadcast.bits)} · 오늘 {used.broadcast || 0}/{cap2(HACKER.broadcast.perDay(n))}</small>
+                    <small>이벤트 배너를 {HACKER.broadcast.minutes(n)}분 동안 원하는 문구로 덮어씁니다. 문구 앞에는 [해커 {s.name}] 서명이 고정되고 루트킷이면 ???입니다. 다른 해커의 방송이 떠 있는 동안은 쓸 수 없습니다. 비트 {cost(HACKER.broadcast.bits)} · 오늘 {used.broadcast || 0}/{cap2(HACKER.broadcast.perDay(n))}</small>
                     <Form onSubmit={e => { e.preventDefault(); if (!message.trim()) return; run('broadcast', message.trim()); setMessage(''); }}>
-                        <input className={field} value={message} maxLength={HACKER.broadcast.maxLength} onChange={e => setMessage(e.target.value.replace(/[\n\r<>]/g, ''))} placeholder={`방송 문구 (${HACKER.broadcast.maxLength}자까지)`} aria-label="방송 문구"/>
+                        <input className={field} value={message} maxLength={HACKER.broadcast.maxLength} onChange={e => setMessage(e.target.value.replace(/[\n\r<>]/g, ''))} placeholder={`방송 문구 · ${HACKER.broadcast.maxLength}자까지`} aria-label="방송 문구"/>
                         <Primary disabled={busy || !isHacker || busted || !message.trim() || (used.broadcast || 0) >= cap2(HACKER.broadcast.perDay(n)) || h.bits < cost(HACKER.broadcast.bits)}>방송 탈취</Primary>
                     </Form>
                 </Box>
@@ -112,7 +112,7 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 </Box>
                 {n >= 2 && <Box>
                     <b>이벤트 변조 · II</b>
-                    <small>진행 중인 운영 이벤트 하나의 남은 시간을 ±{HACKER.tamper.minutes(n)}분, 배율을 ±{Math.round(HACKER.tamper.rate(n) * 100)}%p 바꿉니다(×1.0 아래로는 안 내려감, 제단 축복 제외). 이벤트당 1회 · 비트 {cost(HACKER.tamper.bits)} · 오늘 {used.tamper || 0}/{cap2(HACKER.tamper.perDay())}</small>
+                    <small>진행 중인 운영 이벤트 하나의 남은 시간을 ±{HACKER.tamper.minutes(n)}분, 배율을 ±{Math.round(HACKER.tamper.rate(n) * 100)}%p 바꿉니다. ×1.0 아래로는 내려가지 않고 제단 축복은 빼고. 이벤트당 1회 · 비트 {cost(HACKER.tamper.bits)} · 오늘 {used.tamper || 0}/{cap2(HACKER.tamper.perDay())}</small>
                     {events.length ? <Row>
                         <select className={field} value={tamper.id || events[0].id} onChange={e => setTamper({ ...tamper, id: e.target.value })} aria-label="이벤트">{events.map(e => <option key={e.id} value={e.id} disabled={e.tampered}>{e.name}{e.tampered ? ' (변조됨)' : ''}</option>)}</select>
                         <select className={field} value={tamper.time} onChange={e => setTamper({ ...tamper, time: e.target.value })} aria-label="시간"><option value="+">시간 늘리기</option><option value="-">시간 줄이기</option></select>
@@ -122,7 +122,7 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 </Box>}
                 {n >= 3 && <Box>
                     <b>서버 다운 · III</b>
-                    <small>사냥터·던전 하나를 {downMinutes}분 동안 새로 들어올 수 없게 만듭니다(이미 있는 모험가는 계속, 첫 사냥터 제외, 패치된 곳은 불가). 비트 {cost(HACKER.down.bits)} · 오늘 {used.down || 0}/{cap2(HACKER.down.perDay(n))}</small>
+                    <small>사냥터·던전 하나를 {downMinutes}분 동안 새로 들어올 수 없게 만듭니다. 이미 있는 모험가는 계속 사냥하고, 첫 사냥터와 패치된 곳은 걸 수 없습니다. 비트 {cost(HACKER.down.bits)} · 오늘 {used.down || 0}/{cap2(HACKER.down.perDay(n))}</small>
                     <Row><PlaceSelect value={place} onChange={setPlace}/><Primary type="button" disabled={busy || busted || (used.down || 0) >= cap2(HACKER.down.perDay(n)) || h.bits < cost(HACKER.down.bits)} onClick={() => run('down', place)}>서버 다운</Primary></Row>
                 </Box>}
                 </>}
@@ -134,13 +134,13 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 </Box>}
                 {n >= 5 && <Box>
                     <b>백도어 · V</b>
-                    <small>제단 게이지 하나를 그 게이지 비용의 {Math.round(HACKER.backdoor.share(n) * 100)}%만큼 채웁니다(기여 순위 제외). 게이지마다 하루 1회 · 비트 {cost(HACKER.backdoor.bits)}</small>
+                    <small>제단 게이지 하나를 그 게이지 비용의 {Math.round(HACKER.backdoor.share(n) * 100)}%만큼 채우고 기여 순위에는 오르지 않습니다. 게이지마다 하루 1회 · 비트 {cost(HACKER.backdoor.bits)}</small>
                     <Row><select className={field} value={gauge} onChange={e => setGauge(e.target.value)} aria-label="제단 게이지">{GAUGES.map(g => <option key={g.id} value={g.id} disabled={(used[`backdoor:${g.id}`] || 0) >= 1}>{g.name}</option>)}</select>
                         <Primary type="button" disabled={busy || busted || (used[`backdoor:${gauge}`] || 0) >= 1 || h.bits < cost(HACKER.backdoor.bits)} onClick={() => run('backdoor', gauge)}>백도어</Primary></Row>
                 </Box>}
                 {n >= 6 && <Box>
                     <b>패킷 가로채기 · VI</b>
-                    <small>떠 있는 월드보스 하나에 걸어 둡니다. 그 보스가 쓰러지면 격파 보상 가치(골드/1,000 + 세계석×40 + SP×400)의 {Math.round(HACKER.intercept.share(n) * 100)}%를 비트로 받고, 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 {cap2(HACKER.intercept.perDay())}회 · 비트 {cost(HACKER.intercept.bits)}</small>
+                    <small>떠 있는 월드보스 하나에 걸어 둡니다. 그 보스가 쓰러지면 격파 보상 가치, 곧 골드/1,000 + 세계석×40 + SP×400의 {Math.round(HACKER.intercept.share(n) * 100)}%를 비트로 받고, 쓰러지지 않고 떠나면 아무것도 받지 못합니다. 하루 {cap2(HACKER.intercept.perDay())}회 · 비트 {cost(HACKER.intercept.bits)}</small>
                     {h.intercept ? <Row><small>걸어 둔 보스: {raidById(h.intercept!.raid)?.name || h.intercept.raid}{raids.some(r => r.id === h.intercept!.raid && r.gen === h.intercept!.gen) ? ' · 아직 싸우는 중' : ''}</small><Primary type="button" disabled={busy} onClick={() => run('interceptClaim')}>정산</Primary></Row>
                         : raids.length ? <Row><RaidSelect raids={raids} value={raid?.id || ''} onChange={setRaidPick}/><Primary type="button" disabled={busy || busted || (used.intercept || 0) >= cap2(HACKER.intercept.perDay()) || h.bits < cost(HACKER.intercept.bits)} onClick={() => raid && run('intercept', raid.id)}>가로채기</Primary></Row> : <small>지금 떠 있는 월드보스가 없습니다.</small>}
                 </Box>}
@@ -165,8 +165,8 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 </Box>}
                 {n >= 10 && <Box>
                     <b>루트 권한 · X</b>
-                    <small>오늘 쓴 해킹 횟수를 모두 되돌립니다(주간 DDoS 제외). {HACKER.root.showMinutes}분 동안 모든 모험가의 화면에 ROOT 배너가 뜨고, 처음 쓰면 영구 칭호 root를 얻습니다. 하루 {HACKER.root.perDay()}회 · 비트 {cost(HACKER.root.bits)}{h.roots ? ` · 지금까지 ${h.roots}회` : ''}</small>
-                    <ConfirmAction label="루트 권한" title="루트 권한을 얻을까요?" description="오늘의 해킹 횟수가 모두 초기화되고, 서버 전체에 내 이름(루트킷이면 ???)이 공지됩니다." disabled={busy || busted || (used.root || 0) >= HACKER.root.perDay() || h.bits < cost(HACKER.root.bits)} onConfirm={() => run('root')}/>
+                    <small>오늘 쓴 해킹 횟수를 모두 되돌리고 주간 DDoS는 뺍니다. {HACKER.root.showMinutes}분 동안 모든 모험가의 화면에 ROOT 배너가 뜨고, 처음 쓰면 영구 칭호 root를 얻습니다. 하루 {HACKER.root.perDay()}회 · 비트 {cost(HACKER.root.bits)}{h.roots ? ` · 지금까지 ${h.roots}회` : ''}</small>
+                    <ConfirmAction label="루트 권한" title="루트 권한을 얻을까요?" description="오늘의 해킹 횟수가 모두 초기화되고, 서버 전체에 내 이름이 공지됩니다. 루트킷이면 ???로." disabled={busy || busted || (used.root || 0) >= HACKER.root.perDay() || h.bits < cost(HACKER.root.bits)} onConfirm={() => run('root')}/>
                 </Box>}
                 {white && <>
                 <Box>
@@ -177,12 +177,12 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
                 </Box>
                 <Box>
                     <b>패치 · 화이트</b>
-                    <small>사냥터·던전 하나를 {HACKER.white.patch.minutes + (s.hacker?.crew?.modules?.includes('jointPatch') ? 30 : 0)}분 동안 서버 다운에서 지킵니다(이미 걸린 다운도 그동안 풀림). 하루 1회 · 비트 {HACKER.white.patch.bits}</small>
+                    <small>사냥터·던전 하나를 {HACKER.white.patch.minutes + (s.hacker?.crew?.modules?.includes('jointPatch') ? 30 : 0)}분 동안 서버 다운에서 지키고, 이미 걸린 다운도 그동안 풀립니다. 하루 1회 · 비트 {HACKER.white.patch.bits}</small>
                     <Row><PlaceSelect value={place} onChange={setPlace}/><Primary type="button" disabled={busy || (used.patch || 0) >= HACKER.white.patch.perDay() || h.bits < HACKER.white.patch.bits} onClick={() => run('patch', place)}>패치</Primary></Row>
                 </Box>
                 </>}
             </div>}
-            {!!feedDown.length && <Note>지금 다운된 곳: {feedDown.map(d => `${placeLabel(d.kind, d.id)}(${d.by}, ${Math.ceil((d.until - now) / 60000)}분${d.patched ? ' · 패치됨' : ''})`).join(' · ')}</Note>}
+            {!!feedDown.length && <Note>지금 다운된 곳: {feedDown.map(d => `${placeLabel(d.kind, d.id)} · ${d.by} · ${Math.ceil((d.until - now) / 60000)}분${d.patched ? ' · 패치됨' : ''}`).join(' · ')}</Note>}
         </Card>
 
         {/* v3.57 정보 해킹: 서버가 데이터에서 만든 비밀 조각 하나(드롭·확률 · 출현 가중치 · 히든 직업 조건). 퍼뜨리기는 방송 탈취·채팅으로. */}
@@ -217,7 +217,7 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
         </Card>
 
         <Card>
-            <Head title="신원 조작" aside={<>{level >= 3 ? '3단계 · 항목 선택 · 미끼 정보' : level === 2 ? '2단계 · 항목 선택' : level === 1 ? '1단계 · 전부 숨김' : '꺼짐(장착·숙련 1단계 필요)'}</>}/>
+            <Head title="신원 조작" aside={<>{level >= 3 ? '3단계 · 항목 선택 · 미끼 정보' : level === 2 ? '2단계 · 항목 선택' : level === 1 ? '1단계 · 전부 숨김' : '꺼짐 · 장착과 숙련 1단계 필요'}</>}/>
             <Note>고른 모험가 한 명의 랭킹 · 무릉도장 · 해커 순위 정보를 ???로 가립니다. 나도 고를 수 있습니다. 비트 {HACKER.spoof.bits} · 오늘 {used.spoof || 0}/{HACKER.spoof.perDay(level)}</Note>
             <FinePrint summary="기간 · 해제 · 미끼">
                 <p>기간은 시간 단위로 정하고 0이면 무기한입니다. 랭킹 행의 ‘신원 조작’ 버튼은 무기한으로 겁니다.</p>
@@ -226,13 +226,13 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
             </FinePrint>
             {level >= 2 && <ChoiceChips label="공개로 남길 항목" value={showList} disabled={busy} onChange={v => togglePrivacy(v as PrivacyField)} options={PRIVACY_FIELDS.map(f => ({ value: f, label: `${PRIVACY_LABELS[f]} ${show.has(f) ? '공개' : '숨김'}` }))}/>}
             {level >= HACKER.spoof.decoyLevel && <Row role="group" aria-label="미끼 정보">
-                <input className={field} value={decoy.name} maxLength={12} onChange={e => setDecoy({ ...decoy, name: e.target.value.replace(/[\n\r<>|,]/g, '') })} placeholder="미끼 이름(비우면 ???)" aria-label="미끼 이름"/>
+                <input className={field} value={decoy.name} maxLength={12} onChange={e => setDecoy({ ...decoy, name: e.target.value.replace(/[\n\r<>|,]/g, '') })} placeholder="미끼 이름 · 비우면 ???" aria-label="미끼 이름"/>
                 <select className={field} value={decoy.job} onChange={e => setDecoy({ ...decoy, job: e.target.value })} aria-label="미끼 직업" disabled={show.has('job')}><option value="">미끼 직업 없음</option>{DECOY_JOBS.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}</select>
                 <input className={cn(field, 'w-16 flex-none')} value={decoy.level} onChange={e => setDecoy({ ...decoy, level: e.target.value.replace(/\D/g, '').slice(0, 3) })} inputMode="numeric" placeholder="Lv" aria-label="미끼 레벨" disabled={show.has('level')}/>
             </Row>}
             {level >= 1 && <Form onSubmit={e => { e.preventDefault(); if (!spoofTarget.trim()) return; run('spoof', `${spoofTarget.trim()}|${[...show].join(',')}|${Number(spoofHours) || 0}${decoyPart}`); setSpoofTarget(''); }}>
                 <input className={field} value={spoofTarget} onChange={e => setSpoofTarget(e.target.value.slice(0, 120))} placeholder="랭킹 행 id" aria-label="신원 조작 대상"/>
-                <input className={cn(field, 'w-16 flex-none')} value={spoofHours} onChange={e => setSpoofHours(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" aria-label="기간(시간, 0 = 무기한)" title="기간(시간). 0이면 무기한"/><small>{Number(spoofHours) ? `${spoofHours}시간` : '무기한'}</small>
+                <input className={cn(field, 'w-16 flex-none')} value={spoofHours} onChange={e => setSpoofHours(e.target.value.replace(/\D/g, '').slice(0, 4))} inputMode="numeric" aria-label="기간 · 시간 단위, 0은 무기한" title="기간(시간). 0이면 무기한"/><small>{Number(spoofHours) ? `${spoofHours}시간` : '무기한'}</small>
                 <Primary disabled={busy || !isHacker || !spoofTarget.trim() || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits}>대상 조작</Primary>
                 <Sm disabled={busy || !isHacker || (used.spoof || 0) >= HACKER.spoof.perDay(level) || h.bits < HACKER.spoof.bits} onClick={() => run('spoof', `self|${[...show].join(',')}|${Number(spoofHours) || 0}${decoyPart}`)}>내 정보 가리기</Sm>
             </Form>}

@@ -27,9 +27,9 @@ const Field = ({ label, children }: { label: string; children: React.ReactNode }
 export function AutoRebirthPanel({ s, send, busy }: Props) {
     const open = ascensionPerk(s, 'autoRebirth'), a = s.autoRebirth || { on: false, level: 0 };
     return <Card locked={!open} title="자동 환생" icon={<RefreshCw size={16}/>} aside={open ? (a.on ? '켜짐' : '꺼짐') : `승천 ${ASCENSION_PERKS.autoRebirth}회부터`}>
-        <Note>목표 레벨에 닿으면 위에서 정해 둔 서약으로 환생하고 자동 사냥을 이어 갑니다(부재중 정산 중에도). 던전 안에서는 기다리고, 환생 {ASCENSION.rebirthCap}회 상한에서 멈춥니다.</Note>
+        <Note>목표 레벨에 닿으면 위에서 정해 둔 서약으로 환생하고 자동 사냥을 이어 갑니다. 부재중 정산 중에도 됩니다. 던전 안에서는 기다리고, 환생 {ASCENSION.rebirthCap}회 상한에서 멈춥니다.</Note>
         {open && <Row>
-            <Field label="목표 레벨"><select className={field} value={a.level} disabled={busy} onChange={e => send({ type: 'autoRebirth', id: a.on ? 'on' : 'off', value: e.target.value })}>{AUTO_REBIRTH_LEVELS.map(n => <option key={n} value={n}>{n ? `Lv.${n}${n < rebirthLevel(s) ? ` (지금은 요구 Lv.${rebirthLevel(s)})` : ''}` : `요구 레벨 (지금 Lv.${rebirthLevel(s)})`}</option>)}</select></Field>
+            <Field label="목표 레벨"><select className={field} value={a.level} disabled={busy} onChange={e => send({ type: 'autoRebirth', id: a.on ? 'on' : 'off', value: e.target.value })}>{AUTO_REBIRTH_LEVELS.map(n => <option key={n} value={n}>{n ? `Lv.${n}${n < rebirthLevel(s) ? ` · 지금은 요구 Lv.${rebirthLevel(s)}` : ''}` : `요구 레벨 · 지금 Lv.${rebirthLevel(s)}`}</option>)}</select></Field>
             <Toggle on={a.on} disabled={busy} onClick={() => send({ type: 'autoRebirth', id: a.on ? 'off' : 'on', value: String(a.level) })}/>
         </Row>}
     </Card>;
@@ -63,7 +63,7 @@ export function AutoFollowPanel({ s, send, busy }: Props) {
     const set = (patch: Partial<FollowRule>) => { const next = { ...rule, ...patch }; send({ type: 'autoFollow', id: next.on ? 'on' : 'off', value: `${next.stage}:${next.tide}` }); };
     const target = open ? followTarget(s, rule) : null;
     return <Card locked={!open} title="사냥터 · 난이도 자동 따라가기" icon={<Compass size={16}/>} aside={open ? (rule.on ? '켜짐' : '꺼짐') : `승천 ${ASCENSION_PERKS.autoFollow}회부터`}>
-        <Note>레벨과 환생 횟수가 오르면 규칙대로 사냥터와 난이도를 옮깁니다. 전투 사이(던전 밖, 회복 대기가 아닐 때)에만 바꿉니다.</Note>
+        <Note>레벨과 환생 횟수가 오르면 규칙대로 사냥터와 난이도를 옮깁니다. 던전 밖에서 회복 대기가 아닌 전투 사이에만 바꿉니다.</Note>
         {open && <><Row>
             <Field label="사냥터 규칙"><select className={field} value={rule.stage} disabled={busy} onChange={e => set({ stage: e.target.value as FollowRule['stage'] })}>{FOLLOW_STAGE.map(id => <option key={id} value={id}>{STAGE_RULE[id]}</option>)}</select></Field>
             <Field label="난이도 규칙"><select className={field} value={rule.tide} disabled={busy} onChange={e => set({ tide: e.target.value as FollowRule['tide'] })}>{FOLLOW_TIDE.map(id => <option key={id} value={id}>{TIDE_RULE[id]}</option>)}</select></Field>

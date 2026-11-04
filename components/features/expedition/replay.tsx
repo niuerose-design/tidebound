@@ -28,7 +28,7 @@ function hpAt(frames: ReplayFrame[], step: number, keys: string[]) {
 function caption(f: ReplayFrame | undefined, name: (k: string) => string) {
     if (!f) return '';
     if (f.s === 'start') return `전투 시작 · ${name(f.a)} ${f.m}`;
-    if (f.s === 'revive') return `${f.t}턴 · ${name(f.a)} 부활(체력 30%)`;
+    if (f.s === 'revive') return `${f.t}턴 · ${name(f.a)} 부활, 체력 30%`;
     if (f.s === 'reflect') return `${f.t}턴 · ${name(f.a)} 반격 → ${name(f.d || '')} ${f.v}${f.k ? ' · 처치' : ''}`;
     const what = f.s === 'cast' ? `${f.m} 시전` : f.s === 'miss' ? '공격 빗나감' : f.s === 'heal' ? '공격 · 회복' : '공격';
     return `${f.t}턴 · ${name(f.a)} ${what} → ${name(f.d || '')}${f.v ? ` ${f.v}` : ''}${f.c ? ' 치명' : ''}${f.k ? ' · 처치' : ''}`;

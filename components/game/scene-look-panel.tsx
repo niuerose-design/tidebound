@@ -17,7 +17,7 @@ export function SceneLookSettings({ s }: { s: State | null }) {
     return <div className="setting-toggle scene-look-setting">
         <div>
             <strong>전투 장면 꾸미기</strong>
-            <p>전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 서고(160×220 안으로 줄여 저장), 이 기기에만 저장됩니다.</p>
+            <p>전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 160×220 안으로 줄여 저장되어 서고, 이 기기에만 저장됩니다.</p>
             <div className="scene-look-grid">
                 <label>배경<select value={look.backdrop} onChange={e => setSceneLook({ backdrop: e.target.value as BackdropTheme | 'auto' })}>
                     <option value="auto">자동 · 사냥터별 (지금: {BACKDROP_LABELS[auto]})</option>

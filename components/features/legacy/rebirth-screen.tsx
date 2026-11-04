@@ -41,7 +41,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
     const apGain = s.rebirths < ECONOMY.rebirthAPCap ? 1 : 0, salvage = salvagePreview(s);
     const projected = { ...s, level: Math.max(s.level, required) };
     const parts = rebirthRewardParts(projected), memoryNow = Number(((rebirthMemory(s.rebirths) - 1) * 100).toFixed(1)), memoryNext = Number(((rebirthMemory(s.rebirths + 1) - 1) * 100).toFixed(1));
-    const lifeText = `순풍 · 다음 생 Lv.${Math.max(s.level, required)}(이번 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산) · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
+    const lifeText = `순풍 · 다음 생은 이번 생 최고 레벨 Lv.${Math.max(s.level, required)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%, 합연산 · 그 너머는 레벨마다 필요 경험치 ×${xpWall(s).growth.toFixed(2)}`;
     const capped = s.rebirths >= ASCENSION.rebirthCap, ready = s.level >= required;
     return <div className="grid gap-5 text-ink-1">
         <SectionHeader as="h1" eyebrow="REBIRTH & LEGACY" title="환생" description="이번 모험을 마치고, 다음 생에 남길 힘을 선택하세요."/>
@@ -60,19 +60,19 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
             <Card className={cn(ready && !capped && 'border-accent/60')}>
                 <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-center">
                     <div className="grid gap-2"><Eyebrow>{s.rebirths + 1}번째 환생</Eyebrow><h2 className="font-display text-l font-bold">{capped ? `환생은 ${ASCENSION.rebirthCap}회까지입니다. 위의 승천으로 다시 오를 수 있습니다` : ready ? '다음 모험을 시작할 준비가 됐습니다' : `Lv.${required}에 새로운 모험이 열립니다`}</h2><StatBar value={Math.min(s.level, required)} max={required} tone="exp" label="레벨 조건"/>
-                        {s.rebirths > 0 && <Note>이번 생 효과: {tailwindActive(s) ? `순풍 · Lv.${tailwindLevel(s)}(직전 생 최고 레벨)까지 경험치 +${Math.round(tailwindExp(s) * 100)}%(합연산)` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</Note>}</div>
+                        {s.rebirths > 0 && <Note>이번 생 효과: {tailwindActive(s) ? `순풍 · 직전 생 최고 레벨 Lv.${tailwindLevel(s)}까지 경험치 +${Math.round(tailwindExp(s) * 100)}%, 합연산` : `역풍 · 요구 레벨 너머 필요 경험치 레벨마다 ×${xpWall(s).growth.toFixed(2)}`}</Note>}</div>
                     <div className="grid justify-items-center gap-2 rounded-m bg-surface-1 p-4 text-center"><span className="text-xs text-ink-3">{ready ? '이번에 받을 세계석' : '환생 조건 달성 시 예상 세계석'}</span><strong className="inline-flex items-center gap-1 font-num text-2xl text-accent"><Sparkles size={24}/>{fmt(reward + breathExtra)}</strong>
                         <ConfirmAction label="환생하기" variant="default" className="bg-accent text-accent-ink hover:bg-accent/90" title="다음 모험을 시작할까요?" description="아래 ‘초기화되는 것’이 처음 상태로 돌아가고, ‘유지되는 것’은 그대로 남습니다. 진행 중인 전투·던전은 종료됩니다." confirmLabel="환생" disabled={busy || !ready || capped} onConfirm={() => send({ type: 'rebirth' })}/>
                     </div>
                 </div>
                 <Ledger gain={[
-                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${projected.level} ÷ 10 = ${parts.level} · 환생 횟수 보상 ${parts.count}${s.rebirths > REBIRTH_PEARL_LINEAR ? `(${REBIRTH_PEARL_LINEAR}회까지 회당 1 · 그 뒤 √(횟수 − ${REBIRTH_PEARL_LINEAR}) · 지금 ${s.rebirths}회)` : ''}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
+                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${projected.level} ÷ 10 = ${parts.level} · 환생 횟수 보상 ${parts.count}${s.rebirths > REBIRTH_PEARL_LINEAR ? ` · ${REBIRTH_PEARL_LINEAR}회까지 회당 1, 그 뒤 √(횟수 − ${REBIRTH_PEARL_LINEAR}) · 지금 ${s.rebirths}회` : ''}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
                     ['환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어', `현재 +${memoryNow}% → 환생 후 +${memoryNext}%`],
                     ['영구 경험치 획득', `현재 ×${permanentExp.toFixed(2)} → 환생 후 ×${(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}`],
                     [`장착 AP ${apGain ? '+1' : '+0'}`, apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`],
                     ['다음 생 효과', lifeText],
                     ...(salvage.rate > 0 ? [[`청산 · 장비 ${salvage.count}개 ${salvage.mode === 'dismantle' ? `분해 → 정수 +${fmt(salvage.essence)}` : `판매 → 시작 골드 +${fmt(salvage.gold)} G`}`, <>효율 {Math.round(salvage.rate * 100)}% · <Button type="button" size="xs" variant="link" className="h-auto p-0 text-xs" disabled={busy} onClick={() => send({ type: 'salvageMode', value: salvage.mode === 'dismantle' ? 'sell' : 'dismantle' })}>{salvage.mode === 'dismantle' ? '판매로 바꾸기' : '분해로 바꾸기'}</Button></>] as [React.ReactNode, React.ReactNode]] : []),
-                    [`사냥터 난이도 ${tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택`, `다음 생 Lv.${startingLevel(s)}부터 시작${startingLevel(s) > 1 ? ` (전생의 기억 · 능력치 포인트 +${(startingLevel(s) - 1) * PROGRESSION.statPerLevel})` : ''}`],
+                    [`사냥터 난이도 ${tideLimit({ ...s, rebirths: s.rebirths + 1 })}까지 선택`, `다음 생 Lv.${startingLevel(s)}부터 시작${startingLevel(s) > 1 ? ` · 전생의 기억 · 능력치 포인트 +${(startingLevel(s) - 1) * PROGRESSION.statPerLevel}` : ''}`],
                 ]} kept={['세계석 · 세계석 연구 · 몬스터와 장비 도감', '스킬 해금·계승·성장·숙련 · 보유 SP · 장기 목표', '직업 해금과 숙련 기록', '환생 유물 · 유물 강화·옵션·보관 위치', '길드 소속 · 던전 정복 기록 · 무릉도장 최고 층', '랭킹 점수와 전적']}
                     reset={[`레벨·경험치 → Lv.${startingLevel(s)} · 현재 직업 → 초보자`, '능력치 배분', '일반 장비와 해당 장비의 강화·옵션', '골드 → 시작 골드', '사냥터와 사냥터 난이도 선택', '진행 중 전투·던전']}/>
             </Card>
@@ -80,7 +80,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
             <FoldSection title="저장 데이터 관리"><Note>전체 초기화는 환생과 다릅니다. 이름을 제외한 모든 성장 기록과 랭킹 방어 등록을 삭제하며 복구할 수 없습니다. 자동 사냥을 중단하고 던전에서 나온 뒤 진행하세요.</Note><ConfirmAction className="justify-self-start border-danger/60 text-danger" label="전체 데이터 초기화" title="정말 모든 데이터를 초기화할까요?" description="레벨·장비·환생·세계석·도감·스킬·길드·랭킹을 모두 처음 상태로 되돌립니다. 이 작업은 되돌릴 수 없습니다." confirmLabel="초기화" disabled={busy || s.running || !!s.dungeon} onConfirm={() => send({ type: 'resetData' })}/></FoldSection>
         </>}
         {tab === 'research' && <>
-            <Note>세계석 연구는 환생 후에도 유지됩니다(승천하면 초기화되고 편의 연구는 자동으로 열림). 환생 200회부터는 구매가 잠깁니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</Note>
+            <Note>세계석 연구는 환생 후에도 유지됩니다. 승천하면 초기화되고 편의 연구는 자동으로 열립니다. 환생 200회부터는 구매가 잠깁니다. 카드에는 1단계당 증가량과 현재 → 다음 단계 효과를 표시합니다.</Note>
             <Tabs value={researchTab} onValueChange={v => setResearchTab(v as ResearchTab)}><TabsList className="h-auto flex-wrap">{RESEARCH_TABS.map(t => <TabsTrigger key={t.id} value={t.id} className="min-h-9 pointer-coarse:min-h-11">{t.name}</TabsTrigger>)}</TabsList></Tabs>
             {showAutomation(s) && <ResearchPlanPanel s={s} send={send} busy={busy}/>}
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/>

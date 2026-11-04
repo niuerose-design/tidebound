@@ -19,7 +19,7 @@ export function JobCompare({ s, jobs, onRemove, onClear }: { s: State; jobs: Job
         <div className="overflow-x-auto"><Table className="min-w-[560px]">
             <TableHeader><TableRow><TableHead/>{jobs.map(j => <TableHead key={j.id}><div className="flex items-start gap-1"><div className="grid gap-0.5"><strong className="text-s text-ink-1">{j.name}</strong><small className="text-xs font-normal text-ink-3">{tierName(j)} · {treeName(j.tree)} · {STATUS_LABEL(statusReader(s)(j))}</small></div><Button type="button" size="icon-xs" variant="ghost" aria-label={`${j.name} 비교에서 빼기`} onClick={() => onRemove(j.id)}><X size={14}/></Button></div></TableHead>)}</TableRow></TableHeader>
             <TableBody>
-                {group('보정 (숙달 전 → 숙달 후)')}
+                {group('보정 · 숙달 전 → 숙달 후')}
                 {JOB_BONUS_KEYS.map(key => <TableRow key={key}><TableCell className="text-ink-2">{STAT_LABELS[key]}</TableCell>{jobs.map(j => <TableCell key={j.id} className={cn('font-num', j[key] < 1 && 'text-danger')}>{cell(j, key)}</TableCell>)}</TableRow>)}
                 <TableRow><TableCell className="text-ink-2">치명타 · 경험치</TableCell>{jobs.map(j => <TableCell key={j.id}>{[j.crit ? `치명 ${percent(j.crit, 1, true)}p` : '', j.expBonus ? `경험치 ${percent(j.expBonus, 1, true)}` : ''].filter(Boolean).join(' · ') || '—'}</TableCell>)}</TableRow>
                 <TableRow><TableCell className="text-ink-2">페널티</TableCell>{jobs.map(j => <TableCell key={j.id} className="text-danger">{Object.entries(j.penalties || {}).map(([k, n]) => `${STAT_LABELS[k as keyof Stats]} ${statDeltaDisplay(k, n)}`).join(' · ') || '—'}</TableCell>)}</TableRow>

@@ -47,8 +47,8 @@ export function SettingsScreen({ s, busy, send, onSwitchSlot, onLogout, setView 
         <Card id="automation" title="사냥 자동화" description="서버에 저장되어 어느 기기에서나 같습니다.">
             {researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="salvage" title="자동 분해기" verb="정수로 분해" on={!!s.autoSell} action="autoSell"/>}
             {researchRank(s, 'sortingNet') > 0 && <AutoDeviceRow s={s} busy={busy} send={send} device="vend" title="자동 판매기" verb="골드로 판매" on={!!s.autoVend} action="autoVend"/>}
-            <ToggleRow title="능력치 최대 투자 확인" desc="능력치 화면의 ‘최대’ 버튼을 누를 때 확인 창을 띄웁니다. 끄면 남은 포인트를 바로 투자합니다(재분배는 무료)." checked={!s.skipStatConfirm} disabled={busy} onChange={on => send({ type: 'statConfirm', value: on ? 'on' : 'off' })}/>
-            <Row title="무리 최대 규모" desc="이보다 큰 무리가 뽑히면 이 규모로 나옵니다. 큰 무리는 보상도 마리 수만큼이라 효율은 비슷하고 한 번의 전투만 길어집니다. 일반 사냥터 무리는 ×100까지이고, ×500 도전 무리는 무리 서식지에서만 나옵니다(서식지에는 적용되지 않음). ‘끔’이면 무리 대신 일반 개체가 나오고, 다른 변종(거대 · 심연 · 별빛)은 그대로 나옵니다." stack>
+            <ToggleRow title="능력치 최대 투자 확인" desc="능력치 화면의 ‘최대’ 버튼을 누를 때 확인 창을 띄웁니다. 끄면 남은 포인트를 바로 투자합니다. 재분배는 무료입니다." checked={!s.skipStatConfirm} disabled={busy} onChange={on => send({ type: 'statConfirm', value: on ? 'on' : 'off' })}/>
+            <Row title="무리 최대 규모" desc="이보다 큰 무리가 뽑히면 이 규모로 나옵니다. 큰 무리는 보상도 마리 수만큼이라 효율은 비슷하고 한 번의 전투만 길어집니다. 일반 사냥터 무리는 ×100까지이고, ×500 도전 무리는 무리 서식지에서만 나오고 서식지에는 이 설정이 적용되지 않습니다. ‘끔’이면 무리 대신 일반 개체가 나오고, 거대 · 심연 · 별빛 변종은 그대로 나옵니다." stack>
                 <ChoiceChips label="무리 최대 규모" value={String(swarmCapOf(s))} disabled={busy} onChange={v => send({ type: 'swarmCap', value: v })}
                     options={SWARM_CAPS.map(cap => ({ value: String(cap), label: cap === 0 ? '끔' : cap >= 100 ? '제한 없음(×100)' : `×${cap}까지` }))}/>
             </Row>
@@ -67,7 +67,7 @@ export function SettingsScreen({ s, busy, send, onSwitchSlot, onLogout, setView 
             <NoticeRows/>
         </Card>
         <Card id="enhance" title="강화" description="이 기기에만 저장됩니다.">
-            <StarRow id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다(자동 강화에는 없음)."/>
+            <StarRow id="catch" title="스타캐치 미니게임" desc="수동 강화 때 좌우로 오가는 별을 가운데에서 잡으면 성공률 +10%p. 끄면 바로 강화합니다. 자동 강화에는 없습니다."/>
             <StarRow id="sound" title="강화 효과음" desc="스타캐치와 강화 성공 · 하락 · 파괴 효과음입니다."/>
         </Card>
         <Card id="about" title="정보" description={`판게아 RPG · OPEN BETA · v${GAME_BUILD}`}>
@@ -149,12 +149,12 @@ function AutoDeviceRow({ s, busy, send, device, title, verb, on, action }: { s: 
     const max = autoMaxGrade(researchRank(s, AUTO_RESEARCH[device])), mine = autoGrades(s, device), other = autoGrades(s, device === 'salvage' ? 'vend' : 'salvage'), otherName = device === 'salvage' ? '판매기' : '분해기';
     const id = `toggle-${action}`;
     return <>
-        <Row title={title} htmlFor={id} desc={`고른 등급의 드롭을 바로 ${verb}합니다. 자동 ${otherName}와 함께 켤 수 있고, 한 등급은 한쪽에만 고를 수 있습니다(같은 등급이면 분해가 먼저). 태초 · 칠흑 · 잠금 장비 · 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.${max < 5 ? ` 연구 2단계에서 ${RARITIES[4].name} · ${RARITIES[5].name}도 고를 수 있습니다.` : ''}`}>
+        <Row title={title} htmlFor={id} desc={`고른 등급의 드롭을 바로 ${verb}합니다. 자동 ${otherName}와 함께 켤 수 있고, 한 등급은 한쪽에만 고를 수 있고, 같은 등급이면 분해가 먼저입니다. 태초 · 칠흑 · 잠금 장비 · 유물과 장비 도감에 아직 등록하지 않은 종류는 남깁니다.${max < 5 ? ` 연구 2단계에서 ${RARITIES[4].name} · ${RARITIES[5].name}도 고를 수 있습니다.` : ''}`}>
             <span className="w-9 text-right font-num text-xs text-ink-3" aria-hidden>{on ? '켜짐' : '꺼짐'}</span>
             <Switch id={id} checked={on} disabled={busy} onCheckedChange={v => send({ type: action, value: v ? 'on' : 'off' })}/>
         </Row>
         <div className="-mt-1 pb-3"><ChoiceChips label={`${title} 등급`} value={mine.map(String)} disabled={busy} onChange={v => send({ type: 'autoGrade', id: device, value: v })}
-            options={RARITIES.slice(1, 6).map((r, i) => { const g = i + 1; return { value: String(g), label: r.name, disabled: g > max, mark: other.includes(g), style: { color: rarityVar(RARITY_KEYS[g]) }, title: g > max ? '연구 2단계 필요' : other.includes(g) ? `자동 ${otherName}에서 고른 등급(누르면 이쪽으로 옮김)` : undefined }; })}/></div>
+            options={RARITIES.slice(1, 6).map((r, i) => { const g = i + 1; return { value: String(g), label: r.name, disabled: g > max, mark: other.includes(g), style: { color: rarityVar(RARITY_KEYS[g]) }, title: g > max ? '연구 2단계 필요' : other.includes(g) ? `자동 ${otherName}에서 고른 등급. 누르면 이쪽으로 옮깁니다` : undefined }; })}/></div>
     </>;
 }
 
@@ -183,7 +183,7 @@ function SceneLookRows({ s }: { s: State }) {
     const auto = backdropTheme(d ? d.name : st?.region, st?.name), job = jobById(s.job);
     const upload = async (f: File | null | undefined) => { if (!f) return; setError(await setHeroImage(f) ?? ''); if (file.current) file.current.value = ''; };
     const select = 'h-10 w-full rounded-m border border-line bg-surface-0 px-2 text-s text-ink-1 outline-none focus-visible:border-accent focus-visible:ring-[3px] focus-visible:ring-accent/40 disabled:opacity-50';
-    return <Row device title="전투 장면 꾸미기" desc="전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 서고(160×220 안으로 줄여 저장), 요원 · 트레이더 · 해커 · 광부 · 포식자 · 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다." stack>
+    return <Row device title="전투 장면 꾸미기" desc="전투 장면의 배경과 내 캐릭터 모습을 고릅니다. ‘자동’은 지금처럼 사냥터 · 직업으로 고릅니다. 그림을 올리면 캐릭터 대신 그 그림이 160×220 안으로 줄여 저장되어 서고, 요원 · 트레이더 · 해커 · 광부 · 포식자 · 두건 신비가 모양은 전용 그림이라 무기를 고르지 않습니다." stack>
         <div className="grid w-full gap-4 sm:grid-cols-[1fr_200px]">
             <div className="grid gap-3 sm:grid-cols-2">
                 <label className="grid gap-1 text-xs text-ink-3">배경<select className={select} value={look.backdrop} onChange={e => setSceneLook({ backdrop: e.target.value as BackdropTheme | 'auto' })}>
