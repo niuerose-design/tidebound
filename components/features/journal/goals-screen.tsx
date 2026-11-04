@@ -27,7 +27,7 @@ export function GoalsScreen({ s, send, busy }: P) {
         <SectionHeader as="h1" eyebrow="GOALS & FEATS" title="목표 · 업적" description="업적은 환생해도 남고, 보상은 여기서 받습니다."
             actions={(!s.tutorial || s.tutorial.skipped || s.tutorial.hidden) && <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => send({ type: 'tutorial', id: 'show' })}>모험 안내 다시 보기</Button>}/>
         <Tabs defaultValue={pending.length ? 'feats' : 'goals'} className="grid gap-4">
-            <TabsList className="h-auto flex-wrap">
+            <TabsList className="h-auto! flex-wrap">
                 <TabsTrigger value="goals" className="min-h-9 pointer-coarse:min-h-11">목표</TabsTrigger>
                 <TabsTrigger value="feats" className="min-h-9 pointer-coarse:min-h-11">업적{pending.length ? ` · 보상 ${pending.length}` : ''}</TabsTrigger>
                 <TabsTrigger value="bonus" className="min-h-9 pointer-coarse:min-h-11">업적 보너스</TabsTrigger>

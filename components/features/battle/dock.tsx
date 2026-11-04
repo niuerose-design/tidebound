@@ -38,10 +38,10 @@ const Whistle = memo(function Whistle({ s, send, busy }: { s: State; send: Send;
     if (!targets.length) return null;
     const used = s.whistleDay?.key === dayKey(s.lastTick || 0) ? s.whistleDay.used : 0, left = Math.max(0, WHISTLE.perDay - used), pending = s.whistle ? whistleTarget(s.whistle) : undefined;
     const locked = busy || !!s.dungeon || !!pending || left <= 0 || s.sp < WHISTLE.sp;
-    const why = s.dungeon ? '던전에서 나온 뒤 불 수 있습니다.' : pending ? `불어 두었습니다. 다음 사냥터 출현에 ${pending.name}이(가) 나타납니다.` : left <= 0 ? '오늘 몫을 다 썼습니다(한국 시간 자정 초기화).' : s.sp < WHISTLE.sp ? `SP가 부족합니다(필요 ${WHISTLE.sp}).` : '';
+    const why = s.dungeon ? '던전에서 나온 뒤 불 수 있습니다.' : pending ? `불어 두었습니다. 다음 사냥터 출현에 ${pending.name}이(가) 나타납니다.` : left <= 0 ? '오늘 몫을 다 썼습니다. 한국 시간 자정에 다시 찹니다.' : s.sp < WHISTLE.sp ? `SP가 부족합니다. ${WHISTLE.sp} 필요.` : '';
     return <Popover>
         <PopoverTrigger asChild>
-            <Button type="button" variant="outline" size="sm" className={cn('rounded-full', pending && 'border-gold-ink text-gold-ink')} title={`호루라기: SP ${WHISTLE.sp}로 다음 사냥터 출현을 고른 특별 몬스터로 정합니다(하루 ${WHISTLE.perDay}번). 자세한 규칙은 도움말 → 사냥 규칙.`} aria-label="호루라기 메뉴 열기"><Megaphone size={13}/><span className="hidden sm:inline">{pending ? `${pending.name} 대기` : `SP ${WHISTLE.sp}`}</span></Button>
+            <Button type="button" variant="outline" size="sm" className={cn('rounded-full', pending && 'border-gold-ink text-gold-ink')} title={`호루라기: SP ${WHISTLE.sp}로 다음 사냥터 출현을 고른 특별 몬스터로 정합니다. 하루 ${WHISTLE.perDay}번. 자세한 규칙은 도움말의 사냥 규칙.`} aria-label="호루라기 메뉴 열기"><Megaphone size={13}/><span className="hidden sm:inline">{pending ? `${pending.name} 대기` : `SP ${WHISTLE.sp}`}</span></Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 rounded-m border-line bg-surface-1 p-3 text-ink-1 shadow-2" side="top" align="end">
             <strong className="text-s font-semibold">호루라기 <small className="font-num text-xs text-ink-3">오늘 {left} / {WHISTLE.perDay}</small></strong>

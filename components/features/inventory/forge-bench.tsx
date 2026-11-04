@@ -53,10 +53,10 @@ function GearOptions({ s, send, busy, item }: Props) {
             <Note>{affixDef(x.id)?.description}</Note>
             {!item.relic && !isOnyxUnique(item, x.id) && <div className="flex flex-wrap gap-2">
                 <ConfirmAction size="xs" label="재설정" title={`${x.name} 옵션을 다시 굴릴까요?`} description={`이 옵션 하나만 바뀌고 나머지 옵션은 그대로입니다. 골드 ${fmt(cost.gold)} G를 사용합니다(정수 없음). 같은 옵션은 중복되지 않습니다. 규칙 옵션(◆)도 어느 줄에나 나올 수 있습니다.`} disabled={busy || !canPay} onConfirm={() => send({ type: 'reforge', id: item.id, value: String(i) })}/>
-                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmAction size="xs" label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `. 이 장비는 수치 ${Math.round(top * 100)}%까지 가능하지만 100% 위는 ${Math.round(HEIR_ROLL_TAIL * 100)}%만 나오고 위로 갈수록 급히 드뭅니다(110% 위 ${(heirRollChanceAbove(1.1) * 100).toFixed(1)}% · 120% 위 ${(heirRollChanceAbove(1.2) * 100).toFixed(1)}% · 130% 위 ${(heirRollChanceAbove(1.3) * 100).toFixed(2)}%)` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${fmt(refine.essence)}를 사용합니다(골드 없음). 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
+                {!x.rule && !affixDef(x.id)?.fixed && <ConfirmAction size="xs" label="재련" title={`${x.name} 옵션의 수치를 다시 굴릴까요?`} description={`옵션 종류는 그대로이고 수치만 최저~최고 사이에서 다시 굴립니다${top > 1 ? `. 이 장비는 수치 ${Math.round(top * 100)}%까지 가능하지만 100% 위는 ${Math.round(HEIR_ROLL_TAIL * 100)}%만 나오고 위로 갈수록 급히 드뭅니다. 110% 위 ${(heirRollChanceAbove(1.1) * 100).toFixed(1)}%, 120% 위 ${(heirRollChanceAbove(1.2) * 100).toFixed(1)}%, 130% 위 ${(heirRollChanceAbove(1.3) * 100).toFixed(2)}%` : ''}. 지금보다 낮아질 수도 있습니다. 정수 ${fmt(refine.essence)}를 사용합니다. 골드는 들지 않습니다. 이 장비를 재련할 때마다 다음 정수가 ×${REFINE_GROWTH}로 오릅니다.`} disabled={busy || !canRefine} onConfirm={() => send({ type: 'refine', id: item.id, value: String(i) })}/>}
             </div>}
         </li>)}</ul>
-        <Note>{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 고정 수치 · 비율 옵션 모두 유물 등급 기준으로 맞춰 새겨집니다(태초에서 온 비율 줄 ×0.73). 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 · {fmt(cost.gold)} G{item.rerolls ? ` (이 장비 ${item.rerolls}회 재설정 · 1회마다 +${REROLL_STEP_PCT}%)` : ` (재설정할 때마다 +${REROLL_STEP_PCT}%)`} · 수치 재련 · 정수 {fmt(refine.essence)}{item.refines ? ` (이 장비 ${item.refines}회 재련 · 1회마다 ×${REFINE_GROWTH})` : ` (재련할 때마다 ×${REFINE_GROWTH})`} · 보유 정수 {fmt(s.essence || 0)}</>}</Note>
+        <Note>{item.relic ? '이식 옵션은 환생해도 남고, 같은 칸에 다시 이식하면 덮어씁니다. 고정 수치 · 비율 옵션 모두 유물 등급 기준으로 맞춰 새겨집니다. 태초에서 온 비율 줄은 ×0.73. 위 수치는 장비 기여 수치에 포함됩니다.' : <>옵션 재설정 {fmt(cost.gold)} G, 재설정할 때마다 +{REROLL_STEP_PCT}%{item.rerolls ? `, 지금 ${item.rerolls}회` : ''}. 수치 재련 정수 {fmt(refine.essence)}, 재련할 때마다 ×{REFINE_GROWTH}{item.refines ? `, 지금 ${item.refines}회` : ''}. 보유 정수 {fmt(s.essence || 0)}.</>}</Note>
     </Box>;
 }
 
@@ -92,8 +92,8 @@ function EquipmentForge({ s, send, busy, item }: Props) {
             </Fold>
         </Box>
         <GearLevelUp s={s} send={send} busy={busy} item={item}/>
-        {canResetGear(item) && (item.rerolls || item.refines) ? <Box title="비용 초기화"><Note>재설정 {item.rerolls || 0}회 · 재련 {item.refines || 0}회 → 0 (다음 재설정 · 재련이 기본 비용으로)</Note>
-            <ConfirmAction label={`비용 초기화 · 세계석 ${GEAR_RESET_PEARLS}`} title={`${item.name}의 비용을 초기화할까요?`} description={`세계석 ${GEAR_RESET_PEARLS}를 쓰고 재설정 · 재련 횟수를 0으로 되돌립니다. 대신 별이 0성이 되고 추가 옵션을 모두 새로 굴립니다(수치는 최고${item.onyx ? ', 칠흑 고유 옵션은 그대로' : ''}). 되돌릴 수 없습니다.`} disabled={busy || s.pearls < GEAR_RESET_PEARLS} onConfirm={() => send({ type: 'gearReset', id: item.id })}/></Box> : null}
+        {canResetGear(item) && (item.rerolls || item.refines) ? <Box title="비용 초기화"><Note>재설정 {item.rerolls || 0}회 · 재련 {item.refines || 0}회를 0으로. 다음 재설정과 재련이 기본 비용이 됩니다.</Note>
+            <ConfirmAction label={`비용 초기화 · 세계석 ${GEAR_RESET_PEARLS}`} title={`${item.name}의 비용을 초기화할까요?`} description={`세계석 ${GEAR_RESET_PEARLS}를 쓰고 재설정 · 재련 횟수를 0으로 되돌립니다. 대신 별이 0성이 되고 추가 옵션을 모두 새로 굴리고 수치는 최고가 됩니다${item.onyx ? '. 칠흑 고유 옵션은 그대로' : ''}. 되돌릴 수 없습니다.`} disabled={busy || s.pearls < GEAR_RESET_PEARLS} onConfirm={() => send({ type: 'gearReset', id: item.id })}/></Box> : null}
         {item.relic && <RelicImprint s={s} send={send} busy={busy} item={item}/>}
         {(item.rarity === 5 || item.rarity === 6) && !item.relic && !item.onyx && <HeirPanel s={s} send={send} busy={busy} item={item}/>}
         {legacyReroll && <ConfirmAction label={`옵션 재설정 · ${fmt(reroll.gold)} G`} title="추가 옵션을 무작위로 바꿀까요?" description={`이전 방식의 단일 옵션입니다. 기존 추가 옵션이 사라지고 8종 중 하나가 같은 확률로 선택됩니다. 유물의 전용 옵션도 교체됩니다. 골드 ${fmt(reroll.gold)} G를 사용합니다.`} disabled={busy || item.rarity === 0 || s.gold < reroll.gold || (s.essence || 0) < reroll.essence} onConfirm={() => send({ type: 'reforge', id: item.id })}/>}
@@ -111,7 +111,7 @@ function AutoStar({ s, send, busy, item, safeguard }: Props & { safeguard: boole
             <label className="grid gap-1 text-xs text-ink-3">골드 한도<input className={select} type="text" inputMode="numeric" placeholder={`보유 ${fmt(s.gold)}`} value={cap} onChange={e => setCap(e.target.value)}/></label>
         </div>
         <ConfirmAction variant="default" label={`★${goal}까지 자동 강화`} title={`★${goal}까지 자동으로 강화할까요?`} description={`한도 ${fmt(Math.min(limit || 0, s.gold))} G 안에서 목표에 닿을 때까지 계속 시도합니다. 하락 · 파괴도 그대로 일어나며 파괴되면 멈춥니다.${safeguard ? ' 파괴 방지가 적용됩니다.' : ''}`} disabled={busy || !ok} onConfirm={() => send({ type: 'autoEnhance', id: item.id, value: `${goal}:${Math.min(limit, s.gold)}:${safeguard ? 1 : 0}` })}/>
-        <Note>결과는 전투 기록에 한 줄(시도 · 성공 · 하락 · 유지 · 파괴 · 쓴 골드)로 남습니다. 한 번에 최대 2,000회.</Note>
+        <Note>결과는 시도 · 성공 · 파괴 횟수와 쓴 골드로 전투 기록에 한 줄 남습니다. 한 번에 최대 2,000회.</Note>
     </Box>;
 }
 
@@ -120,8 +120,8 @@ function GearLevelUp({ s, send, busy, item }: Props) {
     const next = levelUpTarget(item, s), cost = levelUpCost(item, s), star = item.enhance || 0;
     if (!next) return <Note>레벨 올리기 · Lv.{item.level || 1} · 내 레벨(Lv.{s.level})까지 올렸습니다{item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}</Note>;
     return <Box title={`레벨 올리기 · Lv.${item.level || 1} → Lv.${next}${item.relic ? ` · 별 상한 ${enhanceMaxFor(item)}성` : ''}`}>
-        <ConfirmAction label={`Lv.${next}로 올리기 · ${fmt(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아갑니다(강화 비용은 돌려받지 않음).` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${fmt(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/>
-        <Note>한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{heirKind(item) ? ' 유물 · 계승 장비 위력은 (레벨 + 2) × 환생 배율입니다.' : ''}</Note>
+        <ConfirmAction label={`Lv.${next}로 올리기 · ${fmt(cost)} G`} title={`${item.name}을(를) Lv.${next}로 올릴까요?`} description={`위력과 고정 수치 옵션이 레벨에 맞춰 오릅니다.${star ? ` 지금 ★${star}은 0으로 돌아가고 강화 비용은 돌려받지 않습니다.` : ''}${item.relic ? ` 유물 별 상한이 ${RELIC_GROWTH.starBase + Math.floor(next / 10)}성이 됩니다.` : ''} 골드 ${fmt(cost)} G를 사용합니다.`} disabled={busy || s.gold < cost} onConfirm={() => send({ type: 'levelUp', id: item.id })}/>
+        <Note>한 번에 +{GEAR_LEVEL_UP.step}. 올리면 별이 0으로 돌아가니 별은 레벨을 다 올린 뒤에 쌓으세요.{heirKind(item) ? ' 유물 · 계승 장비 위력은 레벨 + 2에 환생 배율을 곱한 값입니다.' : ''}</Note>
     </Box>;
 }
 
@@ -145,7 +145,7 @@ function RelicImprint({ s, send, busy, item }: Props) {
     return <Box title={`옵션 이식 · 환생 ${s.rebirths}회 위력 배율 ×${heirFactor('relic', s.rebirths).toFixed(2)}${item.relicLegacy ? ' · 다음 승천까지 예전 공식과 새 공식 중 높은 쪽' : ''}`}>
         <div className="grid gap-1" role="radiogroup" aria-label="이식 칸">{Array.from({ length: RELIC_GROWTH.imprintSlots }, (_, i) => <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-s bg-surface-1 px-2 py-1.5">
             <label className="flex min-h-9 items-center gap-2 text-s text-ink-2"><input type="radio" className="size-4 accent-[var(--accent)]" name={`imprint-${item.id}`} checked={slot === i} onChange={() => setSlot(i)}/> {i + 1}번 칸 · {lines[i] ? label(lines[i]) : '비어 있음'}</label>
-            {lines[i] && <ConfirmAction size="xs" label="지우기" title={`${lines[i].name} 이식 옵션을 지울까요?`} description="이 칸이 비고 옵션은 사라집니다(되돌릴 수 없음). 비용은 없고, 다시 이식할 수 있습니다." disabled={busy} onConfirm={() => send({ type: 'removeImprint', id: item.id, value: String(i) })}/>}
+            {lines[i] && <ConfirmAction size="xs" label="지우기" title={`${lines[i].name} 이식 옵션을 지울까요?`} description="이 칸이 비고 옵션은 사라집니다. 되돌릴 수 없지만 비용 없이 다시 이식할 수 있습니다." disabled={busy} onConfirm={() => send({ type: 'removeImprint', id: item.id, value: String(i) })}/>}
         </div>)}</div>
         {choices.length ? <>
             <label className="grid gap-1 text-xs text-ink-3">소비할 장비 · 옵션<select className={select} value={key} onChange={e => setChoice(e.target.value)}>{choices.map(c => <option key={c.key} value={c.key}>{c.item.name}{starLabel(c.item.enhance || 0) ? ` ${starLabel(c.item.enhance || 0)}` : ''} › {label(imprintAffix(c.affix, c.item.rarity, item.rarity, c.item.level, item.level))}</option>)}</select></label>
@@ -164,18 +164,18 @@ function RelicImprint({ s, send, busy, item }: Props) {
 /** 계승: 고대는 정수로 원시 각성, 태초는 분해 게이지로 계승. */
 function HeirPanel({ s, send, busy, item }: Props) {
     const kind = item.rarity === 5 ? 'ancient' : 'primal', g = HEIR_GROWTH[kind], label = HEIR_LABEL[kind], factor = (rb: number) => heirFactor(kind, rb).toFixed(2);
-    if (item.heir) return <Box title={`${label} · 환생해도 남습니다`}><Note>위력 = (레벨 + 2) × 배율 ×{factor(s.rebirths)} (환생 {HEIR_GROWTH.toRebirth}회 ×{g.to}). 강화가 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다. 승천하면 사라집니다.</Note></Box>;
+    if (item.heir) return <Box title={`${label} · 환생해도 남습니다`}><Note>위력은 레벨 + 2에 ×{factor(s.rebirths)}를 곱한 값이고, 환생 {HEIR_GROWTH.toRebirth}회에 ×{g.to}까지 오릅니다. 강화가 파괴되면 {STARFORCE.relicResetStar}성으로 돌아갑니다. 승천하면 사라집니다.</Note></Box>;
     const old = [...s.inventory, ...Object.values(s.equipment)].find(x => x && x.id !== item.id && x.heir === kind && x.slot === item.slot);
-    const replace = old ? ` 이 부위의 ${label} ‘${old.name}’은(는) 이번 생 장비로 돌아갑니다(다음 환생 때 사라짐).` : '';
-    const what = `환생해도 남고, 위력이 (레벨 + 2) × ${factor(s.rebirths)}(환생 ${HEIR_GROWTH.toRebirth}회 ×${g.to})로 바뀌며 옵션 수치가 최고로 고정됩니다. 판매할 수 없게 되고, 분해는 보호를 푼 뒤에만 됩니다.`;
+    const replace = old ? ` 이 부위의 ${label} ‘${old.name}’은(는) 이번 생 장비로 돌아가 다음 환생 때 사라집니다.` : '';
+    const what = `환생해도 남고, 위력이 레벨 + 2의 ${factor(s.rebirths)}배로 바뀌고 환생 ${HEIR_GROWTH.toRebirth}회에 ×${g.to}까지 오르며 옵션 수치가 최고로 고정됩니다. 판매할 수 없게 되고, 분해는 보호를 푼 뒤에만 됩니다.`;
     if (kind === 'ancient') { const cost = awakenEssence(s.rebirths), have = s.essence || 0;
-        return <Box title={`원시 각성 · 정수 ${fmt(cost)} (보유 ${fmt(have)})`}>
+        return <Box title={`원시 각성 · 정수 ${fmt(cost)} / 보유 ${fmt(have)}`}>
             <ConfirmAction label={`원시 각성 · 정수 ${fmt(cost)}`} title={`${item.name}을(를) 원시 각성할까요?`} description={`정수 ${fmt(cost)}를 씁니다. ${what}${replace}`} disabled={busy || have < cost} onConfirm={() => send({ type: 'awaken', id: item.id })}/>
             <Note>각성 비용은 환생이 많을수록 늘어납니다(정수 {fmt(AWAKENING.essenceBase)} × 10^(환생 ÷ {AWAKENING.rebirthScale})). 부위마다 원시 고대 하나만 둘 수 있습니다.</Note>
         </Box>; }
     const gauge = s.primalGauge || 0;
     return <Box title={`태초 계승 · 게이지 ${gauge}/${PRIMAL_INHERIT.gauge}`}>
         <ConfirmAction label={`태초 계승 · 게이지 ${PRIMAL_INHERIT.gauge}`} title={`${item.name}을(를) 계승할까요?`} description={`계승 게이지 ${PRIMAL_INHERIT.gauge}를 씁니다. ${what}${replace}`} disabled={busy || gauge < PRIMAL_INHERIT.gauge} onConfirm={() => send({ type: 'inheritPrimal', id: item.id })}/>
-        <Note>태초 장비가 손을 떠날 때마다(분해 · 판매 · 강화 파괴 · 도감 등록 · 이식 소비) 게이지가 1 찹니다(환생해도 남고 승천하면 초기화). 부위마다 계승 태초 하나만 둘 수 있습니다.</Note>
+        <Note>태초 장비를 분해 · 판매 · 이식에 쓰거나 강화로 잃거나 도감에 등록할 때마다 게이지가 1 찹니다. 환생해도 남고 승천하면 비웁니다. 부위마다 계승 태초 하나만 둘 수 있습니다.</Note>
     </Box>;
 }

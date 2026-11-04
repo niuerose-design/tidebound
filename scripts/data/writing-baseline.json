@@ -8,18 +8,6 @@
    "paren": 6,
    "dots": 1
   },
-  "components/features/battle/arena.tsx": {
-   "paren": 1
-  },
-  "components/features/battle/dock.tsx": {
-   "paren": 3
-  },
-  "components/features/battle/tide-panel.tsx": {
-   "paren": 1
-  },
-  "components/features/battle/tutorial-card.tsx": {
-   "paren": 2
-  },
   "components/features/character/breakdown.tsx": {
    "paren": 9,
    "long": 1,
@@ -103,13 +91,6 @@
   "components/features/help/topics/status.tsx": {
    "paren": 1
   },
-  "components/features/inventory/forge-bench.tsx": {
-   "paren": 17,
-   "dots": 2
-  },
-  "components/features/inventory/inventory-screen.tsx": {
-   "paren": 3
-  },
   "components/features/jobs/job-compare.tsx": {
    "paren": 1
   },
@@ -157,13 +138,10 @@
    "dots": 1
   },
   "components/features/shop/dungeon-shop-screen.tsx": {
-   "paren": 12,
    "long": 1
   },
   "components/features/shop/shop-screen.tsx": {
-   "paren": 4,
-   "long": 1,
-   "dots": 1
+   "long": 1
   },
   "components/features/skills/loadout.tsx": {
    "paren": 1
@@ -173,9 +151,6 @@
   },
   "components/features/skills/skills-screen.tsx": {
    "paren": 2
-  },
-  "components/features/world/stages-screen.tsx": {
-   "paren": 1
   },
   "components/game/book-research.tsx": {
    "paren": 3

@@ -43,7 +43,7 @@ export function Arena({ s, playerStats, busy, send, setView }: { s: State; playe
                 {shown.variant && shown.variant !== 'swarm' && <span>{variantById(shown.variant)?.mark} {variantById(shown.variant)?.name} · {variantById(shown.variant)?.desc}</span>}
                 {shown.swarm ? <span>무리 체력 ×{swarmHpMultiplier(shown.swarm)}{swarmAttackMultiplier(shown.swarm) > 1 ? ` · 공격 ×${swarmAttackMultiplier(shown.swarm)}` : ''}</span> : null}
                 <small>{bookRevealed(s, shown.id) ? profile(shown.id).hint : `도감 ${BOOK_REVEAL}회 처치 시 성향·대응법 공개 (${Math.min(s.book[shown.id] || 0, BOOK_REVEAL)} / ${BOOK_REVEAL})`}</small>
-                {enemyStats && <small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)}`}>내 속도 {playerStats.speed} · 명중률 {percent(hitChance(playerStats, enemyStats), 0)} · 회피율 {percent(1 - hitChance(enemyStats, playerStats), 0)} (상대 회피 · 명중과 속도 차이로 정해짐)</small>}
+                {enemyStats && <small title={`명중 수치 ${statDisplay('accuracy', playerStats.accuracy || 0)} · 회피 수치 ${statDisplay('evasion', playerStats.evasion || 0)}. 명중률과 회피율은 상대의 회피 · 명중과 속도 차이로 정해집니다.`}>내 속도 {playerStats.speed} · 명중률 {percent(hitChance(playerStats, enemyStats), 0)} · 회피율 {percent(1 - hitChance(enemyStats, playerStats), 0)}</small>}
             </>}/>
             <div className="scene-job-slot"><OtherworldHud s={s} send={send} part="scene"/><AzerothHud s={s}/></div>
             {idle && <span className={cn('scene-idle', recoveryText && 'recovery')} aria-live="polite">{idle}</span>}

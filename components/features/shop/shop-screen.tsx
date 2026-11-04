@@ -53,7 +53,7 @@ export function ShopScreen({ s, send, busy }: { s: State; send: Send; busy: bool
     // v3.72 세 뽑기 탭은 같은 틀(머리 · 설명 · 선택 줄 · 비용 줄 · 버튼 줄)이라 탭을 바꿔도 화면이 흔들리지 않습니다.
     const draw = tab === 'gamble' ? {
         label: '랜덤 뽑기', eyebrow: '모든 부위', head: icons(),
-        desc: '무기 · 방어구 · 장신구 · 망토 중 하나가 같은 확률로 나옵니다(무기는 물리·마법 중 하나). 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.',
+        desc: '무기 · 방어구 · 장신구 · 망토 중 하나가 같은 확률로 나오고, 무기는 물리나 마법 중 하나입니다. 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.',
         controls: <span className="text-xs text-ink-3">Lv.{s.level} · 희귀 이상 · 부위 무작위 · 옵션 1~6개</span>,
         cost: `한 번 ${fmt(gamble)} G`,
         actions: GAMBLE_COUNTS.map(n => { const total = gamble * n, noRoom = s.inventory.length + n > cap; return <ConfirmAction key={n} label={`${n}개 · ${fmt(total)} G`} title={`랜덤 뽑기 ${n}개를 할까요?`} description={`골드 ${fmt(total)} G를 사용합니다. ${odds}부위는 무작위이고, 결과는 가방에 보관됩니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || s.gold < total || noRoom} onConfirm={() => send({ type: 'gamble', id: APPRAISAL_ALL, value: String(n) })}/>; }),
@@ -61,33 +61,33 @@ export function ShopScreen({ s, send, busy }: { s: State; send: Send; busy: bool
         label: '저격 뽑기', eyebrow: '부위 · 옵션 지정', head: icons(slot),
         desc: '부위와 옵션 하나를 고르면 그 옵션이 반드시 붙은 장비가 나옵니다. 나머지 옵션과 등급은 랜덤 뽑기와 같고 천장도 함께 쌓입니다. 고대 이상 전용 옵션은 고를 수 없습니다.',
         controls: <>{slotChips}{affixSelect}{glossaryButton}<small className="basis-full text-xs text-ink-3">{choices.find(c => c.id === pick)?.description}</small></>,
-        cost: `한 번 ${fmt(imprint.gold)} G(랜덤 뽑기의 ${IMPRINT_APPRAISAL.goldMultiplier}배) · 정수 ${imprint.essence}`,
+        cost: `한 번 ${fmt(imprint.gold)} G, 랜덤 뽑기의 ${IMPRINT_APPRAISAL.goldMultiplier}배 · 정수 ${imprint.essence}`,
         actions: GAMBLE_COUNTS.map(n => { const gold = imprint.gold * n, ess = imprint.essence * n, noRoom = s.inventory.length + n > cap; return <ConfirmAction key={n} label={`${n}개 · ${fmt(gold)} G · 정수 ${ess}`} title={`저격 뽑기 ${n}개를 할까요?`} description={`골드 ${fmt(gold)} G와 정수 ${ess}개를 사용합니다. ${odds}고른 옵션이 반드시 붙습니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || !pick || s.gold < gold || (s.essence || 0) < ess || noRoom} onConfirm={() => send({ type: 'imprintGamble', id: slot, value: `${pick}|${n}` })}/>; }),
     } : tab === 'auto' ? {
         label: '자동 뽑기', eyebrow: '목표 등급까지', head: icons(slot),
-        desc: `고른 부위에서 목표 등급 이상이 나올 때까지 가진 골드${autoImprint ? '와 정수' : ''}를 모두 써서 반복합니다(한 번에 최대 ${fmt(AUTO_APPRAISAL_MAX)}회). 목표 미만은 물건 도감에 없는 종류면 등록하고, 나머지는 분해해 정수로 받습니다. 목표 장비는 가방에 들어가고 거기서 멈춥니다.`,
+        desc: `고른 부위에서 목표 등급 이상이 나올 때까지 가진 골드${autoImprint ? '와 정수' : ''}를 모두 써서 반복합니다. 한 번에 최대 ${fmt(AUTO_APPRAISAL_MAX)}회. 목표 미만은 물건 도감에 없는 종류면 등록하고, 나머지는 분해해 정수로 받습니다. 목표 장비는 가방에 들어가고 거기서 멈춥니다.`,
         controls: <>{slotChips}<Field label="목표 등급"><select className={field} value={target} onChange={e => setTarget(Number(e.target.value))}>{APPRAISAL.map(r => <option key={r.rarity} value={r.rarity}>{RARITIES[r.rarity].name} 이상</option>)}</select></Field>
             <label className="flex h-10 items-center gap-2 text-s"><Switch checked={autoImprint} onCheckedChange={setAutoImprint} aria-label="저격 뽑기로 반복"/>저격 뽑기로</label>{autoImprint && affixSelect}{autoImprint && glossaryButton}</>,
         cost: `한 번 ${fmt(autoEach.gold)} G${autoEach.essence ? ` · 정수 ${autoEach.essence}` : ''} · 지금 가진 것으로 최대 ${fmt(autoMax)}회 · ${APPRAISAL_PITY.find(p => p.rarity === target) ? `${RARITIES[target].name} 이상 천장까지 ${fmt(pityLeft(s).find(p => p.rarity === target)!.left)}회` : '희귀·영웅·전설은 천장 없음'}`,
         actions: [<ConfirmAction key="auto" variant="default" className="bg-accent text-accent-ink hover:bg-accent/90" label={`자동 뽑기 시작 · 최대 ${fmt(autoMax)}회`} title="자동 뽑기를 시작할까요?" description={`가진 골드 ${fmt(s.gold)} G${autoEach.essence ? `와 정수 ${fmt(s.essence || 0)}` : ''}를 모두 쓸 수 있습니다. 목표 미만 장비는 분해되거나 도감에 등록됩니다.`} disabled={busy || full || autoMax < 1} onConfirm={() => send({ type: 'autoGamble', id: slot, value: `${target}|max${autoImprint ? `|${pick}` : ''}` })}/>],
     } : null;
     return <div className="grid gap-5 text-ink-1">
-        <SectionHeader as="h1" eyebrow="ITEM SHOP" title="상점" description="모든 부위가 나오는 랜덤 뽑기, 부위와 옵션을 골라 노리는 저격 뽑기, 목표 등급까지 돌리는 자동 뽑기, 그리고 강화."/>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SectionHeader as="h1" eyebrow="ITEM SHOP" title="상점" description="랜덤 · 저격 · 자동 뽑기와 정수 구매, 장비 강화."/>
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             <Tile icon={<Coins size={18}/>} label="보유 골드"><NumberTicker value={s.gold}/><span className="text-xs text-ink-3">G</span></Tile>
             <Tile icon={<Gem size={18}/>} label="보유 정수"><NumberTicker value={s.essence || 0}/></Tile>
             <Tile icon={<ShoppingBag size={18}/>} label="장비 가방"><span className={cn(full && 'text-danger')}>{s.inventory.length}</span><span className="text-xs text-ink-3">/ {cap}</span></Tile>
             <Tile icon={<Tag size={18}/>} label={`뽑기 장비 레벨 · 환생 ${s.rebirths}`}>Lv.{s.level}<span className="text-xs text-ink-3">가격 ×{(gamble / Math.max(1, gambleCost({ ...s, rebirths: 0 }))).toFixed(1)}</span></Tile>
         </div>
-        <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}><TabsList className="h-auto flex-wrap">{TABS.map(([id, name]) => <TabsTrigger key={id} value={id} className="min-h-9 pointer-coarse:min-h-11">{name}</TabsTrigger>)}</TabsList></Tabs>
+        <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}><TabsList className="h-auto! flex-wrap">{TABS.map(([id, name]) => <TabsTrigger key={id} value={id} className="h-auto! min-h-9 pointer-coarse:min-h-11">{name}</TabsTrigger>)}</TabsList></Tabs>
         {draw && <section aria-label={draw.label} className="grid gap-3">
             <Pity s={s}/>
             {!secret && <div className="flex flex-wrap items-center gap-2 text-xs text-ink-3"><span>등급 확률</span>{APPRAISAL.map(r => <RarityTag key={r.rarity} rarity={rarityKey(r.rarity)} label={`${RARITIES[r.rarity].name} ${Math.round(r.chance * 10000) / 100}%`}/>)}</div>}
             <GoodCard eyebrow={draw.eyebrow} title={draw.label} head={draw.head} desc={draw.desc} controls={<>{draw.controls}{glossary.open && (tab === 'imprint' || tab === 'auto' && autoImprint) && <div className="basis-full"><AffixGlossaryList affixes={choices} picked={pick}/></div>}</>} cost={draw.cost}>{draw.actions}</GoodCard>
         </section>}
-        {tab === 'essence' && <GoodCard eyebrow="골드 → 정수" title="정수 구매" head={<span className="grid size-10 place-items-center rounded-m bg-surface-1 text-accent"><Gem size={22}/></span>} desc="골드로 정수를 바로 삽니다. 값은 뽑기 가격처럼 레벨 · 환생에 따라 오릅니다. 정수는 수치 재련 · 저격 뽑기 · 원시 각성 · 제단 공물에 씁니다."
+        {tab === 'essence' && <GoodCard eyebrow="골드 → 정수" title="정수 구매" head={<span className="grid size-10 place-items-center rounded-m bg-surface-1 text-accent"><Gem size={22}/></span>} desc="골드로 정수를 바로 삽니다. 값은 뽑기 가격처럼 레벨 · 환생에 따라 오릅니다. 정수는 수치 재련, 저격 뽑기, 원시 각성, 제단 공물에 씁니다."
             cost={`정수 1개 ${fmt(essence)} G · 가진 정수 ${fmt(s.essence || 0)} · 가진 골드로 최대 ${fmt(essenceMax)}개`}>
-            {[...ESSENCE_SHOP.counts, 'max' as const].map(n => { const count = n === 'max' ? essenceMax : n, gold = essence * count, short = count < 1 || s.gold < gold; return <ConfirmAction key={String(n)} label={n === 'max' ? `최대 ${fmt(count)}개 · ${fmt(gold)} G` : `${fmt(n)}개 · ${fmt(gold)} G`} title={`정수 ${fmt(count)}개를 살까요?`} description={`골드 ${fmt(gold)} G를 쓰고 정수 ${fmt(count)}개를 받습니다(개당 ${fmt(essence)} G). 구매한 정수는 환불되지 않습니다.`} disabled={busy || short} onConfirm={() => send({ type: 'buyEssence', value: String(n) })}/>; })}
+            {[...ESSENCE_SHOP.counts, 'max' as const].map(n => { const count = n === 'max' ? essenceMax : n, gold = essence * count, short = count < 1 || s.gold < gold; return <ConfirmAction key={String(n)} label={n === 'max' ? `최대 ${fmt(count)}개 · ${fmt(gold)} G` : `${fmt(n)}개 · ${fmt(gold)} G`} title={`정수 ${fmt(count)}개를 살까요?`} description={`골드 ${fmt(gold)} G를 쓰고 정수 ${fmt(count)}개를 받습니다. 개당 ${fmt(essence)} G. 구매한 정수는 환불되지 않습니다.`} disabled={busy || short} onConfirm={() => send({ type: 'buyEssence', value: String(n) })}/>; })}
         </GoodCard>}
         {tab === 'forge' && <section aria-label="장비 강화" className="grid gap-3">
             {/* v3.76 부위 고르기 + 작업대 하나: 옵션 재설정까지 한 곳에서 합니다. */}
