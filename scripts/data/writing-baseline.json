@@ -1,32 +1,4 @@
 {
  "note": "docs/writing.md 래칫 기준: 파일마다 지금 남아 있는 위반 수. 줄이면 node scripts/check-writing.mjs --update 로 다시 씁니다. 늘리지 않습니다.",
- "files": {
-  "components/features/character/breakdown.tsx": {
-   "paren": 1
-  },
-  "components/features/character/character-screen.tsx": {
-   "paren": 1
-  },
-  "components/features/help/topics/combat.tsx": {
-   "paren": 3
-  },
-  "components/features/help/topics/growth.tsx": {
-   "paren": 1
-  },
-  "components/features/help/topics/hunting.tsx": {
-   "paren": 1
-  },
-  "components/features/legacy/rebirth-screen.tsx": {
-   "paren": 2
-  },
-  "components/features/legacy/vows.tsx": {
-   "paren": 1
-  },
-  "game/data/skill-balance.ts": {
-   "paren": 4
-  },
-  "game/systems/skill-description.ts": {
-   "paren": 12
-  }
- }
+ "files": {}
 }

@@ -38,7 +38,7 @@ export function HuntingTopic({ s, secret, swarm }: { s?: State; secret: boolean;
                 condition={`매수 · 매도마다 수수료 ${MARKET.fee * 100}%로 최소 1주화, 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다.`}
                 limit="잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 주식도 사라집니다. 차트 · 거래 내역은 이 기기에만 남습니다."/>
             <Rule icon={<Heart size={19}/>} q="쓰러지거나 자리를 비우면 어떻게 되나요?" title="생존 · 방치 진행"
-                effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `. 지금은 ${percent(victoryHealRate({ ...s, dungeon: null }))}` : ''}. 사냥터 난이도가 오를수록 줄어듭니다: 기본 ÷ (1 + 난이도 ÷ ${BALANCE.healAfterKillTideScale}) — 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
+                effect={`처치 후 최대 체력의 ${percent(BALANCE.healAfterKill)}를 회복합니다${s ? `. 지금은 ${percent(victoryHealRate({ ...s, dungeon: null }))}` : ''}. 사냥터 난이도가 오를수록 줄어듭니다. 난이도 ${BALANCE.healAfterKillTideScale}마다 나누는 수가 1씩 커져 난이도 10에서 10%, 30에서 5%, 최저 ${percent(BALANCE.healAfterKillMin)}. 응급처치 패시브는 행동할 때마다 체력을 조금 회복합니다.`}
                 condition={`패배하면 잃는 것 없이 ${BALANCE.recoveryTurns}턴 회복한 뒤 다시 싸웁니다. 자리를 비운 시간도 서버가 턴으로 계산합니다.`}
                 limit={`방치 정산은 기본 ${BALANCE.offlineCapSeconds / 3600}시간${s ? `, 지금은 ${offlineCapSeconds(s) / 3600}시간` : ''}. 가방은 기본 ${BALANCE.inventoryCap}칸${s ? `, 지금은 ${inventoryCap()}칸` : ''}. 둘 다 세계석 연구로 늘어납니다.`}/>
         </div>

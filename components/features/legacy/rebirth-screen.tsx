@@ -66,7 +66,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
                     </div>
                 </div>
                 <Ledger gain={[
-                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${projected.level} ÷ 10 = ${parts.level} · 환생 횟수 보상 ${parts.count}${s.rebirths > REBIRTH_PEARL_LINEAR ? ` · ${REBIRTH_PEARL_LINEAR}회까지 회당 1, 그 뒤 √(횟수 − ${REBIRTH_PEARL_LINEAR}) · 지금 ${s.rebirths}회` : ''}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
+                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${projected.level} ÷ 10 = ${parts.level} · 환생 횟수 보상 ${parts.count}${s.rebirths > REBIRTH_PEARL_LINEAR ? ` · ${REBIRTH_PEARL_LINEAR}회까지 회당 1, 그 뒤로는 넘은 횟수의 제곱근 · 지금 ${s.rebirths}회` : ''}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
                     ['환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어', `현재 +${memoryNow}% → 환생 후 +${memoryNext}%`],
                     ['영구 경험치 획득', `현재 ×${permanentExp.toFixed(2)} → 환생 후 ×${(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}`],
                     [`장착 AP ${apGain ? '+1' : '+0'}`, apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`],
@@ -96,7 +96,7 @@ function RelicTab({ s, send, busy }: { s: State; send: Send; busy: boolean }) {
     const fact = (k: string, v: React.ReactNode, sub?: string) => <span key={k} className="rounded-s border border-line bg-surface-1 px-2 py-1 text-xs text-ink-2">{k} <b className="text-ink-1">{v}</b>{sub && <small className="text-ink-3"> {sub}</small>}</span>;
     return <>
         <Note>환생을 가로질러 자라는 장비입니다. 세계석 없이 환생 횟수를 채우면 받고, 별과 이식 옵션은 환생해도 남습니다. 강화 · 레벨 올리기 · 옵션 이식은 장비 보관함에서 합니다.</Note>
-        <div className="flex flex-wrap gap-2">{fact('위력', '(레벨 + 2) × 배율')}{fact('지금 배율', `×${heirFactor('relic', s.rebirths).toFixed(2)}`, `환생 ${HEIR_GROWTH.toRebirth}회 ×${HEIR_GROWTH.relic.to}`)}{fact('이식 옵션', `최대 ${RELIC_GROWTH.imprintSlots}줄`, '같은 부위 장비 소비')}{fact('강화 파괴 시', `${STARFORCE.relicResetStar}성으로`)}{fact('종류당', '1개')}</div>
+        <div className="flex flex-wrap gap-2">{fact('위력', '레벨에 2를 더해 배율을 곱한 값')}{fact('지금 배율', `×${heirFactor('relic', s.rebirths).toFixed(2)}`, `환생 ${HEIR_GROWTH.toRebirth}회 ×${HEIR_GROWTH.relic.to}`)}{fact('이식 옵션', `최대 ${RELIC_GROWTH.imprintSlots}줄`, '같은 부위 장비 소비')}{fact('강화 파괴 시', `${STARFORCE.relicResetStar}성으로`)}{fact('종류당', '1개')}</div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{RELICS.map(r => {
             const item = owned(r.id), ready = s.rebirths >= r.rebirth;
             const state = item ? '보유 중' : ready ? '받을 수 있음' : `환생 ${r.rebirth}회 필요`;
