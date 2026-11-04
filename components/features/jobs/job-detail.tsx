@@ -34,7 +34,7 @@ export function JobDetail({ j, s, send, busy, onClose, onCompare, compared, comp
         <h2 className="font-display text-l font-bold">???</h2>
         <p className="text-xs text-ink-3">{tierName(j)} · {treeName(j.tree)}</p>
         <p className="text-s text-ink-2">{j.hint || '아직 드러나지 않은 직업입니다.'}</p>
-        <p className="text-xs leading-relaxed text-ink-3">숨은 조건(플레이 기록)을 만족하거나 관문 조건(환생 횟수·선행 직업 숙련)을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
+        <p className="text-xs leading-relaxed text-ink-3">플레이 기록으로 정해지는 숨은 조건을 만족하거나 환생 횟수 · 선행 직업 숙련 같은 관문 조건을 모두 채우면 이름과 조건이 드러납니다. 한 번 전직하거나 숙달하면 계속 보입니다.</p>
     </article>;
     const st = statusReader(s)(j), current = st.status === 'current', ready = canEnter(st);
     const xp = s.jobMastery[j.id] || 0, target = jobMasteryTarget(j), mastered = xp >= target;

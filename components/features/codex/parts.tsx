@@ -75,18 +75,18 @@ function stepEffect(rank: number) {
     return `연구 효과 +${pct(dealt)}% / -${pct(taken)}%`;
 }
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])
-    .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금(${SWARM_UNLOCK[size].toLocaleString()}회 달성)` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
+    .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금 · ${SWARM_UNLOCK[size].toLocaleString()}회 달성` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
 const stepReward = (rank: number, n: number, swarm: boolean) => [PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : '', ...(swarm ? swarmAt(rank, n) : [])].filter(Boolean).join(' · ');
 /** 연구 진행: 처치 수 → 다음 목표 → 보상 → 수령. 사냥터 몬스터(swarm)는 무리 해금도 같이. */
 export function ResearchBlock({ s, id, send, busy, swarm = false }: { s: State; id: string; send: Send; busy: boolean; swarm?: boolean }) {
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id), reached = bookStage(s, id), next = reached < MILESTONES.length ? reached : -1, best = s.bookTier?.[id] || 0;
-    const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` (최고 ${best})`}` : '';
+    const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` · 최고 ${best}`}` : '';
     return <section className="grid gap-2 rounded-m border border-line/60 bg-surface-2 p-3" aria-label="연구 진행">
         <div className="flex items-baseline justify-between gap-2 text-s"><span className="font-semibold text-ink-1">연구 진행</span><span className="font-num text-xs text-ink-3">{reached} / {MILESTONES.length}단계</span></div>
         {next >= 0 ? <StatBar label={`${next + 1}단계까지`} value={Math.min(n, MILESTONES[next])} max={MILESTONES[next]} size="s"/> : <div className="text-xs text-ok">모든 단계 달성</div>}
         <KeyValueList items={[
             { key: '처치 수', value: `${formatExact(n)}회` },
-            { key: '다음 목표', value: next < 0 ? '—' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` (남은 ${(MILESTONES[next] - n).toLocaleString()})` : ' ✓'}${tierText(next)}` },
+            { key: '다음 목표', value: next < 0 ? '—' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` · 남은 ${(MILESTONES[next] - n).toLocaleString()}` : ' ✓'}${tierText(next)}` },
             ...(next >= 0 ? [{ key: '달성하면', value: stepReward(next, n, swarm) || '능력치만', hint: stepEffect(next) }] : []),
             ...(pending.ranks.length ? [{ key: '수령 여부', value: `미수령 SP +${pending.sp}`, tone: 'ok' as const }] : []),
         ]}/>

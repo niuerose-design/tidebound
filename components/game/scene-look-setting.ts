@@ -11,7 +11,7 @@ export type WeaponId = 'sword' | 'spear' | 'bow' | 'dagger' | 'gun' | 'fist' | '
 type SceneLook = { backdrop: BackdropTheme | 'auto'; hero: HeroKindId | 'auto'; weapon: WeaponId | 'auto' };
 export const BACKDROP_LABELS: Record<BackdropTheme, string> = {
     harbor: '항구 (리스항구)', village: '마을 언덕 (헤네시스)', canyon: '바위 협곡 (페리온)', forest: '큰 숲 (엘리니아)', city: '도시 (커닝시티)', underwater: '바닷속 (아쿠아로드)',
-    dragon: '용의 둥지 (리프레)', temple: '신전 (시간의 신전)', arcane: '아케인 리버', swamp: '늪 (슬리피우드)', mountain: '설산 (무릉 · 엘나스)',
+    dragon: '용의 둥지 (리프레)', temple: '신전 · 시간의 신전', arcane: '아케인 리버', swamp: '늪 (슬리피우드)', mountain: '설산 · 무릉 · 엘나스',
 };
 export const HERO_LABELS: Record<HeroKindId, string> = {
     warrior: '전사', mage: '마법사', guardian: '수호자', rogue: '도적', spellblade: '마검사', merchant: '상인', mystic: '두건 신비가', devour: '포식자', miner: '광부', agent: '요원', trader: '트레이더', hacker: '해커',
@@ -53,5 +53,5 @@ export async function setHeroImage(file: File | null): Promise<string | null> {
         localStorage.setItem(IMAGE_KEY, canvas.toDataURL('image/png'));
         window.dispatchEvent(new Event(EVENT));
         return null;
-    } catch { return '그림을 읽거나 저장하지 못했습니다(브라우저 저장 공간이 부족할 수 있습니다).'; }
+    } catch { return '그림을 읽거나 저장하지 못했습니다. 브라우저 저장 공간이 부족할 수 있습니다.'; }
 }

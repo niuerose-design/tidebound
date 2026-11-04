@@ -20,7 +20,7 @@ function stepEffect(_id: string, rank: number) {
 }
 /** 이 연구 단계 구간(이전 목표 초과 ~ 이번 목표 이하)에서 열리는 무리 사냥 규모. 목표와 해금 수가 다르면 해금 수를 같이 적습니다. */
 const swarmAt = (rank: number, n: number) => SWARM_SIZES.filter(size => size > 1 && SWARM_UNLOCK[size] > (MILESTONES[rank - 1] || 0) && SWARM_UNLOCK[size] <= MILESTONES[rank])
-    .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금(${SWARM_UNLOCK[size].toLocaleString()}회 달성)` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
+    .map(size => `무리 변종 ×${size} ${SWARM_UNLOCK[size] === MILESTONES[rank] ? '해금' : n >= SWARM_UNLOCK[size] ? `해금 · ${SWARM_UNLOCK[size].toLocaleString()}회 달성` : `${SWARM_UNLOCK[size].toLocaleString()}회에 해금`}`);
 /** v27.81 단계 보상: SP(4단계부터)와 무리 해금. */
 const stepReward = (rank: number, n: number, swarm: boolean) => [PROGRESSION.bookSP[rank] ? `SP +${PROGRESSION.bookSP[rank]}` : '', ...(swarm ? swarmAt(rank, n) : [])].filter(Boolean).join(' · ');
 
@@ -29,12 +29,12 @@ export function BookResearch({ s, id, send, busy, swarm = false }: { s: State; i
     const n = s.book[id] || 0, claimed = s.bookClaims?.[id] || 0, pending = bookPending(s, id);
     const reached = bookStage(s, id), next = reached < MILESTONES.length ? reached : -1, best = s.bookTier?.[id] || 0;
     /** v27.80 5단계부터 난이도 조건: 처치 수를 채워도 그 난이도 이상에서 잡은 적이 없으면 멈춥니다. */
-    const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` (최고 ${best})`}` : '';
+    const tierText = (r: number) => bookTierReq(r) ? ` + 난이도 ${bookTierReq(r)} 이상 처치${best >= bookTierReq(r) ? ' ✓' : ` · 최고 ${best}`}` : '';
     return <section className="book-block book-research">
         <h4>연구 진행 <small>{reached} / {MILESTONES.length}단계 달성</small></h4>
         <dl className="book-research-rows">
             <div><dt>처치 수</dt><dd>{n.toLocaleString()}회</dd></div>
-            <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` (남은 ${(MILESTONES[next] - n).toLocaleString()}회)` : ' ✓'}${tierText(next)}`}</dd></div>
+            <div><dt>다음 연구 목표</dt><dd>{next < 0 ? '모든 단계 달성' : `${MILESTONES[next].toLocaleString()}회${n < MILESTONES[next] ? ` · 남은 ${(MILESTONES[next] - n).toLocaleString()}회` : ' ✓'}${tierText(next)}`}</dd></div>
             {next >= 0 && <div><dt>달성하면</dt><dd>{stepReward(next, n, swarm) || '능력치만'}</dd><small>{stepEffect(id, next)}</small></div>}
             {pending.ranks.length > 0 && <div><dt>수령 여부</dt><dd><b className="positive">미수령 SP +{pending.sp}</b></dd></div>}
         </dl>

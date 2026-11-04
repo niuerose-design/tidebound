@@ -15,7 +15,7 @@ function coreAttrText(s: PanelProps['s'], id: string, worn = s.coreSlot === id) 
     const e = coreEntry(s.bossCores?.[id]);
     if (!e) return '';
     const m = coreAwaken(e.rank) * (worn ? 1 : BOSS_CORE_RULES.resonance);
-    return e.attrs.length ? e.attrs.map(x => `${attrName(x.k)} +${format(Math.floor(Math.max(1, s.level) * x.f * m))} (레벨 ×${x.f})`).join(' · ') : '기본 능력치 없음(재설정으로 채움)';
+    return e.attrs.length ? e.attrs.map(x => `${attrName(x.k)} +${format(Math.floor(Math.max(1, s.level) * x.f * m))} · 레벨 ×${x.f}`).join(' · ') : '기본 능력치 없음. 재설정으로 채웁니다.';
 }
 
 /** 착용 장비 칸과 같은 모양의 보스 코어 칸 한 줄: 낀 코어, 바꾸기, 해제. */
@@ -30,7 +30,7 @@ export function CoreSlot({ s, send, busy }: Pick<PanelProps, 's' | 'send' | 'bus
             <small>{onyx ? `칠흑 보스코어 · ${core.boss} 격파 보상 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종 · ` : ''}{core.desc}</small>
             <small>{coreAttrText(s, id, true)}</small>
         </div> : <p className="gear-slot-empty">{owned.length ? '비어 있음 · 아래 칸에서 낄 코어를 고르세요' : '보스 코어가 없습니다. 지역 던전 보너스 정복이나 던전 주화 상점 상자로 얻고, 칠흑 보스 윌은 칠흑 보스코어를 줍니다.'}</p>}
-        {owned.length > 0 && <div className="gear-slot-upgrade"><span>칸에 낀 코어 100% · 나머지는 공명 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외)</span>
+        {owned.length > 0 && <div className="gear-slot-upgrade"><span>칸에 낀 코어 100% · 나머지는 공명 {Math.round(BOSS_CORE_RULES.resonance * 100)}%, 턴 연장은 빼고</span>
             <select aria-label="보스 코어 바꾸기" value={id} disabled={busy} onChange={ev => send({ type: 'equipCore', id: ev.target.value })}><option value="">비우기</option>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].onyx ? `◆ ${BOSS_CORES[c].name}(칠흑)` : BOSS_CORES[c].name}</option>)}</select></div>}
     </article>;
 }

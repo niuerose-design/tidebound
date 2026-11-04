@@ -44,7 +44,7 @@ export function VaultPanel({ s, busy, vault, error, load, act }: { s: State; bus
         <ul className="grid gap-2">
             {s.inventory.filter(i => i.onyx).map(i => <Row key={i.id} name={<span style={{ color: 'var(--rarity-primal)' }}>{i.name}{i.onyxRank ? ` +${i.onyxRank}` : ''}</span>} sub={`가방 · ${starLabel(i.enhance || 0, true)} · Lv.${i.level}`} action={<Button type="button" size="sm" variant="outline" disabled={busy || !vault || vault.onyx.length >= VAULT_ONYX_CAP} onClick={() => act({ action: 'deposit', kind: 'onyx', id: i.id })}>넣기</Button>}/>)}
             {vault?.onyx.map(v => <Row key={v.id} name={<span style={{ color: 'var(--rarity-primal)' }}>{v.item.name}{v.item.onyxRank ? ` +${v.item.onyxRank}` : ''}</span>} sub={`금고 · ${v.slot}번 분신이 넣음 · ${starLabel(v.item.enhance || 0, true)} · Lv.${v.item.level}${ownedOnyx(s).has(v.item.onyx!) ? ' · 꺼내면 내 칠흑 각성 +1' : ''}`} action={<Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90" disabled={busy} onClick={() => act({ action: 'withdraw', kind: 'onyx', id: v.id })}>꺼내기</Button>}/>)}
-            {!s.inventory.some(i => i.onyx) && !vault?.onyx.length && <li><Note>가방에 넣을 칠흑이 없습니다(착용 중인 칠흑은 벗어야 넣을 수 있음).</Note></li>}
+            {!s.inventory.some(i => i.onyx) && !vault?.onyx.length && <li><Note>가방에 넣을 칠흑이 없습니다. 착용 중인 칠흑은 벗어야 넣을 수 있습니다.</Note></li>}
         </ul>
     </Card>;
 }

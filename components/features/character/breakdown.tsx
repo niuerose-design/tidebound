@@ -13,15 +13,15 @@ import { cn } from '@/lib/utils';
 
 /** 상한이나 적용 방식이 헷갈리는 능력치의 설명. 펼치면 아래에 보입니다. */
 const STAT_NOTES: Partial<Record<keyof CombatStats, string>> = {
-    speed: `속도 자체에는 상한이 없습니다(최소 1). 효과는 상대 속도와의 비율로 정해져 비율이 커질수록 한계에 닿습니다. 연속 행동 확률 = ${BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도)라 상대의 ${Math.round(2 ** (1 / BALANCE.chainCoefficient))}배에서 100%가 되고, 명중 보정은 약 1.7배에서 +6%p로 멈춥니다. 한 턴에 최대 ${BALANCE.chainMaxActions}번 행동. 가속 ×${1 + STATUS_TUNING.hasteMultiplier} · 감속 ×${1 - STATUS_TUNING.slowMultiplier}.`,
-    hpRegen: `행동할 때마다(연속·추가 행동 포함) 이만큼 체력을 되찾습니다. 최대 체력을 넘지 않습니다. 체질 1마다 +${ATTRIBUTE_EFFECTS.vit.hpRegen}, 소수점은 버립니다.`,
-    manaRegen: '행동할 때마다(연속·추가 행동 포함) 이만큼 마나를 되찾습니다. 최대 마나를 넘지 않습니다.',
+    speed: `속도 자체에는 상한이 없고 최소 1입니다. 효과는 상대 속도와의 비율로 정해져 비율이 커질수록 한계에 닿습니다. 연속 행동 확률 = ${BALANCE.chainCoefficient} × log₂(내 속도 ÷ 상대 속도)라 상대의 ${Math.round(2 ** (1 / BALANCE.chainCoefficient))}배에서 100%가 되고, 명중 보정은 약 1.7배에서 +6%p로 멈춥니다. 한 턴에 최대 ${BALANCE.chainMaxActions}번 행동. 가속 ×${1 + STATUS_TUNING.hasteMultiplier} · 감속 ×${1 - STATUS_TUNING.slowMultiplier}.`,
+    hpRegen: `연속 · 추가 행동을 포함해 행동할 때마다 이만큼 체력을 되찾습니다. 최대 체력을 넘지 않습니다. 체질 1마다 +${ATTRIBUTE_EFFECTS.vit.hpRegen}, 소수점은 버립니다.`,
+    manaRegen: '연속 · 추가 행동을 포함해 행동할 때마다 이만큼 마나를 되찾습니다. 최대 마나를 넘지 않습니다.',
     evasion: '회피 수치는 50%를 넘으면 효율이 줄어 90%에 수렴합니다. 실제 적중률 = 상대 명중 − 내 회피 + 속도 보정(1~99.5%).',
-    accuracy: '실제 적중률 = 내 명중 − 상대 회피 + 속도 보정(최대 ±6%p), 1~99.5% 범위.',
+    accuracy: '실제 적중률 = 내 명중 − 상대 회피 + 속도 보정, 1~99.5% 범위. 속도 보정은 최대 ±6%p.',
     crit: `치명타 확률 상한 ${SKILL_FORMULA.critCap * 100}%. 넘는 몫 100%p마다 극 치명타 확률 +${SKILL_FORMULA.superCritPerHundred * 100}%.`,
     superCrit: `치명타가 뜬 뒤 이 확률로 극 치명타가 됩니다. 극 치명타는 치명 피해에 ×${SKILL_FORMULA.superCritBonus}를 더 곱합니다. 치명타 확률이 ${SKILL_FORMULA.critCap * 100}%를 넘은 몫 100%p마다 +${SKILL_FORMULA.superCritPerHundred * 100}%입니다.`,
-    bossDamage: '보스 · 사냥감(월드보스 포함)에게 주는 직접 피해. 장비 부위 · 칠흑 세트 · 칠흑 옵션마다 곱연산이라 모을수록 크게 붙습니다. 지속 피해(출혈 · 중독 · 화상)에는 붙지 않습니다.',
-    penetration: '방어 관통은 출처끼리 곱연산(남은 방어의 x%를 무시)이라 1에 닿지 않습니다. 장비는 부위마다 따로 곱하고, 스킬의 관통 보너스는 그 위에 더합니다(합계 최대 85%).',
+    bossDamage: '월드보스를 포함한 보스 · 사냥감에게 주는 직접 피해. 장비 부위 · 칠흑 세트 · 칠흑 옵션마다 곱연산이라 모을수록 크게 붙습니다. 출혈 · 중독 · 화상 같은 지속 피해에는 붙지 않습니다.',
+    penetration: '방어 관통은 출처끼리 곱연산이라 남은 방어의 x%를 무시하는 식이고 1에 닿지 않습니다. 장비는 부위마다 따로 곱하고, 스킬의 관통 보너스는 그 위에 더해 합계 최대 85%입니다.',
     lifesteal: `흡혈 상한 30%. 한 번의 행동으로 최대 체력 × 흡혈률 × ${SKILL_FORMULA.lifestealHpCap * 100}%까지만 회복합니다.`,
 };
 type Row = [label: ReactNode, value: ReactNode, total?: boolean];
@@ -67,12 +67,12 @@ function exact(k: keyof CombatStats, n: number) {
 export function MasteryRow({ s }: { s: State }) {
     const m = masteryMultipliers(s), x = (n: number) => `×${n.toFixed(2)}`, drill = rankPerkLevel(s, 'drill');
     const rows: Row[] = [['기본 획득', `+${m.base - drill}`], ['끝없는 수련 · 계정 몬스터', x(m.research)], ...(m.focus !== 1 ? [['계열 집중', x(m.focus)] as Row] : []), ...(m.event !== 1 ? [['이벤트', x(m.event)] as Row] : []), ...(drill ? [[`계급 특전 · 숙련 훈련 ${drill}단계 (배율 밖)`, `+${drill}`] as Row] : []), ['계산식', `${m.base - drill} × ${m.total.toFixed(2)}${drill ? ` + ${drill}` : ''} ≈ ${m.perKill.toFixed(1)}`, true]];
-    return <FoldRow label="숙련도 획득" value={`처치당 ≈ ${m.perKill.toFixed(1)}`} rows={rows} note="처치할 때마다 현재 직업과 장착 스킬의 숙련이 오릅니다. 조건부 숙련 스킬 보너스(지정 적 처치 시)와 무리 마릿수는 따로 더해집니다."/>;
+    return <FoldRow label="숙련도 획득" value={`처치당 ≈ ${m.perKill.toFixed(1)}`} rows={rows} note="처치할 때마다 현재 직업과 장착 스킬의 숙련이 오릅니다. 지정 적을 처치할 때의 조건부 숙련 스킬 보너스와 무리 마릿수는 따로 더해집니다."/>;
 }
 /** 계급 특전 요약: 무엇을 몇 단계 켰고 실제로 얼마가 적용되는지. */
 export function RankPerkRow({ s }: { s: State }) {
     const active = RANK_PERKS.map(p => ({ p, level: rankPerkLevel(s, p.id) })).filter(x => x.level > 0);
-    const value = (id: typeof RANK_PERKS[number]['id'], level: number) => id === 'tally' ? `처치 1마리 = 계급 경험치 ${1 + level}마리` : id === 'drill' ? `처치 숙련 +${level} (고정)` : `${(rankPerkValue(s, id) * 100).toFixed(1)}% (${id === 'medal' ? 'SP' : '세계석'} +1 · 사냥터만)`;
+    const value = (id: typeof RANK_PERKS[number]['id'], level: number) => id === 'tally' ? `처치 1마리 = 계급 경험치 ${1 + level}마리` : id === 'drill' ? `처치 숙련 +${level} (고정)` : `${(rankPerkValue(s, id) * 100).toFixed(1)}%로 ${id === 'medal' ? 'SP' : '세계석'} +1 · 사냥터만`;
     return <FoldRow label={`계급 특전 · ${rankTitle(s)}`} value={active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'} rows={active.map(({ p, level }) => [`${p.name} ${level}단계`, value(p.id, level)] as Row)}
-        note={active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해집니다(계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않음). 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}/>;
+        note={active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해지고, 계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않습니다. 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}/>;
 }

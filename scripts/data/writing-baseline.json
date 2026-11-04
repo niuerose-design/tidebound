@@ -1,59 +1,32 @@
 {
  "note": "docs/writing.md 래칫 기준: 파일마다 지금 남아 있는 위반 수. 줄이면 node scripts/check-writing.mjs --update 로 다시 씁니다. 늘리지 않습니다.",
  "files": {
-  "components/features/altar/altar-screen.tsx": {
-   "paren": 10
-  },
   "components/features/arena/arena-screen.tsx": {
-   "paren": 6,
    "dots": 1
   },
   "components/features/character/breakdown.tsx": {
-   "paren": 9,
+   "paren": 1,
    "long": 1,
    "dots": 1
   },
   "components/features/character/character-screen.tsx": {
-   "paren": 6
-  },
-  "components/features/character/cosmetics-screen.tsx": {
-   "paren": 6
-  },
-  "components/features/codex/monster-book.tsx": {
-   "paren": 14
-  },
-  "components/features/codex/parts.tsx": {
-   "paren": 3
+   "paren": 1
   },
   "components/features/codex/research-bonus.tsx": {
-   "paren": 3,
    "dots": 2,
    "long": 1
   },
   "components/features/expedition/expedition-screen.tsx": {
-   "paren": 3,
    "dots": 3,
    "long": 1
   },
-  "components/features/expedition/growth.tsx": {
-   "paren": 6
-  },
-  "components/features/expedition/records.tsx": {
-   "paren": 2
-  },
-  "components/features/expedition/replay.tsx": {
-   "paren": 1
-  },
   "components/features/expedition/run.tsx": {
-   "paren": 7,
    "dots": 1
   },
   "components/features/hacker/crew-screen.tsx": {
-   "long": 1,
-   "paren": 2
+   "long": 1
   },
   "components/features/hacker/hacker-screen.tsx": {
-   "paren": 16,
    "dots": 1
   },
   "components/features/help/topics/altar.tsx": {
@@ -82,49 +55,20 @@
    "long": 4,
    "dots": 1
   },
-  "components/features/jobs/job-compare.tsx": {
-   "paren": 1
-  },
-  "components/features/jobs/job-detail.tsx": {
-   "paren": 1
-  },
-  "components/features/jobs/mastery-screen.tsx": {
-   "paren": 1
-  },
-  "components/features/journal/goals-screen.tsx": {
-   "paren": 1
-  },
   "components/features/journal/story-screen.tsx": {
    "dots": 1
   },
-  "components/features/legacy/account.tsx": {
-   "paren": 1
-  },
   "components/features/legacy/ascension.tsx": {
-   "paren": 10,
    "long": 1,
    "dots": 2
   },
-  "components/features/legacy/automation.tsx": {
-   "paren": 4
-  },
   "components/features/legacy/rebirth-screen.tsx": {
-   "paren": 6
-  },
-  "components/features/legacy/research.tsx": {
-   "paren": 1
+   "paren": 2
   },
   "components/features/legacy/vows.tsx": {
-   "paren": 4
-  },
-  "components/features/market/market-screen.tsx": {
-   "paren": 4
-  },
-  "components/features/records/stats-screen.tsx": {
    "paren": 1
   },
   "components/features/settings/settings-screen.tsx": {
-   "paren": 6,
    "long": 4,
    "dots": 1
   },
@@ -134,44 +78,14 @@
   "components/features/shop/shop-screen.tsx": {
    "long": 1
   },
-  "components/features/skills/loadout.tsx": {
-   "paren": 1
-  },
-  "components/features/skills/skill-card.tsx": {
-   "paren": 3
-  },
-  "components/features/skills/skills-screen.tsx": {
-   "paren": 2
-  },
-  "components/game/book-research.tsx": {
-   "paren": 3
-  },
   "components/game/chat-panel.tsx": {
-   "paren": 1,
    "dots": 1
-  },
-  "components/game/core-slot.tsx": {
-   "paren": 3
-  },
-  "components/game/game-shell.tsx": {
-   "paren": 1
   },
   "components/game/jobs/job-status.ts": {
-   "paren": 1,
    "dots": 1
-  },
-  "components/game/notice-settings.ts": {
-   "paren": 1
-  },
-  "components/game/otherworld-hud.tsx": {
-   "paren": 1
   },
   "components/game/scene-look-panel.tsx": {
-   "paren": 1,
    "dots": 1
-  },
-  "components/game/scene-look-setting.ts": {
-   "paren": 3
   },
   "game/data/balance.ts": {
    "long": 1

@@ -56,8 +56,8 @@ export function MarketScreen({ s, send, busy }: PanelProps) {
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{STOCKS.map((d, i) => <StockCard key={d.id} d={d} column={i} x={x} s={s} busy={busy || stop} send={send}/>)}</div>
         <section className="rounded-l border border-line bg-surface-2 p-4 shadow-1">
             <ul className="grid list-disc gap-1 pl-4 text-xs leading-relaxed text-ink-2">
-                <li>종목 {STOCKS.length}개(안정 · 보통 · 고위험). 시세는 {MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다.</li>
-                <li>매수 · 매도마다 수수료 {MARKET.fee * 100}%(최소 1주화). 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다. 체결은 서버가 받는 순간의 시세입니다.</li>
+                <li>종목 {STOCKS.length}개로 안정 · 보통 · 고위험이 있습니다. 시세는 {MARKET_TICK_MS / 60_000}분마다 바뀌고, 길게 보면 기준가 주변으로 돌아옵니다.</li>
+                <li>매수 · 매도마다 수수료 {MARKET.fee * 100}%로 최소 1주화. 가진 던전 주화만큼 살 수 있고 거래 횟수 제한은 없습니다. 체결은 서버가 받는 순간의 시세입니다.</li>
                 <li>잃을 수도 있습니다. 환생해도 보유 주식은 남고, 승천하면 주식도 사라집니다.</li>
             </ul>
         </section>
@@ -86,7 +86,7 @@ function StockCard({ d, column, x, s, busy, send }: Pick<PanelProps, 's' | 'busy
             <Button type="button" size="sm" variant="outline" className="pointer-coarse:min-h-11" disabled={!maxBuy} onClick={() => setQty(String(Math.max(1, maxBuy)))}>최대 매수</Button>
             {h && <Button type="button" size="sm" variant="outline" className="pointer-coarse:min-h-11" onClick={() => setQty(String(h.qty))}>전부</Button>}
         </div>
-        <p className="text-xs text-ink-3">{buy && sell && n ? `매수 ${format(buy.total)}주화(수수료 ${buy.fee}) · 매도 ${format(sell.net)}주화(수수료 ${sell.fee})` : '수량을 적으세요.'}</p>
+        <p className="text-xs text-ink-3">{buy && sell && n ? `매수 ${format(buy.total)}주화, 수수료 ${buy.fee} · 매도 ${format(sell.net)}주화, 수수료 ${sell.fee}` : '수량을 적으세요.'}</p>
         <div className="grid grid-cols-2 gap-2">
             <Button type="button" size="sm" className="bg-accent text-accent-ink hover:bg-accent/90 pointer-coarse:min-h-11" disabled={busy || !n || !buy || buy.total > coins} onClick={() => send({ type: 'market', id: `buy:${d.id}`, value: String(n) })}>매수</Button>
             <Button type="button" size="sm" variant="outline" className="pointer-coarse:min-h-11" disabled={busy || !n || !h || h.qty < n} onClick={() => send({ type: 'market', id: `sell:${d.id}`, value: String(n) })}>매도</Button>
@@ -100,6 +100,6 @@ function Journal({ trades }: { trades: MarketTrade[] }) {
         <header className="flex items-center justify-between gap-2"><h3 className="font-display text-m font-bold">거래 내역</h3><Button type="button" size="xs" variant="ghost" className="pointer-coarse:min-h-11" onClick={clearMarketTrades}>지우기</Button></header>
         <ul className="grid gap-1 text-xs">{trades.map((t, i) => <li key={`${t.at}-${i}`} className="flex flex-wrap gap-x-2 rounded-s bg-surface-1 px-2 py-1"><span className="font-num text-ink-3">{new Date(t.at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
             <b className={tone(t.qty)}>{t.qty > 0 ? '매수' : '매도'}</b> <span>{stockById(t.stock)?.name} {format(Math.abs(t.qty))}주 · 약 {format(t.price)}</span></li>)}</ul>
-        <p className="text-xs text-ink-3">이 기기에만 남는 기록입니다(전투 기록처럼). 정확한 체결 금액은 전투 화면 기록판의 시스템 줄에 있습니다.</p>
+        <p className="text-xs text-ink-3">전투 기록처럼 이 기기에만 남는 기록입니다. 정확한 체결 금액은 전투 화면 기록판의 시스템 줄에 있습니다.</p>
     </section>;
 }

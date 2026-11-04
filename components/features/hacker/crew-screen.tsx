@@ -30,7 +30,7 @@ export function CrewScreen({ s, busy, info, error, load, act }: Props) {
         <div className="grid gap-3 lg:grid-cols-2">
             <EntryCard icon={<Terminal size={36}/>} title="조직 창설" desc={`비트 ${CREW.createBits} · 해킹 I 해금 필요. 성향은 바꿀 수 없습니다: 회색은 해커 계열 누구나, 화이트는 해커·화이트 해커, 블랙은 해커·블랙 해커.`}>
                 <input className={field} value={name} maxLength={CREW.nameMax} placeholder="조직 이름" onChange={e => setName(e.target.value)} aria-label="조직 이름"/>
-                <select className={field} value={side} onChange={e => setSide(e.target.value)} aria-label="조직 성향">{info.sides.map(x => <option key={x.id} value={x.id} disabled={!x.allowed}>{x.name}{x.allowed ? '' : ' (지금 직업 불가)'}</option>)}</select>
+                <select className={field} value={side} onChange={e => setSide(e.target.value)} aria-label="조직 성향">{info.sides.map(x => <option key={x.id} value={x.id} disabled={!x.allowed}>{x.name}{x.allowed ? '' : ' · 지금 직업 불가'}</option>)}</select>
                 <Primary type="button" className="justify-self-start" disabled={busy || !hacker || tier < 1 || bits < CREW.createBits || name.trim().length < CREW.nameMin} onClick={() => act({ action: 'create', name, side })}>비트 {CREW.createBits}로 창설</Primary>
             </EntryCard>
             <EntryCard icon={<Users size={36}/>} title="코드로 가입" desc={`조직원에게 받은 ${CREW.codeLength}자 초대 코드를 입력하세요. 조직 성향에 맞는 직업이어야 합니다.`}>
@@ -56,7 +56,7 @@ export function CrewScreen({ s, busy, info, error, load, act }: Props) {
             </FinePrint>
         </Card>
         <Card>
-            <Head title="조직 모듈" aside={`슬롯 ${c.modules.length} / ${c.slots}(조직 등급만큼) · 다음 주 유지비 ${format(c.upkeep)} · 조직 자금 ${format(c.vault)}`}/>
+            <Head title="조직 모듈" aside={`슬롯 ${c.modules.length} / ${c.slots}, 조직 등급만큼 · 다음 주 유지비 ${format(c.upkeep)} · 조직 자금 ${format(c.vault)}`}/>
             <Note>조직장이 켜고 끕니다. 효과는 해커 계열 조직원에게만 적용됩니다.</Note>
             <FinePrint summary="유지비 규칙">
                 <p>켤 때 그 주 유지비를 내고, 월요일 0시마다 조직 자금에서 다시 냅니다.</p>

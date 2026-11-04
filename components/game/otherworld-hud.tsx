@@ -33,7 +33,7 @@ export function OtherworldHud({ s, send, part = 'all' }: { s: State; send: Send;
         const d = h.length > 1 ? h.map((v, i) => `${i ? 'L' : 'M'}${(i / (h.length - 1) * 100).toFixed(1)} ${y(v).toFixed(1)}`).join(' ') : '';
         pnlView = <span className={`ow-hud-pnl ${up ? 'up' : 'down'}`}>
             {d && <svg viewBox="0 0 100 20" preserveAspectRatio="none" aria-hidden="true"><path d={`M0 ${y(0).toFixed(1)} L100 ${y(0).toFixed(1)}`} className="zero"/><path d={d}/></svg>}
-            평가 손익 {up ? '+' : ''}{(pnl * 100).toFixed(1)}%{r !== pnl ? ` (반영 ${r >= 0 ? '+' : ''}${(r * 100).toFixed(0)}%)` : ''} · 공격 ×{factor.toFixed(2)}
+            평가 손익 {up ? '+' : ''}{(pnl * 100).toFixed(1)}%{r !== pnl ? ` · 반영 ${r >= 0 ? '+' : ''}${(r * 100).toFixed(0)}%` : ''} · 공격 ×{factor.toFixed(2)}
         </span>;
     }
     const actions = <span className="ow-hud-actions">

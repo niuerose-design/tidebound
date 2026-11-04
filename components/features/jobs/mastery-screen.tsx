@@ -32,7 +32,7 @@ export function MasteryScreen({ s, setView }: { s: State; setView: (v: string) =
     const vocation = board.reduce((a, j) => a + thresholdRank(s.jobMastery?.[j.id] || 0, vocationTargets(jobMasteryTarget(j))), 0);
     const shown = (j: Job) => filter === 'all' || (filter === 'done') === jobMastered(s, j);
     return <div className="grid gap-5 text-ink-1">
-        <SectionHeader as="h1" eyebrow="MASTERY BOARD" title="숙련 진행판" description="모든 직업을 숙련하는 것이 이 모험의 긴 목표입니다. 숙련은 승천해도 남습니다(연마 단계만 초기화)."/>
+        <SectionHeader as="h1" eyebrow="MASTERY BOARD" title="숙련 진행판" description="모든 직업을 숙련하는 것이 이 모험의 긴 목표입니다. 숙련은 승천해도 남고 연마 단계만 초기화됩니다."/>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Tile label="숙달한 직업" sub={<StatBar size="s" tone="exp" value={tally.mastered} max={tally.total} showText={false}/>}>{tally.mastered}<span className="text-xs text-ink-3"> / {tally.total}</span></Tile>
             <Tile label="남은 직업" sub={<p className="text-xs text-ink-3">전직해 본 직업 {tally.unlocked} / {tally.total} · 아직 못 연 직업 {tally.total - tally.unlocked}개</p>}>{tally.total - tally.mastered}<span className="text-xs text-ink-3">개</span></Tile>
