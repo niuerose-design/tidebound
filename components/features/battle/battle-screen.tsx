@@ -38,9 +38,10 @@ export function BattleScreen({ s: base, frames, busy, send, setView, onSwitchSlo
             <section className="order-1 flex min-w-0 flex-col gap-3 xl:order-2" aria-label="사냥 장면">
                 <PlayerCard s={s} a={playerStats} setView={setView} compact/>
                 {tutorialActive(base) && <div className="battle-top-tutorial"><TutorialCard s={base} send={send} busy={busy} setView={setView}/></div>}
-                {show('liveRates') && <LiveRatesCard s={base} compact/>}
-                <TidePanel s={base} send={send} busy={busy}/>
+                {/* v3.454 상태 중심(docs/writing.md 4단계): 장면이 먼저, 난이도 · 실시간 효율은 그 아래. */}
                 <Arena s={s} playerStats={playerStats} busy={busy} send={send} setView={setView}/>
+                <TidePanel s={base} send={send} busy={busy}/>
+                {show('liveRates') && <LiveRatesCard s={base} compact/>}
             </section>
             <aside className="order-2 min-w-0 lg:order-3"><Rail s={s} base={base} busy={busy} send={send} setView={setView}/></aside>
         </div>

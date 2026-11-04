@@ -30,14 +30,14 @@ export function DungeonShopScreen({ s, send, busy }: { s: State; send: Send; bus
     const coins = s.dungeonCoins || 0, bonus = dungeonGoldMultiplier(s) - 1, left = dailyBonusLeft(s, now);
     const buy: Buy = (id, value) => send({ type: 'dungeonShop', id, ...(value ? { value } : {}) });
     return <div className="grid gap-5 text-ink-1">
-        <SectionHeader as="h1" eyebrow="DUNGEON COIN SHOP" title="던전 주화 상점" description="던전을 정복해 모은 던전 주화로 보스 코어 · 칠흑 장신구 · 성장권 · 장비 상품을 삽니다. 주화는 환생해도 남습니다."/>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SectionHeader as="h1" eyebrow="DUNGEON COIN SHOP" title="던전 주화 상점" description="던전 주화로 보스 코어, 칠흑 장신구, 성장권, 장비 상품을 삽니다. 주화는 환생해도 남습니다."/>
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             <Tile icon={<Coins size={18}/>} label={`보유 던전 주화${bonus > 0 ? ` · 보너스 +${Math.round(bonus * 100)}%` : ''}`}><NumberTicker value={coins}/></Tile>
             <Tile icon={<Swords size={18}/>} label="오늘 보너스 정복">{left}<span className="text-xs text-ink-3">/ {DAILY_BONUS.clears}회</span></Tile>
             <Tile icon={<Gem size={18}/>} label="보유 정수"><NumberTicker value={s.essence || 0}/></Tile>
             <Tile icon={<Sparkles size={18}/>} label="보유 세계석"><NumberTicker value={s.pearls}/></Tile>
         </div>
-        <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}><TabsList className="h-auto flex-wrap">{TABS.map(([id, name]) => <TabsTrigger key={id} value={id} className="min-h-9 pointer-coarse:min-h-11">{name}</TabsTrigger>)}</TabsList></Tabs>
+        <Tabs value={tab} onValueChange={v => setTab(v as typeof tab)}><TabsList className="h-auto! flex-wrap">{TABS.map(([id, name]) => <TabsTrigger key={id} value={id} className="h-auto! min-h-9 pointer-coarse:min-h-11">{name}</TabsTrigger>)}</TabsList></Tabs>
         {tab === 'core' && <CoreTab s={s} send={send} busy={busy} buy={buy} now={now}/>}
         {tab === 'onyx' && <div className="grid gap-3 lg:grid-cols-2"><OnyxGood s={s} busy={busy} buy={buy} now={now}/></div>}
         {tab === 'growth' && <div className="grid gap-3 lg:grid-cols-2">{(Object.keys(GROWTH_GOODS) as GrowthGood[]).map(g => { const o = growthOffer(s, g, now); return <GoodCard key={g} eyebrow="성장권" title={`${o.hours}시간 성장권`}
@@ -57,11 +57,11 @@ export function DungeonShopScreen({ s, send, busy }: { s: State; send: Send; bus
 
 /** 칠흑 장신구: 보스를 골라 카드 한 장에서 제작 · 각성(v3.276 지금 보스가 주는 장신구만). v3.279 칠흑 보스코어(저주받은 마도서)도 같은 카드에서 같은 가격으로 고릅니다. */
 function OnyxGood({ s, busy, buy, now }: P & { now: number }) {
-    const list = [...ONYX_DROP_ITEMS, { id: ONYX_CORE_ID, name: BOSS_CORES[ONYX_CORE_ID].name, desc: `칠흑 보스코어(보스 코어 칸). ${BOSS_CORES[ONYX_CORE_ID].desc}`, boss: BOSS_CORES[ONYX_CORE_ID].onyx }], [pick, setPick] = useState(''), b = list.find(x => x.id === pick) || list.find(x => !onyxOffer(s, x.id, now).reason) || list[0];
+    const list = [...ONYX_DROP_ITEMS, { id: ONYX_CORE_ID, name: BOSS_CORES[ONYX_CORE_ID].name, desc: `보스 코어 칸에 끼는 칠흑 보스코어. ${BOSS_CORES[ONYX_CORE_ID].desc}`, boss: BOSS_CORES[ONYX_CORE_ID].onyx }], [pick, setPick] = useState(''), b = list.find(x => x.id === pick) || list.find(x => !onyxOffer(s, x.id, now).reason) || list[0];
     const o = onyxOffer(s, b.id, now), word = b.id === ONYX_CORE_ID ? '마도서' : '장신구';
     return <GoodCard onyx eyebrow={b.id === ONYX_CORE_ID ? '칠흑 보스코어' : '칠흑 장신구'} title={<span style={{ color: 'var(--rarity-primal)' }}>{b.name}</span>} head={<OnyxArt id={b.id} size={40}/>}
-        desc={`${b.desc} ${o.kind === 'awaken' ? `가진 ${word}를 한 단계 각성합니다(지금 ${o.rank}/${ONYX.awakenMax}).` : `${word}를 바로 만듭니다.`} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
-        controls={<Field label="칠흑 보스"><select className={field} value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{list.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{onyxById(x.boss!)?.name} · {x.name}{r.kind === 'awaken' ? ` (각성 ${r.rank}/${ONYX.awakenMax})` : s.onyxBook?.[x.boss!] ? '' : ' (잠김)'}</option>; })}</select></Field>}
+        desc={`${b.desc} ${o.kind === 'awaken' ? `가진 ${word}를 한 단계 각성합니다. 지금 ${o.rank}/${ONYX.awakenMax}.` : `${word}를 바로 만듭니다.`} 제작 · 각성을 합쳐 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번.`}
+        controls={<Field label="칠흑 보스"><select className={field} value={b.id} disabled={busy} onChange={e => setPick(e.target.value)}>{list.map(x => { const r = onyxOffer(s, x.id, now); return <option key={x.id} value={x.id}>{onyxById(x.boss!)?.name} · {x.name}{r.kind === 'awaken' ? ` · 각성 ${r.rank}/${ONYX.awakenMax}` : s.onyxBook?.[x.boss!] ? '' : ' · 잠김'}</option>; })}</select></Field>}
         cost={o.reason || `${fmt(o.price)} 주화`}>
         <ConfirmAction label={`${o.kind === 'awaken' ? '각성' : '제작'} · ${fmt(o.price)}`} title={`${b.name}을(를) ${o.kind === 'awaken' ? '각성' : '제작'}할까요?`} description={`던전 주화 ${fmt(o.price)}개를 씁니다. 칠흑 상품은 하루 ${DUNGEON_SHOP_DAILY.onyxPerDay}번입니다.`} disabled={busy || !!o.reason || (s.dungeonCoins || 0) < o.price} onConfirm={() => buy(`onyx:${b.id}`)}/>
     </GoodCard>;
@@ -97,17 +97,17 @@ function CoreTab({ s, send, busy, buy, now }: P & { send: Send; now: number }) {
                     <BuyButton disabled={busy || essence < cost} onClick={() => forge('reroll')}>재설정 · 정수 {fmt(cost)}</BuyButton>
                     <BuyButton disabled={busy || !e.attrs[index] || essence < cost} onClick={() => forge('refine')}>재련 · 정수 {fmt(cost)}</BuyButton>
                     <BuyButton disabled={busy || coins < DUNGEON_SHOP.coreReroll} onClick={() => send({ type: 'dungeonShop', id: 'coreReroll', value: `${id}|${index}` })}>재설정 · 주화 {fmt(DUNGEON_SHOP.coreReroll)}</BuyButton>
-                    {e.forges ? <ConfirmAction label={`비용 초기화 · 세계석 ${CORE_FORGE.resetPearls}`} title="코어 손보기 비용을 초기화할까요?" description={`세계석 ${CORE_FORGE.resetPearls}개를 쓰고 손보기 횟수(지금 ${e.forges}회)를 0으로 되돌립니다.`} disabled={busy || s.pearls < CORE_FORGE.resetPearls} onConfirm={() => send({ type: 'coreForgeReset', id })}/> : null}
+                    {e.forges ? <ConfirmAction label={`비용 초기화 · 세계석 ${CORE_FORGE.resetPearls}`} title="코어 손보기 비용을 초기화할까요?" description={`세계석 ${CORE_FORGE.resetPearls}개를 쓰고 손보기 횟수 ${e.forges}회를 0으로 되돌립니다.`} disabled={busy || s.pearls < CORE_FORGE.resetPearls} onConfirm={() => send({ type: 'coreForgeReset', id })}/> : null}
                 </div>
-                <p className="text-xs leading-relaxed text-ink-3">고른 줄을 재설정(종류 · 배율 레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max}) 또는 재련(배율만)합니다. 낮아질 수도 있습니다. 정수는 기본 {CORE_FORGE.base}, 손볼 때마다 ×{CORE_FORGE.growth}{e.forges ? `(지금 ${e.forges}회)` : ''} · 주화 재설정은 비용을 올리지 않습니다.</p>
-            </> : <p className="text-xs leading-relaxed text-ink-3">{c.floors ? `무릉도장 ${c.floors[0]}층을 처음 돌파하면 얻습니다(지금 최고 ${s.abyssBest}층). 랜덤 상자에서는 나오지 않습니다.` : c.onyx ? `칠흑 보스 ${c.boss}을(를) 쓰러뜨리면 칠흑 장신구와 같은 확률 · 천장(${ONYX.dropPity}번째 연속 미획득 격파는 확정)으로 얻고, 다시 얻으면 각성합니다. 아래에서 칠흑 장신구와 같은 주화로 제작할 수도 있습니다. 지역 던전 보너스 정복 · 랜덤 상자에서는 나오지 않습니다.` : '지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다.'} 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
-            {c.floors && <p className="text-xs text-ink-3">무릉도장 층: 획득 {c.floors[0]}층 · 각성 {c.floors.slice(1).join(' · ')}층(최고 기록 기준){e && e.rank < BOSS_CORE_RULES.awakenMax ? ` · 다음 각성 ${c.floors[e.rank + 1]}층` : ''}</p>}
+                <p className="text-xs leading-relaxed text-ink-3">재설정은 종류와 배율을, 재련은 배율만 다시 굴립니다. 배율은 레벨 ×{CORE_ATTRS.min}~{CORE_ATTRS.max}이고 낮아질 수도 있습니다. 정수는 기본 {CORE_FORGE.base}, 손볼 때마다 ×{CORE_FORGE.growth}{e.forges ? `, 지금 ${e.forges}회` : ''}. 주화 재설정은 비용을 올리지 않습니다.</p>
+            </> : <p className="text-xs leading-relaxed text-ink-3">{c.floors ? `무릉도장 ${c.floors[0]}층을 처음 돌파하면 얻습니다. 지금 최고 ${s.abyssBest}층. 랜덤 상자에서는 나오지 않습니다.` : c.onyx ? `칠흑 보스 ${c.boss}을(를) 쓰러뜨리면 칠흑 장신구와 같은 확률과 천장으로 얻고, ${ONYX.dropPity}번째 연속 미획득 격파는 확정이며, 다시 얻으면 각성합니다. 아래에서 칠흑 장신구와 같은 주화로 제작할 수도 있습니다. 지역 던전 보너스 정복 · 랜덤 상자에서는 나오지 않습니다.` : '지역 던전 하루 보너스 정복에서 드물게 나오거나, 아래 랜덤 보스 코어 상자로 얻습니다.'} 얻으면 기본 능력치 2종이 무작위로 붙습니다.</p>}
+            {c.floors && <p className="text-xs text-ink-3">무릉도장 층: 획득 {c.floors[0]}층 · 각성 {c.floors.slice(1).join(' · ')}층, 최고 기록 기준{e && e.rank < BOSS_CORE_RULES.awakenMax ? ` · 다음 각성 ${c.floors[e.rank + 1]}층` : ''}</p>}
         </article>
         {onyxOff ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-l border border-[color:var(--rarity-primal)]/60 bg-surface-2 p-4 shadow-1">
-            <div className="min-w-0 flex-1"><Eyebrow>칠흑 보스코어 · {onyxOff.kind === 'awaken' ? '각성' : '제작'}</Eyebrow><p className="text-s text-ink-2">칠흑 장신구와 같은 가격 · 같은 하루 횟수(칠흑 상품 합쳐 하루 {DUNGEON_SHOP_DAILY.onyxPerDay}번)입니다. {onyxOff.kind === 'awaken' ? `가진 마도서를 한 단계 각성합니다(지금 ${onyxOff.rank}/${ONYX.awakenMax}).` : '마도서를 바로 만듭니다.'}{onyxOff.reason ? ` · ${onyxOff.reason}` : ''}</p></div>
+            <div className="min-w-0 flex-1"><Eyebrow>칠흑 보스코어 · {onyxOff.kind === 'awaken' ? '각성' : '제작'}</Eyebrow><p className="text-s text-ink-2">칠흑 장신구와 같은 가격 · 같은 하루 횟수입니다. 칠흑 상품을 합쳐 하루 {DUNGEON_SHOP_DAILY.onyxPerDay}번. {onyxOff.kind === 'awaken' ? `가진 마도서를 한 단계 각성합니다. 지금 ${onyxOff.rank}/${ONYX.awakenMax}.` : '마도서를 바로 만듭니다.'}{onyxOff.reason ? ` · ${onyxOff.reason}` : ''}</p></div>
             <BuyButton disabled={busy || !!onyxOff.reason || coins < onyxOff.price} onClick={() => buy(`onyx:${ONYX_CORE_ID}`)}>{onyxOff.kind === 'awaken' ? '각성' : '제작'} · {fmt(onyxOff.price)} 주화</BuyButton>
         </div> : <div className="flex flex-wrap items-center justify-between gap-3 rounded-l border border-line bg-surface-2 p-4 shadow-1">
-            <div className="min-w-0 flex-1"><Eyebrow>랜덤 보스 코어 상자</Eyebrow><p className="text-s text-ink-2">지역 던전 코어 7종 중 하나(무릉도장 코어는 층으로만). 없던 코어면 얻고, 있던 코어면 각성합니다(각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}). 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
+            <div className="min-w-0 flex-1"><Eyebrow>랜덤 보스 코어 상자</Eyebrow><p className="text-s text-ink-2">지역 던전 코어 7종 중 하나. 무릉도장 코어는 층으로만 얻습니다. 없던 코어면 얻고, 있던 코어면 각성하며, 각성을 마쳤으면 세계석 +{BOSS_CORE_RULES.duplicatePearls}. 하루 {DUNGEON_SHOP_DAILY.coreBoxPerDay}번 · 오늘 {boxLeft}회 남음</p></div>
             <BuyButton disabled={busy || !boxLeft || coins < DUNGEON_SHOP.coreBox} onClick={() => buy('coreBox')}>구매 · {fmt(DUNGEON_SHOP.coreBox)} 주화</BuyButton>
         </div>}
     </section>;
@@ -117,7 +117,7 @@ function HunterGood({ s, busy, buy }: P) {
     const eligible = allItems(s).filter(x => !hunterBlock(x)), [pick, setPick] = useState(''), [line, setLine] = useState(-1);
     const item = eligible.find(x => x.id === pick) || eligible[0], lines = (item?.affixes || []).map((x, i) => ({ x, i })).filter(({ x }) => !x.rule);
     const index = lines.some(l => l.i === line) ? line : lines[0]?.i ?? -1;
-    return <GoodCard eyebrow="각인" title="포식자 각인" desc="고대 이상 장비의 옵션 한 줄을 포식자(보스 · 사냥감 피해)로 바꿉니다. 장비당 한 줄."
+    return <GoodCard eyebrow="각인" title="포식자 각인" desc="고대 이상 장비의 옵션 한 줄을 보스 · 사냥감 피해를 올리는 포식자로 바꿉니다. 장비당 한 줄."
         controls={item ? <>
             <Field label="장비"><select className={field} value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{eligible.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
             <Field label="바꿀 옵션"><select className={field} value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{lines.map(({ x, i }) => <option key={i} value={i}>{i + 1}. {x.name}</option>)}</select></Field>
@@ -133,7 +133,7 @@ function QualityGood({ s, busy, buy }: P) {
     const rows = item ? (item.affixes || []).map((x, i) => ({ x, i, q: lineQuality(item, i) })).filter(r => r.q !== null && r.q < 1.2 - 1e-6) : [];
     const index = rows.some(r => r.i === line) ? line : rows[0]?.i ?? -1, q = item ? lineQuality(item, index) ?? 0 : 0;
     const ok100 = !!item && qualityLines(item, 'quality100').includes(index), ok120 = !!item && qualityLines(item, 'quality120').includes(index);
-    return <GoodCard eyebrow="옵션 수치" title="옵션 수치 올리기" desc="고른 옵션 한 줄의 수치를 100%(보통 최고)로, 또는 120~150%(계승 최고까지)로 올립니다. 규칙 · 고정 · 장식 옵션은 제외."
+    return <GoodCard eyebrow="옵션 수치" title="옵션 수치 올리기" desc="고른 옵션 한 줄의 수치를 보통 최고인 100%로, 또는 계승 최고인 120~150%로 올립니다. 규칙 · 고정 · 장식 옵션은 제외."
         controls={item ? <>
             <Field label="장비"><select className={field} value={item.id} disabled={busy} onChange={e => { setPick(e.target.value); setLine(-1); }}>{items.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></Field>
             <Field label="옵션"><select className={field} value={index} disabled={busy} onChange={e => setLine(Number(e.target.value))}>{rows.map(r => <option key={r.i} value={r.i}>{r.i + 1}. {r.x.name} · {Math.round(r.q! * 100)}%</option>)}</select></Field>

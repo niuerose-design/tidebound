@@ -16,6 +16,6 @@ export function GoodCard({ eyebrow, title, head, desc, controls, cost, children,
     </article>;
 }
 export function Tile({ icon, label, children, className }: { icon?: ReactNode; label: string; children: ReactNode; className?: string }) {
-    return <div className={cn('flex items-center gap-3 rounded-l border border-line bg-surface-2 p-3 shadow-1', className)}>{icon && <span className="text-accent" aria-hidden="true">{icon}</span>}<div className="grid min-w-0 flex-1 gap-0.5"><span className="text-xs text-ink-3">{label}</span><span className="flex items-baseline gap-1 font-num text-l font-semibold">{children}</span></div></div>;
+    return <div className={cn('flex min-w-0 items-center gap-2.5 rounded-l border border-line bg-surface-2 px-3 py-2 shadow-1', className)}>{icon && <span className="text-accent" aria-hidden="true">{icon}</span>}<div className="grid min-w-0 flex-1 gap-0.5"><span className="text-xs text-ink-3">{label}</span><span className="flex min-w-0 flex-wrap items-baseline gap-1 font-num text-m font-semibold">{children}</span></div></div>;
 }
 export function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="grid gap-0.5 text-xs text-ink-3">{label}{children}</label>; }

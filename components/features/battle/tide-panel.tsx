@@ -22,7 +22,7 @@ export const TidePanel = memo(function TidePanel({ s, send, busy }: { s: State; 
     if (!max) return <section className="rounded-l border border-line bg-surface-2 p-3 shadow-1" aria-label="집중 사냥">{focus}</section>;
     return <section className="grid gap-3 rounded-l border border-line bg-surface-2 p-3 shadow-1 sm:p-4" aria-label="사냥터 난이도">
         <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0" title={`환생 횟수 + 도전 보너스(나이트메어 단계 최대 +${TIDE_CHALLENGE.nightmareMax} · 무릉도장 층 최대 +${TIDE_CHALLENGE.abyssMax})만큼 올릴 수 있는 일반 사냥터 난이도입니다.${bonus.total ? ` 지금 상한 ${max} = 환생 ${s.rebirths} + 나이트메어 ${bonus.nightmare} + 무릉 ${bonus.abyss}.` : ''} 올릴수록 몬스터가 강해지고 보상이 늘어납니다.`}>
+            <div className="min-w-0" title={`일반 사냥터 난이도. 환생 횟수에 도전 보너스를 더한 만큼 올릴 수 있습니다. 도전 보너스는 나이트메어 단계로 최대 +${TIDE_CHALLENGE.nightmareMax}, 무릉도장 층으로 최대 +${TIDE_CHALLENGE.abyssMax}.${bonus.total ? ` 지금 상한 ${max} = 환생 ${s.rebirths} + 나이트메어 ${bonus.nightmare} + 무릉 ${bonus.abyss}.` : ''} 올릴수록 몬스터가 강해지고 보상이 늘어납니다.`}>
                 <h3 className="font-display text-s font-bold text-ink-1">사냥터 난이도 <span className="font-num text-accent">{shown}</span></h3>
                 <p className="mt-0.5 text-xs text-ink-3">골드 ×{tierReward(shown).toFixed(1)} · 경험치 ×{tierExp(shown).toFixed(2)} · 몬스터 체력 ×{tierHealth(shown).toFixed(1)} · 공격 ×{tierAttack(shown).toFixed(1)}</p>
             </div>

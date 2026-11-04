@@ -44,7 +44,7 @@ export function StagesScreen({ s, send, busy }: { s: State; send: Send; busy: bo
                         state={current ? <Badge>현재 사냥터</Badge> : <ArrowUpRight size={16} className="text-ink-3"/>}
                         eyebrow={<span className="inline-flex items-center gap-1"><MapPin size={11}/>{closed ? CLOSED_NOTE : st.subtitle}</span>} title={st.place} description={st.description}
                         foot={<>
-                            <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}{(st.fit ?? 0) > st.rebirth ? <em className={cn('not-italic', s.rebirths >= st.fit! ? 'text-ok' : 'text-warn')} title="기준 몸 측정: 난이도 0에서 무리 없이 사냥할 수 있는 환생(도움말 ‘사냥터’)"> · 적정 환생 {st.fit}</em> : null}</span>
+                            <span>Lv. {st.level}+{st.rebirth ? ` · 환생 ${st.rebirth}회` : ''}{(st.fit ?? 0) > st.rebirth ? <em className={cn('not-italic', s.rebirths >= st.fit! ? 'text-ok' : 'text-warn')} title="난이도 0에서 무리 없이 사냥할 수 있는 환생 횟수. 자세한 기준은 도움말의 사냥터."> · 적정 환생 {st.fit}</em> : null}</span>
                             <span>{st.habitat ? `${st.monsters.length}종 · ${secret ? `무리 ×${HABITAT.sizes[0]}·×${HABITAT.sizes[1]}` : `무리 ×${HABITAT.sizes[0]} ${Math.round((1 - HABITAT.bigChance) * 100)}% · ×${HABITAT.sizes[1]} ${Math.round(HABITAT.bigChance * 100)}%`} 확정 · 까미·누리 없음${onyxBossFor(st.region) ? ` · 칠흑 보스 ${onyxBossFor(st.region)!.name}` : ''}` : `${st.monsters.length}종 서식${secret ? '' : ` · 까미 ×${mimicStageMultiplier(i).toFixed(2)}`}`}</span>
                             {st.habitat ? <span className="text-warn">고위험 고보상 · 처치 한 번에 마리 수만큼 보상·도감 · ×500은 보상 1.5배</span> : <RegionProgress s={s} id={st.id}/>}
                         </>}/>;

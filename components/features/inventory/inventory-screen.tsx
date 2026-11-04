@@ -56,8 +56,8 @@ export function InventoryScreen({ s, send, busy }: { s: State; send: Send; busy:
         </>}/>;
     };
     return <div className="grid gap-5 text-ink-1">
-        <SectionHeader as="h1" eyebrow="Equipment & Forge" title="장비 보관함" description="착용 칸마다 더 좋은 장비가 있으면 바로 추천합니다. 줄을 누르면 상세 · 강화가 열리고, 전투력은 교체 후 종합 전투력 변화입니다."/>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <SectionHeader as="h1" eyebrow="Equipment & Forge" title="장비 보관함" description="줄을 누르면 상세와 강화가 열립니다."/>
+        <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             <Tile icon={<Coins size={18}/>} label="보유 골드"><NumberTicker value={s.gold} suffix=" G" className="text-gold-ink"/></Tile>
             <Tile icon={<Gem size={18}/>} label="보유 정수"><NumberTicker value={s.essence || 0}/></Tile>
             <Tile icon={<ShoppingBag size={18}/>} label="장비 가방"><span className="font-num tabular-nums">{s.inventory.length} <span className="text-s text-ink-3">/ {inventoryCap()}</span></span></Tile>
@@ -127,12 +127,12 @@ function Tile({ icon, label, children }: { icon: React.ReactNode; label: string;
 function CoreSlot({ s, send, busy }: { s: State; send: Send; busy: boolean }) {
     const owned = ownedCores(s), id = s.coreSlot && owned.includes(s.coreSlot) ? s.coreSlot : '', core = id ? BOSS_CORES[id] : undefined, e = coreEntry(s.bossCores?.[id]);
     const onyx = !!core?.onyx;
-    const attrText = e ? (e.attrs.length ? e.attrs.map(x => `${attrName(x.k)} +${formatExact(Math.floor(Math.max(1, s.level) * x.f * coreAwaken(e.rank)))} (레벨 ×${x.f})`).join(' · ') : '기본 능력치 없음(재설정으로 채움)') : '';
+    const attrText = e ? (e.attrs.length ? e.attrs.map(x => `${attrName(x.k)} +${formatExact(Math.floor(Math.max(1, s.level) * x.f * coreAwaken(e.rank)))} · 레벨 ×${x.f}`).join(' · ') : '기본 능력치 없음. 재설정으로 채웁니다.') : '';
     return <section aria-label="보스 코어 칸" className="grid gap-2 rounded-l border border-line bg-surface-2 p-3 shadow-1" style={core ? { borderTopColor: onyx ? 'var(--rarity-primal)' : 'var(--gold-ink)', borderTopWidth: 3 } : undefined}>
         <div className="flex items-center justify-between gap-2 text-xs text-ink-3"><span className="flex items-center gap-1 font-semibold text-ink-2"><Hexagon size={15}/>보스 코어 · 보유 {owned.length}/{Object.keys(BOSS_CORES).length}종</span>{core && <Button type="button" size="xs" variant="ghost" disabled={busy} onClick={() => send({ type: 'equipCore', id: '' })}>해제</Button>}</div>
         {core && e ? <div className="grid gap-1 text-s"><div className="flex flex-wrap items-center gap-2 font-semibold">{onyx && <OnyxArt id={id} size={22}/>}<span style={onyx ? { color: 'var(--rarity-primal)' } : undefined}>{core.name}</span><span className="font-num text-xs text-gold-ink">각성 {e.rank}/{BOSS_CORE_RULES.awakenMax}</span></div><p className="text-xs text-ink-3">{onyx ? `칠흑 보스코어 · ${core.boss} 격파 보상 · 칠흑 ${onyxCollected(s)}/${ONYX_TOTAL}종 · ` : ''}{core.desc}</p><p className="text-xs text-ink-2">{attrText}</p></div>
             : <p className="text-s text-ink-3">{owned.length ? '비어 있음 · 아래에서 낄 코어를 고르세요' : '보스 코어가 없습니다. 지역 던전 보너스 정복이나 던전 주화 상점 상자로 얻고, 칠흑 보스 윌은 칠흑 보스코어를 줍니다.'}</p>}
-        {owned.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-3"><span>칸에 낀 코어 100% · 나머지는 공명 {Math.round(BOSS_CORE_RULES.resonance * 100)}%(턴 연장 제외)</span>
+        {owned.length > 0 && <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink-3"><span>칸에 낀 코어 100% · 나머지는 공명 {Math.round(BOSS_CORE_RULES.resonance * 100)}%, 턴 연장은 빼고</span>
             <select className={field} aria-label="보스 코어 바꾸기" value={id} disabled={busy} onChange={ev => send({ type: 'equipCore', id: ev.target.value })}><option value="">비우기</option>{owned.map(c => <option key={c} value={c}>{BOSS_CORES[c].onyx ? `◆ ${BOSS_CORES[c].name}(칠흑)` : BOSS_CORES[c].name}</option>)}</select></div>}
     </section>;
 }
