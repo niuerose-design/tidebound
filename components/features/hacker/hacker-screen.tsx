@@ -190,7 +190,7 @@ export function HackerScreen({ s, send, busy, setView }: PanelProps) {
             <Head title="정보 해킹" aside={<>알아낸 정보 {leaks.length}개 · 최근 {HACKER.leak.keep}개까지 보관</>}/>
             <Note>서버 깊은 곳에서 아직 모르는 비밀 하나를 빼냅니다. 비트 {cost(HACKER.leak.bits)} · 오늘 {used.leak || 0}/{cap2(HACKER.leak.perDay(n))}</Note>
             <FinePrint summary="빼낼 수 있는 것">
-                <p>장비 드롭 · 등급 · 감정 확률, 까미 · 누리 · 칠흑 · 변종 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 숨은 조건.</p>
+                <p>장비 드롭, 등급, 감정 확률과 까미, 누리, 칠흑, 변종 확률, 희귀 몬스터 출현 가중치, 히든 직업의 전직 조건이나 숨은 조건.</p>
                 <p>퍼뜨릴지는 해커가 정합니다. 방송 탈취나 채팅으로.</p>
             </FinePrint>
             <Primary type="button" className="justify-self-start" disabled={busy || !isHacker || busted || (used.leak || 0) >= cap2(HACKER.leak.perDay(n)) || h.bits < cost(HACKER.leak.bits)} onClick={() => run('leak')}>정보 해킹</Primary>

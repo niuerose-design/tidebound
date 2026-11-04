@@ -78,7 +78,7 @@ export const SkillCard = memo(function SkillCard({ sk, s, send, busy, detailed, 
         {sk.id === 'rareSense' && <p className="text-xs text-ink-3">몬스터 출현률과 장비 등급 확률은 바뀌지 않습니다.</p>}
         {sk.unlockJobMastery && (detailed || !acquired) && <p className="text-xs text-ink-3">최초 해금: {jobById(sk.job)?.name} 숙련도 <b className="font-num text-ink-1">{(s.jobMastery[sk.job!] || 0).toLocaleString()} / {sk.unlockJobMastery.toLocaleString()}</b> · 해금 전에는 SP로 구매 · 계승할 수 없습니다.</p>}
         {detailed && sk.sourceEnemySkill && <p className="text-xs text-ink-3">몬스터 원형: {enemySkillById(sk.sourceEnemySkill)?.name}</p>}
-        {detailed && sk.masteryGain && <p className="text-xs text-ink-3"><b className="text-ink-1">대상 처치 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b> · {masteryConditionText(sk)} · 현재 직업 · 장착 스킬에 적용 · 가장 높은 보너스 하나만 · 최대 ×10</p>}
+        {detailed && sk.masteryGain && <p className="text-xs text-ink-3"><b className="text-ink-1">대상 처치 시 숙련 ×{1 + masteryGainBonus(sk, level)}</b> · {masteryConditionText(sk)} · 현재 직업과 장착 스킬에 적용, 가장 높은 보너스 하나만, 최대 ×10</p>}
         {detailed && masteryBar}
         {!detailed && <div className="flex flex-wrap gap-1">
             <span className={chip(sk.awaken ? 'gold' : undefined)}>{sk.type === 'active' ? (sk.awaken ? '각성 · 턴마다' : '액티브') : '패시브'}</span>

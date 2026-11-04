@@ -17,7 +17,7 @@ export function HuntingTopic({ s, secret, swarm }: { s?: State; secret: boolean;
     <Topic icon={<Fish size={19}/>} title="사냥 · 던전 · 생존" note="변종, 던전 반복, 회복과 방치 진행.">
         <div className="grid gap-1.5">
             <Rule icon={<Fish size={19}/>} q="변종은 무엇인가요?" title="변종"
-                effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b>{secret ? '' : ` ${percent(v.chance, 1)}`} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보의 메소 마스터리 · 메소 가드 · 섀도우 파트너 · 메소 익스플로전 강화 패시브가 확률을 올립니다.</>}
+                effect={<>같은 몬스터인데 특이한 개체입니다. {VARIANTS.filter(v => v.id !== 'swarm').map(v => <span key={v.id}><br/>{v.mark} <b>{v.name}</b>{secret ? '' : ` ${percent(v.chance, 1)}`} · {v.desc}</span>)}<br/>✦ <b>황금 개체</b> · 처치 순간 따로 판정, 그 한 마리 골드 10배. 섀도어 계보의 메소 마스터리, 메소 가드, 섀도우 파트너, 메소 익스플로전 강화 패시브가 확률을 올립니다.</>}
                 condition={`사냥터에서 그 몬스터를 ${VARIANT_BOOK_MIN}회 이상 처치한 뒤부터 출현마다 판정합니다. 버섯숲 연못 테마 +10%. 섀도어 계보 패시브가 확률을 올립니다. 픽파킷 +20%, 무리 감지 +50%, 메소 익스플로전 강화 +100% 등.`}
                 limit={secret ? '던전과 보스에는 변종이 없습니다. 확률은 공개하지 않습니다.' : '던전과 보스에는 변종이 없습니다. 지금 확률은 능력치 화면 아래 ‘변종 조우 확률’에서 봅니다.'}/>
             <Rule icon={<Fish size={19}/>} q="무리 변종은 어떻게 상대하나요?" title="무리 변종"
@@ -25,7 +25,7 @@ export function HuntingTopic({ s, secret, swarm }: { s?: State; secret: boolean;
                 condition={`규모는 도감 처치 수로 정해집니다. ${SWARM_UNLOCK[5]}회 ×5, ${SWARM_UNLOCK[100].toLocaleString()}회 ×100. ×500 도전 무리는 무리 서식지에서만 나옵니다.`}
                 limit="적 방어는 한 마리와 같고, 공격은 ×500에서만 490배입니다. 처치 전에 쓰러지면 보상이 없습니다."/>
             <Rule icon={<Swords size={19}/>} q="던전에서는 무엇을 얻나요?" title="던전 · 무릉도장"
-                effect={`던전에서는 처치마다 골드 · 경험치 · 숙련 · 장비가 나오지 않고, 정복하면 던전 주화를 받습니다. 지역 던전은 한국 시간 자정 기준 하루 처음 ${DAILY_BONUS.clears}번의 정복이 보너스입니다. 보너스는 노말 ${DAILY_BONUS.coins.normal} · 헬 ${DAILY_BONUS.coins.hell} · 나이트메어 ${DAILY_BONUS.coins.nightmare}이고 던전 공용이며 이월되지 않습니다. 그 뒤는 ${DUNGEON_COINS.normal} · ${DUNGEON_COINS.hell} · ${DUNGEON_COINS.nightmare}입니다. 무릉도장은 1 + 10층마다 1이고 보너스가 없습니다. 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나오고, 오래 못 받으면 확정입니다. 보스 코어 칸에 하나를 끼면 효과 100%, 나머지 코어는 10%이고 턴 연장은 빼며, 다시 얻으면 각성합니다. 환생 · 승천해도 남습니다. 주화는 던전 화면의 주화 상점에서 칠흑 장신구 · 장비 상자 · 포식자 각인으로 바꿉니다. 정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
+                effect={`던전에서는 처치마다 골드, 경험치, 숙련, 장비가 나오지 않고, 정복하면 던전 주화를 받습니다. 지역 던전은 한국 시간 자정 기준 하루 처음 ${DAILY_BONUS.clears}번의 정복이 보너스입니다. 보너스는 노말 ${DAILY_BONUS.coins.normal} · 헬 ${DAILY_BONUS.coins.hell} · 나이트메어 ${DAILY_BONUS.coins.nightmare}이고 던전 공용이며 이월되지 않습니다. 그 뒤는 ${DUNGEON_COINS.normal} · ${DUNGEON_COINS.hell} · ${DUNGEON_COINS.nightmare}입니다. 무릉도장은 1 + 10층마다 1이고 보너스가 없습니다. 보너스 정복에서는 드물게 그 던전 보스의 기술을 이어받는 보스 코어가 나오고, 오래 못 받으면 확정입니다. 보스 코어 칸에 하나를 끼면 효과 100%, 나머지 코어는 10%이고 턴 연장은 빼며, 다시 얻으면 각성합니다. 환생 · 승천해도 남습니다. 주화는 던전 화면의 주화 상점에서 칠흑 장신구 · 장비 상자 · 포식자 각인으로 바꿉니다. 정해진 횟수 또는 실패할 때까지 자동으로 다시 도전합니다. 무릉도장은 10층마다 보너스 세계석, ${ABYSS_SP_MILESTONES.join('·')}층 첫 돌파에 SP 1.`}
                 condition="던전 카드에서 반복을 고른 뒤 도전합니다. 입장 후 6초 준비가 끝나면 체력·마나가 회복됩니다."
                 limit={`던전에서는 처치 후 회복이 ${percent(MONSTER_TUNING.dungeonHealAfterKill)}입니다. 반복이 끝나면 사냥터로 돌아옵니다.`}/>
             {/* v3.312 던전 화면에 있던 난이도 · 나이트메어 단계 설명을 여기로 옮겼습니다. */}

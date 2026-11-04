@@ -74,5 +74,5 @@ export function RankPerkRow({ s }: { s: State }) {
     const active = RANK_PERKS.map(p => ({ p, level: rankPerkLevel(s, p.id) })).filter(x => x.level > 0);
     const value = (id: typeof RANK_PERKS[number]['id'], level: number) => id === 'tally' ? `처치 1마리 = 계급 경험치 ${1 + level}마리` : id === 'drill' ? `처치 숙련 +${level} (고정)` : `${(rankPerkValue(s, id) * 100).toFixed(1)}%로 ${id === 'medal' ? 'SP' : '세계석'} +1 · 사냥터만`;
     return <FoldRow label={`계급 특전 · ${rankTitle(s)}`} value={active.length ? `${active.reduce((a, x) => a + x.level, 0)}P 적용` : '없음'} rows={active.map(({ p, level }) => [`${p.name} ${level}단계`, value(p.id, level)] as Row)}
-        note={active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해지고, 계열 집중 · 이벤트 · 연구 · 승천 배율을 받지 않습니다. 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}/>;
+        note={active.length ? '숙련 훈련은 위 숙련도 획득에 배율과 따로 더해지고, 계열 집중, 이벤트, 연구, 승천 배율을 받지 않습니다. 전공 훈장·보급품은 던전에서는 발동하지 않습니다.' : '치장 → 계급에서 진급 포인트로 특전을 켜면 여기에 적용값이 보입니다.'}/>;
 }

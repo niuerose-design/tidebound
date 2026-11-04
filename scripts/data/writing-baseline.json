@@ -1,66 +1,20 @@
 {
  "note": "docs/writing.md 래칫 기준: 파일마다 지금 남아 있는 위반 수. 줄이면 node scripts/check-writing.mjs --update 로 다시 씁니다. 늘리지 않습니다.",
  "files": {
-  "components/features/arena/arena-screen.tsx": {
-   "dots": 1
-  },
   "components/features/character/breakdown.tsx": {
-   "paren": 1,
-   "long": 1,
-   "dots": 1
+   "paren": 1
   },
   "components/features/character/character-screen.tsx": {
    "paren": 1
   },
-  "components/features/codex/research-bonus.tsx": {
-   "dots": 2,
-   "long": 1
-  },
-  "components/features/expedition/expedition-screen.tsx": {
-   "dots": 3,
-   "long": 1
-  },
-  "components/features/expedition/run.tsx": {
-   "dots": 1
-  },
-  "components/features/hacker/crew-screen.tsx": {
-   "long": 1
-  },
-  "components/features/hacker/hacker-screen.tsx": {
-   "dots": 1
-  },
-  "components/features/help/topics/altar.tsx": {
-   "dots": 4,
-   "long": 9
-  },
   "components/features/help/topics/combat.tsx": {
-   "paren": 3,
-   "long": 2,
-   "dots": 1
+   "paren": 3
   },
   "components/features/help/topics/growth.tsx": {
-   "paren": 1,
-   "long": 15,
-   "dots": 4
-  },
-  "components/features/help/topics/hunting.tsx": {
-   "long": 6,
-   "dots": 2,
    "paren": 1
   },
-  "components/features/help/topics/jobs.tsx": {
-   "long": 1
-  },
-  "components/features/help/topics/skills.tsx": {
-   "long": 4,
-   "dots": 1
-  },
-  "components/features/journal/story-screen.tsx": {
-   "dots": 1
-  },
-  "components/features/legacy/ascension.tsx": {
-   "long": 1,
-   "dots": 2
+  "components/features/help/topics/hunting.tsx": {
+   "paren": 1
   },
   "components/features/legacy/rebirth-screen.tsx": {
    "paren": 2
@@ -68,96 +22,11 @@
   "components/features/legacy/vows.tsx": {
    "paren": 1
   },
-  "components/features/settings/settings-screen.tsx": {
-   "long": 4,
-   "dots": 1
-  },
-  "components/features/shop/dungeon-shop-screen.tsx": {
-   "long": 1
-  },
-  "components/features/shop/shop-screen.tsx": {
-   "long": 1
-  },
-  "components/game/chat-panel.tsx": {
-   "dots": 1
-  },
-  "components/game/jobs/job-status.ts": {
-   "dots": 1
-  },
-  "components/game/scene-look-panel.tsx": {
-   "dots": 1
-  },
-  "game/data/balance.ts": {
-   "long": 1
-  },
-  "game/data/classes.ts": {
-   "long": 1
-  },
-  "game/data/economy.ts": {
-   "long": 3
-  },
-  "game/data/expansion-defense.ts": {
-   "long": 2
-  },
-  "game/data/expansion-monostat.ts": {
-   "long": 2
-  },
-  "game/data/expansion-v24.ts": {
-   "long": 1
-  },
-  "game/data/expansion-v25.ts": {
-   "long": 1
-  },
-  "game/data/expansion.ts": {
-   "dots": 1
-  },
-  "game/data/expedition.ts": {
-   "dots": 7
-  },
-  "game/data/gear.ts": {
-   "long": 1
-  },
-  "game/data/otherworld.ts": {
-   "long": 8
-  },
   "game/data/skill-balance.ts": {
    "paren": 4
   },
-  "game/data/specials.ts": {
-   "long": 2
-  },
-  "game/data/variants.ts": {
-   "long": 1
-  },
-  "game/systems/actions/dungeon-shop.ts": {
-   "dots": 1
-  },
-  "game/systems/actions/expedition.ts": {
-   "dots": 1
-  },
-  "game/systems/actions/hacker.ts": {
-   "dots": 1
-  },
-  "game/systems/actions/lifecycle.ts": {
-   "dots": 1
-  },
-  "game/systems/commerce.ts": {
-   "dots": 2
-  },
-  "game/systems/encounter.ts": {
-   "dots": 2
-  },
-  "game/systems/guidance.ts": {
-   "dots": 1,
-   "long": 3
-  },
-  "game/systems/market.ts": {
-   "dots": 2
-  },
   "game/systems/skill-description.ts": {
-   "paren": 12,
-   "dots": 4,
-   "long": 7
+   "paren": 12
   }
  }
 }

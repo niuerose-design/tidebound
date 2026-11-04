@@ -509,10 +509,10 @@ export const SETS: SetDef[] = [
     { id: 'genesis', name: '창세', icon: '🌊', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
     // v3.429: 파란 버섯(비용 1 초원) 대신 기억의 수호병(비용 1 신전 수호). 이 세트는 초원 비용 1이 셋(슬라임 · 돼지 · 파란 버섯)이고 신전 비용 1은 없어, 바꿔 넣으면 풀 크기(30)를 지키면서 신전 초반을 엽니다.
     // 상점 시뮬(EXP_SET=deepTide): 신전 조합 72 → 75%(3 · 4라운드 66/59 → 73/69), 기억의 수호병을 쓰는 신전 조합 76~78%, 지하 조합 · 무작위 구매는 그대로.
-    { id: 'deepTide', name: '심해의 조류', icon: '🌑', desc: '던전 보스 킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스와 뿔버섯, 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+    { id: 'deepTide', name: '심해의 조류', icon: '🌑', desc: '던전 보스 킹 슬라임, 좀비 머쉬맘, 주니어 발록, 파풀라투스와 뿔버섯, 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
     // v3.430 세트 3 · 4: 빠지는 유닛과 같은 비용 · 지역 칸을 새 유닛으로 채워 비용 곡선 · 지역별 비용 1 · 역할 수(각 4 이상)를 지킵니다.
-    { id: 'leafre', name: '리프레의 날개', icon: '🐉', desc: '드래곤 터틀 · 와이번 · 레드 드레이크 · 다크 스톤골렘과 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘용의 심장’ · 아이템 ‘용의 비늘’.', remove: ['orangeMushroom', 'stoneGolem', 'curseEye', 'ligator', 'seaGuard', 'erdaSpirit'], add: ['redTurtle', 'darkStoneGolem', 'blueWyvern', 'blueTurtle', 'redDrake', 'memoryGuard'] },
-    { id: 'timeTemple', name: '시간의 신전', icon: '⏳', desc: '비용 1 신전 도도 · 키메라 · 추억의 수호병 · 트루 에르다 · 주니어 네키 · 와이번이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘시간 되감기’ · 아이템 ‘모래시계’.', remove: ['pig', 'mixedGolem', 'darkDrake', 'juniorWraith', 'sharkUnit', 'memoryMonitor'], add: ['dodo', 'memoryKnight', 'trueErda', 'juniorNekki', 'wyvern', 'chimera'] },
+    { id: 'leafre', name: '리프레의 날개', icon: '🐉', desc: '드래곤 터틀, 와이번, 레드 드레이크, 다크 스톤골렘과 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘용의 심장’ · 아이템 ‘용의 비늘’.', remove: ['orangeMushroom', 'stoneGolem', 'curseEye', 'ligator', 'seaGuard', 'erdaSpirit'], add: ['redTurtle', 'darkStoneGolem', 'blueWyvern', 'blueTurtle', 'redDrake', 'memoryGuard'] },
+    { id: 'timeTemple', name: '시간의 신전', icon: '⏳', desc: '비용 1 신전 도도, 키메라, 추억의 수호병, 트루 에르다, 주니어 네키, 와이번이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘시간 되감기’ · 아이템 ‘모래시계’.', remove: ['pig', 'mixedGolem', 'darkDrake', 'juniorWraith', 'sharkUnit', 'memoryMonitor'], add: ['dodo', 'memoryKnight', 'trueErda', 'juniorNekki', 'wyvern', 'chimera'] },
 ];
 /**
  * v3.430 주간 로테이션(전에는 분기마다 한 세트): 한국 시간 월요일 0시마다 SETS 순서대로 다음 세트로 넘어가고 끝까지 가면 처음으로 돌아갑니다.

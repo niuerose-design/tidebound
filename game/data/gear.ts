@@ -99,7 +99,7 @@ export const AFFIX_POOL: AffixDef[] = [
     // v3.71 고대 이상 전용 옵션(minRarity 5): 고대 · 태초에서만 굴려지는 강한 옵션. 각인 감정으로는 고를 수 없습니다(낮은 등급이 나올 수 있어서).
     // v3.197 가중치를 따로 둡니다(기본 1이라 일반 옵션만큼 나와 태초 5개 중 1개꼴로 초월이 붙었음): 초월 .2(태초 약 4~5%), 나머지 .4.
     { id: 'ruin', name: '파멸', stat: 'critDamage', kind: 'percent', base: .2, minRarity: 5, weight: .4, description: '고대 이상. 치명 피해가 크게 오릅니다.' },
-    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, weight: .2, description: '고대 이상. 체력 · 마나 · 물리/마법 공격 · 물리/마법 방어가 % 오릅니다.' },
+    { id: 'transcend', name: '초월', stat: 'allStats', kind: 'percent', base: .015, minRarity: 5, weight: .2, description: '고대 이상. 체력, 마나, 물리/마법 공격, 물리/마법 방어가 % 오릅니다.' },
     { id: 'hunter', name: '포식자', stat: 'bossDamage', kind: 'percent', base: .05, minRarity: 5, weight: .4, description: '고대 이상. 보스 · 사냥감에게 주는 직접 피해가 오릅니다. 다른 보스 피해와 곱하고, 지속 피해에는 붙지 않습니다.' },
     { id: 'tempo', name: '연격', stat: 'chainBonus', kind: 'percent', base: .02, minRarity: 5, weight: .4, description: '고대 이상. 연속 행동 확률이 오릅니다. 속도와는 무관합니다.' },
     { id: 'bounty', name: '풍요', stat: 'expBonus', kind: 'percent', base: .04, stat2: 'goldBonus', base2: .05, rollBoth: true, minRarity: 5, weight: .4, description: '고대 이상. 경험치와 골드 획득이 함께 늘어납니다.' },

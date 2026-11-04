@@ -53,7 +53,7 @@ export function ShopScreen({ s, send, busy }: { s: State; send: Send; busy: bool
     // v3.72 세 뽑기 탭은 같은 틀(머리 · 설명 · 선택 줄 · 비용 줄 · 버튼 줄)이라 탭을 바꿔도 화면이 흔들리지 않습니다.
     const draw = tab === 'gamble' ? {
         label: '랜덤 뽑기', eyebrow: '모든 부위', head: icons(),
-        desc: '무기 · 방어구 · 장신구 · 망토 중 하나가 같은 확률로 나오고, 무기는 물리나 마법 중 하나입니다. 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.',
+        desc: '무기, 방어구, 장신구, 망토 중 하나가 같은 확률로 나오고, 무기는 물리나 마법 중 하나입니다. 등급 수만큼 옵션이 붙고, 영웅 이상은 규칙 옵션이 붙을 수 있습니다.',
         controls: <span className="text-xs text-ink-3">Lv.{s.level} · 희귀 이상 · 부위 무작위 · 옵션 1~6개</span>,
         cost: `한 번 ${fmt(gamble)} G`,
         actions: GAMBLE_COUNTS.map(n => { const total = gamble * n, noRoom = s.inventory.length + n > cap; return <ConfirmAction key={n} label={`${n}개 · ${fmt(total)} G`} title={`랜덤 뽑기 ${n}개를 할까요?`} description={`골드 ${fmt(total)} G를 사용합니다. ${odds}부위는 무작위이고, 결과는 가방에 보관됩니다.${n > 1 ? ` 가방 ${n}칸이 필요합니다.` : ''}`} disabled={busy || s.gold < total || noRoom} onConfirm={() => send({ type: 'gamble', id: APPRAISAL_ALL, value: String(n) })}/>; }),

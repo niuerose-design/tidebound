@@ -41,7 +41,7 @@ export function setSceneLook(patch: Partial<SceneLook>) {
 /** 그림 파일을 160×220 안으로 줄여 저장합니다. 실패하면 오류 문구를 돌려줍니다. */
 export async function setHeroImage(file: File | null): Promise<string | null> {
     if (!file) { try { localStorage.removeItem(IMAGE_KEY); } catch { /* 없음 */ } window.dispatchEvent(new Event(EVENT)); return null; }
-    if (!file.type.startsWith('image/')) return '그림 파일(PNG · JPG · GIF · WebP)만 올릴 수 있습니다.';
+    if (!file.type.startsWith('image/')) return 'PNG, JPG, GIF, WebP 그림 파일만 올릴 수 있습니다.';
     if (file.size > 8 * 1024 * 1024) return '8MB보다 작은 그림을 올려 주세요.';
     try {
         const bitmap = await createImageBitmap(file);

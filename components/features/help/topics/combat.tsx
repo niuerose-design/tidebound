@@ -22,13 +22,13 @@ export function CombatTopic() {
             <Rule icon={<Crosshair size={19}/>} q="공격은 왜 빗나가나요?" title="명중 · 회피"
                 effect="실제 적중률 = 내 명중 − 상대 회피 + 속도 보정. 속도 보정은 최대 ±6%p. 마법 기술·마력 평타는 상대 회피를 절반만 받고 속도 보정의 마이너스를 받지 않습니다."
                 condition="명중·회피 수치는 확률이 아닙니다. 몬스터별 실제 적중률은 도감에서 봅니다."
-                limit="적중률은 1~99.5%. 패시브 · 장비 · 연구 · 직업처럼 기민을 뺀 회피 소스는 합쳐서 60%p까지만 세고, 기민 회피는 그 위에 더합니다. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다."/>
+                limit="적중률은 1~99.5%. 패시브, 장비, 연구, 직업처럼 기민을 뺀 회피 소스는 합쳐서 60%p까지만 세고, 기민 회피는 그 위에 더합니다. 회피는 50%를 넘으면 효율이 줄어 90%에 수렴합니다."/>
             <Rule icon={<Shield size={19}/>} q="반격은 어떻게 들어가나요?" title="반격 · 무리 사냥"
                 effect={`맞을 때마다 내 방어 × 반격 계수만큼 돌려줍니다. 물리 공격을 맞으면 물리 방어, 마법 공격을 맞으면 마법 방어 기준입니다. 공격자 방어는 ${Math.round((1 - SKILL_FORMULA.thornsPierce) * 100)}%만 적용합니다. 무리 ×N을 상대하면 반격이 1 + log₂N배: ×5 약 3.3배 · ×100 약 7.6배 · ×500 ${SKILL_FORMULA.swarmThornsCap}배.`}
                 condition="탱커 계보 패시브는 반격과 함께 무리 조우 확률을 올립니다(+30~120%). 탱커는 1:1이 느린 대신 무리를 반격으로 갈아 마리 수만큼 보상을 받는 길입니다."
                 limit="반격은 흡혈이 2배로 적용되고, 피해 없는 상태이상 기술에는 발동하지 않습니다."/>
         </div>
-        <FoldSection level={3} title={<span className="inline-flex flex-wrap items-center gap-2 [&_svg]:size-4 [&_svg]:text-accent [&_span]:text-xs [&_span]:font-normal [&_span]:text-ink-3"><Sparkles size={15}/> 피해의 종류 <span>물리 · 마법 · 복합 · 지속(고정) · 마력 평타 · 능력치 비례</span></span>}>
+        <FoldSection level={3} title={<span className="inline-flex flex-wrap items-center gap-2 [&_svg]:size-4 [&_svg]:text-accent [&_span]:text-xs [&_span]:font-normal [&_span]:text-ink-3"><Sparkles size={15}/> 피해의 종류 <span>물리, 마법, 복합, 고정 지속 피해, 마력 평타, 능력치 비례</span></span>}>
             <div className="grid gap-1.5">
                 <Rule icon={<Swords size={19}/>} q="물리 피해는 어떻게 계산하나요?" title="물리 피해"
                     effect="물리 공격 × 스킬 배율. 상대의 물리 방어로 줄어듭니다: 피해 × 100 ÷ (100 + 물리 방어 × 2)."
