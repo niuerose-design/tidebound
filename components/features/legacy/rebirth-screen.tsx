@@ -11,7 +11,7 @@ import { RESEARCH_TABS, RELICS, RELIC_GROWTH, HEIR_GROWTH, heirFactor, heirPower
 import { PROGRESSION, STAT_LABELS, statDeltaDisplay } from '@/game/data/progression';
 import { STARFORCE, starLabel } from '@/game/data/starforce';
 import { SLOTS } from '@/game/data/balance';
-import { rebirthRewardParts, tailwindActive, tailwindExp, tailwindLevel, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
+import { rebirthRewardParts, REBIRTH_PEARL_LINEAR, tailwindActive, tailwindExp, tailwindLevel, xpWall, rebirthLevel, rebirthReward, rebirthAP, tideLimit } from '@/game/systems/meta';
 import { permanentExpBonus } from '@/game/systems/stats';
 import { apCapacity, researchAP } from '@/game/systems/progression';
 import { breathBonus } from '@/game/systems/vows';
@@ -66,7 +66,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
                     </div>
                 </div>
                 <Ledger gain={[
-                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${parts.level} · 환생 횟수 ${parts.count}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
+                    [`세계석 +${fmt(reward + breathExtra)}`, `레벨 ${projected.level} ÷ 10 = ${parts.level} · 환생 횟수 보상 ${parts.count}${s.rebirths > REBIRTH_PEARL_LINEAR ? `(${REBIRTH_PEARL_LINEAR}회까지 회당 1 · 그 뒤 √(횟수 − ${REBIRTH_PEARL_LINEAR}) · 지금 ${s.rebirths}회)` : ''}${breathExtra ? ` · 서약 +${breathExtra}` : ''}`],
                     ['환생 영구 보너스: 체력·마나·물리/마법 공격·물리/마법 방어', `현재 +${memoryNow}% → 환생 후 +${memoryNext}%`],
                     ['영구 경험치 획득', `현재 ×${permanentExp.toFixed(2)} → 환생 후 ×${(permanentExp - rebirthExperience(s.rebirths) + rebirthExperience(s.rebirths + 1)).toFixed(2)}`],
                     [`장착 AP ${apGain ? '+1' : '+0'}`, apGain ? `환생 AP ${rebirthAP(s)} → ${rebirthAP(s) + 1}` : `환생 AP 최대치(${ECONOMY.rebirthAPCap}) 도달`],

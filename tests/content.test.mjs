@@ -97,6 +97,9 @@ test('Variants: appear from 10 catches; swarm sizes gated by codex and passive; 
 
 test('Rebirth reward breakdown always sums to the pearls actually granted',()=>{
  for(const [lv,rb] of [[30,0],[45,3],[60,6],[100,6],[100,25],[70,400]]){const s=newState(0);s.level=lv;s.rebirths=rb;const p=metaMod.rebirthRewardParts(s);assert.equal(p.level+p.count,metaMod.rebirthReward(s));}
+ // v3.446 횟수 보상: 20회까지 회당 1, 그 뒤 √(횟수 − 20). 36~44회는 24로 같습니다(의도한 완만화).
+ for(const [rb,count] of [[0,0],[20,20],[21,21],[29,23],[36,24],[44,24],[45,25],[101,29],[200,33]]) assert.equal(metaMod.rebirthCountPearls(rb),count,`환생 ${rb}회 횟수 보상`);
+ assert.equal(metaMod.REBIRTH_PEARL_LINEAR,20);
 });
 
 test('Follow-up hits: each hit counted once, total equals HP lost, stops when the target dies, works for player and enemy',()=>{
