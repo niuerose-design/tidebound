@@ -26,9 +26,9 @@ export function StatsScreen({ s }: { s: State }) {
     const duels = s.wins + s.losses;
     return <div className="grid gap-4 text-ink-1">
         <SectionHeader as="h1" eyebrow="STATISTICS" title="통계" description="지금까지 쌓은 모험의 기록입니다."/>
-        <FoldSection title="실시간 효율" defaultOpen><LiveRatesCard s={s}/></FoldSection>
+        <section className="rounded-l border border-line bg-surface-2 p-4 shadow-1"><LiveRatesCard s={s}/></section>
         <Block title="모험" open rows={[
-            ['사냥 시간(부재중 정산 포함)', formatDuration(s.playMs || 0)],
+            ['사냥 시간(부재중 포함)', formatDuration(s.playMs || 0)],
             ['누적 처치', `${fmt(s.kills)}마리`],
             ['쓰러짐', `${fmt(s.deaths)}회`],
             ['환생', `${fmt(s.rebirths)}회`],
@@ -56,7 +56,8 @@ export function StatsScreen({ s }: { s: State }) {
         <Block title="사냥터 최고 난이도" note="사냥터마다 처치한 가장 높은 난이도" rows={BASE_STAGES.map(st => [st.name, `${s.tideBest?.[st.id] || 0}`] as Row)}/>
         <Block title="결투" rows={[
             ['레이팅', fmt(s.rating)],
-            ['전적', duels ? `${fmt(s.wins)}승 ${fmt(s.losses)}패 (승률 ${Math.round(s.wins / duels * 100)}%)` : '기록 없음'],
+            ['전적', duels ? `${fmt(s.wins)}승 ${fmt(s.losses)}패` : '기록 없음'],
+            ['승률', duels ? `${Math.round(s.wins / duels * 100)}%` : '—'],
         ]}/>
         <FoldSection title="환생 기록"><RebirthHistory s={s}/></FoldSection>
     </div>;

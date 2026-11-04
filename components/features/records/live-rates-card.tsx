@@ -10,6 +10,7 @@ const xpNeededSafe = (level: number, rebirths: number, wall?: XpTargetWall) => l
 import { short, format } from '@/components/game/shared';
 import { recentKill, RATE_WINDOW_MS, useLiveRates } from '@/components/game/live-rates';
 import { Button } from '@/components/ui/button';
+import { FinePrint } from '@/components/ui/game';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 /** 타일 강조색(경험치 · 골드 · 처치 · 숙련 · DPS). */
@@ -48,14 +49,18 @@ export const LiveRatesCard = memo(function LiveRatesCard({ s, compact = false }:
     return <section className={cn('grid gap-2.5 text-ink-1', compact ? 'mb-3 rounded-l border border-line bg-surface-2 px-3.5 py-3 shadow-1' : '')} aria-label="실시간 효율">
         <div className="flex flex-wrap items-center gap-2.5">
             <h2 className="inline-flex items-center gap-1.5 font-display text-s font-bold"><Activity size={16} className="text-accent"/> 실시간 효율 <span className={cn('font-sans text-xs font-medium', r.ready ? 'text-ink-3' : 'text-warn')}>{status}</span></h2>
-            {recent && <span className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-line bg-surface-1 px-2 py-0.5 text-xs text-ink-3 max-sm:order-3 max-sm:w-full" key={recent.id} title="가장 최근 처치로 얻은 양(경험의 누리·숙련의 까미 당첨분 포함)">최근 처치 <b className="font-num text-gold-ink">+{format(recent.exp)} EXP</b><b className="font-num text-gold-ink">+{format(recent.gold)} G</b>{recent.mastery > 0 && <b className="font-num text-ok">숙련 +{format(recent.mastery)}</b>}</span>}
+            {recent && <span className="inline-flex flex-wrap items-center gap-1.5 rounded-full border border-line bg-surface-1 px-2 py-0.5 text-xs text-ink-3 max-sm:order-3 max-sm:w-full" key={recent.id} title="가장 최근 처치로 얻은 양. 경험의 누리 · 숙련의 까미 당첨분을 포함합니다.">최근 처치 <b className="font-num text-gold-ink">+{format(recent.exp)} EXP</b><b className="font-num text-gold-ink">+{format(recent.gold)} G</b>{recent.mastery > 0 && <b className="font-num text-ok">숙련 +{format(recent.mastery)}</b>}</span>}
             {compact && <Button type="button" size="icon-xs" variant="outline" className="ml-auto pointer-coarse:min-h-11 pointer-coarse:min-w-11" aria-expanded={open} onClick={toggle} title={open ? '접기' : '펼치기'}><ChevronDown size={16} className={cn('transition-transform', open && 'rotate-180')}/></Button>}
         </div>
         {open && <>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">{tiles.map(t => <div key={t.label} style={{ '--tone': TONE[t.tone] } as React.CSSProperties} className="relative grid min-w-0 content-start gap-0.5 overflow-hidden rounded-m border border-line bg-surface-1 py-2.5 pl-3.5 pr-9 before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:bg-[var(--tone)]"><t.Icon size={15} className="absolute right-2.5 top-2.5 text-[var(--tone)] opacity-85"/><span className="text-xs tracking-wide text-ink-3">{t.label}</span><strong className={cn('font-num text-l font-extrabold leading-tight', r.ready ? 'text-ink-1' : 'text-ink-3')}>{r.ready ? t.value : '—'}</strong>{t.sub && <small className="h-4 truncate text-xs leading-4 text-ink-3">{r.ready ? t.sub : ' '}</small>}</div>)}</div>
             <Table className="max-w-xl font-num text-xs [&_td]:text-right [&_th]:text-right"><TableHeader><TableRow><TableHead className="text-left!">예상</TableHead><TableHead>경험치</TableHead><TableHead>레벨</TableHead><TableHead>골드</TableHead><TableHead>처치</TableHead><TableHead>숙련</TableHead></TableRow></TableHeader>
                 <TableBody>{HORIZONS.map(([label, h]) => { const p = projectLevel(s.level, s.exp, s.rebirths, r.perHour.exp * h, xpWall(s)); return <TableRow key={label}><TableHead className="text-left! font-semibold text-ink-2">{label}</TableHead><TableCell title={r.ready ? format(Math.round(r.perHour.exp * h)) : ''}>{r.ready ? short(r.perHour.exp * h) : '—'}</TableCell><TableCell className="text-[#8fd3ff]">{r.ready ? (p.capped ? `Lv.${LEVEL_CAP} ✓` : `Lv.${p.level}`) : '—'}</TableCell><TableCell title={r.ready ? format(Math.round(r.perHour.gold * h)) : ''}>{r.ready ? short(r.perHour.gold * h) : '—'}</TableCell><TableCell>{r.ready ? short(r.perHour.kills * h) : '—'}</TableCell><TableCell>{r.ready ? short(r.perHour.mastery * h) : '—'}</TableCell></TableRow>; })}</TableBody></Table>
-            {!compact && <p className="flex items-start gap-1.5 text-xs leading-relaxed text-ink-3"><Sparkles size={12} className="mt-0.5 shrink-0"/> 브라우저가 이미 받는 전투 기록으로 계산하므로 서버에 부담이 없습니다. 5분 창의 실측 평균이며, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다. 레벨 예상은 지금 속도가 이어진다고 보고 셉니다(몬스터·난이도를 바꾸면 달라짐). 숙련은 직업 단련치 합의 증가분입니다.</p>}
+            {!compact && <FinePrint summary="계산 방법">
+                <p>브라우저가 받는 전투 기록으로 계산합니다. 5분 창의 실측 평균이고, 탭을 숨기거나 부재중 정산이 들어오면 창을 새로 시작합니다.</p>
+                <p>레벨 예상은 지금 속도가 이어진다고 보고 셉니다. 몬스터나 난이도를 바꾸면 달라집니다.</p>
+                <p>숙련은 직업 단련치 합의 증가분입니다.</p>
+            </FinePrint>}
         </>}
     </section>;
 });
