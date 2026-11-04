@@ -238,12 +238,12 @@ export const STORY: StoryScene[] = [
     ] },
 
     // ── 2부 · 제6장 · 판게아 너머 ────────────────────────
-    { id: 'onyxAll', chapter: 5, title: '아홉 개의 칠흑', hint: '칠흑 9종(장신구 8 · 저주받은 마도서)을 모두 모은다', when: s => onyxCollected(s) >= ONYX_TOTAL, lines: [
+    { id: 'onyxAll', chapter: 5, title: '아홉 개의 칠흑', hint: '칠흑 장신구 8종과 저주받은 마도서를 모두 모은다', when: s => onyxCollected(s) >= ONYX_TOTAL, lines: [
         '아홉 번째 칠흑이 손에 들어왔다. 장신구와 마도서를 나란히 놓자 서로를 끌어당겼다.',
         '하나로 맞물린 칠흑은 열쇠 모양이었다. 검은 마법사가 세계를 묶을 때 쓴 바로 그 열쇠.',
         '열쇠는 문을 잠그는 데도, 여는 데도 쓰인다.',
     ] },
-    { id: 'clone', chapter: 5, title: '또 다른 나', hint: '분신(두 번째 모험가)을 만든다', when: s => (s.account?.slots?.length || 0) >= 2 || (s.account?.slot || 1) > 1, lines: [
+    { id: 'clone', chapter: 5, title: '또 다른 나', hint: '두 번째 모험가, 분신을 만든다', when: s => (s.account?.slots?.length || 0) >= 2 || (s.account?.slot || 1) > 1, lines: [
         '선착장에 나와 똑같은 얼굴이 서 있었다. 같은 바다를 건너온 또 다른 나, 분신이었다.',
         '우리는 서로에게 말을 걸지 않았다. 말하지 않아도 무엇을 해야 할지 알았으니까.',
         '한 사람이 걸을 수 없는 길이라면, 둘이 나눠 걸으면 된다.',

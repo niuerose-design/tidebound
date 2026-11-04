@@ -70,7 +70,7 @@ export const isAbyssRound = (round: number) => round > EXPEDITION.rounds;
 export const FEATS: { id: string; name: string; desc: string; title: string }[] = [
     { id: 'flawless', name: '무패 완주', desc: '한 번도 지지 않고 12라운드 완주', title: '🛡 무패의 원정대장' },
     { id: 'noItem', name: '맨손 완주', desc: '12라운드를 이길 때 보드에 아이템이 하나도 없음', title: '✋ 맨손의 원정대장' },
-    { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드를 이길 때 보드 유닛이 모두 같은 지역(문장은 안 쳐줌)', title: '🏳 한 깃발의 원정대' },
+    { id: 'oneOrigin', name: '한 지역 완주', desc: '12라운드를 이길 때 보드 유닛이 모두 같은 지역. 문장은 치지 않습니다', title: '🏳 한 깃발의 원정대' },
     { id: 'cheap', name: '서민 완주', desc: '12라운드 보드가 모두 비용 1~2 유닛', title: '🪙 동전의 원정대' },
     { id: 'abyss10', name: '심연 10', desc: '심연 10라운드 이상 생존', title: '🌑 심연을 걷는 자' },
     { id: 'abyss20', name: '심연 20', desc: '심연 20라운드 이상 생존', title: '🕳 심연의 주인' },
@@ -179,8 +179,8 @@ export const TRAITS: TraitDef[] = [
 ];
 /** 기획서의 ‘의도한 조합’ 6개(균형 측정용 목표 편성). */
 /** 8단계 화면용: 시너지 단계 효과를 글로 풉니다(데이터에서 자동 생성 → 수치가 바뀌어도 설명이 어긋나지 않음). */
-const FLAG_DESC: Record<string, string> = { regen: '매 턴 최대 체력의 4%를 회복', reflect: '받은 피해의 25%를 공격한 적에게 되돌려줌', manaBoost: '마나가 25% 더 빨리 참', killStack: '적을 쓰러뜨릴 때마다 아군 전체 공격력 5% 증가', haste: '전투 시작 때 아군 전체 3턴 가속', startMana50: '마나 50을 채운 채 시작', startMana100: '마나를 가득 채운 채 시작(첫 턴부터 기술)', backline15: '뒷줄 유닛이 받는 피해 15% 감소', manaDrain20: '적 전체의 마나가 20% 느리게 참', manaDrain40: '적 전체의 마나가 40% 느리게 참', shackle: '제어 유닛의 공격이 맞은 적은 2턴 동안 주는 피해 25% 감소(약화)', shackle2: '제어 유닛의 공격이 맞은 적은 3턴 동안 주는 피해 25% 감소(약화)', dread: '전투 시작 때 적 전체를 2턴 약화', blight: '역병 유닛의 공격이 맞을 때마다 중독 1중첩(공격력의 8%, 3턴, 최대 4중첩)', spread: '쓰러진 적의 독 · 화상이 다른 적에게 옮겨감', revive: '망령 유닛이 쓰러지면 체력 30%로 한 번 되살아남', roar: '전투 시작 때 보스가 포효해 적 전체를 2턴 약화' };
-const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}(먼저 움직임)`, crit: v => `치명타 확률 ${Math.round(v * 100)}% 증가`, penetration: v => `방어 관통 ${Math.round(v * 100)}% 증가`, followUpBonus: v => `추가타 위력 ${Math.round(v * 100)}% 증가`, lifesteal: v => `준 피해의 ${Math.round(v * 100)}%만큼 체력 회복(흡혈)`, stunBonus: v => `기절이 ${v}턴 더 오래감`, controlBonus: v => `제어 효과가 ${v}턴 더 오래감`, poisonStackBonus: v => `독을 ${v}중첩 더 걸음`, dotTurnsBonus: v => `지속 피해가 ${v}턴 더 오래감` };
+const FLAG_DESC: Record<string, string> = { regen: '매 턴 최대 체력의 4%를 회복', reflect: '받은 피해의 25%를 공격한 적에게 되돌려줌', manaBoost: '마나가 25% 더 빨리 참', killStack: '적을 쓰러뜨릴 때마다 아군 전체 공격력 5% 증가', haste: '전투 시작 때 아군 전체 3턴 가속', startMana50: '마나 50을 채운 채 시작', startMana100: '마나를 가득 채운 채 시작해 첫 턴부터 기술을 씀', backline15: '뒷줄 유닛이 받는 피해 15% 감소', manaDrain20: '적 전체의 마나가 20% 느리게 참', manaDrain40: '적 전체의 마나가 40% 느리게 참', shackle: '제어 유닛의 공격이 맞은 적은 2턴 동안 주는 피해 25% 감소(약화)', shackle2: '제어 유닛의 공격이 맞은 적은 3턴 동안 주는 피해 25% 감소(약화)', dread: '전투 시작 때 적 전체를 2턴 약화', blight: '역병 유닛의 공격이 맞을 때마다 중독 1중첩. 공격력의 8%, 3턴, 최대 4중첩', spread: '쓰러진 적의 독 · 화상이 다른 적에게 옮겨감', revive: '망령 유닛이 쓰러지면 체력 30%로 한 번 되살아남', roar: '전투 시작 때 보스가 포효해 적 전체를 2턴 약화' };
+const STAT_DESC: Record<string, (v: number) => string> = { speed: v => `속도 +${v}, 먼저 움직임`, crit: v => `치명타 확률 ${Math.round(v * 100)}% 증가`, penetration: v => `방어 관통 ${Math.round(v * 100)}% 증가`, followUpBonus: v => `추가타 위력 ${Math.round(v * 100)}% 증가`, lifesteal: v => `준 피해의 ${Math.round(v * 100)}%만큼 체력 회복(흡혈)`, stunBonus: v => `기절이 ${v}턴 더 오래감`, controlBonus: v => `제어 효과가 ${v}턴 더 오래감`, poisonStackBonus: v => `독을 ${v}중첩 더 걸음`, dotTurnsBonus: v => `지속 피해가 ${v}턴 더 오래감` };
 export function describeTier(t: TraitTier): string {
     const out: string[] = [];
     for (const k of ['hp', 'attack', 'magic'] as const) if (t.mult?.[k]) out.push(`${k === 'hp' ? '체력' : k === 'attack' ? '물리 공격력' : '마법 공격력'} ${Math.round((t.mult[k]! - 1) * 100)}% 증가`);
@@ -213,7 +213,7 @@ export const ITEMS: ItemDef[] = [
     { id: 'blade', name: '맹공의 검', desc: '물리 공격력 35% 증가', mult: { attack: 1.35 } },
     { id: 'wand', name: '마력의 지팡이', desc: '마법 공격력 35% 증가', mult: { magic: 1.35 } },
     { id: 'shield', name: '수호의 방패', desc: '받는 피해 25% 감소', damageTaken: .25 },
-    { id: 'boots', name: '질풍의 신발', desc: '속도 +4 (먼저 움직임)', bonus: { speed: 4 } },
+    { id: 'boots', name: '질풍의 신발', desc: '속도 +4, 먼저 움직임', bonus: { speed: 4 } },
     { id: 'fang', name: '흡혈의 송곳니', desc: '준 피해의 25%만큼 체력 회복', bonus: { lifesteal: .25 } },
     { id: 'horn', name: '메아리 뿔', desc: '추가타 위력 30% · 치명타 확률 10% 증가', bonus: { followUpBonus: .3, crit: .1 } },
     { id: 'manaStone', name: '마나석', desc: '마나 60을 채운 채 시작 · 최대 체력 15% 증가', startMana: 60, mult: { hp: 1.15 } },
@@ -226,7 +226,7 @@ export const ITEMS: ItemDef[] = [
     { id: 'greatBlade', name: '대검', desc: '물리 공격력 80% 증가', mult: { attack: 1.8 }, tier: 2 },
     { id: 'archStaff', name: '대마법봉', desc: '마법 공격력 80% 증가', mult: { magic: 1.8 }, tier: 2 },
     { id: 'towerShield', name: '대방패', desc: '받는 피해 45% 감소 · 최대 체력 15% 증가', damageTaken: .45, mult: { hp: 1.15 }, tier: 2 },
-    { id: 'windBoots', name: '폭풍의 신발', desc: '속도 +10 (거의 항상 먼저 움직임)', bonus: { speed: 10 }, tier: 2 },
+    { id: 'windBoots', name: '폭풍의 신발', desc: '속도 +10, 거의 항상 먼저 움직임', bonus: { speed: 10 }, tier: 2 },
     { id: 'doomSpear', name: '파멸의 창', desc: '물리 · 마법 공격력 45% 증가', mult: { attack: 1.45, magic: 1.45 }, tier: 2 },
     { id: 'citadel', name: '성채', desc: '받는 피해 35% 감소 · 받은 피해의 45%를 되돌려줌 · 최대 체력 30% 증가', damageTaken: .35, reflect: .45, mult: { hp: 1.3 }, tier: 2 },
     { id: 'galeHorn', name: '질풍의 뿔', desc: '속도 +6 · 추가타 위력 45% · 치명타 확률 15% 증가', bonus: { speed: 6, followUpBonus: .45, crit: .15 }, tier: 2 },
@@ -312,14 +312,14 @@ export function augmentMods(id: string): RunMods | undefined {
     return def.mods;
 }
 export function augmentName(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return id; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} ${def.name}` : def.name; }
-export function augmentDesc(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return ''; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} 시너지 인원 +${def.tier === 3 ? 2 : 1} (보드에 ${tn} 유닛이 하나라도 있을 때)` : def.desc; }
+export function augmentDesc(id: string) { const def = augmentById(id), trait = id.split(':')[1]; if (!def) return ''; const tn = trait ? ((ORIGIN_NAMES as Record<string, string>)[trait] || (ROLE_NAMES as Record<string, string>)[trait] || trait) : ''; return tn ? `${tn} 시너지 인원 +${def.tier === 3 ? 2 : 1}. 보드에 ${tn} 유닛이 하나라도 있을 때` : def.desc; }
 
 /** 주간 규칙: 한국 시간 주(ISO)마다 하나. 판을 시작할 때 그 주 규칙이 판에 붙어 끝까지 유지됩니다. */
 export type WeeklyRule = { id: string; name: string; desc: string; mods: RunMods };
 export const WEEKLY_RULES: WeeklyRule[] = [
     { id: 'golden', name: '황금 주간', desc: '라운드마다 골드 +1', mods: { goldPlus: 1 } },
     { id: 'emblems', name: '문장 주간', desc: '상자에 매 라운드 문장이 나옴', mods: { emblemEvery: true } },
-    { id: 'blitz', name: '속전속결', desc: '전투가 25턴에 끝나고(남은 체력이 많은 쪽 승리) 모든 유닛 속도 +1', mods: { maxTurns: 25, speed: 1 } },
+    { id: 'blitz', name: '속전속결', desc: '전투가 25턴에 끝나 남은 체력이 많은 쪽이 이기고, 모든 유닛 속도 +1', mods: { maxTurns: 25, speed: 1 } },
     { id: 'giants', name: '거인의 주', desc: '★2 이상 유닛의 체력 · 공격력 8% 증가', mods: { starPower: 1.08 } },
     { id: 'bossRush', name: '보스 러시', desc: '막 보스 보상 2배', mods: { actMult: 2 } },
     { id: 'haunted', name: '고스트 주간', desc: '다른 모험가의 원정대를 더 자주(90%) 만남', mods: { ghostChance: .9 } },
@@ -509,10 +509,10 @@ export const SETS: SetDef[] = [
     { id: 'genesis', name: '창세', icon: '🌊', desc: '첫 세트. 유닛 30종 · 지역 6 · 역할 6.' },
     // v3.429: 파란 버섯(비용 1 초원) 대신 기억의 수호병(비용 1 신전 수호). 이 세트는 초원 비용 1이 셋(슬라임 · 돼지 · 파란 버섯)이고 신전 비용 1은 없어, 바꿔 넣으면 풀 크기(30)를 지키면서 신전 초반을 엽니다.
     // 상점 시뮬(EXP_SET=deepTide): 신전 조합 72 → 75%(3 · 4라운드 66/59 → 73/69), 기억의 수호병을 쓰는 신전 조합 76~78%, 지하 조합 · 무작위 구매는 그대로.
-    { id: 'deepTide', name: '심해의 조류', icon: '🌑', desc: '던전 보스 4종(킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스)과 뿔버섯 · 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
+    { id: 'deepTide', name: '심해의 조류', icon: '🌑', desc: '던전 보스 킹 슬라임 · 좀비 머쉬맘 · 주니어 발록 · 파풀라투스와 뿔버섯, 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘조류 타기’ · 아이템 ‘조류의 진주’.', remove: ['orangeMushroom', 'skeletonSoldier', 'curseEye', 'mixedGolem', 'skelegon', 'darkWyvern'], add: ['memoryGuard', 'hornMushroom', 'kingSlime', 'zombieMushmom', 'juniorBalrog', 'papulatus'] },
     // v3.430 세트 3 · 4: 빠지는 유닛과 같은 비용 · 지역 칸을 새 유닛으로 채워 비용 곡선 · 지역별 비용 1 · 역할 수(각 4 이상)를 지킵니다.
-    { id: 'leafre', name: '리프레의 날개', icon: '🐉', desc: '드래곤 터틀 · 와이번 · 레드 드레이크 · 다크 스톤골렘과 기억의 수호병(비용 1 신전)이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘용의 심장’ · 아이템 ‘용의 비늘’.', remove: ['orangeMushroom', 'stoneGolem', 'curseEye', 'ligator', 'seaGuard', 'erdaSpirit'], add: ['redTurtle', 'darkStoneGolem', 'blueWyvern', 'blueTurtle', 'redDrake', 'memoryGuard'] },
-    { id: 'timeTemple', name: '시간의 신전', icon: '⏳', desc: '도도(비용 1 신전) · 키메라 · 추억의 수호병 · 트루 에르다 · 주니어 네키 · 와이번이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘시간 되감기’ · 아이템 ‘모래시계’.', remove: ['pig', 'mixedGolem', 'darkDrake', 'juniorWraith', 'sharkUnit', 'memoryMonitor'], add: ['dodo', 'memoryKnight', 'trueErda', 'juniorNekki', 'wyvern', 'chimera'] },
+    { id: 'leafre', name: '리프레의 날개', icon: '🐉', desc: '드래곤 터틀 · 와이번 · 레드 드레이크 · 다크 스톤골렘과 비용 1 신전 기억의 수호병이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘용의 심장’ · 아이템 ‘용의 비늘’.', remove: ['orangeMushroom', 'stoneGolem', 'curseEye', 'ligator', 'seaGuard', 'erdaSpirit'], add: ['redTurtle', 'darkStoneGolem', 'blueWyvern', 'blueTurtle', 'redDrake', 'memoryGuard'] },
+    { id: 'timeTemple', name: '시간의 신전', icon: '⏳', desc: '비용 1 신전 도도 · 키메라 · 추억의 수호병 · 트루 에르다 · 주니어 네키 · 와이번이 들어오고 6종이 쉽니다. 세트 전용 증강 ‘시간 되감기’ · 아이템 ‘모래시계’.', remove: ['pig', 'mixedGolem', 'darkDrake', 'juniorWraith', 'sharkUnit', 'memoryMonitor'], add: ['dodo', 'memoryKnight', 'trueErda', 'juniorNekki', 'wyvern', 'chimera'] },
 ];
 /**
  * v3.430 주간 로테이션(전에는 분기마다 한 세트): 한국 시간 월요일 0시마다 SETS 순서대로 다음 세트로 넘어가고 끝까지 가면 처음으로 돌아갑니다.

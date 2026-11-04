@@ -40,7 +40,7 @@ export const EXPANSION_JOBS: NewJob[] = [
     { id: 'mage', name: '마법사', title: '불꽃을 다루는 학도', desc: '화상을 남기는 플레임 디스차지와 마나 패시브로 주문 순환을 만듭니다.', ...neutral, bonus: { magic: 36, resist: 3 }, crit: .03, tier: 2, level: 25, parent: 'apprentice', requires: { int: 32, wis: 22 }, mastery: 75, requiresSkillMastery: { manaBolt: 2 }, role: '마법·화상', tree: 'magic', masteryTarget: 2800, masteryBoost: .18 },
     { id: 'archmage', name: '대마법사', title: '하늘에서 떨어지는 불', desc: '마법 계보의 3차 직업입니다. 블레이징 익스팅션으로 상대를 기절시키고, 패시브로 마법 관통을 올립니다.', ...neutral, hp: 1, bonus: { magic: 102, resist: 6 }, crit: .05, tier: 3, level: 40, parent: 'mage', requires: { int: 48, wis: 35 }, mastery: 150, requiresSkillMastery: { fireball: 3 }, role: '마법·폭발', tree: 'magic', masteryTarget: 10500, masteryBoost: .3 },
     { id: 'sage', name: '현자', title: '별의 흐름을 읽는다', desc: '환생 후 4차 마법 직업입니다. 피닉스 드라이브는 두 번 떨어지며 화상을 남깁니다. 패시브로 마나 회복과 마법 방어를 올립니다.', ...neutral, defense: 1.12, magic: 1.5, hp: 1.16, resist: 1.21, crit: .06, tier: 4, ...T4, parent: 'archmage', requires: { int: 58, wis: 45 }, requiresSkillMastery: { meteor: 3 }, role: '마법·연속 주문', tree: 'magic' },
-    { id: 'grandMagus', name: '대마도사', title: '세계를 다시 쓰는 주문', desc: '쌓인 화상을 모두 터뜨리는 인피니티 플레임 서클(중첩당 +35%)로 마법 계열의 정점에 선 5차 직업입니다.', ...neutral, magic: 1.77, hp: 1.25, defense: 1.07, resist: 1.28, crit: .08, tier: 5, ...T5, parent: 'sage', requires: { int: 72, wis: 55 }, requiresSkillMastery: { starfall: 3 }, role: '마법 최상위', tree: 'magic' },
+    { id: 'grandMagus', name: '대마도사', title: '세계를 다시 쓰는 주문', desc: '쌓인 화상을 모두 터뜨리는 중첩당 +35%인 인피니티 플레임 서클로 마법 계열의 정점에 선 5차 직업입니다.', ...neutral, magic: 1.77, hp: 1.25, defense: 1.07, resist: 1.28, crit: .08, tier: 5, ...T5, parent: 'sage', requires: { int: 72, wis: 55 }, requiresSkillMastery: { starfall: 3 }, role: '마법 최상위', tree: 'magic' },
 
     // ── 마검의 길 (물리·마법 복합 최상위: 천검) ─────────────────
     // v3.145 데몬슬레이어 재개편: 마나 대신 체력을 바쳐 싸우는 피의 딜러. 액티브는 물리 피해 + 체력 소모, 패시브는 잃은 체력 비례 피해(피의 분노)와 흡혈.
@@ -61,7 +61,7 @@ export const EXPANSION_JOBS: NewJob[] = [
     // ── 저주의 길 (마법 제어 분기) ──────────────────────────────
     { id: 'shaman', name: '주술사', title: '정령에게 묻는다', desc: '약화 보이드 러시와 마법 방어 패시브를 익히는 헥스 입문 직업입니다. 상태이상을 모아 둘수록 헥스가 세집니다.', ...neutral, bonus: { magic: 4, resist: 1 }, tier: 1, level: 10, requires: { int: 10, wis: 12 }, mastery: 0, role: '약화 입문', tree: 'status', masteryTarget: 400, masteryBoost: .08 },
     { id: 'hexer', name: '저주술사', title: '발을 묶는 속삭임', desc: '오래 지속되는 감속을 거는 아츠: 크레센텀으로 칼리 (3차)의 연계를 준비하는 저주 2차 직업입니다.', ...neutral, bonus: { magic: 36, resist: 4 }, crit: .03, tier: 2, level: 25, parent: 'shaman', requires: { int: 30, wis: 25 }, mastery: 75, requiresSkillMastery: { curseBolt: 2 }, role: '감속·연계', tree: 'status', masteryTarget: 2800, masteryBoost: .18 },
-    { id: 'warlock', name: '흑주술사', title: '영혼을 찢는 계약', desc: '아츠: 플러리로 침묵을 걸고, 적에게 걸린 상태이상 종류 수만큼 세지는 헥스: 판데모니움(1종마다 +15%)으로 베는 마법 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 83, resist: 8 }, crit: .05, tier: 3, level: 40, parent: 'hexer', requires: { int: 45, wis: 35 }, mastery: 150, requiresSkillMastery: { hexChain: 3 }, role: '침묵·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
+    { id: 'warlock', name: '흑주술사', title: '영혼을 찢는 계약', desc: '아츠: 플러리로 침묵을 걸고, 적에게 걸린 상태이상 종류 수만큼 세지는 1종마다 +15% 세지는 헥스: 판데모니움으로 베는 마법 3차 직업입니다.', ...neutral, hp: 1, bonus: { magic: 83, resist: 8 }, crit: .05, tier: 3, level: 40, parent: 'hexer', requires: { int: 45, wis: 35 }, mastery: 150, requiresSkillMastery: { hexChain: 3 }, role: '침묵·연계', tree: 'status', masteryTarget: 10000, masteryBoost: .3 },
 
     // ── 노래의 길 (유틸리티) ─────────────────────────────────────
     { id: 'bard', name: '방랑 음유시인', title: '박자가 발을 이끈다', desc: '유틸리티 입문 직업입니다. 노래로 자신을 가속하고, 패시브로 경험치와 속도를 올립니다.', ...neutral, tier: 1, level: 10, requires: { luk: 12, wis: 10 }, mastery: 0, role: '가속·경험치', tree: 'support', masteryTarget: 400, masteryBoost: .08 },
@@ -193,7 +193,7 @@ export const EXPANSION_SKILLS: Skill[] = [
     { ...P, id: 'nimbleStep', name: '가벼운 발', desc: '회피와 속도가 오릅니다.', level: 10, job: 'acrobat', cost: 2, bonus: { evasion: .06, speed: 8 } },
     // 기존 직업 보강 (은월 (3차) 물리 경로)
     // v3.146 은월 재개편: 패시브가 정령을 불러 모든 공격에 추가타를 붙입니다(2차 1회 25% → 3차 35% → 4차 40% → 5차 2회 35%).
-    { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오르고, 정령이 모든 공격에 추가타 1회(위력 25%)를 붙입니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 }, companion: { hits: 1, power: .25 } },
+    { ...P, id: 'galvanicScales', name: '전류 비늘', desc: '물리 공격과 속도가 오르고, 정령이 모든 공격에 위력 25%의 추가타 1회를 붙입니다.', level: 25, job: 'stormEel', cost: 2, bonus: { attack: 16, speed: 8 }, companion: { hits: 1, power: .25 } },
 ];
 
 /** 액티브 밸런스 표 행: 선언한 발동률·배율·재사용 대기·마나를 그대로 사용합니다. */
