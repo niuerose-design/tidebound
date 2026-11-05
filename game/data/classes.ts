@@ -391,10 +391,10 @@ export type Lineage = { id: string; name: string; tree: JobTreeId; summary: stri
 /** v3.221 아제로스 규칙: 직업 숙달 목표와 스킬 숙련 단계가 메이플 월드의 이 배수입니다(secret/register.ts에서 적용). */
 export const AZEROTH_MASTERY_SCALE = 10;
 /**
- * v3.445 아제로스 직업 수(참모 계보 6 + 히든 계보 9). 히든 직업은 서버 전용 표(secret/jobs.ts)라 화면은 드러난 것만 알기 때문에,
+ * v3.445 아제로스 직업 수(참모 계보 6 + 히든 계보 9 + v3.466 스톰윈드 성채 3). 히든 직업은 서버 전용 표(secret/jobs.ts)라 화면은 드러난 것만 알기 때문에,
  * ‘아제로스 직업 모두’ 업적의 목표(업적 id)는 세지 않고 이 값을 씁니다. tests/azeroth.test.mjs가 서버 표의 실제 수와 같은지 검사합니다.
  */
-export const AZEROTH_JOB_COUNT = 15;
+export const AZEROTH_JOB_COUNT = 18;
 /** v3.309 궁극의 모험가(초보자 계보 히든 5차)의 숙달 목표 · 궁극의 유산 숙련 단계 배율: 5차를 다 돌아 본 사람의 긴 목표라 아제로스처럼 메이플 5차의 10배. */
 export const ULTIMATE_MASTERY_SCALE = 10;
 /** 계보가 속한 세계(없으면 메이플 월드). */

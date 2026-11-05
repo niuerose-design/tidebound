@@ -23,6 +23,7 @@ export const UNLOCK_CONDITIONS: Record<string, string> = {
     journeyman: '직업 5개 끝까지 숙달', rebirthFisher: '5차 직업 10개 끝까지 숙달 · 5차 핵심 패시브 5개 숙련 완료 · 지역 던전 7곳 나이트메어 정복', transcendent: '5차 핵심 패시브 10개 숙련 완료 · 극한돌파 1단계 · 지역 던전 7곳 나이트메어 5단계 · 혼테일 3단계 격파 참여',
     kkamiHunter: '숙련의 까미 100번 처치', nuriTracker: '경험의 누리 100번 처치', darkFollower: '지역 던전마다 100번 정복', onyxAvatar: '칠흑 보스 100번 처치',
     abyssAscetic: '무릉도장 50층 정복', variantScholar: '변종 · 황금 개체 1,000마리 처치', altarPilgrim: '신에게 100번 도전', essenceDevourer: '정수 20,000개 보유', pearlMiner: '세계석 3,000개 보유',
+    lightbringer: '승천자의 개척으로 스톰윈드 성채가 열리고 투표로 공개 범위가 정해지면 들어갑니다', felcaller: '승천자의 개척으로 스톰윈드 성채가 열리고 투표로 공개 범위가 정해지면 들어갑니다', deathKnight: '승천자의 개척으로 스톰윈드 성채가 열리고 투표로 공개 범위가 정해지면 들어갑니다',
     // 표에 없는 숨은 조건 직업이 생기면 tests/odds.test.mjs가 알려 줍니다.
 };
 

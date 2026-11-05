@@ -1,11 +1,11 @@
 {
- "build": "3.465",
+ "build": "3.466",
  "hours": 1,
  "seed": 20261021,
  "updatedAt": "2026-11-05",
  "bodies": {
   "r3-hero": {
-   "hash": "3938c491a1a00fa0",
+   "hash": "410278cd7d5a997f",
    "level": 45,
    "kills": 4658,
    "gold": 41038,
@@ -15,7 +15,7 @@
    "logs": 120
   },
   "r30-hero": {
-   "hash": "65c737b41f755d39",
+   "hash": "4179c2fcf126c0a4",
    "level": 84,
    "kills": 8824,
    "gold": 189920,
@@ -25,7 +25,7 @@
    "logs": 120
   },
   "r80-hero": {
-   "hash": "7bf372ef611710af",
+   "hash": "e13903c9f14c0704",
    "level": 100,
    "kills": 17233,
    "gold": 371184,

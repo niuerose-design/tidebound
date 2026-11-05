@@ -8,6 +8,7 @@ export const PIONEER_REGION_JOBS: Record<PioneerRegionId, string[]> = {
     elwynn: ['kkamiHunter', 'nuriTracker', 'variantScholar'],
     blackrock: ['darkFollower', 'onyxAvatar', 'abyssAscetic'],
     dalaran: ['altarPilgrim', 'essenceDevourer', 'pearlMiner'],
+    stormwind: ['lightbringer', 'felcaller', 'deathKnight'],
 };
 export const pioneerRegionOf = (jobId: string): PioneerRegionId | null => (Object.entries(PIONEER_REGION_JOBS).find(([, jobs]) => jobs.includes(jobId))?.[0] as PioneerRegionId | undefined) ?? null;
 /** 개척으로 열린 지역의 계보인지: 세이브에 동기화된 개척 상태(pioneerStatus)와 공개 범위로 판정합니다. 승천자 전용이면 승천자만. */

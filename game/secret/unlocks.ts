@@ -49,6 +49,10 @@ const HIDDEN_UNLOCKS: HiddenUnlock[] = ([
     // v3.246 정수 20,000개 보유 · 세계석 3,000개 보유.
     { job: 'essenceDevourer', test: s => (s.essence || 0) >= 20000 },
     { job: 'pearlMiner', test: s => (s.pearls || 0) >= 3000 },
+    // v3.466 스톰윈드 성채: 사냥 기록 조건이 없고 승천자의 개척 · 투표(pioneerOpen)로만 들어갑니다.
+    { job: 'lightbringer', test: () => false },
+    { job: 'felcaller', test: () => false },
+    { job: 'deathKnight', test: () => false },
 ] as HiddenUnlock[]);
 /** 숨은 조건이 있는 직업. */
 export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);

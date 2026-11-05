@@ -1110,3 +1110,19 @@ test('v3.465 otherworld pearl costs were lowered and the difference is refunded 
     Mi.migrateState(t, 0); assert.equal(t.pearls, 2000, 'runs once');
     const u = newState(0); u.unlockedJobs = ['fisher']; assert.equal(Mi.refundOtherworldCosts(u), 0); assert.equal(u.logs.some(x => x.text.includes('차액')), false);
 });
+
+test('v3.466 Stormwind: three Azeroth jobs open only through pioneering, never through play records, and count toward the Azeroth job total', async () => {
+    const U = await L.load('secret/unlocks'), SP = await L.load('secret/pioneer'), D = await L.load('data/pioneer'), C = await L.load('data/classes'), { SKILLS } = await L.load('data/skills');
+    for (const id of ['lightbringer', 'felcaller', 'deathKnight']) {
+        const j = C.jobById(id); assert.ok(j && j.hidden && j.tier === 4 && C.jobWorldOf(j) === 'azeroth', `${id} is an Azeroth hidden tier-4 job`);
+        assert.equal(SP.pioneerRegionOf(id), 'stormwind'); assert.equal(U.UNLOCK_JOBS.includes(id), true);
+        assert.equal(SKILLS.filter(sk => sk.job === id).length, 2, `${id} has an active and a passive`);
+        const s = newState(0); s.ascension = 1; s.level = 300; s.rebirths = 200; s.kills = 1e9; s.deaths = 1e6; s.playMs = 1e12;
+        assert.equal(U.unlockMet(s, id), false, 'no play record opens it'); assert.deepEqual(U.recordUnlocks(s).filter(x => x === id), [], 'never recorded as a door');
+        s.pioneerStatus = { at: 0, open: { stormwind: 'ascended' } }; assert.equal(U.unlockMet(s, id), true);
+        const t = newState(0); t.pioneerStatus = { at: 0, open: { stormwind: 'ascended' } }; assert.equal(U.unlockMet(t, id), false, 'ascended-only keeps the unascended out');
+        t.pioneerStatus = { at: 0, open: { stormwind: 'all' } }; assert.equal(U.unlockMet(t, id), true);
+    }
+    assert.equal(D.PIONEER_REGIONS.at(-1).id, 'stormwind'); assert.equal(D.PIONEER_REGIONS.at(-1).cost, 6000);
+    assert.equal(C.AZEROTH_JOB_COUNT, 18);
+});
