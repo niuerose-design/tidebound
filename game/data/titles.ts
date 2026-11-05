@@ -13,6 +13,14 @@ export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.
     { id: 'novice', name: '🌱 초심자', desc: '모험을 시작한 모든 모험가', group: '시작' },
     ...REBIRTH_TITLES.map(t => ({ id: `rebirth:${t.rebirths}`, name: t.title, desc: `환생 ${t.rebirths}회`, group: '환생' as const, achievement: `rebirths:${t.rebirths}` })),
+    // v3.463 승천 칭호: 횟수 · 서약 · 높은 환생 횟수. 이름 옆에는 ‘n승천’ 배지도 따로 붙습니다.
+    { id: 'ascension:1', name: '✦ 승천자', desc: '첫 승천', group: '환생', achievement: 'ascension:1' },
+    { id: 'ascension:2', name: '✧ 두 번 오른 자', desc: '2번째 승천', group: '환생', achievement: 'ascension:2' },
+    { id: 'ascension:3', name: '🌠 세 번 오른 자', desc: '3번째 승천', group: '환생', achievement: 'ascension:3' },
+    { id: 'ascension:5', name: '🪐 다섯 번 오른 자', desc: '5번째 승천', group: '환생', achievement: 'ascension:5' },
+    { id: 'ascensionVow:1', name: '⛓ 서약의 승천자', desc: '서약을 건 채 승천', group: '환생', achievement: 'ascensionVow:1' },
+    { id: 'ascensionAt:150', name: '🏔 끝을 본 승천자', desc: '환생 150회에서 승천', group: '환생', achievement: 'ascensionAt:150' },
+    { id: 'ascensionAt:200', name: '🌌 하늘 끝의 승천자', desc: '환생 200회에서 승천', group: '환생', achievement: 'ascensionAt:200' },
     // 11단계 원정 숙련 칭호.
     { id: 'expMastery:2', name: '🧭 원정 견습', desc: '원정 숙련 2', group: '모험', achievement: 'expMastery:2' },
     { id: 'expMastery:20', name: '🏕 원정 베테랑', desc: '원정 숙련 20', group: '모험', achievement: 'expMastery:20' },

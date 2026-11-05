@@ -1047,3 +1047,20 @@ test('v3.462 server rows restore expedition totals: league weeks sum completed-r
     // v3.461 뒤의 승천은 두 복구 표시를 모두 남겨 서버가 행을 읽지 않습니다.
     const a = newState(0); a.rebirths = Asc.ASCENSION.requirements[0]; Lc.ascend(a, 0); assert.equal(a.expeditionRowsRestored, true);
 });
+
+test('v3.463 ascension titles and honor achievements: counts, vows held at ascension, rebirth count at ascension, and the n승천 badge in snapshots', async () => {
+    const { ACHIEVEMENTS } = await L.load('data/achievements'), { TITLES } = await L.load('data/titles'), St = await L.load('systems/stats');
+    const ach = id => ACHIEVEMENTS.find(a => a.id === id);
+    for (const id of ['ascension:1', 'ascension:2', 'ascension:3', 'ascension:5', 'ascensionVow:1', 'ascensionAt:150', 'ascensionAt:200']) {
+        assert.ok(ach(id)?.honor && Object.keys(ach(id).reward).length === 0, `${id} is an honor achievement without rewards`);
+        assert.ok(TITLES.some(t => t.id === id && t.achievement === id && t.group === '환생'), `${id} has a title`);
+    }
+    const s = newState(0); s.rebirths = 160; s.vows = { rough: 2 };
+    assert.equal(St.snapshot(s).ascension, undefined, 'no badge before the first ascension');
+    Lc.ascend(s, 0);
+    assert.deepEqual(s.ascensionLog.at(-1).vows, ['rough']); assert.equal(s.ascensionLog.at(-1).rebirths, 160);
+    assert.equal(ach('ascension:1').progress(s), 1); assert.equal(ach('ascension:2').progress(s), 1); assert.equal(ach('ascensionVow:1').progress(s), 1); assert.equal(ach('ascensionAt:150').progress(s), 160); assert.equal(ach('ascensionAt:200').progress(s), 160);
+    assert.equal(St.snapshot(s).ascension, 1, 'the duel snapshot carries the ascension count');
+    s.rebirths = Asc.ASCENSION.requirements[1]; Lc.ascend(s, 1);
+    assert.equal(s.ascensionLog.at(-1).vows, undefined, 'no vows: nothing recorded'); assert.equal(ach('ascension:2').progress(s), 2); assert.equal(ach('ascensionVow:1').progress(s), 1); assert.equal(ach('ascensionAt:150').progress(s), 160, 'the best rebirth count across ascensions');
+});

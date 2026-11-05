@@ -25,7 +25,7 @@ export function PlayerCard({ s, a, setView, compact = false }: { s: State; a: Co
     if (compact) return <button type="button" className="flex w-full items-center gap-3 rounded-l border border-line bg-surface-2 p-3 text-left shadow-1 xl:hidden" onClick={() => setView('character')} aria-label="나의 모험가 능력치 보기">
         <ProgressRing value={s.exp / Math.max(1, need)} size={44} stroke={4} color="var(--gold-ink)" label="경험치"><span className="font-num text-xs">{s.level}</span></ProgressRing>
         <span className="grid min-w-0 flex-1 gap-1">
-            <span className="flex flex-wrap items-baseline gap-x-2"><strong className="min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{s.name}</strong><small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회</small><span className="ml-auto font-num text-xs text-ink-2">전투력 {formatShort(power(a))}</span></span>
+            <span className="flex flex-wrap items-baseline gap-x-2"><strong className="min-w-0 [overflow-wrap:anywhere] text-s font-semibold text-ink-1">{s.name}</strong><small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회{s.ascension ? ` · ${s.ascension}승천` : ''}</small><span className="ml-auto font-num text-xs text-ink-2">전투력 {formatShort(power(a))}</span></span>
             <span className="grid grid-cols-2 gap-2"><StatBar value={s.hp} max={a.hp} tone="hp" size="s" showText={false} label="체력"/><StatBar value={s.mana} max={a.mana} tone="mp" size="s" showText={false} label="마나"/></span>
         </span>
         <ChevronRight size={16} className="shrink-0 text-ink-3"/>
@@ -36,7 +36,7 @@ export function PlayerCard({ s, a, setView, compact = false }: { s: State; a: Co
             <ProgressRing value={s.exp / Math.max(1, need)} size={76} stroke={5} color="var(--gold-ink)" label="다음 레벨까지"><span className="grid place-items-center leading-none"><Leaf size={18} className="text-accent"/><span className="mt-0.5 font-num text-xs">Lv.{s.level}</span></span></ProgressRing>
             <div className="grid gap-0.5">
                 <div className="flex flex-wrap items-center justify-center gap-1.5">{title}<strong className="text-m font-semibold text-ink-1">{s.name}</strong></div>
-                <small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회</small>
+                <small className="text-xs text-ink-3">{job} · 환생 {s.rebirths}회{s.ascension ? ` · ${s.ascension}승천` : ''}</small>
                 <small className="inline-flex items-center justify-center gap-1 text-xs text-ink-3"><Users size={12}/>{s.guildMember?.name ? `길드 · ${s.guildMember.name}` : '무소속'}</small>
             </div>
         </div>

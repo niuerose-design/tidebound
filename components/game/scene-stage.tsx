@@ -169,7 +169,7 @@ export function SceneMe({ s, stats, effect }: { s: State; stats: CombatStats; ef
         <div ref={ref} className="scene-hero"><MyHero s={s} job={job}/></div>
         <div ref={plate} className="scene-me-plate">
             <div className="scene-me-name"><b>{title ? <small>{title}</small> : null}{s.name}</b><StatusBadges effects={s.effects} stun={s.playerStun} recent={effect} target="player"/></div>
-            <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}</small>
+            <small className="scene-me-sub">{job?.name || '초보자'} · Lv.{s.level}{s.rebirths ? ` · 환생 ${s.rebirths}` : ''}{s.ascension ? ` · ${s.ascension}승천` : ''}</small>
             <div className="player-hp-anchor"><Meter value={s.hp} max={stats.hp} label="HP"/></div>
             <div className="scene-me-mana" title={`마나 ${Math.ceil(s.mana)} / ${stats.mana}`}><i style={{ width: `${Math.max(0, Math.min(100, s.mana / Math.max(1, stats.mana) * 100))}%` }}/></div>
         </div>
