@@ -3,7 +3,7 @@
  * 지역마다 아제로스 히든 계보 셋이 묶여 있고(어느 계보인지는 서버 전용 표 secret/pioneer.ts), 지역이 열리면 그 계보에 숨은 조건 없이 들어갈 수 있습니다.
  * 누가 들어갈 수 있는지는 승천자 투표로 정합니다(15.4). 투표 전에는 승천자 전용입니다.
  */
-export type PioneerRegionId = 'elwynn' | 'blackrock' | 'dalaran';
+export type PioneerRegionId = 'elwynn' | 'blackrock' | 'dalaran' | 'stormwind';
 export type PioneerAccess = 'ascended' | 'all';
 export type PioneerRegionDef = { id: PioneerRegionId; name: string; subtitle: string; desc: string; cost: number };
 /** 열리는 순서대로. 비용은 세계석. 지인 서버에서 한 지역이 몇 주에 열리도록 승천자 한 바퀴의 세계석 수입(환생 100회 약 3,500)에 맞췄습니다. */
@@ -11,6 +11,8 @@ export const PIONEER_REGIONS: PioneerRegionDef[] = [
     { id: 'elwynn', name: '엘윈 숲', subtitle: '사냥의 기록이 잠든 숲', desc: '특별한 몬스터를 오래 쫓은 모험가들의 계보 셋이 잠들어 있습니다.', cost: 1500 },
     { id: 'blackrock', name: '검은바위 산', subtitle: '군주들의 그림자가 깔린 산', desc: '던전과 보스, 무릉도장을 거듭 오른 모험가들의 계보 셋이 잠들어 있습니다.', cost: 2500 },
     { id: 'dalaran', name: '달라란', subtitle: '신과 정수와 세계석의 도시', desc: '제단과 정수, 세계석을 끝까지 파고든 모험가들의 계보 셋이 잠들어 있습니다.', cost: 4000 },
+    /** v3.466 사냥 기록으로는 열리지 않고 개척으로만 열리는 성채. 빛의 기사와 계약 술사, 죽음을 건넌 기사의 계보 셋. */
+    { id: 'stormwind', name: '스톰윈드 성채', subtitle: '승천자의 손으로만 열리는 성문', desc: '사냥 기록으로는 열 수 없는 성채입니다. 빛을 든 기사와 계약을 부리는 술사, 죽음을 건너 돌아온 기사의 계보 셋이 기다립니다.', cost: 6000 },
 ];
 export const pioneerRegionById = (id: string) => PIONEER_REGIONS.find(r => r.id === id);
 export const PIONEER = {

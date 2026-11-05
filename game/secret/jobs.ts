@@ -40,6 +40,10 @@ export const SECRET_JOBS: Job[] = [
     // v3.246 아제로스 히든 둘: 정수 포식자(정수를 먹고 강해지는 마법 · 포식 처치로 기본 능력치 +1, 환생하면 초기화) · 세계석 광부(액티브로 세계석 채굴 · 전투력 낮음).
     {id: 'essenceDevourer', requiresRank: 'ssg', subRole: 'magic', name: '정수 포식자', title: '모은 것을 삼켜 나를 키운다', desc: '정수를 잔뜩 쌓아 둔 모험가의 아제로스 히든 4차 직업. 정수 포식으로 정수를 먹어 치우고, 포식으로 쓰러뜨린 적에게서 기본 능력치 하나를 무작위로 빼앗습니다(+1, 상한 없음, 환생하면 초기화). 정수가 모자라면 허기에 빠집니다. 대신 최대 체력이 낮습니다.', attack: 1, magic: 1.06, hp: 0.8, defense: 1, resist: 1, crit: 0.06, tier: 4, level: 55, mastery: 0, requires: {int: 60, wis: 45}, role: '히든·포식', tree: 'mystery', lineage: 'essenceDevourer', hidden: true, masteryTarget: 300000, masteryBoost: 0.1, hint: '창고 가득 쌓인 정수에서 굶주린 무언가가 아제로스 쪽으로 기어 나옵니다.'},
     {id: 'pearlMiner', requiresRank: 'ssg', subRole: 'physical', name: '세계석 광부', title: '곡괭이 끝에서 세계가 반짝인다', desc: '세계석을 산더미처럼 모아 본 모험가의 아제로스 히든 4차 직업. 광맥 강타로 적을 내리찍으면 세계석 원석을 캐냅니다(상한 없음). 캐는 데 몸을 쓰느라 전투력은 낮습니다.', attack: 0.8, magic: 1, hp: 0.9, defense: 1, resist: 1, crit: 0.05, tier: 4, level: 55, mastery: 0, requires: {str: 55, vit: 50}, role: '히든·채굴', tree: 'mystery', lineage: 'pearlMiner', hidden: true, masteryTarget: 300000, masteryBoost: 0.1, hint: '세계석 더미 아래에서 낯선 대륙의 곡괭이 소리가 들립니다.'},
+    // v3.466 스톰윈드 성채(아제로스 개척 4번째 지역): 사냥 기록이 아니라 승천자의 개척과 투표로만 열리는 히든 4차 셋. 숙달 목표 · 숙련 단계는 다른 아제로스 히든과 같이 ×10.
+    {id: 'lightbringer', requiresRank: 'ssg', subRole: 'physical', name: '성기사', title: '빛을 들고 앞장서는 자', desc: '승천자들이 연 스톰윈드 성채의 아제로스 히든 4차 직업. 심판의 망치로 적을 내리쳐 기절시키고, 빛의 축복으로 공격과 두 방어, 회복량이 오릅니다. 환생 횟수만큼 물리 공격이 자랍니다.', attack: 1.06, magic: 1, hp: 1, defense: 1.06, resist: 1.06, crit: 0.08, tier: 4, level: 55, mastery: 0, requires: {str: 50, vit: 55}, role: '히든·성기사', tree: 'mystery', lineage: 'lightbringer', hidden: true, masteryTarget: 300000, masteryBoost: 0.1, hint: '승천한 이들의 손으로만 열리는 성채 너머에서 빛이 새어 나옵니다.'},
+    {id: 'felcaller', requiresRank: 'ssg', subRole: 'magic', name: '흑마법사', title: '빌린 힘으로 더 큰 힘을', desc: '승천자들이 연 스톰윈드 성채의 아제로스 히든 4차 직업. 생명력 흡수로 준 피해의 일부를 되찾고, 악마의 계약으로 마법 공격과 마나가 오릅니다. 환생 횟수만큼 마법 공격이 자랍니다.', attack: 1, magic: 1.06, hp: 0.85, defense: 1, resist: 1, crit: 0.1, tier: 4, level: 55, mastery: 0, requires: {int: 60, wis: 45}, role: '히든·흑마법사', tree: 'mystery', lineage: 'felcaller', hidden: true, masteryTarget: 300000, masteryBoost: 0.1, hint: '승천한 이들의 손으로만 열리는 성채 아래에서 누군가 계약서를 내밉니다.'},
+    {id: 'deathKnight', requiresRank: 'ssg', subRole: 'physical', name: '죽음의 기사', title: '죽음을 건너 돌아온 자', desc: '승천자들이 연 스톰윈드 성채의 아제로스 히든 4차 직업. 죽음의 일격으로 역병을 걸고, 룬 갑옷으로 공격과 물리 방어, 체력이 오릅니다. 환생 횟수만큼 물리 공격이 자랍니다.', attack: 1.06, magic: 1, hp: 1.05, defense: 1.04, resist: 0.95, crit: 0.09, tier: 4, level: 55, mastery: 0, requires: {str: 60, vit: 50}, role: '히든·죽음의 기사', tree: 'mystery', lineage: 'deathKnight', hidden: true, masteryTarget: 300000, masteryBoost: 0.1, hint: '승천한 이들의 손으로만 열리는 성채 뒤에서 차가운 발소리가 다가옵니다.'},
 ];
 export const SECRET_LINEAGES: Lineage[] = [
     // v3.135 나이트워커 계보 폐지: 2~5차 · 골령술사를 지우고 1차 망인(undead)만 제약 계보(data/specials.ts)로 돌려보냅니다.
@@ -57,4 +61,8 @@ export const SECRET_LINEAGES: Lineage[] = [
     {id: 'altarPilgrim', name: '제단 순례자 계보', tree: 'mystery', world: 'azeroth', summary: '제단의 신에게 거듭 도전한 모험가의 계보입니다. 신에게 도전할수록 강해집니다.'},
     {id: 'essenceDevourer', name: '정수 포식자 계보', tree: 'mystery', world: 'azeroth', summary: '정수를 먹어 치워 강해지는 계보입니다. 포식으로 쓰러뜨린 적의 힘을 몸에 새깁니다.'},
     {id: 'pearlMiner', name: '세계석 광부 계보', tree: 'mystery', world: 'azeroth', summary: '싸우면서 세계석을 캐내는 계보입니다. 전투력은 낮습니다.'},
+    // v3.466 스톰윈드 성채의 세 계보: 개척으로만 열립니다.
+    {id: 'lightbringer', name: '성기사 계보', tree: 'mystery', world: 'azeroth', summary: '승천자들이 연 성채에서 빛을 든 기사의 계보입니다. 적을 내리쳐 기절시키고 축복으로 버팁니다.'},
+    {id: 'felcaller', name: '흑마법사 계보', tree: 'mystery', world: 'azeroth', summary: '승천자들이 연 성채에서 빌린 힘을 부리는 술사의 계보입니다. 생명력을 빨아들이고 계약으로 마법을 키웁니다.'},
+    {id: 'deathKnight', name: '죽음의 기사 계보', tree: 'mystery', world: 'azeroth', summary: '승천자들이 연 성채에서 죽음을 건너 돌아온 기사의 계보입니다. 역병을 걸고 룬 갑옷으로 버팁니다.'},
 ];
