@@ -1024,3 +1024,26 @@ test('v3.461 ascension keeps every expedition field, and the migration restores 
     // 명성만 남은 경우 숙련은 명성당 49를 돌려준 v3.432 규칙대로 50이 되고, migrateState가 같은 복구를 거칩니다.
     const v = newState(0); v.ascension = 2; v.achievements = { 'expRenown:1': 1 }; Mig.migrateState(v, 0); assert.equal(v.expeditionMastery.level, 50); assert.equal(v.expeditionRenown, 1); assert.equal(v.expeditionRestored, true);
 });
+
+test('v3.462 server rows restore expedition totals: league weeks sum completed-run wins and runs, monthly rows give mastery, best wins and abyss', async () => {
+    const E = await L.load('server/expedition');
+    const now = 1_650_000_000_000, week = 7 * 86400_000, id = 'asc-rows-1'; // 다른 테스트의 달과 겹치지 않는 시각
+    const run = (wins, extra = {}) => ({ name: '복구', expeditionLeague: { tier: 3 }, expedition: { round: 12, wins, done: true, last: { won: true }, history: { 2: [{ unit: 'pig', star: 1, row: 'front' }] }, startedAt: 1, mastery: 180, ...extra } });
+    await E.syncLeagueRow(id, run(7), now - 2 * week); await E.syncLeagueRow(id, run(9), now - 2 * week + 1);
+    await E.syncLeagueRow(id, run(4, { mastery: 210 }), now - week);
+    await E.syncExpeditionRow(id, run(9), now - 2 * week); await E.syncExpeditionRow(id, run(4, { mastery: 210, abyss: 3 }), now - week);
+    const h = await E.readExpeditionHistory(id, now, now - 3 * week);
+    assert.equal(h.wins, 20, 'two weeks: 7 + 9 + 4'); assert.equal(h.runs, 3); assert.equal(h.tier, 3); assert.equal(h.best, 9); assert.equal(h.abyss, 3);
+    assert.ok(h.mastery === 180 || h.mastery === 210, `mastery from the best monthly run: ${h.mastery}`);
+    assert.equal(h.weeks, 2); assert.ok(h.months >= 1);
+    const empty = await E.readExpeditionHistory('nobody-' + now, now, now - week); assert.deepEqual([empty.wins, empty.runs, empty.weeks, empty.months], [0, 0, 0, 0]);
+    // 승천으로 비어 있는 세이브에 얹으면 더 높은 값만 올라갑니다. 이미 더 높은 누적은 그대로.
+    const s = newState(0); s.ascension = 1; s.expeditionStats = { runs: 1, clears: 0, wins: 25, roundPlays: [], roundWins: [], units: {}, ghostFights: 0, ghostWins: 0 };
+    const lines = Mig.applyExpeditionHistory(s, h);
+    assert.equal(s.expeditionStats.wins, 25, 'higher save value kept'); assert.equal(s.expeditionStats.runs, 3); assert.equal(s.expeditionMastery.level, h.mastery); assert.equal(s.expeditionMastery.peak, h.mastery);
+    assert.equal(s.expeditionLeague.tier, 3); assert.equal(s.expeditionLeague.best, 3); assert.equal(s.expeditionBest, 9); assert.equal(s.expeditionAbyssBest, 3);
+    assert.ok(!lines.some(x => x.includes('승') && x.startsWith('누적')), lines.join(' / ')); assert.ok(s.logs.some(x => x.text.includes('합산해 되살렸습니다')));
+    assert.deepEqual(Mig.applyExpeditionHistory(s, h), [], 'idempotent');
+    // v3.461 뒤의 승천은 두 복구 표시를 모두 남겨 서버가 행을 읽지 않습니다.
+    const a = newState(0); a.rebirths = Asc.ASCENSION.requirements[0]; Lc.ascend(a, 0); assert.equal(a.expeditionRowsRestored, true);
+});

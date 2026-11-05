@@ -5,7 +5,7 @@ import 'server-only';
  * - 전투 뒤: 이번 달 행을 갱신합니다. 이번 판이 지난 최고보다 못하면 보드 스냅샷은 두고 '판 수'만 올립니다.
  */
 import { db } from './db';
-import { monthKey, previousMonthKey, weekKey, weekSeason } from '../data/time';
+import { monthKey, previousMonthKey, weekKey, weekSeason, DAY, KST } from '../data/time';
 import { starterBoard } from '../systems/expedition';
 import { seasonPearls, EXPEDITION, ABYSS, STARTER_GHOSTS, STARTER_GHOST, isBossRound, difficultyOf, mergeMods, combatMods, augmentMods, weeklyRuleById, masteryPerks, LEAGUE, GHOST_GUARD, type SeasonSettlement, type LeagueSettlement, encodeBoard, cleanShareText, SHARE_MEMO_MAX } from '../data/expedition';
 import type { State, ExpeditionGhost, ExpeditionPlaced } from '../types';
@@ -139,4 +139,29 @@ export async function settleLeague(id: string, now: number): Promise<LeagueSettl
     const rank = board.rows.findIndex(x => x.id === id) + 1, size = board.rows.length, tier = board.tier;
     const nextTier = rank <= LEAGUE.promote && tier < LEAGUE.tiers.length ? tier + 1 : rank > size - LEAGUE.demote && size >= LEAGUE.demoteMin && tier > 1 ? tier - 1 : tier;
     return { week: key, tier, rank, size, score: board.rows[rank - 1]?.score || 0, pearls: LEAGUE.rewards[rank - 1] ?? LEAGUE.rewards[LEAGUE.rewards.length - 1], nextTier };
+}
+
+/** v3.462 원정대가 열린 주의 월요일(2026-10-20, 한국 시간). 복구는 이 주부터 지금까지의 행을 읽습니다. */
+export const EXPEDITION_SINCE = Date.UTC(2026, 9, 20) - KST;
+export type ExpeditionHistory = { wins: number; runs: number; mastery: number; tier: number; best: number; abyss: number; weeks: number; months: number };
+/**
+ * v3.462 서버 행으로 보는 이 모험가의 원정 누적: 주간 리그 행(완주한 판의 승수 합 · 판 수 · 등급)과 월간 순위 행(판 수 · 최고 판 승수와 그때 숙련 · 심연).
+ * 승천으로 세이브의 누적이 지워진 모험가에게 돌려줄 때 씁니다. 행은 승천과 무관하게 남아 있으므로 합이 곧 전체 기간의 누적입니다.
+ */
+export async function readExpeditionHistory(id: string, now: number, since = EXPEDITION_SINCE): Promise<ExpeditionHistory> {
+    const database = db(), out: ExpeditionHistory = { wins: 0, runs: 0, mastery: 0, tier: 0, best: 0, abyss: 0, weeks: 0, months: 0 };
+    const weeks = new Set<string>(), months = new Set<string>();
+    for (let t = since; t <= now; t += 7 * DAY) { weeks.add(weekKey(t)); months.add(monthKey(t)); }
+    weeks.add(weekKey(now)); months.add(monthKey(now));
+    for (const key of weeks) {
+        const row = await database.getRanking(leagueRowId(key, id), leagueSeason(key)); if (!row) continue;
+        try { const snap = JSON.parse(row.snapshot) as LeagueSnapshot; out.wins += snap.wins || 0; out.runs += snap.runs || 0; out.tier = Math.max(out.tier, snap.tier || 0); out.weeks++; } catch { /* 깨진 행 */ }
+    }
+    let monthRuns = 0;
+    for (const key of months) {
+        const row = await database.getRanking(expeditionRowId(key, id), expeditionSeason(key)); if (!row) continue;
+        try { const snap = JSON.parse(row.snapshot) as ExpeditionSnapshot; monthRuns += snap.runs || 0; out.mastery = Math.max(out.mastery, snap.mastery || 0); out.best = Math.max(out.best, snap.wins || 0); out.abyss = Math.max(out.abyss, snap.abyss || 0); out.months++; } catch { /* 깨진 행 */ }
+    }
+    out.runs = Math.max(out.runs, monthRuns);
+    return out;
 }
