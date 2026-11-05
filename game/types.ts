@@ -590,6 +590,10 @@ export type State = {
     altar?: { challengeAt?: number; anonymous?: boolean; /** v27.54 신 도전 횟수·승리·가장 많이 깎은 신 체력 비율(0~1). 운영 통계용. */ tries?: number; wins?: number; best?: number; /** v27.72 공물을 바친 횟수(안내 단계 판정). */ offers?: number; /** v27.91 월드보스: 마지막 도전 시각, 보상을 정산한 세대, 누적 참여·피해(통계). */ raidAt?: number; raidClaimed?: number; raidHits?: number; raidDealt?: number; /** v3.22 보스별 마지막 도전 시각과 보상을 정산한 세대. */ raidAtBy?: Record<string, number>; raidClaimedBy?: Record<string, number> };
     /** v27.44 제단 진행 요약(서버가 동기화마다 채우는 표시용). */
     altarStatus?: import('./data/altar').AltarStatus;
+    /** v3.464 아제로스 개척 상태(서버가 동기화마다 채움): 열린 지역과 공개 범위. 전직 조건 판정이 읽습니다. */
+    pioneerStatus?: import('./data/pioneer').PioneerStatus;
+    /** v3.464 내가 개척에 바친 세계석 합계(업적 · 칭호). 승천해도 남습니다. */
+    pioneer?: { points: number };
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */

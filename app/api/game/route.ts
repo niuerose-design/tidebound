@@ -10,6 +10,7 @@ import { syncCrew, flushCrew, type CrewApply } from '@/game/server/crews';
 import { buildCatalog } from '@/game/server/secrecy';
 import { trimLogs } from '@/game/systems/log-delta';
 import { applyExpeditionHistory } from '@/game/systems/migrations';
+import { syncPioneerStatus } from '@/game/server/pioneer';
 import { diffState } from '@/game/systems/state-delta';
 import { announceHacker } from '@/game/server/hacks';
 import { postPlayerNews } from '@/game/server/news';
@@ -37,7 +38,7 @@ export async function POST(req: Request) { try {
         const out = await mutate(id, a, async s => { const now = Date.now(); announce = s.jobAnnounce || ''; delete s.jobAnnounce; news = collectNews(s, now); syncTraderPnl(s, now);
             // v3.462 v3.461 전에 승천해 원정 누적을 잃은 모험가: 서버의 리그 · 순위 행을 합산해 한 번 되돌립니다. 읽기에 실패하면 다음 행동 때 다시 시도합니다.
             if ((s.ascension || 0) > 0 && !s.expeditionRowsRestored) { try { applyExpeditionHistory(s, await readExpeditionHistory(id, now)); s.expeditionRowsRestored = true; } catch (e) { console.error('expedition restore', e instanceof Error ? e.message : e); } }
-            if (a.type === 'ascend') { await afterAscend(id, now); await vaultAfterAscend(account, now); } await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
+            if (a.type === 'ascend') { await afterAscend(id, now); await vaultAfterAscend(account, now); } await syncAccount(account, slot, s, now); await syncGuild(account, s, now); await syncDuelSeason(id, s, now); await syncAbyssBoard(id, s, now); await syncAltarStatus(s, now, id); await syncPioneerStatus(s, now); await syncHackFeed(s, id, now); await syncCrew(id, s, now);
             // v3.32 합동 작전 기여는 침투 작전이 끝난 뒤 한 번만 올리고, 저장 충돌로 다시 돌면 세이브 변화만 다시 적용합니다.
             if (crewFlush === undefined) crewFlush = await flushCrew(id, s, now);
             crewFlush?.(s); }, { since: (a as { sv?: unknown }).sv });

@@ -26,13 +26,14 @@ import { VowPanel } from './vows';
 import { AutoRebirthPanel, AutoFollowPanel, RotationPanel, ResearchPlanPanel, showAutomation } from './automation';
 import { AscensionPanel } from './ascension';
 import { RebirthHistory } from './rebirth-history';
+import { PioneerPanel, type PioneerProps } from './pioneer';
 
 type Send = (a: Action) => void;
 const fmt = formatExact;
 const TABS = [['prepare', '환생 준비'], ['research', '세계석 연구'], ['relics', '환생 유물'], ['history', '환생 기록']] as const;
 const Tile = ({ icon, label, children }: { icon?: React.ReactNode; label: string; children: React.ReactNode }) => <div className="flex items-center gap-3 rounded-l border border-line bg-surface-2 p-3 shadow-1">{icon && <span className="text-accent" aria-hidden="true">{icon}</span>}<div className="grid min-w-0 flex-1 gap-0.5"><span className="text-xs text-ink-3">{label}</span><span className="flex items-baseline gap-1 font-num text-l font-semibold">{children}</span></div></div>;
 
-export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: boolean }) {
+export function RebirthScreen({ s, send, busy, ...pioneer }: { s: State; send: Send; busy: boolean } & Partial<PioneerProps>) {
     const [tab, setTab] = useState<typeof TABS[number][0]>('prepare');
     const [researchTab, setResearchTab] = useState<ResearchTab>('combat');
     const required = rebirthLevel(s);
@@ -55,6 +56,7 @@ export function RebirthScreen({ s, send, busy }: { s: State; send: Send; busy: b
         {tab === 'history' && <RebirthHistory s={s}/>}
         {tab === 'prepare' && <>
             <AscensionPanel s={s} send={send} busy={busy}/>
+            {pioneer.loadPioneer && pioneer.pioneerAct && <PioneerPanel s={s} busy={busy} pioneer={pioneer.pioneer ?? null} pioneerError={pioneer.pioneerError || ''} loadPioneer={pioneer.loadPioneer} pioneerAct={pioneer.pioneerAct}/>}
             {s.rebirths > 0 && <VowPanel s={s} send={send} busy={busy}/>}
             {showAutomation(s) && <div className="grid gap-3 lg:grid-cols-3"><AutoRebirthPanel s={s} send={send} busy={busy}/><AutoFollowPanel s={s} send={send} busy={busy}/><RotationPanel s={s} send={send} busy={busy}/></div>}
             <Card className={cn(ready && !capped && 'border-accent/60')}>

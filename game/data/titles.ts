@@ -21,6 +21,9 @@ export const TITLES: TitleDef[] = [
     { id: 'ascensionVow:1', name: '⛓ 서약의 승천자', desc: '서약을 건 채 승천', group: '환생', achievement: 'ascensionVow:1' },
     { id: 'ascensionAt:150', name: '🏔 끝을 본 승천자', desc: '환생 150회에서 승천', group: '환생', achievement: 'ascensionAt:150' },
     { id: 'ascensionAt:200', name: '🌌 하늘 끝의 승천자', desc: '환생 200회에서 승천', group: '환생', achievement: 'ascensionAt:200' },
+    { id: 'pioneer:100', name: '⛏ 개척에 나선 자', desc: '개척 세계석 100', group: '환생', achievement: 'pioneer:100' },
+    { id: 'pioneer:1000', name: '🏕 아제로스 개척자', desc: '개척 세계석 1,000', group: '환생', achievement: 'pioneer:1000' },
+    { id: 'pioneer:5000', name: '🗺 아제로스를 연 자', desc: '개척 세계석 5,000', group: '환생', achievement: 'pioneer:5000' },
     // 11단계 원정 숙련 칭호.
     { id: 'expMastery:2', name: '🧭 원정 견습', desc: '원정 숙련 2', group: '모험', achievement: 'expMastery:2' },
     { id: 'expMastery:20', name: '🏕 원정 베테랑', desc: '원정 숙련 20', group: '모험', achievement: 'expMastery:20' },

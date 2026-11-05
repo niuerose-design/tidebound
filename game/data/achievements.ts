@@ -203,6 +203,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     // v3.463 승천 명예 업적 확장(docs/balance-rebirth.md 8.3): 횟수 · 서약을 건 채 승천 · 높은 환생 횟수에서 승천. 보상은 칭호뿐입니다.
     ...honor(series('ascension', '환생', n => `${n}번째 승천`, n => `${n}번째 승천을 마칩니다.`, [2, 3, 5], s => s.ascension || 0, () => ({}))),
     { id: 'ascensionVow:1', honor: true, group: '환생', title: '서약을 건 채 승천', desc: '서약을 하나라도 건 채로 승천합니다.', reward: {}, progress: s => (s.ascensionLog || []).filter(x => x.vows?.length).length, target: 1 },
+    ...honor(series('pioneer', '환생', n => `개척 세계석 ${n.toLocaleString()}`, n => `아제로스 개척에 세계석을 누적 ${n.toLocaleString()}개 바칩니다.`, [100, 1000, 5000], s => s.pioneer?.points || 0, () => ({}))),
     ...honor(series('ascensionAt', '환생', n => `환생 ${n}회에서 승천`, n => `환생 ${n}회 이상에서 승천합니다. 요구 횟수보다 더 버틴 바퀴입니다.`, [150, 200], s => Math.max(0, ...(s.ascensionLog || []).map(x => x.rebirths || 0)), () => ({}))),
     ...honor(series('story', '모험', n => `이야기 ${n}장면`, n => `스토리 장면 ${n}개를 엽니다.`, [10, 20, 39, STORY.length], s => Object.keys(s.story || {}).length, () => ({}))),
     ...honor(series('rating', '사냥', n => `결투 레이팅 ${n.toLocaleString()}`, n => `랭크 결투 레이팅 ${n.toLocaleString()}에 오릅니다.`, [1500, 2000, 2500], s => s.rating || 0, () => ({}))),
