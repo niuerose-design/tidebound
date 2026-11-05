@@ -609,6 +609,8 @@ export type State = {
     expedition?: ExpeditionRun;
     expeditionDay?: string;
     expeditionBest?: number;
+    /** v3.461 승천으로 잃은 원정대 진행을 업적 기록으로 한 번 되살렸는지. */
+    expeditionRestored?: boolean;
     expeditionStats?: ExpeditionStats;
     /** 9단계: 시즌 말 보상을 받은 마지막 시즌 키(YYYY-MM)와 그 내역. */
     expeditionSeasonClaimed?: string;

@@ -1000,3 +1000,27 @@ test('v3.371 overclock speed is a fixed-width (percent) roll, not power-scaled; 
     assert.equal(s.overclockRescaled, true); const once = JSON.stringify(old.affixes); M.migrateState(s, 0); assert.equal(JSON.stringify(old.affixes), once, 'only once');
     assert.equal(newState(0).overclockRescaled, true, 'new saves start fixed');
 });
+
+test('v3.461 ascension keeps every expedition field, and the migration restores lost progress from honor achievements', () => {
+    const s = newState(0); s.rebirths = Asc.ASCENSION.requirements[0];
+    s.expeditionMastery = { level: 137, xp: 40, total: 9000, peak: 137 }; s.expeditionRenown = 2; s.expeditionRenownLegacy = 2; s.expeditionLeague = { tier: 4, best: 4 };
+    s.expeditionStats = { runs: 321, clears: 50, wins: 2000, roundPlays: [], roundWins: [], units: {}, ghostFights: 0, ghostWins: 0 };
+    s.expeditionSetMastery = { set: 'tide', level: 7, xp: 10, claimed: [5] }; s.expeditionSetBest = 7; s.expeditionSkin = 'silver';
+    s.expeditionRecent = [{ at: 1, round: 12, wins: 10, cleared: true, abyss: 0, reward: 1, why: 'x' }]; s.expedition = { round: 3, wins: 1, history: [] };
+    Lc.ascend(s, 0);
+    assert.equal(s.ascension, 1); assert.equal(s.expeditionMastery.level, 137); assert.equal(s.expeditionRenown, 2); assert.equal(s.expeditionRenownLegacy, 2); assert.equal(s.expeditionLeague.tier, 4);
+    assert.equal(s.expeditionStats.wins, 2000); assert.equal(s.expeditionSetMastery.level, 7); assert.equal(s.expeditionSkin, 'silver'); assert.equal(s.expedition.round, 3); assert.equal(s.expeditionRecent.length, 1); assert.equal(s.expeditionRestored, true, 'a fresh ascension marks that nothing was lost');
+    assert.ok(s.logs.some(x => x.text.includes('원정대는 그대로')), 'the ascension log says the expedition stays');
+    // 이미 승천해 잃은 모험가: 명예 업적만 남은 상태에서 바닥값을 한 번 복구합니다.
+    const t = newState(0); t.ascension = 1; t.achievements = { 'expMastery:100': 1, 'expMastery:20': 1, 'expRenown:1': 1, 'expLeague:3': 1, 'expTotalWins:1000': 1, 'expRuns:100': 1 };
+    const lines = Mig.restoreExpeditionAfterAscension(t);
+    assert.equal(lines.length, 5, lines.join(' / '));
+    assert.equal(t.expeditionMastery.level, 100); assert.equal(t.expeditionMastery.peak, 100); assert.equal(t.expeditionRenown, 1); assert.equal(t.expeditionRenownLegacy, 1, 'restored renown is legacy: no board power bonus');
+    assert.equal(t.expeditionLeague.tier, 3); assert.equal(t.expeditionLeague.best, 3); assert.equal(t.expeditionStats.wins, 1000); assert.equal(t.expeditionStats.runs, 100); assert.equal(t.expeditionRestored, true);
+    assert.equal(Mig.restoreExpeditionAfterAscension(t), null, 'runs once');
+    // 승천한 적이 없으면 아무것도 하지 않고, 이미 더 높으면 깎지 않습니다.
+    const u = newState(0); u.achievements = { 'expMastery:100': 1 }; assert.equal(Mig.restoreExpeditionAfterAscension(u), null); assert.equal(u.expeditionMastery, undefined); assert.equal(u.expeditionRestored, undefined, 'never-ascended saves are left untouched');
+    const w = newState(0); w.ascension = 1; w.achievements = { 'expMastery:20': 1 }; w.expeditionMastery = { level: 300, xp: 5, total: 1, peak: 300 }; Mig.restoreExpeditionAfterAscension(w); assert.equal(w.expeditionMastery.level, 300); assert.equal(w.expeditionMastery.xp, 5);
+    // 명성만 남은 경우 숙련은 명성당 49를 돌려준 v3.432 규칙대로 50이 되고, migrateState가 같은 복구를 거칩니다.
+    const v = newState(0); v.ascension = 2; v.achievements = { 'expRenown:1': 1 }; Mig.migrateState(v, 0); assert.equal(v.expeditionMastery.level, 50); assert.equal(v.expeditionRenown, 1); assert.equal(v.expeditionRestored, true);
+});
