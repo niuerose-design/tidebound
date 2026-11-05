@@ -13,6 +13,7 @@ import { SKILLS } from '../data/skills';
 import { jobById } from '../data/classes';
 import { setUnlockSource } from '../data/unlock-info';
 import { DUNGEONS } from '../data/world';
+import { pioneerOpen } from './pioneer';
 /** v3.230 변종(모든 종류) · 황금 개체 처치 합계. */
 const variantKills = (s: State) => Object.values(s.variantBook || {}).reduce((x, row) => x + Object.values(row || {}).reduce((y, n) => y + (n || 0), 0), 0) + Object.values(s.goldenBook || {}).reduce((x, n) => x + (n || 0), 0);
 
@@ -55,7 +56,8 @@ export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);
 /** 이 직업의 숨은 조건을 만족했는지. 숨은 조건이 없는 직업은 null. 한 번 만족해 기록된 조건(doorsOpened)은 계속 만족입니다. */
 export function unlockMet(s: Partial<State>, jobId: string): boolean | null {
     const u = HIDDEN_UNLOCKS.find(x => x.job === jobId);
-    return u ? !!s.doorsOpened?.includes(jobId) || u.test(s as State) : null;
+    // v3.464 아제로스 개척으로 열린 지역의 계보는 숨은 조건 없이 들어갑니다(공개 범위는 승천자 투표).
+    return u ? !!s.doorsOpened?.includes(jobId) || pioneerOpen(s, jobId) || u.test(s as State) : null;
 }
 /** 지금 만족한 숨은 조건을 기록합니다(이후 상시 만족). 정산 때 호출. 새로 만족한 직업 id를 돌려줍니다. */
 export function recordUnlocks(s: State) {

@@ -21,6 +21,7 @@ export type Ranking = Snapshot & {
 export type GuildInfo = import('@/game/server/guild').GuildInfo;
 export type CrewInfo = import('@/game/server/crews').CrewInfo;
 export type AltarInfo = import('@/game/data/altar').AltarInfo;
+export type PioneerInfo = import('@/game/data/pioneer').PioneerInfo;
 export type AltarResult = { winner: 'player' | 'opponent' | 'draw'; turns: number; logs: string[]; claimed: boolean; /** v27.70 탄핵 성공 */ impeached?: boolean; /** v27.91 월드보스: 준 피해·남은 공유 체력·격파 여부·내가 마지막 일격인지 */ dealt?: number; remaining?: number; slain?: boolean; slayer?: boolean };
 export type VaultInfo = import('@/game/data/account').VaultInfo;
 export type AbyssRow = { rank: number; id: string; name: string; depth: number; job: string; rebirths: number; updatedAt: number; self: boolean; masked?: string[] };
@@ -228,6 +229,8 @@ export function useGame() {
     const [altarResult, setAltarResult] = useState<AltarResult | null>(null);
     const onAltar = useCallback((body: Record<string, unknown>, d: { result?: AltarResult }) => { if ((body.action === 'challenge' || body.action === 'impeach' || body.action === 'raid') && d.result) setAltarResult(d.result); }, []);
     const { info: altar, error: altarError, load: loadAltar, act: altarAct } = useSharedInfo<AltarInfo, { result?: AltarResult }>('/api/altar', shared, onAltar);
+    /** v3.464 아제로스 개척: 환생 화면의 개척 카드를 열 때와 바치기 · 투표 뒤에만 읽습니다. */
+    const { info: pioneer, error: pioneerError, load: loadPioneer, act: pioneerAct } = useSharedInfo<PioneerInfo>('/api/pioneer', shared);
     /** v25.13 계정 공유 금고. */
     const { info: vault, error: vaultError, load: loadVault, act: vaultAct } = useSharedInfo<VaultInfo>('/api/vault', shared);
     const [abyss, setAbyss] = useState<{ week: string; rows: AbyssRow[] } | null>(null);
@@ -320,5 +323,5 @@ export function useGame() {
     }, [replay]);
     /** 화면이 바뀔 때 GameShell이 부릅니다. 전투 화면으로 돌아오면 바로 한 번 동기화합니다. */
     const setLive = useCallback((on: boolean) => { const was = live.current; live.current = on; if (on && !was) send({ type: 'sync' }); }, [send]);
-    return { state, catalog, newBuild, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult };
+    return { state, catalog, newBuild, frames, setLive, error, busy, saved, send, rows, rankSeason, rankError, loadRanking, abyss, loadAbyss, register, duel, setDuel, needsLogin, authenticate, logout, switchSlot, guild, guildError, loadGuild, guildAct, crew, crewError, loadCrew, crewAct, vault, vaultError, loadVault, vaultAct, altar, altarError, loadAltar, altarAct, altarResult, setAltarResult, pioneer, pioneerError, loadPioneer, pioneerAct };
 }
