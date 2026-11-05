@@ -16,7 +16,7 @@ import { SAVE_VERSION, PENETRATION, RARITIES } from '../data/balance';
 import { newState } from './engine';
 import { SKILLS, skillMasteryScale, skillById, LEGACY_MASTERY_TARGET, LEGACY_FIRST_MILESTONE } from '../data/skills';
 import { RANKS, RANK_LEGACY_NEED, rankIndex, rankState } from '../data/rank';
-import { unitById } from '../data/expedition';
+import { unitById, SETS, setById, SET_MASTERY, MASTERY_MAX, leagueTierName } from '../data/expedition';
 import { OLD_GEAR_NAMES, RENAMED_GEAR, RENAMED_AFFIX, gearName } from '../data/maple-gear';
 /** v25.23 세계석 연구 ‘황금 개체’(base 8·step 5) 삭제: 투자한 세계석을 전액 돌려줍니다. */
 function refundGoldenResearch(s: State) {
@@ -420,6 +420,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     if (s.version === SAVE_VERSION) revokeCodexLink(s);
     // v3.434 지금까지 쌓인 명성은 모두 숙련 50 시절의 것(숙련 1000은 v3.432에 생겨 아직 아무도 못 닿음) — 한 번 기록해 명성 연결에서 뺍니다.
     if (s.version === SAVE_VERSION && s.expeditionRenownLegacy === undefined) s.expeditionRenownLegacy = s.expeditionRenown || 0;
+    restoreExpeditionAfterAscension(s);
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
@@ -575,4 +576,41 @@ export function fixFlowRegen(s: State) {
     for (const item of [...(s.inventory || []), ...Object.values(s.equipment || {})])
         for (const x of item?.affixes || [])
             if (x.id === 'flow' && x.stat2 === 'manaRegen' && (x.value2 || 0) < 1 && x.value >= 1) x.value2 = Math.max(1, Math.round(x.value * def.base2 / def.base));
+}
+
+/**
+ * v3.461 승천 때 원정대가 지워지던 것을 유지로 바꾸면서, 이미 승천해 원정 진행을 잃은 모험가에게 명예 업적 기록으로 되살릴 수 있는 만큼 돌려줍니다.
+ * 업적(achievements)은 승천해도 남으므로 원정 숙련 · 명성 · 리그 등급 · 누적 승과 판 · 세트 완성을 그 바닥값까지 복구합니다. 이미 더 높으면 건드리지 않습니다.
+ * 되살린 명성은 모두 숙련 50 시절(v3.432 전)의 것이라 legacy로 적어 판 전투력 보정은 받지 않고, 숙련은 그때 돌려준 명성당 49(migrateMastery)를 함께 셉니다. 한 번만 실행합니다.
+ */
+export function restoreExpeditionAfterAscension(s: State): string[] | null {
+    // 승천한 적이 없으면 잃은 것도 없으니 표시 없이 지나갑니다(세이브 모양을 바꾸지 않음). v3.461부터의 승천은 ascend가 표시를 남깁니다.
+    if (s.expeditionRestored || !((s.ascension || 0) > 0)) return null;
+    s.expeditionRestored = true;
+    const got = Object.keys(s.achievements || {});
+    const top = (prefix: string) => Math.max(0, ...got.filter(id => id.startsWith(prefix + ':')).map(id => Number(id.slice(prefix.length + 1)) || 0));
+    const renown = top('expRenown'), league = top('expLeague'), wins = top('expTotalWins'), runs = top('expRuns');
+    const mastery = Math.min(MASTERY_MAX, Math.max(top('expMastery'), renown ? 1 + 49 * renown : 0));
+    const sets = SETS.map(x => x.id).filter(id => s.achievements?.[`expSet:${id}`] !== undefined);
+    const lines: string[] = [];
+    if (mastery > 1) {
+        const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 };
+        if (m.level < mastery) { m.level = mastery; m.xp = 0; lines.push(`숙련 ${mastery}`); }
+        m.peak = Math.max(m.peak || 0, m.level);
+    }
+    if (renown > (s.expeditionRenown || 0)) { s.expeditionRenown = renown; s.expeditionRenownLegacy = Math.max(s.expeditionRenownLegacy || 0, renown); lines.push(`명성 ${renown}`); }
+    if (league > 1) {
+        const l = s.expeditionLeague ??= { tier: 1 };
+        if ((l.tier || 1) < league) { l.tier = league; lines.push(`리그 ${leagueTierName(league)}`); }
+        l.best = Math.max(l.best || 0, league);
+    }
+    if (wins || runs) {
+        const st = s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: [], roundWins: [], units: {}, ghostFights: 0, ghostWins: 0 };
+        if (st.wins < wins) { st.wins = wins; lines.push(`누적 ${wins.toLocaleString()}승`); }
+        if (st.runs < runs) { st.runs = runs; lines.push(`누적 ${runs.toLocaleString()}판`); }
+    }
+    for (const id of sets) { s.expeditionSetDone ??= {}; if (!s.expeditionSetDone[id]) { s.expeditionSetDone[id] = 1; lines.push(`${setById(id)?.name || id} 세트 완성`); } }
+    if (sets.length) s.expeditionSetBest = Math.max(s.expeditionSetBest || 0, SET_MASTERY.max);
+    if (lines.length) addLog(s, `승천으로 지워졌던 원정대 진행을 업적 기록만큼 되살렸습니다 · ${lines.join(' · ')}. 앞으로는 승천해도 원정대가 그대로 남습니다.`, 'reward');
+    return lines;
 }

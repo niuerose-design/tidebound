@@ -148,6 +148,7 @@ export function achievementRefund(s: Pick<State, 'achievementClaims'>) {
  * - 스킬 한계 돌파와 극한돌파(v3.74, 옛 연마)는 지웁니다: 그때의 숙련을 기준점(refineBase)으로 두고, 한계 돌파 단계는 0으로.
  * - SP로 올린 스킬 단계는 1로(배운 스킬 목록은 유지). 업적 세계석·SP는 다시 지급합니다.
  * - 편의 연구는 자동 해제(ASCENSION_RESEARCH), 튜토리얼은 건너뜁니다.
+ * - v3.461 원정대(expedition*)는 전부 남깁니다: 숙련 · 명성 · 세트 숙련과 피부 · 리그 · 진행 중인 판 · 기록. 원정 수치는 본편 환생 배율과 분리되어 있어 지워도 다시 오르는 맛이 없고, 설계 원칙(숙련 · 치장 · 기록은 유지)에도 맞습니다.
  * 계정 금고·무릉도장 주간 순위·결투 등록은 서버가 함께 지웁니다(store.ts).
  */
 export function ascend(s: State, now: number) {
@@ -178,9 +179,12 @@ export function ascend(s: State, now: number) {
         // 튜토리얼은 건너뜁니다: 모든 단계를 완료로 적어 안내도, 단계 보상도 다시 나오지 않게 합니다.
         tutorial: { ...(s.tutorial || {}), skipped: true, done: { ...Object.fromEntries(TUTORIAL_STEPS.map(x => [x.id, 1])), ...(s.tutorial?.done || {}) } },
     };
+    // v3.461 원정대는 필드 이름으로 통째로 남깁니다(새 필드가 생겨도 빠지지 않게).
+    const expedition = Object.fromEntries(Object.entries(s).filter(([key]) => key.startsWith('expedition')));
     // 기존 항목을 모두 지운 뒤 새 캐릭터 + 유지 항목만 채웁니다(새 캐릭터에 기본값이 없는 서약·변종 도감·칠흑 기록 등이 남지 않게).
     for (const key of Object.keys(s)) delete (s as Record<string, unknown>)[key];
-    Object.assign(s, fresh, keep);
+    Object.assign(s, fresh, keep, expedition);
+    s.expeditionRestored = true; // v3.461부터는 잃은 원정 진행이 없으니 복구 이관을 건너뜁니다.
     for (const key of Object.keys(s) as (keyof State)[]) if (s[key] === undefined) delete s[key];
     s.ascension = n + 1;
     // v3.114 예전 기록을 지운 뒤 읽어 직전 승천 기록만 남던 문제: 지우기 전에 받아 둔 기록에 이어 붙입니다.
@@ -196,7 +200,7 @@ export function ascend(s: State, now: number) {
     s.lifeStart = { at: now, playMs: s.playMs || 0 };
     syncRelicPower(s);
     s.hp = stats(s).hp; s.mana = stats(s).mana;
-    addLog(s, `✦ ${s.ascension}번째 승천 · 환생 ${record.rebirths}회의 여정을 마치고 처음부터 다시 오릅니다. 숙련·업적·계급장은 그대로입니다.`, 'reward');
+    addLog(s, `✦ ${s.ascension}번째 승천 · 환생 ${record.rebirths}회의 여정을 마치고 처음부터 다시 오릅니다. 숙련·업적·계급장·원정대는 그대로입니다.`, 'reward');
     addLog(s, `승천 · 업적 보상 다시 지급 · 세계석 +${refund.pearls} · SP +${refund.sp} · 편의 연구 자동 해제`, 'reward');
 }
 export const lifecycleActions: ActionHandlers = {
