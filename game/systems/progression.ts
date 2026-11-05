@@ -1,3 +1,4 @@
+import { kopruluEarly } from '../data/pioneer';
 import { EXTREME_BREAK_PRACTICE, EXTREME_STAGES, EXTREME_FINAL_DAMAGE } from '../data/long-term';
 import { rebirthAP } from './meta';
 import { restraintAP, restraintSlots } from './vows';
@@ -429,7 +430,8 @@ export function jobRequirements(s: State, j: Job) {
     if (j.pearlCost !== undefined) return unlocked || !j.pearlCost ? [] : [{ label: `세계석 ${j.pearlCost.toLocaleString()}`, met: (s.pearls || 0) >= j.pearlCost, value: s.pearls || 0, target: j.pearlCost }];
     /** value·target은 화면의 진행 막대용입니다(판정은 met). */
     const list: { label: string; met: boolean; value?: number; target?: number }[] = [{ label: `레벨 ${j.level}`, met: s.level >= j.level, value: s.level, target: j.level }];
-    if (j.rebirth)
+    // v3.467 코프룰루 조기 개방(아제로스 개척 투표)이 열려 있으면 코프룰루 직업의 환생 조건은 보지 않습니다.
+    if (j.rebirth && !(jobWorldOf(j) === 'koprulu' && kopruluEarly(s)))
         list.push({ label: `환생 ${j.rebirth}회`, met: s.rebirths >= j.rebirth, value: s.rebirths, target: j.rebirth });
     if (!unlocked) {
         for (const [key, n] of Object.entries(j.requires))

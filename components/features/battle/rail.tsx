@@ -3,6 +3,7 @@
  * v3.389 사냥 화면 오른쪽 기록판 · 선택판(새 토대).
  * 기록판: 전투 · 획득 · 소식 · 채팅 탭(고른 탭은 이 기기에 남김). 선택판: 사냥터 · 던전 · 제단 탭(동기화 상태만 보고 재생 프레임마다 다시 그리지 않음).
  */
+import { rebirthGateOk } from '@/game/data/pioneer';
 import { memo, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Compass, Flame, Lock, Map, Megaphone, MessageCircle, Sparkles, Swords } from 'lucide-react';
@@ -68,10 +69,10 @@ const PlacePicker = memo(function PlacePicker({ s, busy, send, setView }: { s: S
         </div>
         <div className="grid max-h-64 gap-1 overflow-y-auto pr-0.5">
             {tab === 'stage' ? STAGES.map((stage, index) => {
-                const closed = closedIn(s, 'stages', stage.id), locked = closed || !levelGateOk(s, stage.level) || s.rebirths < stage.rebirth, selected = s.stage === stage.id && !s.dungeon;
+                const closed = closedIn(s, 'stages', stage.id), locked = closed || !levelGateOk(s, stage.level) || !rebirthGateOk(s, stage), selected = s.stage === stage.id && !s.dungeon;
                 return <PlaceRow key={stage.id} index={String(index + 1).padStart(2, '0')} title={stage.place} sub={closed ? CLOSED_NOTE : `${stage.region} · Lv. ${stage.level}${stage.rebirth ? ` · 환생 ${stage.rebirth}` : ''}${(stage.fit ?? 0) > stage.rebirth ? ` · 적정 ${stage.fit}` : ''}`} selected={selected} locked={locked} disabled={busy || locked || !!s.dungeon} onClick={() => send({ type: 'stage', id: stage.id })}/>;
             }) : tab === 'altar' ? <AltarRows s={s} setView={setView}/> : dungeons.map(dungeon => {
-                const closed = closedIn(s, 'dungeons', dungeon.id), locked = closed || !levelGateOk(s, dungeon.level) || s.rebirths < dungeon.rebirth, active = s.dungeon?.id === dungeon.id;
+                const closed = closedIn(s, 'dungeons', dungeon.id), locked = closed || !levelGateOk(s, dungeon.level) || !rebirthGateOk(s, dungeon), active = s.dungeon?.id === dungeon.id;
                 const wave = active ? `${dungeon.id === 'abyss' ? `${s.dungeon?.depth || s.abyssBest + 1}F · ` : s.dungeon?.mode && s.dungeon.mode !== 'normal' ? `${DUNGEON_MODES.find(m => m.id === s.dungeon!.mode)?.name} · ` : ''}W${(s.dungeon?.wave || 0) + 1}` : undefined;
                 return <PlaceRow key={dungeon.id} title={dungeon.name} sub={closed ? CLOSED_NOTE : `Lv. ${dungeon.level}${dungeon.rebirth ? ` · 환생 ${dungeon.rebirth}` : ''}`} selected={active} locked={locked} badge={wave} disabled={busy || locked || (!!s.dungeon && !active)} onClick={() => send({ type: 'dungeon', id: dungeon.id })}/>;
             })}

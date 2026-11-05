@@ -1123,6 +1123,26 @@ test('v3.466 Stormwind: three Azeroth jobs open only through pioneering, never t
         const t = newState(0); t.pioneerStatus = { at: 0, open: { stormwind: 'ascended' } }; assert.equal(U.unlockMet(t, id), false, 'ascended-only keeps the unascended out');
         t.pioneerStatus = { at: 0, open: { stormwind: 'all' } }; assert.equal(U.unlockMet(t, id), true);
     }
-    assert.equal(D.PIONEER_REGIONS.at(-1).id, 'stormwind'); assert.equal(D.PIONEER_REGIONS.at(-1).cost, 6000);
+    const sw = D.PIONEER_REGIONS.find(r => r.id === 'stormwind'); assert.equal(D.PIONEER_REGIONS.indexOf(sw), 3); assert.equal(sw.cost, 6000);
     assert.equal(C.AZEROTH_JOB_COUNT, 18);
+});
+
+test('v3.467 Koprulu early access: an opened region lifts the rebirth gates on Koprulu jobs, hunting grounds, habitats and dungeons for whoever the vote admits', async () => {
+    const D = await L.load('data/pioneer'), SP = await L.load('secret/pioneer'), W = await L.load('data/world'), K = await L.load('data/expansion-koprulu');
+    const { canChangeJob, jobRequirements } = await L.load('systems/progression'), { jobById } = await L.load('data/classes');
+    assert.equal(D.PIONEER_REGIONS.at(-1).id, 'koprulu'); assert.deepEqual(SP.PIONEER_REGION_JOBS.koprulu, []);
+    const kop = W.STAGES.filter(st => D.KOPRULU_REGION_NAMES.has(st.region)); assert.ok(kop.length >= 8 && kop.every(st => st.rebirth >= K.KOPRULU_REBIRTH), 'the region names cover the Koprulu hunting grounds');
+    const body = () => { const s = newState(0); s.level = 120; s.rebirths = 0; s.attributes = { str: 400, dex: 400, int: 400, vit: 400, wis: 400, luk: 400 }; s.statPoints = 0; return s; };
+    const s = body(); const stage = kop[0], habitat = W.STAGES.find(st => st.habitat && D.KOPRULU_REGION_NAMES.has(st.region)), dungeon = W.DUNGEONS.find(d => d.world === 'koprulu');
+    assert.ok(stage && habitat && dungeon);
+    assert.equal(D.rebirthGateOk(s, stage), false); assert.throws(() => act(s, { type: 'stage', id: stage.id }, 0)); assert.throws(() => act(s, { type: 'dungeon', id: dungeon.id }, 0));
+    assert.ok(jobRequirements(s, jobById('irTrooper')).some(r => r.label === `환생 ${K.KOPRULU_REBIRTH}회` && !r.met));
+    s.pioneerStatus = { at: 0, open: { koprulu: 'ascended' } };
+    assert.equal(D.kopruluEarly(s), false, 'ascended-only keeps the unascended out'); assert.equal(D.rebirthGateOk(s, stage), false);
+    s.pioneerStatus = { at: 0, open: { koprulu: 'all' } };
+    assert.equal(D.kopruluEarly(s), true); assert.equal(D.rebirthGateOk(s, stage), true); assert.equal(D.rebirthGateOk(s, habitat), true); assert.equal(D.rebirthGateOk(s, dungeon), true);
+    assert.equal(D.rebirthGateOk(s, W.STAGES.find(st => st.rebirth === 20)), false, 'other worlds keep their gates');
+    assert.ok(!jobRequirements(s, jobById('irTrooper')).some(r => r.label.startsWith('환생 ')), 'no rebirth line on Koprulu jobs'); assert.equal(canChangeJob(s, 'irTrooper'), true);
+    act(s, { type: 'stage', id: stage.id }, 0); assert.equal(s.stage, stage.id);
+    const a = body(); a.ascension = 1; a.pioneerStatus = { at: 0, open: { koprulu: 'ascended' } }; assert.equal(D.kopruluEarly(a), true); assert.equal(canChangeJob(a, 'irTrooper'), true);
 });

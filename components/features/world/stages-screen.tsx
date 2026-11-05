@@ -1,5 +1,6 @@
 'use client';
 /** v3.395 사냥터(새 토대): 월드맵 · 난이도 카드 · 지역별 접는 장소 카드. 서버 행동(stage · tide · target)은 전과 같습니다. */
+import { rebirthGateOk } from '@/game/data/pioneer';
 import { useState } from 'react';
 import { ArrowUpRight, MapPin } from 'lucide-react';
 import type { State, Action } from '@/game/types';
@@ -37,7 +38,7 @@ export function StagesScreen({ s, send, busy }: { s: State; send: Send; busy: bo
             return <FoldSection key={region} title={<span className="inline-flex items-center gap-2">{region}{here && <Badge>현재 지역</Badge>}</span>} summary={`${places.filter(st => !st.habitat).length}곳 · 무리 서식지${sig.length ? ` · 대표 변종 ${sig.map(v => `${v.mark} ${v.name}`).join('·')}` : ''}`}
                 defaultOpen={openRegions[region] ?? here} onOpenChange={open => toggle(region, open)} extra={<RegionResearchLine s={s} region={region}/>}>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{places.map(st => { const i = STAGES.indexOf(st);
-                    const closed = closedIn(s, 'stages', st.id), locked = closed || !levelGateOk(s, st.level) || s.rebirths < st.rebirth;
+                    const closed = closedIn(s, 'stages', st.id), locked = closed || !levelGateOk(s, st.level) || !rebirthGateOk(s, st);
                     const current = s.stage === st.id && !inDungeon;
                     return <PlaceCard key={st.id} as="button" index={i} locked={locked} tone={st.tone} disabled={busy || locked || inDungeon} onClick={() => send({ type: 'stage', id: st.id })}
                         className={cn(current && 'border-accent/70 bg-accent-soft', st.habitat && 'border-dashed')}
