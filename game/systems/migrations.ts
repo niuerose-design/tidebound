@@ -421,6 +421,7 @@ export function migrateState(s: State, now = s.lastTick || 0): State {
     // v3.434 지금까지 쌓인 명성은 모두 숙련 50 시절의 것(숙련 1000은 v3.432에 생겨 아직 아무도 못 닿음) — 한 번 기록해 명성 연결에서 뺍니다.
     if (s.version === SAVE_VERSION && s.expeditionRenownLegacy === undefined) s.expeditionRenownLegacy = s.expeditionRenown || 0;
     restoreExpeditionAfterAscension(s);
+    if (!s.otherworldCostRefunded) { refundOtherworldCosts(s); s.otherworldCostRefunded = true; }
     // v3.114 환생 50 · 100회 이정표 칠흑: 이미 닿은 캐릭터에게 소급 지급합니다(받은 이정표는 onyxMilestones로 한 번만).
     if (s.version === SAVE_VERSION) grantOnyxMilestones(s);
     // v3.208 무릉도장 코어: 이미 높이 오른 캐릭터에게 최고 층 기준으로 소급 지급 · 각성합니다.
@@ -631,4 +632,17 @@ export function applyExpeditionHistory(s: State, h: { wins: number; runs: number
     if (h.abyss > (s.expeditionAbyssBest || 0)) { s.expeditionAbyssBest = h.abyss; lines.push(`심연 ${h.abyss}라운드`); }
     if (lines.length) addLog(s, `승천으로 지워졌던 원정대 누적을 순위 기록에서 합산해 되살렸습니다 · ${lines.join(' · ')}`, 'reward');
     return lines;
+}
+
+/** v3.465 이계 직업 세계석 비용 인하(옛 값 → 새 값). 이미 들어간 직업(unlockedJobs)마다 차액을 돌려줍니다. 승천해 세계석이 비었어도 직업은 남아 있으므로 그대로 돌려줍니다. */
+const OTHERWORLD_OLD_COST: Record<string, number> = { hacker: 3000, blackHacker: 10000, whiteHacker: 10000, specialAgent: 1000, fundManager: 1000, ghostOperative: 10000, deadshot: 10000, marketMaker: 10000 };
+export function refundOtherworldCosts(s: State) {
+    let refund = 0; const names: string[] = [];
+    for (const id of s.unlockedJobs || []) {
+        const old = OTHERWORLD_OLD_COST[id]; if (old === undefined) continue;
+        const job = jobById(id), diff = old - (job?.pearlCost ?? old);
+        if (diff > 0) { refund += diff; names.push(job?.name || id); }
+    }
+    if (refund > 0) { s.pearls = (s.pearls || 0) + refund; addLog(s, `이계 직업의 세계석 비용이 내려 ${names.join(', ')}의 차액 ${refund.toLocaleString()}개를 돌려받았습니다.`, 'reward'); }
+    return refund;
 }
