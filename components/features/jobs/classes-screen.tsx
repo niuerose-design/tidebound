@@ -4,6 +4,7 @@
  * ① 계열 탭 + 계보 카드 → ② 항로도(01~05) → ③ 직업 상세. 넓은 화면은 세 칸을 나란히, 좁은 화면은 ① · ②를 쌓고 상세는 아래에서 올라오는 Sheet.
  * 세계 책(v3.220) · 빠른 찾기 · 검색 · 비교(최대 3) · 목표 직업(v3.166)은 전과 같고, 판정은 components/game/jobs/job-status.ts 그대로입니다.
  */
+import { kopruluEarly } from '@/game/data/pioneer';
 import { useMemo, useState } from 'react';
 import { BookOpen, ChevronLeft, Compass, Flag, Lock, Search } from 'lucide-react';
 import type { State, Action } from '@/game/types';
@@ -125,7 +126,7 @@ function WorldBook({ s, currentWorld, onOpen }: { s: State; currentWorld: WorldI
             <p className="text-s text-ink-2">세계마다 서로 다른 계보가 이어집니다. 읽을 세계를 고르세요.</p>
         </div>
         <ol className="grid content-start gap-2 p-4">
-            {WORLDS.map((w, i) => { const n = worldJobCount(s, w.id), locked = w.id === 'koprulu' && s.rebirths < KOPRULU_REBIRTH, cur = w.id === currentWorld;
+            {WORLDS.map((w, i) => { const n = worldJobCount(s, w.id), locked = w.id === 'koprulu' && s.rebirths < KOPRULU_REBIRTH && !kopruluEarly(s), cur = w.id === currentWorld;
                 return <li key={w.id}><button type="button" className={cn('grid w-full gap-0.5 rounded-m border p-3 text-left outline-none transition-colors focus-visible:ring-[3px] focus-visible:ring-accent/50', cur ? 'border-accent/70 bg-accent-soft' : 'border-line bg-surface-1 hover:bg-surface-3/60')} style={{ borderLeftColor: w.accent, borderLeftWidth: 3 }} onClick={() => onOpen(w.id)}>
                     <span className="font-display text-xs text-ink-3">제{i + 1}장</span>
                     <strong className="inline-flex items-center gap-1 font-display text-m">{locked && <Lock size={13}/>}{w.name}</strong>

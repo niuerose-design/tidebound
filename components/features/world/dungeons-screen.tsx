@@ -1,5 +1,6 @@
 'use client';
 /** v3.395 던전(새 토대): 진행 중 장면 · 웨이브 띠 · 자동 진행 · 주화 줄 · 던전 카드(난이도 · 단계 · 반복 · 도전). 서버 행동(dungeon · leaveDungeon)은 전과 같습니다. */
+import { rebirthGateOk } from '@/game/data/pioneer';
 import { useState } from 'react';
 import { Coins, Lock, Swords } from 'lucide-react';
 import type { State, Action } from '@/game/types';
@@ -46,7 +47,7 @@ export function DungeonsScreen({ s, send, busy, setView }: { s: State; send: Sen
             {setView && <span className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setView('dungeonShop')}>던전 주화 상점</Button><Button type="button" size="sm" variant="ghost" onClick={() => setView('help')}>난이도 도움말</Button></span>}
         </section>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{[...PLAIN_DUNGEONS].sort((a, b) => a.level - b.level).map((d, i) => {
-            const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || s.rebirths < d.rebirth;
+            const closed = closedIn(s, 'dungeons', d.id), locked = closed || !levelGateOk(s, d.level) || !rebirthGateOk(s, d);
             const mode = modeChoice[d.id] || 'normal', abyss = d.id === 'abyss';
             const stageCap = nightmareStageCap(s, d.id), bestStage = s.nightmareBest?.[d.id] || 0, stage = mode === 'nightmare' && !abyss ? Math.max(1, Math.min(stageChoice[d.id] || stageCap, stageCap)) : 1;
             const research = FIRST_CLEAR_SP[d.id], claimed = !!s.achievementClaims?.[`firstClear:${d.id}`], here = s.dungeon?.id === d.id, off = busy || locked || !!s.dungeon;

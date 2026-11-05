@@ -3,6 +3,7 @@
  * 전투력과 무관한 반복 조작 덜기입니다.
  * 둘 다 자동 사냥 턴(온라인 tick·부재중 정산)마다 확인합니다. 설정은 환생·승천해도 남습니다(승천 전에 짜 둔 순서를 다음 바퀴에 다시 씀).
  */
+import { rebirthGateOk } from '../data/pioneer';
 import type { State } from '../types';
 import { ASCENSION, ascensionOf, ascensionPerk } from '../data/ascension';
 import { rebirthLevel, tideLimit } from './meta';
@@ -30,7 +31,7 @@ export function autoRebirthDue(s: State) {
 export const FOLLOW_STAGE = ['top', 'habitat', 'keep'] as const;
 export const FOLLOW_TIDE = ['max', 'mimic', 'keep'] as const;
 export type FollowRule = { on: boolean; stage: typeof FOLLOW_STAGE[number]; tide: typeof FOLLOW_TIDE[number] };
-const enterable = (s: State, st: typeof STAGES[number]) => st.level <= s.level && s.rebirths >= st.rebirth && !stageClosed(st.id) && (st.id === s.stage || !hackDownOf('stage', st.id, s.lastTick));
+const enterable = (s: State, st: typeof STAGES[number]) => st.level <= s.level && rebirthGateOk(s, st) && !stageClosed(st.id) && (st.id === s.stage || !hackDownOf('stage', st.id, s.lastTick));
 /** 규칙이 고르는 사냥터·난이도(바꿀 것이 없으면 지금 값). */
 export function followTarget(s: State, rule: FollowRule) {
     // v3.103 입장 조건을 내리면서, 적정 환생(fit)에 닿은 곳 중 가장 높은 곳을 고릅니다(없으면 입장 가능한 가장 높은 곳).

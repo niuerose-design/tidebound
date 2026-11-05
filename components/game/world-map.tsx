@@ -1,4 +1,5 @@
 'use client';
+import { rebirthGateOk, kopruluEarly } from '@/game/data/pioneer';
 import { Button } from '@/components/ui/button';
 /**
  * v3.368 사냥터 월드맵: 사냥터 화면 위에 그린 SVG 지도. 메이플 월드(판게아 대륙, 바다)와 코프룰루 구역(별의 바다) 두 장을 탭으로 나눠 보여 주고,
@@ -74,14 +75,14 @@ export function WorldMap({ s, send, busy }: PanelProps) {
     const pickWorld = (w: WorldId) => { setWorld(w); setPick(null); try { localStorage.setItem('tidebound:world-map', w); } catch { /* 이번 화면에서만 */ } };
     const inDungeon = !!s.dungeon, info = WORLD_INFO[world];
     const regions = REGIONS.filter(r => worldOfRegion(r) === world);
-    const lockOf = (st: (typeof STAGES)[number]) => closedIn(s, 'stages', st.id) ? CLOSED_NOTE : inDungeon ? '던전 탐험 중' : s.rebirths < st.rebirth ? `환생 ${st.rebirth}회부터` : !levelGateOk(s, st.level) ? `Lv.${st.level}부터` : null;
+    const lockOf = (st: (typeof STAGES)[number]) => closedIn(s, 'stages', st.id) ? CLOSED_NOTE : inDungeon ? '던전 탐험 중' : !rebirthGateOk(s, st) ? `환생 ${st.rebirth}회부터` : !levelGateOk(s, st.level) ? `Lv.${st.level}부터` : null;
     const picked = STAGES.find(st => st.id === (pick ?? s.stage));
     const pickedLock = picked ? lockOf(picked) : null;
     const route = regions.map(r => LAYOUT[r]);
     return <section className="world-map" style={{ '--world-accent': info.accent } as React.CSSProperties}>
     <div className="world-map-tabs" role="tablist" aria-label="세계">
         {(Object.keys(WORLD_INFO) as WorldId[]).map(w => <button key={w} role="tab" aria-selected={world === w} className={`world-tab ${world === w ? 'on' : ''}`} style={{ '--world-accent': WORLD_INFO[w].accent } as React.CSSProperties} onClick={() => pickWorld(w)}>
-            <small>{WORLD_INFO[w].sub}</small><b>{WORLD_INFO[w].name}</b>{w === 'koprulu' && s.rebirths < KOPRULU_REBIRTH ? <Lock size={13}/> : hereRegion && worldOfRegion(hereRegion) === w ? <MapPin size={13}/> : null}
+            <small>{WORLD_INFO[w].sub}</small><b>{WORLD_INFO[w].name}</b>{w === 'koprulu' && s.rebirths < KOPRULU_REBIRTH && !kopruluEarly(s) ? <Lock size={13}/> : hereRegion && worldOfRegion(hereRegion) === w ? <MapPin size={13}/> : null}
         </button>)}
     </div>
     <svg viewBox="0 0 480 300" className="world-map-svg" role="img" aria-label={`${info.name} 지도`}>

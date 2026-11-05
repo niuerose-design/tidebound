@@ -1,4 +1,5 @@
 /** 모험 진행: 사냥 시작·정지, 사냥터·던전 이동, 집중 사냥, 안내·목표 설정 */
+import { rebirthGateOk } from '../../data/pioneer';
 import { tideLimit, encounterTier, levelGateOk } from '../meta';
 import { STAGES, dungeonClosed, stageClosed, hackDownOf, monsterById, stageById, dungeonById } from '../../data/world';
 import { SWARM_CAPS } from '../../data/variants';
@@ -33,7 +34,7 @@ export const voyageActions: ActionHandlers = {
     },
     stage(s, { id, now }) {
         const st = stageById(id);
-        if (!st || !levelGateOk(s, st.level) || s.rebirths < st.rebirth)
+        if (!st || !levelGateOk(s, st.level) || !rebirthGateOk(s, st))
             throw Error('아직 진입할 수 없는 사냥터입니다.');
         if (stageClosed(st.id))
             throw Error(`${st.name}은(는) 점검 중이라 입장할 수 없습니다.`);
@@ -52,7 +53,7 @@ export const voyageActions: ActionHandlers = {
         if (isHackerJob(s.job))
             throw Error('해커는 던전에 들어가지 않습니다. 침투 작전으로 성장하세요.');
         const d = dungeonById(id);
-        if (!d || !levelGateOk(s, d.level) || s.rebirths < d.rebirth)
+        if (!d || !levelGateOk(s, d.level) || !rebirthGateOk(s, d))
             throw Error('던전 입장 조건을 충족하지 못했습니다.');
         if (dungeonClosed(d.id))
             throw Error(`${d.name}은(는) 점검 중이라 입장할 수 없습니다.`);

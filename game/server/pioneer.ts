@@ -129,7 +129,7 @@ export async function pioneerInfo(id: string, s: State, now: number): Promise<Pi
     const store = await readPioneer(now);
     const regions: PioneerRegionInfo[] = PIONEER_REGIONS.map(def => {
         const r = store.regions[def.id] || blank(), board = sorted(r);
-        const lineages = PIONEER_REGION_JOBS[def.id].map(jobId => { const j = jobById(jobId); if (!j) return null; const l = LINEAGES.find(x => x.id === lineageOf(j)); return l && jobRevealed(s, j) ? l.name : null; });
+        const lineages = def.id === 'koprulu' ? LINEAGES.filter(l => l.world === 'koprulu').map(l => l.name) : PIONEER_REGION_JOBS[def.id].map(jobId => { const j = jobById(jobId); if (!j) return null; const l = LINEAGES.find(x => x.id === lineageOf(j)); return l && jobRevealed(s, j) ? l.name : null; });
         const can = voteOpener(store, def.id, id, s, now);
         return {
             ...def, points: Math.min(def.cost, r.points), open: !!r.openedAt, openedAt: r.openedAt, openedBy: r.openedBy, access: r.access, lineages,

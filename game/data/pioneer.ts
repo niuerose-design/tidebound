@@ -3,7 +3,8 @@
  * 지역마다 아제로스 히든 계보 셋이 묶여 있고(어느 계보인지는 서버 전용 표 secret/pioneer.ts), 지역이 열리면 그 계보에 숨은 조건 없이 들어갈 수 있습니다.
  * 누가 들어갈 수 있는지는 승천자 투표로 정합니다(15.4). 투표 전에는 승천자 전용입니다.
  */
-export type PioneerRegionId = 'elwynn' | 'blackrock' | 'dalaran' | 'stormwind';
+import { ascended } from './ascension';
+export type PioneerRegionId = 'elwynn' | 'blackrock' | 'dalaran' | 'stormwind' | 'koprulu';
 export type PioneerAccess = 'ascended' | 'all';
 export type PioneerRegionDef = { id: PioneerRegionId; name: string; subtitle: string; desc: string; cost: number };
 /** 열리는 순서대로. 비용은 세계석. 지인 서버에서 한 지역이 몇 주에 열리도록 승천자 한 바퀴의 세계석 수입(환생 100회 약 3,500)에 맞췄습니다. */
@@ -13,8 +14,17 @@ export const PIONEER_REGIONS: PioneerRegionDef[] = [
     { id: 'dalaran', name: '달라란', subtitle: '신과 정수와 세계석의 도시', desc: '제단과 정수, 세계석을 끝까지 파고든 모험가들의 계보 셋이 잠들어 있습니다.', cost: 4000 },
     /** v3.466 사냥 기록으로는 열리지 않고 개척으로만 열리는 성채. 빛의 기사와 계약 술사, 죽음을 건넌 기사의 계보 셋. */
     { id: 'stormwind', name: '스톰윈드 성채', subtitle: '승천자의 손으로만 열리는 성문', desc: '사냥 기록으로는 열 수 없는 성채입니다. 빛을 든 기사와 계약을 부리는 술사, 죽음을 건너 돌아온 기사의 계보 셋이 기다립니다.', cost: 6000 },
+    /** v3.467 코프룰루 조기 개방: 열리면 공개 범위 안의 모험가는 코프룰루 구역의 환생 횟수 조건을 보지 않습니다(전직 · 사냥터 · 무리 서식지 · 던전). */
+    { id: 'koprulu', name: '코프룰루 궤도 정거장', subtitle: '별의 바다로 먼저 떠나는 길', desc: '열리면 코프룰루 구역의 환생 50회 조건이 사라집니다. 강철 보병과 군체 조율사 계보, 네 지역의 사냥터와 던전에 바로 들어갑니다.', cost: 8000 },
 ];
 export const pioneerRegionById = (id: string) => PIONEER_REGIONS.find(r => r.id === id);
+/** v3.467 코프룰루 구역의 사냥터 지역 이름(world.ts STAGES.region). */
+export const KOPRULU_REGION_NAMES = new Set(['잿빛 궤도', '광맥 황야', '군체 늪지', '고요한 성단']);
+type GateState = { rebirths?: number; ascension?: number; pioneerStatus?: PioneerStatus };
+/** 코프룰루 조기 개방이 이 모험가에게 열려 있는지: 지역이 열렸고 공개 범위 안(모두에게 공개, 또는 승천자 전용이고 승천자). */
+export const kopruluEarly = (s: GateState) => { const a = s.pioneerStatus?.open?.koprulu; return !!a && (a === 'all' || ascended(s)); };
+/** 사냥터 · 무리 서식지 · 던전의 환생 조건. 코프룰루 것은 조기 개방이면 보지 않습니다. */
+export const rebirthGateOk = (s: GateState, x: { rebirth?: number; region?: string; world?: string }) => (s.rebirths || 0) >= (x.rebirth || 0) || ((x.world === 'koprulu' || KOPRULU_REGION_NAMES.has(x.region || '')) && kopruluEarly(s));
 export const PIONEER = {
     /** 서버 공용 저장 캐시. */
     cacheMs: 30_000,
