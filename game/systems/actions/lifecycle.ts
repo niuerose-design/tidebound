@@ -184,7 +184,7 @@ export function ascend(s: State, now: number) {
     // 기존 항목을 모두 지운 뒤 새 캐릭터 + 유지 항목만 채웁니다(새 캐릭터에 기본값이 없는 서약·변종 도감·칠흑 기록 등이 남지 않게).
     for (const key of Object.keys(s)) delete (s as Record<string, unknown>)[key];
     Object.assign(s, fresh, keep, expedition);
-    s.expeditionRestored = true; // v3.461부터는 잃은 원정 진행이 없으니 복구 이관을 건너뜁니다.
+    s.expeditionRestored = true; s.expeditionRowsRestored = true; // v3.461부터는 잃은 원정 진행이 없으니 복구 이관을 건너뜁니다.
     for (const key of Object.keys(s) as (keyof State)[]) if (s[key] === undefined) delete s[key];
     s.ascension = n + 1;
     // v3.114 예전 기록을 지운 뒤 읽어 직전 승천 기록만 남던 문제: 지우기 전에 받아 둔 기록에 이어 붙입니다.

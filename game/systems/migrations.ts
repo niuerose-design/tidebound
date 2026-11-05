@@ -614,3 +614,21 @@ export function restoreExpeditionAfterAscension(s: State): string[] | null {
     if (lines.length) addLog(s, `승천으로 지워졌던 원정대 진행을 업적 기록만큼 되살렸습니다 · ${lines.join(' · ')}. 앞으로는 승천해도 원정대가 그대로 남습니다.`, 'reward');
     return lines;
 }
+
+/**
+ * v3.462 서버 행(readExpeditionHistory)으로 합산한 원정 누적을 세이브에 되돌립니다. 업적 기반 복구(restoreExpeditionAfterAscension) 위에 얹어 더 높은 값만 올립니다.
+ * 누적 승 · 판은 주간 리그 행의 합, 숙련은 월간 최고 판 때의 숙련, 리그 등급과 최고 승수 · 심연은 행의 최댓값입니다. 서버가 승천한 모험가에게 한 번만 부릅니다(expeditionRowsRestored).
+ */
+export function applyExpeditionHistory(s: State, h: { wins: number; runs: number; mastery: number; tier: number; best: number; abyss: number }): string[] {
+    const lines: string[] = [];
+    const st = s.expeditionStats ??= { runs: 0, clears: 0, wins: 0, roundPlays: [], roundWins: [], units: {}, ghostFights: 0, ghostWins: 0 };
+    if (h.wins > st.wins) { st.wins = h.wins; lines.push(`누적 ${h.wins.toLocaleString()}승`); }
+    if (h.runs > st.runs) { st.runs = h.runs; lines.push(`누적 ${h.runs.toLocaleString()}판`); }
+    const mastery = Math.min(MASTERY_MAX, h.mastery);
+    if (mastery > (s.expeditionMastery?.level || 1)) { const m = s.expeditionMastery ??= { level: 1, xp: 0, total: 0 }; m.level = mastery; m.xp = 0; m.peak = Math.max(m.peak || 0, mastery); lines.push(`숙련 ${mastery}`); }
+    if (h.tier > (s.expeditionLeague?.tier || 1)) { const l = s.expeditionLeague ??= { tier: 1 }; l.tier = h.tier; l.best = Math.max(l.best || 0, h.tier); lines.push(`리그 ${leagueTierName(h.tier)}`); }
+    if (h.best > (s.expeditionBest || 0)) { s.expeditionBest = h.best; lines.push(`최고 ${h.best}승`); }
+    if (h.abyss > (s.expeditionAbyssBest || 0)) { s.expeditionAbyssBest = h.abyss; lines.push(`심연 ${h.abyss}라운드`); }
+    if (lines.length) addLog(s, `승천으로 지워졌던 원정대 누적을 순위 기록에서 합산해 되살렸습니다 · ${lines.join(' · ')}`, 'reward');
+    return lines;
+}
