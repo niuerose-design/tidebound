@@ -1101,3 +1101,12 @@ test('v3.464 Azeroth pioneering: ascended-only offers fill regions in order, vot
     assert.equal(ACHIEVEMENTS.find(x => x.id === 'pioneer:1000').progress(a), 1000); assert.ok(TITLES.some(t => t.id === 'pioneer:1000' && t.achievement === 'pioneer:1000'));
     await P.resetPioneer(now0 + 20);
 });
+
+test('v3.465 otherworld pearl costs were lowered and the difference is refunded once to adventurers who already entered those jobs', async () => {
+    const Mi = await L.load('systems/migrations');
+    const s = newState(0); s.unlockedJobs = ['fisher', 'hacker', 'blackHacker', 'specialAgent', 'agentRookie']; s.pearls = 10;
+    assert.equal(Mi.refundOtherworldCosts(s), 2000 + 7000 + 700); assert.equal(s.pearls, 9710); assert.ok(s.logs.some(x => x.text.includes('차액 9,700개')));
+    const t = newState(0); t.unlockedJobs = ['fisher', 'hacker']; t.pearls = 0; delete t.otherworldCostRefunded; Mi.migrateState(t, 0); assert.equal(t.pearls, 2000); assert.equal(t.otherworldCostRefunded, true);
+    Mi.migrateState(t, 0); assert.equal(t.pearls, 2000, 'runs once');
+    const u = newState(0); u.unlockedJobs = ['fisher']; assert.equal(Mi.refundOtherworldCosts(u), 0); assert.equal(u.logs.some(x => x.text.includes('차액')), false);
+});

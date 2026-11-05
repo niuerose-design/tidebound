@@ -5,17 +5,17 @@ const { load } = loadGame();
 const H = await load('game/systems/hacker.js'), D = await load('game/data/hacker.js');
 
 // v3.231 해커는 이계 직업: 세계석 3,000을 내고 들어갑니다(그 뒤 남는 세계석 500).
-const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 3500; act(s, { type: 'job', id: 'hacker' }, 0); return s; };
+const hacker = () => { const s = newState(0); s.level = 40; s.rebirths = 5; s.sp = 10; s.pearls = 1500; act(s, { type: 'job', id: 'hacker' }, 0); return s; };
 
 test('v3.18 hacker job: public otherworld tier-1 job bought with pearls (v3.231), no stat penalties (combat is blocked by rule), adguard as its only skill', () => {
     const j = JOBS.find(x => x.id === 'hacker');
-    assert.ok(j && !j.hidden && j.tree === 'mystery' && j.tier === 1 && !j.rebirth && j.pearlCost === 3000, 'v3.231 이계: 세계석 3,000만');
+    assert.ok(j && !j.hidden && j.tree === 'mystery' && j.tier === 1 && !j.rebirth && j.pearlCost === 1000, 'v3.465 이계: 세계석 1,000만');
     // v3.18 몹을 만나지 않으니 능력치 보정은 없고, 전투 참여를 규칙으로 막습니다.
     assert.deepEqual([j.attack, j.magic, j.hp, j.defense, j.resist], [1, 1, 1, 1, 1]); assert.ok(!j.constraint);
     assert.ok(H.hackerCombatBlock({ job: 'hacker' }) && !H.hackerCombatBlock({ job: 'fisher' }));
     assert.deepEqual(SKILLS.filter(sk => sk.job === 'hacker').map(sk => sk.id), ['adGuard']);
     // v3.231 레벨 · 환생 조건은 없고 세계석만: 2,999면 막히고 3,000이면 들어가며 그만큼 빠집니다.
-    const s = newState(0); s.pearls = 2999; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0)); s.pearls = 3000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.pearls, 0);
+    const s = newState(0); s.pearls = 999; assert.throws(() => act(s, { type: 'job', id: 'hacker' }, 0)); s.pearls = 1000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.pearls, 0);
     act(s, { type: 'job', id: 'fisher' }, 0); act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.pearls, 0, 'paid once');
 });
 
@@ -425,7 +425,7 @@ test('v3.26 infiltration puzzles: first lock then port, later nodes mix in seque
 });
 
 test('v3.26 becoming a hacker flags an anonymous red chat line (posted by the server test above)', () => {
-    const s = newState(0); s.level = 40; s.rebirths = 5; s.pearls = 3000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
+    const s = newState(0); s.level = 40; s.rebirths = 5; s.pearls = 1000; act(s, { type: 'job', id: 'hacker' }, 0); assert.equal(s.jobAnnounce, 'hacker');
     delete s.jobAnnounce; act(s, { type: 'job', id: 'fisher' }, 0); assert.equal(s.jobAnnounce, undefined, 'leaving is quiet');
 });
 

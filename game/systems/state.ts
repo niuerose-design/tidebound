@@ -24,7 +24,7 @@ export function newState(now: number): State {
         masteryRescaled: true,
         // v3.434 새 모험가에게는 숙련 50 시절 명성이 없음(명성 연결에서 뺄 옛 명성 0).
         expeditionRenownLegacy: 0,
-        ultimateRemade: true,
+        ultimateRemade: true, otherworldCostRefunded: true,
         trainingRescaled: true,
         masteryAligned: true,
         penetrationBoosted: true,
