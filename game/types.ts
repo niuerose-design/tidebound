@@ -543,7 +543,7 @@ type LifeStart = { at: number; playMs: number; partial?: boolean };
 /** 환생 한 번의 기록. realMs: 생 시작부터 환생까지 실제 시간, playMs: 그동안 사냥이 진행된 시간(부재중 정산 포함). */
 export type RebirthRecord = { n: number; at: number; realMs: number; playMs: number; level: number; pearls: number; partial?: boolean };
 /** v3.31 승천 기록: 몇 번째 승천인지, 그때의 환생 횟수·무릉도장 최고층·걸린 시간. */
-export type AscensionRecord = { n: number; at: number; rebirths: number; abyssBest: number; realMs: number; kills: number };
+export type AscensionRecord = { n: number; at: number; rebirths: number; abyssBest: number; realMs: number; kills: number; /** v3.463 승천하는 순간 걸려 있던 서약(명예 업적 · 기록). */ vows?: string[] };
 export type Log = {
     id: number;
     text: string;
@@ -1021,6 +1021,8 @@ export type Snapshot = {
     privacy?: { show: string[] };
     /** v26.1 표시 칭호 이름(랭킹). */
     title?: string;
+    /** v3.463 승천 횟수(랭킹 배지 ‘n승천’). */
+    ascension?: number;
     /** v25.12 지난 시즌 순위(상위 3위만 배지). 시즌 이월 때 서버가 넣습니다. */
     seasonRank?: number;
     /** 걸어 둔 서약 배지(랭킹 표시). 예: ['anchor', 'rough2'] */

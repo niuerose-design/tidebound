@@ -125,7 +125,7 @@ export function ArenaScreen({ s, send, busy, rows, rankError, loadRanking, abyss
             <TableCell className="font-num">{i + 1}</TableCell>
             <TableCell className="min-w-56">
             <strong className="flex flex-wrap items-center gap-1 text-s">{!r.masked && (r.title ?? rebirthTitle(r.rebirths)) ? <small className="rounded-s bg-surface-3 px-1 text-xs font-normal text-gold-ink">{r.title ?? rebirthTitle(r.rebirths)}</small> : null}{r.seasonRank && r.seasonRank <= 3 ? <small className="rounded-s bg-gold-ink/15 px-1 text-xs font-normal text-gold-ink">지난 시즌 {r.seasonRank}위</small> : null}{r.name}{r.self ? ' (나)' : ''}{r.vows?.map(v => <small key={v} className="rounded-s border border-warn/50 px-1 text-xs font-normal text-warn">{vowBadgeLabel(v)}</small>)}</strong>
-            <small className="block text-xs text-ink-3">Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회 · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
+            <small className="block text-xs text-ink-3">Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회{!hid(r, 'level') && r.ascension ? ` · ${r.ascension}승천` : ''} · {new Date(r.updatedAt).toLocaleDateString('ko-KR')} 등록</small>
             {hid(r, 'gear') ? <small className="block text-xs text-ink-3">능력치 ???</small> : <MainStats stats={r.stats}/>}
             </TableCell>
             <TableCell>{hid(r, 'guild') ? '???' : r.guild || '무소속'}</TableCell>
@@ -145,7 +145,7 @@ export function ArenaScreen({ s, send, busy, rows, rankError, loadRanking, abyss
     {rows.length ? <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{rows.map(r => <div className="grid content-start gap-1.5 rounded-m border border-line bg-surface-1 p-3" key={r.id}>
         <span className="inline-flex items-center gap-1 text-xs text-ink-3"><Swords size={13}/>{r.self ? '내 등록 정보' : '등록된 모험가'}</span>
         <h3 className="font-display text-s font-bold">{r.name}</h3>
-        <p className="text-xs text-ink-2">Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회</p>
+        <p className="text-xs text-ink-2">Lv. {hid(r, 'level') ? '???' : r.level} · {hid(r, 'job') ? '???' : jobName(r.job)} · 환생 {hid(r, 'level') ? '???' : r.rebirths}회{!hid(r, 'level') && r.ascension ? ` · ${r.ascension}승천` : ''}</p>
         {hid(r, 'gear') ? <small className="block text-xs text-ink-3">능력치 ???</small> : <MainStats stats={r.stats}/>}
         <div className="mt-auto flex flex-wrap gap-1"><Sm className="bg-accent text-accent-ink hover:bg-accent/90" variant="default" disabled={busy} onClick={() => send({ type: 'training', id: `user:${r.id}` }, '/api/duel')}>연습 대결</Sm><Link onClick={() => setDetail(r)}>상세보기</Link></div>
         </div>)}</div> : <Note>등록된 모험가가 없어 던전 보스와 훈련합니다. 전투 정보를 등록하면 내 방어용 정보와도 연습할 수 있습니다.</Note>}</Card>
@@ -163,7 +163,7 @@ export function ArenaScreen({ s, send, busy, rows, rankError, loadRanking, abyss
     <DialogContent className="max-h-[88vh] overflow-y-auto border-line bg-surface-0 text-ink-1 sm:max-w-2xl">
     <DialogHeader>
     <DialogTitle>{detail?.name}{detail?.self ? ' (나)' : ''}</DialogTitle>
-    <DialogDescription>{detail && `Lv. ${hid(detail, 'level') ? '???' : detail.level} · ${hid(detail, 'job') ? '???' : jobName(detail.job)} · 환생 ${hid(detail, 'level') ? '???' : detail.rebirths}회 · ${hid(detail, 'guild') ? '???' : detail.guild || '무소속'} · 전투력 ${hid(detail, 'gear') ? '???' : format(detail.power)} · 점수 ${detail.rating} · ${new Date(detail.updatedAt).toLocaleString('ko-KR')} 등록`}</DialogDescription>
+    <DialogDescription>{detail && `Lv. ${hid(detail, 'level') ? '???' : detail.level} · ${hid(detail, 'job') ? '???' : jobName(detail.job)} · 환생 ${hid(detail, 'level') ? '???' : detail.rebirths}회${!hid(detail, 'level') && detail.ascension ? ` · ${detail.ascension}승천` : ''} · ${hid(detail, 'guild') ? '???' : detail.guild || '무소속'} · 전투력 ${hid(detail, 'gear') ? '???' : format(detail.power)} · 점수 ${detail.rating} · ${new Date(detail.updatedAt).toLocaleString('ko-KR')} 등록`}</DialogDescription>
     </DialogHeader>
     {detailStats && <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">{DETAIL_STATS.map(k => <span key={k} className="flex justify-between gap-2 rounded-s bg-surface-1 px-2 py-1 text-xs"><small className="text-ink-3">{STAT_LABELS[k]}</small><b className="font-num">{statDisplay(k, detailStats[k])}</b></span>)}</div>}
     {detailLoadout && <div className="grid gap-3 sm:grid-cols-2">

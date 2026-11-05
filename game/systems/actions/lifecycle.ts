@@ -155,7 +155,8 @@ export function ascend(s: State, now: number) {
     const n = ascensionOf(s), need = ascensionRequirement(s);
     if (s.rebirths < need) throw Error(`환생 ${need}회부터 승천할 수 있습니다.`);
     if (s.dungeon) throw Error('던전에서 나온 뒤 승천하세요.');
-    const record: AscensionRecord = { n: n + 1, at: now, rebirths: s.rebirths, abyssBest: s.abyssBest || 0, realMs: Math.max(0, now - (s.ascensionStart || now)), kills: s.kills };
+    const vowsHeld = VOW_IDS.filter(id => s.vows?.[id]);
+    const record: AscensionRecord = { n: n + 1, at: now, rebirths: s.rebirths, abyssBest: s.abyssBest || 0, realMs: Math.max(0, now - (s.ascensionStart || now)), kills: s.kills, ...(vowsHeld.length ? { vows: vowsHeld } : {}) };
     const refineBase: Record<string, number> = { ...(s.refineBase || {}) };
     for (const [id, practice] of Object.entries(s.skillPractice || {})) {
         const last = masteryMilestonesFor(skillById(id)).at(-1)!;
