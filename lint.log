@@ -1,0 +1,1 @@
+$ eslint . --ignore-pattern .next --max-warnings 0
