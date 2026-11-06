@@ -92,7 +92,7 @@ test('v26.1 titles come from achievements; equip, hide and auto all resolve thro
     act(s, { type: 'title', id: 'rebirth:5' }, 0); assert.equal(displayTitle(s), '🔁 되돌아온 모험가');
     act(s, { type: 'title', id: 'none' }, 0); assert.equal(s.title, null); assert.equal(displayTitle(s), '');
     act(s, { type: 'title', id: 'auto' }, 0); assert.equal(s.title, undefined); assert.equal(displayTitle(s), '🍁 메이플 월드에 사는 자');
-    assert.ok(TITLES.every(t => t.achievement || t.id === 'novice'), 'every earned title names its achievement');
+    assert.ok(TITLES.every(t => t.achievement || t.shop || t.id === 'novice'), 'every earned title names its achievement or its shop item');
 });
 
 test('v26.1 server events multiply exp/gold/drop while active and are stamped into the state by advance()', async () => {

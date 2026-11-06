@@ -333,9 +333,11 @@
 .exp-skin-gold { filter:sepia(.7) saturate(1.9) hue-rotate(-12deg) brightness(1.12) drop-shadow(0 0 4px #e0b36a); }
 .exp-skin-prism { filter:saturate(1.5) drop-shadow(0 0 4px #9ad0ff); animation:exp-prism 6s linear infinite; }
 .exp-skin-radiant { filter:brightness(1.2) drop-shadow(0 0 6px #fff1b0); animation:exp-radiant 2.4s ease-in-out infinite; }
+.exp-skin-aurora { filter:saturate(1.3) drop-shadow(0 0 5px #7df0c8); animation:exp-aurora 5s ease-in-out infinite; }
+@keyframes exp-aurora { 0%, 100% { filter:saturate(1.3) hue-rotate(0deg) drop-shadow(0 0 5px #7df0c8); } 50% { filter:saturate(1.5) hue-rotate(60deg) drop-shadow(0 0 8px #b48cff); } }
 @keyframes exp-prism { from { filter:hue-rotate(0deg) saturate(1.5) drop-shadow(0 0 4px #9ad0ff); } to { filter:hue-rotate(360deg) saturate(1.5) drop-shadow(0 0 4px #9ad0ff); } }
 @keyframes exp-radiant { 0%, 100% { filter:brightness(1.1) drop-shadow(0 0 3px #fff1b0); } 50% { filter:brightness(1.4) drop-shadow(0 0 9px #ffe680); } }
-@media (prefers-reduced-motion: reduce) { .exp-skin-prism, .exp-skin-radiant { animation:none; }}
+@media (prefers-reduced-motion: reduce) { .exp-skin-prism, .exp-skin-radiant, .exp-skin-aurora { animation:none; }}
 .exp-skin-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:8px; margin-top:10px; }
 .exp-skin-card { display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 6px; border:1px solid var(--border); border-radius:8px; background:#0f2227; color:inherit; cursor:pointer; min-width:0; text-align:center; }
 .exp-skin-card b { font-size:12px; } .exp-skin-card small { font-size:11px; color:#9fb3b1; }

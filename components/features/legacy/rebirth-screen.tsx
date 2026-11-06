@@ -27,10 +27,11 @@ import { AutoRebirthPanel, AutoFollowPanel, RotationPanel, ResearchPlanPanel, sh
 import { AscensionPanel } from './ascension';
 import { RebirthHistory } from './rebirth-history';
 import { PioneerPanel, type PioneerProps } from './pioneer';
+import { HorizonShop } from './horizon';
 
 type Send = (a: Action) => void;
 const fmt = formatExact;
-const TABS = [['prepare', '환생 준비'], ['research', '세계석 연구'], ['relics', '환생 유물'], ['history', '환생 기록']] as const;
+const TABS = [['prepare', '환생 준비'], ['research', '세계석 연구'], ['horizon', '수평 상점'], ['relics', '환생 유물'], ['history', '환생 기록']] as const;
 const Tile = ({ icon, label, children }: { icon?: React.ReactNode; label: string; children: React.ReactNode }) => <div className="flex items-center gap-3 rounded-l border border-line bg-surface-2 p-3 shadow-1">{icon && <span className="text-accent" aria-hidden="true">{icon}</span>}<div className="grid min-w-0 flex-1 gap-0.5"><span className="text-xs text-ink-3">{label}</span><span className="flex items-baseline gap-1 font-num text-l font-semibold">{children}</span></div></div>;
 
 export function RebirthScreen({ s, send, busy, ...pioneer }: { s: State; send: Send; busy: boolean } & Partial<PioneerProps>) {
@@ -87,6 +88,7 @@ export function RebirthScreen({ s, send, busy, ...pioneer }: { s: State; send: S
             {showAutomation(s) && <ResearchPlanPanel s={s} send={send} busy={busy}/>}
             <ResearchTabView tab={researchTab} s={s} send={send} busy={busy}/>
         </>}
+        {tab === 'horizon' && <HorizonShop s={s} send={send} busy={busy}/>}
         {tab === 'relics' && <RelicTab s={s} send={send} busy={busy}/>}
     </div>;
 }

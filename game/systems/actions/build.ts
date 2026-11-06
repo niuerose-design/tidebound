@@ -1,3 +1,4 @@
+import { presetSlots } from '../../data/horizon';
 import { isHackerJob } from '../../data/hacker';
 /** 빌드: 전직, 스킬 장착·습득·계승·강화, 능력치 배분, 편성 저장 */
 import { stats, clampVitals } from '../stats';
@@ -243,8 +244,8 @@ export const buildActions: ActionHandlers = {
         if (s.skillHidden.includes(id) && s.skillPins?.includes(id)) s.skillPins = s.skillPins.filter(x => x !== id);
     },
     savePreset(s, { a, id }) {
-        if (!['1', '2', '3'].includes(id))
-            throw Error('저장 칸을 확인하세요.');
+        if (!presetSlots(s).includes(id))
+            throw Error('저장 칸을 확인하세요. 편성 칸은 수평 상점에서 늘립니다.');
         // v3.295 다시 저장해도 붙여 둔 이름은 그대로 둡니다(이름을 함께 보내면 그 이름).
         s.presets[id] = { name: (a.value?.trim() || s.presets[id]?.name || `편성 ${id}`).slice(0, 20), skills: [...s.skills] };
     },

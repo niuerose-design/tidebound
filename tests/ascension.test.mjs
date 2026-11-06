@@ -1169,3 +1169,22 @@ test('v3.468 lineage keys: pearls buy a personal, permanent entry into an opened
     low.rebirths = Asc.ASCENSION.requirements[0]; Lc.ascend(low, now0 + 4); assert.deepEqual(low.lineageKeys, ['kkamiHunter'], 'keys survive ascension');
     await P.resetPioneer(now0 + 9);
 });
+
+test('v3.469 horizontal shop: pearls buy preset slots, shop titles and the aurora skin, nothing raises power, limits hold, and purchases survive ascension', async () => {
+    const H = await L.load('data/horizon'), T = await L.load('data/titles'), X = await L.load('data/expedition');
+    const s = newState(0); s.pearls = 20000; s.level = 30;
+    assert.deepEqual(H.presetSlots(s), ['1', '2', '3']); assert.throws(() => act(s, { type: 'savePreset', id: '4' }, 0), /수평 상점/);
+    assert.throws(() => act(s, { type: 'horizon', id: 'nope' }, 0), /없는 물건/);
+    act(s, { type: 'horizon', id: 'presetSlot' }, 0); assert.equal(s.pearls, 20000 - 600); assert.deepEqual(H.presetSlots(s), ['1', '2', '3', '4']);
+    act(s, { type: 'savePreset', id: '4' }, 0); assert.ok(s.presets['4'], 'the bought slot saves a preset');
+    act(s, { type: 'horizon', id: 'presetSlot' }, 0); act(s, { type: 'horizon', id: 'presetSlot' }, 0); assert.throws(() => act(s, { type: 'horizon', id: 'presetSlot' }, 0), /3개까지/);
+    assert.equal(H.presetSlots(s).length, 6);
+    assert.ok(!T.unlockedTitles(s).some(t => t.id === 'title:pearlPatron')); act(s, { type: 'horizon', id: 'title:pearlPatron' }, 0);
+    assert.ok(T.unlockedTitles(s).some(t => t.id === 'title:pearlPatron'), 'a shop title unlocks on purchase'); assert.throws(() => act(s, { type: 'horizon', id: 'title:pearlPatron' }, 0), /이미 산/);
+    act(s, { type: 'title', id: 'title:pearlPatron' }, 0); assert.equal(T.displayTitle(s), '🪙 세계석 후원자');
+    const aurora = X.skinById('aurora'); assert.equal(X.skinUnlocked(aurora, s), false); act(s, { type: 'horizon', id: 'skin:aurora' }, 0); assert.equal(X.skinUnlocked(aurora, s), true); assert.equal(X.skinUnlocked(X.skinById('radiant'), s), false, 'mastery skins stay mastery-gated');
+    const poor = newState(0); poor.pearls = 599; assert.throws(() => act(poor, { type: 'horizon', id: 'presetSlot' }, 0), /모자랍니다/); assert.equal(poor.pearls, 599);
+    assert.equal(H.horizonSpent(s), 600 * 3 + 1000 + 1500);
+    s.rebirths = Asc.ASCENSION.requirements[0]; Lc.ascend(s, 0);
+    assert.deepEqual(H.presetSlots(s).length, 6, 'slots survive ascension'); assert.ok(T.unlockedTitles(s).some(t => t.id === 'title:pearlPatron')); assert.equal(X.skinUnlocked(aurora, s), true);
+});

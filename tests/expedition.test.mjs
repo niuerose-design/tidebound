@@ -924,7 +924,7 @@ test('expedition stage 23 (social · cosmetics): share code round-trips and reje
 test('expedition stage 23-2 (unit skins): skins unlock by the best set mastery ever reached, set mastery level-ups record expeditionSetBest and announce new skins, the skin action rejects locked ids and a locked pick falls back to default', async () => {
     const { newState, act } = await import('./harness.mjs');
     const D = await L.load('data/expedition'), A = await L.load('systems/actions/expedition');
-    assert.equal(D.UNIT_SKINS.length, 5); assert.equal(D.UNIT_SKINS.filter(k => D.skinUnlocked(k, {})).length, 1, 'only default at start');
+    assert.equal(D.UNIT_SKINS.length, 6); // v3.469 수평 상점 피부 오로라 assert.equal(D.UNIT_SKINS.filter(k => D.skinUnlocked(k, {})).length, 1, 'only default at start');
     assert.equal(D.setMasteryBest({ expeditionSetBest: 7, expeditionSetMastery: { level: 3 } }), 7, 'old set record counts'); assert.equal(D.setMasteryBest({ expeditionSetDone: { a: 1 } }), D.SET_MASTERY.max, 'a completed set counts as max');
     const now = 1_800_000_000_000, s = newState(0); s.level = 100;
     assert.throws(() => act(s, { type: 'expeditionSkin', value: 'gold' }, now, mkRng(1)), /잠겨/); assert.throws(() => act(s, { type: 'expeditionSkin', value: 'nope' }, now, mkRng(1)), /없는 피부/);
