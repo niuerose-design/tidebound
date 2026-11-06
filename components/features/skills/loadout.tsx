@@ -1,5 +1,6 @@
 'use client';
 /** v3.385 현재 편성: 액티브(판정 순서, 끌기 · 화살표) · 패시브 · 추가 판정 · 편성 저장 칸 3개. 서버 행동은 전과 같음(setSkills · skillUp · skill · extraRoll · savePreset · loadPreset · renamePreset). */
+import { presetSlots } from '@/game/data/horizon';
 import { useState } from 'react';
 import { ArrowDown, ArrowUp, GripVertical } from 'lucide-react';
 import type { State, Action } from '@/game/types';
@@ -49,7 +50,7 @@ export function Loadout({ s, send, busy, recommended }: { s: State; send: Send; 
             <div className="min-w-0 flex-1 basis-64"><b className="text-ink-1">추가 판정 {level ? `${level}단계 · 켜짐` : unlocked ? '· 꺼짐' : '· 잠김'}</b><p className="mt-0.5 text-xs leading-relaxed text-ink-3">{unlocked ? `액티브가 발동한 행동에서 편성 순서상 그 아래 액티브로 한 번 더 판정합니다. 성공하면 ${power}% 위력으로 함께 씁니다. 동시 시전 묶음으로 나간 행동은 묶음 최대 개수가 1 늘어납니다. 장착 AP ${need}.` : `세계석 연구 ‘${gate?.name}’에서 해금합니다${gate?.rebirth ? `, 환생 ${gate.rebirth}회부터` : ''}. 켜면 장착 AP ${need}를 씁니다.`}</p></div>
             {unlocked > 0 && <Button type="button" size="sm" variant={level ? 'outline' : 'default'} disabled={busy || (!level && short > 0)} onClick={() => send({ type: 'extraRoll', value: String(level ? 0 : 1) })}>{level ? '끄기' : short > 0 ? `AP ${short} 부족` : `켜기 · AP ${need}`}</Button>}
         </div>
-        <div className="grid gap-2 sm:grid-cols-3">{['1', '2', '3'].map(id => <div key={id} className="flex flex-wrap items-center gap-2 rounded-m bg-surface-1 px-3 py-2 text-s"><span className="min-w-0 flex-1"><PresetName id={id} name={s.presets[id]?.name} disabled={busy} send={send}/><span className="block text-xs text-ink-3">{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</span></span><Button type="button" size="xs" variant="outline" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</Button><Button type="button" size="xs" variant="outline" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</Button></div>)}</div>
+        <div className="grid gap-2 sm:grid-cols-3">{presetSlots(s).map(id => <div key={id} className="flex flex-wrap items-center gap-2 rounded-m bg-surface-1 px-3 py-2 text-s"><span className="min-w-0 flex-1"><PresetName id={id} name={s.presets[id]?.name} disabled={busy} send={send}/><span className="block text-xs text-ink-3">{s.presets[id] ? `${s.presets[id].skills.length}개 스킬` : '저장 없음'}</span></span><Button type="button" size="xs" variant="outline" disabled={busy} onClick={() => send({ type: 'savePreset', id })}>저장</Button><Button type="button" size="xs" variant="outline" disabled={busy || !s.presets[id]} onClick={() => send({ type: 'loadPreset', id })}>불러오기</Button></div>)}</div>
     </FoldSection>;
 }
 /** 편성 이름: 저장한 칸은 눌러서 이름을 바꿉니다(Enter · 칸 밖을 누르면 저장, Esc는 취소, 1~20자). */

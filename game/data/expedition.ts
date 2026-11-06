@@ -632,17 +632,18 @@ export const themeById = (id?: string) => EXP_THEMES.find(t => t.id === id) || E
 export const activeTheme = (s: ThemeProgress & { expeditionTheme?: string }) => { const t = themeById(s.expeditionTheme); return t.unlocked(s) ? t : EXP_THEMES[0]; };
 
 /** 23단계(2) 유닛 피부: 세트 숙련 보상. 내 유닛 그림의 색 · 빛만 바꾸고(상대 쪽은 그대로) 능력치는 없습니다. 어느 세트든 가장 높이 올린 세트 숙련(`setMasteryBest`) 기준. */
-export type SkinDef = { id: string; name: string; icon: string; how: string; level: number };
+export type SkinDef = { id: string; name: string; icon: string; how: string; level: number; /** v3.469 수평 상점 물건 id: 사야 열립니다(세트 숙련과 무관). */ shop?: string };
 export const UNIT_SKINS: SkinDef[] = [
     { id: 'default', name: '기본', icon: '🐾', how: '처음부터', level: 0 },
     { id: 'silver', name: '은빛', icon: '🩶', how: '세트 숙련 5', level: 5 },
     { id: 'gold', name: '금빛', icon: '💛', how: '세트 숙련 10', level: 10 },
     { id: 'prism', name: '무지개', icon: '🌈', how: '세트 숙련 15', level: 15 },
     { id: 'radiant', name: '찬란', icon: '💫', how: `세트 숙련 ${SET_MASTERY.max}(세트 완성)`, level: SET_MASTERY.max },
+    { id: 'aurora', name: '오로라', icon: '🌌', how: '수평 상점', level: Infinity, shop: 'skin:aurora' },
 ];
-export type SkinProgress = { expeditionSetBest?: number; expeditionSetMastery?: { level: number }; expeditionSetDone?: Record<string, number> };
+export type SkinProgress = { expeditionSetBest?: number; expeditionSetMastery?: { level: number }; expeditionSetDone?: Record<string, number>; horizon?: { bought: Record<string, number> } };
 /** 지금까지 어느 세트든 가장 높이 올린 세트 숙련(지난 세트 기록은 expeditionSetBest, 완성한 세트는 최대로 칩니다). */
 export const setMasteryBest = (s: SkinProgress) => Math.max(s.expeditionSetBest || 0, s.expeditionSetMastery?.level || 0, Object.values(s.expeditionSetDone || {}).some(n => n > 0) ? SET_MASTERY.max : 0);
-export const skinUnlocked = (skin: SkinDef, s: SkinProgress) => setMasteryBest(s) >= skin.level;
+export const skinUnlocked = (skin: SkinDef, s: SkinProgress) => skin.shop ? (s.horizon?.bought?.[skin.shop] || 0) > 0 : setMasteryBest(s) >= skin.level;
 export const skinById = (id?: string) => UNIT_SKINS.find(x => x.id === id) || UNIT_SKINS[0];
 export const activeSkin = (s: SkinProgress & { expeditionSkin?: string }) => { const k = skinById(s.expeditionSkin); return skinUnlocked(k, s) ? k : UNIT_SKINS[0]; };

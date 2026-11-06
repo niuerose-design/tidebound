@@ -596,6 +596,8 @@ export type State = {
     pioneer?: { points: number };
     /** v3.468 세계석으로 산 계보 입문권(직업 id). 숨은 조건과 투표 공개 범위를 대신하고 승천해도 남습니다. */
     lineageKeys?: string[];
+    /** v3.469 수평 상점에서 산 것(물건 id → 개수). 전투력 없음, 승천해도 남습니다. */
+    horizon?: import('./data/horizon').Horizon;
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */

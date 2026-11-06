@@ -7,12 +7,16 @@ import type { State } from '../types';
 import { REBIRTH_TITLES } from './long-term';
 import { FEATS, SETS, RENOWN, LEAGUE, MILESTONE_WINS, MILESTONE_RUNS, MASTERY_MAX, MASTERY_STEP, masteryTitleIcon } from './expedition';
 
-type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string };
+type TitleDef = { id: string; name: string; desc: string; group: '시작' | '환생' | '도전' | '무릉도장' | '던전' | '사냥' | '강화' | '모험'; /** 달성해야 하는 업적 id. 없으면 누구나 처음부터 가진 칭호. */ achievement?: string; /** v3.469 수평 상점 물건 id. 사야 얻는 칭호. */ shop?: string };
 
 export const TITLES: TitleDef[] = [
     // v3.190 모든 칭호는 이름 앞에 어울리는 그림(이모지)을 둡니다.
     { id: 'novice', name: '🌱 초심자', desc: '모험을 시작한 모든 모험가', group: '시작' },
     ...REBIRTH_TITLES.map(t => ({ id: `rebirth:${t.rebirths}`, name: t.title, desc: `환생 ${t.rebirths}회`, group: '환생' as const, achievement: `rebirths:${t.rebirths}` })),
+    // v3.469 수평 상점 칭호(치장): 세계석으로 삽니다.
+    { id: 'title:pearlPatron', name: '🪙 세계석 후원자', desc: '수평 상점에서 삼', group: '모험', shop: 'title:pearlPatron' },
+    { id: 'title:horizonWalker', name: '🌅 수평선을 걷는 자', desc: '수평 상점에서 삼', group: '모험', shop: 'title:horizonWalker' },
+    { id: 'title:skyNeighbor', name: '🪽 하늘과 이웃한 자', desc: '수평 상점에서 삼', group: '모험', shop: 'title:skyNeighbor' },
     // v3.463 승천 칭호: 횟수 · 서약 · 높은 환생 횟수. 이름 옆에는 ‘n승천’ 배지도 따로 붙습니다.
     { id: 'ascension:1', name: '✦ 승천자', desc: '첫 승천', group: '환생', achievement: 'ascension:1' },
     { id: 'ascension:2', name: '✧ 두 번 오른 자', desc: '2번째 승천', group: '환생', achievement: 'ascension:2' },
@@ -96,18 +100,18 @@ export const TITLES: TitleDef[] = [
 ];
 export const titleById = (id?: string | null) => id ? TITLES.find(t => t.id === id) : undefined;
 /** 달성한 업적 기준으로 얻은 칭호. 환생 칭호는 업적 기록이 없어도 환생 횟수로 인정합니다. */
-export function unlockedTitles(s: Pick<State, 'achievements' | 'rebirths'>) {
-    return TITLES.filter(t => !t.achievement || s.achievements?.[t.achievement] !== undefined || (t.id.startsWith('rebirth:') && (s.rebirths || 0) >= Number(t.id.split(':')[1])));
+export function unlockedTitles(s: Pick<State, 'achievements' | 'rebirths' | 'horizon'>) {
+    return TITLES.filter(t => t.shop ? (s.horizon?.bought?.[t.shop] || 0) > 0 : !t.achievement || s.achievements?.[t.achievement] !== undefined || (t.id.startsWith('rebirth:') && (s.rebirths || 0) >= Number(t.id.split(':')[1])));
 }
 /** 자동 표시 칭호: 얻은 것 중 가장 최근에 달성한 것. 업적이 없는 시작 칭호(초심자)는 다른 칭호를 얻기 전까지만 보입니다. */
-export function autoTitle(s: Pick<State, 'achievements' | 'rebirths'>) {
+export function autoTitle(s: Pick<State, 'achievements' | 'rebirths' | 'horizon'>) {
     const owned = unlockedTitles(s);
     if (!owned.length) return undefined;
     const at = (t: TitleDef) => t.achievement ? (s.achievements?.[t.achievement] ?? -1) : -2;
     return owned.reduce((best, t) => at(t) >= at(best) ? t : best);
 }
 /** 지금 이름 앞에 보일 칭호 이름. 없으면 빈 문자열. */
-export function displayTitle(s: Pick<State, 'achievements' | 'rebirths' | 'title'>) {
+export function displayTitle(s: Pick<State, 'achievements' | 'rebirths' | 'title' | 'horizon'>) {
     if (s.title === null) return '';
     const chosen = titleById(s.title);
     if (chosen && unlockedTitles(s).some(t => t.id === chosen.id)) return chosen.name;
