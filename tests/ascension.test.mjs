@@ -1089,7 +1089,7 @@ test('v3.464 Azeroth pioneering: ascended-only offers fill regions in order, vot
     await P.castVote('b', b, 'elwynn', 'ascended', now0 + 4); await assert.rejects(P.castVote('c', c, 'elwynn', 'all', now0 + 4), /승천한 모험가만/);
     const info = await P.pioneerInfo('a', a, now0 + 5), e = info.regions[0];
     assert.equal(e.vote.all, 1); assert.equal(e.vote.ascended, 1); assert.equal(e.vote.mine, 'all'); assert.equal(e.canOpenVote, false); assert.equal(info.ascendedCount, 2); assert.equal(info.next, 'blackrock');
-    assert.equal(e.lineages.length, 3); assert.equal(typeof e.lineages[0], 'string', 'an opened lineage is revealed to the ascended adventurer');
+    assert.equal(e.lineages.length, 3); assert.equal(typeof e.lineages[0].name, 'string', 'an opened lineage is revealed to the ascended adventurer'); assert.equal(e.lineages[0].open, true);
     store = await P.readPioneer(now0 + 5 + D.PIONEER.voteMs, true);
     assert.equal(store.regions.elwynn.vote, undefined); assert.equal(store.regions.elwynn.access, 'all', 'tie: the opener\'s choice'); assert.equal(store.regions.elwynn.result.all, 1); assert.equal(store.regions.elwynn.result.ascended, 1);
     await P.syncPioneerStatus(c, now0 + 6 + D.PIONEER.voteMs); assert.equal(U.unlockMet(c, 'nuriTracker'), true, 'public: anyone enters');
@@ -1145,4 +1145,27 @@ test('v3.467 Koprulu early access: an opened region lifts the rebirth gates on K
     assert.ok(!jobRequirements(s, jobById('irTrooper')).some(r => r.label.startsWith('환생 ')), 'no rebirth line on Koprulu jobs'); assert.equal(canChangeJob(s, 'irTrooper'), true);
     act(s, { type: 'stage', id: stage.id }, 0); assert.equal(s.stage, stage.id);
     const a = body(); a.ascension = 1; a.pioneerStatus = { at: 0, open: { koprulu: 'ascended' } }; assert.equal(D.kopruluEarly(a), true); assert.equal(canChangeJob(a, 'irTrooper'), true);
+});
+
+test('v3.468 lineage keys: pearls buy a personal, permanent entry into an opened region\'s lineage regardless of the vote, never for lineages already open to you, and the key survives ascension', async () => {
+    const P = await L.load('server/pioneer'), D = await L.load('data/pioneer'), U = await L.load('secret/unlocks');
+    const now0 = 1_660_000_000_000; await P.resetPioneer(now0);
+    const asc = newState(0); asc.name = '승천자'; asc.ascension = 1; asc.pearls = 9000;
+    const low = newState(0); low.name = '초보'; low.pearls = 5000;
+    let store = await P.readPioneer(now0, true);
+    assert.throws(() => P.buyLineageKey(low, 'kkamiHunter', store), /열리지 않았/); assert.throws(() => P.buyLineageKey(low, 'irTrooper', store), /입문권이 없는|없는 계보/);
+    await P.commitOffer('asc', '승천자', 1500, now0 + 1); store = await P.readPioneer(now0 + 1, true);
+    await P.syncPioneerStatus(low, now0 + 2); await P.syncPioneerStatus(asc, now0 + 2);
+    assert.equal(U.unlockMet(low, 'kkamiHunter'), false, 'ascended-only region keeps the unascended out');
+    assert.throws(() => P.buyLineageKey(asc, 'kkamiHunter', store), /필요 없습니다/, 'no key sold to someone who can already enter');
+    const poor = newState(0); poor.pearls = 799; poor.pioneerStatus = low.pioneerStatus; assert.throws(() => P.buyLineageKey(poor, 'kkamiHunter', store), /모자랍니다/);
+    const r = P.buyLineageKey(low, 'kkamiHunter', store); assert.equal(r.cost, D.LINEAGE_KEY_COST.elwynn); assert.equal(low.pearls, 5000 - 800); assert.deepEqual(low.lineageKeys, ['kkamiHunter']);
+    assert.equal(U.unlockMet(low, 'kkamiHunter'), true, 'the key replaces the hidden condition and the vote'); assert.equal(U.unlockMet(low, 'nuriTracker'), false, 'one key, one lineage');
+    assert.throws(() => P.buyLineageKey(low, 'kkamiHunter', store), /이미 들어간/);
+    const info = await P.pioneerInfo('low', low, now0 + 3), e = info.regions[0];
+    assert.deepEqual(e.lineages.map(l => [l.job, l.owned, l.open, l.cost]), [['kkamiHunter', true, true, 800], ['nuriTracker', false, false, 800], ['variantScholar', false, false, 800]]);
+    assert.equal(typeof e.lineages[0].name, 'string', 'a bought lineage is revealed'); assert.equal(e.lineages[1].name, null);
+    assert.ok(info.regions.at(-1).lineages.every(l => l.cost === 0 && typeof l.name === 'string'), 'Koprulu lineages are public and have no key');
+    low.rebirths = Asc.ASCENSION.requirements[0]; Lc.ascend(low, now0 + 4); assert.deepEqual(low.lineageKeys, ['kkamiHunter'], 'keys survive ascension');
+    await P.resetPioneer(now0 + 9);
 });

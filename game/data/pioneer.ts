@@ -35,18 +35,25 @@ export const PIONEER = {
     boardSize: 10,
 } as const;
 export const pioneerAccessName = (a: PioneerAccess) => a === 'all' ? '모두에게 공개' : '승천자 전용';
+/**
+ * v3.468 계보 입문권(docs/balance-rebirth.md 15.2 B): 열린 지역의 히든 계보에 세계석을 내고 개인 · 영구로 입문합니다. 투표 공개 범위와 상관없이 들어가고 승천해도 남습니다.
+ * 지금 들어갈 수 있는 계보에는 팔지 않습니다. 코프룰루는 공개 계보라 없습니다.
+ */
+export const LINEAGE_KEY_COST: Record<PioneerRegionId, number> = { elwynn: 800, blackrock: 1200, dalaran: 1600, stormwind: 2400, koprulu: 0 };
 export type PioneerVote = { by: string; byName: string; openedAt: number; until: number; choice: PioneerAccess; votes: Record<string, PioneerAccess> };
 export type PioneerVoteResult = { by: string; byName: string; access: PioneerAccess; at: number; all: number; ascended: number; sole?: boolean };
 /** 화면에 보내는 지역 정보. lineages는 이 모험가에게 드러난 계보 이름만 적고 아직 숨은 계보는 null입니다. */
 export type PioneerRegionInfo = PioneerRegionDef & {
     points: number; open: boolean; openedAt?: number; openedBy?: string; access: PioneerAccess;
-    lineages: (string | null)[];
+    /** 지역의 계보. name은 이 모험가에게 드러난 이름(아니면 null). 입문권: owned(샀음) · open(지금 들어갈 수 있음) · cost(세계석). 코프룰루는 공개 계보라 입문권이 없습니다(cost 0). */
+    lineages: PioneerLineageInfo[];
     board: { name: string; points: number; self: boolean }[]; mine: number;
     vote: (PioneerVote & { mine?: PioneerAccess; all: number; ascended: number }) | null;
     result: PioneerVoteResult | null;
     /** 내가 지금 투표를 열 수 있는지. 못 열면 이유. */
     canOpenVote: boolean; openVoteWhy?: string;
 };
+export type PioneerLineageInfo = { job: string; name: string | null; owned: boolean; open: boolean; cost: number };
 export type PioneerInfo = { ascended: boolean; ascendedCount: number; regions: PioneerRegionInfo[]; next: PioneerRegionId | null };
 /** 세이브에 동기화하는 개척 상태(서버가 채움): 열린 지역과 공개 범위. 전직 조건 판정이 읽습니다. */
 export type PioneerStatus = { at: number; open: Partial<Record<PioneerRegionId, PioneerAccess>> };

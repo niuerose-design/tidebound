@@ -4,8 +4,8 @@ import 'server-only';
  * 제단처럼 settings 한 칸(JSON)에 두고 30초 캐시로 읽습니다. 쓰기는 바치기 · 투표 열기 · 투표 · 승천자 등록에서만 일어납니다.
  */
 import { db } from './db';
-import { PIONEER, PIONEER_REGIONS, pioneerRegionById, pioneerAccessName, type PioneerRegionId, type PioneerAccess, type PioneerVote, type PioneerVoteResult, type PioneerInfo, type PioneerRegionInfo, type PioneerStatus } from '../data/pioneer';
-import { PIONEER_REGION_JOBS } from '../secret/pioneer';
+import { PIONEER, PIONEER_REGIONS, pioneerRegionById, pioneerAccessName, LINEAGE_KEY_COST, type PioneerLineageInfo, type PioneerRegionId, type PioneerAccess, type PioneerVote, type PioneerVoteResult, type PioneerInfo, type PioneerRegionInfo, type PioneerStatus } from '../data/pioneer';
+import { PIONEER_REGION_JOBS, pioneerOpen, pioneerRegionOf } from '../secret/pioneer';
 import { ascended } from '../data/ascension';
 import { jobById, lineageOf, LINEAGES } from '../data/classes';
 import { jobRevealed } from '../systems/reveal';
@@ -124,12 +124,28 @@ export async function castVote(id: string, s: State, region: PioneerRegionId, ch
     if (!r?.vote) throw new ApiError('진행 중인 투표가 없습니다.');
     r.vote.votes[id] = choice; await write(store, now);
 }
+/** v3.468 계보 입문권 사기(세이브 쪽, mutate 안에서). 지역이 열려 있고, 아직 들어갈 수 없는 계보여야 하며, 세계석을 냅니다. 승천 여부는 보지 않습니다. */
+export function buyLineageKey(s: State, jobId: string, store: Store) {
+    const region = pioneerRegionOf(jobId), def = region && pioneerRegionById(region), job = jobById(jobId);
+    if (!region || !def || !job) throw new ApiError('없는 계보입니다.');
+    const cost = LINEAGE_KEY_COST[region];
+    if (!cost) throw new ApiError('입문권이 없는 지역입니다.');
+    if (!store.regions[region]?.openedAt) throw new ApiError(`${def.name}이(가) 아직 열리지 않았습니다.`);
+    if (s.lineageKeys?.includes(jobId) || s.unlockedJobs.includes(jobId)) throw new ApiError('이미 들어간 계보입니다.');
+    if (pioneerOpen(s, jobId)) throw new ApiError('지금도 들어갈 수 있는 계보라 입문권이 필요 없습니다.');
+    if ((s.pearls || 0) < cost) throw new ApiError(`세계석이 모자랍니다. ${cost.toLocaleString()}개가 필요합니다.`);
+    s.pearls -= cost; (s.lineageKeys ??= []).push(jobId);
+    const lineage = LINEAGES.find(x => x.id === lineageOf(job));
+    addLog(s, `세계석 ${cost.toLocaleString()}개로 ${lineage?.name || job.name}의 입문권을 샀습니다. 승천해도 남습니다.`, 'reward');
+    return { cost, name: lineage?.name || job.name };
+}
 /** 화면 정보. 계보 이름은 이 모험가에게 드러난 것만 적습니다. */
 export async function pioneerInfo(id: string, s: State, now: number): Promise<PioneerInfo> {
     const store = await readPioneer(now);
     const regions: PioneerRegionInfo[] = PIONEER_REGIONS.map(def => {
         const r = store.regions[def.id] || blank(), board = sorted(r);
-        const lineages = def.id === 'koprulu' ? LINEAGES.filter(l => l.world === 'koprulu').map(l => l.name) : PIONEER_REGION_JOBS[def.id].map(jobId => { const j = jobById(jobId); if (!j) return null; const l = LINEAGES.find(x => x.id === lineageOf(j)); return l && jobRevealed(s, j) ? l.name : null; });
+        const lineages: PioneerLineageInfo[] = def.id === 'koprulu' ? LINEAGES.filter(l => l.world === 'koprulu').map(l => ({ job: l.id, name: l.name, owned: false, open: !!r.openedAt, cost: 0 }))
+            : PIONEER_REGION_JOBS[def.id].map(jobId => { const j = jobById(jobId), l = j && LINEAGES.find(x => x.id === lineageOf(j)); const owned = !!s.lineageKeys?.includes(jobId) || !!s.unlockedJobs?.includes(jobId); return { job: jobId, name: j && l && jobRevealed(s, j) ? l.name : null, owned, open: owned || pioneerOpen(s, jobId), cost: LINEAGE_KEY_COST[def.id] }; });
         const can = voteOpener(store, def.id, id, s, now);
         return {
             ...def, points: Math.min(def.cost, r.points), open: !!r.openedAt, openedAt: r.openedAt, openedBy: r.openedBy, access: r.access, lineages,
