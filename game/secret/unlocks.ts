@@ -61,7 +61,8 @@ export const UNLOCK_JOBS = HIDDEN_UNLOCKS.map(u => u.job);
 export function unlockMet(s: Partial<State>, jobId: string): boolean | null {
     const u = HIDDEN_UNLOCKS.find(x => x.job === jobId);
     // v3.464 아제로스 개척으로 열린 지역의 계보는 숨은 조건 없이 들어갑니다(공개 범위는 승천자 투표).
-    return u ? !!s.doorsOpened?.includes(jobId) || pioneerOpen(s, jobId) || u.test(s as State) : null;
+    // v3.468 계보 입문권(lineageKeys)은 숨은 조건과 공개 범위를 대신합니다.
+    return u ? !!s.doorsOpened?.includes(jobId) || !!s.lineageKeys?.includes(jobId) || pioneerOpen(s, jobId) || u.test(s as State) : null;
 }
 /** 지금 만족한 숨은 조건을 기록합니다(이후 상시 만족). 정산 때 호출. 새로 만족한 직업 id를 돌려줍니다. */
 export function recordUnlocks(s: State) {

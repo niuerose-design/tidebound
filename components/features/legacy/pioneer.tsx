@@ -6,7 +6,7 @@ import type { State } from '@/game/types';
 import { StatBar, formatExact, Eyebrow } from '@/components/ui/game';
 import { Button } from '@/components/ui/button';
 import { formatRemaining } from '@/components/game/shared';
-import { PIONEER, pioneerAccessName, type PioneerInfo, type PioneerRegionInfo, type PioneerAccess } from '@/game/data/pioneer';
+import { PIONEER, pioneerAccessName, type PioneerInfo, type PioneerRegionInfo, type PioneerAccess, type PioneerLineageInfo } from '@/game/data/pioneer';
 import { ascensionOf } from '@/game/data/ascension';
 import { Card, Note, field } from './parts';
 import { cn } from '@/lib/utils';
@@ -15,7 +15,7 @@ export type PioneerProps = { pioneer: PioneerInfo | null; pioneerError: string; 
 const fmt = formatExact;
 const QUICK = [10, 50, 100, 500];
 /** 드러난 계보 이름만 적고, 나머지는 수로. */
-const lineageLine = (names: (string | null)[]) => { const shown = names.filter((n): n is string => !!n), hidden = names.length - shown.length; return shown.length ? `드러난 계보: ${shown.join(', ')}${hidden ? ` · 나머지 ${hidden}개는 아직 숨어 있습니다` : ''}` : `계보 ${names.length}개가 아직 숨어 있습니다. 지역이 열리면 드러납니다.`; };
+const lineageLine = (list: PioneerLineageInfo[]) => { const shown = list.map(l => l.name).filter((n): n is string => !!n), hidden = list.length - shown.length; return shown.length ? `드러난 계보: ${shown.join(', ')}${hidden ? ` · 나머지 ${hidden}개는 아직 숨어 있습니다` : ''}` : `계보 ${list.length}개가 아직 숨어 있습니다. 지역이 열리면 드러납니다.`; };
 const num = (v: string) => Math.max(0, Math.floor(Number(v.replace(/[^0-9]/g, '')) || 0));
 const Btn = ({ className, ...rest }: React.ComponentProps<typeof Button>) => <Button type="button" size="sm" className={cn('min-h-9 pointer-coarse:min-h-11', className)} {...rest}/>;
 
@@ -46,12 +46,13 @@ export function PioneerPanel({ s, busy, pioneer, pioneerError, loadPioneer, pion
                 </div>
             </div>}
             {!pioneer.ascended && <Note>승천하면 세계석을 바치고 투표할 수 있습니다. 열린 지역이 모두에게 공개되면 승천하지 않아도 들어갈 수 있습니다.</Note>}
-            <ol className="grid gap-2">{pioneer.regions.map((r, i) => <Region key={r.id} r={r} index={i} now={now} busy={busy} ascended={pioneer.ascended} act={pioneerAct}/>)}</ol>
+            <ol className="grid gap-2">{pioneer.regions.map((r, i) => <Region key={r.id} r={r} index={i} now={now} busy={busy} ascended={pioneer.ascended} pearls={s.pearls} act={pioneerAct}/>)}</ol>
         </>}
     </Card>;
 }
 
-function Region({ r, index, now, busy, ascended, act }: { r: PioneerRegionInfo; index: number; now: number; busy: boolean; ascended: boolean; act: PioneerProps['pioneerAct'] }) {
+function Region({ r, index, now, busy, ascended, pearls, act }: { r: PioneerRegionInfo; index: number; now: number; busy: boolean; ascended: boolean; pearls: number; act: PioneerProps['pioneerAct'] }) {
+    const keys = r.open ? r.lineages.filter(l => l.cost > 0 && !l.open) : [];
     const vote = (choice: PioneerAccess) => { void act({ action: 'vote', region: r.id, choice }); };
     const open = (choice: PioneerAccess) => { void act({ action: 'openVote', region: r.id, choice }); };
     return <li className={cn('grid gap-2 rounded-m border border-line bg-surface-1 p-3', r.open && 'border-accent/50')}>
@@ -63,6 +64,11 @@ function Region({ r, index, now, busy, ascended, act }: { r: PioneerRegionInfo; 
         {!r.open && <StatBar value={r.points} max={r.cost} tone="warn" label="세계석"/>}
         {r.open && r.openedBy && <small className="text-xs text-ink-2">가장 많이 바친 {r.openedBy}의 손으로 {new Date(r.openedAt || now).toLocaleDateString('ko-KR')}에 열렸습니다.</small>}
         <small className="text-xs text-ink-2">{lineageLine(r.lineages)}</small>
+        {keys.length > 0 && <div className="grid gap-1.5 rounded-s bg-surface-0 p-2">
+            <span className="text-xs font-semibold">계보 입문권</span>
+            <small className="text-xs text-ink-2">투표 범위 밖이어도 세계석 {fmt(keys[0].cost)}개를 내면 그 계보에 혼자 들어갑니다. 승천해도 남습니다.</small>
+            <div className="flex flex-wrap gap-1.5">{keys.map((l, i) => <Btn key={l.job} variant="outline" disabled={busy || pearls < l.cost} onClick={() => { void act({ action: 'buyKey', job: l.job }); }}>{l.name || `숨은 계보 ${i + 1}`} 입문권</Btn>)}</div>
+        </div>}
         {r.board.length > 0 && <small className="text-xs text-ink-3">기여: {r.board.slice(0, 5).map(b => `${b.name} ${fmt(b.points)}`).join(', ')}{r.mine ? ` · 내 기여 ${fmt(r.mine)}` : ''}</small>}
         {r.open && <div className="grid gap-1.5 rounded-s bg-surface-0 p-2">
             <span className="inline-flex items-center gap-1 text-xs font-semibold"><Vote size={13}/>공개 범위 투표</span>

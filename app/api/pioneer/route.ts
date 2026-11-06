@@ -1,5 +1,5 @@
 import { session, checkOrigin, mutate, failure, readJson, ApiError, syncAccount } from '@/game/server/store';
-import { pioneerInfo, registerAscended, readPioneer, offerCheck, applyOffer, commitOffer, nextRegion, openVote, castVote, syncPioneerStatus } from '@/game/server/pioneer';
+import { pioneerInfo, registerAscended, readPioneer, offerCheck, applyOffer, commitOffer, nextRegion, openVote, castVote, syncPioneerStatus, buyLineageKey } from '@/game/server/pioneer';
 import { pioneerRegionById, type PioneerAccess, type PioneerRegionId } from '@/game/data/pioneer';
 export const dynamic = 'force-dynamic';
 const headers = { 'Cache-Control': 'no-store' };
@@ -13,7 +13,7 @@ export async function GET(req: Request) { try {
 catch (e) {
     return failure(e);
 } }
-/** { action: 'offer', pearls } | { action: 'openVote', region, choice } | { action: 'vote', region, choice }. */
+/** { action: 'offer', pearls } | { action: 'openVote', region, choice } | { action: 'vote', region, choice } | { action: 'buyKey', job }. */
 export async function POST(req: Request) { try {
     checkOrigin(req);
     const { account, slot, id } = await session(req), body = await readJson(req), now = Date.now();
@@ -23,6 +23,11 @@ export async function POST(req: Request) { try {
         const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); offerCheck(s, pearls, store); applyOffer(s, pearls, region!); });
         await commitOffer(id, payload.state.name, pearls, now);
         await syncPioneerStatus(payload.state, now);
+        return Response.json({ state: payload.state, info: await pioneerInfo(id, payload.state, Date.now()) }, { headers });
+    }
+    if (action === 'buyKey') {
+        const job = String(body.job || ''), store = await readPioneer(now);
+        const payload = await mutate(id, { type: 'sync' }, async s => { await syncAccount(account, slot, s, now); buyLineageKey(s, job, store); });
         return Response.json({ state: payload.state, info: await pioneerInfo(id, payload.state, Date.now()) }, { headers });
     }
     if (action !== 'openVote' && action !== 'vote') throw new ApiError('올바르지 않은 요청입니다.');

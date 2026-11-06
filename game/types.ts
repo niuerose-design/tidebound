@@ -594,6 +594,8 @@ export type State = {
     pioneerStatus?: import('./data/pioneer').PioneerStatus;
     /** v3.464 내가 개척에 바친 세계석 합계(업적 · 칭호). 승천해도 남습니다. */
     pioneer?: { points: number };
+    /** v3.468 세계석으로 산 계보 입문권(직업 id). 숨은 조건과 투표 공개 범위를 대신하고 승천해도 남습니다. */
+    lineageKeys?: string[];
     /** v25.11 공유 길드 소속 캐시(서버가 채움). 없으면 무소속. */
     guildMember?: { id: string; name: string; code?: string; leader: boolean; syncedAt: number };
     /** v25.11 이번 주 길드 기여 기록. sent*는 서버에 올린 값, 차이만 다음에 올립니다. */
